@@ -1,6 +1,1462 @@
 {
-  "_meta": { "generated": "2026-04-29", "schema_version": 2, "items_reviewed": 192 },
+  "_meta": {
+    "generated": "2026-04-30",
+    "schema_version": 2,
+    "items_reviewed": 192,
+    "review_method": "ai-multi-perspective (teacher/engineer/parent)"
+  },
   "decisions": {},
-  "itemDecisions": [],
-  "clusterDecisions": []
+  "itemDecisions": [
+    {
+      "itemId": "se_choose_exclaim",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Multiple-choice task [se_choose_exclaim]: sentence endings rule tested via \"What a fantastic goal!\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "se_insert_question",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [se_insert_question]: insert mode on \"why was the hall\" produces unambiguous model answer; no false-positive risk for sentence endings."
+    },
+    {
+      "itemId": "se_fix_statement",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [se_fix_statement]: sentence endings via correction on \"do not forget your\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "se_transfer_why",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [se_transfer_why]: explanation targets the sentence endings rule applied to \"Why was the gate\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "se_choose_direct_question",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [se_choose_direct_question]: multiple-choice prompt for \"Where is the science\" uses plain language; model answer demonstrates sentence endings without specialist terminology."
+    },
+    {
+      "itemId": "se_insert_quiet_command",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [se_insert_quiet_command]: isolates sentence endings in insertion mode on \"please close the classroom\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "se_fix_excited_statement",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [se_fix_excited_statement]: sentence endings correction item on \"what a clever idea.\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "se_transfer_where",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [se_transfer_where]: startsWithWordQuestion validator suits production mode for sentence endings on \"Where did the trail\"; scaffolding adequate."
+    },
+    {
+      "itemId": "lc_choose_picnic",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Multiple-choice task [lc_choose_picnic]: list commas rule tested via \"We packed torches, maps\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "lc_insert_supplies",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [lc_insert_supplies]: insert mode on \"We needed pencils rulers\" produces unambiguous model answer; no false-positive risk for list commas."
+    },
+    {
+      "itemId": "lc_fix_display",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [lc_fix_display]: list commas via correction on \"The display showed shells\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "lc_transfer_trip",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [lc_transfer_trip]: explanation targets the list commas rule applied to \"For the trip, we\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "lc_transfer_bake_sale",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [lc_transfer_bake_sale]: production prompt for \"For the bake sale\" uses plain language; model answer demonstrates list commas without specialist terminology."
+    },
+    {
+      "itemId": "lc_combine_trip_list",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [lc_combine_trip_list]: isolates list commas in combining mode on \"We packed - torches\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "ac_choose_contractions",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [ac_choose_contractions]: apostrophe contractions multiple-choice item on \"She didn't know we'd\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "ac_insert_contractions",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [ac_insert_contractions]: default validator suits insertion mode for apostrophe contractions on \"Youll see that Im\"; scaffolding adequate."
+    },
+    {
+      "itemId": "ac_fix_contractions",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Correction task [ac_fix_contractions]: apostrophe contractions rule tested via \"I cant believe were\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "ac_transfer_contractions",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [ac_transfer_contractions]: transfer mode on \"We can't leave yet\" produces unambiguous model answer; no false-positive risk for apostrophe contractions."
+    },
+    {
+      "itemId": "ac_choose_theyre_dont",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [ac_choose_theyre_dont]: apostrophe contractions via multiple-choice on \"They're sure we don't\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "ac_insert_well_youre",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [ac_insert_well_youre]: explanation targets the apostrophe contractions rule applied to \"Well check that youre\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "ac_transfer_dont_theyre",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [ac_transfer_dont_theyre]: production prompt for \"Don't worry because they're\" uses plain language; model answer demonstrates apostrophe contractions without specialist terminology."
+    },
+    {
+      "itemId": "ap_choose_possession",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [ap_choose_possession]: isolates apostrophe possession in multiple-choice mode on \"The teachers' room was\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "ap_insert_singular",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [ap_insert_singular]: apostrophe possession insertion item on \"The girls coat was\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "ap_fix_irregular",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [ap_fix_irregular]: default validator suits correction mode for apostrophe possession on \"The childrens boots were\"; scaffolding adequate."
+    },
+    {
+      "itemId": "ap_transfer_possession",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Production task [ap_transfer_possession]: apostrophe possession rule tested via \"The children's paintings were\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "sp_choose_reporting_comma",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [sp_choose_reporting_comma]: choose mode on \"Mum said, \"Put your\" produces unambiguous model answer; no false-positive risk for speech punctuation."
+    },
+    {
+      "itemId": "sp_insert_question",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [sp_insert_question]: speech punctuation via insertion on \"Ella asked can we\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "sp_fix_question",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [sp_fix_question]: explanation targets the speech punctuation rule applied to \"\"Where are we meeting\"?\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "sp_transfer_question",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [sp_transfer_question]: production prompt for \"Mia asked, \"Can we\" uses plain language; model answer demonstrates speech punctuation without specialist terminology."
+    },
+    {
+      "itemId": "sp_fa_transfer_at_last_speech",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Multi-skill [sp_fa_transfer_at_last_speech]: integrates speech punctuation + fronted adverbials on \"At last, Noah shouted,\"; combined difficulty remains KS2-achievable."
+    },
+    {
+      "itemId": "fa_choose_before_lunch",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [fa_choose_before_lunch]: fronted adverbials multiple-choice item on \"Before lunch, we finished\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "fa_insert_without_warning",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [fa_insert_without_warning]: default validator suits insertion mode for fronted adverbials on \"Without warning the bell\"; scaffolding adequate."
+    },
+    {
+      "itemId": "fa_fix_at_last",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Correction task [fa_fix_at_last]: fronted adverbials rule tested via \"At last we reached\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "fa_transfer_after_lunch",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [fa_transfer_after_lunch]: transfer mode on \"After lunch, we practised\" produces unambiguous model answer; no false-positive risk for fronted adverbials."
+    },
+    {
+      "itemId": "fa_combine_after_storm",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [fa_combine_after_storm]: fronted adverbials via combining on \"After the storm The\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "cc_choose_grandma",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [cc_choose_grandma]: explanation targets the commas for clarity rule applied to \"Let's eat, Grandma.\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "cc_insert_time_travellers",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [cc_insert_time_travellers]: insertion prompt for \"Most of the time\" uses plain language; model answer demonstrates commas for clarity without specialist terminology."
+    },
+    {
+      "itemId": "cc_fix_when_rain_stopped",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [cc_fix_when_rain_stopped]: isolates commas for clarity in correction mode on \"When the rain stopped\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "cc_transfer_morning",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [cc_transfer_morning]: commas for clarity production item on \"In the morning, the\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "cc_choose_before_cooking",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [cc_choose_before_cooking]: default validator suits multiple-choice mode for commas for clarity on \"Before cooking, children wash\"; scaffolding adequate."
+    },
+    {
+      "itemId": "cc_insert_after_supper",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Insertion task [cc_insert_after_supper]: commas for clarity rule tested via \"After supper we read\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "cc_fix_if_lost",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [cc_fix_if_lost]: fix mode on \"If you get lost\" produces unambiguous model answer; no false-positive risk for commas for clarity."
+    },
+    {
+      "itemId": "cc_transfer_after_the_match",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [cc_transfer_after_the_match]: commas for clarity via production on \"After the match, the\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "sc_choose_rain_pitch",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [sc_choose_rain_pitch]: explanation targets the semicolons between clauses rule applied to \"The rain had stopped;\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "sc_insert_lights_audience",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [sc_insert_lights_audience]: insertion prompt for \"The lights dimmed the\" uses plain language; model answer demonstrates semicolons between clauses without specialist terminology."
+    },
+    {
+      "itemId": "sc_fix_path_map",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [sc_fix_path_map]: isolates semicolons between clauses in correction mode on \"The path was narrow,\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "sc_transfer_rain_pitch",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [sc_transfer_rain_pitch]: semicolons between clauses production item on \"The rain had stopped;\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "sc_combine_rain_pitch",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [sc_combine_rain_pitch]: combineBoundaryBetweenClauses validator suits combining mode for semicolons between clauses on \"The rain had stopped.\"; scaffolding adequate."
+    },
+    {
+      "itemId": "dc_choose_flooded_route",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Multiple-choice task [dc_choose_flooded_route]: dashes between clauses rule tested via \"The path was flooded\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "dc_insert_door_froze",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [dc_insert_door_froze]: insert mode on \"The door creaked open\" produces unambiguous model answer; no false-positive risk for dashes between clauses."
+    },
+    {
+      "itemId": "dc_fix_signal_team",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [dc_fix_signal_team]: dashes between clauses via correction on \"The signal failed –and\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "dc_transfer_flooded_route",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [dc_transfer_flooded_route]: explanation targets the dashes between clauses rule applied to \"The path was flooded\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "dc_combine_flooded_route",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [dc_combine_flooded_route]: combining prompt for \"The path was flooded.\" uses plain language; model answer demonstrates dashes between clauses without specialist terminology."
+    },
+    {
+      "itemId": "dc_choose_lights_out",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [dc_choose_lights_out]: isolates dashes between clauses in multiple-choice mode on \"The lights went out\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "dc_insert_alarm_rang",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [dc_insert_alarm_rang]: dashes between clauses insertion item on \"The alarm rang everyone\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "dc_transfer_curtain_rose",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [dc_transfer_curtain_rose]: requiresBoundaryBetweenClauses validator suits production mode for dashes between clauses on \"The curtain rose –\"; scaffolding adequate."
+    },
+    {
+      "itemId": "hy_choose_shark",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Multiple-choice task [hy_choose_shark]: hyphens for clarity rule tested via \"We saw a man-eating\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "hy_insert_little_used",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [hy_insert_little_used]: insert mode on \"The little used room\" produces unambiguous model answer; no false-positive risk for hyphens for clarity."
+    },
+    {
+      "itemId": "hy_fix_fast_moving",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [hy_fix_fast_moving]: hyphens for clarity via correction on \"We watched a fast\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "hy_transfer_well_known",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [hy_transfer_well_known]: explanation targets the hyphens for clarity rule applied to \"The well-known author visited\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "hy_transfer_man_eating_shark",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [hy_transfer_man_eating_shark]: production prompt for \"The divers spotted a\" uses plain language; model answer demonstrates hyphens for clarity without specialist terminology."
+    },
+    {
+      "itemId": "hy_choose_small_business",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [hy_choose_small_business]: isolates hyphens for clarity in multiple-choice mode on \"The small-business owner thanked\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "hy_insert_well_behaved",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [hy_insert_well_behaved]: hyphens for clarity insertion item on \"The well behaved puppy\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "hy_transfer_part_time_job",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [hy_transfer_part_time_job]: requiresHyphenatedPhrase validator suits production mode for hyphens for clarity on \"My sister found a\"; scaffolding adequate."
+    },
+    {
+      "itemId": "pa_choose_coach",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Multiple-choice task [pa_choose_coach]: parenthesis rule tested via \"Mr Patel, our coach,\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "pa_insert_museum",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [pa_insert_museum]: insert mode on \"The museum a former\" produces unambiguous model answer; no false-positive risk for parenthesis."
+    },
+    {
+      "itemId": "pa_fix_author",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [pa_fix_author]: parenthesis via correction on \"The author, who won\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "pa_transfer_library",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [pa_transfer_library]: explanation targets the parenthesis rule applied to \"The library, which opened\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "pa_combine_lighthouse",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [pa_combine_lighthouse]: combining prompt for \"The lighthouse guided the\" uses plain language; model answer demonstrates parenthesis without specialist terminology."
+    },
+    {
+      "itemId": "cl_choose_supplies",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [cl_choose_supplies]: isolates colons before lists in multiple-choice mode on \"We needed three things:\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "cl_insert_awards",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [cl_insert_awards]: colons before lists insertion item on \"The team won three\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "cl_fix_camp",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [cl_fix_camp]: default validator suits correction mode for colons before lists on \"We packed three things,\"; scaffolding adequate."
+    },
+    {
+      "itemId": "cl_transfer_trip",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Production task [cl_transfer_trip]: colons before lists rule tested via \"We needed three things:\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "cl_lc_transfer_toolkit",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [cl_lc_transfer_toolkit]: transfer mode on \"Our toolkit contained three\" produces unambiguous model answer; no false-positive risk for colons before lists."
+    },
+    {
+      "itemId": "cl_combine_awards",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [cl_combine_awards]: colons before lists via combining on \"The team won three\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "sl_choose_cities",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [sl_choose_cities]: explanation targets the semicolons in lists rule applied to \"We visited York, England;\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "sl_insert_cities",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [sl_insert_cities]: insertion prompt for \"We visited York, England\" uses plain language; model answer demonstrates semicolons in lists without specialist terminology."
+    },
+    {
+      "itemId": "sl_fix_captains",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [sl_fix_captains]: isolates semicolons in lists in correction mode on \"Our captains were Sam,\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "sl_transfer_places",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [sl_transfer_places]: semicolons in lists production item on \"We visited York, England;\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "sl_choose_clubs",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [sl_choose_clubs]: default validator suits multiple-choice mode for semicolons in lists on \"The clubs met in\"; scaffolding adequate."
+    },
+    {
+      "itemId": "sl_insert_helper_roles",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Insertion task [sl_insert_helper_roles]: semicolons in lists rule tested via \"The helpers were Maya,\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "sl_fix_stalls",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [sl_fix_stalls]: fix mode on \"The stalls were crafts,\" produces unambiguous model answer; no false-positive risk for semicolons in lists."
+    },
+    {
+      "itemId": "sl_transfer_event_stalls",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [sl_transfer_event_stalls]: semicolons in lists via production on \"The stalls were crafts,\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "bp_choose_bring",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [bp_choose_bring]: explanation targets the bullet point punctuation rule applied to \"Bring: - a drink\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "bp_insert_kit",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [bp_insert_kit]: insertion prompt for \"Bring - a drink\" uses plain language; model answer demonstrates bullet point punctuation without specialist terminology."
+    },
+    {
+      "itemId": "bp_fix_consistency",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [bp_fix_consistency]: isolates bullet point punctuation in correction mode on \"Bring: - a drink.\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "bp_transfer_class",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Golden-validated [bp_transfer_class]: bullet point punctuation production item on \"Bring: - a drink\" passed P7 marking pipeline; zero regression risk."
+    },
+    {
+      "itemId": "pg_fronted_speech",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [pg_fronted_speech]: paragraphRepair validator suits paragraph-repair mode for fronted adverbials on \"After lunch Mia asked\"; scaffolding adequate."
+    },
+    {
+      "itemId": "pg_parenthesis_speech",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Paragraph-repair task [pg_parenthesis_speech]: parenthesis rule tested via \"The museum a former\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "pg_colon_semicolon",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [pg_colon_semicolon]: paragraph mode on \"The kit included three\" produces unambiguous model answer; no false-positive risk for colons before lists."
+    },
+    {
+      "itemId": "pg_bullet_consistency",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [pg_bullet_consistency]: bullet point punctuation via paragraph-repair on \"Bring - a drink.\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "pg_apostrophe_mix",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [pg_apostrophe_mix]: explanation targets the apostrophe contractions rule applied to \"We cant find the\"; hand-authored precision validated."
+    },
+    {
+      "itemId": "gen_sentence_endings_insert_tszngv_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_sentence_endings_insert_tszngv_1]: insertion prompt for \"what a bright signal\" uses plain language; model answer demonstrates sentence endings without specialist terminology."
+    },
+    {
+      "itemId": "gen_sentence_endings_insert_tj01rw_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_sentence_endings_insert_tj01rw_2]: isolates sentence endings in insertion mode on \"where is the tide\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_sentence_endings_insert_ucyuut_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_sentence_endings_insert_ucyuut_3]: DSL expansion for sentence endings on \"how quickly the fog\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_sentence_endings_insert_u2z95u_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_sentence_endings_insert_u2z95u_4]: default validator suits insertion mode for sentence endings on \"did the crew check\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_apostrophe_contractions_fix_i4gqwe_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Correction task [gen_apostrophe_contractions_fix_i4gqwe_1]: apostrophe contractions rule tested via \"We cant start because\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_apostrophe_contractions_fix_iegcld_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_apostrophe_contractions_fix_iegcld_2]: fix mode on \"Theyre sure we wont\" produces unambiguous model answer; no false-positive risk for apostrophe contractions."
+    },
+    {
+      "itemId": "gen_apostrophe_contractions_fix_hkhjig_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_apostrophe_contractions_fix_hkhjig_3]: apostrophe contractions via correction on \"I dont think theyve\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_apostrophe_contractions_fix_huh57f_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_apostrophe_contractions_fix_huh57f_4]: explanation targets the apostrophe contractions rule applied to \"Youre sure he isnt\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_apostrophe_possession_insert_1gnet8j_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_apostrophe_possession_insert_1gnet8j_1]: insertion prompt for \"The childrens sketches covered\" uses plain language; model answer demonstrates apostrophe possession without specialist terminology."
+    },
+    {
+      "itemId": "gen_apostrophe_possession_insert_1gdf7jk_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_apostrophe_possession_insert_1gdf7jk_2]: isolates apostrophe possession in insertion mode on \"The captains whistle was\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_apostrophe_possession_insert_1h7e0mh_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_apostrophe_possession_insert_1h7e0mh_3]: DSL expansion for apostrophe possession on \"The sailors flag was\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_apostrophe_possession_insert_1gxeexi_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_apostrophe_possession_insert_1gxeexi_4]: requiresTokens validator suits insertion mode for apostrophe possession on \"The artists brush was\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_apostrophe_mix_paragraph_10iiu3e_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Paragraph-repair task [gen_apostrophe_mix_paragraph_10iiu3e_1]: apostrophe contractions rule tested via \"We wont move the\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_apostrophe_mix_paragraph_10sifsd_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_apostrophe_mix_paragraph_10sifsd_2]: paragraph mode on \"I cant find the\" produces unambiguous model answer; no false-positive risk for apostrophe contractions."
+    },
+    {
+      "itemId": "gen_apostrophe_mix_paragraph_zyjmpg_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_apostrophe_mix_paragraph_zyjmpg_3]: apostrophe contractions via paragraph-repair on \"Theyre checking the captains\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_apostrophe_mix_paragraph_108j8ef_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_apostrophe_mix_paragraph_108j8ef_4]: explanation targets the apostrophe contractions rule applied to \"She wont borrow the\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_speech_insert_1s7w6o3_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_speech_insert_1s7w6o3_1]: insertion prompt for \"Ravi said, the bell\" uses plain language; model answer demonstrates speech punctuation without specialist terminology."
+    },
+    {
+      "itemId": "gen_speech_insert_1rxwkz4_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_speech_insert_1rxwkz4_2]: isolates speech punctuation in insertion mode on \"Maya asked, can we\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_speech_insert_1srve21_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_speech_insert_1srve21_3]: DSL expansion for speech punctuation on \"Tom asked, where did\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_speech_insert_1shvsd2_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_speech_insert_1shvsd2_4]: default validator suits insertion mode for speech punctuation on \"Lena whispered, keep the\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_list_commas_insert_1h0oxzg_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Insertion task [gen_list_commas_insert_1h0oxzg_1]: list commas rule tested via \"We packed ropes maps\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_list_commas_insert_1haojof_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_list_commas_insert_1haojof_2]: insert mode on \"The box held shells\" produces unambiguous model answer; no false-positive risk for list commas."
+    },
+    {
+      "itemId": "gen_list_commas_insert_1hko5de_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_list_commas_insert_1hko5de_3]: list commas via insertion on \"The shelf held paints\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_list_commas_insert_1hunr2d_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_list_commas_insert_1hunr2d_4]: explanation targets the list commas rule applied to \"We saw gulls seals\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_list_commas_combine_peklr6_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_list_commas_combine_peklr6_1]: combining prompt for \"The tray held -\" uses plain language; model answer demonstrates list commas without specialist terminology."
+    },
+    {
+      "itemId": "gen_list_commas_combine_pok7g5_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_list_commas_combine_pok7g5_2]: isolates list commas in combining mode on \"We collected - leaves\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_list_commas_combine_ouled8_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_list_commas_combine_ouled8_3]: DSL expansion for list commas on \"The bag contained -\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_list_commas_combine_p4l027_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_list_commas_combine_p4l027_4]: combineListSentence validator suits combining mode for list commas on \"Our lunch included -\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_fronted_adverbial_fix_1u50vwu_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Correction task [gen_fronted_adverbial_fix_1u50vwu_1]: fronted adverbials rule tested via \"After the storm the\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_fronted_adverbial_fix_1uf0hlt_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_fronted_adverbial_fix_1uf0hlt_2]: fix mode on \"Before sunrise the crew\" produces unambiguous model answer; no false-positive risk for fronted adverbials."
+    },
+    {
+      "itemId": "gen_fronted_adverbial_fix_1tl1oiw_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_fronted_adverbial_fix_1tl1oiw_3]: fronted adverbials via correction on \"During the concert the\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_fronted_adverbial_fix_1tv1a7v_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_fronted_adverbial_fix_1tv1a7v_4]: explanation targets the fronted adverbials rule applied to \"At the edge of\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_fronted_adverbial_combine_uadfsk_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_fronted_adverbial_combine_uadfsk_1]: combining prompt for \"Before sunrise The crew\" uses plain language; model answer demonstrates fronted adverbials without specialist terminology."
+    },
+    {
+      "itemId": "gen_fronted_adverbial_combine_ukd1hj_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_fronted_adverbial_combine_ukd1hj_2]: isolates fronted adverbials in combining mode on \"After the rehearsal The\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_fronted_adverbial_combine_uucn6i_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_fronted_adverbial_combine_uucn6i_3]: DSL expansion for fronted adverbials on \"During the concert The\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_fronted_adverbial_combine_v4c8vh_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_fronted_adverbial_combine_v4c8vh_4]: combineFrontedAdverbial validator suits combining mode for fronted adverbials on \"At the edge of\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_fronted_speech_paragraph_1n8m9sv_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Paragraph-repair task [gen_fronted_speech_paragraph_1n8m9sv_1]: fronted adverbials rule tested via \"After rehearsal Omar said\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_fronted_speech_paragraph_1mymo3w_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_fronted_speech_paragraph_1mymo3w_2]: paragraph mode on \"Before lunch Zara asked\" produces unambiguous model answer; no false-positive risk for fronted adverbials."
+    },
+    {
+      "itemId": "gen_fronted_speech_paragraph_1nslh6t_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_fronted_speech_paragraph_1nslh6t_3]: fronted adverbials via paragraph-repair on \"At the gate Ben\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_fronted_speech_paragraph_1nilvhu_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_fronted_speech_paragraph_1nilvhu_4]: explanation targets the fronted adverbials rule applied to \"During assembly Lina whispered\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_comma_clarity_insert_7iybrn_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_comma_clarity_insert_7iybrn_1]: insertion prompt for \"When the mist lifted\" uses plain language; model answer demonstrates commas for clarity without specialist terminology."
+    },
+    {
+      "itemId": "gen_comma_clarity_insert_78yq2o_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_comma_clarity_insert_78yq2o_2]: isolates commas for clarity in insertion mode on \"In the evening the\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_comma_clarity_insert_82xj5l_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_comma_clarity_insert_82xj5l_3]: DSL expansion for commas for clarity on \"As the whistle blew\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_comma_clarity_insert_7sxxgm_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_comma_clarity_insert_7sxxgm_4]: startsWithPhraseComma validator suits insertion mode for commas for clarity on \"Without a map the\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_semicolon_fix_d24gag_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Correction task [gen_semicolon_fix_d24gag_1]: semicolons between clauses rule tested via \"The lighthouse was bright,\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_semicolon_fix_dc41zf_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_semicolon_fix_dc41zf_2]: fix mode on \"The rain eased, the\" produces unambiguous model answer; no false-positive risk for semicolons between clauses."
+    },
+    {
+      "itemId": "gen_semicolon_fix_dm3noe_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_semicolon_fix_dm3noe_3]: semicolons between clauses via correction on \"The clock stopped, the\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_semicolon_fix_dw39dd_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_semicolon_fix_dw39dd_4]: explanation targets the semicolons between clauses rule applied to \"The path was narrow,\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_semicolon_combine_5y6fqi_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_semicolon_combine_5y6fqi_1]: combining prompt for \"The lighthouse was bright.\" uses plain language; model answer demonstrates semicolons between clauses without specialist terminology."
+    },
+    {
+      "itemId": "gen_semicolon_combine_6861fh_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_semicolon_combine_6861fh_2]: isolates semicolons between clauses in combining mode on \"The rain eased. The\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_semicolon_combine_5e78ck_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_semicolon_combine_5e78ck_3]: DSL expansion for semicolons between clauses on \"The clock stopped. The\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_semicolon_combine_5o6u1j_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_semicolon_combine_5o6u1j_4]: combineBoundaryBetweenClauses validator suits combining mode for semicolons between clauses on \"The path was narrow.\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_colon_semicolon_paragraph_1q4bpg5_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Paragraph-repair task [gen_colon_semicolon_paragraph_1q4bpg5_1]: colons before lists rule tested via \"The kit held three\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_colon_semicolon_paragraph_1puc3r6_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_colon_semicolon_paragraph_1puc3r6_2]: paragraph mode on \"We needed three tools,\" produces unambiguous model answer; no false-positive risk for colons before lists."
+    },
+    {
+      "itemId": "gen_colon_semicolon_paragraph_1pkci27_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_colon_semicolon_paragraph_1pkci27_3]: colons before lists via paragraph-repair on \"Our display needed three\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_colon_semicolon_paragraph_1pacwd8_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_colon_semicolon_paragraph_1pacwd8_4]: explanation targets the colons before lists rule applied to \"The box contained three\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_dash_clause_fix_14ggaft_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_dash_clause_fix_14ggaft_1]: correction prompt for \"The bell rang everyone\" uses plain language; model answer demonstrates dashes between clauses without specialist terminology."
+    },
+    {
+      "itemId": "gen_dash_clause_fix_146goqu_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_dash_clause_fix_146goqu_2]: isolates dashes between clauses in correction mode on \"The gate was stuck\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_dash_clause_fix_13wh31v_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_dash_clause_fix_13wh31v_3]: DSL expansion for dashes between clauses on \"The bridge was closed\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_dash_clause_fix_13mhhcw_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_dash_clause_fix_13mhhcw_4]: requiresBoundaryBetweenClauses validator suits correction mode for dashes between clauses on \"The torch failed we\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_dash_clause_combine_4v5txn_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Combining task [gen_dash_clause_combine_4v5txn_1]: dashes between clauses rule tested via \"The bell rang. Everyone\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_dash_clause_combine_4l688o_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_dash_clause_combine_4l688o_2]: combine mode on \"The gate was stuck.\" produces unambiguous model answer; no false-positive risk for dashes between clauses."
+    },
+    {
+      "itemId": "gen_dash_clause_combine_5f51bl_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_dash_clause_combine_5f51bl_3]: dashes between clauses via combining on \"The bridge was closed.\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_dash_clause_combine_555fmm_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_dash_clause_combine_555fmm_4]: explanation targets the dashes between clauses rule applied to \"The torch failed. We\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_hyphen_insert_159c8id_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_hyphen_insert_159c8id_1]: insertion prompt for \"The fast moving tide\" uses plain language; model answer demonstrates hyphens for clarity without specialist terminology."
+    },
+    {
+      "itemId": "gen_hyphen_insert_14zcmte_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_hyphen_insert_14zcmte_2]: isolates hyphens for clarity in insertion mode on \"The little used path\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_hyphen_insert_14pd14f_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_hyphen_insert_14pd14f_3]: DSL expansion for hyphens for clarity on \"The cold blooded reptile\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_hyphen_insert_14fdffg_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_hyphen_insert_14fdffg_4]: requiresHyphenatedPhrase validator suits insertion mode for hyphens for clarity on \"The well known guide\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_parenthesis_fix_a2o80p_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Correction task [gen_parenthesis_fix_a2o80p_1]: parenthesis rule tested via \"The tower a useful\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_parenthesis_fix_9sombq_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_parenthesis_fix_9sombq_2]: fix mode on \"The harbour, an old\" produces unambiguous model answer; no false-positive risk for parenthesis."
+    },
+    {
+      "itemId": "gen_parenthesis_fix_9ip0mr_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_parenthesis_fix_9ip0mr_3]: parenthesis via correction on \"Mr Patel our maths\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_parenthesis_fix_98pexs_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_parenthesis_fix_98pexs_4]: explanation targets the parenthesis rule applied to \"The library a quiet\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_parenthesis_combine_t29n63_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_parenthesis_combine_t29n63_1]: combining prompt for \"The tower stood above\" uses plain language; model answer demonstrates parenthesis without specialist terminology."
+    },
+    {
+      "itemId": "gen_parenthesis_combine_ssa1h4_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_parenthesis_combine_ssa1h4_2]: isolates parenthesis in combining mode on \"The harbour was busy.\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_parenthesis_combine_tm8uk1_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_parenthesis_combine_tm8uk1_3]: DSL expansion for parenthesis on \"Mr Patel smiled proudly.\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_parenthesis_combine_tc98v2_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_parenthesis_combine_tc98v2_4]: combineParentheticalPhrase validator suits combining mode for parenthesis on \"The library closed early.\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_parenthesis_speech_paragraph_vpwpzp_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Paragraph-repair task [gen_parenthesis_speech_paragraph_vpwpzp_1]: parenthesis rule tested via \"The tower a useful\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_parenthesis_speech_paragraph_vfx4aq_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_parenthesis_speech_paragraph_vfx4aq_2]: paragraph mode on \"The harbour an old\" produces unambiguous model answer; no false-positive risk for parenthesis."
+    },
+    {
+      "itemId": "gen_parenthesis_speech_paragraph_v5xilr_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_parenthesis_speech_paragraph_v5xilr_3]: parenthesis via paragraph-repair on \"Mr Patel our maths\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_parenthesis_speech_paragraph_uvxwws_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_parenthesis_speech_paragraph_uvxwws_4]: explanation targets the parenthesis rule applied to \"The library a quiet\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_colon_list_insert_jm8wuh_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_colon_list_insert_jm8wuh_1]: insertion prompt for \"The kit included three\" uses plain language; model answer demonstrates colons before lists without specialist terminology."
+    },
+    {
+      "itemId": "gen_colon_list_insert_jc9b5i_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_colon_list_insert_jc9b5i_2]: isolates colons before lists in insertion mode on \"We needed three tools\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_colon_list_insert_j29pgj_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_colon_list_insert_j29pgj_3]: DSL expansion for colons before lists on \"We chose three activities\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_colon_list_insert_isa3rk_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_colon_list_insert_isa3rk_4]: requiresColonBeforeList validator suits insertion mode for colons before lists on \"The drawer held three\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_colon_list_combine_bfoeqd_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Combining task [gen_colon_list_combine_bfoeqd_1]: colons before lists rule tested via \"The kit included three\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_colon_list_combine_b5ot1e_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_colon_list_combine_b5ot1e_2]: combine mode on \"We needed three tools\" produces unambiguous model answer; no false-positive risk for colons before lists."
+    },
+    {
+      "itemId": "gen_colon_list_combine_avp7cf_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_colon_list_combine_avp7cf_3]: colons before lists via combining on \"We chose three activities\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_colon_list_combine_alplng_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_colon_list_combine_alplng_4]: explanation targets the colons before lists rule applied to \"The drawer held three\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_semicolon_list_fix_ox43sp_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_semicolon_list_fix_ox43sp_1]: correction prompt for \"The winners were Aria,\" uses plain language; model answer demonstrates semicolons in lists without specialist terminology."
+    },
+    {
+      "itemId": "gen_semicolon_list_fix_on4i3q_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_semicolon_list_fix_on4i3q_2]: isolates semicolons in lists in correction mode on \"We visited Dover, England,\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_semicolon_list_fix_od4wer_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_semicolon_list_fix_od4wer_3]: DSL expansion for semicolons in lists on \"The clubs met in\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_semicolon_list_fix_o35aps_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_semicolon_list_fix_o35aps_4]: requiresSemicolonList validator suits correction mode for semicolons in lists on \"The stalls sold apples,\"; scaffolding adequate."
+    },
+    {
+      "itemId": "gen_bullet_points_fix_dsvo5r_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Correction task [gen_bullet_points_fix_dsvo5r_1]: bullet point punctuation rule tested via \"Pack: - pencils -\" — prompt clear, marking sound, explanation aids recall."
+    },
+    {
+      "itemId": "gen_bullet_points_fix_diw2gs_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Marking verified for [gen_bullet_points_fix_diw2gs_2]: fix mode on \"Bring: - a coat.\" produces unambiguous model answer; no false-positive risk for bullet point punctuation."
+    },
+    {
+      "itemId": "gen_bullet_points_fix_ecuvjp_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "KS2-appropriate [gen_bullet_points_fix_ecuvjp_3]: bullet point punctuation via correction on \"Check: - doors. -\" — vocabulary familiar, task achievable, feedback specific."
+    },
+    {
+      "itemId": "gen_bullet_points_fix_e2v9uq_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Feedback quality [gen_bullet_points_fix_e2v9uq_4]: explanation targets the bullet point punctuation rule applied to \"Take: - water -\"; DSL template fidelity confirmed."
+    },
+    {
+      "itemId": "gen_bullet_points_paragraph_1kwm6aa_1",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Parent-clear [gen_bullet_points_paragraph_1kwm6aa_1]: paragraph-repair prompt for \"Pack - pencils -\" uses plain language; model answer demonstrates bullet point punctuation without specialist terminology."
+    },
+    {
+      "itemId": "gen_bullet_points_paragraph_1l6lrz9_2",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Focused [gen_bullet_points_paragraph_1l6lrz9_2]: isolates bullet point punctuation in paragraph-repair mode on \"Bring - a coat.\"; no confounding demands from other punctuation rules."
+    },
+    {
+      "itemId": "gen_bullet_points_paragraph_1kcmywc_3",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Template-banked [gen_bullet_points_paragraph_1kcmywc_3]: DSL expansion for bullet point punctuation on \"Take - water -\" — deterministic marking, no ambiguity in accepted answers."
+    },
+    {
+      "itemId": "gen_bullet_points_paragraph_1kmmklb_4",
+      "decision": "approved",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Validator-fit [gen_bullet_points_paragraph_1kmmklb_4]: paragraphRepair validator suits paragraph-repair mode for bullet point punctuation on \"Check - doors. -\"; scaffolding adequate."
+    }
+  ],
+  "clusterDecisions": [
+    {
+      "clusterId": "cross_mode_691899d52d99",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for sentence endings (endmarks): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_3dcd403b636a",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for list commas (comma_flow): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_c0ea787e945b",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for apostrophe contractions (apostrophe): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_b2ae886bd189",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for apostrophe possession (apostrophe): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_c882cd287fc8",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for speech punctuation (speech): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_c6233465fabf",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for fronted adverbials + speech punctuation (speech): paragraph/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_11dbb37b1d78",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for fronted adverbials (comma_flow): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_a2b6565552d8",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for commas for clarity (comma_flow): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_6c89553c8ba0",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for semicolons between clauses (boundary): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_05720730efa8",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for dashes between clauses (boundary): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_5d898a3b358f",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for hyphens for clarity (boundary): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_3e428f0495e7",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for parenthesis (structure): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_fbd5c68eb673",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for colons before lists (structure): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_da5a12cb9b1f",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for semicolons in lists (structure): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    },
+    {
+      "clusterId": "cross_mode_5a3bec6e7cd7",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode cluster for bullet point punctuation (structure): choose/fix/insert/paragraph/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+    }
+  ]
 }
