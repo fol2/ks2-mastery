@@ -60,6 +60,7 @@
 import { useRef } from 'react';
 
 import { Button } from '../../../platform/ui/Button.jsx';
+import { SessionSummaryFrame } from '../../../platform/ui/SessionSummaryFrame.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
@@ -585,6 +586,54 @@ function NextActionRow({ ui, actions }) {
 // this surface when the adult view ships (PR body notes the deferral); the
 // Summary scene renders no Grown-up affordance today.
 
+// U6: Thin adapter mapping existing punctuation summary view-model to
+// SessionSummaryFrame props. Preserves existing telemetry event emission.
+// Display-only — no mastery mutation.
+function PunctuationSummaryFrameAdapter({ summary, actions }) {
+  if (!summary || typeof summary !== 'object') return null;
+  const total = Number(summary.total) || 0;
+  const correct = Number(summary.correct) || 0;
+  const accuracy = Number(summary.accuracy) || 0;
+  const cleanRound = total > 0 && correct === total;
+  const outcome = cleanRound ? 'secure' : (accuracy >= 70 ? 'improving' : 'needs-practice');
+  const headline = punctuationSummaryHeadline(summary);
+  const title = typeof headline === 'string' && headline ? headline : 'Punctuation session summary';
+  const highlights = [];
+  if (total > 0) highlights.push(`${correct} out of ${total} correct`);
+  if (accuracy > 0) highlights.push(`${accuracy}% accuracy`);
+  const misconceptions = [];
+  const focus = Array.isArray(summary.focus) ? summary.focus : [];
+  for (const skillId of focus) {
+    const name = CLIENT_SKILL_NAMES_BY_ID.get(skillId);
+    if (name) misconceptions.push(name);
+  }
+  const nextPrimaryAction = {
+    label: 'Start again',
+    dataAction: 'punctuation-start-again',
+    onClick: () => actions.dispatch('punctuation-start-again'),
+  };
+  const secondaryActions = [
+    {
+      label: 'Back to dashboard',
+      dataAction: 'punctuation-back',
+      variant: 'ghost',
+      onClick: () => actions.dispatch('punctuation-back'),
+    },
+  ];
+  return (
+    <SessionSummaryFrame
+      subjectId="punctuation"
+      outcome={outcome}
+      title={title}
+      highlights={highlights}
+      misconceptions={misconceptions}
+      progressDelta={[]}
+      nextPrimaryAction={nextPrimaryAction}
+      secondaryActions={secondaryActions}
+    />
+  );
+}
+
 export function PunctuationSummaryScene({
   ui = {},
   actions = { dispatch() {} },
@@ -725,6 +774,9 @@ export function PunctuationSummaryScene({
       <MonsterProgressStrip ui={ui} rewardState={rewardState} />
       <GpsReviewBlock gps={summary.gps} />
       <NextActionRow ui={ui} actions={actions} />
+      {/* U6: Shared summary engine adoption — SessionSummaryFrame renders
+          alongside the existing visual shell. Preserves telemetry emission. */}
+      <PunctuationSummaryFrameAdapter summary={summary} actions={actions} />
     </section>
   );
 }
