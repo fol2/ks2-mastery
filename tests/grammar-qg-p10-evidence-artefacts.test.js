@@ -196,6 +196,59 @@ describe('P10 Evidence Artefacts: distractor audit', () => {
     const data = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
     assert.equal(data.metadata.pass, true);
   });
+
+  it('each result has per-option detail with required fields', () => {
+    if (!fs.existsSync(auditPath)) return;
+    const data = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+    const sample = data.results.slice(0, 30);
+    for (const item of sample) {
+      assert.ok(Array.isArray(item.options), `item.options must be array for ${item.templateId} seed ${item.seed}`);
+      assert.equal(item.options.length, item.optionCount, 'options array length must match optionCount');
+      for (const opt of item.options) {
+        assert.ok(typeof opt.optionText === 'string', 'opt.optionText must be string');
+        assert.ok(opt.optionText.length > 0, 'opt.optionText must not be empty');
+        assert.ok(typeof opt.isCorrect === 'boolean', 'opt.isCorrect must be boolean');
+        if (!opt.isCorrect) {
+          assert.ok(typeof opt.misconceptionTag === 'string' || opt.misconceptionTag === null,
+            'opt.misconceptionTag must be string or null for incorrect options');
+          if (opt.misconceptionTag) {
+            assert.ok(typeof opt.whyWrong === 'string', 'opt.whyWrong must be string when misconceptionTag is present');
+            assert.ok(opt.whyWrong.length > 0, 'opt.whyWrong must not be empty');
+          }
+        } else {
+          assert.equal(opt.misconceptionTag, null, 'correct option must have null misconceptionTag');
+          assert.equal(opt.whyWrong, null, 'correct option must have null whyWrong');
+        }
+      }
+    }
+  });
+
+  it('each result has ambiguousConceptArea and requiresAdultReview flags', () => {
+    if (!fs.existsSync(auditPath)) return;
+    const data = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+    for (const item of data.results) {
+      assert.ok(typeof item.ambiguousConceptArea === 'boolean',
+        `ambiguousConceptArea must be boolean for ${item.templateId}`);
+      assert.ok(typeof item.requiresAdultReview === 'boolean',
+        `requiresAdultReview must be boolean for ${item.templateId}`);
+      assert.equal(item.ambiguousConceptArea, item.requiresAdultReview,
+        'requiresAdultReview must mirror ambiguousConceptArea');
+    }
+  });
+
+  it('report has ambiguousTemplates array at top level', () => {
+    if (!fs.existsSync(auditPath)) return;
+    const data = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+    assert.ok(Array.isArray(data.ambiguousTemplates), 'ambiguousTemplates must be array');
+    assert.ok(data.ambiguousTemplates.length > 0, 'ambiguousTemplates must not be empty (known ambiguous areas exist)');
+    // Verify every flagged template actually has results marked ambiguous
+    for (const tid of data.ambiguousTemplates) {
+      const matching = data.results.filter((r) => r.templateId === tid);
+      assert.ok(matching.length > 0, `ambiguousTemplates entry ${tid} must have results`);
+      assert.ok(matching.every((r) => r.ambiguousConceptArea === true),
+        `all results for ${tid} must have ambiguousConceptArea=true`);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------

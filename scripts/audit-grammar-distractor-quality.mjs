@@ -1,11 +1,25 @@
 #!/usr/bin/env node
 /**
- * Grammar QG P10 U6 — Distractor Audit
+ * Grammar QG P10 U6 — Distractor Audit (Semantic Classification)
  *
  * For each selected-response template x seeds 1..30, runs every option through
  * evaluateGrammarQuestion. Checks:
  * - Exactly one option marks correct (single_choice)
  * - At least one complete correct set exists (multi_choice / checkbox)
+ *
+ * Per-option detail:
+ * - optionText: the actual label text
+ * - isCorrect: boolean from evaluator
+ * - misconceptionTag: from the evaluation result (misconception ID for wrong answers)
+ * - whyWrong: human-readable explanation from MISCONCEPTIONS lookup
+ *
+ * Per-template flags:
+ * - ambiguousConceptArea: true when template concept overlaps formal/informal,
+ *   modal verbs, subject/object, subordinate/relative clause areas
+ * - requiresAdultReview: mirrors ambiguousConceptArea (flags for human sign-off)
+ *
+ * Report-level:
+ * - ambiguousTemplates: array of template IDs flagged for adult attention
  *
  * Reports S0 if a distractor passes as correct, or no option marks correct.
  * Exit 0 if 0 S0/S1, exit 1 otherwise.
@@ -19,6 +33,7 @@ import fs from 'node:fs/promises';
 import {
   GRAMMAR_TEMPLATE_METADATA,
   GRAMMAR_CONTENT_RELEASE_ID,
+  GRAMMAR_MISCONCEPTIONS,
   createGrammarQuestion,
   evaluateGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
@@ -29,6 +44,23 @@ const REPORTS_DIR = path.resolve(__dirname, '..', 'reports', 'grammar');
 const SEED_MIN = 1;
 const SEED_MAX = 30;
 
+/**
+ * Concept areas that are inherently ambiguous and require adult review.
+ * These domains have genuine edge cases in KS2 marking.
+ */
+const AMBIGUOUS_SKILL_IDS = Object.freeze([
+  'formality',
+  'modal_verbs',
+  'subject_object',
+  'clauses',
+  'relative_clauses',
+]);
+
+function isAmbiguousTemplate(template) {
+  const skillIds = template.skillIds || [];
+  return skillIds.some((id) => AMBIGUOUS_SKILL_IDS.includes(id));
+}
+
 export function runDistractorAudit() {
   const results = [];
   let s0Count = 0;
@@ -38,7 +70,20 @@ export function runDistractorAudit() {
     (t) => t.isSelectedResponse,
   );
 
+  // Pre-compute ambiguous template set (only IDs — actual list populated after results)
+  const ambiguousSet = new Set();
   for (const template of selectedResponseTemplates) {
+    if (isAmbiguousTemplate(template)) {
+      ambiguousSet.add(template.id);
+    }
+  }
+
+  // Track which templates actually produced auditable results
+  const templatesWithResults = new Set();
+
+  for (const template of selectedResponseTemplates) {
+    const ambiguousConceptArea = ambiguousSet.has(template.id);
+
     for (let seed = SEED_MIN; seed <= SEED_MAX; seed++) {
       const question = createGrammarQuestion({ templateId: template.id, seed });
       if (!question) continue;
@@ -49,11 +94,23 @@ export function runDistractorAudit() {
       const options = question.inputSpec.options || [];
       const correctOptions = [];
       const incorrectOptions = [];
+      const optionDetails = [];
 
       for (const opt of options) {
         const resp = { answer: inputType === 'multi_choice' ? [opt.value] : opt.value };
         const result = evaluateGrammarQuestion(question, resp);
-        if (result && result.correct) {
+        const isCorrect = Boolean(result && result.correct);
+        const misconceptionTag = (!isCorrect && result?.misconception) ? result.misconception : null;
+        const whyWrong = misconceptionTag ? (GRAMMAR_MISCONCEPTIONS[misconceptionTag] || null) : null;
+
+        optionDetails.push({
+          optionText: opt.label || opt.value,
+          isCorrect,
+          misconceptionTag,
+          whyWrong,
+        });
+
+        if (isCorrect) {
           correctOptions.push(opt.value);
         } else {
           incorrectOptions.push(opt.value);
@@ -81,6 +138,8 @@ export function runDistractorAudit() {
         }
       }
 
+      templatesWithResults.add(template.id);
+
       results.push({
         templateId: template.id,
         seed,
@@ -90,9 +149,15 @@ export function runDistractorAudit() {
         incorrectCount: incorrectOptions.length,
         severity,
         issue,
+        options: optionDetails,
+        ambiguousConceptArea,
+        requiresAdultReview: ambiguousConceptArea,
       });
     }
   }
+
+  // Only include ambiguous templates that actually produced auditable results
+  const ambiguousTemplates = [...ambiguousSet].filter((id) => templatesWithResults.has(id));
 
   return {
     metadata: {
@@ -105,6 +170,7 @@ export function runDistractorAudit() {
       s1Count,
       pass: s0Count === 0 && s1Count === 0,
     },
+    ambiguousTemplates,
     results,
   };
 }
