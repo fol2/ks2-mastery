@@ -1,9 +1,9 @@
 # Grammar QG P10 — Quality Register
 
 **Content Release:** grammar-qg-p10-2026-04-29
-**Generated:** 2026-04-30T01:56:35.963Z
+**Generated:** 2026-04-30T02:41:44.882Z
 **Templates:** 78
-**Approved:** 70 | **Blocked:** 0
+**Approved:** 74 | **Blocked:** 0
 **High-risk (1..15 seeds):** 28
 
 ## Summary Table
@@ -11,9 +11,9 @@
 | # | Template ID | Decision | Severity | Seed Window | Final Action |
 |---|-------------|----------|----------|-------------|--------------|
 | 1 | `sentence_type_table` | approved | - | 1..10 | ship |
-| 2 | `question_mark_select` | approved_with_limitation | - | 1..10 | ship-with-monitoring |
+| 2 | `question_mark_select` | approved | - | 1..10 | ship |
 | 3 | `word_class_underlined_choice` | approved | - | 1..15 | ship |
-| 4 | `identify_words_in_sentence` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 4 | `identify_words_in_sentence` | approved | - | 1..15 | ship |
 | 5 | `expanded_noun_phrase_choice` | approved | - | 1..10 | ship |
 | 6 | `build_noun_phrase` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 7 | `fronted_adverbial_choose` | approved | - | 1..10 | ship |
@@ -24,9 +24,9 @@
 | 12 | `relative_clause_complete` | approved | - | 1..10 | ship |
 | 13 | `tense_form_choice` | approved | - | 1..10 | ship |
 | 14 | `tense_rewrite` | approved | - | 1..15 | ship |
-| 15 | `standard_english_pairs` | approved_with_limitation | - | 1..10 | ship-with-monitoring |
+| 15 | `standard_english_pairs` | approved | - | 1..10 | ship |
 | 16 | `pronoun_cohesion_choice` | approved | - | 1..10 | ship |
-| 17 | `formality_pairs` | approved_with_limitation | - | 1..10 | ship-with-monitoring |
+| 17 | `formality_pairs` | approved | - | 1..10 | ship |
 | 18 | `active_passive_rewrite` | approved | - | 1..15 | ship |
 | 19 | `subject_object_choice` | approved | - | 1..15 | ship |
 | 20 | `modal_verb_choice` | approved | - | 1..10 | ship |
@@ -98,40 +98,46 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..10
-- **Answerability:** Some seeds produce ambiguous table rows (10/10 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking
+- **Answerability:** All 10 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Tick one box in each row to show the sentence function." → no-result
-- Seed 2: "Tick one box in each row to show the sentence function." → no-result
-- Seed 3: "Tick one box in each row to show the sentence function." → no-result
+- Seed 1: "Tick one box in each row to show the sentence function." → correct
+  - Feedback: How loudly the drums were beating! → exclamation | Why is the gate still open? → question | Our c...
+- Seed 2: "Tick one box in each row to show the sentence function." → correct
+  - Feedback: Can we finish the poster tomorrow? → question | How loudly the drums were beating! → exclamation ...
+- Seed 3: "Tick one box in each row to show the sentence function." → correct
+  - Feedback: Where did you put the compass? → question | How loudly the drums were beating! → exclamation | Ou...
 
 ### `question_mark_select`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..10
-- **Answerability:** 10/10 seeds have answerability issues
-- **Grammar logic:** Grammar logic partially valid for concept 'sentence_functions, speech_punctuation'; some seeds produce incorrect marking
+- **Answerability:** All 10 seeds produce a valid checkbox set with correct golden selection
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions, speech_punctuation'
 - **Distractor quality:** 4 options per seed (multi-select), distractors drawn from related misconceptions
-- **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Tick all the sentences that must end with a question mark." → no-result
-- Seed 2: "Tick all the sentences that must end with a question mark." → no-result
-- Seed 3: "Tick all the sentences that must end with a question mark." → no-result
+- Seed 1: "Tick all the sentences that must end with a question mark." → correct
+  - Feedback: The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on...
+- Seed 2: "Tick all the sentences that must end with a question mark." → correct
+  - Feedback: The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on...
+- Seed 3: "Tick all the sentences that must end with a question mark." → correct
+  - Feedback: The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on...
 
 ### `word_class_underlined_choice`
 
@@ -163,26 +169,31 @@
 
 ### `identify_words_in_sentence`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** 15/15 seeds have answerability issues
-- **Grammar logic:** Grammar logic partially valid for concept 'word_classes'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds produce a valid checkbox set with correct golden selection
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes'
 - **Distractor quality:** 9 options per seed (multi-select), distractors drawn from related misconceptions
-- **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Select all the adverbs in the sentence below. Nina carefully and quietly pack..." → no-result
-- Seed 2: "Select all the adverbs in the sentence below. Nina carefully and quietly pack..." → no-result
-- Seed 3: "Select all the adverbs in the sentence below. Nina carefully and quietly pack..." → no-result
-- Seed 4: "Select all the pronouns in the sentence below. She handed it to them before t..." → no-result
-- Seed 5: "Select all the adverbs in the sentence below. Nina carefully and quietly pack..." → no-result
+- Seed 1: "Select all the adverbs in the sentence below. Nina carefully and quietly pack..." → correct
+  - Feedback: The correct words are: carefully, quietly.
+- Seed 2: "Select all the adverbs in the sentence below. Nina carefully and quietly pack..." → correct
+  - Feedback: The correct words are: carefully, quietly.
+- Seed 3: "Select all the adverbs in the sentence below. Nina carefully and quietly pack..." → correct
+  - Feedback: The correct words are: carefully, quietly.
+- Seed 4: "Select all the pronouns in the sentence below. She handed it to them before t..." → correct
+  - Feedback: The correct words are: She, it, them, they.
+- Seed 5: "Select all the adverbs in the sentence below. Nina carefully and quietly pack..." → correct
+  - Feedback: The correct words are: carefully, quietly.
 
 ### `expanded_noun_phrase_choice`
 
@@ -215,21 +226,26 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** 15/15 seeds have answerability issues
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
 - **Grammar logic:** Grammar logic partially valid for concept 'noun_phrases'; some seeds produce incorrect marking
 - **Distractor quality:** N/A
-- **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
 - **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Build a noun phrase of at least three words to complete the sentence below. _..." → no-result
-- Seed 2: "Build a noun phrase of at least three words to complete the sentence below. _..." → no-result
-- Seed 3: "Build a noun phrase of at least three words to complete the sentence below. _..." → no-result
-- Seed 4: "Build a noun phrase of at least three words to complete the sentence below. _..." → no-result
-- Seed 5: "Build a noun phrase of at least three words to complete the sentence below. _..." → no-result
+- Seed 1: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 2: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 3: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 4: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 5: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
 
 ### `fronted_adverbial_choose`
 
@@ -441,24 +457,27 @@
 
 ### `standard_english_pairs`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..10
-- **Answerability:** 10/10 seeds have answerability issues
-- **Grammar logic:** Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking
+- **Answerability:** All 10 seeds produce answerable multi-field questions with correct golden marking
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
 - **Distractor quality:** N/A
-- **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Choose the correct verb form in each pair to complete the sentences using Sta..." → no-result
-- Seed 2: "Choose the correct verb form in each pair to complete the sentences using Sta..." → no-result
-- Seed 3: "Choose the correct verb form in each pair to complete the sentences using Sta..." → no-result
+- Seed 1: "Choose the correct verb form in each pair to complete the sentences using Sta..." → correct
+  - Feedback: Correct choices: saw; did.
+- Seed 2: "Choose the correct verb form in each pair to complete the sentences using Sta..." → correct
+  - Feedback: Correct choices: were; did.
+- Seed 3: "Choose the correct verb form in each pair to complete the sentences using Sta..." → correct
+  - Feedback: Correct choices: saw; did.
 
 ### `pronoun_cohesion_choice`
 
@@ -486,24 +505,27 @@
 
 ### `formality_pairs`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..10
-- **Answerability:** 10/10 seeds have answerability issues
-- **Grammar logic:** Grammar logic partially valid for concept 'formality'; some seeds produce incorrect marking
+- **Answerability:** All 10 seeds produce answerable multi-field questions with correct golden marking
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'formality'
 - **Distractor quality:** N/A
-- **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Circle the most formal option in each underlined pair below to complete the p..." → no-result
-- Seed 2: "Circle the most formal option in each underlined pair below to complete the p..." → no-result
-- Seed 3: "Circle the most formal option in each underlined pair below to complete the p..." → no-result
+- Seed 1: "Circle the most formal option in each underlined pair below to complete the p..." → correct
+  - Feedback: Correct formal choices: discover; enter; request.
+- Seed 2: "Circle the most formal option in each underlined pair below to complete the p..." → correct
+  - Feedback: Correct formal choices: established; requested; compete.
+- Seed 3: "Circle the most formal option in each underlined pair below to complete the p..." → correct
+  - Feedback: Correct formal choices: discover; enter; request.
 
 ### `active_passive_rewrite`
 
@@ -724,21 +746,26 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** Some constructed-response seeds fail golden marking (15/15 failures)
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
 - **Grammar logic:** Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Rewrite the sentence in Standard English. I done my homework before tea." → no-result
-- Seed 2: "Rewrite the sentence in Standard English. We was walking to school." → no-result
-- Seed 3: "Rewrite the sentence in Standard English. I done my homework before tea." → no-result
-- Seed 4: "Rewrite the sentence in Standard English. We was walking to school." → no-result
-- Seed 5: "Rewrite the sentence in Standard English. I done my homework before tea." → no-result
+- Seed 1: "Rewrite the sentence in Standard English. I done my homework before tea." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
+- Seed 2: "Rewrite the sentence in Standard English. We was walking to school." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
+- Seed 3: "Rewrite the sentence in Standard English. I done my homework before tea." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
+- Seed 4: "Rewrite the sentence in Standard English. We was walking to school." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
+- Seed 5: "Rewrite the sentence in Standard English. I done my homework before tea." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
 
 ### `proc_fronted_adverbial_fix`
 
@@ -1159,21 +1186,26 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** Some constructed-response seeds fail golden marking (15/15 failures)
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
 - **Grammar logic:** Grammar logic partially valid for concept 'adverbials'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → no-result
-- Seed 2: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → no-result
-- Seed 3: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → no-result
-- Seed 4: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → no-result
-- Seed 5: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → no-result
+- Seed 1: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
+- Seed 2: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
+- Seed 3: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
+- Seed 4: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
+- Seed 5: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
 
 ### `proc2_boundary_punctuation_explain`
 
@@ -1254,21 +1286,26 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** Some constructed-response seeds fail golden marking (15/15 failures)
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
 - **Grammar logic:** Grammar logic partially valid for concept 'noun_phrases'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Use all the words to build an expanded noun phrase that could complete the se..." → no-result
-- Seed 2: "Use all the words to build an expanded noun phrase that could complete the se..." → no-result
-- Seed 3: "Use all the words to build an expanded noun phrase that could complete the se..." → no-result
-- Seed 4: "Use all the words to build an expanded noun phrase that could complete the se..." → no-result
-- Seed 5: "Use all the words to build an expanded noun phrase that could complete the se..." → no-result
+- Seed 1: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 2: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 3: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 4: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 5: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
 
 ### `proc3_clause_join_rewrite`
 
@@ -1385,19 +1422,22 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..10
-- **Answerability:** Some seeds produce ambiguous table rows (10/10 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'subject_object'; some seeds produce incorrect marking
+- **Answerability:** All 10 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Classify each named noun phrase as the subject or object." → no-result
-- Seed 2: "Classify each named noun phrase as the subject or object." → no-result
-- Seed 3: "Classify each named noun phrase as the subject or object." → no-result
+- Seed 1: "Classify each named noun phrase as the subject or object." → correct
+  - Feedback: The subject does the action; the object receives it.
+- Seed 2: "Classify each named noun phrase as the subject or object." → correct
+  - Feedback: The subject does the action; the object receives it.
+- Seed 3: "Classify each named noun phrase as the subject or object." → correct
+  - Feedback: The subject does the action; the object receives it.
 
 ### `qg_pronoun_referent_identify`
 
@@ -1430,19 +1470,22 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..10
-- **Answerability:** Some seeds produce ambiguous table rows (10/10 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'formality'; some seeds produce incorrect marking
+- **Answerability:** All 10 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'formality'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Classify each sentence as formal or informal." → no-result
-- Seed 2: "Classify each sentence as formal or informal." → no-result
-- Seed 3: "Classify each sentence as formal or informal." → no-result
+- Seed 1: "Classify each sentence as formal or informal." → correct
+  - Feedback: Formal writing avoids chatty phrasing and uses precise vocabulary.
+- Seed 2: "Classify each sentence as formal or informal." → correct
+  - Feedback: Formal writing avoids chatty phrasing and uses precise vocabulary.
+- Seed 3: "Classify each sentence as formal or informal." → correct
+  - Feedback: Formal writing avoids chatty phrasing and uses precise vocabulary.
 
 ### `qg_modal_verb_explain`
 
@@ -1863,21 +1906,26 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** Some seeds produce ambiguous table rows (15/15 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'word_classes, noun_phrases'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes, noun_phrases'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Identify the head noun and its word class in this expanded noun phrase. the r..." → no-result
-- Seed 2: "Identify the head noun and the word class of the modifier before it. a terrif..." → no-result
-- Seed 3: "Identify the head noun and the word class of the underlined word in this noun..." → no-result
-- Seed 4: "Identify the head noun and the word class of the first word in this noun phra..." → no-result
-- Seed 5: "Identify the head noun and the word class of the describing word. the brightl..." → no-result
+- Seed 1: "Identify the head noun and its word class in this expanded noun phrase. the r..." → correct
+  - Feedback: The head noun is the main word the phrase is built around. 'Rusty' is an adjective modifying the ...
+- Seed 2: "Identify the head noun and the word class of the modifier before it. a terrif..." → correct
+  - Feedback: 'Storm' is the head noun. 'Mountain' is a noun used as a modifier (a noun adjunct), not an adject...
+- Seed 3: "Identify the head noun and the word class of the underlined word in this noun..." → correct
+  - Feedback: 'Firefighters' is the head noun. 'Incredibly' is an adverb modifying the adjective 'brave', not i...
+- Seed 4: "Identify the head noun and the word class of the first word in this noun phra..." → correct
+  - Feedback: 'Lesson' is the head noun the phrase centres on. 'Every' is a determiner specifying which lesson,...
+- Seed 5: "Identify the head noun and the word class of the describing word. the brightl..." → correct
+  - Feedback: 'Fence' is the head noun. 'Painted' here is used as an adjective describing the fence, not as a v...
 
 ### `qg_p4_adverbial_clause_boundary_transfer`
 
@@ -1982,21 +2030,26 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** Some seeds produce ambiguous table rows (15/15 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'active_passive, subject_object'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive, subject_object'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → no-result
-- Seed 2: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → no-result
-- Seed 3: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → no-result
-- Seed 4: "Identify the voice and the grammatical role of the underlined noun phrase. Le..." → no-result
-- Seed 5: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → no-result
+- Seed 1: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: The sentence is passive because the action is done TO the trophy. In a passive sentence, the thin...
+- Seed 2: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: The sentence is active because the doer ('the goalkeeper') comes first and does the action. 'The ...
+- Seed 3: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: This is passive voice: the thing affected ('the cake') has been moved to the subject position. Ev...
+- Seed 4: "Identify the voice and the grammatical role of the underlined noun phrase. Le..." → correct
+  - Feedback: The sentence is active because the doer ('Lena') performs the action. 'The scenery' receives the ...
+- Seed 5: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: This is passive voice: the affected thing ('the windows') is the grammatical subject. The doer ('...
 
 ### `qg_p4_possession_hyphen_clarity_transfer`
 
