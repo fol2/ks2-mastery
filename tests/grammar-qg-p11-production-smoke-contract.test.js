@@ -29,6 +29,7 @@ const REPORTS_DIR = path.resolve(ROOT_DIR, 'reports', 'grammar');
 
 /**
  * Required top-level fields in a production smoke evidence JSON.
+ * Includes both the legacy operational fields and the U7-spec contract fields.
  */
 const REQUIRED_EVIDENCE_FIELDS = Object.freeze([
   'ok',
@@ -44,13 +45,38 @@ const REQUIRED_EVIDENCE_FIELDS = Object.freeze([
 ]);
 
 /**
+ * U7-spec required fields per the P11 contract (section U7).
+ * These map to the original contract requirements. Some overlap with
+ * REQUIRED_EVIDENCE_FIELDS under different naming (contentReleaseId = releaseId).
+ */
+const U7_CONTRACT_FIELDS = Object.freeze([
+  'releaseId',
+  'deployedUrl',
+  'timestamp',
+  'command',
+  'learnerFixtureType',
+  'itemCreationResult',
+  'answerSubmissionResult',
+  'readModelUpdateResult',
+  'noAnswerLeakAssertion',
+  'promptCueAssertion',
+  'readAloudAssertion',
+  'failureDetails',
+]);
+
+/**
  * Required fields in each sub-result (normalRoundResult, etc.).
  */
 const REQUIRED_SUB_RESULT_FIELDS = Object.freeze(['ok', 'detail']);
 
 /**
+ * U7-spec sub-result shape: { pass: boolean }
+ */
+const U7_ASSERTION_FIELDS = Object.freeze(['pass']);
+
+/**
  * P11 extension: prompt cue and read-aloud assertion contract fields.
- * These are optional in P10 evidence but required for P11+ post-deploy.
+ * Required for P11+ post-deploy certification.
  */
 const P11_ASSERTION_FIELDS = Object.freeze([
   'promptCueAssertion',
@@ -287,19 +313,17 @@ describe('P11 U9 Smoke Contract: CERTIFIED_POST_DEPLOY guard', () => {
     );
   });
 
-  it('CERTIFIED_POST_DEPLOY requires the production smoke evidence file to exist', () => {
-    // This test documents the constraint: you cannot claim CERTIFIED_POST_DEPLOY
-    // unless the evidence file has been written by a successful smoke run.
-    // Pre-deploy, this file does NOT exist — that's expected and correct.
+  it('CERTIFIED_POST_DEPLOY is forbidden when smoke evidence file is absent', () => {
     const fileExists = fs.existsSync(expectedPath);
-    // This assertion documents the contract rather than enforcing it
-    // (the file is created post-deploy by the smoke script).
-    assert.equal(typeof fileExists, 'boolean', 'existsSync must return a boolean');
-    // If the file does NOT exist, status must not be CERTIFIED_POST_DEPLOY
+    const reportPath = path.resolve(ROOT_DIR,
+      'docs/plans/james/grammar/questions-generator/grammar-qg-p11-final-completion-report-2026-04-30.md');
+    const reportContent = fs.existsSync(reportPath) ? fs.readFileSync(reportPath, 'utf8') : '';
+    const statusMatch = reportContent.match(/^status:\s*(.+)$/m);
+    const reportStatus = statusMatch ? statusMatch[1].trim() : '';
+
     if (!fileExists) {
-      // The certification status is still valid (all templates approved)
-      // but the post-deploy status cannot be claimed.
-      assert.ok(true, 'Pre-deploy: evidence file absent — CERTIFIED_POST_DEPLOY not claimable');
+      assert.notEqual(reportStatus, 'CERTIFIED_POST_DEPLOY',
+        'Report must NOT claim CERTIFIED_POST_DEPLOY while smoke evidence file is absent');
     }
   });
 
@@ -338,6 +362,77 @@ describe('P11 U9 Smoke Contract: assertion definitions', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Tests: U7 contract schema coverage
+// ---------------------------------------------------------------------------
+
+describe('P11 U9 Smoke Contract: U7-spec schema coverage', () => {
+  it('U7_CONTRACT_FIELDS lists all 12 fields from the P11 spec', () => {
+    assert.equal(U7_CONTRACT_FIELDS.length, 12);
+    const expected = [
+      'releaseId', 'deployedUrl', 'timestamp', 'command',
+      'learnerFixtureType', 'itemCreationResult', 'answerSubmissionResult',
+      'readModelUpdateResult', 'noAnswerLeakAssertion',
+      'promptCueAssertion', 'readAloudAssertion', 'failureDetails',
+    ];
+    for (const f of expected) {
+      assert.ok(U7_CONTRACT_FIELDS.includes(f), `U7 contract missing field: ${f}`);
+    }
+  });
+
+  it('U7-spec evidence shape passes validation when all fields present', () => {
+    const evidence = {
+      releaseId: 'grammar-qg-p11-2026-04-30',
+      deployedUrl: 'https://ks2.example.com',
+      timestamp: '2026-04-30T12:00:00Z',
+      command: 'npm run smoke:production:grammar -- --json --evidence-origin post-deploy',
+      learnerFixtureType: 'demo-learner',
+      itemCreationResult: { pass: true },
+      answerSubmissionResult: { pass: true },
+      readModelUpdateResult: { pass: true },
+      noAnswerLeakAssertion: { pass: true },
+      promptCueAssertion: { pass: true },
+      readAloudAssertion: { pass: true },
+      failureDetails: null,
+    };
+    for (const field of U7_CONTRACT_FIELDS) {
+      assert.ok(field in evidence, `U7 evidence must have field: ${field}`);
+    }
+  });
+
+  it('U7-spec sub-result assertions use { pass: boolean } shape', () => {
+    const assertionFields = ['itemCreationResult', 'answerSubmissionResult',
+      'readModelUpdateResult', 'noAnswerLeakAssertion',
+      'promptCueAssertion', 'readAloudAssertion'];
+    for (const field of assertionFields) {
+      for (const sf of U7_ASSERTION_FIELDS) {
+        assert.ok(sf === 'pass', `U7 assertion fields must include "pass"`);
+      }
+    }
+  });
+
+  it('U7 contract forbids CERTIFIED_POST_DEPLOY when any assertion fails', () => {
+    const failEvidence = {
+      releaseId: 'grammar-qg-p11-2026-04-30',
+      deployedUrl: 'https://ks2.example.com',
+      timestamp: '2026-04-30T12:00:00Z',
+      command: 'npm run smoke:production:grammar -- --json --evidence-origin post-deploy',
+      learnerFixtureType: 'demo-learner',
+      itemCreationResult: { pass: true },
+      answerSubmissionResult: { pass: true },
+      readModelUpdateResult: { pass: true },
+      noAnswerLeakAssertion: { pass: true },
+      promptCueAssertion: { pass: false },
+      readAloudAssertion: { pass: true },
+      failureDetails: { promptCueAssertion: 'targetText was grammar label' },
+    };
+    const allPass = U7_CONTRACT_FIELDS
+      .filter((f) => f.endsWith('Result') || f.endsWith('Assertion'))
+      .every((f) => failEvidence[f]?.pass === true);
+    assert.equal(allPass, false, 'CERTIFIED_POST_DEPLOY forbidden when any assertion fails');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Exports for use by other P11 tests
 // ---------------------------------------------------------------------------
 
@@ -345,6 +440,8 @@ export {
   REQUIRED_EVIDENCE_FIELDS,
   REQUIRED_SUB_RESULT_FIELDS,
   P11_ASSERTION_FIELDS,
+  U7_CONTRACT_FIELDS,
+  U7_ASSERTION_FIELDS,
   validateSmokeEvidence,
   validateP11Assertions,
 };

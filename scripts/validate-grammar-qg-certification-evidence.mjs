@@ -529,15 +529,16 @@ export function validateInventoryReleaseIds(inventoryPath, expectedReleaseId) {
  * @param {string} [reportReleaseId] - Release ID extracted from a completion report (optional).
  * @returns {{ pass: boolean, mismatches: Array<{ field: string, claimed: any, actual: any, message: string }> }}
  */
-export function validateReleaseIdConsistency(manifest, reportReleaseId, reportContent) {
+export function validateReleaseIdConsistency(manifest, reportReleaseId, reportContent, opts = {}) {
   const mismatches = [];
+  const expectedRelease = opts.expectedRelease || GRAMMAR_CONTENT_RELEASE_ID;
 
-  if (manifest.contentReleaseId !== GRAMMAR_CONTENT_RELEASE_ID) {
+  if (manifest.contentReleaseId !== expectedRelease) {
     mismatches.push({
       field: 'manifestVsCodeReleaseId',
       claimed: manifest.contentReleaseId,
-      actual: GRAMMAR_CONTENT_RELEASE_ID,
-      message: `Manifest contentReleaseId "${manifest.contentReleaseId}" does not match code GRAMMAR_CONTENT_RELEASE_ID "${GRAMMAR_CONTENT_RELEASE_ID}"`,
+      actual: expectedRelease,
+      message: `Manifest contentReleaseId "${manifest.contentReleaseId}" does not match expected release "${expectedRelease}"`,
     });
   }
 
@@ -550,15 +551,14 @@ export function validateReleaseIdConsistency(manifest, reportReleaseId, reportCo
     });
   }
 
-  // Cross-check report frontmatter final_content_release_id if reportContent provided
   if (reportContent != null) {
     const fm = extractFrontmatter(reportContent);
-    if (fm.final_content_release_id != null && fm.final_content_release_id !== GRAMMAR_CONTENT_RELEASE_ID) {
+    if (fm.final_content_release_id != null && fm.final_content_release_id !== expectedRelease) {
       mismatches.push({
         field: 'reportFrontmatterVsCodeReleaseId',
         claimed: fm.final_content_release_id,
-        actual: GRAMMAR_CONTENT_RELEASE_ID,
-        message: `Report frontmatter final_content_release_id "${fm.final_content_release_id}" does not match code GRAMMAR_CONTENT_RELEASE_ID "${GRAMMAR_CONTENT_RELEASE_ID}"`,
+        actual: expectedRelease,
+        message: `Report frontmatter final_content_release_id "${fm.final_content_release_id}" does not match expected release "${expectedRelease}"`,
       });
     }
   }
@@ -797,12 +797,15 @@ export function validateDistractorReviewCoverage(rootDir) {
 async function main(argv) {
   const args = argv.filter((a) => !a.startsWith('--'));
   const jsonOutput = argv.includes('--json');
+  const expectedReleaseArg = argv.find((a) => a.startsWith('--expected-release='));
+  const expectedRelease = expectedReleaseArg ? expectedReleaseArg.split('=')[1] : undefined;
 
   if (args.length < 1) {
-    console.error('Usage: validate-grammar-qg-certification-evidence.mjs <manifest-path> [report-path] [--json]');
+    console.error('Usage: validate-grammar-qg-certification-evidence.mjs <manifest-path> [report-path] [--json] [--expected-release=ID]');
     console.error('');
-    console.error('  manifest-path  Path to the certification manifest JSON');
-    console.error('  report-path    Optional path to a completion report to cross-validate');
+    console.error('  manifest-path       Path to the certification manifest JSON');
+    console.error('  report-path         Optional path to a completion report to cross-validate');
+    console.error('  --expected-release   Override the expected release ID (default: live code constant)');
     process.exit(1);
   }
 
@@ -844,8 +847,8 @@ async function main(argv) {
     console.log(`PASS: Inventory release IDs consistent with manifest (${releaseId})`);
   }
 
-  // Gate 1c: Validate release ID consistency (manifest ↔ code)
-  const releaseIdResult = validateReleaseIdConsistency(manifestResult.manifest);
+  // Gate 1c: Validate release ID consistency (manifest ↔ expected release)
+  const releaseIdResult = validateReleaseIdConsistency(manifestResult.manifest, null, null, { expectedRelease });
   if (!releaseIdResult.pass) {
     if (jsonOutput) {
       console.log(JSON.stringify({ pass: false, gate: 'release-id-consistency', mismatches: releaseIdResult.mismatches }, null, 2));
@@ -875,7 +878,7 @@ async function main(argv) {
 
     // Gate 2c: Release ID consistency with report frontmatter
     const reportReleaseIdResult = validateReleaseIdConsistency(
-      manifestResult.manifest, null, reportContent
+      manifestResult.manifest, null, reportContent, { expectedRelease }
     );
 
     const allMismatches = [
