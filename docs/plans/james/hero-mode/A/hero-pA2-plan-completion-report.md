@@ -41,6 +41,8 @@ All 5 rings pass the certification validator. Production internal cohort was con
 - External cohort readiness (deferred to post-hold hardening)
 - 12 of 16 Goal 6 signals require telemetry beyond the ops probe architecture
 
+> **A3 annotation (2026-04-30):** Rows A2-3 in the certification validator pass because they count dated observation rows, not elapsed real calendar days. The 4 simulation rows (2026-05-01 through 2026-05-04) are operator-accepted modelled outcomes from issue #684. They satisfy the mechanical gate but do not represent real production calendar usage. pA3 remedies this by upgrading the evidence model to distinguish `real-production` from `simulation` rows and gating real cohort duration on provenance, not row count.
+
 ### Certification validator output:
 ```
 [PASS] A2-0: Evidence close-out
