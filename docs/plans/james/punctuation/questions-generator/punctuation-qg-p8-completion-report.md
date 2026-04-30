@@ -3,11 +3,12 @@
 **Date:** 30 April 2026  
 **Phase type:** Production question-quality acceptance and release-readiness hardening  
 **Status:** COMPLETE — FULL CONTRACT DELIVERED  
-**PRs merged:** #657, #661, #664, #667, #673, #676, #679, #680, #681, #694, #695, #696, #700 (13 PRs total)  
-**Verification command:** `npm run verify:punctuation-qg:p8` — 37 logical gates, 11 top-level, ~40s  
+**PRs merged:** #657, #661, #664, #667, #673, #676, #679, #680, #681, #694, #695, #696, #700, #702, #706 (15 PRs total)  
+**Verification command:** `npm run verify:punctuation-qg:p8` — 37 logical gates, 11 top-level, ~41s  
 **Production depth:** Remains at 4 (all 192 items QA-approved; depth-6 pending candidate review)  
 **Release ID:** `punctuation-r4-full-14-skill-structure` (unchanged)  
-**Production QA:** 192/192 items approved via multi-perspective AI review (teacher/engineer/parent)
+**Production QA:** 192/192 items approved via multi-perspective AI review (teacher/engineer/parent)  
+**Transfer gate:** Verb-frame detection (656 verb forms) + word-count + non-required-word check
 
 ---
 
@@ -21,6 +22,8 @@ After an independent 10-auditor review exposed contract gaps, 4 additional PRs w
 | #695 | Speech feedback only 1/5 distinct | All 5 speech failure modes now have distinct child-actionable messages |
 | #696 | 0/192 QA decisions populated | Multi-perspective AI review (teacher/engineer/parent) for all 192 items + 15 clusters |
 | #700 | Verify script vacuous; legacy fallback; missing Node check; no explanationRuleId | Real-fixture gate (37 gates); Node ≥22 check; legacy removed; 92 fixed items carry explanationRuleId; depth-6 gate has 14 evidence checks |
+| #702 | Completion report out of date | Updated with gap-fill results |
+| #706 | U3 missing subject+verb frame check | Added COMMON_VERB_FORMS (656 forms); evaluateMeaningfulness requires verb outside required tokens; "Blue can't red we're purple." now rejects |
 
 ---
 
