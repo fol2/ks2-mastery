@@ -37,6 +37,7 @@ import {
 } from './spelling-view-model.js';
 import { isPostMasteryMode } from '../service-contract.js';
 import { SessionHUD } from '../../../platform/ui/SessionHUD.jsx';
+import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
 
 // Self-contained post-Mega branch lookup — Phaeton (the spelling grand
 // master) anchors the f-region vista regardless of the rest of the
@@ -238,6 +239,7 @@ export function SpellingSessionScene({
   const softLockoutStorageCas = repositories?.storageCas || null;
 
   return (
+    <PracticeStage subjectId="spelling" scene="session" backdrop="meadow" motion="calm">
     <div className={sessionClasses.join(' ')} style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
       <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
       <div className="session">
@@ -423,5 +425,6 @@ export function SpellingSessionScene({
         </footer>
       </div>
     </div>
+    </PracticeStage>
   );
 }
