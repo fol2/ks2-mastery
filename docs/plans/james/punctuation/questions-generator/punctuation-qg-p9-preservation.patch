@@ -1,0 +1,63 @@
+--- a/shared/punctuation/marking.js
++++ b/shared/punctuation/marking.js
+@@ -46,6 +46,8 @@
+   if (reportingClause && !reportingClause.ok) return 'Add a comma between the reporting clause and the speech.';
+   const reportingClauseWords = lookup('reporting_clause_words');
+   if (reportingClauseWords && !reportingClauseWords.ok) return 'Keep the reporting clause from the question.';
++  const contentPreservation = lookup('content_preservation');
++  if (contentPreservation && !contentPreservation.ok) return 'Keep the sentence from the question and do not add extra words.';
+   const preservation = lookup('preservation');
+   if (preservation && !preservation.ok) return 'Keep the exact spoken words from the question.';
+   return null;
+@@ -301,10 +303,14 @@
+   const answerWords = stripPunctuation(text).split(' ').filter(Boolean);
+   const expectedCount = expectedTokens.length;
+ 
+-  // Reject answers with word count significantly exceeding expected (catches extra tails)
+-  if (answerWords.length > expectedCount + 2) {
+-    const extra = answerWords.slice(expectedCount);
+-    return { preserved: false, extraWords: extra, missingWords: [] };
++  // Closed punctuation items must preserve the lexical sentence exactly.
++  // Punctuation and capitalisation may change; words may not be added or removed.
++  if (answerWords.length !== expectedCount) {
++    const expectedLower = expectedTokens.map((w) => String(w).toLowerCase());
++    const answerLower = answerWords.map((w) => String(w).toLowerCase());
++    const extra = answerWords.length > expectedCount ? answerWords.slice(expectedCount) : [];
++    const missing = expectedLower.filter((w) => !answerLower.includes(w));
++    return { preserved: false, extraWords: extra, missingWords: missing };
+   }
+ 
+   // Check all expected words appear in order
+@@ -1637,6 +1643,32 @@
+ 
+   if (item.rubric?.type === 'speech') {
+     rubricResult = evaluateSpeechRubric(text, item.rubric);
++
++    // Speech rubrics check the speech shape; closed insert/fix/combine items
++    // also need the same lexical-preservation contract as validator-backed items.
++    // Only apply this after the speech rubric passes so changed reporters still
++    // receive the more specific reporting-clause feedback.
++    if (rubricResult.correct
++      && ['insert', 'fix', 'combine'].includes(item.mode)
++      && typeof item.stem === 'string'
++      && item.stem.trim()) {
++      const preservation = evaluatePreservation(text, item);
++      if (!preservation.preserved) {
++        rubricResult = {
++          ...rubricResult,
++          correct: false,
++          misconceptionTags: [...new Set([
++            ...(rubricResult.misconceptionTags || []),
++            'speech.extra_words_outside_reporting_clause',
++          ])],
++          facets: [
++            ...(rubricResult.facets || []),
++            facet('content_preservation', false),
++          ],
++        };
++      }
++    }
++
+     exact = exact || rubricResult.correct;
+   }
+ 
