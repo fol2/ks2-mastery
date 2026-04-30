@@ -15,7 +15,8 @@
       "name": "Real internal production cohort",
       "requiredEvidence": [
         { "path": "docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md", "condition": "min_real_observations_5", "description": "At least 5 real-production observations" },
-        { "path": "docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md", "condition": "min_real_datekeys_2", "description": "At least 2 unique date keys from real observations" },
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md", "condition": "min_real_datekeys_5", "description": "At least 5 unique date keys from real observations (5 calendar days)" },
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md", "condition": "no_stop_conditions", "description": "No stop conditions fired during the observation window" },
         { "path": "docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md", "condition": "min_real_learners_3", "description": "At least 3 unique learner profiles from real observations" }
       ]
     },
