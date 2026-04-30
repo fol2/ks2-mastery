@@ -74,7 +74,7 @@ describe('P11 U10 Verify Chain: verify:grammar-qg-production-release', () => {
   it('verify:grammar-qg-production-release includes the semantic audit', () => {
     const cmd = scripts['verify:grammar-qg-production-release'] || '';
     assert.ok(
-      cmd.includes('audit-grammar-prompt-cues-semantic'),
+      cmd.includes('audit:grammar-qg:semantic'),
       `verify:grammar-qg-production-release must include the semantic audit. Actual: "${cmd}"`,
     );
   });
@@ -90,7 +90,7 @@ describe('P11 U10 Verify Chain: verify:grammar-qg-production-release', () => {
   it('verify:grammar-qg-production-release references the certification manifest', () => {
     const cmd = scripts['verify:grammar-qg-production-release'] || '';
     assert.ok(
-      cmd.includes('grammar-qg-p10-certification-manifest.json'),
+      cmd.includes('grammar-qg-p11-certification-manifest.json'),
       `verify:grammar-qg-production-release must reference the manifest. Actual: "${cmd}"`,
     );
   });
