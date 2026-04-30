@@ -53,21 +53,35 @@ function buildGoldenResponse(question) {
     }
     return null;
   }
-  if (question.inputSpec?.type === 'multi_choice' || question.inputSpec?.type === 'checkbox_list') {
+  if (question.inputSpec?.type === 'multi_choice') {
     const correctOpts = [];
     for (const opt of question.inputSpec.options || []) {
       const resp = { answer: [opt.value] };
       const result = evaluateGrammarQuestion(question, resp);
       if (result && result.correct) correctOpts.push(opt.value);
     }
-    // Try combined set
     if (correctOpts.length > 0) {
       const combined = { answer: correctOpts };
       const res = evaluateGrammarQuestion(question, combined);
       if (res && res.correct) return combined;
     }
-    // Fallback: single correct
     if (correctOpts.length > 0) return { answer: correctOpts };
+    return null;
+  }
+  if (question.inputSpec?.type === 'checkbox_list') {
+    // checkbox_list evaluate functions expect { selected: [...] } and use setEq,
+    // so we must find the exact correct subset. Brute-force all subsets.
+    const options = (question.inputSpec.options || []).map((o) => o.value);
+    const totalSubsets = 1 << options.length; // 2^n
+    for (let mask = 1; mask < totalSubsets; mask++) {
+      const subset = [];
+      for (let i = 0; i < options.length; i++) {
+        if (mask & (1 << i)) subset.push(options[i]);
+      }
+      const resp = { selected: subset };
+      const result = evaluateGrammarQuestion(question, resp);
+      if (result && result.correct) return resp;
+    }
     return null;
   }
   return null;
@@ -111,6 +125,74 @@ function buildConstructedGolden(question) {
   return null;
 }
 
+function buildMultiGolden(question) {
+  const fields = question.inputSpec?.fields || [];
+  if (fields.length === 0) return null;
+  const resp = {};
+  for (const field of fields) {
+    const key = field.key;
+    const options = field.options || [];
+    // For radio/select fields, try each option value
+    if ((field.kind === 'radio' || field.kind === 'select') && options.length > 0) {
+      for (const opt of options) {
+        // Options may be [value, label] arrays or plain strings
+        const val = Array.isArray(opt) ? opt[0] : (opt?.value ?? opt);
+        if (!val) continue; // skip empty placeholder
+        const trial = { ...resp, [key]: val };
+        const res = evaluateGrammarQuestion(question, trial);
+        if (res && res.correct) {
+          resp[key] = val;
+          break;
+        }
+      }
+      // If brute-force per-field didn't yield a correct overall result,
+      // try each option individually for this field anyway
+      if (resp[key] === undefined) {
+        for (const opt of options) {
+          const val = Array.isArray(opt) ? opt[0] : (opt?.value ?? opt);
+          if (!val) continue;
+          resp[key] = val;
+          break;
+        }
+      }
+    }
+  }
+  // Now do a brute-force search across all field combinations (limited to small sets)
+  // For efficiency, try the full response we assembled
+  if (Object.keys(resp).length > 0) {
+    const res = evaluateGrammarQuestion(question, resp);
+    if (res && res.correct) return resp;
+  }
+  // If partial assembly failed, try brute-force all combinations for small field sets
+  if (fields.length <= 5) {
+    const optionsPerField = fields.map((f) => {
+      return (f.options || [])
+        .map((opt) => (Array.isArray(opt) ? opt[0] : (opt?.value ?? opt)))
+        .filter((v) => v !== '' && v != null);
+    });
+    // Limit brute-force to avoid exponential blowup
+    const totalCombinations = optionsPerField.reduce((a, b) => a * Math.max(b.length, 1), 1);
+    if (totalCombinations <= 256) {
+      const indices = new Array(fields.length).fill(0);
+      for (let iter = 0; iter < totalCombinations; iter++) {
+        const trial = {};
+        for (let fi = 0; fi < fields.length; fi++) {
+          trial[fields[fi].key] = optionsPerField[fi][indices[fi]] || '';
+        }
+        const res = evaluateGrammarQuestion(question, trial);
+        if (res && res.correct) return trial;
+        // Increment indices
+        for (let fi = fields.length - 1; fi >= 0; fi--) {
+          indices[fi]++;
+          if (indices[fi] < optionsPerField[fi].length) break;
+          indices[fi] = 0;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 function deriveGoldenAnswer(question) {
   const inputType = question.inputSpec?.type;
   if (inputType === 'single_choice' || inputType === 'multi_choice' || inputType === 'checkbox_list') {
@@ -118,6 +200,9 @@ function deriveGoldenAnswer(question) {
   }
   if (inputType === 'table_choice') {
     return buildTableGolden(question);
+  }
+  if (inputType === 'multi') {
+    return buildMultiGolden(question);
   }
   return buildConstructedGolden(question);
 }
@@ -144,15 +229,25 @@ function buildConcreteExample(question, seed, result, goldenResp) {
     example.goldenAnswer = goldenResp?.answer || null;
   }
 
-  example.markingResult = result ? (result.correct ? 'correct' : 'incorrect') : 'no-result';
+  if (!result) {
+    example.markingResult = 'no-result';
+  } else if (result.nonScored || result.manualReviewOnly) {
+    example.markingResult = 'non-scored';
+  } else {
+    example.markingResult = result.correct ? 'correct' : 'incorrect';
+  }
   example.feedbackSnippet = truncate(result?.feedbackLong || result?.feedbackShort || '', 150);
 
   return example;
 }
 
 function deriveAnswerabilityJudgement(results, inputType) {
-  const allCorrect = results.every((r) => r.result && r.result.correct);
+  const isManualReview = results.some((r) => r.result?.nonScored || r.result?.manualReviewOnly);
   const seedCount = results.length;
+  if (isManualReview) {
+    return `All ${seedCount} seeds produce a valid prompt for manual-review constructed response — non-scored by design`;
+  }
+  const allCorrect = results.every((r) => r.result && r.result.correct);
   if (inputType === 'single_choice') {
     return allCorrect
       ? `All ${seedCount} seeds produce exactly one correct option with clear prompt`
@@ -167,6 +262,16 @@ function deriveAnswerabilityJudgement(results, inputType) {
     return allCorrect
       ? `All ${seedCount} seeds accept the golden constructed answer`
       : `Some constructed-response seeds fail golden marking (${results.filter((r) => !r.result?.correct).length}/${seedCount} failures)`;
+  }
+  if (inputType === 'checkbox_list') {
+    return allCorrect
+      ? `All ${seedCount} seeds produce a valid checkbox set with correct golden selection`
+      : `Some seeds fail golden-answer marking (${results.filter((r) => !r.result?.correct).length}/${seedCount} failures)`;
+  }
+  if (inputType === 'multi') {
+    return allCorrect
+      ? `All ${seedCount} seeds produce answerable multi-field questions with correct golden marking`
+      : `${results.filter((r) => !r.result?.correct).length}/${seedCount} seeds have answerability issues`;
   }
   return allCorrect
     ? `All ${seedCount} seeds produce answerable questions with correct golden marking`
@@ -203,6 +308,11 @@ function deriveDistractorQualityJudgement(results, inputType) {
 }
 
 function deriveMarkingJudgement(results) {
+  const isManualReview = results.some((r) => r.result?.nonScored || r.result?.manualReviewOnly);
+  if (isManualReview) {
+    const seedCount = results.length;
+    return `Non-scored template — all ${seedCount} seeds return { nonScored: true } by design; teacher/parent review required`;
+  }
   const allCorrect = results.every((r) => r.result && r.result.correct);
   const seedCount = results.length;
   if (allCorrect) {
@@ -213,6 +323,10 @@ function deriveMarkingJudgement(results) {
 }
 
 function deriveFeedbackJudgement(results, inputType) {
+  const isManualReview = results.some((r) => r.result?.nonScored || r.result?.manualReviewOnly);
+  if (isManualReview) {
+    return 'Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness';
+  }
   const hasLong = results.some((r) => r.result?.feedbackLong && r.result.feedbackLong.length > 0);
   const hasShort = results.some((r) => r.result?.feedbackShort && r.result.feedbackShort.length > 0);
   if (hasLong && hasShort) {
@@ -265,13 +379,17 @@ export function buildQualityRegister() {
         continue;
       }
 
-      const golden = deriveGoldenAnswer(question);
+      const isManualReview = question.answerSpec?.kind === 'manualReviewOnly';
+      const golden = isManualReview ? { answer: 'test response' } : deriveGoldenAnswer(question);
       let result = null;
       let pass = true;
 
       if (golden) {
         result = evaluateGrammarQuestion(question, golden);
-        if (!result || !result.correct) {
+        if (result && (result.nonScored || result.manualReviewOnly)) {
+          // Non-scored by design — this is correct behaviour, counts as pass
+          pass = true;
+        } else if (!result || !result.correct) {
           pass = false;
           allPass = false;
         }
@@ -303,11 +421,16 @@ export function buildQualityRegister() {
 
     // Determine decision and finalAction
     const allNoResult = results.every((r) => !r.result);
+    const allNonScored = results.every((r) => r.result?.nonScored || r.result?.manualReviewOnly);
     let decision;
     let finalAction;
     if (!allPass) {
       decision = 'blocked';
       finalAction = 'requires-adult-review';
+    } else if (allNonScored) {
+      // Manual-review templates — non-scored by design, ship with monitoring
+      decision = 'approved_with_limitation';
+      finalAction = 'ship-with-monitoring';
     } else if (allNoResult && primaryInputType !== 'table_choice') {
       decision = 'approved_with_limitation';
       finalAction = 'ship-with-monitoring';

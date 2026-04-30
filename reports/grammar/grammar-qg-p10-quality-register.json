@@ -1,10 +1,10 @@
 {
   "metadata": {
     "contentReleaseId": "grammar-qg-p10-2026-04-29",
-    "generatedAt": "2026-04-30T01:56:35.963Z",
+    "generatedAt": "2026-04-30T02:26:44.569Z",
     "templateCount": 78,
-    "approved": 70,
-    "approvedWithLimitation": 8,
+    "approved": 74,
+    "approvedWithLimitation": 4,
     "blocked": 0,
     "highRiskCount": 28
   },
@@ -46,7 +46,7 @@
     },
     {
       "templateId": "question_mark_select",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -61,8 +61,8 @@
             "Mum wondered whether the parcel had arrived",
             "Did the coach leave on time"
           ],
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on time."
         },
         {
           "seed": 2,
@@ -73,8 +73,8 @@
             "Mum wondered whether the parcel had arrived",
             "Did the coach leave on time"
           ],
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on time."
         },
         {
           "seed": 3,
@@ -85,17 +85,17 @@
             "Mum wondered whether the parcel had arrived",
             "Did the coach leave on time"
           ],
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on time."
         }
       ],
-      "answerabilityJudgement": "10/10 seeds have answerability issues",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'sentence_functions, speech_punctuation'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 10 seeds produce a valid checkbox set with correct golden selection",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'sentence_functions, speech_punctuation'",
       "distractorQualityJudgement": "4 options per seed (multi-select), distractors drawn from related misconceptions",
-      "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "word_class_underlined_choice",
@@ -176,7 +176,7 @@
     },
     {
       "templateId": "identify_words_in_sentence",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -195,8 +195,8 @@
             "glass",
             "vase"
           ],
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The correct words are: carefully, quietly."
         },
         {
           "seed": 2,
@@ -211,8 +211,8 @@
             "glass",
             "vase"
           ],
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The correct words are: carefully, quietly."
         },
         {
           "seed": 3,
@@ -227,8 +227,8 @@
             "glass",
             "vase"
           ],
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The correct words are: carefully, quietly."
         },
         {
           "seed": 4,
@@ -243,8 +243,8 @@
             "they",
             "left"
           ],
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The correct words are: She, it, them, they."
         },
         {
           "seed": 5,
@@ -259,17 +259,17 @@
             "glass",
             "vase"
           ],
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The correct words are: carefully, quietly."
         }
       ],
-      "answerabilityJudgement": "15/15 seeds have answerability issues",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'word_classes'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds produce a valid checkbox set with correct golden selection",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'word_classes'",
       "distractorQualityJudgement": "9 options per seed (multi-select), distractors drawn from related misconceptions",
-      "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "expanded_noun_phrase_choice",
@@ -335,39 +335,39 @@
         {
           "seed": 1,
           "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ found the silver key.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 2,
           "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ opened the door.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 3,
           "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ found the silver key.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 4,
           "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ opened the door.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 5,
           "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ found the silver key.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your noun phrase has been saved for review. It is not auto-marked for mastery."
         }
       ],
-      "answerabilityJudgement": "15/15 seeds have answerability issues",
+      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
       "grammarLogicJudgement": "Grammar logic partially valid for concept 'noun_phrases'; some seeds produce incorrect marking",
       "distractorQualityJudgement": "N/A",
-      "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
+      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
       "finalAction": "ship-with-monitoring"
     },
@@ -818,7 +818,7 @@
     },
     {
       "templateId": "standard_english_pairs",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -827,29 +827,29 @@
         {
           "seed": 1,
           "promptText": "Choose the correct verb form in each pair to complete the sentences using Standard English.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Correct choices: saw; did."
         },
         {
           "seed": 2,
           "promptText": "Choose the correct verb form in each pair to complete the sentences using Standard English.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Correct choices: were; did."
         },
         {
           "seed": 3,
           "promptText": "Choose the correct verb form in each pair to complete the sentences using Standard English.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Correct choices: saw; did."
         }
       ],
-      "answerabilityJudgement": "10/10 seeds have answerability issues",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 10 seeds produce answerable multi-field questions with correct golden marking",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'standard_english'",
       "distractorQualityJudgement": "N/A",
-      "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "pronoun_cohesion_choice",
@@ -906,7 +906,7 @@
     },
     {
       "templateId": "formality_pairs",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -915,29 +915,29 @@
         {
           "seed": 1,
           "promptText": "Circle the most formal option in each underlined pair below to complete the passage.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Correct formal choices: discover; enter; request."
         },
         {
           "seed": 2,
           "promptText": "Circle the most formal option in each underlined pair below to complete the passage.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Correct formal choices: established; requested; compete."
         },
         {
           "seed": 3,
           "promptText": "Circle the most formal option in each underlined pair below to complete the passage.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Correct formal choices: discover; enter; request."
         }
       ],
-      "answerabilityJudgement": "10/10 seeds have answerability issues",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'formality'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 10 seeds produce answerable multi-field questions with correct golden marking",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'formality'",
       "distractorQualityJudgement": "N/A",
-      "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "active_passive_rewrite",
@@ -1419,44 +1419,44 @@
         {
           "seed": 1,
           "promptText": "Rewrite the sentence in Standard English. I done my homework before tea.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 2,
           "promptText": "Rewrite the sentence in Standard English. We was walking to school.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 3,
           "promptText": "Rewrite the sentence in Standard English. I done my homework before tea.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 4,
           "promptText": "Rewrite the sentence in Standard English. We was walking to school.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 5,
           "promptText": "Rewrite the sentence in Standard English. I done my homework before tea.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
         }
       ],
-      "answerabilityJudgement": "Some constructed-response seeds fail golden marking (15/15 failures)",
+      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
       "grammarLogicJudgement": "Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
+      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
       "finalAction": "ship-with-monitoring"
     },
@@ -2337,44 +2337,44 @@
         {
           "seed": 1,
           "promptText": "Use this opening phrase and clause to build one correct sentence. Opening phrase: With great care Main clause: Ava locked the window",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 2,
           "promptText": "Use this opening phrase and clause to build one correct sentence. Opening phrase: With great care Main clause: Noah found the map",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 3,
           "promptText": "Use this opening phrase and clause to build one correct sentence. Opening phrase: With great care Main clause: Ava carried the trophy",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 4,
           "promptText": "Use this opening phrase and clause to build one correct sentence. Opening phrase: After the final whistle Main clause: Noah carried the gate",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 5,
           "promptText": "Use this opening phrase and clause to build one correct sentence. Opening phrase: With great care Main clause: Nora found the gate",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery."
         }
       ],
-      "answerabilityJudgement": "Some constructed-response seeds fail golden marking (15/15 failures)",
+      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
       "grammarLogicJudgement": "Grammar logic partially valid for concept 'adverbials'; some seeds produce incorrect marking",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
+      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
       "finalAction": "ship-with-monitoring"
     },
@@ -2548,44 +2548,44 @@
         {
           "seed": 1,
           "promptText": "Use all the words to build an expanded noun phrase that could complete the sentence. Words: the / heavy / silver / bucket ___ was still on the shelf.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your expanded noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 2,
           "promptText": "Use all the words to build an expanded noun phrase that could complete the sentence. Words: the / bright / blue / lantern ___ rested near the gate.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your expanded noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 3,
           "promptText": "Use all the words to build an expanded noun phrase that could complete the sentence. Words: the / bright / silver / scarf ___ was hidden under the bench.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your expanded noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 4,
           "promptText": "Use all the words to build an expanded noun phrase that could complete the sentence. Words: the / narrow / blue / lantern ___ was hidden under the bench.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your expanded noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 5,
           "promptText": "Use all the words to build an expanded noun phrase that could complete the sentence. Words: the / bright / golden / lantern ___ rested near the gate.",
-          "goldenAnswer": null,
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "goldenAnswer": "test response",
+          "markingResult": "non-scored",
+          "feedbackSnippet": "Your expanded noun phrase has been saved for review. It is not auto-marked for mastery."
         }
       ],
-      "answerabilityJudgement": "Some constructed-response seeds fail golden marking (15/15 failures)",
+      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
       "grammarLogicJudgement": "Grammar logic partially valid for concept 'noun_phrases'; some seeds produce incorrect marking",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
+      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
       "finalAction": "ship-with-monitoring"
     },
