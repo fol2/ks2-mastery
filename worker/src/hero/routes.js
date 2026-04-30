@@ -7,7 +7,7 @@
 import { json } from '../http.js';
 import { NotFoundError } from '../errors.js';
 import { buildHeroShadowReadModel } from './read-model.js';
-import { resolveHeroFlagsWithOverride } from '../../../shared/hero/account-override.js';
+import { resolveHeroFlagsForAccount } from '../../../shared/hero/account-override.js';
 
 function envFlagEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
@@ -40,7 +40,37 @@ export async function handleHeroReadModel({
   // 1. Apply per-account override before feature flag gate (pA2 #683 fix).
   //    Without this, internal cohort accounts with global flags OFF cannot
   //    access the read-model — the override only applied on command routes.
-  const resolvedEnv = resolveHeroFlagsWithOverride({ env, accountId: session.accountId });
+  //    pA5 U4: use full resolver to capture overrideStatus for emergency/excluded guard.
+  const { resolvedEnv, overrideStatus } = resolveHeroFlagsForAccount({ env, accountId: session.accountId });
+
+  // pA5 U4: Emergency-off or excluded — return empty/hidden Hero state.
+  // State remains dormant (no mutation, no deletion). Event logged for ops.
+  if (overrideStatus === 'emergency-off' || overrideStatus === 'excluded') {
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'hero_read_model_blocked',
+        learnerId: url.searchParams.get('learnerId') || account.selected_learner_id || '',
+        accountId: session.accountId,
+        overrideStatus,
+      }));
+    } catch { /* best-effort */ }
+
+    // Return a valid response shape with Hero effectively hidden.
+    // No overrideStatus, no account lists, no rollout salt in the response.
+    return json({
+      ok: true,
+      hero: {
+        version: 6,
+        heroEnabled: false,
+        ui: { enabled: false },
+        dailyQuest: null,
+        activeHeroSession: null,
+        economy: null,
+        camp: null,
+      },
+    });
+  }
 
   if (!envFlagEnabled(resolvedEnv.HERO_MODE_SHADOW_ENABLED)) {
     throw new NotFoundError('Hero shadow read model is not available.', {

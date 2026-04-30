@@ -1437,6 +1437,26 @@ export function createWorkerApp({
           // so team accounts in HERO_INTERNAL_ACCOUNTS bypass global flag gates.
           // pA4 U2: unified resolver — also captures overrideStatus for ops output.
           const { resolvedEnv: heroCommandEnv, overrideStatus: heroCommandOverrideStatus } = resolveHeroFlagsForAccount({ env, accountId: session.accountId });
+
+          // pA5 U4: Emergency-off or excluded — reject command with 403.
+          // State remains dormant (no mutation, no deletion). Event logged for ops.
+          if (heroCommandOverrideStatus === 'emergency-off' || heroCommandOverrideStatus === 'excluded') {
+            try {
+              // eslint-disable-next-line no-console
+              console.log(JSON.stringify({
+                event: 'hero_command_blocked',
+                accountId: session.accountId,
+                overrideStatus: heroCommandOverrideStatus,
+              }));
+            } catch { /* best-effort */ }
+
+            // No overrideStatus, no account lists, no rollout salt in the response body.
+            return json({
+              error: 'hero-unavailable',
+              reason: heroCommandOverrideStatus === 'emergency-off' ? 'emergency-disabled' : 'account-excluded',
+            }, 403);
+          }
+
           if (!envFlagEnabled(heroCommandEnv.HERO_MODE_LAUNCH_ENABLED)) {
             throw new NotFoundError('Hero launch is not available.', {
               code: 'hero_launch_disabled',
