@@ -421,6 +421,7 @@ function buildVarietyClusters(pool) {
       itemIds: items.map((i) => i.id).sort(),
       count: items.length,
       classification: isSameMode ? 'SAME-MODE-DUPLICATE' : 'CROSS-MODE-OVERLAP',
+      reviewRequired: !isSameMode,
       sampleStem: items[0].stem || '',
     });
   }
@@ -436,6 +437,7 @@ function buildVarietyClusters(pool) {
       itemIds: items.map((i) => i.id).sort(),
       count: items.length,
       classification: isSameMode ? 'SAME-MODE-DUPLICATE' : 'CROSS-MODE-OVERLAP',
+      reviewRequired: !isSameMode,
       sampleModel: items[0].model || '',
     });
   }
@@ -451,6 +453,7 @@ function buildVarietyClusters(pool) {
       itemIds: items.map((i) => i.id).sort(),
       count: items.length,
       classification: 'REPEATED-EXPLANATION',
+      reviewRequired: false,
       sampleExplanation: items[0].explanation || '',
     });
   }
@@ -469,6 +472,7 @@ function buildVarietyClusters(pool) {
       itemIds: items.map((i) => i.id).sort(),
       count: items.length,
       classification: 'CHARACTER-OVERUSE',
+      reviewRequired: false,
       skill,
       character,
     });
@@ -488,6 +492,7 @@ function buildVarietyClusters(pool) {
       itemIds: items.map((i) => i.id).sort(),
       count: items.length,
       classification: isSameMode ? 'SAME-CORRECTION-PATTERN' : 'CROSS-MODE-CORRECTION',
+      reviewRequired: false,
       skill,
       sampleModel: items[0].model || '',
     });

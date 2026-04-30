@@ -1,9 +1,23 @@
 {
   "_meta": {
     "generated": "2026-04-30",
-    "schema_version": 2,
+    "schema_version": 3,
     "items_reviewed": 192,
-    "review_method": "ai-multi-perspective (teacher/engineer/parent)"
+    "review_method": "ai-multi-perspective (teacher/engineer/parent)",
+    "ai_pre_review": {
+      "status": "complete",
+      "method": "multi-perspective teacher/engineer/parent simulation",
+      "date": "2026-04-30"
+    },
+    "human_acceptance": {
+      "status": "not_started",
+      "reviewer": null,
+      "role": null,
+      "reviewedAt": null
+    },
+    "production_certification": {
+      "status": "blocked_pending_human_acceptance_and_p9_gates"
+    }
   },
   "decisions": {},
   "itemDecisions": [
@@ -1354,109 +1368,333 @@
   ],
   "clusterDecisions": [
     {
-      "clusterId": "cross_mode_691899d52d99",
+      "clusterId": "model_07cfda5f0a9c",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for sentence endings (endmarks): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (choose/insert/transfer) for \"We visited York, England; Cardiff, Wales; and Belfast, No...\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_3dcd403b636a",
+      "clusterId": "model_09cd64e15299",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for list commas (comma_flow): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/fix) for \"Before sunrise, the crew checked the ropes.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_c0ea787e945b",
+      "clusterId": "model_0c598f93d9c9",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for apostrophe contractions (apostrophe): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/insert) for \"The kit included three things: a lantern, a compass and a...\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_b2ae886bd189",
+      "clusterId": "model_1101a7611fd2",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for apostrophe possession (apostrophe): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (choose/combine/transfer) for \"The path was flooded – we took the longer route.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_c882cd287fc8",
+      "clusterId": "model_14a235af6bc8",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for speech punctuation (speech): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (choose/combine/transfer) for \"The rain had stopped; the pitch was still slippery.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_c6233465fabf",
+      "clusterId": "model_19d95b86da72",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for fronted adverbials + speech punctuation (speech): paragraph/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The tower, a useful lookout, stood above the bay.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_11dbb37b1d78",
+      "clusterId": "model_19ddd7ec3788",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for fronted adverbials (comma_flow): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (fix/paragraph) for \"Bring:\n- a coat.\n- a torch.\n- a notebook.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_a2b6565552d8",
+      "clusterId": "model_1af924f6500e",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for commas for clarity (comma_flow): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (fix/paragraph) for \"Pack:\n- pencils\n- rulers\n- glue sticks\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_6c89553c8ba0",
+      "clusterId": "model_1fc4486dee55",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for semicolons between clauses (boundary): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/fix) for \"Mr Patel, our maths teacher, smiled proudly.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_05720730efa8",
+      "clusterId": "model_230e6db97e76",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for dashes between clauses (boundary): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/insert) for \"We chose three activities: swimming, cycling and climbing.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_5d898a3b358f",
+      "clusterId": "model_26ac2ae36d5a",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for hyphens for clarity (boundary): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The harbour, an old fishing port, was busy.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_3e428f0495e7",
+      "clusterId": "model_28155228dd0d",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for parenthesis (structure): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/fix) for \"During the concert, the hall became silent.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_fbd5c68eb673",
+      "clusterId": "model_2b5c62895c91",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for colons before lists (structure): choose/combine/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The path was narrow; the hikers walked slowly.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_da5a12cb9b1f",
+      "clusterId": "model_32f74f9f1950",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for semicolons in lists (structure): choose/fix/insert/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The bell rang – everyone hurried inside.\" — pedagogically intentional mode progression, not redundant overlap."
     },
     {
-      "clusterId": "cross_mode_5a3bec6e7cd7",
+      "clusterId": "model_3afc1159a84b",
       "decision": "acceptable-cross-mode-overlap",
       "reviewer": "ai-multi-perspective-review",
       "reviewedAt": "2026-04-30",
-      "rationale": "Cross-mode cluster for bullet point punctuation (structure): choose/fix/insert/paragraph/transfer modes test the same rule from retrieval through production — pedagogically intentional progression, not redundant overlap."
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The clock stopped; the class kept working.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_3ddaa092ae47",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The library, a quiet room, closed early.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_3e1b3dd5d20b",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (choose/fix/insert/paragraph/transfer) for \"Bring:\n- a drink\n- a hat\n- a sketchbook\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_4ce4f4680327",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The lighthouse was bright; the boats still waited.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_82ba8b254d4a",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The bridge was closed – the buses turned back.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_88d84dc64951",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/insert) for \"The team won three awards: player of the match, best defe...\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_93d507ec2e95",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The gate was stuck – we found another path.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_99babb5a0cab",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (fix/transfer) for \"The stalls were crafts, table one; games, table two; and ...\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_a79968c8d5fb",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/fix) for \"At the edge of the field, the coach waited.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_ae3dbee64485",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/insert) for \"We needed three tools: a torch, a rope and a map.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_b43c5aa7e92e",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/insert) for \"The drawer held three supplies: pens, rulers and tape.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_e3e751bf2028",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (choose/combine) for \"We packed torches, maps and water.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_e50f31d24dce",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (fix/paragraph) for \"Check:\n- doors.\n- windows.\n- lights.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_ef616bd7f6f3",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (choose/transfer) for \"We needed three things: a torch, a map and a whistle.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_f552397485c5",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (fix/paragraph) for \"Take:\n- water\n- snacks\n- a hat\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_f632c3559c44",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The torch failed – we used the lantern.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "model_f8c4ae733cf3",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode model cluster (combine/fix) for \"The rain eased; the match could continue.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_09cd64e15299",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"Before sunrise the crew checked the ropes.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_19ddd7ec3788",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (fix/paragraph) for \"Bring:\n- a coat.\n- a torch\n- a notebook.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_1af924f6500e",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (fix/paragraph) for \"Pack:\n- pencils\n- rulers.\n- glue sticks\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_28155228dd0d",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"During the concert the hall became silent.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_2b5c62895c91",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"The path was narrow, the hikers walked slowly.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_2da3555f8450",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (fix/insert/paragraph) for \"Bring\n- a drink\n- a hat\n- a sketchbook\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_32f74f9f1950",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"The bell rang everyone hurried inside.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_3afc1159a84b",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"The clock stopped, the class kept working.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_4ce4f4680327",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"The lighthouse was bright, the boats still waited.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_82ba8b254d4a",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"The bridge was closed the buses turned back.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_93d507ec2e95",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"The gate was stuck we found another path.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_a79968c8d5fb",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"At the edge of the field the coach waited.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_e50f31d24dce",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (fix/paragraph) for \"Check:\n- doors.\n- windows\n- lights.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_f552397485c5",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (fix/paragraph) for \"Take:\n- water\n- snacks.\n- a hat\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_f632c3559c44",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"The torch failed we used the lantern.\" — pedagogically intentional mode progression, not redundant overlap."
+    },
+    {
+      "clusterId": "stem_f8c4ae733cf3",
+      "decision": "acceptable-cross-mode-overlap",
+      "reviewer": "ai-multi-perspective-review",
+      "reviewedAt": "2026-04-30",
+      "rationale": "Cross-mode stem cluster (combine/fix) for \"The rain eased, the match could continue.\" — pedagogically intentional mode progression, not redundant overlap."
     }
   ]
 }
