@@ -288,14 +288,14 @@ function buildItemEntry(item, { productionIds = null, clusterMap = null, itemDec
   if (negativeVectorMap && negativeVectorMap.has(item.id)) {
     const vectors = negativeVectorMap.get(item.id);
     for (const vec of vectors) {
-      const vecAnswer = item.mode === 'choose' ? { choiceIndex: -1 } : { typed: vec.input };
+      const vecAnswer = item.mode === 'choose' ? { choiceIndex: -1 } : { typed: vec.answer };
       let vecResult;
       try {
         vecResult = markPunctuationAnswer({ item, answer: vecAnswer });
       } catch {
         vecResult = { correct: false, error: 'marking threw' };
       }
-      fixedNegativeVectors.push({ input: vec.input, expectedCorrect: vec.expectedCorrect ?? false, result: vecResult });
+      fixedNegativeVectors.push({ input: vec.answer, expectedCorrect: vec.expectedCorrect ?? false, result: vecResult });
     }
   }
 
