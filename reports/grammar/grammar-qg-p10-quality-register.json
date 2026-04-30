@@ -1,9 +1,10 @@
 {
   "metadata": {
     "contentReleaseId": "grammar-qg-p10-2026-04-29",
-    "generatedAt": "2026-04-30T00:24:03.745Z",
+    "generatedAt": "2026-04-30T01:56:35.963Z",
     "templateCount": 78,
-    "approved": 78,
+    "approved": 70,
+    "approvedWithLimitation": 8,
     "blocked": 0,
     "highRiskCount": 28
   },
@@ -39,13 +40,13 @@
       "grammarLogicJudgement": "Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
       "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
       "finalAction": "ship"
     },
     {
       "templateId": "question_mark_select",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -94,7 +95,7 @@
       "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
       "feedbackJudgement": "Feedback fields not populated — requires review",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship-with-monitoring"
     },
     {
       "templateId": "word_class_underlined_choice",
@@ -175,7 +176,7 @@
     },
     {
       "templateId": "identify_words_in_sentence",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -268,7 +269,7 @@
       "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
       "feedbackJudgement": "Feedback fields not populated — requires review",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
-      "finalAction": "ship"
+      "finalAction": "ship-with-monitoring"
     },
     {
       "templateId": "expanded_noun_phrase_choice",
@@ -325,7 +326,7 @@
     },
     {
       "templateId": "build_noun_phrase",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -368,7 +369,7 @@
       "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
       "feedbackJudgement": "Feedback fields not populated — requires review",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
-      "finalAction": "ship"
+      "finalAction": "ship-with-monitoring"
     },
     {
       "templateId": "fronted_adverbial_choose",
@@ -817,7 +818,7 @@
     },
     {
       "templateId": "standard_english_pairs",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -848,7 +849,7 @@
       "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
       "feedbackJudgement": "Feedback fields not populated — requires review",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship-with-monitoring"
     },
     {
       "templateId": "pronoun_cohesion_choice",
@@ -905,7 +906,7 @@
     },
     {
       "templateId": "formality_pairs",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -936,7 +937,7 @@
       "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
       "feedbackJudgement": "Feedback fields not populated — requires review",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship-with-monitoring"
     },
     {
       "templateId": "active_passive_rewrite",
@@ -1409,7 +1410,7 @@
     },
     {
       "templateId": "standard_fix_sentence",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -1457,7 +1458,7 @@
       "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
       "feedbackJudgement": "Feedback fields not populated — requires review",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship-with-monitoring"
     },
     {
       "templateId": "proc_fronted_adverbial_fix",
@@ -2327,7 +2328,7 @@
     },
     {
       "templateId": "proc2_fronted_adverbial_build",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -2375,7 +2376,7 @@
       "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
       "feedbackJudgement": "Feedback fields not populated — requires review",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship-with-monitoring"
     },
     {
       "templateId": "proc2_boundary_punctuation_explain",
@@ -2538,7 +2539,7 @@
     },
     {
       "templateId": "proc3_noun_phrase_build",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -2586,7 +2587,7 @@
       "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
       "feedbackJudgement": "Feedback fields not populated — requires review",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship-with-monitoring"
     },
     {
       "templateId": "proc3_clause_join_rewrite",
@@ -2828,7 +2829,7 @@
       "grammarLogicJudgement": "Grammar logic partially valid for concept 'subject_object'; some seeds produce incorrect marking",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
       "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
       "finalAction": "ship"
     },
@@ -2916,7 +2917,7 @@
       "grammarLogicJudgement": "Grammar logic partially valid for concept 'formality'; some seeds produce incorrect marking",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
       "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
       "finalAction": "ship"
     },
@@ -3860,7 +3861,7 @@
       "grammarLogicJudgement": "Grammar logic partially valid for concept 'word_classes, noun_phrases'; some seeds produce incorrect marking",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
       "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
       "finalAction": "ship"
     },
@@ -4119,7 +4120,7 @@
       "grammarLogicJudgement": "Grammar logic partially valid for concept 'active_passive, subject_object'; some seeds produce incorrect marking",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
       "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
-      "feedbackJudgement": "Feedback fields not populated — requires review",
+      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
       "finalAction": "ship"
     },

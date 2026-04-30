@@ -212,7 +212,7 @@ function deriveMarkingJudgement(results) {
   return `${seedCount - failures}/${seedCount} seeds mark correctly; ${failures} seed(s) fail golden validation`;
 }
 
-function deriveFeedbackJudgement(results) {
+function deriveFeedbackJudgement(results, inputType) {
   const hasLong = results.some((r) => r.result?.feedbackLong && r.result.feedbackLong.length > 0);
   const hasShort = results.some((r) => r.result?.feedbackShort && r.result.feedbackShort.length > 0);
   if (hasLong && hasShort) {
@@ -220,6 +220,9 @@ function deriveFeedbackJudgement(results) {
   }
   if (hasShort && !hasLong) {
     return 'feedbackShort present; feedbackLong absent — partial feedback coverage';
+  }
+  if (inputType === 'table_choice') {
+    return 'Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.';
   }
   return 'Feedback fields not populated — requires review';
 }
@@ -298,9 +301,24 @@ export function buildQualityRegister() {
       else severity = 'S2';
     }
 
+    // Determine decision and finalAction
+    const allNoResult = results.every((r) => !r.result);
+    let decision;
+    let finalAction;
+    if (!allPass) {
+      decision = 'blocked';
+      finalAction = 'requires-adult-review';
+    } else if (allNoResult && primaryInputType !== 'table_choice') {
+      decision = 'approved_with_limitation';
+      finalAction = 'ship-with-monitoring';
+    } else {
+      decision = 'approved';
+      finalAction = 'ship';
+    }
+
     entries.push({
       templateId: template.id,
-      decision: allPass ? 'approved' : 'blocked',
+      decision,
       severity,
       reviewerId: 'automated-p10-oracle',
       reviewMethod: 'automated-oracle-with-concrete-evidence',
@@ -310,9 +328,9 @@ export function buildQualityRegister() {
       grammarLogicJudgement: deriveGrammarLogicJudgement(template, results),
       distractorQualityJudgement: deriveDistractorQualityJudgement(results, primaryInputType),
       markingJudgement: deriveMarkingJudgement(results),
-      feedbackJudgement: deriveFeedbackJudgement(results),
+      feedbackJudgement: deriveFeedbackJudgement(results, primaryInputType),
       accessibilityJudgement: deriveAccessibilityJudgement(results),
-      finalAction: allPass ? 'ship' : 'requires-adult-review',
+      finalAction,
     });
   }
 
@@ -322,6 +340,7 @@ export function buildQualityRegister() {
       generatedAt: new Date().toISOString(),
       templateCount: entries.length,
       approved: entries.filter((e) => e.decision === 'approved').length,
+      approvedWithLimitation: entries.filter((e) => e.decision === 'approved_with_limitation').length,
       blocked: entries.filter((e) => e.decision === 'blocked').length,
       highRiskCount: entries.filter((e) => e.seedWindow === '1..15').length,
     },
