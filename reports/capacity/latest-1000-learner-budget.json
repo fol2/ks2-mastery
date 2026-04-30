@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "kind": "capacity-1000-learner-free-tier-budget-ledger",
-  "generatedAt": "2026-04-29T19:39:11.714Z",
+  "generatedAt": "2026-04-30T03:10:07.391Z",
   "modellingOnly": true,
   "certifying": false,
   "certification": {
@@ -24,17 +24,9 @@
   "redThresholdPercent": 80,
   "sources": [
     {
-      "path": "reports/capacity/evidence/2026-04-29-p2-t1-strict-post-p1.json",
+      "path": "reports/capacity/evidence/2026-04-30-p3-t5-strict-r2.json",
       "evidenceKind": "capacity-run",
-      "finishedAt": "2026-04-29T19:25:56.716Z",
-      "inputCertifying": false,
-      "usedForCertification": false,
-      "modellingInputStatus": "non-certifying-modelling-input"
-    },
-    {
-      "path": "reports/capacity/evidence/2026-04-29-p2-t5-strict-repeat-1.json",
-      "evidenceKind": "capacity-run",
-      "finishedAt": "2026-04-29T19:38:25.019Z",
+      "finishedAt": "2026-04-30T03:08:07.687Z",
       "inputCertifying": false,
       "usedForCertification": false,
       "modellingInputStatus": "non-certifying-modelling-input"
@@ -45,8 +37,7 @@
       "route": "GET /api/bootstrap",
       "phase": "bootstrap",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-29-p2-t1-strict-post-p1.json",
-        "reports/capacity/evidence/2026-04-29-p2-t5-strict-repeat-1.json"
+        "reports/capacity/evidence/2026-04-30-p3-t5-strict-r2.json"
       ],
       "count": 50,
       "queryCountP50": 11,
@@ -58,7 +49,7 @@
       "d1RowsWrittenP50": 0,
       "d1RowsWrittenP95": 0,
       "d1RowsWrittenMax": 0,
-      "responseBytesP50": 2449,
+      "responseBytesP50": 2448,
       "responseBytesP95": 2449,
       "responseBytesMax": 2449,
       "workerCpuMsP50": null,
@@ -69,8 +60,7 @@
       "route": "POST /api/demo/session",
       "phase": "setup",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-29-p2-t1-strict-post-p1.json",
-        "reports/capacity/evidence/2026-04-29-p2-t5-strict-repeat-1.json"
+        "reports/capacity/evidence/2026-04-30-p3-t5-strict-r2.json"
       ],
       "count": 30,
       "queryCountP50": null,
@@ -93,22 +83,21 @@
       "route": "POST /api/subjects/grammar/command",
       "phase": "command",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-29-p2-t1-strict-post-p1.json",
-        "reports/capacity/evidence/2026-04-29-p2-t5-strict-repeat-1.json"
+        "reports/capacity/evidence/2026-04-30-p3-t5-strict-r2.json"
       ],
       "count": 90,
       "queryCountP50": 20,
       "queryCountP95": 22,
       "queryCountMax": 23,
       "d1RowsReadP50": 21,
-      "d1RowsReadP95": 836,
-      "d1RowsReadMax": 928,
+      "d1RowsReadP95": 25,
+      "d1RowsReadMax": 771,
       "d1RowsWrittenP50": 17,
       "d1RowsWrittenP95": 32,
       "d1RowsWrittenMax": 32,
-      "responseBytesP50": 16635,
-      "responseBytesP95": 29588,
-      "responseBytesMax": 29589,
+      "responseBytesP50": 16637,
+      "responseBytesP95": 29596,
+      "responseBytesMax": 29597,
       "workerCpuMsP50": null,
       "workerCpuMsP95": null,
       "workerCpuMsMax": null
@@ -134,7 +123,7 @@
             "d1QueriesPerDay": 7860,
             "d1RowsReadPerDay": 8100,
             "d1RowsWrittenPerDay": 6120,
-            "responseBytesPerDay": 6135772.5,
+            "responseBytesPerDay": 6136432.5,
             "responseMiBPerDay": 5.852,
             "worst15MinuteDynamicRequests": 50.76
           },
@@ -265,10 +254,10 @@
           "totals": {
             "dynamicRequestsPerDay": 1080.45,
             "d1QueriesPerDay": 22176,
-            "d1RowsReadPerDay": 791154,
+            "d1RowsReadPerDay": 24759,
             "d1RowsWrittenPerDay": 30240,
-            "responseBytesPerDay": 28269722.25,
-            "responseMiBPerDay": 26.96,
+            "responseBytesPerDay": 28277282.25,
+            "responseMiBPerDay": 26.967,
             "worst15MinuteDynamicRequests": 216.09
           },
           "quotaUse": {
@@ -280,9 +269,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 791154,
+              "value": 24759,
               "limit": 5000000,
-              "percent": 15.82,
+              "percent": 0.5,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
@@ -318,14 +307,14 @@
               "status": "unknown"
             },
             {
-              "quota": "d1RowsReadPerDay",
-              "percent": 15.82,
-              "status": "unknown"
-            },
-            {
               "quota": "dynamicRequestsPerDay",
               "percent": 1.08,
               "status": "green"
+            },
+            {
+              "quota": "d1RowsReadPerDay",
+              "percent": 0.5,
+              "status": "unknown"
             },
             {
               "quota": "workerCpuMsPerInvocation",
@@ -398,10 +387,10 @@
           "totals": {
             "dynamicRequestsPerDay": 2576.25,
             "d1QueriesPerDay": 55050,
-            "d1RowsReadPerDay": 2090700,
+            "d1RowsReadPerDay": 1737450,
             "d1RowsWrittenPerDay": 72000,
-            "responseBytesPerDay": 67311112.5,
-            "responseMiBPerDay": 64.193,
+            "responseBytesPerDay": 67329112.5,
+            "responseMiBPerDay": 64.21,
             "worst15MinuteDynamicRequests": 901.69
           },
           "quotaUse": {
@@ -413,9 +402,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 2090700,
+              "value": 1737450,
               "limit": 5000000,
-              "percent": 41.81,
+              "percent": 34.75,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
@@ -452,7 +441,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 41.81,
+              "percent": 34.75,
               "status": "unknown"
             },
             {
@@ -538,8 +527,8 @@
             "d1QueriesPerDay": 15720,
             "d1RowsReadPerDay": 16200,
             "d1RowsWrittenPerDay": 12240,
-            "responseBytesPerDay": 12271545,
-            "responseMiBPerDay": 11.703,
+            "responseBytesPerDay": 12272865,
+            "responseMiBPerDay": 11.704,
             "worst15MinuteDynamicRequests": 101.52
           },
           "quotaUse": {
@@ -669,10 +658,10 @@
           "totals": {
             "dynamicRequestsPerDay": 2160.9,
             "d1QueriesPerDay": 44352,
-            "d1RowsReadPerDay": 1582308,
+            "d1RowsReadPerDay": 49518,
             "d1RowsWrittenPerDay": 60480,
-            "responseBytesPerDay": 56539444.5,
-            "responseMiBPerDay": 53.92,
+            "responseBytesPerDay": 56554564.5,
+            "responseMiBPerDay": 53.935,
             "worst15MinuteDynamicRequests": 432.18
           },
           "quotaUse": {
@@ -684,9 +673,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 1582308,
+              "value": 49518,
               "limit": 5000000,
-              "percent": 31.65,
+              "percent": 0.99,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
@@ -722,14 +711,14 @@
               "status": "unknown"
             },
             {
-              "quota": "d1RowsReadPerDay",
-              "percent": 31.65,
-              "status": "unknown"
-            },
-            {
               "quota": "dynamicRequestsPerDay",
               "percent": 2.16,
               "status": "green"
+            },
+            {
+              "quota": "d1RowsReadPerDay",
+              "percent": 0.99,
+              "status": "unknown"
             },
             {
               "quota": "workerCpuMsPerInvocation",
@@ -802,10 +791,10 @@
           "totals": {
             "dynamicRequestsPerDay": 5152.5,
             "d1QueriesPerDay": 110100,
-            "d1RowsReadPerDay": 4181400,
+            "d1RowsReadPerDay": 3474900,
             "d1RowsWrittenPerDay": 144000,
-            "responseBytesPerDay": 134622225,
-            "responseMiBPerDay": 128.386,
+            "responseBytesPerDay": 134658225,
+            "responseMiBPerDay": 128.42,
             "worst15MinuteDynamicRequests": 1803.37
           },
           "quotaUse": {
@@ -817,10 +806,10 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 4181400,
+              "value": 3474900,
               "limit": 5000000,
-              "percent": 83.63,
-              "status": "red",
+              "percent": 69.5,
+              "status": "unknown",
               "coverage": "partial-lower-bound"
             },
             "d1RowsWrittenPerDay": {
@@ -856,8 +845,8 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 83.63,
-              "status": "red"
+              "percent": 69.5,
+              "status": "unknown"
             },
             {
               "quota": "dynamicRequestsPerDay",
@@ -913,15 +902,6 @@
           ],
           "phase2Recommendations": [
             {
-              "path": "statement-map-backed query-plan read reduction",
-              "protects": [
-                "D1 rows read/day",
-                "D1 query duration",
-                "bootstrap wall-time tail"
-              ],
-              "triggeredBy": "d1RowsReadPerDay"
-            },
-            {
               "path": "write-amplification review before new indexes",
               "protects": [
                 "D1 rows written/day"
@@ -958,8 +938,8 @@
             "d1QueriesPerDay": 26200,
             "d1RowsReadPerDay": 27000,
             "d1RowsWrittenPerDay": 20400,
-            "responseBytesPerDay": 20452575,
-            "responseMiBPerDay": 19.505,
+            "responseBytesPerDay": 20454775,
+            "responseMiBPerDay": 19.507,
             "worst15MinuteDynamicRequests": 169.2
           },
           "quotaUse": {
@@ -1089,10 +1069,10 @@
           "totals": {
             "dynamicRequestsPerDay": 3601.5,
             "d1QueriesPerDay": 73920,
-            "d1RowsReadPerDay": 2637180,
+            "d1RowsReadPerDay": 82530,
             "d1RowsWrittenPerDay": 100800,
-            "responseBytesPerDay": 94232407.5,
-            "responseMiBPerDay": 89.867,
+            "responseBytesPerDay": 94257607.5,
+            "responseMiBPerDay": 89.891,
             "worst15MinuteDynamicRequests": 720.3
           },
           "quotaUse": {
@@ -1104,9 +1084,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 2637180,
+              "value": 82530,
               "limit": 5000000,
-              "percent": 52.74,
+              "percent": 1.65,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
@@ -1142,14 +1122,14 @@
               "status": "red"
             },
             {
-              "quota": "d1RowsReadPerDay",
-              "percent": 52.74,
-              "status": "unknown"
-            },
-            {
               "quota": "dynamicRequestsPerDay",
               "percent": 3.6,
               "status": "green"
+            },
+            {
+              "quota": "d1RowsReadPerDay",
+              "percent": 1.65,
+              "status": "unknown"
             },
             {
               "quota": "workerCpuMsPerInvocation",
@@ -1229,10 +1209,10 @@
           "totals": {
             "dynamicRequestsPerDay": 8587.5,
             "d1QueriesPerDay": 183500,
-            "d1RowsReadPerDay": 6969000,
+            "d1RowsReadPerDay": 5791500,
             "d1RowsWrittenPerDay": 240000,
-            "responseBytesPerDay": 224370375,
-            "responseMiBPerDay": 213.976,
+            "responseBytesPerDay": 224430375,
+            "responseMiBPerDay": 214.033,
             "worst15MinuteDynamicRequests": 3005.63
           },
           "quotaUse": {
@@ -1244,9 +1224,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 6969000,
+              "value": 5791500,
               "limit": 5000000,
-              "percent": 139.38,
+              "percent": 115.83,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
@@ -1283,7 +1263,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 139.38,
+              "percent": 115.83,
               "status": "red"
             },
             {
@@ -1385,8 +1365,8 @@
             "d1QueriesPerDay": 78600,
             "d1RowsReadPerDay": 81000,
             "d1RowsWrittenPerDay": 61200,
-            "responseBytesPerDay": 61357725,
-            "responseMiBPerDay": 58.515,
+            "responseBytesPerDay": 61364325,
+            "responseMiBPerDay": 58.522,
             "worst15MinuteDynamicRequests": 507.6
           },
           "quotaUse": {
@@ -1516,10 +1496,10 @@
           "totals": {
             "dynamicRequestsPerDay": 10804.5,
             "d1QueriesPerDay": 221760,
-            "d1RowsReadPerDay": 7911540,
+            "d1RowsReadPerDay": 247590,
             "d1RowsWrittenPerDay": 302400,
-            "responseBytesPerDay": 282697222.5,
-            "responseMiBPerDay": 269.601,
+            "responseBytesPerDay": 282772822.5,
+            "responseMiBPerDay": 269.673,
             "worst15MinuteDynamicRequests": 2160.9
           },
           "quotaUse": {
@@ -1531,10 +1511,10 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 7911540,
+              "value": 247590,
               "limit": 5000000,
-              "percent": 158.23,
-              "status": "red",
+              "percent": 4.95,
+              "status": "unknown",
               "coverage": "partial-lower-bound"
             },
             "d1RowsWrittenPerDay": {
@@ -1569,14 +1549,14 @@
               "status": "red"
             },
             {
-              "quota": "d1RowsReadPerDay",
-              "percent": 158.23,
-              "status": "red"
-            },
-            {
               "quota": "dynamicRequestsPerDay",
               "percent": 10.8,
               "status": "green"
+            },
+            {
+              "quota": "d1RowsReadPerDay",
+              "percent": 4.95,
+              "status": "unknown"
             },
             {
               "quota": "workerCpuMsPerInvocation",
@@ -1627,15 +1607,6 @@
           ],
           "phase2Recommendations": [
             {
-              "path": "statement-map-backed query-plan read reduction",
-              "protects": [
-                "D1 rows read/day",
-                "D1 query duration",
-                "bootstrap wall-time tail"
-              ],
-              "triggeredBy": "d1RowsReadPerDay"
-            },
-            {
               "path": "write-amplification review before new indexes",
               "protects": [
                 "D1 rows written/day"
@@ -1665,10 +1636,10 @@
           "totals": {
             "dynamicRequestsPerDay": 25762.5,
             "d1QueriesPerDay": 550500,
-            "d1RowsReadPerDay": 20907000,
+            "d1RowsReadPerDay": 17374500,
             "d1RowsWrittenPerDay": 720000,
-            "responseBytesPerDay": 673111125,
-            "responseMiBPerDay": 641.929,
+            "responseBytesPerDay": 673291125,
+            "responseMiBPerDay": 642.1,
             "worst15MinuteDynamicRequests": 9016.88
           },
           "quotaUse": {
@@ -1680,9 +1651,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 20907000,
+              "value": 17374500,
               "limit": 5000000,
-              "percent": 418.14,
+              "percent": 347.49,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
@@ -1719,7 +1690,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 418.14,
+              "percent": 347.49,
               "status": "red"
             },
             {
@@ -1821,8 +1792,8 @@
             "d1QueriesPerDay": 262000,
             "d1RowsReadPerDay": 270000,
             "d1RowsWrittenPerDay": 204000,
-            "responseBytesPerDay": 204525750,
-            "responseMiBPerDay": 195.051,
+            "responseBytesPerDay": 204547750,
+            "responseMiBPerDay": 195.072,
             "worst15MinuteDynamicRequests": 1692
           },
           "quotaUse": {
@@ -1959,10 +1930,10 @@
           "totals": {
             "dynamicRequestsPerDay": 36015,
             "d1QueriesPerDay": 739200,
-            "d1RowsReadPerDay": 26371800,
+            "d1RowsReadPerDay": 825300,
             "d1RowsWrittenPerDay": 1008000,
-            "responseBytesPerDay": 942324075,
-            "responseMiBPerDay": 898.67,
+            "responseBytesPerDay": 942576075,
+            "responseMiBPerDay": 898.911,
             "worst15MinuteDynamicRequests": 7203
           },
           "quotaUse": {
@@ -1974,10 +1945,10 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 26371800,
+              "value": 825300,
               "limit": 5000000,
-              "percent": 527.44,
-              "status": "red",
+              "percent": 16.51,
+              "status": "unknown",
               "coverage": "partial-lower-bound"
             },
             "d1RowsWrittenPerDay": {
@@ -2012,14 +1983,14 @@
               "status": "red"
             },
             {
-              "quota": "d1RowsReadPerDay",
-              "percent": 527.44,
-              "status": "red"
-            },
-            {
               "quota": "dynamicRequestsPerDay",
               "percent": 36.02,
               "status": "green"
+            },
+            {
+              "quota": "d1RowsReadPerDay",
+              "percent": 16.51,
+              "status": "unknown"
             },
             {
               "quota": "workerCpuMsPerInvocation",
@@ -2070,15 +2041,6 @@
           ],
           "phase2Recommendations": [
             {
-              "path": "statement-map-backed query-plan read reduction",
-              "protects": [
-                "D1 rows read/day",
-                "D1 query duration",
-                "bootstrap wall-time tail"
-              ],
-              "triggeredBy": "d1RowsReadPerDay"
-            },
-            {
               "path": "write-amplification review before new indexes",
               "protects": [
                 "D1 rows written/day"
@@ -2108,10 +2070,10 @@
           "totals": {
             "dynamicRequestsPerDay": 85875,
             "d1QueriesPerDay": 1835000,
-            "d1RowsReadPerDay": 69690000,
+            "d1RowsReadPerDay": 57915000,
             "d1RowsWrittenPerDay": 2400000,
-            "responseBytesPerDay": 2243703750,
-            "responseMiBPerDay": 2139.763,
+            "responseBytesPerDay": 2244303750,
+            "responseMiBPerDay": 2140.335,
             "worst15MinuteDynamicRequests": 30056.25
           },
           "quotaUse": {
@@ -2123,9 +2085,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 69690000,
+              "value": 57915000,
               "limit": 5000000,
-              "percent": 1393.8,
+              "percent": 1158.3,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
@@ -2162,7 +2124,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 1393.8,
+              "percent": 1158.3,
               "status": "red"
             },
             {

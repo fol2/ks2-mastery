@@ -1,10 +1,11 @@
 ---
 title: "feat: System Hardening Optimisation P3 Invocation Telemetry Gate"
 type: feat
-status: tooling-complete
+status: completed
 date: 2026-04-30
 origin: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md
-completion_scope: "Repo-local P3 telemetry tooling and guardrails only; production strict evidence, classification, and final P3 decision remain follow-up."
+contract_status: terminal-outcome-recorded
+completion_scope: "P3 completed with strict-30-certified-candidate evidence on 2026-04-30; public/Admin promotion remains a separate reviewed capacity-status row."
 source_docs:
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p2-completion-report.md
@@ -22,11 +23,27 @@ deepened: 2026-04-30
 
 Implement P3 as an observability repair and strict evidence decision phase: prove a machine-joinable Cloudflare invocation CPU/wall capture path, repeat the strict 30-learner gate with that telemetry present, then choose one next mitigation path from evidence rather than optimisation guesswork.
 
+PR #699 executed only the repo-local telemetry-tooling slice of this plan. A later gap-fix branch completed the remaining P3 contract work: operator smoke, strict production reruns, top-tail classification, and the final decision report required by `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md`.
+
+The 2026-04-30 P3-T0 smoke proved the live `npm run ops:tail:json` path on a bounded production run, with 2/2 retained top-tail bootstrap samples matched for both invocation CPU/wall and statement logs. Strict P3-T1, P3-T5 repeat 1, and P3-T5 repeat 2 then passed the strict 30 learner gate with 10/10 retained bootstrap top-tail invocation coverage and 10/10 statement-log coverage on each run.
+
+Terminal P3 outcome: `strict-30-certified-candidate`. Public/Admin promotion remains intentionally deferred to a separate capacity-status row PR.
+
 ---
 
 ## Problem Frame
 
 P2 ended correctly as non-certifying: the first strict 30 run passed, the repeated strict run failed bootstrap P95, statement-log coverage was complete, and Cloudflare invocation CPU/wall coverage was 0/10 for top-tail bootstrap samples. P3 exists because the blocker is now the missing telemetry layer, not a proven D1, Worker CPU, payload, or policy defect.
+
+## Execution Boundary
+
+The source contract remains the authority. A tooling-complete branch is not a P3 terminal outcome. P3 is complete only when the contract exits through one of the product outcomes in the original document: `strict-30-certified-candidate`, `strict-30-still-blocked-classified`, `strict-30-still-blocked-unclassified`, or `telemetry-repair-failed`.
+
+The required final P3 report path remains unfilled until that terminal outcome exists:
+
+```text
+docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3-completion-report.md
+```
 
 ---
 
@@ -46,7 +63,7 @@ P2 ended correctly as non-certifying: the first strict 30 run passed, the repeat
 - R2. Prove one canonical machine-joinable Cloudflare invocation capture path that includes finite CPU and wall time for top-tail Worker invocations.
 - R3. Keep invocation coverage and sampled `capacity.request` statement coverage separate; complete statement logs must not be interpreted as complete CPU/wall coverage.
 - R4. Preserve request-id pairing and capture-window discipline so strict-run top-tail request IDs can be joined to raw operator-held logs without committing raw logs.
-- R5. Keep redaction fail-closed: committed production-derived evidence artefacts use opaque `req_<hash>` and `stmt_<hash>` identifiers and must not include raw `ks2_req_*`, SQL, table/column names, cookies, bearer tokens, learner names, answers, request bodies, or response bodies. Parser fixtures may contain raw-looking IDs or field names only when they are synthetic, production-free, and explicitly treated as test fixtures rather than evidence artefacts.
+- R5. Keep redaction fail-closed: committed production-derived evidence artefacts use opaque `req_<hash>` and `stmt_<hash>` identifiers and must not include raw `ks2_req_*`, SQL, table/column names, cookies, bearer tokens, learner names, answers, request bodies, or response bodies. New P3 parser fixtures should use synthetic fixture-only request IDs rather than raw-looking `ks2_req_*` IDs unless the test is explicitly exercising legacy raw-ID redaction behaviour.
 - R6. Rerun strict 30 evidence only after the capture path is proven; strict certification candidates must use the pinned `reports/capacity/configs/30-learner-beta.json` shape and unique output paths.
 - R7. Classify top-tail bootstrap samples using client wall, app/server wall, Cloudflare Worker wall, Worker CPU, D1 duration, query count, D1 rows read/written, response bytes, statement coverage, and classification reasons.
 - R8. Update Admin/Operations evidence truth only through verifier-backed and generated summary paths; diagnostic worker-log joins must remain diagnostic-only.
@@ -135,6 +152,7 @@ P2 ended correctly as non-certifying: the first strict 30 run passed, the repeat
 - **Does Cloudflare expose CPU/wall telemetry in official surfaces?** Yes. Official Workers Trace, Logs, Tail/Logpush, and limits documentation describe CPU/wall availability, but the repo must still prove the exact operator export shape.
 - **Can `diagnostics.workerLogJoin` certify a run?** No. It remains diagnostic-only and cannot promote public capacity wording.
 - **Should raw logs be committed for reproducibility?** No. Reproducibility comes from redacted fixtures and diagnostic artefacts; raw logs remain local/operator-held.
+- **Whether one or two strict repeats are enough:** The source contract requires P3-T5 strict repeat 2 unless a written policy explains why exactly one repeat is sufficient.
 
 ### Deferred to Implementation
 
@@ -142,7 +160,6 @@ P2 ended correctly as non-certifying: the first strict 30 run passed, the repeat
 - **Whether `npm run ops:tail:json` alone is enough:** implementation must prove it with smoke/fixture data; if it lacks CPU/wall fields, choose another approved source or exit telemetry-repair-failed.
 - **Exact strict P3 evidence result:** pass/fail status, tail classification, and Phase 4 recommendation depend on production-origin runs.
 - **Whether Admin UI copy changes are needed:** docs and generated summary truth may be sufficient unless P3 surfaces a new ambiguous state that the Admin panel cannot represent.
-- **Whether one or two strict repeats are enough:** the source contract prefers T5 repeat 1 plus repeat 2 unless a written policy accepts one repeat.
 
 ---
 
@@ -181,6 +198,8 @@ The decision matrix for P3 is:
 | Strict repeat fails and top-tail cause is `worker-cpu-dominated` | `strict-30-still-blocked-classified` | Phase 4 Worker CPU/JSON construction mitigation. |
 | Strict repeat fails and top-tail cause is `payload-size-pressure` | `strict-30-still-blocked-classified` | Phase 4 payload/envelope mitigation. |
 | Strict repeat fails and top-tail cause is client/network/platform overhead | `strict-30-still-blocked-classified` | Phase 4 operations/load-driver/platform investigation. |
+| Strict repeat fails and top-tail cause is `mixed-no-single-dominant-resource` | `strict-30-still-blocked-classified` | Choose the least risky bounded mitigation from the evidence table and document rejected alternatives. |
+| Strict repeat fails and joined invocation exists but statement logs are absent (`partial-invocation-only`) | `strict-30-still-blocked-unclassified` or limited CPU-only classification | Do not approve D1/query work; either classify Worker CPU pressure only if CPU evidence is decisive, or continue observability repair. |
 | Strict repeat fails and telemetry is still incomplete | `strict-30-still-blocked-unclassified` | Observability repair continuation; no performance code. |
 | No reliable CPU/wall capture source can be proven | `telemetry-repair-failed` | Alternative observability path decision. |
 
@@ -250,7 +269,7 @@ The decision matrix for P3 is:
 
 **Approach:**
 - Select and document the canonical P3 capture source from the operator-available Cloudflare surface: JSON tail, Workers Logs export, Workers Trace/Logpush export, Tail Worker export, or another approved JSON/JSONL source.
-- Add a synthetic, production-free parser fixture for the chosen shape with CPU/wall fields, outcome/status, timestamp, request URL/method, and enough request-id material to join. Raw-looking request IDs are permitted only inside this fixture to exercise parser semantics; they must not appear in committed production-derived evidence artefacts.
+- Add a synthetic, production-free parser fixture for the chosen shape with CPU/wall fields, outcome/status, timestamp, request URL/method, and enough request-id material to join. The P3 canonical fixture should use fixture-only request IDs, not raw-looking `ks2_req_*` values. Legacy raw-ID fixtures may remain only when they are explicitly testing redaction and parser compatibility.
 - Keep parser support permissive for known wrappers but strict for CPU/wall semantics: missing, null, non-finite, or single-sided CPU/wall values must not become zeroes or matched invocation coverage.
 - Report invocation coverage separately from statement coverage and preserve partial states.
 - Treat malformed pretty/log lines as bounded warnings, not silent success.
@@ -273,6 +292,7 @@ The decision matrix for P3 is:
 **Verification:**
 - The chosen export fixture proves matched finite invocation CPU/wall fields.
 - The runbook names one canonical P3 capture source and explicitly says when P3 must exit telemetry-repair-failed.
+- Log exports with parsed records but no timestamps produce a machine-readable capture-window warning before they can be treated as decision-grade evidence.
 
 ---
 
@@ -361,6 +381,7 @@ The decision matrix for P3 is:
 
 **Verification:**
 - Each strict run has a unique evidence path, redacted tail correlation, and statement map or explicit incomplete-coverage record.
+- At least the retained top 10 bootstrap samples have finite invocation CPU/wall coverage, or the run is marked telemetry-incomplete and cannot support certification or mitigation selection.
 - Any run considered certification-eligible passes the evidence verifier in a full clone without certification bypass.
 - A failing repeat blocks certification even when an earlier strict run passes.
 
@@ -424,12 +445,12 @@ The decision matrix for P3 is:
 
 **Files:**
 - Create: `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3-completion-report.md`
-- Modify: `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md`
+- Review: `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md`
 - Test expectation: none -- completion reporting is reviewed against evidence artefacts and verifier output.
 
 **Approach:**
 - Report the completion boundary, ZIP/local validation boundary if applicable, evidence inventory, strict run table, tail-correlation coverage table, top-tail classification table, certification decision, 1000-learner interpretation, validation results, residual blockers, and recommended Phase 4.
-- Use "complete" only for the SDLC/evidence phase unless the strict certification criteria actually passed.
+- Use "complete" only for an explicitly named slice, such as "telemetry-tooling SDLC complete", unless the strict certification criteria actually passed or the contract exits through another terminal P3 outcome.
 - Include exact evidence file names and public capacity wording.
 - If P3 exits telemetry-repair-failed, state that no performance mitigation or promotion is approved.
 
@@ -444,6 +465,7 @@ The decision matrix for P3 is:
 - The report states one of the P3 terminal outcomes and one recommended Phase 4 path.
 - The report gives exact file paths for evidence and validation artefacts.
 - The report keeps 1000-learner budget interpretation modelling-only.
+- The governing source contract is not rewritten to relax completion criteria; any cross-reference update must preserve the original acceptance gates.
 
 ---
 
@@ -495,11 +517,40 @@ The decision matrix for P3 is:
 
 ## Success Metrics
 
-- P3 has a fixture-backed canonical invocation capture path or a clear telemetry-repair-failed exit.
+- P3 has a live/operator-proven canonical invocation capture path or a clear telemetry-repair-failed exit. A fixture-backed parser alone is a tooling milestone, not a P3 terminal outcome.
 - Strict 30 P3 runs have unique evidence, joined tail-correlation, statement-map, and verifier interpretation.
 - Top-tail classification names a resource class or explicitly says telemetry is still insufficient.
 - Admin/Operations evidence cannot accidentally promote from T1, diagnostics, stale summary generation, or modelling ledgers.
 - The P3 completion report recommends exactly one Phase 4 path.
+
+---
+
+## Final Validation Gates
+
+Before any branch claims P3 completion, run and record:
+
+```sh
+node --test \
+  tests/capacity-scripts.test.js \
+  tests/capacity-worker-log-join.test.js \
+  tests/capacity-evidence.test.js \
+  tests/capacity-statement-map.test.js \
+  tests/generate-evidence-summary.test.js \
+  tests/verify-capacity-evidence.test.js
+
+npm run capacity:verify-evidence
+npm run check
+git diff --check
+```
+
+Privacy scans must be recorded separately from test pass/fail. The expected result for new P3 committed evidence, operations docs, and reports is no raw secrets and no raw production request IDs:
+
+```sh
+grep -R "ks2_req_" reports/capacity/evidence docs/operations docs/plans/james/sys-hardening/A || true
+grep -R "CLOUDFLARE_API_TOKEN\|ks2_session\|Bearer " reports/capacity/evidence docs/operations docs/plans/james/sys-hardening/A || true
+```
+
+Existing historical evidence may still contain legacy raw request IDs. That legacy state must be called out as residual risk rather than treated as proof that new P3 artefacts are allowed to persist raw IDs.
 
 ---
 

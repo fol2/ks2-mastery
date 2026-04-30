@@ -83,6 +83,10 @@ P3 is a telemetry-gate phase, not a performance mitigation phase. The implementa
 
 The canonical P3 capture path is the JSONL Cloudflare Workers Logs/Tail invocation shape documented in `docs/operations/capacity-cpu-d1-evidence.md` and locked by `tests/fixtures/capacity-worker-logs/p3-invocation-export.jsonl`.
 
+This fixture proves parser compatibility only. A live P3 operator smoke must still prove that the actual Cloudflare export available to the operator contains finite CPU/wall fields and usable timestamps before any strict P3 run is treated as decision-grade.
+
+On 2026-04-30, `reports/capacity/evidence/2026-04-30-p3-t0-smoke.json` and `reports/capacity/evidence/2026-04-30-p3-t0-smoke-tail-correlation.json` proved the live `npm run ops:tail:json` operator path against a bounded production smoke: 2/2 retained top-tail bootstrap samples matched invocation CPU/wall and statement logs with no join warnings. That smoke is still diagnostic-only because the run shape was one learner, burst 1, and one round.
+
 For each strict P3 run, keep these artefacts separate:
 
 | Run | Evidence path | Raw log path | Redacted join path | Statement map path | Certification role |
@@ -97,9 +101,22 @@ Read these warning codes before interpreting a join:
 | Warning | Meaning | Operator action |
 | --- | --- | --- |
 | `capture-window-no-overlap` | Log timestamps do not overlap the evidence run window. | Treat the join as wrong-window diagnostic output and recapture. |
+| `capture-window-missing-log-timestamps` | Parsed log records had no timestamps, so overlap with the evidence run cannot be proven. | Recapture with timestamp-bearing Workers Logs/Tail/Trace output before making a P3 decision. |
 | `insufficient-invocation-coverage` | Statement logs matched the retained top-tail samples, but finite invocation CPU/wall matches were zero. | This reproduces the P2 failure shape; do not classify D1, Worker CPU, payload, or platform overhead from this join. |
 
 If P3 cannot obtain finite invocation CPU/wall coverage from the canonical JSONL source or an approved equivalent Workers Logs/Tail/Trace/Logpush export, the outcome is `telemetry-repair-failed`. Keep public capacity wording at `small-pilot-provisional`, keep P2 T5 as the active strict 30 row, and open an observability-continuation path rather than an optimisation PR.
+
+## P3 Evidence Lock, 2026-04-30
+
+P3 obtained finite invocation CPU/wall coverage and completed the strict repeat gate. The public/Admin capacity status is not promoted by this diagnostic section; promotion still requires a separate reviewed capacity-status row.
+
+| Run | Bootstrap P95 | Bootstrap max | Command P95 | Invocation coverage | Statement coverage | Warnings | Result |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| P3-T1 strict | 701.3 ms | 703.7 ms | 292.7 ms | 10/10 | 10/10 | 0 | Pass |
+| P3-T5 strict repeat 1 | 661.4 ms | 664.3 ms | 319.2 ms | 10/10 | 10/10 | 0 | Pass |
+| P3-T5 strict repeat 2 | 715.2 ms | 719.0 ms | 279.7 ms | 10/10 | 10/10 | 0 | Pass |
+
+Diagnostic classification across the strict-run retained bootstrap top tails was mostly `d1-dominated` (24/30 samples), with 3 `worker-cpu-dominated` samples and 3 `client-network-or-platform-overhead` samples. Because all strict repeats passed, the P3 decision is `strict-30-certified-candidate`, not a Phase 4 D1 or Worker CPU mitigation.
 
 ## Minimum Evidence Set Before Mitigation
 

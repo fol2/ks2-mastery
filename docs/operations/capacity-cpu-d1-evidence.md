@@ -20,7 +20,7 @@ This guide covers the evidence-attribution lane for joining Cloudflare Worker in
 
 ## P3 Canonical Invocation Capture
 
-P3 uses a Cloudflare Workers Logs/Tail JSONL invocation export as the canonical capture source. The expected invocation record is a `cf-worker-event` shape with finite Cloudflare CPU and wall fields, request method/url/status, timestamp, and retained request-id material. The fixture that locks the accepted schema is:
+P3 uses a Cloudflare Workers Logs/Tail JSONL invocation export as the canonical capture source. The expected invocation record is a `cf-worker-event` shape with finite Cloudflare CPU and wall fields, request method/url/status, timestamp, and retained request-id material. The synthetic fixture that locks the accepted schema uses fixture-only request IDs rather than raw-looking production request IDs:
 
 - `tests/fixtures/capacity-worker-logs/p3-invocation-export.jsonl`
 
@@ -31,6 +31,19 @@ P3_RUN=2026-04-30-p3-t1
 RAW_LOG=/tmp/ks2-${P3_RUN}-worker-tail.jsonl
 npm run ops:tail:json > "$RAW_LOG"
 ```
+
+The 2026-04-30 P3-T0 smoke confirmed that this package script can emit the live pretty JSON stream shape needed for finite Cloudflare CPU/wall joins. The committed proof is diagnostic-only:
+
+- `reports/capacity/evidence/2026-04-30-p3-t0-smoke.json`
+- `reports/capacity/evidence/2026-04-30-p3-t0-smoke-tail-correlation.json`
+
+The same capture path then supported the strict P3 gate:
+
+- `reports/capacity/evidence/2026-04-30-p3-t1-tail-correlation.json`
+- `reports/capacity/evidence/2026-04-30-p3-t5-strict-r1-tail-correlation.json`
+- `reports/capacity/evidence/2026-04-30-p3-t5-strict-r2-tail-correlation.json`
+
+Each strict join matched 10/10 retained bootstrap top-tail samples for invocation CPU/wall and 10/10 for statement logs with zero join warnings.
 
 The raw log path must stay outside git. If a local operator must temporarily place raw captures under `reports/capacity/evidence/`, names containing `worker-log`, `worker-tail`, `pretty-tail`, `raw-tail`, `tail-raw`, or ending in `-tail` before a raw log extension are ignored by `reports/capacity/.gitignore`. Do not name redacted artefacts with those raw-log tokens; use `*-tail-correlation.json`, `*-statement-map.json`, and `*-tail-classification.md`.
 
@@ -59,7 +72,7 @@ Operator checklist for every P3 strict or smoke join:
 | Statement map path | `reports/capacity/evidence/<date>-p3-*-statement-map.json` when statement logs are captured. |
 | Invocation coverage | `diagnostics.workerLogJoin.coverage.invocation` from the joined output. |
 | Statement coverage | `diagnostics.workerLogJoin.coverage.statementLogs` from the joined output. |
-| Warnings | Must not include `capture-window-no-overlap` for decision-grade evidence. |
+| Warnings | Must not include `capture-window-no-overlap`, `capture-window-missing-log-timestamps`, or `insufficient-invocation-coverage` for decision-grade evidence. |
 
 Join the exported logs to the evidence by request id:
 
@@ -102,7 +115,7 @@ Correlation output is written as a diagnostic artefact with:
 - `diagnostics.workerLogJoin.coverage.invocation`: top-tail samples with matched Cloudflare CPU/wall invocation logs.
 - `diagnostics.workerLogJoin.coverage.statementLogs`: top-tail samples with matched sampled `capacity.request` statement breakdowns.
 - `diagnostics.workerLogJoin.samples[]`: per-request hashed request ID, app wall time, response bytes, D1 counts, Cloudflare CPU/wall, outcome, capacity-request D1 duration, bounded opaque statement IDs/counts, join status, and classification.
-- `diagnostics.workerLogJoin.warnings[]`: bounded warning strings copied from the join. `capture-window-no-overlap` means the log timestamps do not overlap the capacity evidence window. `insufficient-invocation-coverage` means sampled statement logs matched the retained top-tail set but finite invocation CPU/wall coverage remained zero.
+- `diagnostics.workerLogJoin.warnings[]`: bounded warning strings copied from the join. `capture-window-no-overlap` means the log timestamps do not overlap the capacity evidence window. `capture-window-missing-log-timestamps` means parsed log records had no timestamps, so the capture window could not be validated. `insufficient-invocation-coverage` means sampled statement logs matched the retained top-tail set but finite invocation CPU/wall coverage remained zero.
 
 Classification values are intentionally conservative:
 

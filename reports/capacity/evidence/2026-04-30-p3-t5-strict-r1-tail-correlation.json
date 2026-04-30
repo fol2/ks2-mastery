@@ -1,0 +1,1208 @@
+{
+  "ok": true,
+  "kind": "capacity-worker-log-correlation",
+  "diagnosticOnly": true,
+  "generatedAt": "2026-04-30T02:55:41.969Z",
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "requestIds": "sha256:24",
+    "statementIds": "sha256:24",
+    "rawRequestIdsPersisted": false,
+    "rawStatementNamesPersisted": false
+  },
+  "sourceEvidence": {
+    "path": "reports/capacity/evidence/2026-04-30-p3-t5-strict-r1.json",
+    "commit": "3c4b4a5e238e6fc4078a91e0f13d1fccfadd5d85",
+    "startedAt": "2026-04-30T02:54:51.205Z",
+    "finishedAt": "2026-04-30T02:55:26.708Z",
+    "learners": 30,
+    "bootstrapBurst": 20,
+    "rounds": 1
+  },
+  "warnings": [],
+  "diagnostics": {
+    "workerLogJoin": {
+      "schemaVersion": 1,
+      "diagnosticOnly": true,
+      "generatedAt": "2026-04-30T02:55:41.969Z",
+      "sourceEvidencePath": "reports/capacity/evidence/2026-04-30-p3-t5-strict-r1.json",
+      "logSourcePaths": [
+        "/tmp/ks2-2026-04-30-p3-t5-strict-r1-worker-tail.jsonl"
+      ],
+      "certification": {
+        "contributesToCertification": false,
+        "reason": "worker-log-diagnostics-do-not-certify"
+      },
+      "coverage": {
+        "topTailSamples": 10,
+        "invocation": {
+          "matched": 10,
+          "partial": 0,
+          "missing": 0,
+          "coverageRatio": 1
+        },
+        "statementLogs": {
+          "matched": 10,
+          "partial": 0,
+          "missing": 0,
+          "coverageRatio": 1
+        }
+      },
+      "classificationCounts": {
+        "d1-dominated": 7,
+        "worker-cpu-dominated": 2,
+        "client-network-or-platform-overhead": 1
+      },
+      "samples": [
+        {
+          "requestId": "req_a6ce62cc03799a4ef439b998",
+          "clientRequestId": "req_a6ce62cc03799a4ef439b998",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 664.3,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 296,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 14,
+            "wallTimeMs": 308,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 296,
+            "d1DurationMs": 179.3961,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 36
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 28
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 28
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 29
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.0982
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 27
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0562
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0876
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0728
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0813
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "d1-dominated",
+          "classificationReason": "D1 duration accounts for at least half of joined Worker wall time."
+        },
+        {
+          "requestId": "req_06c7e1d7651d710b32b7facc",
+          "clientRequestId": "req_06c7e1d7651d710b32b7facc",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 663.2,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 283,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 10,
+            "wallTimeMs": 304,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 283,
+            "d1DurationMs": 172.46500000000003,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 32
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 32
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 25
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 34
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 23
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1142
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 26
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0612
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0795
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.073
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1371
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "d1-dominated",
+          "classificationReason": "D1 duration accounts for at least half of joined Worker wall time."
+        },
+        {
+          "requestId": "req_0c0cfdff1529c52ad5b3447c",
+          "clientRequestId": "req_0c0cfdff1529c52ad5b3447c",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 661.4,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 267,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 20,
+            "wallTimeMs": 307,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 267,
+            "d1DurationMs": 145.4218,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 20
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 30
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 17
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 23
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 33
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1234
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 22
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0599
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0527
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1074
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0784
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "worker-cpu-dominated",
+          "classificationReason": "Worker CPU is near the Free-plan budget or dominates Worker wall time."
+        },
+        {
+          "requestId": "req_44ece595c176582183f2d428",
+          "clientRequestId": "req_44ece595c176582183f2d428",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 660,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 289,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 7,
+            "wallTimeMs": 306,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 289,
+            "d1DurationMs": 175.40929999999997,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 25
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 29
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1067
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 28
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0592
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0649
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0716
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1069
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "d1-dominated",
+          "classificationReason": "D1 duration accounts for at least half of joined Worker wall time."
+        },
+        {
+          "requestId": "req_c7879c017862234b67ace69b",
+          "clientRequestId": "req_c7879c017862234b67ace69b",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 659.9,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 284,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 4,
+            "wallTimeMs": 310,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 284,
+            "d1DurationMs": 151.6795,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 20
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 21
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 25
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 28
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1172
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 26
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0778
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1201
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.203
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1614
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "client-network-or-platform-overhead",
+          "classificationReason": "Client-observed wall time materially exceeds joined Worker wall time."
+        },
+        {
+          "requestId": "req_b8597202b8f6fd9de853b188",
+          "clientRequestId": "req_b8597202b8f6fd9de853b188",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 659.6,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 291,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 8,
+            "wallTimeMs": 308,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 291,
+            "d1DurationMs": 172.4158,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 30
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 30
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 24
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 35
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 28
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1287
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 25
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0563
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0574
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0676
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1058
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "d1-dominated",
+          "classificationReason": "D1 duration accounts for at least half of joined Worker wall time."
+        },
+        {
+          "requestId": "req_f5e0ef89fe789b35f9e34216",
+          "clientRequestId": "req_f5e0ef89fe789b35f9e34216",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 656.4,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 273,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 6,
+            "wallTimeMs": 308,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 273,
+            "d1DurationMs": 178.36790000000002,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 22
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 40
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 29
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 33
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 26
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1035
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 28
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0569
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0574
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0746
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0755
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "d1-dominated",
+          "classificationReason": "D1 duration accounts for at least half of joined Worker wall time."
+        },
+        {
+          "requestId": "req_105e09e42a023cb1e97ccc5e",
+          "clientRequestId": "req_105e09e42a023cb1e97ccc5e",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 655.6,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 289,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 4,
+            "wallTimeMs": 319,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 289,
+            "d1DurationMs": 178.4435,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 20
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 32
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 41
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 30
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 32
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1173
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 23
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0823
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0736
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0795
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0908
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "d1-dominated",
+          "classificationReason": "D1 duration accounts for at least half of joined Worker wall time."
+        },
+        {
+          "requestId": "req_3f2f049e94ead3944f6ca47b",
+          "clientRequestId": "req_3f2f049e94ead3944f6ca47b",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 655.2,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 278,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 6,
+            "wallTimeMs": 317,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 278,
+            "d1DurationMs": 174.4584,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 21
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 38
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 33
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 30
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 25
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1271
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 27
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1072
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0751
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0692
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0798
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "d1-dominated",
+          "classificationReason": "D1 duration accounts for at least half of joined Worker wall time."
+        },
+        {
+          "requestId": "req_c0550b303c1341ee37e0481f",
+          "clientRequestId": "req_c0550b303c1341ee37e0481f",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 587.3,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 252,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 14,
+            "wallTimeMs": 280,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 252,
+            "d1DurationMs": 130.49909999999997,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 20
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 21
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 11
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 38
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 8
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1201
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 32
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0649
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0823
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1318
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "worker-cpu-dominated",
+          "classificationReason": "Worker CPU is near the Free-plan budget or dominates Worker wall time."
+        }
+      ],
+      "warnings": [],
+      "redaction": {
+        "version": "capacity-diagnostics-redaction-v1",
+        "requestIds": "sha256:24",
+        "statementIds": "sha256:24",
+        "rawRequestIdsPersisted": false,
+        "rawStatementNamesPersisted": false
+      }
+    }
+  }
+}

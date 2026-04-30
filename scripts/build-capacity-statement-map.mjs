@@ -117,6 +117,55 @@ function parseStructuredLine(line) {
   }
 }
 
+function entriesFromPrettyJsonStream(text) {
+  const entries = [];
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (start === -1) {
+      if (char === '{') {
+        start = index;
+        depth = 1;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+    } else if (char === '{') {
+      depth += 1;
+    } else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        const raw = text.slice(start, index + 1);
+        try {
+          entries.push(JSON.parse(raw));
+        } catch {
+          // Ignore partial objects; the line parser below handles JSONL and warnings are not needed here.
+        }
+        start = -1;
+      }
+    }
+  }
+
+  return entries;
+}
+
 function looksLikeCapacityRecord(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   if (value.event === 'capacity.request') return true;
@@ -138,6 +187,13 @@ function maybeParseEmbeddedMessage(value) {
 }
 
 function collectCapacityRecords(value, output = [], seen = new Set()) {
+  if (typeof value === 'string') {
+    if (!value.includes('capacity.request') && !value.includes('[ks2-worker]')) return output;
+    const embedded = parseStructuredLine(value);
+    if (embedded) collectCapacityRecords(embedded, output, seen);
+    return output;
+  }
+
   if (!value || typeof value !== 'object') return output;
 
   const embedded = maybeParseEmbeddedMessage(value);
@@ -173,6 +229,11 @@ export function readStatementMapInput(filePath) {
   })();
 
   if (parsed !== null) return collectCapacityRecords(parsed);
+
+  const streamedEntries = entriesFromPrettyJsonStream(text);
+  if (streamedEntries.length) {
+    return streamedEntries.flatMap((entry) => collectCapacityRecords(entry));
+  }
 
   const records = [];
   for (const line of text.split(/\r?\n/)) {

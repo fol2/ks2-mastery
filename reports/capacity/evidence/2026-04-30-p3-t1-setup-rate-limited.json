@@ -1,0 +1,442 @@
+{
+  "ok": false,
+  "dryRun": false,
+  "plan": {
+    "mode": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "virtualLearners": [
+      {
+        "index": 0,
+        "label": "learner-01"
+      },
+      {
+        "index": 1,
+        "label": "learner-02"
+      },
+      {
+        "index": 2,
+        "label": "learner-03"
+      },
+      {
+        "index": 3,
+        "label": "learner-04"
+      },
+      {
+        "index": 4,
+        "label": "learner-05"
+      },
+      {
+        "index": 5,
+        "label": "learner-06"
+      },
+      {
+        "index": 6,
+        "label": "learner-07"
+      },
+      {
+        "index": 7,
+        "label": "learner-08"
+      },
+      {
+        "index": 8,
+        "label": "learner-09"
+      },
+      {
+        "index": 9,
+        "label": "learner-10"
+      },
+      {
+        "index": 10,
+        "label": "learner-11"
+      },
+      {
+        "index": 11,
+        "label": "learner-12"
+      },
+      {
+        "index": 12,
+        "label": "learner-13"
+      },
+      {
+        "index": 13,
+        "label": "learner-14"
+      },
+      {
+        "index": 14,
+        "label": "learner-15"
+      },
+      {
+        "index": 15,
+        "label": "learner-16"
+      },
+      {
+        "index": 16,
+        "label": "learner-17"
+      },
+      {
+        "index": 17,
+        "label": "learner-18"
+      },
+      {
+        "index": 18,
+        "label": "learner-19"
+      },
+      {
+        "index": 19,
+        "label": "learner-20"
+      },
+      {
+        "index": 20,
+        "label": "learner-21"
+      },
+      {
+        "index": 21,
+        "label": "learner-22"
+      },
+      {
+        "index": 22,
+        "label": "learner-23"
+      },
+      {
+        "index": 23,
+        "label": "learner-24"
+      },
+      {
+        "index": 24,
+        "label": "learner-25"
+      },
+      {
+        "index": 25,
+        "label": "learner-26"
+      },
+      {
+        "index": 26,
+        "label": "learner-27"
+      },
+      {
+        "index": 27,
+        "label": "learner-28"
+      },
+      {
+        "index": 28,
+        "label": "learner-29"
+      },
+      {
+        "index": 29,
+        "label": "learner-30"
+      }
+    ],
+    "scenarios": [
+      {
+        "name": "cold-bootstrap-burst",
+        "requests": 20,
+        "concurrency": 20,
+        "endpoint": "GET /api/bootstrap"
+      },
+      {
+        "name": "human-paced-grammar-round",
+        "learners": 30,
+        "rounds": 1,
+        "pacingMs": 0,
+        "commandsPerRound": 3,
+        "endpoint": "POST /api/subjects/grammar/command"
+      }
+    ],
+    "expectedRequests": 170,
+    "safety": {
+      "productionRequiresConfirmation": true,
+      "productionRequiresAuth": true,
+      "localFixtureRequiresDemoSessions": true
+    }
+  },
+  "summary": {
+    "ok": false,
+    "totalRequests": 1,
+    "expectedRequests": 170,
+    "statusCounts": {
+      "400": 1
+    },
+    "endpointStatus": {
+      "POST /api/demo/session 400": 1
+    },
+    "endpoints": {
+      "POST /api/demo/session": {
+        "phase": "setup",
+        "count": 1,
+        "p50WallMs": 55.6,
+        "p95WallMs": 55.6,
+        "maxWallMs": 55.6,
+        "p50ResponseBytes": 178,
+        "p95ResponseBytes": 178,
+        "maxResponseBytes": 178,
+        "topTailSamples": [
+          {
+            "scenario": "demo-session-setup",
+            "virtualLearner": "learner-30",
+            "status": 400,
+            "ok": false,
+            "wallMs": 55.6,
+            "responseBytes": 178,
+            "clientRequestId": "req_d3f4089bb608f241e3c03751",
+            "serverRequestId": "req_d3f4089bb608f241e3c03751"
+          }
+        ]
+      }
+    },
+    "phases": {
+      "setup": {
+        "phase": "setup",
+        "count": 1,
+        "p50WallMs": 55.6,
+        "p95WallMs": 55.6,
+        "maxWallMs": 55.6,
+        "p50ResponseBytes": 178,
+        "p95ResponseBytes": 178,
+        "maxResponseBytes": 178
+      }
+    },
+    "scenarios": {
+      "demo-session-setup": {
+        "phase": "setup",
+        "count": 1,
+        "p50WallMs": 55.6,
+        "p95WallMs": 55.6,
+        "maxWallMs": 55.6,
+        "p50ResponseBytes": 178,
+        "p95ResponseBytes": 178,
+        "maxResponseBytes": 178
+      }
+    },
+    "signals": {},
+    "failures": [
+      {
+        "scenario": "demo-session-setup",
+        "endpoint": "POST /api/demo/session",
+        "status": 400,
+        "code": "demo_rate_limited",
+        "message": "Request failed with code \"demo_rate_limited\".",
+        "signal": null,
+        "signals": [],
+        "failureClass": "setup"
+      }
+    ]
+  },
+  "setupFailure": {
+    "phase": "setup",
+    "message": "Demo session setup failed for learner-30; refusing to reuse global auth for an isolated load context.",
+    "measurements": 1
+  },
+  "measurements": [
+    {
+      "scenario": "demo-session-setup",
+      "virtualLearner": "learner-30",
+      "method": "POST",
+      "endpoint": "/api/demo/session",
+      "status": 400,
+      "ok": false,
+      "wallMs": 55.6,
+      "responseBytes": 178,
+      "code": "demo_rate_limited",
+      "message": "Request failed with code \"demo_rate_limited\".",
+      "requestId": null,
+      "clientRequestId": "req_d3f4089bb608f241e3c03751",
+      "serverRequestId": "req_d3f4089bb608f241e3c03751",
+      "capacity": null
+    }
+  ],
+  "startedAt": "2026-04-30T02:29:07.858Z",
+  "finishedAt": "2026-04-30T02:29:39.694Z",
+  "sessionSourceMode": "demo-sessions",
+  "thresholds": {
+    "max5xx": {
+      "configured": 0,
+      "observed": 0,
+      "passed": true
+    },
+    "maxNetworkFailures": {
+      "configured": 0,
+      "observed": 0,
+      "passed": true
+    },
+    "maxBootstrapP95Ms": {
+      "configured": 1000,
+      "observed": null,
+      "passed": false
+    },
+    "maxCommandP95Ms": {
+      "configured": 750,
+      "observed": null,
+      "passed": false
+    },
+    "maxResponseBytes": {
+      "configured": 600000,
+      "observed": 178,
+      "passed": true
+    },
+    "requireZeroSignals": {
+      "configured": true,
+      "observed": 0,
+      "passed": true
+    },
+    "requireBootstrapCapacity": {
+      "configured": true,
+      "observed": "no-bootstrap-endpoint",
+      "passed": false
+    },
+    "configured": true,
+    "violations": [
+      {
+        "threshold": "max-bootstrap-p95-ms",
+        "limit": 1000,
+        "observed": null,
+        "gatedEndpoints": [
+          "GET /api/bootstrap"
+        ],
+        "message": "No measurements captured for bootstrap gated endpoints (GET /api/bootstrap); threshold cannot be evaluated safely."
+      },
+      {
+        "threshold": "max-command-p95-ms",
+        "limit": 750,
+        "observed": null,
+        "gatedEndpoints": [
+          "POST /api/subjects/grammar/command"
+        ],
+        "message": "No measurements captured for command gated endpoints (POST /api/subjects/grammar/command); threshold cannot be evaluated safely."
+      }
+    ],
+    "limits": {
+      "max5xx": 0,
+      "maxNetworkFailures": 0,
+      "maxBootstrapP95Ms": 1000,
+      "maxCommandP95Ms": 750,
+      "maxResponseBytes": 600000,
+      "requireZeroSignals": true,
+      "requireBootstrapCapacity": true
+    }
+  },
+  "failures": [
+    "maxBootstrapP95Ms",
+    "maxCommandP95Ms",
+    "requireBootstrapCapacity",
+    "setupFailure"
+  ],
+  "safety": {
+    "mode": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "learners": 30,
+    "bootstrapBurst": 20,
+    "demoSessions": true,
+    "authMode": "demo-sessions",
+    "confirmedVia": [
+      "production-load",
+      "high-production-load"
+    ]
+  },
+  "diagnostics": {
+    "classification": {
+      "kind": "diagnostic",
+      "certificationEligible": false,
+      "reasons": [
+        "missing-bootstrap-metrics",
+        "missing-command-metrics",
+        "threshold-violations"
+      ],
+      "targetTier": "30-learner-beta-certified",
+      "runShape": {
+        "mode": "production",
+        "origin": "https://ks2.eugnel.uk",
+        "originClass": "production",
+        "learners": 30,
+        "bootstrapBurst": 20,
+        "rounds": 1,
+        "sessionSourceMode": "demo-sessions",
+        "releaseGateShape": true
+      },
+      "shapeEligible": true,
+      "thresholdEligible": false,
+      "evidenceComplete": false
+    },
+    "evidenceLane": {
+      "matrix": "p1-evidence-attribution",
+      "lane": "strict-30-release-gate",
+      "diagnosticOnly": false,
+      "certificationCandidate": true,
+      "requiresUniqueOutputPath": true,
+      "reasons": []
+    },
+    "runShape": {
+      "mode": "production",
+      "origin": "https://ks2.eugnel.uk",
+      "originClass": "production",
+      "learners": 30,
+      "bootstrapBurst": 20,
+      "rounds": 1,
+      "sessionSourceMode": "demo-sessions",
+      "releaseGateShape": true
+    },
+    "endpointInventory": {
+      "hasBootstrapMetrics": false,
+      "hasCommandMetrics": false,
+      "bootstrapEndpointKeys": [],
+      "commandEndpointKeys": []
+    },
+    "thresholdConfig": {
+      "configPath": "reports/capacity/configs/30-learner-beta.json",
+      "tier": "30-learner-beta-certified",
+      "minEvidenceSchemaVersion": 2,
+      "hash": "2127fb3330207f59b587dee13671a8fec4853e1d85107a582ecd5199f2c3dbce"
+    },
+    "thresholdViolations": [
+      {
+        "threshold": "max-bootstrap-p95-ms",
+        "limit": 1000,
+        "observed": null,
+        "message": "No measurements captured for bootstrap gated endpoints (GET /api/bootstrap); threshold cannot be evaluated safely.",
+        "gatedEndpoints": [
+          "GET /api/bootstrap"
+        ]
+      },
+      {
+        "threshold": "max-command-p95-ms",
+        "limit": 750,
+        "observed": null,
+        "message": "No measurements captured for command gated endpoints (POST /api/subjects/grammar/command); threshold cannot be evaluated safely.",
+        "gatedEndpoints": [
+          "POST /api/subjects/grammar/command"
+        ]
+      }
+    ]
+  },
+  "reportMeta": {
+    "commit": "4a2a370c3e3c8909e6f79d4cc555894841ecfb4f",
+    "environment": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "authMode": "demo-sessions",
+    "learners": 30,
+    "bootstrapBurst": 20,
+    "rounds": 1,
+    "startedAt": "2026-04-30T02:29:07.858Z",
+    "finishedAt": "2026-04-30T02:29:39.694Z",
+    "evidenceSchemaVersion": 3,
+    "provenance": {
+      "workflowRunUrl": "unknown",
+      "workflowName": "unknown",
+      "gitSha": "4a2a370c3e3c8909e6f79d4cc555894841ecfb4f",
+      "dirtyTreeFlag": false,
+      "thresholdConfigHash": "2127fb3330207f59b587dee13671a8fec4853e1d85107a582ecd5199f2c3dbce",
+      "loadDriverVersion": "0.1.0",
+      "operator": "jamesto",
+      "rawLogArtifactPath": "none"
+    }
+  },
+  "tier": {
+    "tier": "30-learner-beta-certified",
+    "minEvidenceSchemaVersion": 2,
+    "configPath": "reports/capacity/configs/30-learner-beta.json"
+  },
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "requestIds": "sha256:24",
+    "rawRequestIdsPersisted": false
+  }
+}
