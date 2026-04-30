@@ -17,10 +17,24 @@ implementation_prs:
   - "#691"
   - "#692"
   - "#698"
-final_content_release_commit: "a28d4962"
+  - "#703"
+  - "#708"
+  - "#712"
+  - "#713"
+  - "#714"
+  - "#717"
+  - "#721"
+final_content_release_commit: "6835702c"
 post_merge_fix_commits:
   - "665 (U2 target-sentence dedup hotfix)"
-final_report_commit: "01f6bb98"
+  - "703 (R-U8+U9 final cleanup)"
+  - "708 (final-four: inventory cross-check, targetOccurrence, noun-phrase DOM, mobile)"
+  - "712 (U0 report frontmatter cross-check)"
+  - "713 (U5 register coherence)"
+  - "714 (U6 per-option defensibility)"
+  - "717 (U2 targetText rename)"
+  - "721 (U5 register eval shapes for checkbox/multi/manualReview)"
+final_report_commit: "6835702c"
 baseline_content_release_id: grammar-qg-p9-2026-04-29
 final_content_release_id: grammar-qg-p10-2026-04-29
 content_release_id_changed: "true"
@@ -36,7 +50,14 @@ post_deploy_smoke_evidence: not-run
 
 ## Executive Summary
 
-P10 returns the Grammar Question Generator to first principles: every question a child sees must be logically correct, visually unambiguous, correctly marked, accessible, and backed by reproducible evidence. Where P9 built certification infrastructure, P10 locks the actual question pool to production quality. A seven-PR remediation pass (PRs #687–#692, #698) closed minor test coverage gaps, added inventory cross-check validation, and resolved all evidence-truth placeholders.
+P10 returns the Grammar Question Generator to first principles: every question a child sees must be logically correct, visually unambiguous, correctly marked, accessible, and backed by reproducible evidence. Where P9 built certification infrastructure, P10 locks the actual question pool to production quality.
+
+Three implementation rounds were required:
+1. **Round 1** (PRs #655–#675): Core behaviour fixes + initial evidence artefacts
+2. **Round 2 — Remediation** (PRs #687–#698): Full rewrite of quality register, marking matrix, distractor audit, render tests, scheduler safety
+3. **Round 3 — Final gaps** (PRs #703–#721): targetText rename, per-option defensibility, inventory cross-checks, mobile-width tests, eval-shape fixes for checkbox/multi/manualReview templates
+
+Each round was audited by 10 independent subagent reviewers against the origin contract. Round 3 closed all remaining gaps identified by the auditors.
 
 **Key numbers:**
 - 6 PRs across 11 implementation units (U0–U9, U11)
