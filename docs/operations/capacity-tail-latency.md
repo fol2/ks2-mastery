@@ -77,6 +77,30 @@ The first post-P1 strict run passed the 30-learner shape, but the repeated stric
 
 This locks P2 to evidence-capture repair before any D1, Worker CPU, payload, launch-policy, or certification change. Public capacity wording remains `small-pilot-provisional`.
 
+## P3 Invocation Telemetry Gate
+
+P3 is a telemetry-gate phase, not a performance mitigation phase. The implementation branch adds parser fixtures, capture-window warnings, raw-log guardrails, and operator documentation. It does not run production load tests and does not create certifying P3 evidence by itself.
+
+The canonical P3 capture path is the JSONL Cloudflare Workers Logs/Tail invocation shape documented in `docs/operations/capacity-cpu-d1-evidence.md` and locked by `tests/fixtures/capacity-worker-logs/p3-invocation-export.jsonl`.
+
+For each strict P3 run, keep these artefacts separate:
+
+| Run | Evidence path | Raw log path | Redacted join path | Statement map path | Certification role |
+| --- | --- | --- | --- | --- | --- |
+| P3-T0 smoke | `reports/capacity/evidence/<date>-p3-t0-smoke.json` | `/tmp/ks2-<run>-worker-tail.jsonl` | `reports/capacity/evidence/<date>-p3-t0-tail-correlation.json` | optional | Non-certifying capture proof. |
+| P3-T1 strict 30 | `reports/capacity/evidence/<date>-p3-t1-strict.json` | `/tmp/ks2-<run>-worker-tail.jsonl` | `reports/capacity/evidence/<date>-p3-t1-tail-correlation.json` | `reports/capacity/evidence/<date>-p3-t1-statement-map.json` | Candidate only if verifier, thresholds, and repeat policy pass. |
+| P3-T5 strict repeat 1 | `reports/capacity/evidence/<date>-p3-t5-strict-r1.json` | `/tmp/ks2-<run>-worker-tail.jsonl` | `reports/capacity/evidence/<date>-p3-t5-strict-r1-tail-correlation.json` | `reports/capacity/evidence/<date>-p3-t5-strict-r1-statement-map.json` | Must pass independently. |
+| P3-T5 strict repeat 2 | `reports/capacity/evidence/<date>-p3-t5-strict-r2.json` | `/tmp/ks2-<run>-worker-tail.jsonl` | `reports/capacity/evidence/<date>-p3-t5-strict-r2-tail-correlation.json` | `reports/capacity/evidence/<date>-p3-t5-strict-r2-statement-map.json` | Confidence repeat. |
+
+Read these warning codes before interpreting a join:
+
+| Warning | Meaning | Operator action |
+| --- | --- | --- |
+| `capture-window-no-overlap` | Log timestamps do not overlap the evidence run window. | Treat the join as wrong-window diagnostic output and recapture. |
+| `insufficient-invocation-coverage` | Statement logs matched the retained top-tail samples, but finite invocation CPU/wall matches were zero. | This reproduces the P2 failure shape; do not classify D1, Worker CPU, payload, or platform overhead from this join. |
+
+If P3 cannot obtain finite invocation CPU/wall coverage from the canonical JSONL source or an approved equivalent Workers Logs/Tail/Trace/Logpush export, the outcome is `telemetry-repair-failed`. Keep public capacity wording at `small-pilot-provisional`, keep P2 T5 as the active strict 30 row, and open an observability-continuation path rather than an optimisation PR.
+
 ## Minimum Evidence Set Before Mitigation
 
 Before changing bootstrap behaviour or debating thresholds, collect at least three dated diagnostic runs from the matrix, including one strict T1 run and one repeated strict T5 run. Each evidence file should retain:

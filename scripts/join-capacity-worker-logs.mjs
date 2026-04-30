@@ -168,6 +168,8 @@ function normaliseWorkerLogEntry(entry, index, warnings) {
 }
 
 function extractInvocation(entry) {
+  const cloudflare = entry.$cloudflare || entry.cloudflare || {};
+  const metadata = cloudflare.$metadata || cloudflare.metadata || entry.$metadata || entry.metadata || {};
   const event = entry.event || entry.Event || {};
   const request = entry.request || entry.Request || event.request || event.Request || {};
   const response = entry.response || entry.Response || event.response || event.Response || {};
@@ -178,6 +180,12 @@ function extractInvocation(entry) {
     entry.cpuTime,
     event.CPUTimeMs,
     event.cpuTimeMs,
+    cloudflare.CPUTimeMs,
+    cloudflare.cpuTimeMs,
+    cloudflare.cpu_time_ms,
+    metadata.CPUTimeMs,
+    metadata.cpuTimeMs,
+    metadata.cpu_time_ms,
   );
   const wallTimeMs = firstFinite(
     entry.WallTimeMs,
@@ -187,13 +195,48 @@ function extractInvocation(entry) {
     entry.durationMs,
     event.WallTimeMs,
     event.wallTimeMs,
+    cloudflare.WallTimeMs,
+    cloudflare.wallTimeMs,
+    cloudflare.wall_time_ms,
+    cloudflare.durationMs,
+    metadata.WallTimeMs,
+    metadata.wallTimeMs,
+    metadata.wall_time_ms,
+    metadata.durationMs,
   );
   return {
     cpuTimeMs,
     wallTimeMs,
-    outcome: firstString(entry.Outcome, entry.outcome, event.Outcome, event.outcome),
+    outcome: firstString(
+      entry.Outcome,
+      entry.outcome,
+      event.Outcome,
+      event.outcome,
+      cloudflare.Outcome,
+      cloudflare.outcome,
+      metadata.Outcome,
+      metadata.outcome,
+    ),
     timestampMs: parseTimestampMs(
-      firstString(entry.EventTimestampMs, entry.eventTimestampMs, entry.eventTimestamp, entry.timestamp, entry.Timestamp),
+      firstString(
+        entry.EventTimestampMs,
+        entry.eventTimestampMs,
+        entry.eventTimestamp,
+        entry.timestamp,
+        entry.Timestamp,
+        event.EventTimestampMs,
+        event.eventTimestampMs,
+        event.eventTimestamp,
+        event.timestamp,
+        cloudflare.EventTimestampMs,
+        cloudflare.eventTimestampMs,
+        cloudflare.eventTimestamp,
+        cloudflare.timestamp,
+        metadata.EventTimestampMs,
+        metadata.eventTimestampMs,
+        metadata.eventTimestamp,
+        metadata.timestamp,
+      ),
     ),
     method: firstString(entry.method, entry.Method, request.method, request.Method),
     url: firstString(entry.url, entry.URL, request.url, request.URL),
@@ -298,6 +341,11 @@ export function joinCapacityWorkerLogs({
     logSourcePaths,
     samples: joinedSamples,
   });
+  const joinedWarnings = buildJoinWarnings({ evidence, records: records || [], workerLogJoin, warnings });
+  const diagnosticWorkerLogJoin = {
+    ...workerLogJoin,
+    warnings: joinedWarnings,
+  };
 
   return {
     ok: true,
@@ -314,9 +362,52 @@ export function joinCapacityWorkerLogs({
       bootstrapBurst: evidence?.reportMeta?.bootstrapBurst ?? null,
       rounds: evidence?.reportMeta?.rounds ?? null,
     },
-    warnings: warnings.slice(0, MAX_WARNINGS),
-    diagnostics: { workerLogJoin: redactWorkerLogJoinDiagnostics(workerLogJoin) },
+    warnings: joinedWarnings,
+    diagnostics: { workerLogJoin: redactWorkerLogJoinDiagnostics(diagnosticWorkerLogJoin) },
   };
+}
+
+function buildJoinWarnings({ evidence, records, workerLogJoin, warnings }) {
+  const output = [];
+  for (const warning of warnings || []) pushWarning(output, warning);
+  pushCaptureWindowWarning(output, evidence, records);
+  pushCoverageWarning(output, workerLogJoin);
+  return output;
+}
+
+function pushCaptureWindowWarning(warnings, evidence, records) {
+  const startedAt = parseTimestampMs(evidence?.startedAt || evidence?.reportMeta?.startedAt);
+  const finishedAt = parseTimestampMs(evidence?.finishedAt || evidence?.reportMeta?.finishedAt);
+  if (!Number.isFinite(startedAt) || !Number.isFinite(finishedAt)) return;
+
+  const timestamps = records
+    .map((record) => record.timestampMs)
+    .filter((value) => Number.isFinite(value));
+  if (!timestamps.length) return;
+
+  const logStart = Math.min(...timestamps);
+  const logEnd = Math.max(...timestamps);
+  if (logEnd < startedAt || logStart > finishedAt) {
+    pushWarning(
+      warnings,
+      `capture-window-no-overlap: log timestamps ${new Date(logStart).toISOString()}..${new Date(logEnd).toISOString()} do not overlap evidence window ${new Date(startedAt).toISOString()}..${new Date(finishedAt).toISOString()}`,
+    );
+  }
+}
+
+function pushCoverageWarning(warnings, workerLogJoin) {
+  const coverage = workerLogJoin?.coverage || {};
+  const topTailSamples = coverage.topTailSamples || 0;
+  if (
+    topTailSamples > 0
+    && coverage.statementLogs?.matched === topTailSamples
+    && coverage.invocation?.matched === 0
+  ) {
+    pushWarning(
+      warnings,
+      `insufficient-invocation-coverage: statement logs matched ${topTailSamples}/${topTailSamples} top-tail samples but invocation CPU/wall matched 0/${topTailSamples}`,
+    );
+  }
 }
 
 export function redactWorkerLogJoinReport(report = {}) {

@@ -18,4 +18,28 @@
 !configs/**
 !evidence/
 !evidence/**
+# P3 telemetry gate: raw Worker/Tail captures stay local because they can
+# contain unrelated live traffic or request metadata. Commit only redacted
+# `*-tail-correlation.json`, `*-statement-map.json`, classification, and
+# capacity evidence artefacts.
+evidence/**/*worker-log*.json
+evidence/**/*worker-log*.jsonl
+evidence/**/*worker-log*.ndjson
+evidence/**/*worker-log*.log
+evidence/**/*worker-log*.txt
+evidence/**/*pretty-tail*.json
+evidence/**/*pretty-tail*.jsonl
+evidence/**/*pretty-tail*.ndjson
+evidence/**/*pretty-tail*.log
+evidence/**/*pretty-tail*.txt
+evidence/**/*raw-tail*.json
+evidence/**/*raw-tail*.jsonl
+evidence/**/*raw-tail*.ndjson
+evidence/**/*raw-tail*.log
+evidence/**/*raw-tail*.txt
+evidence/**/*tail-raw*.json
+evidence/**/*tail-raw*.jsonl
+evidence/**/*tail-raw*.ndjson
+evidence/**/*tail-raw*.log
+evidence/**/*tail-raw*.txt
 !README.md
