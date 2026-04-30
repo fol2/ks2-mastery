@@ -171,6 +171,13 @@ const TOKEN_GLOB_DIRS = [
 ];
 const TOKEN_GLOB_FILES = [
   path.resolve(REPO_ROOT, 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'),
+  // U7 review: extend the ratchet to the other two SetupScenes in scope.
+  // Grammar already passed token unification, Spelling threads accent
+  // inline through Button (deferred remap noted in completion report
+  // §6.2). Locking both files prevents future drift even though they
+  // contain zero hex literals today.
+  path.resolve(REPO_ROOT, 'src/subjects/grammar/components/GrammarSetupScene.jsx'),
+  path.resolve(REPO_ROOT, 'src/subjects/spelling/components/SpellingSetupScene.jsx'),
 ];
 // Subject-metadata fixtures: linear-gradient accent strings keyed by
 // subject id, consumed as content rather than as token-driven styling.
@@ -200,9 +207,15 @@ async function collectTokenGlobFiles() {
 
 test('curated-glob hex-literal ratchet — no raw #XXXXXX literals in shared primitives or Home tree (comments stripped)', async () => {
   const files = await collectTokenGlobFiles();
+  // Floor pinned close to the live count so a directory rename / file
+  // disappearance lands a loud failure instead of silently weakening
+  // the ratchet. Bump in a paired commit if a deliberate file move
+  // shrinks the glob, mirroring the reasoning at line 81 of
+  // tests/bundle-byte-budget.test.js.
+  const MIN_GLOB_FILES = 25;
   assert.ok(
-    files.length >= 8,
-    `Expected ≥ 8 files under the token glob; got ${files.length}. `
+    files.length >= MIN_GLOB_FILES,
+    `Expected ≥ ${MIN_GLOB_FILES} files under the token glob; got ${files.length}. `
     + 'A sudden drop suggests a directory move or rename — refresh TOKEN_GLOB_DIRS.',
   );
   const offences = [];
@@ -227,44 +240,7 @@ test('curated-glob hex-literal ratchet — no raw #XXXXXX literals in shared pri
   );
 });
 
-// AE for plan §11 (completion-report wording guard): the U7 completion
-// report MUST NOT contain forbidden marketing phrases that would
-// over-claim what P2 has shipped. The completion report exists only
-// after this unit lands, so the test fails-soft (no-op) if the file is
-// absent — and asserts the absence of forbidden phrases when present.
-test('U7 completion report does NOT contain forbidden marketing claims', async () => {
-  const reportPath = path.resolve(
-    REPO_ROOT,
-    'docs/plans/james/ui-refactor/ui-refactor-p2-completion-report.md',
-  );
-  let source;
-  try {
-    source = await readFile(reportPath, 'utf8');
-  } catch {
-    // Report may not have landed yet during U7-in-progress edits; the
-    // ratchet activates as soon as the report exists. The file MUST
-    // exist by the time U7 commits land on `main`, so a green test
-    // before the file lands is a transient state, not a permanent gap.
-    return;
-  }
-  const FORBIDDEN_PHRASES = [
-    'the design system is finished',
-    'all colours and inline styles are tokenised',
-    // The third forbidden phrase from plan §574 ("full verification passed"
-    // without command evidence) is a structural claim, not an exact
-    // string — it is enforced by the report's required §7
-    // "Verification commands" section. The literal phrase itself,
-    // however, would also be a regression: anyone writing it without
-    // command output should fail this gate.
-    'full verification passed',
-  ];
-  for (const phrase of FORBIDDEN_PHRASES) {
-    assert.equal(
-      source.toLowerCase().includes(phrase),
-      false,
-      `Completion report contains the forbidden phrase "${phrase}" — over-claims what P2 ships. `
-      + 'Either rephrase or, if the claim is genuinely backed by command evidence, anchor it '
-      + 'next to the evidence in the §7 Verification commands section.',
-    );
-  }
-});
+// Note: the completion-report wording guard (plan §574 "no forbidden
+// claims") lives in `tests/ui-completion-report-claims.test.js` —
+// extracted from this file so `ui-token-contract` stays focused on
+// CSS-variable plumbing and hex-literal ratchets.

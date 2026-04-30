@@ -50,10 +50,28 @@ function stripJsComments(source) {
   return blockStripped.replace(/\/\/[^\n]*/g, '');
 }
 
-// Walk the source, isolate every top-level `return (...)` JSX block,
-// and return the JSX text inside each. The function uses a one-pass
-// parenthesis counter; it does not attempt full JSX parsing.
-function extractReturnBranches(source) {
+// Walk the source, isolate every `return (...)` JSX block, and return
+// the JSX text inside each. Known limitations (disclosed so the
+// assertion message stays truthful):
+//   1. Nested `.map(() => return (...))` callbacks count as their own
+//      branches alongside top-level function returns. The contract
+//      "at most one primary per branch" still holds — a nested map
+//      that grew two primary <Button>s would correctly fail — but
+//      branch indices in the failure message do NOT track the
+//      function-level vs callback-level distinction.
+//   2. Top-level conditional ternaries inside one return
+//      (`return (cond ? <A primary /> : <B primary />)`) become a
+//      single branch containing both, which would trip the gate even
+//      though only one renders. No allowlisted surface uses this
+//      pattern today; refactor into separate function components if
+//      the gate fires.
+//   3. The parenthesis counter does not track string / template /
+//      comment scopes — an unbalanced paren inside a JSX attribute
+//      string would silently truncate a branch slice.
+// Renamed from extractReturnBranches → extractAllReturnBranches to
+// signal the limitation: every `return (` matches, not just the
+// top-level function return.
+function extractAllReturnBranches(source) {
   const branches = [];
   const re = /return\s*\(/g;
   let match;
@@ -111,14 +129,14 @@ function isPrimaryButton(openingTag) {
   return false;
 }
 
-test('every primary-CTA surface renders at most one primary <Button> per top-level branch', async () => {
+test('every primary-CTA surface renders at most one primary <Button> per `return (` literal', async () => {
   for (const relative of PRIMARY_CTA_SURFACES) {
     const source = await readFile(path.join(REPO_ROOT, relative), 'utf8');
     const stripped = stripJsComments(source);
-    const branches = extractReturnBranches(stripped);
+    const branches = extractAllReturnBranches(stripped);
     assert.ok(
       branches.length >= 1,
-      `${relative} must have at least one top-level return branch — none extracted.`,
+      `${relative} must have at least one \`return (\` literal — none extracted.`,
     );
     let foundOnePrimaryBranch = false;
     branches.forEach((branchSource, idx) => {
@@ -126,15 +144,18 @@ test('every primary-CTA surface renders at most one primary <Button> per top-lev
       const primaries = openings.filter(isPrimaryButton);
       assert.ok(
         primaries.length <= 1,
-        `${relative} return-branch #${idx} renders ${primaries.length} primary <Button> elements; `
-        + 'the design system allows exactly one primary CTA per render branch. '
+        `${relative} \`return (\` literal #${idx} renders ${primaries.length} primary <Button> elements. `
+        + 'The contract is "at most one primary CTA per `return (` literal" — siblings inside one '
+        + 'literal would render simultaneously. If the literal contains a top-level conditional '
+        + 'ternary with two primaries (which never co-render), refactor into separate function '
+        + 'components so each conditional outcome owns its own `return (`.\n'
         + `Offending tags:\n${primaries.map((tag) => `  - ${tag.replace(/\s+/g, ' ').trim()}`).join('\n')}`,
       );
       if (primaries.length === 1) foundOnePrimaryBranch = true;
     });
     assert.ok(
       foundOnePrimaryBranch,
-      `${relative} must have at least one render branch with a primary <Button>; `
+      `${relative} must have at least one \`return (\` literal with a primary <Button>; `
       + 'the surface is in PRIMARY_CTA_SURFACES because it owns a primary CTA. '
       + 'If the surface no longer hosts a primary CTA, remove it from the allowlist deliberately.',
     );
@@ -166,8 +187,14 @@ test('no primary-CTA surface contains a raw <button className=".*btn.*primary.*x
 });
 
 test('primary CTA surface allowlist matches the U7 plan-mandated five entries', () => {
-  assert.ok(
-    PRIMARY_CTA_SURFACES.length >= 5,
-    `Plan §U7 line 568 names 5 primary-CTA surfaces; got ${PRIMARY_CTA_SURFACES.length}.`,
+  // Tight ratchet (===, not >=): the plan names exactly 5 surfaces.
+  // A 6th surface entering the allowlist must come with a plan update,
+  // not slip in via a routine refactor — `===` makes that explicit.
+  assert.equal(
+    PRIMARY_CTA_SURFACES.length,
+    5,
+    `Plan §U7 line 568 names 5 primary-CTA surfaces; got ${PRIMARY_CTA_SURFACES.length}. `
+    + 'If a new surface is genuinely a primary-CTA owner, update the plan FIRST and bump '
+    + 'this assertion alongside the allowlist entry.',
   );
 });
