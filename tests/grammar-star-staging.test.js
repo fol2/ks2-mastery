@@ -4,7 +4,7 @@
 //
 // Verifies:
 //  1. progressForGrammarMonster returns Star fields (stars, starMax, displayStage, stageName, starHighWater).
-//  2. Stage thresholds map Stars to correct internal stage 0-4 and display stage 0-5.
+//  2. Stage thresholds map Stars to correct asset stage 0-4 and display stage 0-5.
 //  3. starHighWater latch: display Stars = max(computed, persisted high-water).
 //  4. Legacy migration: pre-P5 learners with no starHighWater get a Star floor from their old stage.
 //  5. recordGrammarConceptMastery preserves starHighWater on written state.
@@ -59,26 +59,26 @@ function makeRepository(initialState = {}) {
 }
 
 // =============================================================================
-// 1. Star stage thresholds — grammarStarStageFor (internal 0-4)
+// 1. Star stage thresholds — grammarStarStageFor (asset 0-4)
 // =============================================================================
 
-test('U4 star staging: 0 Stars -> stage 0', () => {
+test('U4 star staging: 0 Stars -> stage 0 sentinel hidden by display state', () => {
   assert.equal(grammarStarStageFor(0), 0);
 });
 
-test('U4 star staging: 1 Star -> stage 1', () => {
-  assert.equal(grammarStarStageFor(1), 1);
+test('U4 star staging: 1 Star -> asset stage 0 (egg)', () => {
+  assert.equal(grammarStarStageFor(1), 0);
 });
 
-test('U4 star staging: 14 Stars -> stage 1 (below hatch)', () => {
-  assert.equal(grammarStarStageFor(14), 1);
+test('U4 star staging: 14 Stars -> asset stage 0 (egg, below hatch)', () => {
+  assert.equal(grammarStarStageFor(14), 0);
 });
 
-test('U4 star staging: 15 Stars -> stage 2 (hatched)', () => {
-  assert.equal(grammarStarStageFor(15), 2);
+test('U4 star staging: 15 Stars -> asset stage 1 (hatched)', () => {
+  assert.equal(grammarStarStageFor(15), 1);
 });
 
-test('U4 star staging: 35 Stars -> stage 2 (still internal stage 2)', () => {
+test('U4 star staging: 35 Stars -> asset stage 2 (growing)', () => {
   assert.equal(grammarStarStageFor(35), 2);
 });
 
