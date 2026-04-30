@@ -868,6 +868,276 @@
       "answer": "We can't find the childrens coats. The girls bags are in the hall.",
       "expectedResult": "fail",
       "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "se_insert_question",
+      "answer": "Why was the hall still open?",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "se_fix_statement",
+      "answer": "Do not forget your reading folder.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "se_insert_quiet_command",
+      "answer": "Please close the classroom window.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "se_fix_excited_statement",
+      "answer": "What a simple idea!",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "lc_insert_supplies",
+      "answer": "We needed pencils, rulers and tape.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "lc_fix_display",
+      "answer": "The display showed shells, pebbles and crystals.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "lc_combine_trip_list",
+      "answer": "We packed torches, maps and juice.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "ac_insert_contractions",
+      "answer": "You'll see that I'm ready because I've studied already.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "ac_fix_contractions",
+      "answer": "I can't imagine we're nearly there.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "ac_insert_well_youre",
+      "answer": "We'll check that you're ready before we start.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "ap_insert_singular",
+      "answer": "The girl's scarf was hanging on the peg.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "ap_fix_irregular",
+      "answer": "The children's shoes were lined up by the door.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sp_insert_question",
+      "answer": "Ella asked, \"Can we begin now?\"",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sp_fix_question",
+      "answer": "\"Where are we sitting?\" asked Zara.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "fa_insert_without_warning",
+      "answer": "Without warning, the alarm began to ring.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "fa_fix_at_last",
+      "answer": "At last, we reached the village.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "fa_combine_after_storm",
+      "answer": "After the storm, the playground sparkled.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "cc_insert_time_travellers",
+      "answer": "Most of the time, travellers worry about queues.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "cc_fix_when_rain_stopped",
+      "answer": "When the rain stopped, the children clapped.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "cc_insert_after_supper",
+      "answer": "After supper, we read quickly.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "cc_fix_if_lost",
+      "answer": "If you get lost, ask a teacher.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sc_insert_lights_audience",
+      "answer": "The lights dimmed; the audience fell still.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sc_fix_path_map",
+      "answer": "The path was muddy; the map showed a safer route.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sc_combine_rain_pitch",
+      "answer": "The rain had stopped; the pitch was still waterlogged.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "dc_insert_door_froze",
+      "answer": "The door creaked open – we gasped.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "dc_fix_signal_team",
+      "answer": "The signal failed – the team paused.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "dc_combine_flooded_route",
+      "answer": "The path was blocked – we took the longer route.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "dc_insert_alarm_rang",
+      "answer": "The alarm rang – everyone stood up.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "hy_insert_little_used",
+      "answer": "The little-used room was dusty.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "hy_fix_fast_moving",
+      "answer": "We watched a fast-moving truck.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "hy_insert_well_behaved",
+      "answer": "The well-behaved kitten waited by the gate.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "pa_insert_museum",
+      "answer": "The museum, a former station, was crowded.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "pa_fix_author",
+      "answer": "The author, who won the prize, waved.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "pa_combine_lighthouse",
+      "answer": "The lighthouse, a useful lookout, guided the ships.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "cl_insert_awards",
+      "answer": "The team won three awards: player of the match, best attack and fair play.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "cl_fix_camp",
+      "answer": "We packed three things: tents, food and lanterns.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "cl_combine_awards",
+      "answer": "The team won three awards: player of the match, best attack and fair play.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sl_insert_cities",
+      "answer": "We visited York, England; Cardiff, Wales; and Dublin, Northern Ireland.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sl_fix_captains",
+      "answer": "Our captains were Sam, Year 5; Priya, Year 6; and Noor, Year 6.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sl_insert_helper_roles",
+      "answer": "The helpers were Sara, register monitor; Leo, equipment monitor; and Aisha, line leader.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sl_fix_stalls",
+      "answer": "The stalls were books, table one; games, table two; and snacks, table three.",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "bp_insert_kit",
+      "answer": "Bring:\n- a drink\n- a hat\n- a notebook",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "bp_fix_consistency",
+      "answer": "Bring:\n- a drink\n- a hat\n- a notebook",
+      "expectedResult": "fail",
+      "failureType": "changed_required_words"
+    },
+    {
+      "itemId": "sp_insert_question",
+      "answer": "Tom asked, \"Can we start now?\"",
+      "expectedResult": "fail",
+      "failureType": "wrong_reporting_clause"
+    },
+    {
+      "itemId": "sp_fix_question",
+      "answer": "\"Where are we meeting?\" asked Tom.",
+      "expectedResult": "fail",
+      "failureType": "wrong_reporting_clause"
     }
   ],
   "choiceValidation": [

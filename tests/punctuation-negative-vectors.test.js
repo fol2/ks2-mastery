@@ -38,8 +38,8 @@ test('fixture has exactly 20 choice validation entries', () => {
   assert.equal(fixture.choiceValidation.length, 20);
 });
 
-test('total negative vectors >= 144', () => {
-  assert.ok(fixture.vectors.length >= 144, `Expected >= 144 vectors, got ${fixture.vectors.length}`);
+test('total negative vectors >= 189', () => {
+  assert.ok(fixture.vectors.length >= 189, `Expected >= 189 vectors, got ${fixture.vectors.length}`);
 });
 
 // ---- Negative vector verification ----
@@ -112,4 +112,37 @@ test('vectors cover multiple failure types', () => {
   const types = new Set(fixture.vectors.map((v) => v.failureType));
   // Must have at least 4 distinct failure types
   assert.ok(types.size >= 4, `Expected >= 4 failure types, got ${types.size}: ${[...types].join(', ')}`);
+});
+
+// ---- Per-type coverage: changed_required_words ----
+
+test('every closed item (insert/fix/combine) has at least one changed_required_words vector', () => {
+  const closedModes = ['insert', 'fix', 'combine'];
+  const closedItems = PUNCTUATION_ITEMS.filter((i) => closedModes.includes(i.mode));
+  const changedWordVectors = fixture.vectors.filter((v) => v.failureType === 'changed_required_words');
+  const coveredIds = new Set(changedWordVectors.map((v) => v.itemId));
+
+  for (const item of closedItems) {
+    assert.ok(
+      coveredIds.has(item.id),
+      `Closed item ${item.id} (mode=${item.mode}) missing changed_required_words vector`,
+    );
+  }
+});
+
+// ---- Per-type coverage: wrong_reporting_clause ----
+
+test('every speech item with reportingClause has at least one wrong_reporting_clause vector', () => {
+  const speechItemsWithClause = PUNCTUATION_ITEMS.filter(
+    (i) => i.rubric && i.rubric.reportingClause,
+  );
+  const wrongClauseVectors = fixture.vectors.filter((v) => v.failureType === 'wrong_reporting_clause');
+  const coveredIds = new Set(wrongClauseVectors.map((v) => v.itemId));
+
+  for (const item of speechItemsWithClause) {
+    assert.ok(
+      coveredIds.has(item.id),
+      `Speech item ${item.id} (reportingClause="${item.rubric.reportingClause}") missing wrong_reporting_clause vector`,
+    );
+  }
 });
