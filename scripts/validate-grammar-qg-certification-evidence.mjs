@@ -450,6 +450,73 @@ export function validateSmokeEvidence(manifest, reportContent, opts = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Cross-check: render inventory release ID consistency (P10-R-U9)
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that a render inventory JSON file has a consistent contentReleaseId
+ * in both its metadata and sampled items.
+ *
+ * @param {string} inventoryPath - Path to the render inventory JSON file.
+ * @param {string} expectedReleaseId - The expected content release ID.
+ * @returns {{ pass: boolean, mismatches: Array<{ field: string, claimed: any, actual: any, message: string }> }}
+ */
+export function validateInventoryReleaseIds(inventoryPath, expectedReleaseId) {
+  const mismatches = [];
+
+  if (!existsSync(inventoryPath)) {
+    mismatches.push({
+      field: 'inventoryFile',
+      claimed: inventoryPath,
+      actual: 'not found',
+      message: `Inventory file not found: ${inventoryPath}`,
+    });
+    return { pass: false, mismatches };
+  }
+
+  let inventory;
+  try {
+    inventory = JSON.parse(readFileSync(inventoryPath, 'utf8'));
+  } catch (err) {
+    mismatches.push({
+      field: 'inventoryParse',
+      claimed: 'valid JSON',
+      actual: `parse error: ${err.message}`,
+      message: `Inventory file is not valid JSON: ${err.message}`,
+    });
+    return { pass: false, mismatches };
+  }
+
+  // Check metadata.contentReleaseId
+  const metadataReleaseId = inventory?.metadata?.contentReleaseId;
+  if (metadataReleaseId !== expectedReleaseId) {
+    mismatches.push({
+      field: 'inventoryMetadataReleaseId',
+      claimed: metadataReleaseId,
+      actual: expectedReleaseId,
+      message: `Inventory metadata.contentReleaseId "${metadataReleaseId}" does not match expected "${expectedReleaseId}"`,
+    });
+  }
+
+  // Sample first 10 items and check their contentReleaseId
+  const items = Array.isArray(inventory?.items) ? inventory.items : [];
+  const sampleSize = Math.min(10, items.length);
+  for (let i = 0; i < sampleSize; i++) {
+    const item = items[i];
+    if (item?.contentReleaseId !== expectedReleaseId) {
+      mismatches.push({
+        field: `inventoryItem[${i}].contentReleaseId`,
+        claimed: item?.contentReleaseId,
+        actual: expectedReleaseId,
+        message: `Inventory item[${i}] contentReleaseId "${item?.contentReleaseId}" does not match expected "${expectedReleaseId}"`,
+      });
+    }
+  }
+
+  return { pass: mismatches.length === 0, mismatches };
+}
+
+// ---------------------------------------------------------------------------
 // Cross-check: manifest ↔ code ↔ report release ID consistency (P10-U0)
 // ---------------------------------------------------------------------------
 
@@ -520,6 +587,25 @@ async function main(argv) {
   }
 
   console.log(`PASS: Manifest schema valid (${Object.keys(manifestResult.manifest.seedWindowPerEvidenceType).length} oracle families)`);
+
+  // Gate 1b: Validate render inventory release IDs if inventory exists
+  const releaseId = manifestResult.manifest.contentReleaseId;
+  const inventoryPath = path.join(ROOT_DIR, 'reports', 'grammar', `grammar-qg-p10-render-inventory.json`);
+  if (existsSync(inventoryPath)) {
+    const invResult = validateInventoryReleaseIds(inventoryPath, releaseId);
+    if (!invResult.pass) {
+      if (jsonOutput) {
+        console.log(JSON.stringify({ pass: false, gate: 'inventory-release-ids', mismatches: invResult.mismatches }, null, 2));
+      } else {
+        console.log(`FAIL: Inventory release ID cross-check — ${invResult.mismatches.length} mismatch(es)\n`);
+        for (const m of invResult.mismatches) {
+          console.log(`  [${m.field}] ${m.message}`);
+        }
+      }
+      process.exit(1);
+    }
+    console.log(`PASS: Inventory release IDs consistent with manifest (${releaseId})`);
+  }
 
   // Gate 2: Cross-validate report if provided
   if (reportPath) {
