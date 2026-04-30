@@ -34,6 +34,10 @@ const EVIDENCE_ORIGIN_FLAG_INDEX = CLI_ARGS.indexOf('--evidence-origin');
 const CONFIGURED_ORIGIN_VALUE = EVIDENCE_ORIGIN_FLAG_INDEX !== -1 && CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
   ? CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
   : 'repository';
+const RELEASE_ID_ARG = CLI_ARGS.find(a => a.startsWith('--release-id='));
+const CONFIGURED_RELEASE_ID = RELEASE_ID_ARG ? RELEASE_ID_ARG.split('=')[1] : GRAMMAR_CONTENT_RELEASE_ID;
+const OUT_ARG = CLI_ARGS.find(a => a.startsWith('--out='));
+const CONFIGURED_OUT_PATH = OUT_ARG ? OUT_ARG.split('=')[1] : null;
 
 const GRAMMAR_SMOKE_ITEM = Object.freeze({
   templateId: 'qg_modal_verb_explain',
