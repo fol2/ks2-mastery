@@ -35,6 +35,7 @@ import {
   spellingSessionProgressIndex,
 } from './spelling-view-model.js';
 import { isPostMasteryMode } from '../service-contract.js';
+import { SessionHUD } from '../../../platform/ui/SessionHUD.jsx';
 
 // Self-contained post-Mega branch lookup — Phaeton (the spelling grand
 // master) anchors the f-region vista regardless of the rest of the
@@ -243,6 +244,14 @@ export function SpellingSessionScene({
         <header className="session-head">
           <PathProgress done={pathDone} current={pathCurrent} total={progressTotal} />
           <span className="path-count">Word {progressCurrent} of {progressTotal}</span>
+          <SessionHUD
+            subjectId="spelling"
+            answeredCount={done}
+            totalCount={progressTotal}
+            remainingCount={Math.max(0, progressTotal - done)}
+            currentIndex={progressCurrent}
+            modeLabel={session.mode || ''}
+          />
         </header>
 
         {showPersistenceBanner ? (

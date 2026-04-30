@@ -64,6 +64,7 @@ import {
   punctuationSessionSubmitLabel,
 } from '../session-ui.js';
 import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
+import { SessionHUD } from '../../../platform/ui/SessionHUD.jsx';
 
 // --- Local helpers ---------------------------------------------------------
 
@@ -402,6 +403,17 @@ function ActiveItemBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
           <p className="subtitle">{currentItemInstruction(item)}</p>
         </div>
       </section>
+
+      <SessionHUD
+        subjectId="punctuation"
+        answeredCount={Number(session.answeredCount) || 0}
+        totalCount={Number(session.length) || 0}
+        remainingCount={Math.max(0, (Number(session.length) || 0) - (Number(session.answeredCount) || 0))}
+        currentIndex={(Number(session.answeredCount) || 0) + 1}
+        modeLabel={modeLabel}
+        supportState={help.showTeachBox ? 'available' : 'none'}
+        progressLabel={progressLabel}
+      />
 
       {isGps ? <GpsDelayedFeedbackChips session={session} /> : null}
       {help.showTeachBox ? <CollapsedTeachBox guided={session.guided} /> : null}
