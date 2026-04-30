@@ -1,7 +1,7 @@
 {
   "metadata": {
     "contentReleaseId": "grammar-qg-p10-2026-04-29",
-    "generatedAt": "2026-04-30T02:26:44.569Z",
+    "generatedAt": "2026-04-30T02:41:44.882Z",
     "templateCount": 78,
     "approved": 74,
     "approvedWithLimitation": 4,
@@ -20,27 +20,27 @@
         {
           "seed": 1,
           "promptText": "Tick one box in each row to show the sentence function.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "How loudly the drums were beating! → exclamation | Why is the gate still open? → question | Our coach arrives at half past nine. → statement | Wait..."
         },
         {
           "seed": 2,
           "promptText": "Tick one box in each row to show the sentence function.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Can we finish the poster tomorrow? → question | How loudly the drums were beating! → exclamation | Mia tucked the map into her coat pocket. → state..."
         },
         {
           "seed": 3,
           "promptText": "Tick one box in each row to show the sentence function.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Where did you put the compass? → question | How loudly the drums were beating! → exclamation | Our coach arrives at half past nine. → statement | B..."
         }
       ],
-      "answerabilityJudgement": "Some seeds produce ambiguous table rows (10/10 failures)",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 10 seeds produce a valid table with unambiguous row answers",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'sentence_functions'",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
-      "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
-      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
       "finalAction": "ship"
     },
@@ -2809,27 +2809,27 @@
         {
           "seed": 1,
           "promptText": "Classify each named noun phrase as the subject or object.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The subject does the action; the object receives it."
         },
         {
           "seed": 2,
           "promptText": "Classify each named noun phrase as the subject or object.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The subject does the action; the object receives it."
         },
         {
           "seed": 3,
           "promptText": "Classify each named noun phrase as the subject or object.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The subject does the action; the object receives it."
         }
       ],
-      "answerabilityJudgement": "Some seeds produce ambiguous table rows (10/10 failures)",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'subject_object'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 10 seeds produce a valid table with unambiguous row answers",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'subject_object'",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
-      "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
-      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
       "finalAction": "ship"
     },
@@ -2897,27 +2897,27 @@
         {
           "seed": 1,
           "promptText": "Classify each sentence as formal or informal.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Formal writing avoids chatty phrasing and uses precise vocabulary."
         },
         {
           "seed": 2,
           "promptText": "Classify each sentence as formal or informal.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Formal writing avoids chatty phrasing and uses precise vocabulary."
         },
         {
           "seed": 3,
           "promptText": "Classify each sentence as formal or informal.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "Formal writing avoids chatty phrasing and uses precise vocabulary."
         }
       ],
-      "answerabilityJudgement": "Some seeds produce ambiguous table rows (10/10 failures)",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'formality'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 10 seeds produce a valid table with unambiguous row answers",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'formality'",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
-      "markingJudgement": "0/10 seeds mark correctly; 10 seed(s) fail golden validation",
-      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
       "finalAction": "ship"
     },
@@ -3829,39 +3829,39 @@
         {
           "seed": 1,
           "promptText": "Identify the head noun and its word class in this expanded noun phrase. the rusty old bicycle",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The head noun is the main word the phrase is built around. 'Rusty' is an adjective modifying the noun."
         },
         {
           "seed": 2,
           "promptText": "Identify the head noun and the word class of the modifier before it. a terrifying mountain storm",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "'Storm' is the head noun. 'Mountain' is a noun used as a modifier (a noun adjunct), not an adjective."
         },
         {
           "seed": 3,
           "promptText": "Identify the head noun and the word class of the underlined word in this noun phrase. those incredibly brave firefighters",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "'Firefighters' is the head noun. 'Incredibly' is an adverb modifying the adjective 'brave', not itself an adjective."
         },
         {
           "seed": 4,
           "promptText": "Identify the head noun and the word class of the first word in this noun phrase. every single morning lesson",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "'Lesson' is the head noun the phrase centres on. 'Every' is a determiner specifying which lesson, not an adjective."
         },
         {
           "seed": 5,
           "promptText": "Identify the head noun and the word class of the describing word. the brightly painted fence",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "'Fence' is the head noun. 'Painted' here is used as an adjective describing the fence, not as a verb showing ongoing action."
         }
       ],
-      "answerabilityJudgement": "Some seeds produce ambiguous table rows (15/15 failures)",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'word_classes, noun_phrases'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds produce a valid table with unambiguous row answers",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'word_classes, noun_phrases'",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
-      "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
-      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
       "finalAction": "ship"
     },
@@ -4088,39 +4088,39 @@
         {
           "seed": 1,
           "promptText": "Identify the voice and the grammatical role of the underlined noun phrase. The trophy was awarded to Amir by the head teacher.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The sentence is passive because the action is done TO the trophy. In a passive sentence, the thing affected ('the trophy') becomes the grammatical ..."
         },
         {
           "seed": 2,
           "promptText": "Identify the voice and the grammatical role of the underlined noun phrase. The goalkeeper saved the penalty brilliantly.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The sentence is active because the doer ('the goalkeeper') comes first and does the action. 'The penalty' receives the action, so it is the object."
         },
         {
           "seed": 3,
           "promptText": "Identify the voice and the grammatical role of the underlined noun phrase. The cake was eaten by the children before lunch.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "This is passive voice: the thing affected ('the cake') has been moved to the subject position. Even though the children did the eating, 'the cake' ..."
         },
         {
           "seed": 4,
           "promptText": "Identify the voice and the grammatical role of the underlined noun phrase. Lena painted the scenery for the school play.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "The sentence is active because the doer ('Lena') performs the action. 'The scenery' receives the painting, making it the object."
         },
         {
           "seed": 5,
           "promptText": "Identify the voice and the grammatical role of the underlined noun phrase. The windows were smashed by the hailstones during the storm.",
-          "markingResult": "no-result",
-          "feedbackSnippet": ""
+          "markingResult": "correct",
+          "feedbackSnippet": "This is passive voice: the affected thing ('the windows') is the grammatical subject. The doer ('the hailstones') appears later in a 'by' phrase."
         }
       ],
-      "answerabilityJudgement": "Some seeds produce ambiguous table rows (15/15 failures)",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'active_passive, subject_object'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds produce a valid table with unambiguous row answers",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'active_passive, subject_object'",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
-      "markingJudgement": "0/15 seeds mark correctly; 15 seed(s) fail golden validation",
-      "feedbackJudgement": "Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
       "finalAction": "ship"
     },

@@ -1,7 +1,7 @@
 # Grammar QG P10 — Quality Register
 
 **Content Release:** grammar-qg-p10-2026-04-29
-**Generated:** 2026-04-30T02:26:44.569Z
+**Generated:** 2026-04-30T02:41:44.882Z
 **Templates:** 78
 **Approved:** 74 | **Blocked:** 0
 **High-risk (1..15 seeds):** 28
@@ -98,19 +98,22 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..10
-- **Answerability:** Some seeds produce ambiguous table rows (10/10 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking
+- **Answerability:** All 10 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Tick one box in each row to show the sentence function." → no-result
-- Seed 2: "Tick one box in each row to show the sentence function." → no-result
-- Seed 3: "Tick one box in each row to show the sentence function." → no-result
+- Seed 1: "Tick one box in each row to show the sentence function." → correct
+  - Feedback: How loudly the drums were beating! → exclamation | Why is the gate still open? → question | Our c...
+- Seed 2: "Tick one box in each row to show the sentence function." → correct
+  - Feedback: Can we finish the poster tomorrow? → question | How loudly the drums were beating! → exclamation ...
+- Seed 3: "Tick one box in each row to show the sentence function." → correct
+  - Feedback: Where did you put the compass? → question | How loudly the drums were beating! → exclamation | Ou...
 
 ### `question_mark_select`
 
@@ -1419,19 +1422,22 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..10
-- **Answerability:** Some seeds produce ambiguous table rows (10/10 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'subject_object'; some seeds produce incorrect marking
+- **Answerability:** All 10 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Classify each named noun phrase as the subject or object." → no-result
-- Seed 2: "Classify each named noun phrase as the subject or object." → no-result
-- Seed 3: "Classify each named noun phrase as the subject or object." → no-result
+- Seed 1: "Classify each named noun phrase as the subject or object." → correct
+  - Feedback: The subject does the action; the object receives it.
+- Seed 2: "Classify each named noun phrase as the subject or object." → correct
+  - Feedback: The subject does the action; the object receives it.
+- Seed 3: "Classify each named noun phrase as the subject or object." → correct
+  - Feedback: The subject does the action; the object receives it.
 
 ### `qg_pronoun_referent_identify`
 
@@ -1464,19 +1470,22 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..10
-- **Answerability:** Some seeds produce ambiguous table rows (10/10 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'formality'; some seeds produce incorrect marking
+- **Answerability:** All 10 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'formality'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Classify each sentence as formal or informal." → no-result
-- Seed 2: "Classify each sentence as formal or informal." → no-result
-- Seed 3: "Classify each sentence as formal or informal." → no-result
+- Seed 1: "Classify each sentence as formal or informal." → correct
+  - Feedback: Formal writing avoids chatty phrasing and uses precise vocabulary.
+- Seed 2: "Classify each sentence as formal or informal." → correct
+  - Feedback: Formal writing avoids chatty phrasing and uses precise vocabulary.
+- Seed 3: "Classify each sentence as formal or informal." → correct
+  - Feedback: Formal writing avoids chatty phrasing and uses precise vocabulary.
 
 ### `qg_modal_verb_explain`
 
@@ -1897,21 +1906,26 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** Some seeds produce ambiguous table rows (15/15 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'word_classes, noun_phrases'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes, noun_phrases'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Identify the head noun and its word class in this expanded noun phrase. the r..." → no-result
-- Seed 2: "Identify the head noun and the word class of the modifier before it. a terrif..." → no-result
-- Seed 3: "Identify the head noun and the word class of the underlined word in this noun..." → no-result
-- Seed 4: "Identify the head noun and the word class of the first word in this noun phra..." → no-result
-- Seed 5: "Identify the head noun and the word class of the describing word. the brightl..." → no-result
+- Seed 1: "Identify the head noun and its word class in this expanded noun phrase. the r..." → correct
+  - Feedback: The head noun is the main word the phrase is built around. 'Rusty' is an adjective modifying the ...
+- Seed 2: "Identify the head noun and the word class of the modifier before it. a terrif..." → correct
+  - Feedback: 'Storm' is the head noun. 'Mountain' is a noun used as a modifier (a noun adjunct), not an adject...
+- Seed 3: "Identify the head noun and the word class of the underlined word in this noun..." → correct
+  - Feedback: 'Firefighters' is the head noun. 'Incredibly' is an adverb modifying the adjective 'brave', not i...
+- Seed 4: "Identify the head noun and the word class of the first word in this noun phra..." → correct
+  - Feedback: 'Lesson' is the head noun the phrase centres on. 'Every' is a determiner specifying which lesson,...
+- Seed 5: "Identify the head noun and the word class of the describing word. the brightl..." → correct
+  - Feedback: 'Fence' is the head noun. 'Painted' here is used as an adjective describing the fence, not as a v...
 
 ### `qg_p4_adverbial_clause_boundary_transfer`
 
@@ -2016,21 +2030,26 @@
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** Some seeds produce ambiguous table rows (15/15 failures)
-- **Grammar logic:** Grammar logic partially valid for concept 'active_passive, subject_object'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive, subject_object'
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
-- **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → no-result
-- Seed 2: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → no-result
-- Seed 3: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → no-result
-- Seed 4: "Identify the voice and the grammatical role of the underlined noun phrase. Le..." → no-result
-- Seed 5: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → no-result
+- Seed 1: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: The sentence is passive because the action is done TO the trophy. In a passive sentence, the thin...
+- Seed 2: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: The sentence is active because the doer ('the goalkeeper') comes first and does the action. 'The ...
+- Seed 3: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: This is passive voice: the thing affected ('the cake') has been moved to the subject position. Ev...
+- Seed 4: "Identify the voice and the grammatical role of the underlined noun phrase. Le..." → correct
+  - Feedback: The sentence is active because the doer ('Lena') performs the action. 'The scenery' receives the ...
+- Seed 5: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: This is passive voice: the affected thing ('the windows') is the grammatical subject. The doer ('...
 
 ### `qg_p4_possession_hyphen_clarity_transfer`
 

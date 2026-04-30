@@ -89,9 +89,40 @@ function buildGoldenResponse(question) {
 
 function buildTableGolden(question) {
   if (question.inputSpec?.type !== 'table_choice') return null;
+
+  // Pattern 1: Heterogeneous tables with multiField answerSpec
+  // e.g. qg_p4_voice_roles_transfer, qg_p4_word_class_noun_phrase_transfer,
+  //      qg_subject_object_classify_table, qg_formality_classify_table
+  if (question.answerSpec?.kind === 'multiField') {
+    const fields = question.answerSpec.params?.fields;
+    if (fields) {
+      const resp = {};
+      for (const [key, spec] of Object.entries(fields)) {
+        resp[key] = spec.golden[0];
+      }
+      return resp;
+    }
+  }
+
+  // Pattern 2: Homogeneous tables with closure evaluator (no answerSpec)
+  // e.g. sentence_type_table — derive answers from feedback text
+  if (!question.answerSpec) {
+    const wrongResult = evaluateGrammarQuestion(question, {});
+    const text = wrongResult?.answerText || wrongResult?.feedbackLong || '';
+    if (text.includes(' | ') || text.includes(' → ')) {
+      const pairs = text.split(' | ');
+      const resp = {};
+      pairs.forEach((pair, i) => {
+        const answer = pair.split(' → ')[1]?.trim();
+        if (answer) resp[`row${i}`] = answer;
+      });
+      if (Object.keys(resp).length > 0) return resp;
+    }
+  }
+
+  // Fallback: brute-force each row with column values
   const rows = question.inputSpec.rows || [];
   const resp = {};
-  // Brute-force each row: try each column value
   for (let i = 0; i < rows.length; i++) {
     const cols = question.inputSpec.columns || rows[i].columns || [];
     for (const col of cols) {
