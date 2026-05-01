@@ -254,6 +254,25 @@ test('Grammar production smoke has visible-data probes for every answer-spec fam
   }
 });
 
+test('Grammar production smoke manual-review probe uses current visible input options', () => {
+  const fixture = GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS.find((item) => item.family === 'manualReviewOnly');
+  assert.ok(fixture, 'Manual-review fixture should exist.');
+  const question = createGrammarQuestion({ templateId: fixture.templateId, seed: fixture.seed });
+  const readItem = readItemFromQuestion(question);
+  const response = visibleResponseForAnswerSpecFamily(readItem);
+
+  for (const field of readItem.inputSpec.fields) {
+    const visibleValues = field.options.map((option) => Array.isArray(option) ? String(option[0]) : String(option.value));
+    assert.ok(
+      visibleValues.includes(response[field.key]),
+      `Manual-review response for ${field.key} must use a current visible option.`,
+    );
+  }
+  const result = evaluateGrammarQuestion(question, response);
+  assert.equal(result.nonScored, true);
+  assert.equal(result.manualReviewOnly, true);
+});
+
 // ---------------------------------------------------------------------------
 // P4 mixed-transfer smoke probes
 // ---------------------------------------------------------------------------

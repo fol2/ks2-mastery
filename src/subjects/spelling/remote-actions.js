@@ -349,6 +349,14 @@ export function createRemoteSpellingActionHandler({
     clearRuntimeErrorForLearner(learnerId);
     reconcilePreferenceSaveResponse({ command, learnerId, preferenceVersion });
     reapplyPendingOptimisticPrefs();
+    const liveReadModel = response?.subjectReadModel || response?.state || null;
+    if (wasSelectedLearner && liveReadModel && typeof liveReadModel === 'object' && !Array.isArray(liveReadModel)) {
+      patchSpellingSubjectUiLocally((current) => ({
+        ...current,
+        ...liveReadModel,
+        learnerId: liveReadModel.learnerId || current?.learnerId || learnerId || '',
+      }));
+    }
     // P2 U4: hydrate the post-mastery snapshot from the worker response into
     // `subjectUi.spelling.postMastery` so subsequent reads via
     // `createSpellingReadModelService.getPostMasteryState(learnerId)` see the

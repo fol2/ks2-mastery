@@ -127,6 +127,117 @@ function normaliseChoiceOptions(inputSpec, context, { allowExtraKeys = false } =
   });
 }
 
+function visibleOptionValue(option) {
+  if (Array.isArray(option)) return String(option[0] ?? '');
+  if (option && typeof option === 'object') return String(option.value ?? '');
+  return String(option ?? '');
+}
+
+function visibleOptionValues(options) {
+  return (Array.isArray(options) ? options : [])
+    .map(visibleOptionValue)
+    .filter((value) => value.trim());
+}
+
+function firstVisibleOption(options) {
+  return visibleOptionValues(options)[0] || '';
+}
+
+function firstAllowedGolden(answerSpec, allowedValues) {
+  const allowed = new Set(allowedValues);
+  for (const value of Array.isArray(answerSpec?.golden) ? answerSpec.golden : []) {
+    const text = String(value ?? '');
+    if (!allowed.size || allowed.has(text)) return text;
+  }
+  return '';
+}
+
+function responseUsesVisibleInput(inputSpec, response) {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) return false;
+  const spec = inputSpec && typeof inputSpec === 'object' ? inputSpec : {};
+  if (spec.type === 'single_choice') {
+    return visibleOptionValues(spec.options).includes(String(response.answer ?? ''));
+  }
+  if (spec.type === 'checkbox_list') {
+    const allowed = new Set(visibleOptionValues(spec.options));
+    const selected = Array.isArray(response.selected) ? response.selected.map(String) : [];
+    return selected.length > 0 && selected.every((value) => allowed.has(value));
+  }
+  if (spec.type === 'table_choice') {
+    const globalAllowed = visibleOptionValues(spec.columns);
+    return (Array.isArray(spec.rows) ? spec.rows : []).every((row) => {
+      const key = typeof row?.key === 'string' ? row.key : '';
+      const allowed = visibleOptionValues(Array.isArray(row?.options) && row.options.length ? row.options : globalAllowed);
+      return key && allowed.includes(String(response[key] ?? ''));
+    });
+  }
+  if (spec.type === 'multi') {
+    return (Array.isArray(spec.fields) ? spec.fields : []).every((field) => {
+      const key = typeof field?.key === 'string' ? field.key : '';
+      const value = String(response[key] ?? '').trim();
+      if (!key || !value) return false;
+      const allowed = visibleOptionValues(field.options);
+      return !allowed.length || allowed.includes(value);
+    });
+  }
+  return String(response.answer ?? '').trim().length > 0;
+}
+
+function responseFromVisibleInput(question) {
+  const inputSpec = question?.inputSpec || {};
+  const answerSpec = question?.answerSpec || {};
+
+  if (inputSpec.type === 'single_choice') {
+    return correctResponseFor({
+      templateId: question.templateId,
+      seed: question.seed,
+      inputSpec,
+    });
+  }
+
+  if (inputSpec.type === 'checkbox_list') {
+    const selected = (Array.isArray(answerSpec.golden) ? answerSpec.golden : [])
+      .map(String)
+      .filter((value) => visibleOptionValues(inputSpec.options).includes(value));
+    return { selected: selected.length ? selected : [firstVisibleOption(inputSpec.options)].filter(Boolean) };
+  }
+
+  if (inputSpec.type === 'table_choice') {
+    const fields = answerSpec?.params?.fields && typeof answerSpec.params.fields === 'object'
+      ? answerSpec.params.fields
+      : {};
+    const globalAllowed = visibleOptionValues(inputSpec.columns);
+    const response = {};
+    for (const row of Array.isArray(inputSpec.rows) ? inputSpec.rows : []) {
+      const key = typeof row?.key === 'string' ? row.key : '';
+      if (!key) continue;
+      const allowed = visibleOptionValues(Array.isArray(row.options) && row.options.length ? row.options : globalAllowed);
+      response[key] = firstAllowedGolden(fields[key], allowed) || allowed[0] || '';
+    }
+    return response;
+  }
+
+  if (inputSpec.type === 'multi') {
+    const fields = answerSpec?.params?.fields && typeof answerSpec.params.fields === 'object'
+      ? answerSpec.params.fields
+      : {};
+    const response = {};
+    for (const field of Array.isArray(inputSpec.fields) ? inputSpec.fields : []) {
+      const key = typeof field?.key === 'string' ? field.key : '';
+      if (!key) continue;
+      const allowed = visibleOptionValues(field.options);
+      response[key] = firstAllowedGolden(fields[key], allowed)
+        || allowed[0]
+        || String(fields[key]?.answerText || fields[key]?.golden?.[0] || answerSpec.answerText || answerSpec.golden?.[0] || 'Smoke response');
+    }
+    return response;
+  }
+
+  return {
+    answer: String(answerSpec.answerText || answerSpec.golden?.[0] || 'Smoke response'),
+  };
+}
+
 export function assertNoForbiddenGrammarReadModelKeys(value, path = 'grammar.subjectReadModel') {
   assertNoForbiddenObjectKeys(value, FORBIDDEN_GRAMMAR_READ_MODEL_KEYS, path);
   assertNoForbiddenObjectKeys(value?.session?.currentItem, FORBIDDEN_GRAMMAR_ITEM_KEYS, `${path}.session.currentItem`);
@@ -174,8 +285,19 @@ export function visibleResponseForAnswerSpecFamily(readItem) {
     item.templateId === readItem?.templateId && Number(item.seed) === Number(readItem?.seed)
   ));
   if (!fixture) return correctResponseFor(readItem);
-  if (!fixture.response) return correctResponseFor(readItem);
-  return { ...fixture.response };
+  if (fixture.response && responseUsesVisibleInput(readItem.inputSpec, fixture.response)) return { ...fixture.response };
+  const question = createGrammarQuestion({
+    templateId: readItem?.templateId,
+    seed: readItem?.seed,
+  });
+  assert.ok(question, `Could not rebuild Grammar answer-spec smoke question for ${readItem?.templateId || 'unknown template'}.`);
+  const response = responseFromVisibleInput(question);
+  assert.equal(
+    responseUsesVisibleInput(readItem.inputSpec, response),
+    true,
+    `Grammar ${fixture.family} smoke response did not use production-visible input values.`,
+  );
+  return response;
 }
 
 async function smokeGrammarNormalRound({ origin, cookie, learnerId, revision }) {

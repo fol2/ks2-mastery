@@ -20,7 +20,15 @@ const DEFAULT_ROUTE = {
   adminSection: null,
 };
 
-const VALID_ADMIN_SECTIONS = new Set(['overview', 'accounts', 'debug', 'content', 'marketing']);
+const VALID_ADMIN_SECTIONS = new Set([
+  'overview',
+  'accounts',
+  'debug',
+  'content',
+  'marketing',
+  'business',
+  'visual-engine',
+]);
 
 const VALID_ROUTE_SCREENS = new Set(['dashboard', 'subject', 'codex', 'profile-settings', 'parent-hub', 'admin-hub']);
 const VALID_ROUTE_TABS = new Set(['practice', 'analytics', 'profiles', 'settings', 'method']);
