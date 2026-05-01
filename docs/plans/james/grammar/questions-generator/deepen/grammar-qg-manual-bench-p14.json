@@ -2,16 +2,18 @@
   "packId": "grammar-qg-manual-bench-p14-2026-05-01",
   "language": "en-GB",
   "status": "human-authored-bench-expansion-draft",
-  "purpose": "Manual Grammar QG bench expansion: double the number of template families from 78 to 156 before any further generator-only certification work.",
-  "sourceBoundary": "Authored as a separate content-bench line. Not yet integrated into worker/src/subjects/grammar/content.js.",
+  "purpose": "Manual Grammar QG bench expansion: extend the P14 production-candidate bench from 110 to 188 template families before any further generator-only certification work.",
+  "sourceBoundary": "Authored as a separate draft content-bench line after P14. Not yet integrated into worker/src/subjects/grammar/content.js.",
   "currentBaseline": {
-    "currentTemplateCount": 78,
-    "currentThirtySeedInstances": 2340,
+    "contentReleaseId": "grammar-qg-p14-2026-05-01",
+    "baselineSource": "reports/grammar/grammar-qg-p14-render-inventory.json",
+    "currentTemplateCount": 110,
+    "currentThirtySeedInstances": 3300,
     "knownLowDiversityTemplateFamilies": 23
   },
   "targetAfterIntegration": {
     "newManualTemplateFamilies": 78,
-    "totalTemplateFamilies": 156,
+    "totalTemplateFamilies": 188,
     "handAuthoredSeedCasesInThisPack": 156,
     "minimumIntegrationRequirement": "Each new template family must ship with at least 2 hand-authored fixed cases and an expansion path to 6+ learner-visible surfaces before production certification."
   },
