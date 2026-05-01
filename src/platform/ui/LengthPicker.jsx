@@ -102,10 +102,9 @@ export function LengthPicker({
         if (includeDataValue) buttonProps['data-value'] = entry.value;
         buttonProps.value = entry.value;
         buttonProps.disabled = disabled;
-        buttonProps.key = entry.value;
         buttonProps.onClick = (event) => onChange(entry.value, event);
         return (
-          <button {...buttonProps}>
+          <button key={entry.value} {...buttonProps}>
             <span>{entry.label}</span>
           </button>
         );

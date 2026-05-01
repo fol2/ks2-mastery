@@ -6,7 +6,7 @@
  * 2. verify:grammar-qg-p11 chains verify:grammar-qg-p10 first
  * 3. verify:grammar-qg-production-release exists
  * 4. verify:grammar-qg-production-release includes the semantic audit
- * 5. verify:grammar-qg-production-release chains p11 first
+ * 5. verify:grammar-qg-production-release chains through p14, which chains p11
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -63,19 +63,28 @@ describe('P11 U10 Verify Chain: verify:grammar-qg-production-release', () => {
     assert.ok('verify:grammar-qg-production-release' in scripts, 'Missing script: verify:grammar-qg-production-release');
   });
 
-  it('verify:grammar-qg-production-release chains p11 first', () => {
+  it('verify:grammar-qg-production-release chains the active p14 release gate first', () => {
     const cmd = scripts['verify:grammar-qg-production-release'] || '';
     assert.ok(
+      cmd.startsWith('npm run verify:grammar-qg-p14'),
+      `verify:grammar-qg-production-release must chain p14 first. Actual: "${cmd}"`,
+    );
+  });
+
+  it('verify:grammar-qg-p14 chains p11 first', () => {
+    const cmd = scripts['verify:grammar-qg-p14'] || '';
+    assert.ok(
       cmd.startsWith('npm run verify:grammar-qg-p11'),
-      `verify:grammar-qg-production-release must chain p11 first. Actual: "${cmd}"`,
+      `verify:grammar-qg-p14 must chain p11 first. Actual: "${cmd}"`,
     );
   });
 
   it('verify:grammar-qg-production-release includes the semantic audit', () => {
     const cmd = scripts['verify:grammar-qg-production-release'] || '';
+    const p14Cmd = scripts['verify:grammar-qg-p14'] || '';
     assert.ok(
-      cmd.includes('audit:grammar-qg:semantic'),
-      `verify:grammar-qg-production-release must include the semantic audit. Actual: "${cmd}"`,
+      cmd.includes('audit:grammar-qg:semantic') || p14Cmd.includes('audit:grammar-qg:semantic'),
+      `verify:grammar-qg-production-release must include the semantic audit directly or through p14. Actual: "${cmd}" / "${p14Cmd}"`,
     );
   });
 
@@ -90,7 +99,7 @@ describe('P11 U10 Verify Chain: verify:grammar-qg-production-release', () => {
   it('verify:grammar-qg-production-release references the certification manifest', () => {
     const cmd = scripts['verify:grammar-qg-production-release'] || '';
     assert.ok(
-      cmd.includes('grammar-qg-p11-certification-manifest.json'),
+      cmd.includes('grammar-qg-p14-certification-manifest.json'),
       `verify:grammar-qg-production-release must reference the manifest. Actual: "${cmd}"`,
     );
   });
@@ -108,9 +117,11 @@ describe('P11 U10 Verify Chain: ordering integrity', () => {
     assert.ok(p10Cmd.includes('verify:grammar-qg-p9'), 'p10 must chain p9');
   });
 
-  it('production-release chains p11 which chains p10 (no skipping)', () => {
+  it('production-release chains p14, which chains p11 and p10 (no skipping)', () => {
     const releaseCmd = scripts['verify:grammar-qg-production-release'] || '';
-    assert.ok(releaseCmd.includes('verify:grammar-qg-p11'), 'production-release must chain p11');
-    // p11 transitively chains p10 → p9 → p8 → ... → base
+    const p14Cmd = scripts['verify:grammar-qg-p14'] || '';
+    assert.ok(releaseCmd.includes('verify:grammar-qg-p14'), 'production-release must chain p14');
+    assert.ok(p14Cmd.includes('verify:grammar-qg-p11'), 'p14 must chain p11');
+    // p14 transitively chains p11 → p10 → p9 → p8 → ... → base
   });
 });

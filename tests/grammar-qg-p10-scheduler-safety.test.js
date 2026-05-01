@@ -2,8 +2,8 @@
  * Grammar QG P10 U8 — Historical Scheduler Safety
  *
  * Proves that the historical P10 certification status map remains internally
- * consistent, while active runtime scheduling uses the current P11/P12-derived
- * generated authority.
+ * consistent, while active runtime scheduling uses the current generated
+ * authority.
  *
  * R-U4 addendum: proves that engine.js paths (takeDueRetry, nextItem
  * direct-launch, startSimilarProblem) respect the blocklist.
@@ -35,6 +35,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
 const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p10-certification-status-map.json');
+const QUALITY_REGISTER_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p10-quality-register.json');
 
 // ---------------------------------------------------------------------------
 // 1. P10 Status Map structural validity
@@ -46,15 +47,17 @@ describe('P10 Scheduler Safety: status map structure', () => {
   });
 
   const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
+  const qualityRegister = JSON.parse(fs.readFileSync(QUALITY_REGISTER_PATH, 'utf8'));
+  const p10TemplateIds = qualityRegister.entries.map((entry) => entry.templateId);
 
   it('has entries for all 78 templates', () => {
     assert.equal(Object.keys(statusMap).length, 78);
   });
 
-  it('every template in GRAMMAR_TEMPLATE_METADATA exists in the P10 map', () => {
+  it('every historical P10 quality-register template exists in the P10 map', () => {
     const mapKeys = new Set(Object.keys(statusMap));
-    for (const template of GRAMMAR_TEMPLATE_METADATA) {
-      assert.ok(mapKeys.has(template.id), `Missing template in P10 status map: ${template.id}`);
+    for (const templateId of p10TemplateIds) {
+      assert.ok(mapKeys.has(templateId), `Missing template in P10 status map: ${templateId}`);
     }
   });
 
@@ -78,10 +81,18 @@ describe('P10 Scheduler Safety: status map structure', () => {
 // ---------------------------------------------------------------------------
 
 describe('P10 Historical Scheduler Safety: active runtime coverage', () => {
-  it('active runtime map covers every historical P10 template ID', () => {
+  it('active runtime map covers every live template ID', () => {
     for (const template of GRAMMAR_TEMPLATE_METADATA) {
       const moduleEntry = CERTIFICATION_STATUS_MAP[template.id];
       assert.ok(moduleEntry, `Module missing template: ${template.id}`);
+    }
+  });
+
+  it('active runtime map still covers every historical P10 template ID', () => {
+    const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
+    for (const templateId of Object.keys(statusMap)) {
+      const moduleEntry = CERTIFICATION_STATUS_MAP[templateId];
+      assert.ok(moduleEntry, `Module missing historical P10 template: ${templateId}`);
     }
   });
 

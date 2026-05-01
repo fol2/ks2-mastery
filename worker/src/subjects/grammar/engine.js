@@ -18,6 +18,7 @@ import {
   evaluateGrammarQuestion,
   GRAMMAR_CONCEPTS,
   GRAMMAR_CONTENT_RELEASE_ID,
+  GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS,
   GRAMMAR_TEMPLATE_METADATA,
   grammarQuestionVariantSignature,
   grammarTemplateById,
@@ -58,6 +59,7 @@ const LOCKED_MODES = Object.freeze([]);
 const NO_STORED_FOCUS_MODES = new Set(['trouble', 'surgery', 'builder']);
 const NO_SESSION_FOCUS_MODES = new Set(['surgery', 'builder']);
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
+const GRAMMAR_FIXED_DIAGNOSTIC_IDS = new Set(GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS);
 const GOAL_TYPES = new Set(['questions', 'timed', 'due']);
 
 // P6 calibration telemetry — bucket raw elapsed time into coarse bands.
@@ -82,6 +84,128 @@ function timestamp(now = Date.now) {
 
 function clamp(number, min, max) {
   return Math.min(max, Math.max(min, number));
+}
+
+function grammarSessionDepthClassification({ type = 'practice', mode = 'smart', targetCount = 5 } = {}) {
+  const count = Math.max(0, Math.floor(Number(targetCount) || 0));
+  if (type === 'mini-set' || mode === 'satsset') return count >= 12 ? 'mini-test-12' : 'mini-test-8';
+  if (count >= 10) return 'deep-practice';
+  if (count <= 5) return 'quick-practice';
+  return 'bridge-practice';
+}
+
+function createSessionVarietyTelemetry({ type = 'practice', mode = 'smart', targetCount = 5 } = {}) {
+  const sessionDepthClassification = grammarSessionDepthClassification({ type, mode, targetCount });
+  return {
+    sessionDepthClassification,
+    templateExposureCount: 0,
+    sessionTemplateDuplicateCount: 0,
+    sessionUniqueTemplateCount: 0,
+    sessionUniqueConceptCount: 0,
+    lowDiversityTemplateExposureCount: 0,
+    inputTypeExposureCounts: {},
+    templateInputTypeExposureCounts: {},
+    elapsedByDepthType: {
+      [sessionDepthClassification]: { attempts: 0, totalElapsedMs: 0, averageElapsedMs: null },
+    },
+    abandonRateByTemplateInputType: {},
+    _templateCounts: {},
+    _conceptCounts: {},
+  };
+}
+
+function safeElapsedMs(value) {
+  const ms = Number(value);
+  return Number.isFinite(ms) && ms >= 0 && ms <= 180000 ? ms : null;
+}
+
+function ensureSessionVarietyTelemetry(session) {
+  if (!isPlainObject(session.varietyTelemetry)) {
+    session.varietyTelemetry = createSessionVarietyTelemetry({
+      type: session.type,
+      mode: session.mode,
+      targetCount: session.targetCount,
+    });
+  }
+  if (!isPlainObject(session.varietyTelemetry._templateCounts)) session.varietyTelemetry._templateCounts = {};
+  if (!isPlainObject(session.varietyTelemetry._conceptCounts)) session.varietyTelemetry._conceptCounts = {};
+  if (!isPlainObject(session.varietyTelemetry.inputTypeExposureCounts)) session.varietyTelemetry.inputTypeExposureCounts = {};
+  if (!isPlainObject(session.varietyTelemetry.templateInputTypeExposureCounts)) session.varietyTelemetry.templateInputTypeExposureCounts = {};
+  if (!isPlainObject(session.varietyTelemetry.elapsedByDepthType)) session.varietyTelemetry.elapsedByDepthType = {};
+  return session.varietyTelemetry;
+}
+
+function publicSessionVarietyTelemetry(telemetry) {
+  if (!isPlainObject(telemetry)) return null;
+  const elapsedByDepthType = {};
+  for (const [depth, raw] of Object.entries(telemetry.elapsedByDepthType || {})) {
+    const attempts = Math.max(0, Math.floor(Number(raw?.attempts) || 0));
+    const totalElapsedMs = Math.max(0, Math.floor(Number(raw?.totalElapsedMs) || 0));
+    elapsedByDepthType[depth] = {
+      attempts,
+      totalElapsedMs,
+      averageElapsedMs: attempts > 0 ? Math.round(totalElapsedMs / attempts) : null,
+    };
+  }
+  return {
+    sessionDepthClassification: typeof telemetry.sessionDepthClassification === 'string'
+      ? telemetry.sessionDepthClassification
+      : 'quick-practice',
+    templateExposureCount: Math.max(0, Math.floor(Number(telemetry.templateExposureCount) || 0)),
+    sessionTemplateDuplicateCount: Math.max(0, Math.floor(Number(telemetry.sessionTemplateDuplicateCount) || 0)),
+    sessionUniqueTemplateCount: Math.max(0, Math.floor(Number(telemetry.sessionUniqueTemplateCount) || 0)),
+    sessionUniqueConceptCount: Math.max(0, Math.floor(Number(telemetry.sessionUniqueConceptCount) || 0)),
+    lowDiversityTemplateExposureCount: Math.max(0, Math.floor(Number(telemetry.lowDiversityTemplateExposureCount) || 0)),
+    inputTypeExposureCounts: isPlainObject(telemetry.inputTypeExposureCounts)
+      ? cloneSerialisable(telemetry.inputTypeExposureCounts)
+      : {},
+    templateInputTypeExposureCounts: isPlainObject(telemetry.templateInputTypeExposureCounts)
+      ? cloneSerialisable(telemetry.templateInputTypeExposureCounts)
+      : {},
+    elapsedByDepthType,
+    abandonRateByTemplateInputType: isPlainObject(telemetry.abandonRateByTemplateInputType)
+      ? cloneSerialisable(telemetry.abandonRateByTemplateInputType)
+      : {},
+  };
+}
+
+function recordSessionItemExposure(session, item) {
+  if (!session || !item) return;
+  const telemetry = ensureSessionVarietyTelemetry(session);
+  const templateId = typeof item.templateId === 'string' ? item.templateId : '';
+  if (!templateId) return;
+  const inputType = typeof item.inputSpec?.type === 'string' ? item.inputSpec.type : 'unknown';
+  telemetry.templateExposureCount = (Number(telemetry.templateExposureCount) || 0) + 1;
+  telemetry._templateCounts[templateId] = (Number(telemetry._templateCounts[templateId]) || 0) + 1;
+  telemetry.sessionUniqueTemplateCount = Object.keys(telemetry._templateCounts).length;
+  telemetry.sessionTemplateDuplicateCount = Object.values(telemetry._templateCounts)
+    .reduce((sum, count) => sum + Math.max(0, (Number(count) || 0) - 1), 0);
+  if (GRAMMAR_FIXED_DIAGNOSTIC_IDS.has(templateId)) {
+    telemetry.lowDiversityTemplateExposureCount = (Number(telemetry.lowDiversityTemplateExposureCount) || 0) + 1;
+  }
+  const conceptIds = Array.isArray(item.skillIds)
+    ? item.skillIds
+    : (Array.isArray(item.replay?.conceptIds) ? item.replay.conceptIds : []);
+  for (const conceptId of conceptIds) {
+    if (typeof conceptId !== 'string' || !conceptId) continue;
+    telemetry._conceptCounts[conceptId] = (Number(telemetry._conceptCounts[conceptId]) || 0) + 1;
+  }
+  telemetry.sessionUniqueConceptCount = Object.keys(telemetry._conceptCounts).length;
+  telemetry.inputTypeExposureCounts[inputType] = (Number(telemetry.inputTypeExposureCounts[inputType]) || 0) + 1;
+  const templateInputKey = `${templateId}|${inputType}`;
+  telemetry.templateInputTypeExposureCounts[templateInputKey] = (Number(telemetry.templateInputTypeExposureCounts[templateInputKey]) || 0) + 1;
+}
+
+function recordSessionElapsedTelemetry(session, elapsedMs) {
+  const safeMs = safeElapsedMs(elapsedMs);
+  if (safeMs == null || !session) return;
+  const telemetry = ensureSessionVarietyTelemetry(session);
+  const depth = telemetry.sessionDepthClassification || grammarSessionDepthClassification(session);
+  const row = telemetry.elapsedByDepthType[depth] || { attempts: 0, totalElapsedMs: 0, averageElapsedMs: null };
+  row.attempts = (Number(row.attempts) || 0) + 1;
+  row.totalElapsedMs = (Number(row.totalElapsedMs) || 0) + safeMs;
+  row.averageElapsedMs = Math.round(row.totalElapsedMs / row.attempts);
+  telemetry.elapsedByDepthType[depth] = row;
 }
 
 function normaliseSpeechRate(value, fallback = DEFAULT_SPEECH_RATE) {
@@ -883,6 +1007,27 @@ function practiceSessionRecord(learnerId, state, latestSession, nowTs) {
   return buildActiveRecord(learnerId, state, nowTs) || buildCompletedRecord(learnerId, state, latestSession, nowTs);
 }
 
+function sessionStateWithAbandonTelemetry(sessionState) {
+  const safeSessionState = cloneSerialisable(sessionState);
+  if (!isPlainObject(safeSessionState?.varietyTelemetry)) return safeSessionState || null;
+  const telemetry = safeSessionState.varietyTelemetry;
+  const exposureCounts = isPlainObject(telemetry.templateInputTypeExposureCounts)
+    ? telemetry.templateInputTypeExposureCounts
+    : {};
+  const abandonment = {};
+  for (const [key, count] of Object.entries(exposureCounts)) {
+    const exposures = Math.max(1, Math.floor(Number(count) || 0));
+    abandonment[key] = {
+      exposedItems: exposures,
+      abandonedSessions: 1,
+      observedSessions: 1,
+      abandonRate: 1,
+    };
+  }
+  telemetry.abandonRateByTemplateInputType = abandonment;
+  return safeSessionState;
+}
+
 function buildAbandonedRecord(learnerId, latestSession, nowTs) {
   if (!latestSession?.id || latestSession.status !== 'active') return null;
   return normalisePracticeSessionRecord({
@@ -891,7 +1036,7 @@ function buildAbandonedRecord(learnerId, latestSession, nowTs) {
     subjectId: SUBJECT_ID,
     sessionKind: latestSession.sessionKind || latestSession.mode || 'smart',
     status: 'abandoned',
-    sessionState: latestSession.sessionState || null,
+    sessionState: sessionStateWithAbandonTelemetry(latestSession.sessionState),
     summary: latestSession.summary || null,
     createdAt: latestSession.createdAt || nowTs,
     updatedAt: nowTs,
@@ -1094,7 +1239,13 @@ function startSession(state, payload, nowTs, learnerId) {
       },
       heroContext: payload.heroContext || null,
       serverAuthority: SERVER_AUTHORITY,
+      varietyTelemetry: createSessionVarietyTelemetry({
+        type: 'mini-set',
+        mode,
+        targetCount: questions.length,
+      }),
     };
+    for (const question of questions) recordSessionItemExposure(state.session, question?.item);
     return [];
   }
   const firstItem = nextItem(state, {
@@ -1153,7 +1304,13 @@ function startSession(state, payload, nowTs, learnerId) {
     },
     heroContext: payload.heroContext || null,
     serverAuthority: SERVER_AUTHORITY,
+    varietyTelemetry: createSessionVarietyTelemetry({
+      type: sessionTypeForMode(mode),
+      mode,
+      targetCount: sessionGoal.targetCount,
+    }),
   };
+  recordSessionItemExposure(state.session, firstItem);
   return [];
 }
 
@@ -1179,6 +1336,12 @@ function completionSummary(state, nowTs) {
     goal: isPlainObject(session.goal) ? cloneSerialisable(session.goal) : { type: 'questions' },
     timedOut: sessionGoalExpired(session, nowTs),
     heroContext: extractHeroSummaryContext(session),
+    sessionDepthClassification: grammarSessionDepthClassification({
+      type: session.type,
+      mode: session.mode,
+      targetCount: session.targetCount,
+    }),
+    varietyTelemetry: publicSessionVarietyTelemetry(session.varietyTelemetry),
   };
 }
 
@@ -1210,6 +1373,8 @@ function completeSession(state, nowTs, command) {
     correct: summary.correct,
     totalScore: summary.totalScore,
     totalMarks: summary.totalMarks,
+    sessionDepthClassification: summary.sessionDepthClassification,
+    varietyTelemetry: cloneSerialisable(summary.varietyTelemetry) || null,
     createdAt: nowTs,
   };
   state.session = null;
@@ -1411,6 +1576,8 @@ function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
     totalScore: summary.totalScore,
     totalMarks: summary.totalMarks,
     timedOut: Boolean(timedOut),
+    sessionDepthClassification: summary.sessionDepthClassification,
+    varietyTelemetry: cloneSerialisable(summary.varietyTelemetry) || null,
     createdAt: nowTs,
   });
   return events;
@@ -1551,6 +1718,7 @@ function startSimilarProblem(state, nowTs) {
   repair.retryingCurrent = false;
   session.currentIndex = Number(session.currentIndex) + 1;
   session.currentItem = item;
+  recordSessionItemExposure(session, item);
   session.attemptsForCurrent = 0;
   session.supportLevel = supportLevelForSession(session.mode, state.prefs, session);
   session.targetCount = Math.max(Number(session.targetCount) || 0, Number(session.answered) + 1);
@@ -1590,6 +1758,7 @@ function continueSession(state, nowTs) {
     seed: itemSeed,
     nowTs,
   });
+  recordSessionItemExposure(session, session.currentItem);
   session.attemptsForCurrent = 0;
   session.supportLevel = supportLevelForSession(session.mode, state.prefs, session);
   state.phase = 'session';
@@ -1835,6 +2004,7 @@ function submitAnswer(state, payload, command, nowTs) {
     mode: session.mode,
     clientElapsedMs: payload.clientElapsedMs ?? null,
   });
+  recordSessionElapsedTelemetry(session, payload.clientElapsedMs ?? null);
   if (!retryingCurrent) {
     const nonScoredResult = isNonScoredGrammarResult(applied.result);
     session.answered += 1;

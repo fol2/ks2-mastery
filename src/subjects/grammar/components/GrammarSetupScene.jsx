@@ -24,6 +24,9 @@ import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
 import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
+import {
+  GRAMMAR_STAR_STAGE_THRESHOLDS,
+} from '../../../../shared/grammar/grammar-stars.js';
 
 /* Aligned Grammar setup scene.
  *
@@ -44,6 +47,69 @@ import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
 
 const NORMAL_ROUND_OPTIONS = ['3', '5', '8', '10', '15'];
 const MINI_TEST_ROUND_OPTIONS = ['8', '12'];
+const DEEP_PRACTICE_MILESTONES = Object.freeze([
+  GRAMMAR_STAR_STAGE_THRESHOLDS.egg,
+  GRAMMAR_STAR_STAGE_THRESHOLDS.hatch,
+  GRAMMAR_STAR_STAGE_THRESHOLDS.evolve2,
+  GRAMMAR_STAR_STAGE_THRESHOLDS.evolve3,
+  GRAMMAR_STAR_STAGE_THRESHOLDS.mega,
+]);
+
+function practiceDepthForSelection(mode, selectedLength) {
+  const count = Number(selectedLength) || 5;
+  if (mode === 'satsset') {
+    return {
+      id: count >= 12 ? 'mini-test-12' : 'mini-test-8',
+      label: count >= 12 ? 'Mini-test · 12 questions' : 'Mini-test · 8 questions',
+      startLabel: 'Start Mini Test',
+    };
+  }
+  if (count >= 10) {
+    return {
+      id: 'deep-practice',
+      label: `Deep practice · ${count} questions`,
+      startLabel: 'Start Deep Practice',
+    };
+  }
+  if (count === 5) {
+    return {
+      id: 'quick-practice',
+      label: 'Quick practice · 5 questions',
+      startLabel: 'Start Quick Practice',
+    };
+  }
+  return {
+    id: 'bridge-practice',
+    label: `${count} question practice`,
+    startLabel: 'Start Practice',
+  };
+}
+
+function isNearGrammarMilestone(monsterStrip = []) {
+  return (Array.isArray(monsterStrip) ? monsterStrip : []).some((entry) => {
+    const stars = Number(entry?.stars);
+    if (!Number.isFinite(stars) || stars < 0) return false;
+    const nextMilestone = DEEP_PRACTICE_MILESTONES.find((milestone) => stars < milestone);
+    return Number.isFinite(nextMilestone) && nextMilestone - stars <= 5;
+  });
+}
+
+function isRepeatingEasyGrammarWork(recentAttempts = []) {
+  const recentCorrect = (Array.isArray(recentAttempts) ? recentAttempts : [])
+    .slice(-6)
+    .filter((attempt) => {
+      const result = attempt?.result || {};
+      return result.correct === true && result.nonScored !== true && result.manualReviewOnly !== true;
+    });
+  if (recentCorrect.length < 4) return false;
+  const templateCounts = new Map();
+  for (const attempt of recentCorrect) {
+    const templateId = typeof attempt?.templateId === 'string' ? attempt.templateId : '';
+    if (!templateId) continue;
+    templateCounts.set(templateId, (templateCounts.get(templateId) || 0) + 1);
+  }
+  return [...templateCounts.values()].some((count) => count >= 3);
+}
 
 function TodayCard({ card }) {
   return (
@@ -185,6 +251,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
   const selectedLength = miniTestMode
     ? (rawLength >= 10 ? '12' : '8')
     : (Number.isFinite(rawLength) && rawLength > 0 ? String(rawLength) : '5');
+  const selectedDepth = practiceDepthForSelection(selectedMode, selectedLength);
   const { title: heroTitle, subtitle: heroSubtitle } = GRAMMAR_DASHBOARD_HERO;
 
   const troubleCard = (dashboard.todayCards || []).find((card) => card.id === 'trouble');
@@ -195,7 +262,15 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
     ? 'Fix Trouble Spots'
     : selectedMode === 'satsset'
       ? 'Start Mini Test'
-      : `Start ${selectedModeCard?.title || 'Smart Practice'}`;
+      : selectedDepth.startLabel || `Start ${selectedModeCard?.title || 'Smart Practice'}`;
+  const deepRecommendationReason = troubleCount > 0
+    ? 'repair'
+    : isNearGrammarMilestone(dashboard.monsterStrip)
+      ? 'milestone'
+      : isRepeatingEasyGrammarWork(recentAttempts)
+        ? 'variety'
+        : '';
+  const deepRecommended = !miniTestMode && Boolean(deepRecommendationReason) && Number(selectedLength) < 10;
 
   // Hero backdrop URL + contrast probe. The hook reads the curated
   // per-tone profile when one is available and falls back to a runtime
@@ -267,7 +342,17 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
                   actionName="grammar-set-round-length"
                   prefKey="roundLength"
                 />
+                <span className="length-unit" data-session-depth={selectedDepth.id}>{selectedDepth.label}</span>
               </div>
+              {deepRecommended ? (
+                <div
+                  className="tool-label"
+                  data-session-depth-recommendation="deep-practice"
+                  data-session-depth-reason={deepRecommendationReason}
+                >
+                  Deep practice recommended today
+                </div>
+              ) : null}
             </div>
 
             {grammar.error ? (

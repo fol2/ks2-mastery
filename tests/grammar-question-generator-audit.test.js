@@ -20,13 +20,13 @@ test('Grammar question-generator audit covers the current template inventory', (
   assert.deepEqual(audit.templatesMissingAnswerSpecs, []);
   assert.deepEqual(audit.invalidAnswerSpecs, []);
   assert.equal(audit.conceptCoverage.length, GRAMMAR_CONCEPTS.length);
-  assert.equal(audit.answerSpecTemplateCount, 47);
-  assert.equal(audit.constructedResponseTemplateCount, 20);
-  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 20);
+  assert.equal(audit.answerSpecTemplateCount, 79);
+  assert.equal(audit.constructedResponseTemplateCount, 28);
+  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 28);
   assert.equal(audit.legacyAdapterTemplateCount, 0);
   assert.equal(audit.manualReviewOnlyTemplateCount, 4);
   assert.equal(audit.p2MigrationComplete, true);
-  assert.equal(audit.explainTemplateCount, 17);
+  assert.equal(audit.explainTemplateCount, 25);
   assert.equal(audit.conceptsWithExplainCoverage.length, GRAMMAR_CONCEPTS.length);
   assert.deepEqual(audit.conceptsMissingExplainCoverage, []);
   assert.equal(audit.p3ExplanationComplete, true);
@@ -36,16 +36,16 @@ test('Grammar question-generator audit covers the current template inventory', (
   );
   assert.deepEqual(audit.answerSpecKindCounts, {
     acceptedSet: 2,
-    exact: 23,
+    exact: 47,
     manualReviewOnly: 4,
     multiField: 4,
-    normalisedText: 5,
+    normalisedText: 13,
     punctuationPattern: 9,
   });
 
   // P4 mixed-transfer assertions
   assert.equal(typeof audit.mixedTransferTemplateCount, 'number');
-  assert.equal(audit.mixedTransferTemplateCount, 8);
+  assert.equal(audit.mixedTransferTemplateCount, 16);
   assert.ok(Array.isArray(audit.conceptsMissingMixedTransferCoverage));
   assert.equal(audit.conceptsMissingMixedTransferCoverage.length, 0);
   assert.equal(audit.p4MixedTransferComplete, true);
@@ -72,45 +72,46 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
   assert.notEqual(a, c);
 });
 
-test('Grammar question-generator P5 denominator assertions', () => {
+test('Grammar question-generator P14 denominator assertions', () => {
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
 
-  // P5 denominators
-  assert.equal(audit.templateCount, 78);
+  assert.equal(audit.releaseId, 'grammar-qg-p14-2026-05-01');
+  assert.equal(audit.templateCount, 110);
   assert.equal(audit.conceptCount, 18);
-  assert.equal(audit.selectedResponseCount, 58);
-  assert.equal(audit.constructedResponseCount, 20);
-  assert.equal(audit.generatedTemplateCount, 52);
+  assert.equal(audit.selectedResponseCount, 82);
+  assert.equal(audit.constructedResponseCount, 28);
+  assert.equal(audit.generatedTemplateCount, 84);
   assert.equal(audit.fixedTemplateCount, 26);
-  assert.equal(audit.explainTemplateCount, 17);
+  assert.equal(audit.explainTemplateCount, 25);
   assert.equal(audit.conceptsWithExplainCoverage.length, 18);
-  assert.equal(audit.mixedTransferTemplateCount, 8);
+  assert.equal(audit.mixedTransferTemplateCount, 16);
   assert.equal(audit.conceptsWithMixedTransferCoverage.length, 18);
   assert.equal(audit.repeatedGeneratedVariants.length, 0, 'Default-window repeated variants must be zero');
   assert.equal(audit.lowDepthGeneratedTemplates.length, 0, 'Deep low-depth families must be zero');
-  assert.equal(audit.answerSpecTemplateCount, 47);
-  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 20);
+  assert.equal(audit.answerSpecTemplateCount, 79);
+  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 28);
   assert.equal(audit.manualReviewOnlyTemplateCount, 4);
   assert.equal(audit.generatedSignatureCollisions.length, 0, 'Cross-template collisions must be zero');
 });
 
-test('Grammar P6 baseline fixture is frozen against live audit output', () => {
+test('Grammar P6 baseline fixture remains frozen while P14 supersedes the live audit output', () => {
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
   const baseline = readGrammarQuestionGeneratorP6Baseline();
 
-  assert.equal(audit.releaseId, baseline.releaseId);
+  assert.equal(baseline.releaseId, 'grammar-qg-p11-2026-04-30');
   assert.equal(audit.conceptCount, baseline.conceptCount);
-  assert.equal(audit.templateCount, baseline.templateCount);
-  assert.equal(audit.selectedResponseCount, baseline.selectedResponseCount);
-  assert.equal(audit.constructedResponseCount, baseline.constructedResponseCount);
-  assert.equal(audit.generatedTemplateCount, baseline.generatedTemplateCount);
+  assert.equal(audit.templateCount, 110);
+  assert.equal(baseline.templateCount, 78);
+  assert.ok(audit.selectedResponseCount > baseline.selectedResponseCount);
+  assert.ok(audit.constructedResponseCount > baseline.constructedResponseCount);
+  assert.ok(audit.generatedTemplateCount > baseline.generatedTemplateCount);
   assert.equal(audit.fixedTemplateCount, baseline.fixedTemplateCount);
-  assert.equal(audit.explainTemplateCount, baseline.explainTemplateCount);
-  assert.equal(audit.mixedTransferTemplateCount, baseline.mixedTransferTemplateCount);
-  assert.equal(audit.answerSpecTemplateCount, baseline.answerSpecTemplateCount);
-  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, baseline.constructedResponseAnswerSpecTemplateCount);
+  assert.ok(audit.explainTemplateCount > baseline.explainTemplateCount);
+  assert.ok(audit.mixedTransferTemplateCount > baseline.mixedTransferTemplateCount);
+  assert.ok(audit.answerSpecTemplateCount > baseline.answerSpecTemplateCount);
+  assert.ok(audit.constructedResponseAnswerSpecTemplateCount > baseline.constructedResponseAnswerSpecTemplateCount);
   assert.equal(audit.manualReviewOnlyTemplateCount, baseline.manualReviewOnlyTemplateCount);
   assert.equal(audit.repeatedGeneratedVariants.length, baseline.repeatedGeneratedVariants.length);
   assert.equal(audit.generatedSignatureCollisions.length, baseline.generatedSignatureCollisions.length);

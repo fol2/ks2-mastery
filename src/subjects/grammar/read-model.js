@@ -228,9 +228,9 @@ function progressSnapshotFromConcepts(concepts) {
 
 function grammarCoverageDiagnostics() {
   return {
-    releaseId: 'grammar-qg-p6-2026-04-29',
-    templateCount: 78,
-    generatedTemplateCount: 52,
+    releaseId: 'grammar-qg-p14-2026-05-01',
+    templateCount: 110,
+    generatedTemplateCount: 84,
     thinPoolWarnings: [],
   };
 }

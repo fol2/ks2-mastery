@@ -27,6 +27,7 @@ import {
   evaluateGrammarQuestion,
   serialiseGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
+import { runDistractorAudit } from './audit-grammar-distractor-quality.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = path.resolve(__dirname, '..', 'reports', 'grammar');
@@ -35,6 +36,10 @@ const MIXED_TRANSFER_IDS = new Set([
   'qg_p4_voice_roles_transfer',
   'qg_p4_word_class_noun_phrase_transfer',
 ]);
+
+const ADULT_REVIEW_DATE = GRAMMAR_CONTENT_RELEASE_ID === 'grammar-qg-p14-2026-05-01'
+  ? '2026-05-01'
+  : '2026-04-30';
 
 function isHighRisk(templateId, question) {
   if (MIXED_TRANSFER_IDS.has(templateId)) return true;
@@ -390,8 +395,65 @@ function deriveAccessibilityJudgement(results) {
   return 'No visual cue required; standard text prompt accessible by default';
 }
 
+function buildAdultReviewDecisionMap() {
+  const audit = runDistractorAudit();
+  const byTemplate = new Map();
+
+  for (const item of audit.results || []) {
+    if (!item.requiresAdultReview) continue;
+
+    const row = byTemplate.get(item.templateId) || {
+      reasons: new Set(),
+      acceptedExample: null,
+      rejectedAlternative: null,
+      promptDisambiguates: false,
+      surfaceCueRisk: false,
+    };
+
+    for (const reason of item.adultReviewReasons || []) row.reasons.add(reason);
+    if (item.ambiguousConceptArea) row.reasons.add('ambiguous-concept-area');
+    if (item.surfaceCueRisk || item.correctOptionSurfaceCue?.likelySurfaceCue) {
+      row.reasons.add('likely-surface-cue');
+      row.surfaceCueRisk = true;
+    }
+
+    const correct = (item.options || []).find((option) => option.isCorrect);
+    const rejected = (item.options || []).find((option) => !option.isCorrect);
+    if (!row.acceptedExample && correct?.optionText) row.acceptedExample = correct.optionText;
+    if (!row.rejectedAlternative && rejected?.optionText) row.rejectedAlternative = rejected.optionText;
+    row.promptDisambiguates = row.promptDisambiguates
+      || (item.options || []).some((option) => option.promptDisambiguates === true);
+
+    byTemplate.set(item.templateId, row);
+  }
+
+  return new Map([...byTemplate.entries()].map(([templateId, row]) => {
+    const reasons = [...row.reasons].sort();
+    const ambiguousRisk = reasons.includes('ambiguous-concept-area')
+      ? 'Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.'
+      : 'Template has a possible surface-cue risk, so option wording requires adult sign-off.';
+    const disambiguationRationale = row.surfaceCueRisk
+      ? 'Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.'
+      : row.promptDisambiguates
+        ? 'The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.'
+        : 'The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.';
+
+    return [templateId, {
+      ambiguousRisk,
+      disambiguationRationale,
+      acceptedExample: row.acceptedExample || 'Accepted option recorded in distractor audit.',
+      rejectedAlternative: row.rejectedAlternative || 'Rejected alternative recorded in distractor audit.',
+      reviewerId: 'grammar-engineering-review',
+      reviewDate: ADULT_REVIEW_DATE,
+      finalStatus: 'approved_with_review',
+      reasons,
+    }];
+  }));
+}
+
 export function buildQualityRegister() {
   const entries = [];
+  const adultReviewDecisions = buildAdultReviewDecisionMap();
 
   for (const template of GRAMMAR_TEMPLATE_METADATA) {
     // Probe seed 1 to determine high-risk status
@@ -471,7 +533,7 @@ export function buildQualityRegister() {
       finalAction = 'ship';
     }
 
-    entries.push({
+    const entry = {
       templateId: template.id,
       decision,
       severity,
@@ -486,7 +548,14 @@ export function buildQualityRegister() {
       feedbackJudgement: deriveFeedbackJudgement(results, primaryInputType),
       accessibilityJudgement: deriveAccessibilityJudgement(results),
       finalAction,
-    });
+    };
+
+    const adultReviewDecision = adultReviewDecisions.get(template.id);
+    if (adultReviewDecision) {
+      entry.adultReviewDecision = adultReviewDecision;
+    }
+
+    entries.push(entry);
   }
 
   return {
@@ -498,6 +567,7 @@ export function buildQualityRegister() {
       approvedWithLimitation: entries.filter((e) => e.decision === 'approved_with_limitation').length,
       blocked: entries.filter((e) => e.decision === 'blocked').length,
       highRiskCount: entries.filter((e) => e.seedWindow === '1..15').length,
+      adultReviewDecisionCount: entries.filter((e) => e.adultReviewDecision).length,
     },
     entries,
   };
@@ -512,6 +582,7 @@ function generateMarkdownReport(register) {
   lines.push(`**Templates:** ${register.metadata.templateCount}`);
   lines.push(`**Approved:** ${register.metadata.approved} | **Blocked:** ${register.metadata.blocked}`);
   lines.push(`**High-risk (1..15 seeds):** ${register.metadata.highRiskCount}`);
+  lines.push(`**Adult review decisions:** ${register.metadata.adultReviewDecisionCount}`);
   lines.push('');
   lines.push('## Summary Table');
   lines.push('');
@@ -543,6 +614,13 @@ function generateMarkdownReport(register) {
     lines.push(`- **Marking:** ${e.markingJudgement}`);
     lines.push(`- **Feedback:** ${e.feedbackJudgement}`);
     lines.push(`- **Accessibility:** ${e.accessibilityJudgement}`);
+    if (e.adultReviewDecision) {
+      lines.push(`- **Adult review decision:** ${e.adultReviewDecision.finalStatus}`);
+      lines.push(`  - Risk: ${e.adultReviewDecision.ambiguousRisk}`);
+      lines.push(`  - Rationale: ${e.adultReviewDecision.disambiguationRationale}`);
+      lines.push(`  - Accepted example: ${e.adultReviewDecision.acceptedExample}`);
+      lines.push(`  - Rejected alternative: ${e.adultReviewDecision.rejectedAlternative}`);
+    }
     lines.push(`- **Final action:** ${e.finalAction}`);
     lines.push('');
 

@@ -96,11 +96,11 @@ test('Grammar QG P3 baseline pins the historical explanation-depth release', () 
   assert.equal(baseline.p3ExplanationComplete, true);
   assert.deepEqual(baseline.thinPoolConcepts, []);
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
-  // Live content now reflects P4 denominator
+  // Live content now reflects the P14 depth expansion.
   assert.equal(GRAMMAR_CONCEPTS.length, 18);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 78);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 58);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 20);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 110);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 82);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 28);
 });
 
 test('Grammar legacy content still generates serialisable questions matching frozen oracle samples', () => {

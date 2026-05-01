@@ -1,0 +1,317 @@
+{
+  "reportId": "grammar-qg-p14-star-pacing-simulation",
+  "contentReleaseId": "grammar-qg-p14-2026-05-01",
+  "generatedAt": "2026-05-01T13:34:37.842Z",
+  "templateCount": 110,
+  "profiles": [
+    {
+      "profile": "always-correct",
+      "sessionSize": 5,
+      "sessionsSimulated": 80,
+      "milestones": {
+        "Egg found": {
+          "session": 1,
+          "distinctTemplates": 5,
+          "distinctConcepts": 5,
+          "retainedAfterSecureEvents": 0,
+          "stars": 3
+        },
+        "Hatched": {
+          "session": 4,
+          "distinctTemplates": 20,
+          "distinctConcepts": 14,
+          "retainedAfterSecureEvents": 0,
+          "stars": 15
+        },
+        "Growing": {
+          "session": 10,
+          "distinctTemplates": 39,
+          "distinctConcepts": 17,
+          "retainedAfterSecureEvents": 2,
+          "stars": 38
+        },
+        "Nearly Mega": {
+          "session": 14,
+          "distinctTemplates": 49,
+          "distinctConcepts": 17,
+          "retainedAfterSecureEvents": 8,
+          "stars": 72
+        },
+        "Mega": {
+          "session": 19,
+          "distinctTemplates": 61,
+          "distinctConcepts": 18,
+          "retainedAfterSecureEvents": 32,
+          "stars": 100
+        }
+      },
+      "finalMaxDirectStars": 100,
+      "finalStageName": "Mega",
+      "finalDirectStars": {
+        "bracehart": 100,
+        "chronalyx": 100,
+        "couronnail": 100
+      },
+      "distinctTemplates": 102,
+      "distinctConcepts": 18,
+      "retainedAfterSecureEvents": 389,
+      "highStageViaRepeatedShallowItems": false
+    },
+    {
+      "profile": "mixed-correct-wrong",
+      "sessionSize": 5,
+      "sessionsSimulated": 80,
+      "milestones": {
+        "Egg found": {
+          "session": 1,
+          "distinctTemplates": 5,
+          "distinctConcepts": 5,
+          "retainedAfterSecureEvents": 0,
+          "stars": 3
+        },
+        "Hatched": {
+          "session": 8,
+          "distinctTemplates": 31,
+          "distinctConcepts": 15,
+          "retainedAfterSecureEvents": 1,
+          "stars": 20
+        },
+        "Growing": {
+          "session": 14,
+          "distinctTemplates": 50,
+          "distinctConcepts": 17,
+          "retainedAfterSecureEvents": 2,
+          "stars": 38
+        },
+        "Nearly Mega": {
+          "session": 39,
+          "distinctTemplates": 81,
+          "distinctConcepts": 18,
+          "retainedAfterSecureEvents": 22,
+          "stars": 70
+        }
+      },
+      "finalMaxDirectStars": 57,
+      "finalStageName": "Growing",
+      "finalDirectStars": {
+        "bracehart": 36,
+        "chronalyx": 57,
+        "couronnail": 40
+      },
+      "distinctTemplates": 98,
+      "distinctConcepts": 18,
+      "retainedAfterSecureEvents": 66,
+      "highStageViaRepeatedShallowItems": false
+    },
+    {
+      "profile": "easy-template-only",
+      "sessionSize": 5,
+      "sessionsSimulated": 80,
+      "milestones": {
+        "Egg found": {
+          "session": 1,
+          "distinctTemplates": 1,
+          "distinctConcepts": 2,
+          "retainedAfterSecureEvents": 2,
+          "stars": 20
+        },
+        "Hatched": {
+          "session": 1,
+          "distinctTemplates": 1,
+          "distinctConcepts": 2,
+          "retainedAfterSecureEvents": 2,
+          "stars": 20
+        }
+      },
+      "finalMaxDirectStars": 20,
+      "finalStageName": "Hatched",
+      "finalDirectStars": {
+        "bracehart": 20,
+        "chronalyx": 0,
+        "couronnail": 0
+      },
+      "distinctTemplates": 1,
+      "distinctConcepts": 2,
+      "retainedAfterSecureEvents": 792,
+      "highStageViaRepeatedShallowItems": false
+    },
+    {
+      "profile": "repeated-template",
+      "sessionSize": 5,
+      "sessionsSimulated": 80,
+      "milestones": {
+        "Egg found": {
+          "session": 1,
+          "distinctTemplates": 1,
+          "distinctConcepts": 2,
+          "retainedAfterSecureEvents": 2,
+          "stars": 20
+        },
+        "Hatched": {
+          "session": 1,
+          "distinctTemplates": 1,
+          "distinctConcepts": 2,
+          "retainedAfterSecureEvents": 2,
+          "stars": 20
+        }
+      },
+      "finalMaxDirectStars": 20,
+      "finalStageName": "Hatched",
+      "finalDirectStars": {
+        "bracehart": 20,
+        "chronalyx": 0,
+        "couronnail": 0
+      },
+      "distinctTemplates": 1,
+      "distinctConcepts": 2,
+      "retainedAfterSecureEvents": 792,
+      "highStageViaRepeatedShallowItems": false
+    },
+    {
+      "profile": "supported-after-wrong",
+      "sessionSize": 5,
+      "sessionsSimulated": 80,
+      "milestones": {
+        "Egg found": {
+          "session": 3,
+          "distinctTemplates": 14,
+          "distinctConcepts": 12,
+          "retainedAfterSecureEvents": 0,
+          "stars": 2
+        },
+        "Hatched": {
+          "session": 14,
+          "distinctTemplates": 47,
+          "distinctConcepts": 18,
+          "retainedAfterSecureEvents": 5,
+          "stars": 15
+        }
+      },
+      "finalMaxDirectStars": 25,
+      "finalStageName": "Hatched",
+      "finalDirectStars": {
+        "bracehart": 25,
+        "chronalyx": 25,
+        "couronnail": 19
+      },
+      "distinctTemplates": 97,
+      "distinctConcepts": 18,
+      "retainedAfterSecureEvents": 214,
+      "highStageViaRepeatedShallowItems": false
+    },
+    {
+      "profile": "deep-practice",
+      "sessionSize": 15,
+      "sessionsSimulated": 80,
+      "milestones": {
+        "Egg found": {
+          "session": 1,
+          "distinctTemplates": 15,
+          "distinctConcepts": 13,
+          "retainedAfterSecureEvents": 0,
+          "stars": 7
+        },
+        "Hatched": {
+          "session": 2,
+          "distinctTemplates": 27,
+          "distinctConcepts": 14,
+          "retainedAfterSecureEvents": 0,
+          "stars": 20
+        },
+        "Growing": {
+          "session": 3,
+          "distinctTemplates": 40,
+          "distinctConcepts": 16,
+          "retainedAfterSecureEvents": 2,
+          "stars": 37
+        },
+        "Nearly Mega": {
+          "session": 5,
+          "distinctTemplates": 59,
+          "distinctConcepts": 18,
+          "retainedAfterSecureEvents": 20,
+          "stars": 83
+        },
+        "Mega": {
+          "session": 6,
+          "distinctTemplates": 66,
+          "distinctConcepts": 18,
+          "retainedAfterSecureEvents": 32,
+          "stars": 100
+        }
+      },
+      "finalMaxDirectStars": 100,
+      "finalStageName": "Mega",
+      "finalDirectStars": {
+        "bracehart": 97,
+        "chronalyx": 100,
+        "couronnail": 100
+      },
+      "distinctTemplates": 109,
+      "distinctConcepts": 18,
+      "retainedAfterSecureEvents": 1302,
+      "highStageViaRepeatedShallowItems": false
+    },
+    {
+      "profile": "long-gap-retention",
+      "sessionSize": 5,
+      "sessionsSimulated": 80,
+      "milestones": {
+        "Egg found": {
+          "session": 1,
+          "distinctTemplates": 5,
+          "distinctConcepts": 5,
+          "retainedAfterSecureEvents": 0,
+          "stars": 3
+        },
+        "Hatched": {
+          "session": 6,
+          "distinctTemplates": 27,
+          "distinctConcepts": 17,
+          "retainedAfterSecureEvents": 0,
+          "stars": 17
+        },
+        "Growing": {
+          "session": 9,
+          "distinctTemplates": 40,
+          "distinctConcepts": 17,
+          "retainedAfterSecureEvents": 1,
+          "stars": 43
+        },
+        "Nearly Mega": {
+          "session": 15,
+          "distinctTemplates": 56,
+          "distinctConcepts": 18,
+          "retainedAfterSecureEvents": 16,
+          "stars": 81
+        },
+        "Mega": {
+          "session": 34,
+          "distinctTemplates": 82,
+          "distinctConcepts": 18,
+          "retainedAfterSecureEvents": 121,
+          "stars": 100
+        }
+      },
+      "finalMaxDirectStars": 100,
+      "finalStageName": "Mega",
+      "finalDirectStars": {
+        "bracehart": 100,
+        "chronalyx": 100,
+        "couronnail": 100
+      },
+      "distinctTemplates": 105,
+      "distinctConcepts": 18,
+      "retainedAfterSecureEvents": 386,
+      "highStageViaRepeatedShallowItems": false
+    }
+  ],
+  "conclusion": {
+    "pass": true,
+    "highStageFailures": [],
+    "copyRecommendation": "Keep quick practice copy separate from deep practice; no Star threshold change is required in this P14 slice.",
+    "thresholdChange": "none",
+    "migrationRequired": false,
+    "highWaterSafetyImpacted": false
+  }
+}
