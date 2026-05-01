@@ -20,6 +20,7 @@ export const DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
 export const DEFAULT_RUN_ID = `${DEFAULT_P5_DATE}-p5-60-diagnostic`;
 export const DEFAULT_MANIFEST_PATH = '/tmp/ks2-p5-60-manifest.json';
 export const DEFAULT_RAW_TAIL_PATH = `/tmp/ks2-${DEFAULT_RUN_ID}-worker-tail.jsonl`;
+export const DEFAULT_DECISION_PATH = 'docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p5-60-diagnostic-decision.md';
 export const EXPECTED_DURATION = 'At least 25 minutes for 28/28/4 manifest preparation plus diagnostic and post-run correlation time.';
 
 const SCRIPT_VALIDATORS = Object.freeze({
@@ -41,7 +42,7 @@ export function parseDiagnosticPlannerArgs(argv = process.argv.slice(2)) {
     tailCorrelationPath: '',
     statementMapPath: '',
     tailClassificationPath: '',
-    decisionPath: 'docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p5-60-diagnostic-decision.md',
+    decisionPath: '',
     help: false,
   };
 
@@ -104,12 +105,26 @@ function commandString(argv) {
 
 function derivePaths(options) {
   const runId = options.runId || DEFAULT_RUN_ID;
+  const runSlug = runId.replace(/-diagnostic$/, '');
   return {
+    phase: derivePhase(runSlug),
     evidencePath: options.evidencePath || `reports/capacity/evidence/${runId}.json`,
-    tailCorrelationPath: options.tailCorrelationPath || `reports/capacity/evidence/${runId.replace(/-diagnostic$/, '')}-tail-correlation.json`,
-    statementMapPath: options.statementMapPath || `reports/capacity/evidence/${runId.replace(/-diagnostic$/, '')}-statement-map.json`,
-    tailClassificationPath: options.tailClassificationPath || `reports/capacity/evidence/${runId.replace(/-diagnostic$/, '')}-tail-classification.md`,
+    tailCorrelationPath: options.tailCorrelationPath || `reports/capacity/evidence/${runSlug}-tail-correlation.json`,
+    statementMapPath: options.statementMapPath || `reports/capacity/evidence/${runSlug}-statement-map.json`,
+    tailClassificationPath: options.tailClassificationPath || `reports/capacity/evidence/${runSlug}-tail-classification.md`,
+    decisionPath: options.decisionPath || deriveDecisionPath(runSlug),
   };
+}
+
+function derivePhase(runSlug) {
+  const match = runSlug.match(/^(?<date>\d{4}-\d{2}-\d{2})-(?<phase>p\d+)-60$/);
+  return match?.groups?.phase || 'p5';
+}
+
+function deriveDecisionPath(runSlug) {
+  const phase = derivePhase(runSlug);
+  if (!phase) return DEFAULT_DECISION_PATH;
+  return `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-${phase}-60-diagnostic-decision.md`;
 }
 
 export function buildSixtyLearnerDiagnosticPlan(options = {}) {
@@ -190,7 +205,7 @@ export function buildSixtyLearnerDiagnosticPlan(options = {}) {
 
   return {
     schema: 1,
-    kind: 'p5-60-learner-diagnostic-plan',
+    kind: `${paths.phase}-60-learner-diagnostic-plan`,
     runId: merged.runId,
     origin: merged.origin,
     learners: 60,
@@ -203,7 +218,7 @@ export function buildSixtyLearnerDiagnosticPlan(options = {}) {
     tailCorrelationPath: paths.tailCorrelationPath,
     statementMapPath: paths.statementMapPath,
     tailClassificationPath: paths.tailClassificationPath,
-    decisionPath: merged.decisionPath,
+    decisionPath: paths.decisionPath,
     expectedDuration: EXPECTED_DURATION,
     prerequisites: [
       'Cloudflare account credentials and wrangler tail access.',
@@ -215,7 +230,7 @@ export function buildSixtyLearnerDiagnosticPlan(options = {}) {
     execution: {
       dryRunDefault: true,
       localValidationOnly: true,
-      fullProductionOwnedBy: 'P5-U2/U3',
+      fullProductionOwnedBy: 'approved-operator-gate',
       approvalRequired: true,
     },
     commands: commands.map((command) => ({
@@ -296,7 +311,7 @@ function validateStatementMapCommand(argv) {
 
 function renderPlan(plan, validation) {
   const lines = [
-    `P5 60-learner diagnostic plan: ${plan.runId}`,
+    `60-learner diagnostic plan: ${plan.runId}`,
     `Origin: ${plan.origin}`,
     `Manifest: ${plan.manifestPath}`,
     `Raw tail: ${plan.rawTailPath}`,
@@ -328,8 +343,8 @@ export async function runSixtyLearnerDiagnosticPlanner(argv = process.argv.slice
       ok: true,
       help: [
         'Usage: node scripts/plan-60-learner-diagnostic.mjs [--json] [--execute]',
-        'Prints and validates the P5 60-learner diagnostic command plan.',
-        '--execute runs local validation only; full production execution belongs to P5-U2/U3.',
+        'Prints and validates the 60-learner diagnostic command plan.',
+        '--execute runs local validation only; full production execution belongs to the approved operator gate.',
       ].join('\n'),
     };
   }
@@ -337,7 +352,7 @@ export async function runSixtyLearnerDiagnosticPlanner(argv = process.argv.slice
   const plan = buildSixtyLearnerDiagnosticPlan(options);
   const validation = validateSixtyLearnerDiagnosticPlan(plan, { cwd });
   if (options.execute && options.approvedProductionRun) {
-    validation.errors.push('Full production execution is intentionally not performed by this planner; use the P5-U2/U3 execution gate.');
+    validation.errors.push('Full production execution is intentionally not performed by this planner; use the approved operator gate.');
   }
   const ok = validation.ok && validation.errors.length === 0;
   return {

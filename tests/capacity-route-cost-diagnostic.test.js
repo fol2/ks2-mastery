@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import {
+  ALLOWED_ROUTE_COST_STATUSES,
   REQUIRED_ROUTE_COST_METRICS,
   REQUIRED_ROUTE_FAMILIES,
   buildRouteCostDiagnosticPlan,
@@ -85,6 +86,7 @@ const TAIL_CORRELATION_FIXTURE = {
 test('route-cost diagnostic plan lists every required family and metric', () => {
   const plan = buildRouteCostDiagnosticPlan();
 
+  assert.equal(plan.kind, 'p5-route-cost-diagnostic-plan');
   assert.equal(plan.routeFamilies.length, REQUIRED_ROUTE_FAMILIES.length);
   assert.deepEqual(
     plan.routeFamilies.map((family) => family.id),
@@ -95,6 +97,15 @@ test('route-cost diagnostic plan lists every required family and metric', () => 
     assert.ok(Array.isArray(family.discoverySources));
     assert.ok(family.discoverySources.length > 0);
   }
+});
+
+test('route-cost diagnostic plan derives phase-specific kind from output path', () => {
+  const plan = buildRouteCostDiagnosticPlan({
+    outputPath: 'reports/capacity/evidence/2026-04-30-p6-route-costs.json',
+  });
+
+  assert.equal(plan.kind, 'p6-route-cost-diagnostic-plan');
+  assert.equal(plan.outputPath, 'reports/capacity/evidence/2026-04-30-p6-route-costs.json');
 });
 
 test('route-cost diagnostic plan uses POST lastKnownRevision for not-modified bootstrap', () => {
@@ -124,8 +135,9 @@ test('route-cost evidence validates required families and redacted aggregate sha
   assert.equal(evidence.certifying, false);
   assert.equal(bootstrap.status, 'measured');
   assert.equal(bootstrap.metrics.workerCpuMsP95, 11);
-  assert.equal(parent.status, 'requires-production-operator');
+  assert.equal(parent.status, 'auth-gated');
   assert.equal(parent.metrics.queryCountP95, null);
+  assert.match(parent.justification, /authenticated adult\/operator state/);
 });
 
 test('route-cost evidence validation fails when a required family is omitted', () => {
@@ -145,6 +157,15 @@ test('route-cost evidence validation rejects raw request ids and SQL-like leakag
   assert.equal(validation.ok, false);
   assert.match(validation.errors.join('\n'), /raw ks2 request id/);
   assert.match(validation.errors.join('\n'), /SQL\/table/);
+});
+
+test('route-cost evidence validation rejects raw tail paths with Windows separators', () => {
+  const evidence = buildRouteCostEvidence({ budget: BUDGET_FIXTURE });
+  evidence.routeFamilies[0].sourcePaths.push('reports\\capacity\\evidence\\p6-worker-tail.jsonl');
+  const validation = validateRouteCostEvidence(evidence);
+
+  assert.equal(validation.ok, false);
+  assert.match(validation.errors.join('\n'), /raw tail path/);
 });
 
 test('route-cost evidence validation rejects disabled redaction guardrails', () => {
@@ -235,10 +256,72 @@ test('route-cost evidence round-trips generated budget placeholders as blocked',
   assert.equal(evidence.coverage.measuredRouteFamilies, 1);
   assert.equal(evidence.coverage.partialRouteFamilies, 2);
   assert.equal(evidence.coverage.missingRouteFamilies, 9);
-  assert.equal(heroStart.status, 'requires-production-operator');
+  assert.equal(heroStart.status, 'feature-gated');
   assert.equal(heroStart.metrics.count, null);
+  assert.match(heroStart.justification, /Hero feature flags/);
   assert.equal(notModified.status, 'requires-production-operator');
   assert.match(notModified.probeContract, /lastKnownRevision/);
+  assert.deepEqual(
+    notModified.missingMetrics,
+    REQUIRED_ROUTE_COST_METRICS,
+  );
+});
+
+test('route-cost evidence consumes capacity-run summaries without persisting raw request ids', () => {
+  const evidence = buildRouteCostEvidence({
+    budget: BUDGET_FIXTURE,
+    evidenceFiles: [{
+      path: 'reports/capacity/evidence/60-learner-stretch-preflight-20260428-p6.json',
+      data: {
+        reportMeta: { environment: 'production' },
+        summary: {
+          endpoints: {
+            'POST /api/subjects/grammar/command': {
+              count: 180,
+              p50WallMs: 260.1,
+              p95WallMs: 295.2,
+              maxWallMs: 325.3,
+              queryCountP50: 20,
+              queryCountP95: 23,
+              queryCountMax: 24,
+              d1RowsReadP50: 21,
+              d1RowsReadP95: 584,
+              d1RowsReadMax: 754,
+              d1RowsWrittenP50: 17,
+              d1RowsWrittenP95: 36,
+              d1RowsWrittenMax: 36,
+              p50ResponseBytes: 16735,
+              p95ResponseBytes: 30148,
+              maxResponseBytes: 30149,
+              topTailSamples: [{
+                clientRequestId: 'ks2_req_11111111-1111-4111-8111-111111111111',
+              }],
+            },
+          },
+        },
+      },
+    }],
+    generatedAt: '2026-04-30T00:00:00.000Z',
+  });
+  const validation = validateRouteCostEvidence(evidence);
+  const grammar = evidence.routeFamilies.find((entry) => entry.routeFamily === 'grammar-command');
+
+  assert.equal(validation.ok, true);
+  assert.equal(grammar.status, 'partial');
+  assert.equal(grammar.metrics.wallMsP95, 295.2);
+  assert.equal(grammar.metrics.queryCountP95, 23);
+  assert.equal(grammar.metrics.d1RowsReadP95, 584);
+  assert.equal(JSON.stringify(evidence).includes('ks2_req_'), false);
+});
+
+test('route-cost evidence validation rejects unsupported statuses', () => {
+  const evidence = buildRouteCostEvidence({ budget: BUDGET_FIXTURE });
+  evidence.routeFamilies[0].status = 'blocked-or-missing';
+  const validation = validateRouteCostEvidence(evidence);
+
+  assert.equal(ALLOWED_ROUTE_COST_STATUSES.includes('blocked-or-missing'), false);
+  assert.equal(validation.ok, false);
+  assert.match(validation.errors.join('\n'), /unsupported status blocked-or-missing/);
 });
 
 test('route-cost diagnostic execute-local writes validated evidence without production credentials', async () => {

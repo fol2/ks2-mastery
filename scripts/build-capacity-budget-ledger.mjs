@@ -358,9 +358,13 @@ function buildRouteFamilyCoverage(routeCosts = []) {
       REQUIRED_ROUTE_COST_METRICS.some((metric) => finiteOrNull(cost[metric]) !== null)
     ));
     const hasPartialStatus = matches.some((cost) => cost.routeCostStatus === 'partial');
+    const blockedStatus = matches
+      .map((cost) => cost.routeCostStatus)
+      .find((status) => status && status !== 'measured' && status !== 'partial')
+      || 'blocked-or-missing';
     return {
       routeFamily: family.id,
-      status: !missingMetrics.length ? 'measured' : (hasAnyMetric || hasPartialStatus ? 'partial' : 'blocked-or-missing'),
+      status: !missingMetrics.length ? 'measured' : (hasAnyMetric || hasPartialStatus ? 'partial' : blockedStatus),
       routes: matches.map((cost) => cost.route),
       missingMetrics,
       evidenceStatuses: [...new Set(matches.map((cost) => cost.evidenceStatus).filter(Boolean))].sort(),
@@ -371,7 +375,7 @@ function buildRouteFamilyCoverage(routeCosts = []) {
     required: REQUIRED_ROUTE_FAMILIES.length,
     measured: families.filter((family) => family.status === 'measured').length,
     partial: families.filter((family) => family.status === 'partial').length,
-    missing: families.filter((family) => family.status === 'missing-route' || family.status === 'blocked-or-missing').length,
+    missing: families.filter((family) => family.status !== 'measured' && family.status !== 'partial').length,
     families,
   };
 }

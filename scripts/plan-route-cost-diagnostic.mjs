@@ -34,6 +34,15 @@ export const REQUIRED_ROUTE_COST_METRICS = Object.freeze([
   'responseBytesMax',
 ]);
 
+export const ALLOWED_ROUTE_COST_STATUSES = Object.freeze([
+  'measured',
+  'partial',
+  'requires-production-operator',
+  'auth-gated',
+  'feature-gated',
+  'not-present-in-current-runtime',
+]);
+
 export const REQUIRED_ROUTE_FAMILIES = Object.freeze([
   {
     id: 'full-bootstrap',
@@ -127,7 +136,7 @@ export const REQUIRED_ROUTE_FAMILIES = Object.freeze([
 ]);
 
 const RAW_REQUEST_ID_RE = /ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
-const RAW_TAIL_RE = /reports\/capacity\/evidence\/[^"\s]*(?:tail|worker-log)[^"\s]*\.(?:jsonl|ndjson|log|txt)/i;
+const RAW_TAIL_RE = /reports[\\/]+capacity[\\/]+evidence[\\/]+[^"\s]*(?:tail|worker-log)[^"\s]*\.(?:jsonl|ndjson|log|txt)/i;
 const SQL_LEAK_RE = /\b(?:SELECT|INSERT|UPDATE|DELETE)\b|child_subject_state|practice_sessions|account_id|learner_id/i;
 const HERO_COMMAND_ACTIONS = Object.freeze({
   'start-task': 'start',
@@ -147,6 +156,7 @@ export function parseRouteCostDiagnosticArgs(argv = process.argv.slice(2)) {
     approvedProductionRun: false,
     outputPath: DEFAULT_ROUTE_COST_OUTPUT,
     budgetPath: 'reports/capacity/latest-1000-learner-budget.json',
+    evidencePaths: [],
     tailCorrelationPaths: ['reports/capacity/evidence/2026-04-30-p3-t5-strict-r2-tail-correlation.json'],
     help: false,
   };
@@ -168,6 +178,9 @@ export function parseRouteCostDiagnosticArgs(argv = process.argv.slice(2)) {
       index += 1;
     } else if (arg === '--budget') {
       options.budgetPath = readValue(argv, index, arg);
+      index += 1;
+    } else if (arg === '--evidence') {
+      options.evidencePaths.push(readValue(argv, index, arg));
       index += 1;
     } else if (arg === '--tail-correlation') {
       options.tailCorrelationPaths.push(readValue(argv, index, arg));
@@ -191,9 +204,10 @@ function readValue(argv, index, optionName) {
 export function buildRouteCostDiagnosticPlan({
   outputPath = DEFAULT_ROUTE_COST_OUTPUT,
 } = {}) {
+  const phase = derivePhaseFromPath(outputPath);
   return {
     schema: 1,
-    kind: 'p5-route-cost-diagnostic-plan',
+    kind: `${phase}-route-cost-diagnostic-plan`,
     generatedAt: new Date().toISOString(),
     outputPath,
     modellingOnly: true,
@@ -211,6 +225,11 @@ export function buildRouteCostDiagnosticPlan({
       redactionStatus: 'required-redacted-aggregate',
     })),
   };
+}
+
+function derivePhaseFromPath(filePath = '') {
+  const match = String(filePath).match(/(?:^|[-/\\])(?<phase>p\d+)(?:[-/\\])/i);
+  return match?.groups?.phase?.toLowerCase() || 'p5';
 }
 
 function percentile(values, percentileValue) {
@@ -299,6 +318,36 @@ function metricsFromBudgetCost(cost = {}) {
   };
 }
 
+function metricsFromCapacitySummary(summary = {}) {
+  return {
+    count: finiteOrNull(summary.count),
+    wallMsP50: finiteOrNull(summary.wallMsP50 ?? summary.p50WallMs),
+    wallMsP95: finiteOrNull(summary.wallMsP95 ?? summary.p95WallMs),
+    wallMsMax: finiteOrNull(summary.wallMsMax ?? summary.maxWallMs),
+    workerCpuMsP50: finiteOrNull(summary.workerCpuMsP50 ?? summary.cpuMsP50 ?? summary.cloudflareCpuMsP50),
+    workerCpuMsP95: finiteOrNull(summary.workerCpuMsP95 ?? summary.cpuMsP95 ?? summary.cloudflareCpuMsP95),
+    workerCpuMsMax: finiteOrNull(summary.workerCpuMsMax ?? summary.cpuMsMax ?? summary.cloudflareCpuMsMax),
+    workerWallMsP50: finiteOrNull(summary.workerWallMsP50 ?? summary.workerWallP50 ?? summary.cloudflareWallMsP50),
+    workerWallMsP95: finiteOrNull(summary.workerWallMsP95 ?? summary.workerWallP95 ?? summary.cloudflareWallMsP95),
+    workerWallMsMax: finiteOrNull(summary.workerWallMsMax ?? summary.workerWallMax ?? summary.cloudflareWallMsMax),
+    d1DurationMsP50: finiteOrNull(summary.d1DurationMsP50 ?? summary.d1MsP50),
+    d1DurationMsP95: finiteOrNull(summary.d1DurationMsP95 ?? summary.d1MsP95 ?? summary.d1DurationMs),
+    d1DurationMsMax: finiteOrNull(summary.d1DurationMsMax ?? summary.d1MsMax ?? summary.d1DurationMs),
+    queryCountP50: finiteOrNull(summary.queryCountP50 ?? summary.queriesP50),
+    queryCountP95: finiteOrNull(summary.queryCountP95 ?? summary.queriesP95 ?? summary.queryCount),
+    queryCountMax: finiteOrNull(summary.queryCountMax ?? summary.queryCount),
+    d1RowsReadP50: finiteOrNull(summary.d1RowsReadP50 ?? summary.rowsReadP50),
+    d1RowsReadP95: finiteOrNull(summary.d1RowsReadP95 ?? summary.rowsReadP95 ?? summary.d1RowsRead),
+    d1RowsReadMax: finiteOrNull(summary.d1RowsReadMax ?? summary.rowsReadMax ?? summary.d1RowsRead),
+    d1RowsWrittenP50: finiteOrNull(summary.d1RowsWrittenP50 ?? summary.rowsWrittenP50),
+    d1RowsWrittenP95: finiteOrNull(summary.d1RowsWrittenP95 ?? summary.rowsWrittenP95 ?? summary.d1RowsWritten),
+    d1RowsWrittenMax: finiteOrNull(summary.d1RowsWrittenMax ?? summary.rowsWrittenMax ?? summary.d1RowsWritten),
+    responseBytesP50: finiteOrNull(summary.responseBytesP50 ?? summary.p50ResponseBytes),
+    responseBytesP95: finiteOrNull(summary.responseBytesP95 ?? summary.p95ResponseBytes ?? summary.maxResponseBytes),
+    responseBytesMax: finiteOrNull(summary.responseBytesMax ?? summary.maxResponseBytes),
+  };
+}
+
 function finiteOrNull(value) {
   if (value == null || value === '' || typeof value === 'boolean') return null;
   const number = Number(value);
@@ -308,7 +357,13 @@ function finiteOrNull(value) {
 function mergeMetrics(left = {}, right = {}) {
   const merged = { ...left };
   for (const metric of REQUIRED_ROUTE_COST_METRICS) {
-    if (merged[metric] == null && right[metric] != null) merged[metric] = right[metric];
+    const leftValue = finiteOrNull(merged[metric]);
+    const rightValue = finiteOrNull(right[metric]);
+    if (leftValue === null && rightValue !== null) {
+      merged[metric] = rightValue;
+    } else if (leftValue !== null && rightValue !== null) {
+      merged[metric] = Math.max(leftValue, rightValue);
+    }
   }
   return merged;
 }
@@ -334,6 +389,17 @@ function measuredStatusForCost(cost = {}, metrics = {}) {
   return explicitStatus === 'measured' ? 'missing-metric' : 'missing-route';
 }
 
+function normaliseBlockedStatus(familyId, status, metrics = {}) {
+  if (status === 'measured' || status === 'partial') return status;
+  if (hasMeasuredRouteMetrics(metrics)) return statusForMetrics(metrics);
+  const definition = routeFamilyDefinition(familyId);
+  if (!definition) return status || 'requires-production-operator';
+  if (status === 'missing-route' || status === 'missing-metric' || status === 'requires-production-operator') {
+    return blockedStatusForFamily(definition);
+  }
+  return status || blockedStatusForFamily(definition);
+}
+
 function isMeasuredEntry(entry = {}) {
   return entry.status === 'measured' && hasCompleteRouteMetrics(entry.metrics || {});
 }
@@ -353,7 +419,7 @@ function routeEntryFromBudgetCost(cost, sourcePath) {
     endpoint: definition.endpoint,
     route: cost.route,
     broadPhase: definition.broadPhase,
-    status: measuredStatusForCost(cost, metrics),
+    status: normaliseBlockedStatus(familyId, measuredStatusForCost(cost, metrics), metrics),
     evidenceStatus: cost.evidenceStatus || 'modelling-only',
     redactionStatus: cost.redactionStatus || 'redacted-aggregate',
     sourcePaths: [sourcePath, ...(cost.sourcePaths || [])].filter(Boolean),
@@ -424,6 +490,70 @@ function routeEntryFromTailCorrelation(data, sourcePath) {
   });
 }
 
+function routeEntriesFromCapacityEvidence(data, sourcePath) {
+  const endpoints = data?.summary?.endpoints || data?.endpoints || null;
+  if (!endpoints || typeof endpoints !== 'object' || Array.isArray(endpoints)) return [];
+
+  return Object.entries(endpoints).map(([route, summary]) => {
+    const familyId = routeFamilyForCost(route, summary?.routeFamily, commandActionFromSample(summary));
+    if (!familyId) return null;
+    const definition = routeFamilyDefinition(familyId);
+    const metrics = metricsFromCapacitySummary(summary);
+    return {
+      routeFamily: familyId,
+      method: definition.method,
+      endpoint: definition.endpoint,
+      route,
+      broadPhase: definition.broadPhase,
+      status: statusForMetrics(metrics),
+      evidenceStatus: data?.certifying === true ? 'certification-source' : 'diagnostic-only',
+      redactionStatus: 'redacted-aggregate',
+      sourcePaths: [sourcePath],
+      discoverySource: definition.discoverySources,
+      ...(definition.probeContract ? { probeContract: definition.probeContract } : {}),
+      ...(definition.commandAction ? { commandAction: definition.commandAction } : {}),
+      metrics,
+    };
+  }).filter(Boolean);
+}
+
+function routeEntriesFromRouteCostEvidence(data, sourcePath) {
+  if (data?.kind !== 'capacity-route-cost-diagnostic' || !Array.isArray(data.routeFamilies)) return [];
+  return data.routeFamilies.map((entry) => {
+    const definition = routeFamilyDefinition(entry.routeFamily);
+    if (!definition) return null;
+    return {
+      routeFamily: entry.routeFamily,
+      method: entry.method || definition.method,
+      endpoint: entry.endpoint || definition.endpoint,
+      route: entry.route || `${entry.method || definition.method} ${entry.endpoint || definition.endpoint}`,
+      broadPhase: entry.broadPhase || definition.broadPhase,
+      status: normaliseBlockedStatus(
+        entry.routeFamily,
+        entry.status || statusForMetrics(entry.metrics || {}),
+        entry.metrics || {},
+      ),
+      evidenceStatus: entry.evidenceStatus || 'modelling-only',
+      redactionStatus: entry.redactionStatus || 'redacted-aggregate',
+      sourcePaths: [sourcePath, ...(entry.sourcePaths || [])].filter(Boolean),
+      discoverySource: entry.discoverySource || definition.discoverySources,
+      metrics: metricsFromBudgetCost(entry.metrics || {}),
+      ...(definition.probeContract ? { probeContract: definition.probeContract } : {}),
+      ...(definition.commandAction ? { commandAction: definition.commandAction } : {}),
+    };
+  }).filter(Boolean);
+}
+
+function routeEntriesFromEvidence(data, sourcePath) {
+  if (data?.kind === 'capacity-route-cost-diagnostic') {
+    return routeEntriesFromRouteCostEvidence(data, sourcePath);
+  }
+  if (data?.kind === 'capacity-worker-log-correlation') {
+    return routeEntryFromTailCorrelation(data, sourcePath);
+  }
+  return routeEntriesFromCapacityEvidence(data, sourcePath);
+}
+
 function mergeRouteEntries(entries = []) {
   const byFamily = new Map();
   for (const entry of entries) {
@@ -448,7 +578,43 @@ function mergeRouteEntries(entries = []) {
   return byFamily;
 }
 
-function blockedEntryForFamily(family, status = 'requires-production-operator') {
+function blockedStatusForFamily(family) {
+  if (family.id.startsWith('hero-')) return 'feature-gated';
+  if (family.id === 'parent-summary-hub-read' || family.id === 'admin-production-evidence-overview') return 'auth-gated';
+  return 'requires-production-operator';
+}
+
+function missingMetricsFor(metrics = {}) {
+  return REQUIRED_ROUTE_COST_METRICS.filter((metric) => finiteOrNull(metrics[metric]) === null);
+}
+
+function routeCostJustification(entry = {}) {
+  if (entry.status === 'measured') return 'All required route-cost metrics are present.';
+  if (entry.status === 'partial') {
+    return 'Some aggregate route-cost metrics are present, but the missing metrics still require production telemetry before this family can be treated as measured.';
+  }
+  if (entry.status === 'auth-gated') {
+    return 'The route requires authenticated adult/operator state and must be measured with an approved production session or equivalent authorised fixture.';
+  }
+  if (entry.status === 'feature-gated') {
+    return 'The route exists in the runtime but is behind Hero feature flags in the default deployed configuration; it is excluded from certifying assumptions until an enabled cohort is explicitly measured.';
+  }
+  if (entry.status === 'not-present-in-current-runtime') {
+    return 'The route family is not present in the current runtime and is recorded as non-zero unknown rather than silently omitted.';
+  }
+  return 'The route needs an approved production operator run with session material and Worker tail capture before its missing metrics can be filled.';
+}
+
+function annotateRouteEntry(entry = {}) {
+  const missingMetrics = missingMetricsFor(entry.metrics || {});
+  return {
+    ...entry,
+    missingMetrics,
+    justification: routeCostJustification({ ...entry, missingMetrics }),
+  };
+}
+
+function blockedEntryForFamily(family, status = blockedStatusForFamily(family)) {
   return {
     routeFamily: family.id,
     method: family.method,
@@ -469,6 +635,7 @@ function blockedEntryForFamily(family, status = 'requires-production-operator') 
 export function buildRouteCostEvidence({
   budget = null,
   tailCorrelations = [],
+  evidenceFiles = [],
   generatedAt = new Date().toISOString(),
   sourcePaths = {},
 } = {}) {
@@ -480,9 +647,14 @@ export function buildRouteCostEvidence({
   for (const item of tailCorrelations) {
     routeEntries.push(...routeEntryFromTailCorrelation(item.data || item, item.path || item.sourcePath || 'tail-correlation.json'));
   }
+  for (const item of evidenceFiles) {
+    routeEntries.push(...routeEntriesFromEvidence(item.data || item, item.path || item.sourcePath || 'capacity-evidence.json'));
+  }
 
   const merged = mergeRouteEntries(routeEntries);
-  const routeFamilies = REQUIRED_ROUTE_FAMILIES.map((family) => merged.get(family.id) || blockedEntryForFamily(family));
+  const routeFamilies = REQUIRED_ROUTE_FAMILIES.map((family) => (
+    annotateRouteEntry(merged.get(family.id) || blockedEntryForFamily(family))
+  ));
   const measuredCount = routeFamilies.filter(isMeasuredEntry).length;
   const partialCount = routeFamilies.filter(isPartialEntry).length;
   return {
@@ -539,6 +711,9 @@ export function validateRouteCostEvidence(evidence = {}) {
       continue;
     }
     if (!entry.method || !entry.endpoint) errors.push(`${family.id} missing method or endpoint`);
+    if (!ALLOWED_ROUTE_COST_STATUSES.includes(entry.status)) {
+      errors.push(`${family.id} has unsupported status ${entry.status}`);
+    }
     if (!Array.isArray(entry.discoverySource) || !entry.discoverySource.length) {
       errors.push(`${family.id} missing discoverySource`);
     }
@@ -553,6 +728,12 @@ export function validateRouteCostEvidence(evidence = {}) {
     }
     if (entry.status === 'partial' && !hasMeasuredRouteMetrics(metrics)) {
       errors.push(`${family.id} marked partial without any non-null route-cost metric`);
+    }
+    if (!Array.isArray(entry.missingMetrics)) {
+      errors.push(`${family.id} missing missingMetrics list`);
+    }
+    if (entry.status !== 'measured' && typeof entry.justification !== 'string') {
+      errors.push(`${family.id} missing non-measured justification`);
     }
   }
 
@@ -590,7 +771,7 @@ export async function runRouteCostDiagnostic(argv = process.argv.slice(2), {
       ok: true,
       help: [
         'Usage: node scripts/plan-route-cost-diagnostic.mjs [--json] [--execute-local] [--output <json>]',
-        'Plans P5 route-cost coverage and can write redacted local/fixture-backed route-cost evidence.',
+        'Plans route-cost coverage and can write redacted local/fixture-backed route-cost evidence.',
       ].join('\n'),
     };
   }
@@ -612,9 +793,16 @@ export async function runRouteCostDiagnostic(argv = process.argv.slice(2), {
         return data ? { path: sourcePath, data } : null;
       })
       .filter(Boolean);
+    const evidenceFiles = options.evidencePaths
+      .map((sourcePath) => {
+        const data = readJsonIfExists(sourcePath, cwd);
+        return data ? { path: sourcePath, data } : null;
+      })
+      .filter(Boolean);
     evidence = buildRouteCostEvidence({
       budget,
       tailCorrelations,
+      evidenceFiles,
       generatedAt: now().toISOString(),
       sourcePaths: { budget: options.budgetPath },
     });
@@ -636,7 +824,7 @@ export async function runRouteCostDiagnostic(argv = process.argv.slice(2), {
 
 function renderPlan({ ok, plan, evidence, validation, outputPath }) {
   const lines = [
-    `P5 route-cost diagnostic plan: ${plan.outputPath}`,
+    `Route-cost diagnostic plan: ${plan.outputPath}`,
     `Route families: ${plan.routeFamilies.length}`,
     `Raw-log warning: ${plan.rawLogWarning}`,
     '',

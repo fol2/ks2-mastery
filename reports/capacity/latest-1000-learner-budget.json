@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "kind": "capacity-1000-learner-free-tier-budget-ledger",
-  "generatedAt": "2026-04-30T20:28:32.109Z",
+  "generatedAt": "2026-05-01T10:42:18.460Z",
   "modellingOnly": true,
   "certifying": false,
   "certification": {
@@ -24,9 +24,9 @@
   "redThresholdPercent": 80,
   "sources": [
     {
-      "path": "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+      "path": "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
       "evidenceKind": "route-cost-diagnostic",
-      "finishedAt": "2026-04-30T20:25:58.997Z",
+      "finishedAt": "2026-05-01T10:42:07.099Z",
       "inputCertifying": false,
       "usedForCertification": false,
       "modellingInputStatus": "non-certifying-modelling-input"
@@ -37,10 +37,11 @@
       "route": "GET /api/admin/ops/production-evidence",
       "phase": "parent-admin",
       "routeFamily": "admin-production-evidence-overview",
-      "routeCostStatus": "requires-production-operator",
+      "routeCostStatus": "auth-gated",
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
@@ -78,32 +79,34 @@
       "evidenceStatus": "diagnostic-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p3-t5-strict-r2-tail-correlation.json",
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/60-learner-stretch-preflight-20260428-p6.json",
         "reports/capacity/latest-1000-learner-budget.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r1.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r2.json"
       ],
-      "count": 50,
+      "count": 80,
       "wallMsP50": 710.2,
-      "wallMsP95": 719,
-      "wallMsMax": 719,
-      "queryCountP50": 11,
-      "queryCountP95": 11,
-      "queryCountMax": 11,
+      "wallMsP95": 854,
+      "wallMsMax": 855.6,
+      "queryCountP50": 12,
+      "queryCountP95": 12,
+      "queryCountMax": 12,
       "d1DurationMsP50": 164.50390000000002,
       "d1DurationMsP95": 197.4371,
       "d1DurationMsMax": 197.4371,
-      "d1RowsReadP50": 9,
-      "d1RowsReadP95": 9,
-      "d1RowsReadMax": 9,
+      "d1RowsReadP50": 10,
+      "d1RowsReadP95": 10,
+      "d1RowsReadMax": 10,
       "d1RowsWrittenP50": 0,
       "d1RowsWrittenP95": 0,
       "d1RowsWrittenMax": 0,
-      "responseBytesP50": 2449,
-      "responseBytesP95": 2449,
-      "responseBytesMax": 2449,
+      "responseBytesP50": 2450,
+      "responseBytesP95": 2450,
+      "responseBytesMax": 2450,
       "workerCpuMsP50": 13,
       "workerCpuMsP95": 21,
       "workerCpuMsMax": 21,
@@ -115,10 +118,11 @@
       "route": "GET /api/hero/read-model",
       "phase": "hero",
       "routeFamily": "hero-read-model",
-      "routeCostStatus": "requires-production-operator",
+      "routeCostStatus": "feature-gated",
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
@@ -152,10 +156,11 @@
       "route": "GET /api/hubs/parent",
       "phase": "parent-admin",
       "routeFamily": "parent-summary-hub-read",
-      "routeCostStatus": "requires-production-operator",
+      "routeCostStatus": "auth-gated",
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
@@ -193,6 +198,7 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
@@ -230,6 +236,7 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
@@ -267,10 +274,11 @@
       "phase": "hero-command",
       "routeFamily": "hero-command-start",
       "commandAction": "start",
-      "routeCostStatus": "requires-production-operator",
+      "routeCostStatus": "feature-gated",
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
@@ -305,10 +313,11 @@
       "phase": "hero-command",
       "routeFamily": "hero-command-claim",
       "commandAction": "claim",
-      "routeCostStatus": "requires-production-operator",
+      "routeCostStatus": "feature-gated",
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
@@ -343,10 +352,11 @@
       "phase": "hero-command",
       "routeFamily": "hero-command-camp",
       "commandAction": "camp",
-      "routeCostStatus": "requires-production-operator",
+      "routeCostStatus": "feature-gated",
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
@@ -381,34 +391,36 @@
       "phase": "command",
       "routeFamily": "grammar-command",
       "routeCostStatus": "partial",
-      "evidenceStatus": "modelling-only",
+      "evidenceStatus": "diagnostic-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/60-learner-stretch-preflight-20260428-p6.json",
         "reports/capacity/latest-1000-learner-budget.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r1.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r2.json"
       ],
-      "count": 90,
-      "wallMsP50": null,
-      "wallMsP95": null,
-      "wallMsMax": null,
+      "count": 180,
+      "wallMsP50": 260.1,
+      "wallMsP95": 295.2,
+      "wallMsMax": 325.3,
       "queryCountP50": 20,
-      "queryCountP95": 22,
-      "queryCountMax": 23,
+      "queryCountP95": 23,
+      "queryCountMax": 24,
       "d1DurationMsP50": null,
       "d1DurationMsP95": null,
       "d1DurationMsMax": null,
       "d1RowsReadP50": 21,
-      "d1RowsReadP95": 499,
+      "d1RowsReadP95": 584,
       "d1RowsReadMax": 2031,
       "d1RowsWrittenP50": 17,
-      "d1RowsWrittenP95": 32,
+      "d1RowsWrittenP95": 36,
       "d1RowsWrittenMax": 517,
-      "responseBytesP50": 16637,
-      "responseBytesP95": 29596,
-      "responseBytesMax": 29597,
+      "responseBytesP50": 16735,
+      "responseBytesP95": 30148,
+      "responseBytesMax": 30149,
       "workerCpuMsP50": null,
       "workerCpuMsP95": null,
       "workerCpuMsMax": null,
@@ -424,6 +436,7 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
@@ -461,6 +474,7 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
@@ -513,7 +527,7 @@
       },
       {
         "routeFamily": "not-modified-bootstrap",
-        "status": "blocked-or-missing",
+        "status": "requires-production-operator",
         "routes": [
           "POST /api/bootstrap"
         ],
@@ -589,7 +603,7 @@
       },
       {
         "routeFamily": "spelling-command",
-        "status": "blocked-or-missing",
+        "status": "requires-production-operator",
         "routes": [
           "POST /api/subjects/spelling/command"
         ],
@@ -634,9 +648,6 @@
           "POST /api/subjects/grammar/command"
         ],
         "missingMetrics": [
-          "wallMsP50",
-          "wallMsP95",
-          "wallMsMax",
           "workerCpuMsP50",
           "workerCpuMsP95",
           "workerCpuMsMax",
@@ -648,7 +659,7 @@
           "d1DurationMsMax"
         ],
         "evidenceStatuses": [
-          "modelling-only"
+          "diagnostic-only"
         ],
         "redactionStatuses": [
           "redacted-aggregate"
@@ -656,7 +667,7 @@
       },
       {
         "routeFamily": "punctuation-command",
-        "status": "blocked-or-missing",
+        "status": "requires-production-operator",
         "routes": [
           "POST /api/subjects/punctuation/command"
         ],
@@ -696,7 +707,7 @@
       },
       {
         "routeFamily": "parent-summary-hub-read",
-        "status": "blocked-or-missing",
+        "status": "auth-gated",
         "routes": [
           "GET /api/hubs/parent"
         ],
@@ -736,7 +747,7 @@
       },
       {
         "routeFamily": "admin-production-evidence-overview",
-        "status": "blocked-or-missing",
+        "status": "auth-gated",
         "routes": [
           "GET /api/admin/ops/production-evidence"
         ],
@@ -776,7 +787,7 @@
       },
       {
         "routeFamily": "hero-read-model",
-        "status": "blocked-or-missing",
+        "status": "feature-gated",
         "routes": [
           "GET /api/hero/read-model"
         ],
@@ -816,7 +827,7 @@
       },
       {
         "routeFamily": "hero-command-start",
-        "status": "blocked-or-missing",
+        "status": "feature-gated",
         "routes": [
           "POST /api/hero/command"
         ],
@@ -856,7 +867,7 @@
       },
       {
         "routeFamily": "hero-command-claim",
-        "status": "blocked-or-missing",
+        "status": "feature-gated",
         "routes": [
           "POST /api/hero/command"
         ],
@@ -896,7 +907,7 @@
       },
       {
         "routeFamily": "hero-command-camp",
-        "status": "blocked-or-missing",
+        "status": "feature-gated",
         "routes": [
           "POST /api/hero/command"
         ],
@@ -939,7 +950,7 @@
   "missingRouteCosts": [
     {
       "routeFamily": "not-modified-bootstrap",
-      "status": "blocked-or-missing",
+      "status": "requires-production-operator",
       "routes": [
         "POST /api/bootstrap"
       ],
@@ -1015,7 +1026,7 @@
     },
     {
       "routeFamily": "spelling-command",
-      "status": "blocked-or-missing",
+      "status": "requires-production-operator",
       "routes": [
         "POST /api/subjects/spelling/command"
       ],
@@ -1060,9 +1071,6 @@
         "POST /api/subjects/grammar/command"
       ],
       "missingMetrics": [
-        "wallMsP50",
-        "wallMsP95",
-        "wallMsMax",
         "workerCpuMsP50",
         "workerCpuMsP95",
         "workerCpuMsMax",
@@ -1074,7 +1082,7 @@
         "d1DurationMsMax"
       ],
       "evidenceStatuses": [
-        "modelling-only"
+        "diagnostic-only"
       ],
       "redactionStatuses": [
         "redacted-aggregate"
@@ -1082,7 +1090,7 @@
     },
     {
       "routeFamily": "punctuation-command",
-      "status": "blocked-or-missing",
+      "status": "requires-production-operator",
       "routes": [
         "POST /api/subjects/punctuation/command"
       ],
@@ -1122,7 +1130,7 @@
     },
     {
       "routeFamily": "parent-summary-hub-read",
-      "status": "blocked-or-missing",
+      "status": "auth-gated",
       "routes": [
         "GET /api/hubs/parent"
       ],
@@ -1162,7 +1170,7 @@
     },
     {
       "routeFamily": "admin-production-evidence-overview",
-      "status": "blocked-or-missing",
+      "status": "auth-gated",
       "routes": [
         "GET /api/admin/ops/production-evidence"
       ],
@@ -1202,7 +1210,7 @@
     },
     {
       "routeFamily": "hero-read-model",
-      "status": "blocked-or-missing",
+      "status": "feature-gated",
       "routes": [
         "GET /api/hero/read-model"
       ],
@@ -1242,7 +1250,7 @@
     },
     {
       "routeFamily": "hero-command-start",
-      "status": "blocked-or-missing",
+      "status": "feature-gated",
       "routes": [
         "POST /api/hero/command"
       ],
@@ -1282,7 +1290,7 @@
     },
     {
       "routeFamily": "hero-command-claim",
-      "status": "blocked-or-missing",
+      "status": "feature-gated",
       "routes": [
         "POST /api/hero/command"
       ],
@@ -1322,7 +1330,7 @@
     },
     {
       "routeFamily": "hero-command-camp",
-      "status": "blocked-or-missing",
+      "status": "feature-gated",
       "routes": [
         "POST /api/hero/command"
       ],
@@ -1378,11 +1386,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 423,
-            "d1QueriesPerDay": 7860,
-            "d1RowsReadPerDay": 8100,
+            "d1QueriesPerDay": 7920,
+            "d1RowsReadPerDay": 8160,
             "d1RowsWrittenPerDay": 6120,
-            "responseBytesPerDay": 6136492.5,
-            "responseMiBPerDay": 5.852,
+            "responseBytesPerDay": 6171832.5,
+            "responseMiBPerDay": 5.886,
             "worst15MinuteDynamicRequests": 50.76
           },
           "quotaUse": {
@@ -1394,7 +1402,7 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 8100,
+              "value": 8160,
               "limit": 5000000,
               "percent": 0.16,
               "status": "unknown",
@@ -1498,11 +1506,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 1080.45,
-            "d1QueriesPerDay": 22176,
-            "d1RowsReadPerDay": 472689,
-            "d1RowsWrittenPerDay": 30240,
-            "responseBytesPerDay": 28277282.25,
-            "responseMiBPerDay": 26.967,
+            "d1QueriesPerDay": 23247,
+            "d1RowsReadPerDay": 553140,
+            "d1RowsWrittenPerDay": 34020,
+            "responseBytesPerDay": 28799048.25,
+            "responseMiBPerDay": 27.465,
             "worst15MinuteDynamicRequests": 216.09
           },
           "quotaUse": {
@@ -1514,16 +1522,16 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 472689,
+              "value": 553140,
               "limit": 5000000,
-              "percent": 9.45,
+              "percent": 11.06,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
             "d1RowsWrittenPerDay": {
-              "value": 30240,
+              "value": 34020,
               "limit": 100000,
-              "percent": 30.24,
+              "percent": 34.02,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             }
@@ -1542,20 +1550,20 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 22,
+            "maxD1QueriesPerInvocation": 23,
             "limit": 50,
-            "percentOfLimit": 44,
+            "percentOfLimit": 46,
             "status": "green"
           },
           "bottlenecks": [
             {
               "quota": "d1RowsWrittenPerDay",
-              "percent": 30.24,
+              "percent": 34.02,
               "status": "unknown"
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 9.45,
+              "percent": 11.06,
               "status": "unknown"
             },
             {
@@ -1618,11 +1626,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 2576.25,
-            "d1QueriesPerDay": 55050,
-            "d1RowsReadPerDay": 4572450,
+            "d1QueriesPerDay": 57600,
+            "d1RowsReadPerDay": 4572750,
             "d1RowsWrittenPerDay": 1163250,
-            "responseBytesPerDay": 67329112.5,
-            "responseMiBPerDay": 64.21,
+            "responseBytesPerDay": 68571412.5,
+            "responseMiBPerDay": 65.395,
             "worst15MinuteDynamicRequests": 901.69
           },
           "quotaUse": {
@@ -1634,9 +1642,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 4572450,
+              "value": 4572750,
               "limit": 5000000,
-              "percent": 91.45,
+              "percent": 91.46,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
@@ -1662,9 +1670,9 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 23,
+            "maxD1QueriesPerInvocation": 24,
             "limit": 50,
-            "percentOfLimit": 46,
+            "percentOfLimit": 48,
             "status": "green"
           },
           "bottlenecks": [
@@ -1675,7 +1683,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 91.45,
+              "percent": 91.46,
               "status": "red"
             },
             {
@@ -1760,11 +1768,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 846,
-            "d1QueriesPerDay": 15720,
-            "d1RowsReadPerDay": 16200,
+            "d1QueriesPerDay": 15840,
+            "d1RowsReadPerDay": 16320,
             "d1RowsWrittenPerDay": 12240,
-            "responseBytesPerDay": 12272985,
-            "responseMiBPerDay": 11.704,
+            "responseBytesPerDay": 12343665,
+            "responseMiBPerDay": 11.772,
             "worst15MinuteDynamicRequests": 101.52
           },
           "quotaUse": {
@@ -1776,9 +1784,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 16200,
+              "value": 16320,
               "limit": 5000000,
-              "percent": 0.32,
+              "percent": 0.33,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
@@ -1822,7 +1830,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 0.32,
+              "percent": 0.33,
               "status": "unknown"
             }
           ],
@@ -1880,11 +1888,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 2160.9,
-            "d1QueriesPerDay": 44352,
-            "d1RowsReadPerDay": 945378,
-            "d1RowsWrittenPerDay": 60480,
-            "responseBytesPerDay": 56554564.5,
-            "responseMiBPerDay": 53.935,
+            "d1QueriesPerDay": 46494,
+            "d1RowsReadPerDay": 1106280,
+            "d1RowsWrittenPerDay": 68040,
+            "responseBytesPerDay": 57598096.5,
+            "responseMiBPerDay": 54.93,
             "worst15MinuteDynamicRequests": 432.18
           },
           "quotaUse": {
@@ -1896,16 +1904,16 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 945378,
+              "value": 1106280,
               "limit": 5000000,
-              "percent": 18.91,
+              "percent": 22.13,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
             "d1RowsWrittenPerDay": {
-              "value": 60480,
+              "value": 68040,
               "limit": 100000,
-              "percent": 60.48,
+              "percent": 68.04,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             }
@@ -1924,20 +1932,20 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 22,
+            "maxD1QueriesPerInvocation": 23,
             "limit": 50,
-            "percentOfLimit": 44,
+            "percentOfLimit": 46,
             "status": "green"
           },
           "bottlenecks": [
             {
               "quota": "d1RowsWrittenPerDay",
-              "percent": 60.48,
+              "percent": 68.04,
               "status": "unknown"
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 18.91,
+              "percent": 22.13,
               "status": "unknown"
             },
             {
@@ -2000,11 +2008,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 5152.5,
-            "d1QueriesPerDay": 110100,
-            "d1RowsReadPerDay": 9144900,
+            "d1QueriesPerDay": 115200,
+            "d1RowsReadPerDay": 9145500,
             "d1RowsWrittenPerDay": 2326500,
-            "responseBytesPerDay": 134658225,
-            "responseMiBPerDay": 128.42,
+            "responseBytesPerDay": 137142825,
+            "responseMiBPerDay": 130.79,
             "worst15MinuteDynamicRequests": 1803.37
           },
           "quotaUse": {
@@ -2016,9 +2024,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 9144900,
+              "value": 9145500,
               "limit": 5000000,
-              "percent": 182.9,
+              "percent": 182.91,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
@@ -2044,9 +2052,9 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 23,
+            "maxD1QueriesPerInvocation": 24,
             "limit": 50,
-            "percentOfLimit": 46,
+            "percentOfLimit": 48,
             "status": "green"
           },
           "bottlenecks": [
@@ -2057,7 +2065,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 182.9,
+              "percent": 182.91,
               "status": "red"
             },
             {
@@ -2142,11 +2150,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 1410,
-            "d1QueriesPerDay": 26200,
-            "d1RowsReadPerDay": 27000,
+            "d1QueriesPerDay": 26400,
+            "d1RowsReadPerDay": 27200,
             "d1RowsWrittenPerDay": 20400,
-            "responseBytesPerDay": 20454975,
-            "responseMiBPerDay": 19.507,
+            "responseBytesPerDay": 20572775,
+            "responseMiBPerDay": 19.62,
             "worst15MinuteDynamicRequests": 169.2
           },
           "quotaUse": {
@@ -2158,7 +2166,7 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 27000,
+              "value": 27200,
               "limit": 5000000,
               "percent": 0.54,
               "status": "unknown",
@@ -2262,11 +2270,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 3601.5,
-            "d1QueriesPerDay": 73920,
-            "d1RowsReadPerDay": 1575630,
-            "d1RowsWrittenPerDay": 100800,
-            "responseBytesPerDay": 94257607.5,
-            "responseMiBPerDay": 89.891,
+            "d1QueriesPerDay": 77490,
+            "d1RowsReadPerDay": 1843800,
+            "d1RowsWrittenPerDay": 113400,
+            "responseBytesPerDay": 95996827.5,
+            "responseMiBPerDay": 91.55,
             "worst15MinuteDynamicRequests": 720.3
           },
           "quotaUse": {
@@ -2278,16 +2286,16 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 1575630,
+              "value": 1843800,
               "limit": 5000000,
-              "percent": 31.51,
+              "percent": 36.88,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
             "d1RowsWrittenPerDay": {
-              "value": 100800,
+              "value": 113400,
               "limit": 100000,
-              "percent": 100.8,
+              "percent": 113.4,
               "status": "red",
               "coverage": "partial-lower-bound"
             }
@@ -2306,20 +2314,20 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 22,
+            "maxD1QueriesPerInvocation": 23,
             "limit": 50,
-            "percentOfLimit": 44,
+            "percentOfLimit": 46,
             "status": "green"
           },
           "bottlenecks": [
             {
               "quota": "d1RowsWrittenPerDay",
-              "percent": 100.8,
+              "percent": 113.4,
               "status": "red"
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 31.51,
+              "percent": 36.88,
               "status": "unknown"
             },
             {
@@ -2390,11 +2398,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 8587.5,
-            "d1QueriesPerDay": 183500,
-            "d1RowsReadPerDay": 15241500,
+            "d1QueriesPerDay": 192000,
+            "d1RowsReadPerDay": 15242500,
             "d1RowsWrittenPerDay": 3877500,
-            "responseBytesPerDay": 224430375,
-            "responseMiBPerDay": 214.033,
+            "responseBytesPerDay": 228571375,
+            "responseMiBPerDay": 217.983,
             "worst15MinuteDynamicRequests": 3005.63
           },
           "quotaUse": {
@@ -2406,9 +2414,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 15241500,
+              "value": 15242500,
               "limit": 5000000,
-              "percent": 304.83,
+              "percent": 304.85,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
@@ -2434,9 +2442,9 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 23,
+            "maxD1QueriesPerInvocation": 24,
             "limit": 50,
-            "percentOfLimit": 46,
+            "percentOfLimit": 48,
             "status": "green"
           },
           "bottlenecks": [
@@ -2447,7 +2455,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 304.83,
+              "percent": 304.85,
               "status": "red"
             },
             {
@@ -2532,11 +2540,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 4230,
-            "d1QueriesPerDay": 78600,
-            "d1RowsReadPerDay": 81000,
+            "d1QueriesPerDay": 79200,
+            "d1RowsReadPerDay": 81600,
             "d1RowsWrittenPerDay": 61200,
-            "responseBytesPerDay": 61364925,
-            "responseMiBPerDay": 58.522,
+            "responseBytesPerDay": 61718325,
+            "responseMiBPerDay": 58.859,
             "worst15MinuteDynamicRequests": 507.6
           },
           "quotaUse": {
@@ -2548,9 +2556,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 81000,
+              "value": 81600,
               "limit": 5000000,
-              "percent": 1.62,
+              "percent": 1.63,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
@@ -2594,7 +2602,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 1.62,
+              "percent": 1.63,
               "status": "unknown"
             }
           ],
@@ -2652,11 +2660,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 10804.5,
-            "d1QueriesPerDay": 221760,
-            "d1RowsReadPerDay": 4726890,
-            "d1RowsWrittenPerDay": 302400,
-            "responseBytesPerDay": 282772822.5,
-            "responseMiBPerDay": 269.673,
+            "d1QueriesPerDay": 232470,
+            "d1RowsReadPerDay": 5531400,
+            "d1RowsWrittenPerDay": 340200,
+            "responseBytesPerDay": 287990482.5,
+            "responseMiBPerDay": 274.649,
             "worst15MinuteDynamicRequests": 2160.9
           },
           "quotaUse": {
@@ -2668,16 +2676,16 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 4726890,
+              "value": 5531400,
               "limit": 5000000,
-              "percent": 94.54,
+              "percent": 110.63,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
             "d1RowsWrittenPerDay": {
-              "value": 302400,
+              "value": 340200,
               "limit": 100000,
-              "percent": 302.4,
+              "percent": 340.2,
               "status": "red",
               "coverage": "partial-lower-bound"
             }
@@ -2696,20 +2704,20 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 22,
+            "maxD1QueriesPerInvocation": 23,
             "limit": 50,
-            "percentOfLimit": 44,
+            "percentOfLimit": 46,
             "status": "green"
           },
           "bottlenecks": [
             {
               "quota": "d1RowsWrittenPerDay",
-              "percent": 302.4,
+              "percent": 340.2,
               "status": "red"
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 94.54,
+              "percent": 110.63,
               "status": "red"
             },
             {
@@ -2789,11 +2797,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 25762.5,
-            "d1QueriesPerDay": 550500,
-            "d1RowsReadPerDay": 45724500,
+            "d1QueriesPerDay": 576000,
+            "d1RowsReadPerDay": 45727500,
             "d1RowsWrittenPerDay": 11632500,
-            "responseBytesPerDay": 673291125,
-            "responseMiBPerDay": 642.1,
+            "responseBytesPerDay": 685714125,
+            "responseMiBPerDay": 653.948,
             "worst15MinuteDynamicRequests": 9016.88
           },
           "quotaUse": {
@@ -2805,9 +2813,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 45724500,
+              "value": 45727500,
               "limit": 5000000,
-              "percent": 914.49,
+              "percent": 914.55,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
@@ -2833,9 +2841,9 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 23,
+            "maxD1QueriesPerInvocation": 24,
             "limit": 50,
-            "percentOfLimit": 46,
+            "percentOfLimit": 48,
             "status": "green"
           },
           "bottlenecks": [
@@ -2846,7 +2854,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 914.49,
+              "percent": 914.55,
               "status": "red"
             },
             {
@@ -2931,11 +2939,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 14100,
-            "d1QueriesPerDay": 262000,
-            "d1RowsReadPerDay": 270000,
+            "d1QueriesPerDay": 264000,
+            "d1RowsReadPerDay": 272000,
             "d1RowsWrittenPerDay": 204000,
-            "responseBytesPerDay": 204549750,
-            "responseMiBPerDay": 195.074,
+            "responseBytesPerDay": 205727750,
+            "responseMiBPerDay": 196.197,
             "worst15MinuteDynamicRequests": 1692
           },
           "quotaUse": {
@@ -2947,9 +2955,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 270000,
+              "value": 272000,
               "limit": 5000000,
-              "percent": 5.4,
+              "percent": 5.44,
               "status": "unknown",
               "coverage": "partial-lower-bound"
             },
@@ -2993,7 +3001,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 5.4,
+              "percent": 5.44,
               "status": "unknown"
             }
           ],
@@ -3059,11 +3067,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 36015,
-            "d1QueriesPerDay": 739200,
-            "d1RowsReadPerDay": 15756300,
-            "d1RowsWrittenPerDay": 1008000,
-            "responseBytesPerDay": 942576075,
-            "responseMiBPerDay": 898.911,
+            "d1QueriesPerDay": 774900,
+            "d1RowsReadPerDay": 18438000,
+            "d1RowsWrittenPerDay": 1134000,
+            "responseBytesPerDay": 959968275,
+            "responseMiBPerDay": 915.497,
             "worst15MinuteDynamicRequests": 7203
           },
           "quotaUse": {
@@ -3075,16 +3083,16 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 15756300,
+              "value": 18438000,
               "limit": 5000000,
-              "percent": 315.13,
+              "percent": 368.76,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
             "d1RowsWrittenPerDay": {
-              "value": 1008000,
+              "value": 1134000,
               "limit": 100000,
-              "percent": 1008,
+              "percent": 1134,
               "status": "red",
               "coverage": "partial-lower-bound"
             }
@@ -3103,20 +3111,20 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 22,
+            "maxD1QueriesPerInvocation": 23,
             "limit": 50,
-            "percentOfLimit": 44,
+            "percentOfLimit": 46,
             "status": "green"
           },
           "bottlenecks": [
             {
               "quota": "d1RowsWrittenPerDay",
-              "percent": 1008,
+              "percent": 1134,
               "status": "red"
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 315.13,
+              "percent": 368.76,
               "status": "red"
             },
             {
@@ -3196,11 +3204,11 @@
           },
           "totals": {
             "dynamicRequestsPerDay": 85875,
-            "d1QueriesPerDay": 1835000,
-            "d1RowsReadPerDay": 152415000,
+            "d1QueriesPerDay": 1920000,
+            "d1RowsReadPerDay": 152425000,
             "d1RowsWrittenPerDay": 38775000,
-            "responseBytesPerDay": 2244303750,
-            "responseMiBPerDay": 2140.335,
+            "responseBytesPerDay": 2285713750,
+            "responseMiBPerDay": 2179.826,
             "worst15MinuteDynamicRequests": 30056.25
           },
           "quotaUse": {
@@ -3212,9 +3220,9 @@
               "coverage": "complete"
             },
             "d1RowsReadPerDay": {
-              "value": 152415000,
+              "value": 152425000,
               "limit": 5000000,
-              "percent": 3048.3,
+              "percent": 3048.5,
               "status": "red",
               "coverage": "partial-lower-bound"
             },
@@ -3240,9 +3248,9 @@
             ]
           },
           "d1Invocation": {
-            "maxD1QueriesPerInvocation": 23,
+            "maxD1QueriesPerInvocation": 24,
             "limit": 50,
-            "percentOfLimit": 46,
+            "percentOfLimit": 48,
             "status": "green"
           },
           "bottlenecks": [
@@ -3253,7 +3261,7 @@
             },
             {
               "quota": "d1RowsReadPerDay",
-              "percent": 3048.3,
+              "percent": 3048.5,
               "status": "red"
             },
             {
