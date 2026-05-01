@@ -13,6 +13,7 @@ source_context:
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-statement-family-summary.md
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-post-change-run-report.md
   - reports/capacity/evidence/2026-05-01-p7-statement-family-summary.json
+  - reports/capacity/evidence/2026-05-02-p7-production-bootstrap-probe.json
 ---
 
 # System Hardening Optimisation P7 — Path Decision
@@ -21,12 +22,12 @@ source_context:
 
 Selected exit state: `p7-continuation-required`.
 
-P7 has a reviewed, merged narrow implementation candidate and local query-count proof, but it has not yet produced a post-change production 60-learner diagnostic. The next step is deployed-merge confirmation, then the approved 60-learner run shape.
+P7 has a reviewed, merged narrow implementation candidate, local query-count proof, and deployed single-demo bootstrap confirmation. It has not yet produced a post-change production 60-learner diagnostic. The next step is the approved 60-learner run shape.
 
 ## Required Questions
 
 1. **Did P7 reduce full-bootstrap D1 statement count or D1 duration?**
-   Locally, yes for statement count. The focused production/demo public bootstrap test reduced the observed full-bootstrap query count from the P6 production shape of 11 to 9. The broader three-learner bounded GET/POST bootstrap budget also ratcheted from the previous measured 11 to 10. Production D1 duration has not yet been measured post-change.
+   Yes for statement count. The focused production/demo public bootstrap test reduced the observed full-bootstrap query count from the P6 production shape of 11 to 9, and the deployed single-demo bootstrap probe also observed query count 9. The broader three-learner bounded GET/POST bootstrap budget ratcheted from the previous measured 11 to 10. Production D1 duration has not yet been measured under the 60-learner diagnostic shape.
 
 2. **Did the post-change 60-learner run pass the bootstrap P95 threshold?**
    Not measured. The post-change production run is operator-gated until the merged code is confirmed deployed and the diagnostic is captured.
@@ -41,7 +42,7 @@ P7 has a reviewed, merged narrow implementation candidate and local query-count 
    Yes. 60 learners remain uncertified.
 
 6. **What is the next phase?**
-   Continue P7 through deployed-merge confirmation and an approved post-change 60-learner diagnostic. If that run passes once with complete telemetry, the next path is repeat-governance, not direct certification. If it still fails and remains D1-dominated, continue deeper bootstrap/D1 work.
+   Continue P7 through an approved post-change 60-learner diagnostic. If that run passes once with complete telemetry, the next path is repeat-governance, not direct certification. If it still fails and remains D1-dominated, continue deeper bootstrap/D1 work.
 
 ## Rejected Decisions
 

@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "kind": "p7-production-bootstrap-probe",
+  "runId": "2026-05-02-p7-production-bootstrap-probe",
+  "origin": "https://ks2.eugnel.uk",
+  "route": "GET /api/bootstrap",
+  "startedAt": "2026-05-01T23:13:00.000Z",
+  "finishedAt": "2026-05-01T23:14:00.000Z",
+  "certifying": false,
+  "diagnosticOnly": true,
+  "redaction": {
+    "rawRequestIdsPersisted": false,
+    "rawCookiesPersisted": false,
+    "rawSessionMaterialPersisted": false,
+    "rawSqlPersisted": false,
+    "emailsPersisted": false,
+    "learnerNamesPersisted": false
+  },
+  "source": {
+    "sessionSource": "production-demo-session",
+    "cookieJarPath": "/tmp/ks2-p7-demo-cookies.txt",
+    "cookieJarPersisted": false,
+    "rawResponsePersisted": false
+  },
+  "result": {
+    "demoSessionHttpStatus": 201,
+    "bootstrapHttpStatus": 200,
+    "ok": true,
+    "queryCount": 9,
+    "d1RowsWritten": 0,
+    "bootstrapMode": "selected-learner-bounded",
+    "capacityMode": "public-bounded",
+    "capacityVersion": 4,
+    "responseLearners": 1
+  },
+  "boundary": {
+    "deployedMergeConfirmed": true,
+    "production60LearnerDiagnostic": "not-run",
+    "routeCostRefresh": "not-run",
+    "publicCapacityStatusChanged": false
+  }
+}
