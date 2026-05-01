@@ -35,7 +35,7 @@
       "status": "accepted_production_smoke",
       "origin": "https://ks2.eugnel.uk",
       "releaseId": "punctuation-qg-p11-2026-05-01",
-      "timestamp": "2026-05-01T22:11:10.873Z",
+      "timestamp": "2026-05-01T22:20:29.625Z",
       "artefactPath": "reports/punctuation/punctuation-qg-p11-production-smoke-2026-05-01.json",
       "evidence": "Production smoke passed against https://ks2.eugnel.uk using an authenticated demo child session. The deployed read model reported release punctuation-qg-p11-2026-05-01, 1268 runtime items, 14 published reward units, generated-item command-path evidence, dash acceptance, Oxford-comma acceptance, GPS delayed review, Parent Hub Punctuation evidence, and English Spelling smoke parity. Admin Hub production coverage remains false because admin credentials were not available for this smoke."
     }

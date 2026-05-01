@@ -694,9 +694,17 @@ async function smokePunctuationParentEvidence({ origin, cookie, learnerId }) {
   assertNoForbiddenPunctuationAdultEvidenceKeys(parentHub.progressSnapshots, 'parentHub.progressSnapshots');
   assertNoForbiddenPunctuationAdultEvidenceKeys(parentHub.misconceptionPatterns, 'parentHub.misconceptionPatterns');
 
+  const progressSnapshotsHasPunctuation = parentHub.progressSnapshots?.some((snapshot) => snapshot?.subjectId === 'punctuation') === true;
   return {
+    hasEvidence: evidence.hasEvidence === true,
     attempts: evidence.overview.attempts,
     accuracyPercent: evidence.overview.accuracyPercent,
+    progressSnapshotsHasPunctuation,
+    redactionChecks: {
+      punctuationEvidence: true,
+      progressSnapshots: true,
+      misconceptionPatterns: true,
+    },
     sessionModes: evidence.bySessionMode.map((entry) => entry.id),
   };
 }
@@ -881,10 +889,17 @@ async function main() {
       generatedIncorrectMisconceptionTags: punctuation.generatedIncorrect.misconceptionTags,
       dashAcceptance: punctuation.dashAcceptance.variants,
       oxfordCommaItemId: punctuation.oxfordCommaAcceptance.itemId,
+      oxfordCommaAcceptance: {
+        itemId: punctuation.oxfordCommaAcceptance.itemId,
+        mode: punctuation.oxfordCommaAcceptance.mode,
+        skillIds: punctuation.oxfordCommaAcceptance.skillIds,
+        feedbackKind: punctuation.oxfordCommaAcceptance.feedbackKind,
+      },
       advancedMode: 'gps',
       advancedItemId: punctuation.advanced.itemId,
       advancedReviewItems: punctuation.advanced.reviewItems,
       parentHubAttempts: punctuation.parentHub.attempts,
+      parentHubEvidence: punctuation.parentHub,
     },
     spelling: {
       progressTotal: spelling.progressTotal,

@@ -6,7 +6,7 @@ if (major < 22) {
   process.exit(1);
 }
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,6 +32,7 @@ const ROOT = resolve(__dirname, '..');
 const GATE_TIMEOUT = 180_000;
 const ACCEPTANCE_PATH = resolve(ROOT, 'reports/punctuation/punctuation-qg-p11-product-acceptance.json');
 const SURFACE_PACK_PATH = resolve(ROOT, 'reports/punctuation/punctuation-qg-p11-surface-pack.json');
+const PRODUCTION_ORIGIN = 'https://ks2.eugnel.uk';
 
 function runCommand(command) {
   return execSync(command, {
@@ -203,7 +204,117 @@ function checkLiveSmokeTruth() {
     if (live.releaseId !== PUNCTUATION_RELEASE_ID) {
       throw new Error(`liveJourneySmoke.releaseId=${live.releaseId}, expected ${PUNCTUATION_RELEASE_ID}`);
     }
-    return { detail: `liveJourneySmoke=pass ${live.origin}` };
+    if (!live.artefactPath.startsWith('reports/punctuation/') || !live.artefactPath.endsWith('.json')) {
+      throw new Error(`liveJourneySmoke.artefactPath must be a reports/punctuation JSON file: ${live.artefactPath}`);
+    }
+    const artefactPath = resolve(ROOT, live.artefactPath);
+    if (!artefactPath.startsWith(`${ROOT}/`)) {
+      throw new Error(`liveJourneySmoke.artefactPath escapes repository root: ${live.artefactPath}`);
+    }
+    if (!existsSync(artefactPath)) {
+      throw new Error(`liveJourneySmoke artefact missing: ${live.artefactPath}`);
+    }
+    const rootRealPath = realpathSync(ROOT);
+    const artefactRealPath = realpathSync(artefactPath);
+    if (!artefactRealPath.startsWith(`${rootRealPath}/reports/punctuation/`)) {
+      throw new Error(`liveJourneySmoke artefact real path escapes reports/punctuation: ${live.artefactPath}`);
+    }
+
+    const artefact = loadJson(artefactPath);
+    const summary = runtimeSummary();
+    const errors = [];
+    if (artefact.ok !== true) errors.push('artefact.ok is not true');
+    if (artefact.origin !== live.origin) errors.push(`artefact.origin=${artefact.origin}, expected ${live.origin}`);
+    if (live.origin !== PRODUCTION_ORIGIN) errors.push(`liveJourneySmoke.origin=${live.origin}, expected ${PRODUCTION_ORIGIN}`);
+    if (artefact.attestation?.environment !== 'production') {
+      errors.push(`artefact.attestation.environment=${artefact.attestation?.environment}, expected production`);
+    }
+    if (typeof artefact.accountId !== 'string' || !artefact.accountId.startsWith('demo-')) {
+      errors.push('artefact.accountId must be a demo account id');
+    }
+    if (typeof artefact.learnerId !== 'string' || !artefact.learnerId.startsWith('learner-demo-')) {
+      errors.push('artefact.learnerId must be a demo learner id');
+    }
+    if (artefact.attestation?.releaseId !== live.releaseId) {
+      errors.push(`artefact.attestation.releaseId=${artefact.attestation?.releaseId}, expected ${live.releaseId}`);
+    }
+    if (artefact.attestation?.timestamp !== live.timestamp) {
+      errors.push(`artefact.attestation.timestamp=${artefact.attestation?.timestamp}, expected ${live.timestamp}`);
+    }
+    if (artefact.attestation?.authenticatedCoverage !== true) {
+      errors.push('artefact.attestation.authenticatedCoverage must be true');
+    }
+    if (artefact.attestation?.adminHubCoverage !== false) {
+      errors.push('artefact.attestation.adminHubCoverage must be false for this acceptance report');
+    }
+    if (artefact.attestation?.runtimeItemCount !== summary.totalProductionItems) {
+      errors.push(`artefact.attestation.runtimeItemCount=${artefact.attestation?.runtimeItemCount}, expected ${summary.totalProductionItems}`);
+    }
+    if (artefact.attestation?.generatedDepth !== summary.productionDepth) {
+      errors.push(`artefact.attestation.generatedDepth=${artefact.attestation?.generatedDepth}, expected ${summary.productionDepth}`);
+    }
+
+    const observed = artefact.punctuation?.productionObserved || {};
+    if (observed.releaseId !== live.releaseId) {
+      errors.push(`productionObserved.releaseId=${observed.releaseId}, expected ${live.releaseId}`);
+    }
+    if (observed.runtimeItems !== summary.totalProductionItems) {
+      errors.push(`productionObserved.runtimeItems=${observed.runtimeItems}, expected ${summary.totalProductionItems}`);
+    }
+    if (observed.publishedRewardUnits !== 14) {
+      errors.push(`productionObserved.publishedRewardUnits=${observed.publishedRewardUnits}, expected 14`);
+    }
+    const generatedProbe = observed.generatedItemCommandPathProbe || {};
+    if (typeof generatedProbe.itemId !== 'string' || !generatedProbe.itemId.startsWith('gen_')) {
+      errors.push('productionObserved.generatedItemCommandPathProbe.itemId must be a generated item id');
+    }
+    if (typeof generatedProbe.feedbackKind !== 'string' || !generatedProbe.feedbackKind) {
+      errors.push('productionObserved.generatedItemCommandPathProbe.feedbackKind is required');
+    }
+    if (!Array.isArray(generatedProbe.misconceptionTags) || generatedProbe.misconceptionTags.length === 0) {
+      errors.push('productionObserved.generatedItemCommandPathProbe.misconceptionTags are required');
+    }
+
+    const expectation = artefact.punctuation?.localReleaseManifestExpectation || {};
+    if (expectation.fixedItems !== summary.fixedCount) errors.push(`localReleaseManifestExpectation.fixedItems=${expectation.fixedItems}, expected ${summary.fixedCount}`);
+    if (expectation.generatedItems !== summary.generatedCount) errors.push(`localReleaseManifestExpectation.generatedItems=${expectation.generatedItems}, expected ${summary.generatedCount}`);
+    if (expectation.generatedPerFamily !== summary.productionDepth) errors.push(`localReleaseManifestExpectation.generatedPerFamily=${expectation.generatedPerFamily}, expected ${summary.productionDepth}`);
+    if (expectation.runtimeItems !== summary.totalProductionItems) errors.push(`localReleaseManifestExpectation.runtimeItems=${expectation.runtimeItems}, expected ${summary.totalProductionItems}`);
+    if (expectation.publishedRewardUnits !== 14) errors.push(`localReleaseManifestExpectation.publishedRewardUnits=${expectation.publishedRewardUnits}, expected 14`);
+
+    const dashVariants = new Set((artefact.punctuation?.dashAcceptance || []).map((entry) => entry?.variant));
+    for (const variant of ['spaced-hyphen', 'en-dash', 'em-dash']) {
+      if (!dashVariants.has(variant)) errors.push(`dashAcceptance missing ${variant}`);
+    }
+    const oxfordComma = artefact.punctuation?.oxfordCommaAcceptance || {};
+    if (typeof artefact.punctuation?.oxfordCommaItemId !== 'string' || !artefact.punctuation.oxfordCommaItemId) {
+      errors.push('oxfordCommaItemId is required');
+    }
+    if (oxfordComma.itemId !== artefact.punctuation?.oxfordCommaItemId) {
+      errors.push('oxfordCommaAcceptance.itemId must match oxfordCommaItemId');
+    }
+    if (oxfordComma.feedbackKind !== 'success') {
+      errors.push(`oxfordCommaAcceptance.feedbackKind=${oxfordComma.feedbackKind}, expected success`);
+    }
+    if (artefact.punctuation?.advancedMode !== 'gps') errors.push(`advancedMode=${artefact.punctuation?.advancedMode}, expected gps`);
+    if (Number(artefact.punctuation?.advancedReviewItems) < 1) errors.push('advancedReviewItems must be at least 1');
+    if (Number(artefact.punctuation?.parentHubAttempts) < 2) errors.push('parentHubAttempts must be at least 2');
+    const parentHubEvidence = artefact.punctuation?.parentHubEvidence || {};
+    if (parentHubEvidence.hasEvidence !== true) errors.push('parentHubEvidence.hasEvidence must be true');
+    if (Number(parentHubEvidence.attempts) < 2) errors.push('parentHubEvidence.attempts must be at least 2');
+    if (parentHubEvidence.progressSnapshotsHasPunctuation !== true) {
+      errors.push('parentHubEvidence.progressSnapshotsHasPunctuation must be true');
+    }
+    for (const key of ['punctuationEvidence', 'progressSnapshots', 'misconceptionPatterns']) {
+      if (parentHubEvidence.redactionChecks?.[key] !== true) {
+        errors.push(`parentHubEvidence.redactionChecks.${key} must be true`);
+      }
+    }
+    if (artefact.spelling?.progressTotal !== 1) errors.push(`spelling.progressTotal=${artefact.spelling?.progressTotal}, expected 1`);
+    if (artefact.spelling?.hasPromptToken !== true) errors.push('spelling.hasPromptToken must be true');
+
+    if (errors.length) throw new Error(errors.join('; '));
+    return { detail: `liveJourneySmoke=pass ${live.origin}, artefact=${live.artefactPath}` };
   }
   return {
     detail: `liveJourneySmoke=${live.status || 'not_run'}`,

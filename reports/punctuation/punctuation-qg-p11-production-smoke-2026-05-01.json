@@ -1,15 +1,15 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "accountId": "demo-bc36GTZqe2FPPQ",
-  "learnerId": "learner-demo-1S9uphhU18cMJA",
+  "accountId": "demo-LE6T_Jyr1xkxgA",
+  "learnerId": "learner-demo-DDzE6azgV3pr9A",
   "attestation": {
     "environment": "production",
     "releaseId": "punctuation-qg-p11-2026-05-01",
     "runtimeItemCount": 1268,
     "generatedDepth": 40,
     "workerCommitSha": null,
-    "timestamp": "2026-05-01T22:11:10.873Z",
+    "timestamp": "2026-05-01T22:20:29.625Z",
     "authenticatedCoverage": true,
     "adminHubCoverage": false
   },
@@ -19,7 +19,7 @@
       "runtimeItems": 1268,
       "publishedRewardUnits": 14,
       "generatedItemCommandPathProbe": {
-        "itemId": "gen_speech_insert_1jmy4r7_12",
+        "itemId": "gen_speech_insert_1l0w582_17",
         "mode": "insert",
         "skillIds": [
           "speech"
@@ -37,16 +37,16 @@
       "runtimeItems": 1268,
       "publishedRewardUnits": 14
     },
-    "smartItemId": "fx_ac_choose_ill_youll",
+    "smartItemId": "sl_choose_clubs",
     "smartSummaryTotal": 1,
-    "generatedIncorrectItemId": "gen_speech_insert_1jmy4r7_12",
+    "generatedIncorrectItemId": "gen_speech_insert_1l0w582_17",
     "generatedIncorrectMisconceptionTags": [
       "speech.quote_missing"
     ],
     "dashAcceptance": [
       {
         "variant": "spaced-hyphen",
-        "itemId": "dc_insert_alarm_rang",
+        "itemId": "dc_insert_door_froze",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
@@ -69,11 +69,37 @@
         ]
       }
     ],
-    "oxfordCommaItemId": "gen_list_commas_insert_1xz4ao5_26",
+    "oxfordCommaItemId": "gen_list_commas_insert_1wl6a7a_21",
+    "oxfordCommaAcceptance": {
+      "itemId": "gen_list_commas_insert_1wl6a7a_21",
+      "mode": "insert",
+      "skillIds": [
+        "list_commas"
+      ],
+      "feedbackKind": "success"
+    },
     "advancedMode": "gps",
-    "advancedItemId": "sl_choose_clubs",
+    "advancedItemId": "sp_choose_reporting_comma",
     "advancedReviewItems": 1,
-    "parentHubAttempts": 10
+    "parentHubAttempts": 10,
+    "parentHubEvidence": {
+      "hasEvidence": true,
+      "attempts": 10,
+      "accuracyPercent": 90,
+      "progressSnapshotsHasPunctuation": true,
+      "redactionChecks": {
+        "punctuationEvidence": true,
+        "progressSnapshots": true,
+        "misconceptionPatterns": true
+      },
+      "sessionModes": [
+        "guided",
+        "comma_flow",
+        "gps",
+        "smart",
+        "speech"
+      ]
+    }
   },
   "spelling": {
     "progressTotal": 1,
