@@ -15,7 +15,7 @@ import { projectPunctuationStars } from '../src/subjects/punctuation/star-projec
 import { buildPunctuationLearnerReadModel } from '../src/subjects/punctuation/read-model.js';
 import { buildPunctuationReadModel } from '../worker/src/subjects/punctuation/read-models.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------

@@ -45,6 +45,7 @@ import {
   heroContrastProfileForPunctuationBg,
 } from './punctuation-hero-bg.js';
 import { emitPunctuationEvent } from '../telemetry.js';
+import { DEFAULT_PUNCTUATION_PREFS } from '../service-contract.js';
 import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 import { useSetupHeroContrast } from '../../../platform/ui/useSetupHeroContrast.js';
 import { HeroWelcome } from '../../../platform/ui/HeroWelcome.jsx';
@@ -102,8 +103,10 @@ function selectedRoundLength(prefs) {
   const raw = prefs && typeof prefs === 'object' && !Array.isArray(prefs)
     ? prefs.roundLength
     : null;
-  const candidate = typeof raw === 'string' && raw ? raw : '4';
-  return PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(candidate) ? candidate : '4';
+  const defaultLength = DEFAULT_PUNCTUATION_PREFS.roundLength;
+  const candidate = typeof raw === 'string' && raw ? raw : defaultLength;
+  if (PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(candidate)) return candidate;
+  return PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(defaultLength) ? defaultLength : '4';
 }
 
 // --- Legacy PrimaryModeCard export (backward compat) -----------------------
@@ -338,6 +341,7 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
               <Button
                 size="xl"
                 data-punctuation-cta=""
+                data-round-length={ctaMode === 'continue' ? undefined : selectedLengthValue}
                 dataAction={ctaMode === 'continue' ? 'punctuation-continue' : 'punctuation-start'}
                 disabled={disabled}
                 onClick={handlePrimaryCta}

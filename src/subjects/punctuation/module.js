@@ -161,18 +161,18 @@ export const punctuationModule = {
 
     if (action === 'punctuation-set-round-length') {
       // adv-234-001 (MEDIUM): phase guard. Round-length is a Setup-scoped
-      // affordance (the compact 4 / 8 / 12 toggle on the Setup scene). A
+      // affordance (the compact 4 / 6 / 8 / 12 toggle on the Setup scene). A
       // dispatch from session / feedback / summary / map would otherwise save
       // prefs mid-session without any reflection in the active session's
       // `length`. Refuse so the caller treats the dispatch as a miss rather
       // than a silent success (learning #7).
       if (ui.phase !== 'setup') return false;
       // adv-234-001 (MEDIUM): validate against the narrow UI enum
-      // `PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS = ['4', '8', '12']` rather
+      // `PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS = ['4', '6', '8', '12']` rather
       // than the storage-level `normalisePunctuationRoundLength` which also
-      // accepts 1 / 2 / 3 / 6 / 'all' (the superset kept for `/start-session`
+      // accepts 1 / 2 / 3 / 'all' (the superset kept for `/start-session`
       // payloads that still honour legacy per-skill drills). The Setup toggle
-      // exposes exactly three stops; a rogue payload carrying 'all' or '1'
+      // exposes exactly four stops; a rogue payload carrying 'all' or '1'
       // bypasses the primary-dashboard contract and must be rejected here.
       const value = typeof data?.value === 'string' ? data.value : '';
       if (!PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(value)) return false;

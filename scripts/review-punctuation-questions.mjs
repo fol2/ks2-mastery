@@ -9,12 +9,12 @@
  * cluster IDs, v2 decision schema, and new filter/summary flags.
  *
  * Usage:
- *   node scripts/review-punctuation-questions.mjs                        # markdown to stdout (192 items, production pool)
+ *   node scripts/review-punctuation-questions.mjs                        # markdown to stdout (production pool)
  *   node scripts/review-punctuation-questions.mjs --json                 # JSON to stdout (production pool)
  *   node scripts/review-punctuation-questions.mjs --out qa.json          # JSON to file (production pool)
- *   node scripts/review-punctuation-questions.mjs --depth 6              # depth-6 generated items only (150 items)
- *   node scripts/review-punctuation-questions.mjs --include-depth-6      # inclusive pool: fixed + depth-6 (242 items)
- *   node scripts/review-punctuation-questions.mjs --candidate-depth 6 --out review.json  # delta only (50 items beyond production)
+ *   node scripts/review-punctuation-questions.mjs --depth 6              # depth-6 generated items only
+ *   node scripts/review-punctuation-questions.mjs --include-depth-6      # inclusive pool: fixed + depth-6
+ *   node scripts/review-punctuation-questions.mjs --candidate-depth 6 --out review.json  # delta only beyond production
  *   node scripts/review-punctuation-questions.mjs --summary              # decision state counts (fast, no per-item detail)
  *   node scripts/review-punctuation-questions.mjs --only-blocked         # show only items/clusters with blocking decisions
  *   node scripts/review-punctuation-questions.mjs --only-candidates      # show only depth-6 candidate items
@@ -91,6 +91,19 @@ function markingResultSummary(result) {
   return parts.join(' | ');
 }
 
+function wrongAnswerForItem(item) {
+  if (item.mode === 'choose' && Array.isArray(item.options)) {
+    const wrongOption = item.options.find((option, index) => {
+      if (option && typeof option === 'object') return Number(option.index) !== Number(item.correctIndex);
+      return index !== Number(item.correctIndex);
+    });
+    if (wrongOption && typeof wrongOption === 'object') return { choiceIndex: wrongOption.index };
+    const fallbackIndex = Number(item.correctIndex) === 0 ? 1 : 0;
+    return { choiceIndex: fallbackIndex };
+  }
+  return { typed: 'missing punctuation' };
+}
+
 // ─── Reviewer decisions loader (v2 schema-aware) ────────────────────────────
 
 function loadDecisionsFile() {
@@ -162,7 +175,7 @@ function buildProductionPool() {
 
   const generatedItems = createPunctuationGeneratedItems({
     manifest: PUNCTUATION_CONTENT_MANIFEST,
-    seed: PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation',
+    seed: PUNCTUATION_CONTENT_MANIFEST.generatedSeed || PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation',
     perFamily: PRODUCTION_DEPTH,
   }).map((item) => ({ ...item, _source: 'generated' }));
 
@@ -181,7 +194,7 @@ function buildProductionPool() {
 function buildPool({ depth = null, includeDepth6 = false, candidateDepth = null } = {}) {
   const indexes = createPunctuationContentIndexes(PUNCTUATION_CONTENT_MANIFEST);
   const fixedItems = indexes.items.map((item) => ({ ...item, _source: 'fixed' }));
-  const seed = PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation';
+  const seed = PUNCTUATION_CONTENT_MANIFEST.generatedSeed || PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation';
 
   // Production generated items (for productionIds tracking)
   const productionGenerated = createPunctuationGeneratedItems({
@@ -242,6 +255,13 @@ function buildItemEntry(item, { productionIds = null, clusterMap = null, itemDec
     markingResult = markPunctuationAnswer({ item, answer });
   } catch {
     markingResult = { correct: false, error: 'marking threw' };
+  }
+
+  let wrongMarkingResult = null;
+  try {
+    wrongMarkingResult = markPunctuationAnswer({ item, answer: wrongAnswerForItem(item) });
+  } catch {
+    wrongMarkingResult = { correct: false, error: 'marking threw' };
   }
 
   // Mark every accepted alternative
@@ -330,8 +350,11 @@ function buildItemEntry(item, { productionIds = null, clusterMap = null, itemDec
     mode: item.mode || '',
     prompt: item.prompt || '',
     stem: item.stem || '',
+    inputWidget: item.mode === 'choose' || item.inputKind === 'choice' ? 'choice' : 'text',
     model: item.model || '',
     accepted: item.accepted || [],
+    feedbackOnCorrect: markingResult?.note || item.explanation || '',
+    feedbackOnWrong: wrongMarkingResult?.note || wrongMarkingResult?.expected || item.explanation || '',
     explanation: item.explanation || '',
     validatorSummary: validatorSummary(item),
     misconceptionTags: item.misconceptionTags || [],

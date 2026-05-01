@@ -1,6 +1,6 @@
 # Punctuation QG manual expansion samples
 
-New manual generated templates: 800. New fixed questions: 56.
+New manual generated templates: 800. New generated choice templates: 120. New fixed questions: 56.
 
 ## Generated template samples by family
 
@@ -1241,4 +1241,3 @@ Choose the sentence with direct speech marked correctly.
 3. Wait here, said Priya.
 
 Explanation: The comma belongs inside the closing inverted comma before the reporting clause.
-

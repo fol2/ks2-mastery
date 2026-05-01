@@ -26,7 +26,7 @@ const fixedItems = indexes.items.map((item) => ({ ...item, source: 'fixed' }));
 
 const generatedItems = createPunctuationGeneratedItems({
   manifest: PUNCTUATION_CONTENT_MANIFEST,
-  seed: PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation',
+  seed: PUNCTUATION_CONTENT_MANIFEST.generatedSeed || PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation',
   perFamily: PRODUCTION_DEPTH,
 }).map((item) => ({ ...item, source: 'generated' }));
 

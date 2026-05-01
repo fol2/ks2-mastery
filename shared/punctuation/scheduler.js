@@ -21,6 +21,8 @@ export const MIN_MS = 60 * 1000;
 const SMART_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix', 'transfer', 'combine', 'paragraph']);
 const GUIDED_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix']);
 const RECENT_ITEM_AVOIDANCE_WINDOW = 6;
+const SAME_ITEM_REPEAT_WINDOW = 20;
+const MAX_SAME_ITEM_REPEAT_IN_WINDOW = 2;
 const CLUSTER_MODE = Object.freeze({
   endmarks: 'endmarks',
   apostrophe: 'apostrophe',
@@ -178,7 +180,9 @@ function targetModeOptions(session, prefs = {}) {
   const mode = session?.mode || prefs.mode || 'smart';
   const answeredCount = Number(session?.answeredCount) || 0;
   const rotate = (cycle) => {
-    const start = answeredCount % cycle.length;
+    const rawOffset = Number(session?.modeStartOffset);
+    const modeStartOffset = Number.isFinite(rawOffset) ? Math.max(0, Math.floor(rawOffset)) : 0;
+    const start = (answeredCount + modeStartOffset) % cycle.length;
     return [...cycle.slice(start), ...cycle.slice(0, start)];
   };
   if (mode === 'guided') {
@@ -258,10 +262,20 @@ function signatureExposurePenalty(item, progress, sessionSignatures, now, { isMi
   const dayMs = MAX_SAME_SIGNATURE_DAYS * DAY_MS;
   const nowMs = typeof now === 'function' ? now() : now;
   const cutoff = (Number.isFinite(nowMs) ? nowMs : 0) - dayMs;
-  const dayHit = attempts.some(a => a?.variantSignature === sig && (a.timestamp || 0) > cutoff);
+  const dayHit = attempts.some(a => a?.variantSignature === sig && (a.ts || a.timestamp || 0) > cutoff);
   if (dayHit) return EXPOSURE_WEIGHT_DAY_AVOIDED;
 
   return 1.0;
+}
+
+function itemRepeatWindowPenalty(item, progress, { isMisconceptionRetry = false } = {}) {
+  if (!item?.id || isMisconceptionRetry) return 1.0;
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
+  const repeatCount = attempts
+    .slice(-SAME_ITEM_REPEAT_WINDOW)
+    .filter((attempt) => attempt?.itemId === item.id)
+    .length;
+  return repeatCount >= MAX_SAME_ITEM_REPEAT_IN_WINDOW ? 0 : 1.0;
 }
 
 function recentMissForItem(progress, item) {
@@ -745,6 +759,7 @@ export function selectPunctuationItem({
     return {
       item: misconceptionResult.item,
       reason: misconceptionResult.reason,
+      misconceptionTag: misconceptionResult.misconceptionTag || '',
       targetMode: misconceptionResult.item?.mode || null,
       targetClusterId: misconceptionResult.item?.clusterId || null,
       weakFocus: null,
@@ -809,8 +824,9 @@ export function selectPunctuationItem({
     else if (item.variantSignature && recentSignatures.has(item.variantSignature)) weight *= 0.2;
     // Per-signature exposure limit penalty (3-tier)
     weight *= signatureExposurePenalty(item, progress, sessionSignatures, now, { isMisconceptionRetry });
+    weight *= itemRepeatWindowPenalty(item, progress, { isMisconceptionRetry });
     return { item, weight: Math.max(EXPOSURE_WEIGHT_BLOCKED, weight) };
-  }).filter((row) => row.weight > 0);
+  }).filter((row) => row.weight > EXPOSURE_WEIGHT_BLOCKED);
 
   const item = weightedPick(rows, random) || windowed[0] || null;
   const smartReason = classifySmartReason(indexes, progress, item, session, now);

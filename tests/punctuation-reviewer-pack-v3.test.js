@@ -13,21 +13,24 @@ import {
 import { PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 import { generateStableClusterId, BLOCKING_DECISIONS } from '../shared/punctuation/reviewer-decisions.js';
 
-// ─── Pool size invariants (match P7 baseline) ───────────────────────────────
+const P11_PRODUCTION_COUNT = 1268;
+const P11_DEPTH_6_COUNT = 316;
 
-test('default production pack covers 192 items', () => {
+// ─── Pool size invariants ───────────────────────────────────────────────────
+
+test('default production pack covers 1268 P11 items', () => {
   const { pool } = buildPool();
-  assert.equal(pool.length, 192);
+  assert.equal(pool.length, P11_PRODUCTION_COUNT);
 });
 
-test('--include-depth-6 covers 242 items', () => {
+test('--include-depth-6 covers the historical depth-6 view over the expanded fixed bank', () => {
   const { pool } = buildPool({ includeDepth6: true });
-  assert.equal(pool.length, 242);
+  assert.equal(pool.length, P11_DEPTH_6_COUNT);
 });
 
-test('--candidate-depth 6 covers 50 candidate-only items', () => {
+test('--candidate-depth below production depth has no candidate-only items', () => {
   const { pool } = buildPool({ candidateDepth: 6 });
-  assert.equal(pool.length, 50);
+  assert.equal(pool.length, 0);
 });
 
 // ─── Summary output ─────────────────────────────────────────────────────────
@@ -41,13 +44,13 @@ test('--summary outputs decision state counts', () => {
 
   const summary = buildSummaryOutput(pool, { productionIds, itemDecisionMap, clusterDecisionMap, clusters });
 
-  assert.equal(summary.totalItems, 192);
-  assert.equal(summary.productionCount, 192);
+  assert.equal(summary.totalItems, P11_PRODUCTION_COUNT);
+  assert.equal(summary.productionCount, P11_PRODUCTION_COUNT);
   assert.equal(summary.candidateCount, 0);
   assert.equal(typeof summary.itemStates, 'object');
   assert.equal(typeof summary.clusterStates, 'object');
   // With no decisions, all items are unreviewed
-  assert.equal(summary.itemStates.unreviewed, 192);
+  assert.equal(summary.itemStates.unreviewed, P11_PRODUCTION_COUNT);
   assert.equal(summary.itemStates.approved, 0);
   assert.equal(summary.itemStates.blocked, 0);
 });
@@ -69,7 +72,7 @@ test('--summary with populated decisions counts correctly', () => {
 
   assert.equal(summary.itemStates.approved, 1);
   assert.equal(summary.itemStates.blocked, 2); // needs-rewrite + pending are blocking
-  assert.equal(summary.itemStates.unreviewed, 192 - 3);
+  assert.equal(summary.itemStates.unreviewed, P11_PRODUCTION_COUNT - 3);
 });
 
 // ─── --only-unreviewed with empty decisions shows all items ──────────────────
@@ -89,7 +92,7 @@ test('--only-unreviewed with empty decisions shows all items', () => {
 
   // All items should be unreviewed (no decisions)
   const unreviewed = entries.filter((e) => !e.reviewerDecision);
-  assert.equal(unreviewed.length, 192);
+  assert.equal(unreviewed.length, P11_PRODUCTION_COUNT);
 });
 
 // ─── Stable cluster IDs are deterministic across runs ────────────────────────
@@ -316,9 +319,9 @@ test('fixed negative vectors are loaded and marked against items', () => {
 
 // ─── Backward compatibility ──────────────────────────────────────────────────
 
-test('buildProductionPool still works and returns 192 items', () => {
+test('buildProductionPool still works and returns the P11 production pool', () => {
   const pool = buildProductionPool();
-  assert.equal(pool.length, 192);
+  assert.equal(pool.length, P11_PRODUCTION_COUNT);
 });
 
 test('all required entry fields present (backward compat with P7 tests)', () => {

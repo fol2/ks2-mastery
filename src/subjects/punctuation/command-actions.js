@@ -1,4 +1,5 @@
 import { parseChoiceIndex } from '../../../shared/punctuation/choice-index.js';
+import { DEFAULT_PUNCTUATION_PREFS } from './service-contract.js';
 import { sanitisePunctuationTelemetryPayload } from './telemetry.js';
 
 export function punctuationSubmitAnswerPayload(data = {}) {
@@ -103,8 +104,8 @@ export const punctuationSubjectCommandActions = Object.freeze({
     payload({ data, state }) {
       const prefs = state.subjectUi?.punctuation?.prefs || {};
       const payload = {
-        mode: data?.mode || prefs.mode || 'smart',
-        roundLength: data?.roundLength || prefs.roundLength || '4',
+        mode: data?.mode || prefs.mode || DEFAULT_PUNCTUATION_PREFS.mode,
+        roundLength: data?.roundLength || prefs.roundLength || DEFAULT_PUNCTUATION_PREFS.roundLength,
       };
       const skillId = data?.skillId || data?.guidedSkillId;
       if (skillId) payload.skillId = skillId;
@@ -116,8 +117,8 @@ export const punctuationSubjectCommandActions = Object.freeze({
     payload({ state }) {
       const prefs = state.subjectUi?.punctuation?.prefs || {};
       return {
-        mode: prefs.mode || 'smart',
-        roundLength: prefs.roundLength || '4',
+        mode: prefs.mode || DEFAULT_PUNCTUATION_PREFS.mode,
+        roundLength: prefs.roundLength || DEFAULT_PUNCTUATION_PREFS.roundLength,
       };
     },
   },

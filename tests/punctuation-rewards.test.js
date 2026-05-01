@@ -300,9 +300,9 @@ test('terminalRewardToken uses (learnerId, monsterId, kind, releaseId)', () => {
     kind: 'caught',
     learnerId: 'learner-a',
     monsterId: 'quoral',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
   });
-  assert.equal(token, 'reward.monster.terminal:learner-a:quoral:caught:punctuation-r4-full-14-skill-structure');
+  assert.equal(token, 'reward.monster.terminal:learner-a:quoral:caught:punctuation-qg-p11-2026-05-01');
 });
 
 test('terminalRewardToken returns null for non-terminal transitions', () => {
@@ -322,7 +322,7 @@ test('cross-flip caught events dedupe to one terminal transition per (learner, m
     kind: 'caught',
     learnerId: 'learner-a',
     monsterId: 'quoral',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
     clusterId: 'speech',
   };
   const postFlip = {
@@ -331,7 +331,7 @@ test('cross-flip caught events dedupe to one terminal transition per (learner, m
     kind: 'caught',
     learnerId: 'learner-a',
     monsterId: 'quoral',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
     clusterId: 'published_release',
   };
   // Case A: pre-flip is already persisted; post-flip arrives fresh.
@@ -356,7 +356,7 @@ test('cross-release caught events remain distinct — future release re-emits', 
     kind: 'caught',
     learnerId: 'learner-a',
     monsterId: 'quoral',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
   };
   const r5 = {
     ...r4,
@@ -378,7 +378,7 @@ test('mega across flip also dedupes by terminal token', () => {
     kind: 'mega',
     learnerId: 'learner-a',
     monsterId: 'quoral',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
   };
   const postFlipMega = {
     ...preFlipMega,
@@ -401,7 +401,7 @@ test('caught and mega coexist for the same (learner, monster, release)', () => {
     kind: 'caught',
     learnerId: 'learner-a',
     monsterId: 'quoral',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
   };
   const mega = {
     ...caught,
@@ -420,7 +420,7 @@ test('levelup and evolve are unaffected by terminal dedupe', () => {
     kind: 'levelup',
     learnerId: 'learner-a',
     monsterId: 'quoral',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
   };
   const next = {
     ...existing,

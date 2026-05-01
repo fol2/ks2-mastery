@@ -427,6 +427,6 @@ test('generated items: no item uses the generic fallback (depth 8)', () => {
 
 // ─── Fixed bank: total item count gate ───────────────────────────────────────
 
-test('fixed bank: item count matches expected (92)', () => {
-  assert.strictEqual(PUNCTUATION_ITEMS.length, 92, `Expected 92 fixed items, got ${PUNCTUATION_ITEMS.length}`);
+test('fixed bank: item count matches expected (148)', () => {
+  assert.strictEqual(PUNCTUATION_ITEMS.length, 148, `Expected 148 fixed items, got ${PUNCTUATION_ITEMS.length}`);
 });

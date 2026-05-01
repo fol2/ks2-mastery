@@ -10,39 +10,51 @@ import {
 } from '../scripts/review-punctuation-questions.mjs';
 import { PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 
+const P11_PRODUCTION_COUNT = 1268;
+const P11_DEPTH_6_COUNT = 316;
+const P11_DEPTH_6_GENERATED_COUNT = 168;
+const P11_CANDIDATE_DEPTH_41_DELTA_COUNT = 28;
+
 // ─── Pool size invariants ────────────────────────────────────────────────────
 
-test('default buildProductionPool() produces exactly 192 items', () => {
+test('default buildProductionPool() produces exactly 1268 items', () => {
   const pool = buildProductionPool();
-  assert.equal(pool.length, 192);
+  assert.equal(pool.length, P11_PRODUCTION_COUNT);
 });
 
-test('buildPool() default produces exactly 192 items (same as buildProductionPool)', () => {
+test('buildPool() default produces exactly 1268 items (same as buildProductionPool)', () => {
   const { pool } = buildPool();
-  assert.equal(pool.length, 192);
+  assert.equal(pool.length, P11_PRODUCTION_COUNT);
 });
 
-test('--include-depth-6 produces exactly 242 items (92 fixed + 150 generated)', () => {
+test('--include-depth-6 produces the historical depth-6 view over the expanded fixed bank', () => {
   const { pool } = buildPool({ includeDepth6: true });
-  assert.equal(pool.length, 242);
+  assert.equal(pool.length, P11_DEPTH_6_COUNT);
   const fixed = pool.filter((i) => i._source === 'fixed').length;
   const generated = pool.filter((i) => i._source === 'generated').length;
-  assert.equal(fixed, 92);
-  assert.equal(generated, 150);
+  assert.equal(fixed, 148);
+  assert.equal(generated, P11_DEPTH_6_GENERATED_COUNT);
 });
 
-test('--depth 6 produces exactly 150 items (25 families x 6, generated only)', () => {
+test('--depth 6 produces exactly 168 items (28 families x 6, generated only)', () => {
   const { pool } = buildPool({ depth: 6 });
-  assert.equal(pool.length, 150);
+  assert.equal(pool.length, P11_DEPTH_6_GENERATED_COUNT);
   const fixed = pool.filter((i) => i._source === 'fixed').length;
   const generated = pool.filter((i) => i._source === 'generated').length;
   assert.equal(fixed, 0);
-  assert.equal(generated, 150);
+  assert.equal(generated, P11_DEPTH_6_GENERATED_COUNT);
 });
 
-test('--candidate-depth 6 produces exactly 50 delta items (25 families x (6-4))', () => {
+test('--candidate-depth below production depth produces no delta items', () => {
   const { pool } = buildPool({ candidateDepth: 6 });
-  assert.equal(pool.length, 50);
+  assert.equal(pool.length, 0);
+  const fixed = pool.filter((i) => i._source === 'fixed').length;
+  assert.equal(fixed, 0);
+});
+
+test('--candidate-depth 41 produces exactly 28 delta items beyond P11 production depth', () => {
+  const { pool } = buildPool({ candidateDepth: 41 });
+  assert.equal(pool.length, P11_CANDIDATE_DEPTH_41_DELTA_COUNT);
   const fixed = pool.filter((i) => i._source === 'fixed').length;
   assert.equal(fixed, 0);
 });
@@ -51,7 +63,8 @@ test('--candidate-depth 6 produces exactly 50 delta items (25 families x (6-4))'
 
 const REQUIRED_ENTRY_FIELDS = [
   'id', 'source', 'skillIds', 'rewardUnitId', 'mode',
-  'prompt', 'stem', 'model', 'accepted',
+  'prompt', 'stem', 'inputWidget', 'model', 'accepted',
+  'feedbackOnCorrect', 'feedbackOnWrong',
   'markingResult', 'markingResultSummary',
   'alternativeMarkingResults', 'negativeExamples',
   'explanation', 'validatorSummary',
@@ -110,7 +123,7 @@ test('production pool items all have productionStatus "production"', () => {
 });
 
 test('candidate-depth delta items all have productionStatus "candidate-only"', () => {
-  const { pool: delta, productionIds } = buildPool({ candidateDepth: 6 });
+  const { pool: delta, productionIds } = buildPool({ candidateDepth: 41 });
   const clusters = buildVarietyClusters(delta);
   const clusterMap = buildClusterMap(clusters);
 
@@ -123,7 +136,7 @@ test('candidate-depth delta items all have productionStatus "candidate-only"', (
   }
 });
 
-test('inclusive depth-6 pool has mix of production and candidate-only items', () => {
+test('inclusive depth-6 pool is a production subset after P11 depth raise', () => {
   const { pool, productionIds } = buildPool({ includeDepth6: true });
   const clusters = buildVarietyClusters(pool);
   const clusterMap = buildClusterMap(clusters);
@@ -132,8 +145,8 @@ test('inclusive depth-6 pool has mix of production and candidate-only items', ()
   const prodCount = entries.filter((e) => e.productionStatus === 'production').length;
   const candCount = entries.filter((e) => e.productionStatus === 'candidate-only').length;
 
-  assert.equal(prodCount, 192, `Expected 192 production items, got ${prodCount}`);
-  assert.equal(candCount, 50, `Expected 50 candidate-only items, got ${candCount}`);
+  assert.equal(prodCount, P11_DEPTH_6_COUNT, `Expected ${P11_DEPTH_6_COUNT} production items, got ${prodCount}`);
+  assert.equal(candCount, 0, `Expected 0 candidate-only items, got ${candCount}`);
 });
 
 // ─── Marking results ─────────────────────────────────────────────────────────
@@ -188,8 +201,8 @@ test('generated items have non-empty templateId and variantSignature', () => {
 
 // ─── PRODUCTION_DEPTH sanity ─────────────────────────────────────────────────
 
-test('PRODUCTION_DEPTH is 4', () => {
-  assert.equal(PRODUCTION_DEPTH, 4);
+test('PRODUCTION_DEPTH is 40 after P11 expansion', () => {
+  assert.equal(PRODUCTION_DEPTH, 40);
 });
 
 // ─── Backward compatibility: buildProductionPool still works for existing tests ─

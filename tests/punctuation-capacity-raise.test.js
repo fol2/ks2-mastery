@@ -13,29 +13,33 @@ import {
 } from '../shared/punctuation/content.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
+const GENERATOR_FAMILY_COUNT = PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length;
+const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.length;
+const expectedRuntimeItems = (depth) => FIXED_ITEM_COUNT + (GENERATOR_FAMILY_COUNT * depth);
+
 describe('Punctuation capacity raise mechanism', () => {
-  it('exports PRODUCTION_DEPTH = 4', () => {
-    assert.equal(PRODUCTION_DEPTH, 4);
+  it('exports PRODUCTION_DEPTH = 40', () => {
+    assert.equal(PRODUCTION_DEPTH, 40);
   });
 
-  it('exports CAPACITY_DEPTH = 8', () => {
-    assert.equal(CAPACITY_DEPTH, 8);
+  it('exports CAPACITY_DEPTH = 40', () => {
+    assert.equal(CAPACITY_DEPTH, 40);
   });
 
-  it('default production depth produces 192 runtime items', () => {
+  it('default production depth produces 1268 runtime items', () => {
     const manifest = createPunctuationRuntimeManifest({
       generatedPerFamily: PRODUCTION_DEPTH,
     });
     const indexes = createPunctuationContentIndexes(manifest);
-    assert.equal(indexes.items.length, 192);
+    assert.equal(indexes.items.length, expectedRuntimeItems(PRODUCTION_DEPTH));
   });
 
-  it('depth-6 mode produces 242 runtime items', () => {
+  it('depth-6 mode produces 316 runtime items', () => {
     const manifest = createPunctuationRuntimeManifest({
       generatedPerFamily: 6,
     });
     const indexes = createPunctuationContentIndexes(manifest);
-    assert.equal(indexes.items.length, 242);
+    assert.equal(indexes.items.length, expectedRuntimeItems(6));
   });
 
   it('depth-6 items have no duplicate variant signatures', () => {
@@ -66,26 +70,24 @@ describe('Punctuation capacity raise mechanism', () => {
 
   it('depth parameter overrides perFamily when explicitly provided', () => {
     const items = createPunctuationGeneratedItems({ perFamily: 4, depth: 6 });
-    // 25 families * 6 = 150 generated items
-    assert.equal(items.length, 150);
+    assert.equal(items.length, GENERATOR_FAMILY_COUNT * 6);
   });
 
   it('depth defaults to perFamily when not specified', () => {
     const items = createPunctuationGeneratedItems({ perFamily: 4 });
-    // 25 families * 4 = 100 generated items
-    assert.equal(items.length, 100);
+    assert.equal(items.length, GENERATOR_FAMILY_COUNT * 4);
   });
 
-  it('capacity depth 8 produces 292 runtime items with no signature collisions', () => {
+  it('capacity depth produces 1268 runtime items with no signature collisions', () => {
     const manifest = createPunctuationRuntimeManifest({
       generatedPerFamily: CAPACITY_DEPTH,
     });
     const indexes = createPunctuationContentIndexes(manifest);
-    assert.equal(indexes.items.length, 292);
+    assert.equal(indexes.items.length, expectedRuntimeItems(CAPACITY_DEPTH));
 
     const generated = indexes.items.filter((item) => item.source === 'generated');
     const signatures = generated.map((item) => item.variantSignature);
     const unique = new Set(signatures);
-    assert.equal(unique.size, signatures.length, 'Duplicate signatures at capacity depth 8');
+    assert.equal(unique.size, signatures.length, 'Duplicate signatures at capacity depth');
   });
 });

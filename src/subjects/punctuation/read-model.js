@@ -7,7 +7,7 @@ import {
 export { PUNCTUATION_CLIENT_SKILLS };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
 const TOTAL_REWARD_UNITS = 14;
 const DAILY_TARGET_ATTEMPTS = 4;
 

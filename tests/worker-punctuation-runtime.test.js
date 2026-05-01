@@ -8,9 +8,16 @@ import {
   createPunctuationContentIndexes,
   createPunctuationMasteryKey,
 } from '../shared/punctuation/content.js';
+import {
+  createPunctuationRuntimeManifest,
+  PRODUCTION_DEPTH,
+} from '../shared/punctuation/generators.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const PUNCTUATION_RUNTIME_INDEXES = createPunctuationContentIndexes(
+  createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH }),
+);
 
 function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {
   const now = Date.UTC(2026, 0, 1);
@@ -108,7 +115,7 @@ function payloadText(value) {
 }
 
 function correctAnswerFor(readItem) {
-  const source = createPunctuationContentIndexes().itemById.get(readItem.id);
+  const source = PUNCTUATION_RUNTIME_INDEXES.itemById.get(readItem.id);
   assert.ok(source, `Expected source item for ${readItem.id}`);
   if (readItem.inputKind === 'choice') return { choiceIndex: source.correctIndex };
   return { typed: source.model };
@@ -118,7 +125,7 @@ function wrongAnswerFor(readItem) {
   return readItem.inputKind === 'choice' ? { choiceIndex: 99 } : { typed: 'not sure' };
 }
 
-function clearPunctuationAttemptHistory(harness) {
+function clearPunctuationAttemptHistory(harness, { resetSessionsCompleted = false } = {}) {
   const row = harness.DB.db.prepare(`
     SELECT data_json
     FROM child_subject_state
@@ -130,6 +137,7 @@ function clearPunctuationAttemptHistory(harness) {
     ? data.progress
     : {};
   data.progress.attempts = [];
+  if (resetSessionsCompleted) data.progress.sessionsCompleted = 0;
   harness.DB.db.prepare(`
     UPDATE child_subject_state
     SET data_json = ?
@@ -788,10 +796,11 @@ test('punctuation secure-unit events project idempotent Monster Codex rewards', 
     let secureSubmit = null;
     for (const day of [0, 4, 8]) {
       harness.nowRef.value = Date.UTC(2026, 0, 1) + day * DAY_MS;
-      await harness.command('start-session', { mode: 'endmarks', roundLength: '1' });
-      const submit = await harness.command('submit-answer', { choiceIndex: 1 });
+      const start = await harness.command('start-session', { mode: 'endmarks', roundLength: '1' });
+      const submit = await harness.command('submit-answer', correctAnswerFor(start.body.subjectReadModel.session.currentItem));
       if (submit.body.domainEvents.some((event) => event.type === 'punctuation.unit-secured')) secureSubmit = submit;
       await harness.command('continue-session');
+      clearPunctuationAttemptHistory(harness, { resetSessionsCompleted: true });
     }
 
     assert.ok(secureSubmit, 'third spaced clean attempt should secure a reward unit');

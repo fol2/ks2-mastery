@@ -74,11 +74,11 @@ CAPACITY_DEPTH: 8
 
 P10 deliberately keeps depth 6 blocked. That means P10 did not answer the original product question of whether the item pool is large enough. It certified the depth-4 pool; it did not expand it.
 
-The current generated production structure is 25 generator families × 4 variants. That is tidy, but not deep enough if the product is supposed to sustain repeated use without visible repetition.
+At the P10 snapshot, the generated production structure was 25 generator families × 4 variants. That was tidy, but not deep enough if the product is supposed to sustain repeated use without visible repetition.
 
 ### Gap 2 — The default Smart session is too short for the intended mode mix
 
-The current allowed round lengths are `1`, `2`, `3`, `4`, `6`, `8`, and `12`, and the default preference is `roundLength: '4'`.
+At the P10 snapshot, the allowed round lengths were `1`, `2`, `3`, `4`, `6`, `8`, and `12`, and the default preference was `roundLength: '4'`.
 
 The Smart mode cycle is:
 
@@ -333,6 +333,8 @@ Live journey smoke accepted: yes/no
 ```
 
 Do not reuse a generic “human accepted 192 items” fixture as proof that the product journey is good. Product acceptance must include examples from the child-facing sequence.
+
+The P11 source package therefore includes `reports/punctuation/punctuation-qg-p11-surface-pack.json`: a joined item catalogue and service journey trace covering the current 1268-item pool, all 192 historical P10 depth-4 item ids, 27 simulated learner journeys, and first-click / retry / mixed / due / spaced-return surface evidence. Independent reviewer sign-off must reference this pack, not only the historical reviewer fixture.
 
 ## P11 verifier contract
 

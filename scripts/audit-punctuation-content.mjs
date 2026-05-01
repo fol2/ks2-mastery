@@ -65,7 +65,10 @@ function readinessRowsFor(items) {
 function generatedModelFailures(generatedItems) {
   const failures = [];
   for (const item of generatedItems) {
-    const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
+    const answer = item.mode === 'choose' || item.inputKind === 'choice'
+      ? { choiceIndex: item.correctIndex }
+      : { typed: item.model };
+    const result = markPunctuationAnswer({ item, answer });
     if (!result.correct) {
       failures.push({
         id: item.id,
@@ -287,7 +290,7 @@ function buildFailureDetails({ validation, generatorFamilies, generatedDuplicate
 
 export function runPunctuationContentAudit({
   manifest = PUNCTUATION_CONTENT_MANIFEST,
-  seed = manifest.releaseId || 'punctuation-audit',
+  seed = manifest.generatedSeed || manifest.releaseId || 'punctuation-audit',
   generatedPerFamily = 1,
   contextPack = null,
   thresholds = {},
@@ -485,7 +488,7 @@ function groupDuplicatesByMode(items, textFn) {
  */
 export function buildStemModelClusters({
   manifest = PUNCTUATION_CONTENT_MANIFEST,
-  seed = manifest.releaseId || 'punctuation-audit',
+  seed = manifest.generatedSeed || manifest.releaseId || 'punctuation-audit',
   depths = [4, 6, 8],
 } = {}) {
   const clustersByDepth = {};
@@ -569,6 +572,22 @@ function isDslBackedFamily(familyId) {
   return templates.some((t) => isPlainObject(t.tests));
 }
 
+function isGeneratedChoiceTemplateFamily(familyId) {
+  const templates = GENERATED_TEMPLATE_BANK[familyId];
+  if (!templates || !templates.length) return false;
+  return templates.every((template) => (
+    Array.isArray(template.options)
+      && template.options.length >= 2
+      && Number.isInteger(template.correctIndex)
+      && template.correctIndex >= 0
+      && template.correctIndex < template.options.length
+  ));
+}
+
+function isReviewedTemplateFamily(familyId) {
+  return isDslBackedFamily(familyId) || isGeneratedChoiceTemplateFamily(familyId);
+}
+
 /** Check if generated items leak validator/rubric into learner-visible fields */
 function redactionRiskFindings(generatedItems) {
   const LEARNER_VISIBLE_FIELDS = ['stem', 'prompt', 'explanation', 'options'];
@@ -618,6 +637,7 @@ export function buildReviewerReport({
         capacitySignatures: distinctAtCapacity,
         spareCapacity,
         isDsl: isDslBackedFamily(f.id),
+        isReviewedTemplate: isReviewedTemplateFamily(f.id),
       };
     });
 
@@ -642,6 +662,7 @@ export function buildReviewerReport({
       familyId: f.id,
       templateCount: f.templateIds.length,
       isDsl: isDslBackedFamily(f.id),
+      isReviewedTemplate: isReviewedTemplateFamily(f.id),
     }));
 
   // 7. Per-family signature count
@@ -689,15 +710,15 @@ export function buildReviewerReport({
     }
   }
 
-  // 11. Families using legacy non-DSL templates
+  // 11. Families using legacy templates without DSL tests or a reviewed choice contract
   const legacyFamilies = Object.keys(GENERATED_TEMPLATE_BANK)
-    .filter((familyId) => !isDslBackedFamily(familyId))
+    .filter((familyId) => !isReviewedTemplateFamily(familyId))
     .sort();
 
   // 12. Duplicate stem/model clusters (mode-scoped, depth-gated)
   const stemModelClusterData = buildStemModelClusters({
     manifest,
-    seed: audit.seed || manifest.releaseId || 'punctuation-audit',
+    seed: audit.seed || manifest.generatedSeed || manifest.releaseId || 'punctuation-audit',
     depths: [4, 6, 8],
   });
   const stemModelClusters = stemModelClusterData.allClusters;
@@ -791,11 +812,11 @@ export function buildReviewerReport({
     }
   }
 
-  // Legacy non-DSL families → Warning (or Fail with --require-all-dsl)
+  // Legacy non-reviewed families → Warning (or Fail with --require-all-dsl)
   const legacySeverity = requireAllDsl ? 'Fail' : 'Warning';
   for (const familyId of legacyFamilies) {
     findings.push(finding(legacySeverity, 'legacy_non_dsl_family',
-      `Family "${familyId}" uses legacy non-DSL templates`,
+      `Family "${familyId}" uses legacy templates without DSL tests or reviewed choice options`,
       { detail: { familyId } },
     ));
   }
@@ -822,9 +843,14 @@ export function buildReviewerReport({
   // Coverage signals → Info
   const dslFamilyCount = Object.keys(GENERATED_TEMPLATE_BANK).filter(isDslBackedFamily).length;
   const totalFamilyCount = Object.keys(GENERATED_TEMPLATE_BANK).length;
+  const reviewedTemplateFamilyCount = Object.keys(GENERATED_TEMPLATE_BANK).filter(isReviewedTemplateFamily).length;
   findings.push(finding('Info', 'dsl_coverage_ratio',
     `DSL coverage: ${dslFamilyCount}/${totalFamilyCount} families are DSL-backed`,
     { detail: { dslFamilyCount, totalFamilyCount, ratio: totalFamilyCount > 0 ? dslFamilyCount / totalFamilyCount : 0 } },
+  ));
+  findings.push(finding('Info', 'reviewed_template_family_coverage',
+    `Reviewed template coverage: ${reviewedTemplateFamilyCount}/${totalFamilyCount} families are DSL-backed or choice-option reviewed`,
+    { detail: { reviewedTemplateFamilyCount, totalFamilyCount, ratio: totalFamilyCount > 0 ? reviewedTemplateFamilyCount / totalFamilyCount : 0 } },
   ));
 
   // Capacity headroom → Info
@@ -871,7 +897,7 @@ export function buildReviewerReport({
     recommendedActions.push(`Fix ${severityCounts.fail} Fail-severity finding(s) before merging.`);
   }
   if (legacyFamilies.length > 0) {
-    recommendedActions.push(`Convert ${legacyFamilies.length} legacy families to DSL-backed templates.`);
+    recommendedActions.push(`Convert ${legacyFamilies.length} legacy families to DSL-backed templates or reviewed choice-option templates.`);
   }
   if (templatesMissingTests.length > 0) {
     recommendedActions.push(`Add golden tests to ${templatesMissingTests.length} DSL template(s) missing coverage.`);
@@ -893,6 +919,7 @@ export function buildReviewerReport({
     releaseId,
     rewardUnits: publishedRewardUnits,
     dslCoverage,
+    reviewedTemplateCoverage: totalFamilyCount > 0 ? reviewedTemplateFamilyCount / totalFamilyCount : 0,
     severityCounts,
   };
 
@@ -946,6 +973,10 @@ export function formatReviewerReport(report) {
   if (dslInfo) {
     lines.push(`   ${dslInfo.detail.dslFamilyCount}/${dslInfo.detail.totalFamilyCount} families DSL-backed (${(report.summary.dslCoverage * 100).toFixed(0)}%)`);
   }
+  const reviewedInfo = report.findings.find((f) => f.code === 'reviewed_template_family_coverage');
+  if (reviewedInfo) {
+    lines.push(`   ${reviewedInfo.detail.reviewedTemplateFamilyCount}/${reviewedInfo.detail.totalFamilyCount} families reviewed-template backed (${(report.summary.reviewedTemplateCoverage * 100).toFixed(0)}%)`);
+  }
   lines.push('');
 
   // Section 3: Top duplicate generated stems
@@ -973,7 +1004,7 @@ export function formatReviewerReport(report) {
   // Section 5: Per-family spare capacity
   lines.push(`5. Per-family spare capacity at generatedPerFamily = ${report.capacityDepth}:`);
   for (const row of report.perFamilyCapacity) {
-    const tag = row.isDsl ? '' : ' [legacy]';
+    const tag = row.isReviewedTemplate ? '' : ' [legacy]';
     lines.push(`   - ${row.familyId}: production=${row.productionSignatures}, capacity=${row.capacitySignatures}, spare=${row.spareCapacity}${tag}`);
   }
   lines.push('');
@@ -1256,7 +1287,7 @@ async function main() {
 
   if (args.reviewerReport) {
     const generatedItems = createPunctuationGeneratedItems({
-      seed: PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation-audit',
+      seed: PUNCTUATION_CONTENT_MANIFEST.generatedSeed || PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation-audit',
       perFamily: args.generatedPerFamily,
     });
     const report = buildReviewerReport({

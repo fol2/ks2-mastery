@@ -33,15 +33,15 @@ if (major < 22) {
 
 import { execSync } from 'node:child_process';
 
-import { PRODUCTION_DEPTH, CAPACITY_DEPTH } from '../shared/punctuation/generators.js';
+import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH, CAPACITY_DEPTH } from '../shared/punctuation/generators.js';
 import { PUNCTUATION_TELEMETRY_MANIFEST } from '../shared/punctuation/telemetry-manifest.js';
-
-const FIXED_BANK_COUNT = 92;
-const GENERATED_PER_DEPTH = 25;
 
 const EMITTED_EVENT_COUNT = Object.values(PUNCTUATION_TELEMETRY_MANIFEST)
   .filter((entry) => entry.status === 'emitted').length;
 const TOTAL_EVENT_COUNT = Object.keys(PUNCTUATION_TELEMETRY_MANIFEST).length;
+const runtimeManifest = createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH });
+const fixedItems = runtimeManifest.items.filter((item) => item.source === 'fixed').length;
+const generatedItems = runtimeManifest.items.filter((item) => item.source === 'generated').length;
 
 // ─── Classification labels ──────────────────────────────────────────────────
 
@@ -115,8 +115,8 @@ const gates = [
     logicalGates: 1,
   },
   {
-    name: 'Production QA decisions (real fixture)',
-    command: 'node -e "import { loadReviewerDecisions, evaluateProductionGate } from \'./shared/punctuation/reviewer-decisions.js\'; import { PUNCTUATION_ITEMS, PUNCTUATION_CONTENT_MANIFEST } from \'./shared/punctuation/content.js\'; import { createPunctuationGeneratedItems, PRODUCTION_DEPTH } from \'./shared/punctuation/generators.js\'; const gen=createPunctuationGeneratedItems({manifest:PUNCTUATION_CONTENT_MANIFEST,seed:PUNCTUATION_CONTENT_MANIFEST.releaseId||\'punctuation\',perFamily:PRODUCTION_DEPTH}); const ids=[...PUNCTUATION_ITEMS.map(i=>i.id),...gen.map(i=>i.id)]; const {data}=loadReviewerDecisions(\'tests/fixtures/punctuation-reviewer-decisions.json\'); const r=evaluateProductionGate(data,ids); if(!r.pass){console.error(\'Production QA gate FAILED:\',JSON.stringify(r.blockers.slice(0,5)));process.exit(1);} console.log(\'Production QA: \'+r.stats.approved+\'/\'+r.stats.total+\' approved\');"',
+    name: 'Historical P8 production QA decisions (192-item fixture)',
+    command: 'node -e "import { loadReviewerDecisions, evaluateProductionGate } from \'./shared/punctuation/reviewer-decisions.js\'; const {data}=loadReviewerDecisions(\'tests/fixtures/punctuation-reviewer-decisions.json\'); const ids=data.itemDecisions.map((entry)=>entry.itemId); const r=evaluateProductionGate(data,ids); if(!r.pass){console.error(\'Historical production QA gate FAILED:\',JSON.stringify(r.blockers.slice(0,5)));process.exit(1);} console.log(\'Historical production QA: \'+r.stats.approved+\'/\'+r.stats.total+\' approved\');"',
     label: LABEL.PRODUCTION,
     logicalGates: 1,
   },
@@ -177,7 +177,7 @@ const depth6Ready = depth6Blockers.length === 0 && PRODUCTION_DEPTH >= 6;
 const totalLogicalGates = gates.reduce((sum, g) => sum + g.logicalGates, 0);
 const productionGates = gates.filter((g) => g.label === LABEL.PRODUCTION);
 const depth6CandidateGates = gates.filter((g) => g.label === LABEL.DEPTH6);
-const runtimePool = FIXED_BANK_COUNT + GENERATED_PER_DEPTH * PRODUCTION_DEPTH;
+const runtimePool = runtimeManifest.items.length;
 
 // ─── Summary output ─────────────────────────────────────────────────────────
 
@@ -206,7 +206,7 @@ console.log(`    Production gates:   ${productionGates.length}`);
 console.log(`    Depth-6 candidates: ${depth6CandidateGates.length}`);
 console.log(`    Production depth:   ${PRODUCTION_DEPTH}`);
 console.log(`    Capacity depth:     ${CAPACITY_DEPTH}`);
-console.log(`    Runtime pool:       ${runtimePool} items (${FIXED_BANK_COUNT} fixed + ${GENERATED_PER_DEPTH * PRODUCTION_DEPTH} generated)`);
+console.log(`    Runtime pool:       ${runtimePool} items (${fixedItems} fixed + ${generatedItems} generated)`);
 console.log(`    Telemetry events:   ${EMITTED_EVENT_COUNT}/${TOTAL_EVENT_COUNT} emitted`);
 console.log(`    Elapsed:            ${elapsed}s`);
 console.log('──────────────────────────────────────────────────────────────');
@@ -226,7 +226,9 @@ console.log(`  Depth-6 readiness: ${depth6Ready ? 'READY' : 'BLOCKED'}`);
 if (depth6Blockers.length > 0) {
   console.log(`  Blockers: ${depth6Blockers.join(', ')}`);
 }
-if (!depth6Ready) {
+if (PRODUCTION_DEPTH > 6) {
+  console.log('  Recommendation: Historical P8 depth-6 decision is superseded; use the current phase verifier for release decisions');
+} else if (!depth6Ready) {
   console.log(`  Recommendation: Keep production depth at ${PRODUCTION_DEPTH} (reviewer decisions not yet populated)`);
 } else {
   console.log('  Recommendation: Depth-6 activation is available pending human sign-off');

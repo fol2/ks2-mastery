@@ -225,6 +225,12 @@ const P2_PRIORITY_CAPACITY_FAMILIES = Object.freeze([
   'gen_semicolon_list_fix',
 ]);
 
+const GENERATED_CHOICE_FAMILIES = new Set([
+  'gen_sentence_endings_choose',
+  'gen_apostrophe_possession_choose',
+  'gen_list_commas_choose',
+]);
+
 const P2_RELEASE_PRIORITY_RUNTIME_FOUR = Object.freeze({
   gen_sentence_endings_insert: [
     ['gen_sentence_endings_insert_template_ojehq4', 'puncsig_16hqza'],
@@ -270,6 +276,13 @@ const P2_RELEASE_PRIORITY_RUNTIME_FOUR = Object.freeze({
   ],
 });
 
+function correctAnswerForGeneratedItem(item) {
+  if (item.mode === 'choose' || item.inputKind === 'choice') {
+    return { choiceIndex: item.correctIndex };
+  }
+  return { typed: item.model };
+}
+
 test('generated punctuation items are deterministic, unique, and family-scoped', () => {
   const first = createPunctuationGeneratedItems({ seed: 'release-a', perFamily: 2 });
   const second = createPunctuationGeneratedItems({ seed: 'release-a', perFamily: 2 });
@@ -287,9 +300,10 @@ test('generated punctuation items are deterministic, unique, and family-scoped',
 
 test('generated punctuation first variants preserve legacy runtime surfaces when banks expand', () => {
   const generated = createPunctuationGeneratedItems({ seed: 'legacy-runtime', perFamily: 1 });
+  const legacyComparable = generated.filter((item) => !GENERATED_CHOICE_FAMILIES.has(item.generatorFamilyId));
 
   assert.deepEqual(
-    generated.map(({ id, generatorFamilyId, stem, model, templateId, variantSignature }) => ({
+    legacyComparable.map(({ id, generatorFamilyId, stem, model, templateId, variantSignature }) => ({
       id,
       generatorFamilyId,
       stem,
@@ -300,6 +314,12 @@ test('generated punctuation first variants preserve legacy runtime surfaces when
     LEGACY_RUNTIME_GENERATED_FIXTURE,
   );
   assert.equal(generated.every((item) => !/_template_\\d+$/.test(item.templateId)), true);
+  for (const item of generated.filter((entry) => GENERATED_CHOICE_FAMILIES.has(entry.generatorFamilyId))) {
+    assert.equal(item.mode, 'choose', item.id);
+    assert.equal(item.inputKind, 'choice', item.id);
+    assert.ok(Array.isArray(item.options), item.id);
+    assert.equal(Number.isInteger(item.correctIndex), true, item.id);
+  }
 });
 
 test('generated punctuation signatures detect duplicate learner-visible surfaces', () => {
@@ -326,26 +346,32 @@ test('expanded priority generated banks add spare distinct capacity after runtim
 test('generated punctuation model answers pass deterministic marking', () => {
   const generatedItems = createPunctuationGeneratedItems({ seed: 'marking-smoke', perFamily: 8 });
   for (const item of generatedItems) {
-    const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
+    const result = markPunctuationAnswer({ item, answer: correctAnswerForGeneratedItem(item) });
     assert.equal(result.correct, true, item.id);
   }
 });
 
-test('priority capacity expansion preserves production four-variant generated surfaces', () => {
+test('priority capacity expansion preserves the first four generated surfaces', () => {
   const generatedItems = createPunctuationGeneratedItems({
-    seed: PUNCTUATION_CONTENT_MANIFEST.releaseId,
+    seed: PUNCTUATION_CONTENT_MANIFEST.generatedSeed,
     perFamily: 4,
   });
   const generatedRuntime = generatedItems.filter((item) => item.source === 'generated');
   const runtimeManifest = createPunctuationRuntimeManifest({
-    seed: PUNCTUATION_CONTENT_MANIFEST.releaseId,
+    seed: PUNCTUATION_CONTENT_MANIFEST.generatedSeed,
     generatedPerFamily: 4,
   });
   const runtimeIndexes = createPunctuationContentIndexes(runtimeManifest);
 
-  assert.equal(generatedRuntime.length, 100);
-  assert.equal(runtimeIndexes.items.length, 192);
-  assert.equal(runtimeIndexes.items.filter((item) => item.source === 'generated').length, 100);
+  assert.equal(generatedRuntime.length, PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length * 4);
+  assert.equal(
+    runtimeIndexes.items.length,
+    PUNCTUATION_CONTENT_MANIFEST.items.length + (PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length * 4),
+  );
+  assert.equal(
+    runtimeIndexes.items.filter((item) => item.source === 'generated').length,
+    PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length * 4,
+  );
 
   for (const [familyId, expected] of Object.entries(P2_RELEASE_PRIORITY_RUNTIME_FOUR)) {
     const actual = generatedItems

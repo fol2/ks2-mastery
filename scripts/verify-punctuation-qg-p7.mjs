@@ -23,11 +23,8 @@
 
 import { execSync } from 'node:child_process';
 
-import { PRODUCTION_DEPTH, CAPACITY_DEPTH } from '../shared/punctuation/generators.js';
+import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH, CAPACITY_DEPTH } from '../shared/punctuation/generators.js';
 import { PUNCTUATION_TELEMETRY_MANIFEST } from '../shared/punctuation/telemetry-manifest.js';
-
-const FIXED_BANK_COUNT = 92;
-const GENERATED_PER_DEPTH = 25;
 
 const EMITTED_EVENT_COUNT = Object.values(PUNCTUATION_TELEMETRY_MANIFEST)
   .filter((entry) => entry.status === 'emitted').length;
@@ -158,7 +155,10 @@ const depth6Ready = depth6Blockers.length === 0 && PRODUCTION_DEPTH >= 6;
 const totalLogicalGates = gates.reduce((sum, g) => sum + g.logicalGates, 0);
 const productionGates = gates.filter((g) => g.label === LABEL.PRODUCTION);
 const depth6CandidateGates = gates.filter((g) => g.label === LABEL.DEPTH6);
-const runtimePool = FIXED_BANK_COUNT + GENERATED_PER_DEPTH * PRODUCTION_DEPTH;
+const runtimeManifest = createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH });
+const fixedItems = runtimeManifest.items.filter((item) => item.source === 'fixed').length;
+const generatedItems = runtimeManifest.items.filter((item) => item.source === 'generated').length;
+const runtimePool = runtimeManifest.items.length;
 
 // ─── Summary output ─────────────────────────────────────────────────────────
 
@@ -187,7 +187,7 @@ console.log(`    Production gates:   ${productionGates.length}`);
 console.log(`    Depth-6 candidates: ${depth6CandidateGates.length}`);
 console.log(`    Production depth:   ${PRODUCTION_DEPTH}`);
 console.log(`    Capacity depth:     ${CAPACITY_DEPTH}`);
-console.log(`    Runtime pool:       ${runtimePool} items (${FIXED_BANK_COUNT} fixed + ${GENERATED_PER_DEPTH * PRODUCTION_DEPTH} generated)`);
+console.log(`    Runtime pool:       ${runtimePool} items (${fixedItems} fixed + ${generatedItems} generated)`);
 console.log(`    Telemetry events:   ${EMITTED_EVENT_COUNT}/${TOTAL_EVENT_COUNT} emitted`);
 console.log(`    Elapsed:            ${elapsed}s`);
 console.log('──────────────────────────────────────────────────────────────');

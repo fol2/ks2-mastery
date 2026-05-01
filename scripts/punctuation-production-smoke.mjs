@@ -34,14 +34,14 @@ const FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS = new Set(SHARED_FORBIDDEN_PUNCTUATI
 const FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS = new Set(SHARED_FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS);
 const ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS = new Set(SHARED_ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS);
 const OPAQUE_VARIANT_SIGNATURE_PATTERN = /^puncsig_[a-z0-9]+$/;
-const PRODUCTION_GENERATED_PER_FAMILY = 4;
+const PRODUCTION_GENERATED_PER_FAMILY = PRODUCTION_DEPTH;
 const LIST_COMMA_VALIDATOR_TYPES = new Set(['requiresListCommas', 'combineListSentence']);
 
 export const PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS = Object.freeze({
   releaseId: PUNCTUATION_RELEASE_ID,
-  fixedItemCount: 92,
-  generatedItemCount: 100,
-  runtimeItemCount: 192,
+  fixedItemCount: 148,
+  generatedItemCount: 1120,
+  runtimeItemCount: 1268,
   publishedRewardUnits: 14,
   generatedPerFamily: PRODUCTION_GENERATED_PER_FAMILY,
 });
@@ -798,7 +798,8 @@ export function buildAttestationMetadata({
 }
 
 export function assertAttestationRuntimeCount(attestation) {
-  const expectedForDepth = 92 + 25 * PRODUCTION_DEPTH;
+  const manifest = createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH });
+  const expectedForDepth = createPunctuationContentIndexes(manifest).items.length;
   if (attestation.runtimeItemCount !== expectedForDepth) {
     throw new Error(
       `Attestation runtime count mismatch: expected ${expectedForDepth} items for production depth ${PRODUCTION_DEPTH}, got ${attestation.runtimeItemCount}`,
