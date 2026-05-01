@@ -21,7 +21,7 @@ source_context:
 
 Selected exit state: `p7-continuation-required`.
 
-P7 has a reviewed narrow implementation candidate and local query-count proof, but it has not yet produced a post-change production 60-learner diagnostic. The next step is commit/PR/merge, deploy, then the approved 60-learner run shape.
+P7 has a reviewed, merged narrow implementation candidate and local query-count proof, but it has not yet produced a post-change production 60-learner diagnostic. The next step is deployed-merge confirmation, then the approved 60-learner run shape.
 
 ## Required Questions
 
@@ -29,7 +29,7 @@ P7 has a reviewed narrow implementation candidate and local query-count proof, b
    Locally, yes for statement count. The focused production/demo public bootstrap test reduced the observed full-bootstrap query count from the P6 production shape of 11 to 9. The broader three-learner bounded GET/POST bootstrap budget also ratcheted from the previous measured 11 to 10. Production D1 duration has not yet been measured post-change.
 
 2. **Did the post-change 60-learner run pass the bootstrap P95 threshold?**
-   Not measured. The post-change production run is operator-gated until the code is reviewed, committed, merged and deployed.
+   Not measured. The post-change production run is operator-gated until the merged code is confirmed deployed and the diagnostic is captured.
 
 3. **Did Worker CPU become the new dominant blocker?**
    Unknown. No post-change production tail correlation exists yet.
