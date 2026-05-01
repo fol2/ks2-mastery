@@ -17,6 +17,8 @@ P14 is complete for pre-deploy release review under `grammar-qg-p14-2026-05-01`.
 
 The active Grammar QG pool now has 110 templates, 3,300 render-inventory items, 2,496 unique learner-visible surfaces and 1,622 unique prompt texts across seeds 1..30. Quality evidence records 106 approved + 4 approved_with_limitation templates, 0 blocked templates, 33 adult-review decisions, 2,190 distractor audit items with 0 S0/S1 failures, 0 P14 selected-response surface-cue flags, and 120 marking matrix entries.
 
+The distractor audit still records heuristic surface-cue warnings on prior-pool templates. Those are monitored as residual prior-pool review signals, not hidden P14 clean-room claims. P14's new selected-response templates have 0 likely surface-cue flags.
+
 ## Unit Closure
 
 | Unit | Status | Evidence |

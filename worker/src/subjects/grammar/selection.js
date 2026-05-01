@@ -399,6 +399,7 @@ export function buildGrammarPracticeQueue({
   size = 1,
   now = Date.now(),
   includeBlocked = false,
+  avoidTemplateIds = [],
 } = {}) {
   const safeSize = Math.max(0, Math.floor(Number(size) || 0));
   if (safeSize === 0) return [];
@@ -412,7 +413,10 @@ export function buildGrammarPracticeQueue({
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
   const workingRecentVariants = recentVariantIndex(recentAttempts);
-  const plannedTemplateIds = new Set();
+  const plannedTemplateIds = new Set(
+    [...(avoidTemplateIds instanceof Set ? avoidTemplateIds : (Array.isArray(avoidTemplateIds) ? avoidTemplateIds : []))]
+      .filter((id) => typeof id === 'string' && id),
+  );
   const queue = [];
 
   function unplannedTemplates(candidatePool) {

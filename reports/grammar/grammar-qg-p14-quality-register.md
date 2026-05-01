@@ -1,4 +1,4 @@
-# Grammar QG P10 — Quality Register
+# Grammar QG P14 — Quality Register
 
 **Content Release:** grammar-qg-p14-2026-05-01
 **Generated:** 2026-05-01T16:23:10.816Z

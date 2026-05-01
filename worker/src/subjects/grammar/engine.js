@@ -208,6 +208,19 @@ function recordSessionElapsedTelemetry(session, elapsedMs) {
   telemetry.elapsedByDepthType[depth] = row;
 }
 
+function sessionExposedTemplateIds(session) {
+  const ids = new Set();
+  if (isPlainObject(session?.varietyTelemetry?._templateCounts)) {
+    for (const [templateId, count] of Object.entries(session.varietyTelemetry._templateCounts)) {
+      if (typeof templateId === 'string' && templateId && Number(count) > 0) ids.add(templateId);
+    }
+  }
+  if (typeof session?.currentItem?.templateId === 'string' && session.currentItem.templateId) {
+    ids.add(session.currentItem.templateId);
+  }
+  return ids;
+}
+
 function normaliseSpeechRate(value, fallback = DEFAULT_SPEECH_RATE) {
   const numeric = Number(value);
   const base = Number.isFinite(numeric) ? numeric : Number(fallback);
@@ -731,7 +744,7 @@ function templateFits(template, { mode, focusConceptId } = {}) {
   return true;
 }
 
-function weightedTemplatePick(state, { mode, focusConceptId, seed, nowTs = Date.now() }) {
+function weightedTemplatePick(state, { mode, focusConceptId, seed, nowTs = Date.now(), avoidTemplateIds = [] }) {
   const [entry] = buildGrammarPracticeQueue({
     mode,
     focusConceptId,
@@ -740,14 +753,16 @@ function weightedTemplatePick(state, { mode, focusConceptId, seed, nowTs = Date.
     seed,
     size: 1,
     now: nowTs,
+    avoidTemplateIds,
   });
   if (!entry) return grammarTemplateById(GRAMMAR_TEMPLATE_METADATA[0].id);
   return grammarTemplateById(entry.templateId);
 }
 
-function takeDueRetry(state, { mode, focusConceptId, nowTs }) {
+function takeDueRetry(state, { mode, focusConceptId, nowTs, avoidTemplateIds = new Set() }) {
   const index = state.retryQueue.findIndex((entry) => {
     if (Number(entry.dueAt) > nowTs) return false;
+    if (avoidTemplateIds.has(entry.templateId)) return false;
     if (isTemplateBlocked(entry.templateId)) return false;
     const template = grammarTemplateById(entry.templateId);
     return templateFits(template, { mode, focusConceptId });
@@ -796,9 +811,16 @@ function nextItem(state, { mode, focusConceptId, seed, templateId = '', nowTs = 
     }
     return itemFromTemplate(template, seed);
   }
-  const retry = takeDueRetry(state, { mode, focusConceptId, nowTs });
+  const avoidTemplateIds = sessionExposedTemplateIds(session);
+  const retry = takeDueRetry(state, { mode, focusConceptId, nowTs, avoidTemplateIds });
   if (retry) return itemFromTemplate(grammarTemplateById(retry.templateId), retry.seed);
-  return itemFromTemplate(weightedTemplatePick(state, { mode, focusConceptId, seed, nowTs }), seed);
+  return itemFromTemplate(weightedTemplatePick(state, {
+    mode,
+    focusConceptId,
+    seed,
+    nowTs,
+    avoidTemplateIds,
+  }), seed);
 }
 
 function weakestConceptIdForTrouble(state, nowTs) {
@@ -1757,6 +1779,7 @@ function continueSession(state, nowTs) {
     focusConceptId: session.focusConceptId,
     seed: itemSeed,
     nowTs,
+    session,
   });
   recordSessionItemExposure(session, session.currentItem);
   session.attemptsForCurrent = 0;

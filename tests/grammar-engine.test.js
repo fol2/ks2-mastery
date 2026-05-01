@@ -30,6 +30,24 @@ import { assertNoForbiddenGrammarReadModelKeys } from '../scripts/grammar-produc
 
 const LEGACY_GRAMMAR_CONTENT_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
 
+function responseForGrammarItem(item) {
+  const question = createGrammarQuestion({ templateId: item.templateId, seed: item.seed });
+  if (question.answerSpec?.kind === 'multiField') {
+    const response = {};
+    for (const [key, fieldSpec] of Object.entries(question.answerSpec.params?.fields || {})) {
+      response[key] = fieldSpec.golden?.[0] || fieldSpec.accepted?.[0] || 'answer';
+    }
+    return response;
+  }
+  if (Array.isArray(question.answerSpec?.golden) && question.answerSpec.golden.length > 0) {
+    return { answer: question.answerSpec.golden[0] };
+  }
+  const correctOption = (question.inputSpec?.options || []).find((option) =>
+    evaluateGrammarQuestion(question, { answer: option.value }).correct);
+  if (correctOption) return { answer: correctOption.value };
+  return { answer: 'A complete answer.' };
+}
+
 test('Grammar legacy oracle fixture remains frozen for the reviewed denominator', () => {
   const oracle = readGrammarLegacyOracle();
 
@@ -465,6 +483,57 @@ test('Grammar command engine clears active sessions from an older content releas
   assert.equal(cleared.practiceSession.status, 'abandoned');
   assert.equal(cleared.practiceSession.id, started.practiceSession.id);
   assert.deepEqual(cleared.events, []);
+});
+
+test('Grammar live smart five-question session does not repeat templates when the pool allows', () => {
+  for (const seed of [1, 2, 27]) {
+    const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+    let result = engine.apply({
+      learnerId: 'learner-a',
+      subjectRecord: {},
+      command: 'start-session',
+      requestId: `runtime-no-repeat-start-${seed}`,
+      payload: {
+        mode: 'smart',
+        roundLength: 5,
+        seed,
+      },
+    });
+    const templateIds = [];
+
+    for (let index = 0; index < 5; index += 1) {
+      const item = result.state.session?.currentItem;
+      assert.ok(item, `seed ${seed} item ${index + 1} should be active`);
+      templateIds.push(item.templateId);
+      result = engine.apply({
+        learnerId: 'learner-a',
+        subjectRecord: { ui: result.state, data: result.data },
+        latestSession: result.practiceSession,
+        command: 'submit-answer',
+        requestId: `runtime-no-repeat-submit-${seed}-${index}`,
+        payload: {
+          response: responseForGrammarItem(item),
+          clientElapsedMs: 1000,
+        },
+      });
+      if (index < 4) {
+        result = engine.apply({
+          learnerId: 'learner-a',
+          subjectRecord: { ui: result.state, data: result.data },
+          latestSession: result.practiceSession,
+          command: 'continue-session',
+          requestId: `runtime-no-repeat-continue-${seed}-${index}`,
+          payload: {},
+        });
+      }
+    }
+
+    assert.equal(
+      new Set(templateIds).size,
+      templateIds.length,
+      `seed ${seed} repeated template(s): ${templateIds.join(', ')}`,
+    );
+  }
 });
 
 test('Grammar retry queue de-duplicates repeated misses for the same template and seed', () => {
