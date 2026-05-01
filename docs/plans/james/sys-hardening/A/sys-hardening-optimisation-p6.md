@@ -1,7 +1,7 @@
 ---
 title: "System Hardening Optimisation P6 — Operator-Gated 60-Learner Diagnostic and Bottleneck Selection"
 type: plan
-status: proposed
+status: approved
 date: 2026-04-30
 phase: P6
 owner: james

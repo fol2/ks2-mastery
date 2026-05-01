@@ -133,8 +133,12 @@ test('budget ledger consumes route-cost evidence and tail-correlation CPU covera
   assert.ok(ledger.routeFamilyCoverage.families.some((entry) => (
     entry.routeFamily === 'full-bootstrap' && entry.routes.includes('GET /api/bootstrap')
   )));
-  assert.ok(ledger.missingRouteCosts.some((entry) => entry.routeFamily === 'parent-summary-hub-read'));
-  assert.ok(ledger.missingRouteCosts.some((entry) => entry.routeFamily === 'hero-read-model'));
+  assert.ok(ledger.missingRouteCosts.some((entry) => (
+    entry.routeFamily === 'parent-summary-hub-read' && entry.status === 'auth-gated'
+  )));
+  assert.ok(ledger.missingRouteCosts.some((entry) => (
+    entry.routeFamily === 'hero-read-model' && entry.status === 'feature-gated'
+  )));
 });
 
 test('budget ledger keeps Hero command tail costs split by explicit command action', () => {

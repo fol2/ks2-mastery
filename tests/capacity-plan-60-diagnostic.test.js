@@ -20,6 +20,8 @@ test('60-learner diagnostic planner emits the full dry-run-safe command plan', (
   assert.equal(plan.tailCorrelationPath, 'reports/capacity/evidence/2026-04-30-p5-60-tail-correlation.json');
   assert.equal(plan.statementMapPath, 'reports/capacity/evidence/2026-04-30-p5-60-statement-map.json');
   assert.equal(plan.tailClassificationPath, 'reports/capacity/evidence/2026-04-30-p5-60-tail-classification.md');
+  assert.equal(plan.decisionPath, 'docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p5-60-diagnostic-decision.md');
+  assert.equal(plan.execution.fullProductionOwnedBy, 'approved-operator-gate');
   assert.deepEqual(commandIds, [
     'prepare-session-manifest',
     'start-worker-tail',
@@ -29,6 +31,20 @@ test('60-learner diagnostic planner emits the full dry-run-safe command plan', (
   ]);
   assert.match(plan.rawLogWarning, /must not be committed/i);
   assert.equal(plan.execution.localValidationOnly, true);
+});
+
+test('60-learner diagnostic planner derives phase-specific decision paths from run ids', () => {
+  const plan = buildSixtyLearnerDiagnosticPlan({
+    runId: '2026-04-30-p6-60-diagnostic',
+    manifestPath: '/tmp/ks2-p6-60-manifest.json',
+  });
+
+  assert.equal(plan.diagnosticEvidencePath, 'reports/capacity/evidence/2026-04-30-p6-60-diagnostic.json');
+  assert.equal(plan.tailCorrelationPath, 'reports/capacity/evidence/2026-04-30-p6-60-tail-correlation.json');
+  assert.equal(plan.statementMapPath, 'reports/capacity/evidence/2026-04-30-p6-60-statement-map.json');
+  assert.equal(plan.tailClassificationPath, 'reports/capacity/evidence/2026-04-30-p6-60-tail-classification.md');
+  assert.equal(plan.decisionPath, 'docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-60-diagnostic-decision.md');
+  assert.equal(plan.kind, 'p6-60-learner-diagnostic-plan');
 });
 
 test('60-learner diagnostic planner validates script paths and documented options', () => {
