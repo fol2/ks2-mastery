@@ -4,12 +4,15 @@ type: decision-record
 status: complete
 date: 2026-05-01
 phase: P6
-exit_state: p6-continuation-required
+exit_state: p7a-bootstrap-d1-selected
 certifying: false
 language: en-GB
 source_context:
-  - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-60-diagnostic-decision.md
-  - reports/capacity/evidence/2026-04-30-p6-route-costs.json
+  - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-60-approved-run-report.md
+  - reports/capacity/evidence/2026-05-01-p6-60-diagnostic.json
+  - reports/capacity/evidence/2026-05-01-p6-60-tail-correlation.json
+  - reports/capacity/evidence/2026-05-01-p6-60-statement-map.json
+  - reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json
   - reports/capacity/latest-1000-learner-budget.json
 ---
 
@@ -19,9 +22,12 @@ source_context:
 
 Inputs:
 
-- `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-60-diagnostic-decision.md`
-- `reports/capacity/evidence/2026-04-30-p6-60-tail-classification.md`
-- `reports/capacity/evidence/2026-04-30-p6-route-costs.json`
+- `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-60-approved-run-report.md`
+- `reports/capacity/evidence/2026-05-01-p6-60-diagnostic.json`
+- `reports/capacity/evidence/2026-05-01-p6-60-tail-correlation.json`
+- `reports/capacity/evidence/2026-05-01-p6-60-statement-map.json`
+- `reports/capacity/evidence/2026-05-01-p6-60-tail-classification.md`
+- `reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json`
 - `reports/capacity/latest-1000-learner-budget.json`
 - `docs/operations/capacity-1000-learner-free-tier-budget.md`
 
@@ -30,57 +36,51 @@ The budget remains `modellingOnly: true` and `certifying: false`. It is not prod
 ## Required Questions
 
 1. **Did the 60-learner diagnostic reach production app-load?**
-   No. The P6 run did not start because the session manifest and raw Worker tail capture were absent.
+   Yes. The approved 2026-05-01 run completed 260/260 expected production requests.
 
 2. **Did it pass the 60-learner diagnostic thresholds?**
-   Not measured.
+   No. Bootstrap P95 wall time was 1057.3 ms against the configured 750 ms limit. Command P95, response bytes, 5xx, network failures and capacity signals passed.
 
 3. **Were Worker CPU/wall samples joined for top-tail requests?**
-   No P6 samples were joined. Existing bootstrap CPU/wall coverage remains partial model input only.
+   Yes. The redacted Worker tail join matched invocation and statement logs for 10/10 retained top-tail samples with no warnings.
 
 4. **Were D1 statement maps complete enough to classify D1 cost?**
-   No P6 60-learner statement map exists.
+   Yes. The statement map covered 260/260 requests, observed 4484/4484 expected statements, and reported no truncation.
 
 5. **Which route family dominates latency risk?**
-   Not classifiable from P6 live telemetry. The route-cost model still shows full-bootstrap as the only measured route family with joined Worker CPU/wall and D1 duration.
+   Full bootstrap. The failed threshold was bootstrap P95, and the top-tail classification was mostly `d1-dominated`.
 
 6. **Which route family dominates D1 read risk?**
-   The expected 1000-learner model points to command traffic, currently grammar-command, as a major lower-bound D1 read contributor. This remains incomplete because spelling, punctuation, parent/admin, not-modified bootstrap and Hero coverage are not measured.
+   Full bootstrap dominates the immediate failed 60-learner diagnostic. The wider 1000-learner model still shows command traffic as a major lower-bound D1 read contributor, but the 60-learner certification blocker is bootstrap latency.
 
 7. **Which route family dominates D1 write risk?**
-   The expected 1000-learner model points to command traffic, currently grammar-command, as the dominant lower-bound D1 write contributor. This is not sufficient to start write compaction because subject and admin route coverage is incomplete.
+   Command traffic remains the 1000-learner write-budget risk, but D1 writes did not drive the failed 60-learner diagnostic. Grammar command P95 passed at 383.8 ms.
 
 8. **Does the expected 1000-learner scenario still fail D1 rows written?**
-   Yes. Expected 1000-learner D1 rows written are red and lower-bound: 1,134,000 rows/day against a 100,000 rows/day Free-tier limit.
+   Yes. Expected 1000-learner D1 rows written remain red and lower-bound in the regenerated non-certifying model.
 
 9. **Does the expected 1000-learner scenario still fail D1 rows read?**
-   Yes. Expected 1000-learner D1 rows read are red and lower-bound: 18,438,000 rows/day against a 5,000,000 rows/day Free-tier limit.
+   Yes. Expected 1000-learner D1 rows read remain red and lower-bound in the regenerated non-certifying model.
 
 10. **Is Worker CPU still red, partial or unknown?**
-    Red and partial. The expected model records max bootstrap Worker CPU at 21 ms against the 10 ms Free-tier limit, but non-bootstrap Worker CPU remains missing.
+    Partial. The approved run measured full-bootstrap Worker CPU for retained top-tail samples, but non-bootstrap Worker CPU coverage remains incomplete. The failed 60-learner gate is better explained by D1/bootstrap latency than by Worker CPU alone.
 
 11. **Which optimisation path should be P7?**
-    No P7 optimisation path should start yet. The selected path is `P6 continuation — diagnostic repair, not optimisation`.
+    `P7A — Bootstrap/D1 query-shape and cache-contract optimisation`.
 
 ## Selected Exit State
 
-`p6-continuation-required`
+`p7a-bootstrap-d1-selected`
 
-P6 improved the route-cost model and gap classification, but the telemetry-complete 60-learner run remains incomplete.
+The approved production run is telemetry-complete, but it failed the 60-learner stretch threshold. The selected next path is bootstrap/D1 optimisation, not certification.
 
 ## Rejected Alternatives
 
-- **P7D — Command write-amplification and batching design:** rejected as the primary next phase because D1 writes are red but route coverage remains incomplete and no P6 live run classified the bottleneck.
-- **P7A — Bootstrap/D1 query-shape and cache-contract optimisation:** rejected because D1 reads are red and bootstrap CPU is red/partial, but the decisive P6 telemetry is missing and command/admin route coverage remains incomplete.
-- **P7B — Worker CPU, JSON construction and response rewrite reduction:** rejected because Worker CPU is partial, not route-complete; only bootstrap has joined CPU/wall coverage.
-- **P7G — Repeat-policy governance for 60-learner certification candidate:** rejected because there is no positive telemetry-complete P6 diagnostic.
+- **P7G — Repeat-policy governance for 60-learner certification candidate:** rejected because the approved diagnostic failed the bootstrap P95 threshold.
+- **P7B — Worker CPU, JSON construction and response rewrite reduction:** rejected as the primary path because top-tail classification was 8 `d1-dominated` and 2 `worker-cpu-dominated`.
+- **P7D — Command write-amplification and batching design:** rejected as the immediate 60-learner certification blocker because command P95 passed. It remains relevant to the non-certifying 1000-learner budget.
+- **P6 continuation:** rejected because the approved diagnostic, Worker tail join and statement map are now complete.
 
 ## Next Action
 
-Continue P6 with an operator-gated live run:
-
-1. Prepare `/tmp/ks2-p6-60-manifest.json`.
-2. Start `npm run ops:tail:json > /tmp/ks2-p6-60-worker-tail.jsonl`.
-3. Run the approved `capacity:classroom` production command.
-4. Build redacted tail correlation and statement map artefacts.
-5. Re-run the route-cost budget and select P7 from the completed evidence.
+Start P7A with a narrow bootstrap/D1 query-shape and cache-contract plan. Keep 60 learners uncertified until a post-optimisation diagnostic passes and repeat-governance evidence exists.

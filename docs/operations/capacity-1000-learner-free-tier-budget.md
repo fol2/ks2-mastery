@@ -2,14 +2,14 @@
 
 > Non-certifying modelling worksheet. This document does not certify 30, 60, 100, 300, or 1000 learner capacity; certification still requires verifier-backed strict evidence.
 
-Generated: 2026-05-01T10:42:18.460Z
+Generated: 2026-05-01T13:10:43.020Z
 Cloudflare limits retrieved: 2026-04-29
 
 ## Inputs
 
 | Source | Kind | Used for certification |
 | --- | --- | --- |
-| reports/capacity/evidence/2026-04-30-p6-route-costs.json | route-cost-diagnostic | no |
+| reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json | route-cost-diagnostic | no |
 
 ## Free-Tier Limits
 

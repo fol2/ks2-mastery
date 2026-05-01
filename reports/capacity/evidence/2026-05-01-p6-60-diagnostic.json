@@ -1,0 +1,1050 @@
+{
+  "ok": false,
+  "dryRun": false,
+  "plan": {
+    "mode": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "virtualLearners": [
+      {
+        "index": 0,
+        "label": "learner-01"
+      },
+      {
+        "index": 1,
+        "label": "learner-02"
+      },
+      {
+        "index": 2,
+        "label": "learner-03"
+      },
+      {
+        "index": 3,
+        "label": "learner-04"
+      },
+      {
+        "index": 4,
+        "label": "learner-05"
+      },
+      {
+        "index": 5,
+        "label": "learner-06"
+      },
+      {
+        "index": 6,
+        "label": "learner-07"
+      },
+      {
+        "index": 7,
+        "label": "learner-08"
+      },
+      {
+        "index": 8,
+        "label": "learner-09"
+      },
+      {
+        "index": 9,
+        "label": "learner-10"
+      },
+      {
+        "index": 10,
+        "label": "learner-11"
+      },
+      {
+        "index": 11,
+        "label": "learner-12"
+      },
+      {
+        "index": 12,
+        "label": "learner-13"
+      },
+      {
+        "index": 13,
+        "label": "learner-14"
+      },
+      {
+        "index": 14,
+        "label": "learner-15"
+      },
+      {
+        "index": 15,
+        "label": "learner-16"
+      },
+      {
+        "index": 16,
+        "label": "learner-17"
+      },
+      {
+        "index": 17,
+        "label": "learner-18"
+      },
+      {
+        "index": 18,
+        "label": "learner-19"
+      },
+      {
+        "index": 19,
+        "label": "learner-20"
+      },
+      {
+        "index": 20,
+        "label": "learner-21"
+      },
+      {
+        "index": 21,
+        "label": "learner-22"
+      },
+      {
+        "index": 22,
+        "label": "learner-23"
+      },
+      {
+        "index": 23,
+        "label": "learner-24"
+      },
+      {
+        "index": 24,
+        "label": "learner-25"
+      },
+      {
+        "index": 25,
+        "label": "learner-26"
+      },
+      {
+        "index": 26,
+        "label": "learner-27"
+      },
+      {
+        "index": 27,
+        "label": "learner-28"
+      },
+      {
+        "index": 28,
+        "label": "learner-29"
+      },
+      {
+        "index": 29,
+        "label": "learner-30"
+      },
+      {
+        "index": 30,
+        "label": "learner-31"
+      },
+      {
+        "index": 31,
+        "label": "learner-32"
+      },
+      {
+        "index": 32,
+        "label": "learner-33"
+      },
+      {
+        "index": 33,
+        "label": "learner-34"
+      },
+      {
+        "index": 34,
+        "label": "learner-35"
+      },
+      {
+        "index": 35,
+        "label": "learner-36"
+      },
+      {
+        "index": 36,
+        "label": "learner-37"
+      },
+      {
+        "index": 37,
+        "label": "learner-38"
+      },
+      {
+        "index": 38,
+        "label": "learner-39"
+      },
+      {
+        "index": 39,
+        "label": "learner-40"
+      },
+      {
+        "index": 40,
+        "label": "learner-41"
+      },
+      {
+        "index": 41,
+        "label": "learner-42"
+      },
+      {
+        "index": 42,
+        "label": "learner-43"
+      },
+      {
+        "index": 43,
+        "label": "learner-44"
+      },
+      {
+        "index": 44,
+        "label": "learner-45"
+      },
+      {
+        "index": 45,
+        "label": "learner-46"
+      },
+      {
+        "index": 46,
+        "label": "learner-47"
+      },
+      {
+        "index": 47,
+        "label": "learner-48"
+      },
+      {
+        "index": 48,
+        "label": "learner-49"
+      },
+      {
+        "index": 49,
+        "label": "learner-50"
+      },
+      {
+        "index": 50,
+        "label": "learner-51"
+      },
+      {
+        "index": 51,
+        "label": "learner-52"
+      },
+      {
+        "index": 52,
+        "label": "learner-53"
+      },
+      {
+        "index": 53,
+        "label": "learner-54"
+      },
+      {
+        "index": 54,
+        "label": "learner-55"
+      },
+      {
+        "index": 55,
+        "label": "learner-56"
+      },
+      {
+        "index": 56,
+        "label": "learner-57"
+      },
+      {
+        "index": 57,
+        "label": "learner-58"
+      },
+      {
+        "index": 58,
+        "label": "learner-59"
+      },
+      {
+        "index": 59,
+        "label": "learner-60"
+      }
+    ],
+    "scenarios": [
+      {
+        "name": "cold-bootstrap-burst",
+        "requests": 20,
+        "concurrency": 20,
+        "endpoint": "GET /api/bootstrap"
+      },
+      {
+        "name": "human-paced-grammar-round",
+        "learners": 60,
+        "rounds": 1,
+        "pacingMs": 0,
+        "commandsPerRound": 3,
+        "endpoint": "POST /api/subjects/grammar/command"
+      }
+    ],
+    "expectedRequests": 260,
+    "safety": {
+      "productionRequiresConfirmation": true,
+      "productionRequiresAuth": true,
+      "localFixtureRequiresDemoSessions": true
+    }
+  },
+  "summary": {
+    "ok": true,
+    "totalRequests": 260,
+    "expectedRequests": 260,
+    "statusCounts": {
+      "200": 260
+    },
+    "endpointStatus": {
+      "GET /api/bootstrap 200": 80,
+      "POST /api/subjects/grammar/command 200": 180
+    },
+    "endpoints": {
+      "GET /api/bootstrap": {
+        "phase": "bootstrap",
+        "count": 80,
+        "p50WallMs": 244.8,
+        "p95WallMs": 1057.3,
+        "maxWallMs": 1128.8,
+        "p50ResponseBytes": 2449,
+        "p95ResponseBytes": 2449,
+        "maxResponseBytes": 2449,
+        "queryCount": 11,
+        "queryCountP50": 11,
+        "queryCountP95": 11,
+        "queryCountMax": 11,
+        "d1RowsRead": 9,
+        "d1RowsReadP50": 9,
+        "d1RowsReadP95": 9,
+        "d1RowsReadMax": 9,
+        "d1RowsWritten": 0,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "serverWallMsP50": 209,
+        "serverWallMsP95": 903,
+        "serverWallMsMax": 950,
+        "serverResponseBytesP50": 1818,
+        "serverResponseBytesP95": 1818,
+        "serverResponseBytesMax": 1818,
+        "bootstrapModes": {
+          "selected-learner-bounded": 80
+        },
+        "bootstrapCapacityModes": {
+          "public-bounded": 80
+        },
+        "bootstrapCapacityVersions": {
+          "4": 80
+        },
+        "subjectStatesBounded": {
+          "false": 80
+        },
+        "topTailSamples": [
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-19",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1128.8,
+            "responseBytes": 2449,
+            "clientRequestId": "req_f5bf6e2732cce93993e72ab5",
+            "serverRequestId": "req_f5bf6e2732cce93993e72ab5",
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 749,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-09",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1121.9,
+            "responseBytes": 2449,
+            "clientRequestId": "req_d9cf480c0553543f73703862",
+            "serverRequestId": "req_d9cf480c0553543f73703862",
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 783,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-15",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1108.1,
+            "responseBytes": 2449,
+            "clientRequestId": "req_1633db1edde6d730fc3c3f57",
+            "serverRequestId": "req_1633db1edde6d730fc3c3f57",
+            "queryCount": 11,
+            "d1RowsRead": 8,
+            "d1RowsWritten": 0,
+            "serverWallMs": 731,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-04",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1067.2,
+            "responseBytes": 2449,
+            "clientRequestId": "req_40a4642981cb1da85ea66581",
+            "serverRequestId": "req_40a4642981cb1da85ea66581",
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 950,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-18",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1057.3,
+            "responseBytes": 2449,
+            "clientRequestId": "req_25e10d418ccefaab3b04cf30",
+            "serverRequestId": "req_25e10d418ccefaab3b04cf30",
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 909,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-08",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1053,
+            "responseBytes": 2449,
+            "clientRequestId": "req_49b4ac73306418aceae06fbd",
+            "serverRequestId": "req_49b4ac73306418aceae06fbd",
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 931,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-10",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1052.4,
+            "responseBytes": 2449,
+            "clientRequestId": "req_adbbb7ccd0922485557dac72",
+            "serverRequestId": "req_adbbb7ccd0922485557dac72",
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 886,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-13",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1051,
+            "responseBytes": 2449,
+            "clientRequestId": "req_5e6cdb074d98dfb40e430b0c",
+            "serverRequestId": "req_5e6cdb074d98dfb40e430b0c",
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 886,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-12",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1048,
+            "responseBytes": 2449,
+            "clientRequestId": "req_45bcc04575f62779450770a3",
+            "serverRequestId": "req_45bcc04575f62779450770a3",
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 913,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-16",
+            "status": 200,
+            "ok": true,
+            "wallMs": 1048,
+            "responseBytes": 2449,
+            "clientRequestId": "req_571adcb7a8746b7df3aa7891",
+            "serverRequestId": "req_571adcb7a8746b7df3aa7891",
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 903,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          }
+        ]
+      },
+      "POST /api/subjects/grammar/command": {
+        "phase": "command",
+        "count": 180,
+        "p50WallMs": 331.1,
+        "p95WallMs": 383.8,
+        "maxWallMs": 451.7,
+        "p50ResponseBytes": 16590,
+        "p95ResponseBytes": 29602,
+        "maxResponseBytes": 29602,
+        "queryCount": 23,
+        "queryCountP50": 20,
+        "queryCountP95": 22,
+        "queryCountMax": 23,
+        "d1RowsRead": 192,
+        "d1RowsReadP50": 21,
+        "d1RowsReadP95": 25,
+        "d1RowsReadMax": 192,
+        "d1RowsWritten": 33,
+        "d1RowsWrittenP50": 17,
+        "d1RowsWrittenP95": 32,
+        "d1RowsWrittenMax": 33,
+        "serverWallMsP50": 291,
+        "serverWallMsP95": 344,
+        "serverWallMsMax": 416,
+        "serverResponseBytesP50": 16383,
+        "serverResponseBytesP95": 29395,
+        "serverResponseBytesMax": 29395,
+        "topTailSamples": [
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-35",
+            "status": 200,
+            "ok": true,
+            "wallMs": 451.7,
+            "responseBytes": 15611,
+            "clientRequestId": "req_4bd2a0bf2621bb9960f78890",
+            "serverRequestId": "req_4bd2a0bf2621bb9960f78890",
+            "queryCount": 20,
+            "d1RowsRead": 15,
+            "d1RowsWritten": 16,
+            "serverWallMs": 416,
+            "serverResponseBytes": 15392
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-01",
+            "status": 200,
+            "ok": true,
+            "wallMs": 436.6,
+            "responseBytes": 15607,
+            "clientRequestId": "req_d23e589f335b34f487c5f4f7",
+            "serverRequestId": "req_d23e589f335b34f487c5f4f7",
+            "queryCount": 21,
+            "d1RowsRead": 133,
+            "d1RowsWritten": 16,
+            "serverWallMs": 372,
+            "serverResponseBytes": 15387
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-15",
+            "status": 200,
+            "ok": true,
+            "wallMs": 401.8,
+            "responseBytes": 15609,
+            "clientRequestId": "req_cb8c1740b513f9d55a032f36",
+            "serverRequestId": "req_cb8c1740b513f9d55a032f36",
+            "queryCount": 20,
+            "d1RowsRead": 15,
+            "d1RowsWritten": 16,
+            "serverWallMs": 368,
+            "serverResponseBytes": 15390
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-10",
+            "status": 200,
+            "ok": true,
+            "wallMs": 400.4,
+            "responseBytes": 29596,
+            "clientRequestId": "req_12a4b527d436cc1524d2aded",
+            "serverRequestId": "req_12a4b527d436cc1524d2aded",
+            "queryCount": 22,
+            "d1RowsRead": 25,
+            "d1RowsWritten": 32,
+            "serverWallMs": 357,
+            "serverResponseBytes": 29389
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-30",
+            "status": 200,
+            "ok": true,
+            "wallMs": 394,
+            "responseBytes": 15609,
+            "clientRequestId": "req_b425ca3499538b2b04e628d0",
+            "serverRequestId": "req_b425ca3499538b2b04e628d0",
+            "queryCount": 20,
+            "d1RowsRead": 15,
+            "d1RowsWritten": 16,
+            "serverWallMs": 358,
+            "serverResponseBytes": 15390
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-08",
+            "status": 200,
+            "ok": true,
+            "wallMs": 390.5,
+            "responseBytes": 15609,
+            "clientRequestId": "req_0a31773f6405f446bd4a3fbe",
+            "serverRequestId": "req_0a31773f6405f446bd4a3fbe",
+            "queryCount": 20,
+            "d1RowsRead": 15,
+            "d1RowsWritten": 16,
+            "serverWallMs": 354,
+            "serverResponseBytes": 15390
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-31",
+            "status": 200,
+            "ok": true,
+            "wallMs": 386.5,
+            "responseBytes": 15609,
+            "clientRequestId": "req_94bc20dcf71b6d9ed9e45b15",
+            "serverRequestId": "req_94bc20dcf71b6d9ed9e45b15",
+            "queryCount": 20,
+            "d1RowsRead": 15,
+            "d1RowsWritten": 16,
+            "serverWallMs": 344,
+            "serverResponseBytes": 15390
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-39",
+            "status": 200,
+            "ok": true,
+            "wallMs": 385.6,
+            "responseBytes": 15610,
+            "clientRequestId": "req_b723ab332a02fb1dcb1fb748",
+            "serverRequestId": "req_b723ab332a02fb1dcb1fb748",
+            "queryCount": 20,
+            "d1RowsRead": 15,
+            "d1RowsWritten": 16,
+            "serverWallMs": 344,
+            "serverResponseBytes": 15391
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-03",
+            "status": 200,
+            "ok": true,
+            "wallMs": 383.8,
+            "responseBytes": 15606,
+            "clientRequestId": "req_592a8f0dbe8dce9ed6ff273d",
+            "serverRequestId": "req_592a8f0dbe8dce9ed6ff273d",
+            "queryCount": 20,
+            "d1RowsRead": 15,
+            "d1RowsWritten": 16,
+            "serverWallMs": 349,
+            "serverResponseBytes": 15387
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-21",
+            "status": 200,
+            "ok": true,
+            "wallMs": 383.8,
+            "responseBytes": 15609,
+            "clientRequestId": "req_f3a391e43aebd1f604919adf",
+            "serverRequestId": "req_f3a391e43aebd1f604919adf",
+            "queryCount": 20,
+            "d1RowsRead": 15,
+            "d1RowsWritten": 16,
+            "serverWallMs": 346,
+            "serverResponseBytes": 15390
+          }
+        ]
+      }
+    },
+    "phases": {
+      "bootstrap": {
+        "phase": "bootstrap",
+        "count": 80,
+        "p50WallMs": 244.8,
+        "p95WallMs": 1057.3,
+        "maxWallMs": 1128.8,
+        "p50ResponseBytes": 2449,
+        "p95ResponseBytes": 2449,
+        "maxResponseBytes": 2449,
+        "queryCount": 11,
+        "queryCountP50": 11,
+        "queryCountP95": 11,
+        "queryCountMax": 11,
+        "d1RowsRead": 9,
+        "d1RowsReadP50": 9,
+        "d1RowsReadP95": 9,
+        "d1RowsReadMax": 9,
+        "d1RowsWritten": 0,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "serverWallMsP50": 209,
+        "serverWallMsP95": 903,
+        "serverWallMsMax": 950,
+        "serverResponseBytesP50": 1818,
+        "serverResponseBytesP95": 1818,
+        "serverResponseBytesMax": 1818,
+        "bootstrapModes": {
+          "selected-learner-bounded": 80
+        },
+        "bootstrapCapacityModes": {
+          "public-bounded": 80
+        },
+        "bootstrapCapacityVersions": {
+          "4": 80
+        },
+        "subjectStatesBounded": {
+          "false": 80
+        }
+      },
+      "command": {
+        "phase": "command",
+        "count": 180,
+        "p50WallMs": 331.1,
+        "p95WallMs": 383.8,
+        "maxWallMs": 451.7,
+        "p50ResponseBytes": 16590,
+        "p95ResponseBytes": 29602,
+        "maxResponseBytes": 29602,
+        "queryCount": 23,
+        "queryCountP50": 20,
+        "queryCountP95": 22,
+        "queryCountMax": 23,
+        "d1RowsRead": 192,
+        "d1RowsReadP50": 21,
+        "d1RowsReadP95": 25,
+        "d1RowsReadMax": 192,
+        "d1RowsWritten": 33,
+        "d1RowsWrittenP50": 17,
+        "d1RowsWrittenP95": 32,
+        "d1RowsWrittenMax": 33,
+        "serverWallMsP50": 291,
+        "serverWallMsP95": 344,
+        "serverWallMsMax": 416,
+        "serverResponseBytesP50": 16383,
+        "serverResponseBytesP95": 29395,
+        "serverResponseBytesMax": 29395
+      }
+    },
+    "scenarios": {
+      "initial-bootstrap": {
+        "phase": "bootstrap",
+        "count": 60,
+        "p50WallMs": 240.3,
+        "p95WallMs": 260.5,
+        "maxWallMs": 388.5,
+        "p50ResponseBytes": 2449,
+        "p95ResponseBytes": 2449,
+        "maxResponseBytes": 2449,
+        "queryCount": 11,
+        "queryCountP50": 11,
+        "queryCountP95": 11,
+        "queryCountMax": 11,
+        "d1RowsRead": 9,
+        "d1RowsReadP50": 9,
+        "d1RowsReadP95": 9,
+        "d1RowsReadMax": 9,
+        "d1RowsWritten": 0,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "serverWallMsP50": 205,
+        "serverWallMsP95": 220,
+        "serverWallMsMax": 227,
+        "serverResponseBytesP50": 1818,
+        "serverResponseBytesP95": 1818,
+        "serverResponseBytesMax": 1818,
+        "bootstrapModes": {
+          "selected-learner-bounded": 60
+        },
+        "bootstrapCapacityModes": {
+          "public-bounded": 60
+        },
+        "bootstrapCapacityVersions": {
+          "4": 60
+        },
+        "subjectStatesBounded": {
+          "false": 60
+        }
+      },
+      "cold-bootstrap-burst": {
+        "phase": "bootstrap",
+        "count": 20,
+        "p50WallMs": 1015,
+        "p95WallMs": 1121.9,
+        "maxWallMs": 1128.8,
+        "p50ResponseBytes": 2449,
+        "p95ResponseBytes": 2449,
+        "maxResponseBytes": 2449,
+        "queryCount": 11,
+        "queryCountP50": 11,
+        "queryCountP95": 11,
+        "queryCountMax": 11,
+        "d1RowsRead": 9,
+        "d1RowsReadP50": 9,
+        "d1RowsReadP95": 9,
+        "d1RowsReadMax": 9,
+        "d1RowsWritten": 0,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "serverWallMsP50": 836,
+        "serverWallMsP95": 931,
+        "serverWallMsMax": 950,
+        "serverResponseBytesP50": 1818,
+        "serverResponseBytesP95": 1818,
+        "serverResponseBytesMax": 1818,
+        "bootstrapModes": {
+          "selected-learner-bounded": 20
+        },
+        "bootstrapCapacityModes": {
+          "public-bounded": 20
+        },
+        "bootstrapCapacityVersions": {
+          "4": 20
+        },
+        "subjectStatesBounded": {
+          "false": 20
+        }
+      },
+      "human-paced-grammar-round": {
+        "phase": "command",
+        "count": 180,
+        "p50WallMs": 331.1,
+        "p95WallMs": 383.8,
+        "maxWallMs": 451.7,
+        "p50ResponseBytes": 16590,
+        "p95ResponseBytes": 29602,
+        "maxResponseBytes": 29602,
+        "queryCount": 23,
+        "queryCountP50": 20,
+        "queryCountP95": 22,
+        "queryCountMax": 23,
+        "d1RowsRead": 192,
+        "d1RowsReadP50": 21,
+        "d1RowsReadP95": 25,
+        "d1RowsReadMax": 192,
+        "d1RowsWritten": 33,
+        "d1RowsWrittenP50": 17,
+        "d1RowsWrittenP95": 32,
+        "d1RowsWrittenMax": 33,
+        "serverWallMsP50": 291,
+        "serverWallMsP95": 344,
+        "serverWallMsMax": 416,
+        "serverResponseBytesP50": 16383,
+        "serverResponseBytesP95": 29395,
+        "serverResponseBytesMax": 29395
+      }
+    },
+    "signals": {},
+    "failures": []
+  },
+  "startedAt": "2026-05-01T13:07:38.685Z",
+  "finishedAt": "2026-05-01T13:08:54.588Z",
+  "sessionSourceMode": "manifest",
+  "thresholds": {
+    "max5xx": {
+      "configured": 0,
+      "observed": 0,
+      "passed": true
+    },
+    "maxNetworkFailures": {
+      "configured": 0,
+      "observed": 0,
+      "passed": true
+    },
+    "maxBootstrapP95Ms": {
+      "configured": 750,
+      "observed": 1057.3,
+      "passed": false
+    },
+    "maxCommandP95Ms": {
+      "configured": 400,
+      "observed": 383.8,
+      "passed": true
+    },
+    "maxResponseBytes": {
+      "configured": 600000,
+      "observed": 29602,
+      "passed": true
+    },
+    "requireZeroSignals": {
+      "configured": true,
+      "observed": 0,
+      "passed": true
+    },
+    "requireBootstrapCapacity": {
+      "configured": true,
+      "observed": {
+        "queryCount": 11,
+        "d1RowsRead": 9
+      },
+      "passed": true
+    },
+    "configured": true,
+    "violations": [
+      {
+        "threshold": "max-bootstrap-p95-ms",
+        "limit": 750,
+        "observed": 1057.3,
+        "message": "Bootstrap P95 wall time 1057.3 ms exceeds 750 ms."
+      }
+    ],
+    "limits": {
+      "max5xx": 0,
+      "maxNetworkFailures": 0,
+      "maxBootstrapP95Ms": 750,
+      "maxCommandP95Ms": 400,
+      "maxResponseBytes": 600000,
+      "requireZeroSignals": true,
+      "requireBootstrapCapacity": true
+    }
+  },
+  "failures": [
+    "maxBootstrapP95Ms"
+  ],
+  "safety": {
+    "mode": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "learners": 60,
+    "bootstrapBurst": 20,
+    "demoSessions": false,
+    "authMode": "session-manifest",
+    "confirmedVia": [
+      "production-load",
+      "high-production-load"
+    ]
+  },
+  "diagnostics": {
+    "classification": {
+      "kind": "diagnostic",
+      "certificationEligible": false,
+      "reasons": [
+        "session-manifest-requires-equivalence-record",
+        "non-p6-30-learner-gate-shape",
+        "threshold-config-not-p6-30-learner-beta",
+        "threshold-violations"
+      ],
+      "targetTier": "60-learner-stretch-certified",
+      "runShape": {
+        "mode": "production",
+        "origin": "https://ks2.eugnel.uk",
+        "originClass": "production",
+        "learners": 60,
+        "bootstrapBurst": 20,
+        "rounds": 1,
+        "sessionSourceMode": "manifest",
+        "releaseGateShape": false
+      },
+      "shapeEligible": false,
+      "thresholdEligible": false,
+      "evidenceComplete": true
+    },
+    "evidenceLane": {
+      "matrix": "p1-evidence-attribution",
+      "lane": "diagnostic-session-manifest",
+      "diagnosticOnly": true,
+      "certificationCandidate": false,
+      "requiresUniqueOutputPath": true,
+      "reasons": [
+        "session-manifest-requires-equivalence-record",
+        "non-p6-30-learner-gate-shape",
+        "threshold-config-not-p6-30-learner-beta"
+      ]
+    },
+    "runShape": {
+      "mode": "production",
+      "origin": "https://ks2.eugnel.uk",
+      "originClass": "production",
+      "learners": 60,
+      "bootstrapBurst": 20,
+      "rounds": 1,
+      "sessionSourceMode": "manifest",
+      "releaseGateShape": false
+    },
+    "endpointInventory": {
+      "hasBootstrapMetrics": true,
+      "hasCommandMetrics": true,
+      "bootstrapEndpointKeys": [
+        "GET /api/bootstrap"
+      ],
+      "commandEndpointKeys": [
+        "POST /api/subjects/grammar/command"
+      ]
+    },
+    "thresholdConfig": {
+      "configPath": "reports/capacity/configs/60-learner-stretch.json",
+      "tier": "60-learner-stretch-certified",
+      "minEvidenceSchemaVersion": 2,
+      "hash": "fee6a9018964bda4a3ae2d32dcea193717a66a5ed9101f891a963b3b17204457"
+    },
+    "thresholdViolations": [
+      {
+        "threshold": "max-bootstrap-p95-ms",
+        "limit": 750,
+        "observed": 1057.3,
+        "message": "Bootstrap P95 wall time 1057.3 ms exceeds 750 ms."
+      }
+    ]
+  },
+  "reportMeta": {
+    "commit": "dcb699e99134130e61787973a0b66837652ffa49",
+    "environment": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "authMode": "session-manifest",
+    "learners": 60,
+    "bootstrapBurst": 20,
+    "rounds": 1,
+    "startedAt": "2026-05-01T13:07:38.685Z",
+    "finishedAt": "2026-05-01T13:08:54.588Z",
+    "evidenceSchemaVersion": 3,
+    "provenance": {
+      "workflowRunUrl": "unknown",
+      "workflowName": "unknown",
+      "gitSha": "dcb699e99134130e61787973a0b66837652ffa49",
+      "dirtyTreeFlag": false,
+      "thresholdConfigHash": "fee6a9018964bda4a3ae2d32dcea193717a66a5ed9101f891a963b3b17204457",
+      "loadDriverVersion": "0.1.0",
+      "operator": "jamesto",
+      "rawLogArtifactPath": "none"
+    }
+  },
+  "tier": {
+    "tier": "60-learner-stretch-certified",
+    "minEvidenceSchemaVersion": 2,
+    "configPath": "reports/capacity/configs/60-learner-stretch.json"
+  },
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "requestIds": "sha256:24",
+    "rawRequestIdsPersisted": false
+  }
+}

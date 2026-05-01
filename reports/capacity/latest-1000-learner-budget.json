@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "kind": "capacity-1000-learner-free-tier-budget-ledger",
-  "generatedAt": "2026-05-01T10:42:18.460Z",
+  "generatedAt": "2026-05-01T13:10:43.020Z",
   "modellingOnly": true,
   "certifying": false,
   "certification": {
@@ -24,9 +24,9 @@
   "redThresholdPercent": 80,
   "sources": [
     {
-      "path": "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+      "path": "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
       "evidenceKind": "route-cost-diagnostic",
-      "finishedAt": "2026-05-01T10:42:07.099Z",
+      "finishedAt": "2026-05-01T13:10:36.284Z",
       "inputCertifying": false,
       "usedForCertification": false,
       "modellingInputStatus": "non-certifying-modelling-input"
@@ -41,8 +41,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
       "count": null,
@@ -79,9 +80,12 @@
       "evidenceStatus": "diagnostic-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p3-t5-strict-r2-tail-correlation.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-60-diagnostic.json",
+        "reports/capacity/evidence/2026-05-01-p6-60-tail-correlation.json",
         "reports/capacity/evidence/60-learner-stretch-preflight-20260428-p6.json",
         "reports/capacity/latest-1000-learner-budget.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
@@ -89,15 +93,15 @@
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r2.json"
       ],
       "count": 80,
-      "wallMsP50": 710.2,
-      "wallMsP95": 854,
-      "wallMsMax": 855.6,
+      "wallMsP50": 1053,
+      "wallMsP95": 1128.8,
+      "wallMsMax": 1128.8,
       "queryCountP50": 12,
       "queryCountP95": 12,
       "queryCountMax": 12,
-      "d1DurationMsP50": 164.50390000000002,
-      "d1DurationMsP95": 197.4371,
-      "d1DurationMsMax": 197.4371,
+      "d1DurationMsP50": 480.24069999999995,
+      "d1DurationMsP95": 597.6092,
+      "d1DurationMsMax": 597.6092,
       "d1RowsReadP50": 10,
       "d1RowsReadP95": 10,
       "d1RowsReadMax": 10,
@@ -110,9 +114,9 @@
       "workerCpuMsP50": 13,
       "workerCpuMsP95": 21,
       "workerCpuMsMax": 21,
-      "workerWallMsP50": 282,
-      "workerWallMsP95": 354,
-      "workerWallMsMax": 354
+      "workerWallMsP50": 914,
+      "workerWallMsP95": 957,
+      "workerWallMsMax": 957
     },
     {
       "route": "GET /api/hero/read-model",
@@ -122,8 +126,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
       "count": null,
@@ -160,8 +165,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
       "count": null,
@@ -198,8 +204,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
       "count": null,
@@ -236,8 +243,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r1.json",
@@ -278,8 +286,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
       "count": null,
@@ -317,8 +326,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
       "count": null,
@@ -356,8 +366,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
       "count": null,
@@ -394,8 +405,10 @@
       "evidenceStatus": "diagnostic-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-60-diagnostic.json",
         "reports/capacity/evidence/60-learner-stretch-preflight-20260428-p6.json",
         "reports/capacity/latest-1000-learner-budget.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
@@ -403,9 +416,9 @@
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r2.json"
       ],
       "count": 180,
-      "wallMsP50": 260.1,
-      "wallMsP95": 295.2,
-      "wallMsMax": 325.3,
+      "wallMsP50": 331.1,
+      "wallMsP95": 383.8,
+      "wallMsMax": 451.7,
       "queryCountP50": 20,
       "queryCountP95": 23,
       "queryCountMax": 24,
@@ -436,8 +449,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
       "count": null,
@@ -474,8 +488,9 @@
       "evidenceStatus": "modelling-only",
       "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
-        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
+        "reports/capacity/evidence/2026-05-01-p6-route-costs-after-60-diagnostic.json",
         "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p6-route-costs.json",
         "reports/capacity/latest-1000-learner-budget.json"
       ],
       "count": null,
