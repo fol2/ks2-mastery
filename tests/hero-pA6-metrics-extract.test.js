@@ -185,6 +185,7 @@ describe('Hero Mode pA6 schema extraction', () => {
     assert.equal(report.privacy.status, 'not-evaluated');
     assert.equal(report.privacy.passed, null);
     assert.equal(report.privacy.failureCount, 0);
+    assert.equal(report.stateInspection.failureCount, 0);
     assert.equal(getMetric(report, 'pa6-safety-06').evidenceState, 'no-live-export-supplied');
     assert.ok(report.decisionImpact.reasons.some((reason) => reason.includes('No supplied live Hero production export rows')));
   });
@@ -285,6 +286,17 @@ describe('Hero Mode pA6 schema extraction', () => {
     assert.equal(report.privacy.parseErrorCount, 1);
     assert.equal(report.privacy.failureCount, 1);
     assert.equal(getMetric(report, 'pa6-safety-06').value, 1);
+    assert.equal(report.decisionImpact.recommendedOutcome, 'ROLL BACK TO COHORT ONLY');
+  });
+
+  it('fails closed when authoritative Hero state_json is malformed', () => {
+    const input = makeHealthyInput();
+    input.child_game_state[0].state_json = '{not valid json';
+
+    const report = buildA6MetricsReport(input);
+    assert.equal(report.stateInspection.failureCount, 1);
+    assert.equal(report.stateInspection.parseErrorCount, 1);
+    assert.equal(getMetric(report, 'pa6-safety-03').value, 1);
     assert.equal(report.decisionImpact.recommendedOutcome, 'ROLL BACK TO COHORT ONLY');
   });
 });

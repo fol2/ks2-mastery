@@ -39,7 +39,7 @@ no-live-export-supplied
 
 Zero supplied rows do not prove zero production issues. They prove that no live production export was supplied to this A6 branch.
 
-For the same reason, privacy validation in the machine-readable report is `status: "not-evaluated"` with `passed: null`; it must not be read as a live privacy pass. When Hero event rows are supplied, malformed, missing, or non-object `event_json` payloads fail closed as privacy evaluation failures.
+For the same reason, privacy validation in the machine-readable report is `status: "not-evaluated"` with `passed: null`; it must not be read as a live privacy pass. When Hero event rows are supplied, malformed, missing, or non-object `event_json` payloads fail closed as privacy evaluation failures. Malformed or non-object `child_game_state.state_json` rows also fail closed as authoritative state inspection failures.
 
 ---
 
@@ -99,7 +99,7 @@ For the same reason, privacy validation in the machine-readable report is `statu
 |--------|----------------|---------------|-------------|
 | Duplicate daily award | schema-derived | 0 from supplied rows | Needs live Hero state export |
 | Duplicate Camp debit | schema-derived | 0 from supplied rows | Needs live Hero state export |
-| Negative balance | schema-derived | 0 from supplied rows | Needs live Hero state export |
+| Negative balance | schema-derived | 0 from supplied rows | Needs live Hero state export; malformed Hero state fails closed as an inspection failure |
 | Dead CTA | not-observable-yet | Not observable | Needs browser smoke |
 | Claim without Worker-verified completion | schema-derived | 0 from supplied rows | Needs live Hero state and telemetry |
 | Raw child content | observed-live | Not evaluated | Needs live telemetry export; malformed or missing Hero `event_json` fails closed |

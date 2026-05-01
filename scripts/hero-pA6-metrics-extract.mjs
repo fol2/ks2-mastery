@@ -240,7 +240,7 @@ export const PA6_METRIC_REGISTRY = Object.freeze([
     name: 'negative balance',
     sourceType: 'schema-derived',
     sourceTables: ['child_game_state'],
-    extraction: 'Inspect economy.balance and ledger balanceAfter values in Hero progress JSON.',
+    extraction: 'Inspect economy.balance and ledger balanceAfter values in Hero progress JSON; malformed Hero state fails closed as an inspection failure.',
   },
   {
     id: 'pa6-safety-04',
@@ -318,17 +318,6 @@ export function assertNoConceptualTables(registry = PA6_METRIC_REGISTRY) {
   };
 }
 
-function parseJsonMaybe(value) {
-  if (value == null || value === '') return null;
-  if (typeof value === 'object') return value;
-  if (typeof value !== 'string') return null;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-}
-
 function parseEventJson(value) {
   if (value == null || value === '') {
     return { value: null, parseError: false };
@@ -348,6 +337,31 @@ function parseEventJson(value) {
     };
   } catch {
     return { value: null, parseError: true };
+  }
+}
+
+function parseStateJson(value) {
+  if (value == null || value === '') {
+    return { value: {}, parseError: true };
+  }
+  if (typeof value === 'object') {
+    return {
+      value: value && !Array.isArray(value) ? value : {},
+      parseError: !value || Array.isArray(value),
+    };
+  }
+  if (typeof value !== 'string') {
+    return { value: {}, parseError: true };
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return {
+      value: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {},
+      parseError: !parsed || typeof parsed !== 'object' || Array.isArray(parsed),
+    };
+  } catch {
+    return { value: {}, parseError: true };
   }
 }
 
@@ -397,11 +411,13 @@ export function parseHeroStateRows(rawRows = []) {
   return rawRows
     .filter((row) => (row.system_id ?? row.systemId) === 'hero-mode')
     .map((row) => {
-      const rawState = parseJsonMaybe(row.state_json ?? row.stateJson) || {};
+      const parsedState = parseStateJson(row.state_json ?? row.stateJson);
+      const rawState = parsedState.value;
       return {
         learnerId: row.learner_id ?? row.learnerId ?? null,
         updatedAt: row.updated_at ?? row.updatedAt ?? null,
         updatedAtMs: normaliseCreatedAt(row.updated_at ?? row.updatedAt),
+        stateJsonParseError: parsedState.parseError,
         rawState,
         economy: rawState.economy && typeof rawState.economy === 'object' ? rawState.economy : {},
         heroPool: rawState.heroPool && typeof rawState.heroPool === 'object' ? rawState.heroPool : {},
@@ -591,6 +607,15 @@ function computeExtraPracticeAfterCap(events) {
 }
 
 function buildValues({ events, stateRows, childSubjectRows, membershipRows, supportRows }) {
+  const stateInspectionFailures = stateRows
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => row.stateJsonParseError)
+    .map(({ row, index }) => ({
+      rowIndex: index,
+      learnerId: row.learnerId,
+      reason: 'malformed-or-non-object-state-json',
+    }));
+  const stateInspectionFailureCount = stateInspectionFailures.length;
   const ledgerEntries = ledgerEntriesFromStates(stateRows);
   const dailyAwardEntries = ledgerEntries.filter((entry) => entry.type === 'daily-completion-award');
   const campDebitEntries = ledgerEntries.filter((entry) => entry.type === 'monster-invite' || entry.type === 'monster-grow');
@@ -647,7 +672,8 @@ function buildValues({ events, stateRows, childSubjectRows, membershipRows, supp
       `${entry.learnerId || ''}|${entry.type || ''}|${entry.monsterId || ''}|${entry.stageAfter ?? ''}|${entry.branch || ''}`
     )),
   );
-  const negativeBalanceCount = stateRows.filter((row) => typeof row.economy?.balance === 'number' && row.economy.balance < 0).length
+  const negativeBalanceCount = stateInspectionFailureCount
+    + stateRows.filter((row) => typeof row.economy?.balance === 'number' && row.economy.balance < 0).length
     + ledgerEntries.filter((entry) => typeof entry.balanceAfter === 'number' && entry.balanceAfter < 0).length;
 
   const dailyCompleteKeys = new Set(dailyCompletedEvents.map((event) => {
@@ -718,6 +744,11 @@ function buildValues({ events, stateRows, childSubjectRows, membershipRows, supp
     'pa6-safety-09': null,
     'pa6-safety-10': null,
     _privacy: privacy,
+    _stateInspection: {
+      parseErrorCount: stateInspectionFailureCount,
+      failureCount: stateInspectionFailureCount,
+      failures: stateInspectionFailures,
+    },
     _eventMirrorCounts: {
       taskCompleted: taskCompletedEvents.length,
       dailyCompleted: dailyCompletedEvents.length,
@@ -772,6 +803,7 @@ export function buildA6MetricsReport(input = {}, options = {}) {
     },
     eventMirrorCounts: values._eventMirrorCounts,
     privacy: values._privacy,
+    stateInspection: values._stateInspection,
     metrics,
     blindSpots: [
       ...notObservable.map((metric) => ({ id: metric.id, name: metric.name, reason: metric.extraction })),
