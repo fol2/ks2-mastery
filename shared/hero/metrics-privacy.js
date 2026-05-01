@@ -14,6 +14,7 @@ export const PRIVACY_FORBIDDEN_FIELDS = Object.freeze([
   'answerText',
   'rawText',
   'childContent',
+  'childName',
 ]);
 
 const MAX_DEPTH = 50;

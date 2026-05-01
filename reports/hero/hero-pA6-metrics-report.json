@@ -1,0 +1,548 @@
+{
+  "phase": "hero-mode-pA6",
+  "generatedAt": "2026-05-01T17:22:22.108Z",
+  "evidenceState": "no-live-export-supplied",
+  "dateRange": {
+    "from": null,
+    "to": null
+  },
+  "sourceCounts": {
+    "eventLogRows": 0,
+    "heroStateRows": 0,
+    "childSubjectStateRows": 0,
+    "membershipRows": 0,
+    "supportRows": 0
+  },
+  "sourceTruth": {
+    "economyAuthority": "child_game_state.state_json where system_id='hero-mode'",
+    "eventLogRole": "telemetry mirror only",
+    "conceptualTablesAbsent": true,
+    "conceptualTableOffenders": []
+  },
+  "eventMirrorCounts": {
+    "taskCompleted": 0,
+    "dailyCompleted": 0,
+    "coinAwarded": 0,
+    "campEvents": 0
+  },
+  "privacy": {
+    "passed": null,
+    "status": "not-evaluated",
+    "rowsChecked": 0,
+    "violationCount": 0,
+    "parseErrorCount": 0,
+    "notEvaluatedCount": 0,
+    "failureCount": 0,
+    "violations": [],
+    "parseFailures": [],
+    "notEvaluatedRows": []
+  },
+  "stateInspection": {
+    "parseErrorCount": 0,
+    "failureCount": 0,
+    "failures": []
+  },
+  "metrics": [
+    {
+      "id": "pa6-launch-01",
+      "category": "launch",
+      "name": "eligible ready-subject learner count",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_subject_state",
+        "account_learner_memberships"
+      ],
+      "extraction": "Count distinct learners with ready-subject state rows; final launchability still requires smoke proof.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-launch-02",
+      "category": "launch",
+      "name": "exposed account count",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "event_log",
+        "account_learner_memberships"
+      ],
+      "extraction": "Count distinct actor accounts from Hero telemetry and linked accounts for learners with Hero state.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-launch-03",
+      "category": "launch",
+      "name": "Hero Quest shown count",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "Requires client render telemetry or browser-smoke evidence; do not infer from registry presence.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-launch-04",
+      "category": "launch",
+      "name": "Hero Quest start count",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state"
+      ],
+      "extraction": "Count learner-days where Hero progress has firstStartedAt or at least one task started/completed.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-launch-05",
+      "category": "launch",
+      "name": "Hero task start count",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state"
+      ],
+      "extraction": "Count Hero tasks with status started or completed in the authoritative progress JSON.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-launch-06",
+      "category": "launch",
+      "name": "Hero task completion count",
+      "sourceType": "observed-live",
+      "sourceTables": [
+        "event_log"
+      ],
+      "extraction": "Count event_log rows where system_id='hero-mode' and event_type='hero.task.completed'.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-launch-07",
+      "category": "launch",
+      "name": "daily Hero Quest completion count",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state",
+        "event_log"
+      ],
+      "extraction": "Use child_game_state daily.status=completed as authority, with event_log daily.completed as telemetry mirror.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-launch-08",
+      "category": "launch",
+      "name": "claim success count",
+      "sourceType": "observed-live",
+      "sourceTables": [
+        "event_log"
+      ],
+      "extraction": "Current server mirror records successful claims as hero.task.completed events.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-launch-09",
+      "category": "launch",
+      "name": "claim rejection count",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "Current rejection paths are not persisted in a queryable production table.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-launch-10",
+      "category": "launch",
+      "name": "coin award count",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state"
+      ],
+      "extraction": "Count economy.ledger entries with type=daily-completion-award in Hero progress JSON.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-launch-11",
+      "category": "launch",
+      "name": "Camp open count",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "Camp screen opens are client-side only unless instrumented separately.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-launch-12",
+      "category": "launch",
+      "name": "Camp invite/grow count",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state",
+        "event_log"
+      ],
+      "extraction": "Use economy spending ledger and Hero Pool state as authority; use camp events as telemetry mirror.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-launch-13",
+      "category": "launch",
+      "name": "Hero route 4xx count",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "Requires Workers request logs or explicit persisted route-error telemetry.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-launch-14",
+      "category": "launch",
+      "name": "Hero route 5xx count",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "Requires Workers request logs or explicit persisted route-error telemetry.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-product-01",
+      "category": "product",
+      "name": "start rate from shown",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "The shown denominator requires client render telemetry. Use server-started counts only as a narrower decision substitute.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-product-02",
+      "category": "product",
+      "name": "completion rate from server-started learner-days",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state"
+      ],
+      "extraction": "daily.status=completed divided by learner-days with firstStartedAt or started/completed tasks.",
+      "value": {
+        "startedLearnerDays": 0,
+        "dailyCompletedStateCount": 0,
+        "rate": 0
+      },
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-product-03",
+      "category": "product",
+      "name": "next-day return rate",
+      "sourceType": "observed-live",
+      "sourceTables": [
+        "event_log"
+      ],
+      "extraction": "Approximate from distinct learner-date pairs in Hero telemetry.",
+      "value": {
+        "activeLearnerDays": 0,
+        "returnNextDayCount": 0,
+        "rate": 0
+      },
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-product-04",
+      "category": "product",
+      "name": "subject mix distribution",
+      "sourceType": "observed-live",
+      "sourceTables": [
+        "event_log"
+      ],
+      "extraction": "Count subject_id on hero.task.completed telemetry rows.",
+      "value": {},
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-product-05",
+      "category": "product",
+      "name": "task-intent mix",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state"
+      ],
+      "extraction": "Count current Hero task intent values in authoritative progress JSON.",
+      "value": {},
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-product-06",
+      "category": "product",
+      "name": "abandonment point distribution",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "Requires client/session instrumentation beyond current Hero state and event mirror.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-product-07",
+      "category": "product",
+      "name": "parent/support confusion reports",
+      "sourceType": "manual-support-log",
+      "sourceTables": [],
+      "extraction": "Count support-log rows in category=comprehension.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-product-08",
+      "category": "product",
+      "name": "Camp-before-learning ratio",
+      "sourceType": "observed-live",
+      "sourceTables": [
+        "event_log"
+      ],
+      "extraction": "Compare camp telemetry timestamps with daily.completed telemetry for the same learner-date.",
+      "value": {
+        "campEvents": 0,
+        "beforeLearning": 0,
+        "ratio": 0
+      },
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-product-09",
+      "category": "product",
+      "name": "extra subject practice after daily coin cap",
+      "sourceType": "observed-live",
+      "sourceTables": [
+        "event_log"
+      ],
+      "extraction": "Count task.completed telemetry after daily.completed for the same learner-date.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-product-10",
+      "category": "product",
+      "name": "warning-condition count",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state",
+        "event_log"
+      ],
+      "extraction": "Derived from computed A6 warning checks plus manual support-log thresholds.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-safety-01",
+      "category": "safety",
+      "name": "duplicate daily award",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state"
+      ],
+      "extraction": "Group daily-completion-award ledger entries by learner/date/quest/idempotency key.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-safety-02",
+      "category": "safety",
+      "name": "duplicate Camp debit",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state"
+      ],
+      "extraction": "Group monster-invite and monster-grow ledger entries by learner/idempotency key.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-safety-03",
+      "category": "safety",
+      "name": "negative balance",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state"
+      ],
+      "extraction": "Inspect economy.balance and ledger balanceAfter values in Hero progress JSON; malformed Hero state fails closed as an inspection failure.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-safety-04",
+      "category": "safety",
+      "name": "dead CTA",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "Requires browser smoke or client instrumentation because dead navigation is not persisted.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-safety-05",
+      "category": "safety",
+      "name": "claim without Worker-verified completion",
+      "sourceType": "schema-derived",
+      "sourceTables": [
+        "child_game_state",
+        "event_log"
+      ],
+      "extraction": "Compare daily-award ledger entries with daily completion state and telemetry.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-safety-06",
+      "category": "safety",
+      "name": "raw child content",
+      "sourceType": "observed-live",
+      "sourceTables": [
+        "event_log"
+      ],
+      "extraction": "Run recursive privacy validation against event_json payloads; fail closed on malformed, missing, or non-object payloads.",
+      "value": 0,
+      "observableNow": true,
+      "evidenceState": "no-live-export-supplied"
+    },
+    {
+      "id": "pa6-safety-07",
+      "category": "safety",
+      "name": "subject Star/mastery drift attributable to Hero Mode",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [
+        "child_subject_state"
+      ],
+      "extraction": "Requires pre/post child_subject_state snapshots across the rollout window.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-safety-08",
+      "category": "safety",
+      "name": "exposure to excluded accounts",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "Requires resolver classification export or named smoke accounts; do not infer from event presence alone.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-safety-09",
+      "category": "safety",
+      "name": "rollback failure",
+      "sourceType": "manual-support-log",
+      "sourceTables": [],
+      "extraction": "Recorded by rollback rehearsal evidence, not by normal Hero state rows.",
+      "value": null,
+      "observableNow": true,
+      "evidenceState": "not-observable-yet"
+    },
+    {
+      "id": "pa6-safety-10",
+      "category": "safety",
+      "name": "production 5xx spike attributable to Hero",
+      "sourceType": "not-observable-yet",
+      "sourceTables": [],
+      "extraction": "Requires Workers request logs or explicit persisted route-error telemetry.",
+      "value": null,
+      "observableNow": false,
+      "evidenceState": "not-observable-yet"
+    }
+  ],
+  "blindSpots": [
+    {
+      "id": "pa6-launch-03",
+      "name": "Hero Quest shown count",
+      "reason": "Requires client render telemetry or browser-smoke evidence; do not infer from registry presence."
+    },
+    {
+      "id": "pa6-launch-09",
+      "name": "claim rejection count",
+      "reason": "Current rejection paths are not persisted in a queryable production table."
+    },
+    {
+      "id": "pa6-launch-11",
+      "name": "Camp open count",
+      "reason": "Camp screen opens are client-side only unless instrumented separately."
+    },
+    {
+      "id": "pa6-launch-13",
+      "name": "Hero route 4xx count",
+      "reason": "Requires Workers request logs or explicit persisted route-error telemetry."
+    },
+    {
+      "id": "pa6-launch-14",
+      "name": "Hero route 5xx count",
+      "reason": "Requires Workers request logs or explicit persisted route-error telemetry."
+    },
+    {
+      "id": "pa6-product-01",
+      "name": "start rate from shown",
+      "reason": "The shown denominator requires client render telemetry. Use server-started counts only as a narrower decision substitute."
+    },
+    {
+      "id": "pa6-product-06",
+      "name": "abandonment point distribution",
+      "reason": "Requires client/session instrumentation beyond current Hero state and event mirror."
+    },
+    {
+      "id": "pa6-safety-04",
+      "name": "dead CTA",
+      "reason": "Requires browser smoke or client instrumentation because dead navigation is not persisted."
+    },
+    {
+      "id": "pa6-safety-07",
+      "name": "subject Star/mastery drift attributable to Hero Mode",
+      "reason": "Requires pre/post child_subject_state snapshots across the rollout window."
+    },
+    {
+      "id": "pa6-safety-08",
+      "name": "exposure to excluded accounts",
+      "reason": "Requires resolver classification export or named smoke accounts; do not infer from event presence alone."
+    },
+    {
+      "id": "pa6-safety-10",
+      "name": "production 5xx spike attributable to Hero",
+      "reason": "Requires Workers request logs or explicit persisted route-error telemetry."
+    }
+  ],
+  "decisionImpact": {
+    "recommendedOutcome": "HOLD AT CURRENT ROLLOUT PERCENTAGE",
+    "zeroToleranceBreaches": [],
+    "reasons": [
+      "No supplied live Hero production export rows; normalisation is not supported.",
+      "Safety blind spots still need smoke/log/manual evidence: pa6-safety-04, pa6-safety-07, pa6-safety-08, pa6-safety-10"
+    ]
+  }
+}

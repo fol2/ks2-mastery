@@ -155,8 +155,8 @@ describe('hero-pA5 metrics sanity — product signals', () => {
 
 // ── §8.1 Launch Metrics — 14 required ───────────────────────────────
 
-describe('hero-pA5 metrics sanity — launch metrics derivability', () => {
-  it('all 14 launch metrics are derivable from event counts', () => {
+describe('hero-pA5 metrics sanity — launch metric classification', () => {
+  it('all 14 launch metrics are classified without overclaiming event derivability', () => {
     // The pA5 contract requires 14 launch metrics. The pA4 validator defines
     // 18 (a superset). We verify the 14 required pA5 metrics exist within.
     const PA5_REQUIRED_LAUNCH_NAMES = [
@@ -199,12 +199,22 @@ describe('hero-pA5 metrics sanity — launch metrics derivability', () => {
       assert.ok(mappedId, `pA5 launch metric "${name}" has a mapping`);
       const metric = REQUIRED_LAUNCH_METRICS.find(m => m.id === mappedId);
       assert.ok(metric, `pA4 metric ${mappedId} exists for "${name}"`);
-      // Each metric has either a queryPattern or extractionSource
+      // Each metric has either a real query pattern or an explicit source
+      // classification. not-observable-yet metrics must not pretend to have an
+      // event_log query.
       assert.ok(
         metric.queryPattern || metric.extractionSource,
-        `metric ${mappedId} is derivable (has queryPattern or extractionSource)`,
+        `metric ${mappedId} is classified (has queryPattern or extractionSource)`,
       );
+      if (metric.extractionSource === 'not-observable-yet') {
+        assert.equal(metric.queryPattern, null, `metric ${mappedId} must not invent an event query`);
+      }
     }
+
+    const claimRejection = REQUIRED_LAUNCH_METRICS.find(m => m.id === 'launch-09');
+    assert.equal(claimRejection.extractionSource, 'not-observable-yet');
+    assert.equal(claimRejection.queryPattern, null);
+    assert.match(claimRejection.description, /not persisted/i);
   });
 });
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Hero Mode pA5 — Metrics Sanity Check (U7)
 // Validates that all 34 required A5 metrics (14 launch + 10 product + 10 safety)
-// are derivable from existing infrastructure.
+// have registry/function mappings. This is not production evidence; pA6 uses
+// scripts/hero-pA6-metrics-extract.mjs for schema-accurate extraction.
 //
 // Usage: node scripts/hero-pA5-metrics-sanity-check.mjs
 //
@@ -207,7 +208,8 @@ function main() {
     process.exit(1);
   }
 
-  console.log('\n[PASS] All 34 metrics are mapped and validated.');
+  console.log('\n[PASS] All 34 metrics have registry/function mappings.');
+  console.log('[NOTE] Mapping coverage is not production evidence. Use hero-pA6-metrics-extract.mjs for schema-accurate live extraction.');
   process.exit(0);
 }
 
