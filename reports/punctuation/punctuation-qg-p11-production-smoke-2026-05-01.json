@@ -1,0 +1,82 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "accountId": "demo-bc36GTZqe2FPPQ",
+  "learnerId": "learner-demo-1S9uphhU18cMJA",
+  "attestation": {
+    "environment": "production",
+    "releaseId": "punctuation-qg-p11-2026-05-01",
+    "runtimeItemCount": 1268,
+    "generatedDepth": 40,
+    "workerCommitSha": null,
+    "timestamp": "2026-05-01T22:11:10.873Z",
+    "authenticatedCoverage": true,
+    "adminHubCoverage": false
+  },
+  "punctuation": {
+    "productionObserved": {
+      "releaseId": "punctuation-qg-p11-2026-05-01",
+      "runtimeItems": 1268,
+      "publishedRewardUnits": 14,
+      "generatedItemCommandPathProbe": {
+        "itemId": "gen_speech_insert_1jmy4r7_12",
+        "mode": "insert",
+        "skillIds": [
+          "speech"
+        ],
+        "feedbackKind": "error",
+        "misconceptionTags": [
+          "speech.quote_missing"
+        ]
+      }
+    },
+    "localReleaseManifestExpectation": {
+      "fixedItems": 148,
+      "generatedItems": 1120,
+      "generatedPerFamily": 40,
+      "runtimeItems": 1268,
+      "publishedRewardUnits": 14
+    },
+    "smartItemId": "fx_ac_choose_ill_youll",
+    "smartSummaryTotal": 1,
+    "generatedIncorrectItemId": "gen_speech_insert_1jmy4r7_12",
+    "generatedIncorrectMisconceptionTags": [
+      "speech.quote_missing"
+    ],
+    "dashAcceptance": [
+      {
+        "variant": "spaced-hyphen",
+        "itemId": "dc_insert_alarm_rang",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      },
+      {
+        "variant": "en-dash",
+        "itemId": "dc_insert_alarm_rang",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      },
+      {
+        "variant": "em-dash",
+        "itemId": "dc_insert_door_froze",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      }
+    ],
+    "oxfordCommaItemId": "gen_list_commas_insert_1xz4ao5_26",
+    "advancedMode": "gps",
+    "advancedItemId": "sl_choose_clubs",
+    "advancedReviewItems": 1,
+    "parentHubAttempts": 10
+  },
+  "spelling": {
+    "progressTotal": 1,
+    "hasPromptToken": true
+  }
+}

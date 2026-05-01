@@ -31,13 +31,13 @@
       "evidence": "reports/punctuation/punctuation-qg-p11-surface-pack.json covers 1268 current items, all 192 historical P10 depth-4 item ids, 27 simulated product journeys, and first-click/retry/mixed/due/spaced-return service evidence. Independent engineering and contract reviewers both passed this source-level surface review on 2026-05-01."
     },
     "liveJourneySmoke": {
-      "accepted": false,
-      "status": "not_run",
-      "origin": "",
-      "releaseId": "",
-      "timestamp": "",
-      "artefactPath": "",
-      "evidence": "Live authenticated child journey smoke can only be accepted after the release is deployed."
+      "accepted": true,
+      "status": "accepted_production_smoke",
+      "origin": "https://ks2.eugnel.uk",
+      "releaseId": "punctuation-qg-p11-2026-05-01",
+      "timestamp": "2026-05-01T22:11:10.873Z",
+      "artefactPath": "reports/punctuation/punctuation-qg-p11-production-smoke-2026-05-01.json",
+      "evidence": "Production smoke passed against https://ks2.eugnel.uk using an authenticated demo child session. The deployed read model reported release punctuation-qg-p11-2026-05-01, 1268 runtime items, 14 published reward units, generated-item command-path evidence, dash acceptance, Oxford-comma acceptance, GPS delayed review, Parent Hub Punctuation evidence, and English Spelling smoke parity. Admin Hub production coverage remains false because admin credentials were not available for this smoke."
     }
   }
 }
