@@ -763,6 +763,64 @@ test('smartBucket routes secure-stage words with historical wrongs to fragile be
   assert.deepEqual(result.session.uniqueWords, [fragileSlug]);
 });
 
+test('Smart Review fallback prioritises not-yet-secure historical-wrong words over secure fragile review', () => {
+  const now = () => Date.UTC(2026, 3, 30);
+  const today = Math.floor(now() / (24 * 60 * 60 * 1000));
+  const learnerId = 'learner-nelson-tail';
+  const targetSlugs = ['apparent', 'privilege'];
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const y56Words = WORDS.filter((word) => word.spellingPool === 'core' && word.year === '5-6');
+
+  const progress = Object.fromEntries(y56Words.map((word) => {
+    const blocking = targetSlugs.includes(word.slug);
+    return [word.slug, blocking
+      ? {
+          stage: 3,
+          attempts: 4,
+          correct: 3,
+          wrong: 1,
+          dueDay: today + 2,
+          lastDay: today - 5,
+          lastResult: 'correct',
+        }
+      : {
+          stage: 4,
+          attempts: 6,
+          correct: 5,
+          wrong: 1,
+          dueDay: today + 30,
+          lastDay: today - 7,
+          lastResult: 'correct',
+        }];
+  }));
+  repositories.subjectStates.writeData(learnerId, 'spelling', { progress });
+
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories, now }),
+    now,
+    random: makeSeededRandom(1),
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+
+  const started = service.startSession(learnerId, {
+    mode: 'trouble',
+    yearFilter: 'y5-6',
+    length: 10,
+  });
+
+  assert.equal(started.ok, true);
+  assert.equal(started.state.feedback?.headline, 'Trouble drill fell back to Smart Review.');
+  assert.ok(
+    targetSlugs.every((slug) => started.state.session.uniqueWords.includes(slug)),
+    `expected completion-tail words in session: ${started.state.session.uniqueWords.join(', ')}`,
+  );
+});
+
 // ----- U8: Storage-failure warning surface (Smart Review path) -----------------
 //
 // Goal: when localStorage.setItem throws during a Smart Review submit, the

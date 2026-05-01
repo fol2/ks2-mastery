@@ -317,6 +317,28 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         var bucketWeights = { urgent: 7, fragile: 5, due: 4, new: 3, growing: 2, secure: 0.7 };
         var selected = [];
 
+        var completionTail = available.filter(function (word) {
+          var p = getProgressFromStore(profileId, word.slug, store);
+          return p.attempts > 0 && p.stage > 0 && p.stage < SECURE_STAGE;
+        });
+        if (completionTail.length && completionTail.length <= target) {
+          completionTail.sort(function (a, b) {
+            var aProgress = getProgressFromStore(profileId, a.slug, store);
+            var bProgress = getProgressFromStore(profileId, b.slug, store);
+            if (aProgress.stage !== bProgress.stage) return aProgress.stage - bProgress.stage;
+            if (aProgress.dueDay !== bProgress.dueDay) return aProgress.dueDay - bProgress.dueDay;
+            return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
+          });
+          for (var tailIndex = 0; tailIndex < completionTail.length; tailIndex++) {
+            selected.push(completionTail[tailIndex]);
+          }
+          var completionTailSlugs = Object.create(null);
+          for (var slugIndex = 0; slugIndex < completionTail.length; slugIndex++) {
+            completionTailSlugs[completionTail[slugIndex].slug] = true;
+          }
+          available = available.filter(function (word) { return !completionTailSlugs[word.slug]; });
+        }
+
         while (selected.length < target && available.length) {
           var bucketChoices = Object.keys(bucketWeights).map(function (name) {
             var baseWeight = bucketWeights[name];
