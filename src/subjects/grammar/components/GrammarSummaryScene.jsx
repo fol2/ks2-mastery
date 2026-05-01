@@ -1,4 +1,3 @@
-import { Button } from '../../../platform/ui/Button.jsx';
 import { SessionSummaryFrame } from '../../../platform/ui/SessionSummaryFrame.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import { GrammarMiniTestReview } from './GrammarMiniTestReview.jsx';
@@ -69,11 +68,7 @@ function SummaryCards({ cards }) {
   );
 }
 
-// Aligned ribbon header — sits above the five summary stat cards on the
-// regular-practice branch. Tone is "good" when every answered question was
-// correct, otherwise "warn". Headline + sub-copy mirror the prototype but
-// pull live numbers from the summary cards so we never duplicate state.
-function SummaryRibbon({ cards }) {
+function summaryToneCopy(cards) {
   const cardMap = {};
   for (const card of cards) {
     if (card && typeof card.id === 'string') cardMap[card.id] = card;
@@ -82,7 +77,6 @@ function SummaryRibbon({ cards }) {
   const correct = Number(cardMap.correct?.value ?? 0);
   const trouble = Number(cardMap.trouble?.value ?? 0);
   const cleanRound = answered > 0 && correct === answered && trouble === 0;
-  const tone = cleanRound ? 'good' : 'warn';
   const headline = cleanRound
     ? 'Clean round — every answer landed.'
     : `${correct} of ${answered} correct.`;
@@ -91,22 +85,7 @@ function SummaryRibbon({ cards }) {
     : trouble > 0
       ? `${trouble} concept${trouble === 1 ? '' : 's'} to revisit below.`
       : 'A few wobbles to come back to next round.';
-  return (
-    <div
-      className="grammar-summary-ribbon"
-      data-tone={tone}
-      role="status"
-      aria-live="polite"
-    >
-      <div className="grammar-summary-ribbon-icon" aria-hidden="true">
-        {cleanRound ? '✓' : '!'}
-      </div>
-      <div className="grammar-summary-ribbon-copy">
-        <p className="grammar-summary-ribbon-headline">{headline}</p>
-        <p className="grammar-summary-ribbon-sub">{sub}</p>
-      </div>
-    </div>
-  );
+  return { answered, correct, trouble, cleanRound, headline, sub };
 }
 
 function ScoreCard({ summary }) {
@@ -130,47 +109,6 @@ function ScoreCard({ summary }) {
   );
 }
 
-function PrimaryActions({ buttons, disabled }) {
-  // SH2-U1: child component hosts the hook so a double-tap on any
-  // summary next-action early-returns the second dispatch. The button
-  // list is 2-3 items; sharing a single lock is correct because tapping
-  // two different actions in the same frame would be a user mistake
-  // (e.g. accidentally hitting both "Start again" and "Open bank") —
-  // absorbing the second click here prevents a double navigation.
-  const submitLock = useSubmitLock();
-  return (
-    <div className="grammar-summary-primary-actions" role="group" aria-label="Next steps">
-      {buttons.map((button) => (
-        <Button
-          key={button.action}
-          variant={button.variant || 'primary'}
-          dataAction={button.action}
-          disabled={disabled || button.disabled === true || submitLock.locked}
-          onClick={() => submitLock.run(async () => button.onClick())}
-        >
-          {button.label}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
-function SecondaryActions({ onGrownUp, disabled }) {
-  return (
-    <div className="grammar-summary-secondary-actions">
-      <Button
-        variant="ghost"
-        dataAction="grammar-open-analytics"
-        aria-label="Open adult report"
-        disabled={disabled}
-        onClick={onGrownUp}
-      >
-        Grown-up view
-      </Button>
-    </div>
-  );
-}
-
 function firstMissedMiniTestConceptId(summary) {
   const questions = Array.isArray(summary?.miniTestReview?.questions)
     ? summary.miniTestReview.questions
@@ -189,57 +127,105 @@ function firstMissedMiniTestConceptId(summary) {
   return '';
 }
 
-// U6: Thin adapter mapping existing grammar summary view-model to
-// SessionSummaryFrame props. Preserves existing next-action routes.
-// Display-only — no mastery mutation.
-function GrammarSummaryFrameAdapter({ summary, cards, actions }) {
+function scrollToMiniTestReview() {
+  if (typeof globalThis?.document?.getElementById !== 'function') return;
+  const node = globalThis.document.getElementById('grammar-mini-review-title');
+  if (node && typeof node.scrollIntoView === 'function') {
+    node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// P4 U4: Thin adapter mapping existing grammar summary view-model to
+// SessionSummaryFrame props. The shared frame owns the headline and
+// next-step hierarchy; grammar keeps cards and mini-test review as detail.
+function GrammarSummaryFrameAdapter({
+  summary,
+  cards,
+  actions,
+  disabled,
+  miniTest = false,
+  missedConceptId = '',
+  learner,
+  children,
+}) {
   if (!summary) return null;
-  const cardMap = {};
-  for (const card of (cards || [])) {
-    if (card && typeof card.id === 'string') cardMap[card.id] = card;
-  }
-  const answered = Number(cardMap.answered?.value ?? 0);
-  const correct = Number(cardMap.correct?.value ?? 0);
-  const trouble = Number(cardMap.trouble?.value ?? 0);
-  const cleanRound = answered > 0 && correct === answered && trouble === 0;
+  const submitLock = useSubmitLock();
+  const { correct, cleanRound, headline, sub } = summaryToneCopy(cards || []);
   const outcome = cleanRound ? 'secure' : (correct > 0 ? 'improving' : 'needs-practice');
-  const title = cleanRound
-    ? 'Clean round — every answer landed.'
-    : `${correct} of ${answered} correct.`;
-  const highlights = [];
-  for (const card of (cards || [])) {
-    if (card && card.id !== 'monster-progress' && card.label && card.value !== undefined) {
-      highlights.push(`${card.label}: ${card.value}`);
-    }
-  }
-  const misconceptions = [];
-  if (trouble > 0 && cardMap.trouble?.detail) {
-    misconceptions.push(String(cardMap.trouble.detail));
-  }
-  const nextPrimaryAction = {
-    label: 'Start another round',
-    dataAction: 'grammar-start-again',
-    onClick: () => actions.dispatch('grammar-start-again'),
-  };
-  const secondaryActions = [
-    {
-      label: 'Open Grammar Bank',
-      dataAction: 'grammar-open-concept-bank',
-      variant: 'secondary',
-      onClick: () => actions.dispatch('grammar-open-concept-bank'),
-    },
-  ];
+  const lockedOrDisabled = Boolean(disabled || submitLock.locked);
+  const title = miniTest
+    ? `Nice work, ${learner?.name || 'friend'} — results are in`
+    : 'Nice work — round complete';
+  const subtitle = miniTest ? 'Mini Test complete' : `${headline} ${sub}`;
+  const nextPrimaryAction = miniTest || missedConceptId
+    ? {
+        label: miniTest ? 'Fix missed concepts' : 'Practise missed',
+        dataAction: 'grammar-practise-missed',
+        disabled: lockedOrDisabled || !missedConceptId,
+        onClick: () => submitLock.run(async () => actions.dispatch('grammar-practise-missed')),
+      }
+    : {
+        label: 'Start another round',
+        dataAction: 'grammar-start-again',
+        disabled: lockedOrDisabled,
+        onClick: () => submitLock.run(async () => actions.dispatch('grammar-start-again')),
+      };
+  const secondaryActions = miniTest
+    ? [
+        {
+          label: 'Review answers',
+          dataAction: 'grammar-review-mini-test',
+          variant: 'secondary',
+          disabled: lockedOrDisabled,
+          onClick: () => scrollToMiniTestReview(),
+        },
+        {
+          label: 'Grown-up view',
+          dataAction: 'grammar-open-analytics',
+          variant: 'ghost',
+          ariaLabel: 'Open adult report',
+          disabled: Boolean(disabled),
+          onClick: () => actions.dispatch('grammar-open-analytics'),
+        },
+      ]
+    : [
+        ...(missedConceptId ? [{
+          label: 'Start another round',
+          dataAction: 'grammar-start-again',
+          variant: 'secondary',
+          disabled: lockedOrDisabled,
+          onClick: () => submitLock.run(async () => actions.dispatch('grammar-start-again')),
+        }] : []),
+        {
+          label: 'Open Grammar Bank',
+          dataAction: 'grammar-open-concept-bank',
+          variant: 'secondary',
+          disabled: lockedOrDisabled,
+          onClick: () => submitLock.run(async () => actions.dispatch('grammar-open-concept-bank')),
+        },
+        {
+          label: 'Grown-up view',
+          dataAction: 'grammar-open-analytics',
+          variant: 'ghost',
+          ariaLabel: 'Open adult report',
+          disabled: Boolean(disabled),
+          onClick: () => actions.dispatch('grammar-open-analytics'),
+        },
+      ];
   return (
     <SessionSummaryFrame
       subjectId="grammar"
-      outcome={outcome}
+      outcome={miniTest ? 'review-complete' : outcome}
       title={title}
-      highlights={highlights}
-      misconceptions={misconceptions}
+      subtitle={subtitle}
+      highlights={[]}
+      misconceptions={[]}
       progressDelta={[]}
       nextPrimaryAction={nextPrimaryAction}
       secondaryActions={secondaryActions}
-    />
+    >
+      {children}
+    </SessionSummaryFrame>
   );
 }
 
@@ -255,7 +241,6 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
   const effectiveRewardState = rewardState || grammar.projections?.rewards?.state || {};
   const miniTest = isMiniTestSummary(summary);
   const cards = grammarSummaryCards(summary, effectiveRewardState, null, null);
-  const handleGrownUp = () => actions.dispatch('grammar-open-analytics');
   // U5 follower: regular-practice `Practise missed` is a silent no-op
   // when there is no actionable missed / weak / due concept. Compute the
   // same concept id that `grammar-practise-missed` would resolve inside
@@ -266,98 +251,48 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
 
   if (miniTest) {
     const missedConceptId = firstMissedMiniTestConceptId(summary);
-    // U5 follower: `Fix missed concepts` is the product-suggested next
-    // step after a Mini Test, so it takes the primary variant and leads
-    // the row. `Review answers` is a lower-stakes scroll affordance and
-    // drops to secondary. Order mirrors the hierarchy: primary first.
-    const buttons = [
-      {
-        action: 'grammar-practise-missed',
-        label: 'Fix missed concepts',
-        variant: 'primary',
-        disabled: !missedConceptId,
-        onClick: () => actions.dispatch('grammar-practise-missed'),
-      },
-      {
-        action: 'grammar-review-mini-test',
-        label: 'Review answers',
-        variant: 'secondary',
-        onClick: () => {
-          if (typeof globalThis?.document?.getElementById === 'function') {
-            const node = globalThis.document.getElementById('grammar-mini-review-title');
-            if (node && typeof node.scrollIntoView === 'function') {
-              node.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }
-        },
-      },
-    ];
     return (
       <div
         className="grammar-summary-shell grammar-summary-shell--mini-test"
         data-grammar-phase-root="summary"
       >
-        <section className="card grammar-summary-card-wrap" aria-labelledby="grammar-summary-title">
-          <div className="eyebrow">Mini Test complete</div>
-          <h2 className="section-title" id="grammar-summary-title">
-            Nice work, {learner?.name || 'friend'} — results are in
-          </h2>
+        <GrammarSummaryFrameAdapter
+          summary={summary}
+          cards={cards}
+          actions={actions}
+          disabled={disabled}
+          miniTest
+          missedConceptId={missedConceptId}
+          learner={learner}
+        >
           <ScoreCard summary={summary} />
-          <PrimaryActions buttons={buttons} disabled={disabled} />
-          <SecondaryActions onGrownUp={handleGrownUp} disabled={disabled} />
-        </section>
+        </GrammarSummaryFrameAdapter>
         <GrammarMiniTestReview
           review={summary.miniTestReview}
           actions={actions}
           runtimeReadOnly={runtimeReadOnly}
           pending={pending}
         />
-        {/* U6: Shared summary engine adoption — display-only. */}
-        <GrammarSummaryFrameAdapter summary={summary} cards={cards} actions={actions} />
       </div>
     );
   }
 
   // Regular practice branch.
-  const buttons = [
-    {
-      action: 'grammar-practise-missed',
-      label: 'Practise missed',
-      variant: 'primary',
-      disabled: !regularMissedConceptId,
-      onClick: () => actions.dispatch('grammar-practise-missed'),
-    },
-    {
-      action: 'grammar-start-again',
-      label: 'Start another round',
-      variant: 'primary',
-      onClick: () => actions.dispatch('grammar-start-again'),
-    },
-    {
-      action: 'grammar-open-concept-bank',
-      label: 'Open Grammar Bank',
-      variant: 'secondary',
-      onClick: () => actions.dispatch('grammar-open-concept-bank'),
-    },
-  ];
-
   return (
     <div
       className="grammar-summary-shell"
       data-grammar-phase-root="summary"
     >
-      <section className="card grammar-summary-card-wrap" aria-labelledby="grammar-summary-title">
-        <div className="eyebrow">Grammar round complete</div>
-        <h2 className="section-title" id="grammar-summary-title">
-          Nice work — round complete
-        </h2>
-        <SummaryRibbon cards={cards} />
+      <GrammarSummaryFrameAdapter
+        summary={summary}
+        cards={cards}
+        actions={actions}
+        disabled={disabled}
+        missedConceptId={regularMissedConceptId}
+        learner={learner}
+      >
         <SummaryCards cards={cards} />
-        <PrimaryActions buttons={buttons} disabled={disabled} />
-        <SecondaryActions onGrownUp={handleGrownUp} disabled={disabled} />
-      </section>
-      {/* U6: Shared summary engine adoption — display-only. */}
-      <GrammarSummaryFrameAdapter summary={summary} cards={cards} actions={actions} />
+      </GrammarSummaryFrameAdapter>
     </div>
   );
 }

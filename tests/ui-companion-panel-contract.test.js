@@ -208,6 +208,25 @@ test('SubjectCompanionPanel: adopted by all three ready subjects', () => {
   assert.match(grammarSource, /SubjectCompanionPanel/);
 });
 
+test('P4 U5: ready-subject setup call-sites make the companion panel visible', () => {
+  const subjects = [
+    ['spelling', 'src/subjects/spelling/components/SpellingSetupScene.jsx'],
+    ['punctuation', 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'],
+    ['grammar', 'src/subjects/grammar/components/GrammarSetupScene.jsx'],
+  ];
+
+  for (const [subject, relativePath] of subjects) {
+    const text = readFileSync(path.join(rootDir, relativePath), 'utf8');
+    const panel = text.match(/<SubjectCompanionPanel[\s\S]*?\/>/)?.[0] || '';
+    assert.match(panel, new RegExp(`subjectId="${subject}"`));
+    assert.match(
+      panel,
+      /\svisible(?:\s|>|$|=)/,
+      `${subject} setup must pass visible or an equivalent visible disclosure path`,
+    );
+  }
+});
+
 // ---------------------------------------------------------------
 // No forbidden copy patterns
 // ---------------------------------------------------------------

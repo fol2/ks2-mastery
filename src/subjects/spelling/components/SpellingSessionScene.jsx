@@ -239,13 +239,12 @@ export function SpellingSessionScene({
   const softLockoutStorageCas = repositories?.storageCas || null;
 
   return (
-    <PracticeStage subjectId="spelling" scene="session" backdrop="meadow" motion="calm">
+    <PracticeStage subjectId="spelling" scene="session" backdrop="meadow" motion={awaitingAdvance ? 'celebration' : 'active'}>
     <div className={sessionClasses.join(' ')} style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
       <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
       <div className="session">
         <header className="session-head">
           <PathProgress done={pathDone} current={pathCurrent} total={progressTotal} />
-          <span className="path-count">Word {progressCurrent} of {progressTotal}</span>
           <SessionHUD
             subjectId="spelling"
             answeredCount={done}

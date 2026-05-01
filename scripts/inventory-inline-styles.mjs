@@ -297,11 +297,15 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // extended to read var(--card-accent, currentColor) so subject remaps
 // drive the ribbon directly (no per-subject override needed). Net
 // delta: -2 sites. Constants bumped from 247 → 245.
-export const PRE_MIGRATION_TOTAL = 448;
-export const SITES_MIGRATED_THIS_PR = 194;
 // P3 added 9 inline-style sites: ActionRow (3), PracticeStage (1),
 // AdminVisualEngineSection (5). All classified. Owner-approved exception.
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 254
+//
+// P4 U7 migrated 8 simple AdminVisualEngineSection spacing/opacity styles
+// into scoped CSS classes. The Visual Engine admin panel is now read-only and
+// inline-style-free; constants bumped from 254 -> 246.
+export const PRE_MIGRATION_TOTAL = 448;
+export const SITES_MIGRATED_THIS_PR = 202;
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 246
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';

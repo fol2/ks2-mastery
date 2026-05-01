@@ -55,11 +55,13 @@ export function SessionHUD({
   // Defensive normalisation — avoids NaN / Infinity / negative values.
   const safeTotal = Math.max(0, Number(totalCount) || 0);
   const safeAnswered = Math.min(safeTotal, Math.max(0, Number(answeredCount) || 0));
-  const safeRemaining = typeof remainingCount === 'number'
-    ? Math.max(0, remainingCount)
+  const remainingNumber = Number(remainingCount);
+  const safeRemaining = Number.isFinite(remainingNumber)
+    ? Math.min(safeTotal, Math.max(0, remainingNumber))
     : Math.max(0, safeTotal - safeAnswered);
-  const safeIndex = typeof currentIndex === 'number'
-    ? Math.min(safeTotal, Math.max(0, currentIndex))
+  const currentNumber = Number(currentIndex);
+  const safeIndex = Number.isFinite(currentNumber)
+    ? Math.min(safeTotal, Math.max(0, currentNumber))
     : safeAnswered;
 
   // Percentage clamped 0–100 (ProgressMeter also clamps internally).
@@ -84,6 +86,7 @@ export function SessionHUD({
       data-session-hud
       data-subject={subjectId || undefined}
       data-support-state={supportState || undefined}
+      data-current-index={safeIndex}
     >
       {title || progressLabel ? (
         <div className="session-hud-title" data-session-hud-title>

@@ -24,6 +24,13 @@ function readFile(relative) {
   return readFileSync(path.join(REPO_ROOT, relative), 'utf8');
 }
 
+function hasActionSelector(source, action) {
+  return source.includes(`dataAction="${action}"`)
+    || source.includes(`data-action="${action}"`)
+    || source.includes(`dataAction: '${action}'`)
+    || source.includes(`dataAction: "${action}"`);
+}
+
 // --- ActionRow structural tests (parser-level) ---
 
 test('ActionRow module exports the named export', () => {
@@ -131,8 +138,7 @@ test('migrated session scenes preserve data-action selectors via Button dataActi
     const source = readFile(file);
     for (const action of actions) {
       // Check either dataAction="..." or data-action="..." is present
-      const hasDataAction = source.includes(`dataAction="${action}"`) ||
-        source.includes(`data-action="${action}"`);
+      const hasDataAction = hasActionSelector(source, action);
       assert.ok(
         hasDataAction,
         `${file} must preserve the data-action="${action}" selector ` +
@@ -146,8 +152,7 @@ test('spelling summary preserves data-action selectors', () => {
   const source = readFile('src/subjects/spelling/components/SpellingSummaryScene.jsx');
   const expected = ['spelling-drill-all', 'spelling-back', 'spelling-start-again'];
   for (const action of expected) {
-    const has = source.includes(`dataAction="${action}"`) ||
-      source.includes(`data-action="${action}"`);
+    const has = hasActionSelector(source, action);
     assert.ok(has, `SpellingSummaryScene must preserve data-action="${action}"`);
   }
 });
@@ -156,8 +161,7 @@ test('punctuation summary preserves data-action selectors', () => {
   const source = readFile('src/subjects/punctuation/components/PunctuationSummaryScene.jsx');
   const expected = ['punctuation-start', 'punctuation-open-map', 'punctuation-start-again', 'punctuation-back'];
   for (const action of expected) {
-    const has = source.includes(`dataAction="${action}"`) ||
-      source.includes(`data-action="${action}"`);
+    const has = hasActionSelector(source, action);
     assert.ok(has, `PunctuationSummaryScene must preserve data-action="${action}"`);
   }
 });
@@ -167,15 +171,13 @@ test('punctuation summary preserves data-action selectors', () => {
 test('all migrated surfaces import Button from platform/ui/Button', () => {
   for (const file of MIGRATED_LEARNER_SURFACES) {
     const source = readFile(file);
-    assert.match(
-      source,
-      /import\s*\{[^}]*\bButton\b[^}]*\}\s*from\s*['"][^'"]*platform\/ui\/Button(\.jsx)?['"]/,
-      `${file} must import Button from the shared primitive.`,
-    );
-    assert.match(
-      source,
-      /<Button\b/,
-      `${file} must render <Button> at least once.`,
+    const usesButtonDirectly = /import\s*\{[^}]*\bButton\b[^}]*\}\s*from\s*['"][^'"]*platform\/ui\/Button(\.jsx)?['"]/.test(source)
+      && /<Button\b/.test(source);
+    const usesButtonViaSummaryFrame = /import\s*\{[^}]*\bSessionSummaryFrame\b[^}]*\}/.test(source)
+      && /<SessionSummaryFrame\b/.test(source);
+    assert.ok(
+      usesButtonDirectly || usesButtonViaSummaryFrame,
+      `${file} must use the shared Button primitive directly or through SessionSummaryFrame.`,
     );
   }
 });

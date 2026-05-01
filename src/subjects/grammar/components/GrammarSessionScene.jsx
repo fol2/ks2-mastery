@@ -595,9 +595,10 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const progressDone = isMiniTest
     ? miniTestQuestions.filter((question) => question.answered).length
     : Math.min(Number(session.answered) || 0, Number(session.targetCount) || 0);
-  const progressTotal = isMiniTest
-    ? Math.max(1, Number(miniTest?.setSize) || miniTestQuestions.length || 1)
-    : Math.max(1, Number(session.targetCount) || 1);
+  const hudProgressTotal = isMiniTest
+    ? Math.max(0, Number(miniTest?.setSize) || miniTestQuestions.length || 0)
+    : Math.max(0, Number(session.targetCount) || 0);
+  const progressTotal = Math.max(1, hudProgressTotal || 1);
   const isFeedback = grammar.phase === 'feedback' || grammar.awaitingAdvance;
   const pending = Boolean(grammar.pendingCommand);
   const submitDisabled = runtimeReadOnly || pending || (!isMiniTest && isFeedback);
@@ -623,7 +624,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
     : '';
 
   return (
-    <PracticeStage subjectId="grammar" scene="session" backdrop="library">
+    <PracticeStage subjectId="grammar" scene="session" backdrop="library" motion={isFeedback ? 'celebration' : 'active'}>
     <section
       className="grammar-session"
       aria-labelledby="grammar-session-title"
@@ -636,11 +637,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         </div>
         <div
           className="grammar-progress-dots"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={progressTotal}
-          aria-valuenow={Math.min(progressDone, progressTotal)}
-          aria-label={`Question ${Math.min(progressDone + 1, progressTotal)} of ${progressTotal}`}
+          aria-hidden="true"
         >
           {Array.from({ length: progressTotal }, (_, index) => {
             const stateClass = index < progressDone
@@ -657,15 +654,11 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             );
           })}
         </div>
-        <div className="grammar-progress" aria-label="Round progress">
-          <span>{progressDone}</span>
-          <small>of {progressTotal}</small>
-        </div>
         <SessionHUD
           subjectId="grammar"
           answeredCount={progressDone}
-          totalCount={progressTotal}
-          remainingCount={Math.max(0, progressTotal - progressDone)}
+          totalCount={hudProgressTotal}
+          remainingCount={Math.max(0, hudProgressTotal - progressDone)}
           currentIndex={progressDone}
           modeLabel={session.mode || ''}
           supportState={help.showFadedSupport ? 'available' : 'none'}

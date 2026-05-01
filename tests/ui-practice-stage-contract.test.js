@@ -134,6 +134,38 @@ test('PracticeStage adopted in 3+ subject scenes (adoption gate)', () => {
   );
 });
 
+test('P4 U6 ready subject stages opt into visible CSS motion classes', () => {
+  const expectations = [
+    {
+      path: 'src/subjects/spelling/components/SpellingSessionScene.jsx',
+      patterns: [/motion=\{awaitingAdvance \? 'celebration' : 'active'\}/],
+    },
+    {
+      path: 'src/subjects/grammar/components/GrammarSetupScene.jsx',
+      patterns: [/motion="calm"/],
+    },
+    {
+      path: 'src/subjects/grammar/components/GrammarSessionScene.jsx',
+      patterns: [/motion=\{isFeedback \? 'celebration' : 'active'\}/],
+    },
+    {
+      path: 'src/subjects/punctuation/components/PunctuationSetupScene.jsx',
+      patterns: [/motion="calm"/],
+    },
+    {
+      path: 'src/subjects/punctuation/components/PunctuationSessionScene.jsx',
+      patterns: [/motion=\{phase === 'feedback' \? 'celebration' : 'active'\}/],
+    },
+  ];
+
+  for (const expectation of expectations) {
+    const source = readSource(expectation.path);
+    for (const pattern of expectation.patterns) {
+      assert.match(source, pattern, `${expectation.path} must opt into a non-none PracticeStage motion class`);
+    }
+  }
+});
+
 test('PracticeStage adoption preserves data-action selectors in spelling', () => {
   const source = readSource('src/subjects/spelling/components/SpellingSessionScene.jsx');
   const requiredSelectors = [

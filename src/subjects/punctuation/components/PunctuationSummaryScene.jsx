@@ -59,7 +59,6 @@
 
 import { useRef } from 'react';
 
-import { Button } from '../../../platform/ui/Button.jsx';
 import { SessionSummaryFrame } from '../../../platform/ui/SessionSummaryFrame.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
@@ -517,66 +516,6 @@ function GpsReviewBlock({ gps }) {
 
 // --- Next-action buttons ---------------------------------------------------
 
-function NextActionRow({ ui, actions }) {
-  // Phase 4 U6: mutation controls keep `composeIsDisabled` — they pause while
-  // a command is in flight or the runtime is degraded / unavailable / read-
-  // only. Navigation ("Back to dashboard") threads the sibling
-  // `composeIsNavigationDisabled` so a stalled `pendingCommand` or a
-  // degraded runtime never traps the child on the Summary scene (plan R7 /
-  // AE7). The ghost-button divergence is the canonical example the Map
-  // top-bar and Skill Detail close mirror.
-  //
-  // SH2-U1 (from main): JSX-layer guard for all four non-destructive next-
-  // action buttons. Sharing one lock means a double-tap across the row (an
-  // unlikely but possible "thumb drift" pattern on narrow mobile viewports)
-  // early-returns the second dispatch — which is the right UX outcome
-  // since any of these actions unmounts the summary. The lock OR's into
-  // the mutation `isDisabled` only — navigation deliberately stays
-  // escape-hatch-live (a stuck lock must not trap the child on Summary).
-  const submitLock = useSubmitLock();
-  const isDisabled = composeIsDisabled(ui) || submitLock.locked;
-  const isNavigationDisabled = composeIsNavigationDisabled(ui);
-  return (
-    <div className="actions punctuation-summary-actions" style={{ marginTop: 16 }}>
-      <Button
-        variant="primary"
-        disabled={isDisabled}
-        dataAction="punctuation-start"
-        dataValue="weak"
-        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-start', { mode: 'weak' }))}
-      >
-        Practise wobbly spots
-      </Button>
-      <Button
-        variant="secondary"
-        disabled={isDisabled}
-        dataAction="punctuation-open-map"
-        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-open-map'))}
-      >
-        Open Punctuation Map
-      </Button>
-      <Button
-        variant="secondary"
-        disabled={isDisabled}
-        dataAction="punctuation-start-again"
-        data-punctuation-start-again
-        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-start-again'))}
-      >
-        Start again
-      </Button>
-      <Button
-        variant="ghost"
-        disabled={isNavigationDisabled}
-        aria-disabled={isNavigationDisabled ? 'true' : 'false'}
-        dataAction="punctuation-back"
-        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-back'))}
-      >
-        Back to dashboard
-      </Button>
-    </div>
-  );
-}
-
 // --- Scene -----------------------------------------------------------------
 
 // U4 follower (adversarial MEDIUM 1): the Grown-up view placeholder button
@@ -586,11 +525,13 @@ function NextActionRow({ ui, actions }) {
 // this surface when the adult view ships (PR body notes the deferral); the
 // Summary scene renders no Grown-up affordance today.
 
-// U6: Thin adapter mapping existing punctuation summary view-model to
-// SessionSummaryFrame props. Preserves existing telemetry event emission.
-// Display-only — no mastery mutation.
-function PunctuationSummaryFrameAdapter({ summary, actions }) {
+// P4 U4: Thin adapter mapping existing punctuation summary view-model to
+// SessionSummaryFrame props. The shared frame now owns the headline and
+// next-step row; punctuation keeps GPS review, monster progress and skill
+// chips as subject-specific detail sections.
+function PunctuationSummaryFrameAdapter({ summary, ui, actions, children }) {
   if (!summary || typeof summary !== 'object') return null;
+  const submitLock = useSubmitLock();
   const total = Number(summary.total) || 0;
   const correct = Number(summary.correct) || 0;
   const accuracy = Number(summary.accuracy) || 0;
@@ -598,25 +539,40 @@ function PunctuationSummaryFrameAdapter({ summary, actions }) {
   const outcome = cleanRound ? 'secure' : (accuracy >= 70 ? 'improving' : 'needs-practice');
   const headline = punctuationSummaryHeadline(summary);
   const title = typeof headline === 'string' && headline ? headline : 'Punctuation session summary';
-  const highlights = [];
-  if (total > 0) highlights.push(`${correct} out of ${total} correct`);
-  if (accuracy > 0) highlights.push(`${accuracy}% accuracy`);
-  const misconceptions = [];
-  const focus = Array.isArray(summary.focus) ? summary.focus : [];
-  for (const skillId of focus) {
-    const name = CLIENT_SKILL_NAMES_BY_ID.get(skillId);
-    if (name) misconceptions.push(name);
-  }
+  const subtitle = typeof summary.message === 'string' && summary.message
+    ? summary.message
+    : 'Session complete.';
+  const isDisabled = composeIsDisabled(ui) || submitLock.locked;
+  const isNavigationDisabled = composeIsNavigationDisabled(ui);
   const nextPrimaryAction = {
-    label: 'Start again',
-    dataAction: 'punctuation-start-again',
-    onClick: () => actions.dispatch('punctuation-start-again'),
+    label: 'Practise wobbly spots',
+    dataAction: 'punctuation-start',
+    dataValue: 'weak',
+    disabled: isDisabled,
+    onClick: () => submitLock.run(async () => actions.dispatch('punctuation-start', { mode: 'weak' })),
   };
   const secondaryActions = [
+    {
+      label: 'Open Punctuation Map',
+      dataAction: 'punctuation-open-map',
+      variant: 'secondary',
+      disabled: isDisabled,
+      onClick: () => submitLock.run(async () => actions.dispatch('punctuation-open-map')),
+    },
+    {
+      label: 'Start again',
+      dataAction: 'punctuation-start-again',
+      variant: 'secondary',
+      disabled: isDisabled,
+      'data-punctuation-start-again': true,
+      onClick: () => submitLock.run(async () => actions.dispatch('punctuation-start-again')),
+    },
     {
       label: 'Back to dashboard',
       dataAction: 'punctuation-back',
       variant: 'ghost',
+      disabled: isNavigationDisabled,
+      'aria-disabled': isNavigationDisabled ? 'true' : 'false',
       onClick: () => actions.dispatch('punctuation-back'),
     },
   ];
@@ -625,12 +581,15 @@ function PunctuationSummaryFrameAdapter({ summary, actions }) {
       subjectId="punctuation"
       outcome={outcome}
       title={title}
-      highlights={highlights}
-      misconceptions={misconceptions}
+      subtitle={subtitle}
+      highlights={[]}
+      misconceptions={[]}
       progressDelta={[]}
       nextPrimaryAction={nextPrimaryAction}
       secondaryActions={secondaryActions}
-    />
+    >
+      {children}
+    </SessionSummaryFrame>
   );
 }
 
@@ -641,18 +600,6 @@ export function PunctuationSummaryScene({
 }) {
   const summary = ui && typeof ui === 'object' && !Array.isArray(ui) ? (ui.summary || {}) : {};
   const scene = bellstormSceneForPhase('summary');
-  // Accuracy-bucketed celebration copy (design-lens HIGH 2). The helper
-  // returns null when `summary.accuracy` is missing / malformed; the label
-  // fallback keeps the hero filled even for degenerate payloads.
-  const tonalHeadline = punctuationSummaryHeadline(summary);
-  const headline = typeof tonalHeadline === 'string' && tonalHeadline
-    ? tonalHeadline
-    : (typeof summary.label === 'string' && summary.label
-      ? summary.label
-      : 'Punctuation session summary');
-  const subtitle = typeof summary.message === 'string' && summary.message
-    ? summary.message
-    : 'Session complete.';
 
   // U5: extract the monsterProgress triple once — drives both the
   // teaser render AND the `monster-progress-changed` telemetry emit so
@@ -742,41 +689,36 @@ export function PunctuationSummaryScene({
       <section className="punctuation-summary-hero">
         <HeroBackdrop url={scene.src} extraBackdropClassName="punctuation-hero-backdrop" />
         <div className="punctuation-summary-hero-content">
-          <div className="eyebrow">Summary</div>
-          <h2 className="section-title">{headline}</h2>
-          <p className="subtitle">{subtitle}</p>
+          <PunctuationSummaryFrameAdapter summary={summary} ui={ui} actions={actions}>
+            <CorrectCountLine summary={summary} />
+            <ScoreChipRow summary={summary} />
+            <SkillsExercisedRow summary={summary} />
+            {/*
+              U5 review follow-on (FINDING B — design-lens HIGH): when the per-skill
+              SkillsExercisedRow renders (i.e. `summary.skillsExercised` is non-
+              empty), it already surfaces each wobbly skill with a "· needs
+              practice" badge. The legacy WobblyChipRow below would then re-render
+              the same skills with "needs another go" labels — duplicated chips in
+              the same class ("warn") for a KS2 reader. Suppress WobblyChipRow in
+              that case. SkillsExercisedRow is the new authoritative display (one
+              chip per exercised skill, status encoded). WobblyChipRow stays as a
+              fallback ONLY when `skillsExercised` is empty — covers pre-U9
+              production rounds that haven't yet flowed through the producer
+              (defensive) and the degraded-payload branch where `skillsExercised`
+              is absent. The "Everything was secure this round!" empty-chip fallback
+              in WobblyChipRow still fires via this branch when a round had no
+              wobbly skills AND no `skillsExercised` (legacy rounds).
+            */}
+            {(Array.isArray(summary.skillsExercised) && summary.skillsExercised.length > 0)
+              ? null
+              : <WobblyChipRow focus={summary.focus} />}
+            <MonsterProgressTeaser progress={monsterProgress} />
+            <NextReviewHint ui={ui} />
+            <MonsterProgressStrip ui={ui} rewardState={rewardState} />
+            <GpsReviewBlock gps={summary.gps} />
+          </PunctuationSummaryFrameAdapter>
         </div>
       </section>
-      <CorrectCountLine summary={summary} />
-      <ScoreChipRow summary={summary} />
-      <SkillsExercisedRow summary={summary} />
-      {/*
-        U5 review follow-on (FINDING B — design-lens HIGH): when the per-skill
-        SkillsExercisedRow renders (i.e. `summary.skillsExercised` is non-
-        empty), it already surfaces each wobbly skill with a "· needs
-        practice" badge. The legacy WobblyChipRow below would then re-render
-        the same skills with "needs another go" labels — duplicated chips in
-        the same class ("warn") for a KS2 reader. Suppress WobblyChipRow in
-        that case. SkillsExercisedRow is the new authoritative display (one
-        chip per exercised skill, status encoded). WobblyChipRow stays as a
-        fallback ONLY when `skillsExercised` is empty — covers pre-U9
-        production rounds that haven't yet flowed through the producer
-        (defensive) and the degraded-payload branch where `skillsExercised`
-        is absent. The "Everything was secure this round!" empty-chip fallback
-        in WobblyChipRow still fires via this branch when a round had no
-        wobbly skills AND no `skillsExercised` (legacy rounds).
-      */}
-      {(Array.isArray(summary.skillsExercised) && summary.skillsExercised.length > 0)
-        ? null
-        : <WobblyChipRow focus={summary.focus} />}
-      <MonsterProgressTeaser progress={monsterProgress} />
-      <NextReviewHint ui={ui} />
-      <MonsterProgressStrip ui={ui} rewardState={rewardState} />
-      <GpsReviewBlock gps={summary.gps} />
-      <NextActionRow ui={ui} actions={actions} />
-      {/* U6: Shared summary engine adoption — SessionSummaryFrame renders
-          alongside the existing visual shell. Preserves telemetry emission. */}
-      <PunctuationSummaryFrameAdapter summary={summary} actions={actions} />
     </section>
   );
 }
