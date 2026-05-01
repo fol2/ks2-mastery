@@ -27,8 +27,8 @@ export const REQUIRED_LAUNCH_METRICS = Object.freeze([
     name: 'cohort accounts enabled',
     canonicalMetric: null,
     extractionSource: 'server-extractable',
-    queryPattern: "SELECT COUNT(*) FROM cohort_members WHERE cohort_id = ? AND status = 'active'",
-    description: 'Count of learner accounts with Hero Mode cohort flag enabled',
+    queryPattern: "SELECT COUNT(DISTINCT m.account_id) FROM account_learner_memberships m JOIN child_game_state h ON h.learner_id = m.learner_id AND h.system_id = 'hero-mode'",
+    description: 'Count of accounts linked to learners with Hero Mode state; resolver allowlist or rollout export is still required for accounts with no state yet',
   },
   {
     id: 'launch-02',
@@ -90,9 +90,9 @@ export const REQUIRED_LAUNCH_METRICS = Object.freeze([
     id: 'launch-09',
     name: 'claim rejection count',
     canonicalMetric: null,
-    extractionSource: 'derived',
-    queryPattern: "SELECT COUNT(*) FROM event_log WHERE system_id = 'hero-mode' AND event_type = 'hero.task.rejected'",
-    description: 'Task claim rejections (stale write, revision conflict)',
+    extractionSource: 'not-observable-yet',
+    queryPattern: null,
+    description: 'Current rejection paths are not persisted in a queryable production table; do not infer from missing hero.task.rejected events.',
   },
   {
     id: 'launch-10',
@@ -194,9 +194,9 @@ export const REQUIRED_SAFETY_METRICS = Object.freeze([
     name: 'negative balance count',
     canonicalMetric: null,
     extractionSource: 'derived',
-    queryPattern: "SELECT COUNT(*) FROM hero_ledger WHERE balance < 0",
+    queryPattern: "SELECT learner_id, state_json FROM child_game_state WHERE system_id = 'hero-mode'",
     zeroTolerance: true,
-    description: 'Must be 0: ledger balance must never go negative',
+    description: 'Must be 0: parse Hero economy JSON and ensure balance and ledger balanceAfter values never go negative',
   },
   {
     id: 'safety-04',
@@ -212,18 +212,18 @@ export const REQUIRED_SAFETY_METRICS = Object.freeze([
     name: 'claim-without-completion count',
     canonicalMetric: null,
     extractionSource: 'derived',
-    queryPattern: "SELECT COUNT(*) FROM hero_ledger l LEFT JOIN event_log e ON l.source_event_id = e.id WHERE e.id IS NULL AND l.entry_type = 'daily-award'",
+    queryPattern: "SELECT learner_id, state_json FROM child_game_state WHERE system_id = 'hero-mode'",
     zeroTolerance: true,
-    description: 'Must be 0: coin award without corresponding task completion evidence',
+    description: 'Must be 0: parse daily award ledger entries and compare against Hero daily completion state plus event_log telemetry',
   },
   {
     id: 'safety-06',
     name: 'non-cohort exposure count',
     canonicalMetric: null,
     extractionSource: 'server-extractable',
-    queryPattern: "SELECT COUNT(*) FROM event_log WHERE system_id = 'hero-mode' AND learner_id NOT IN (SELECT learner_id FROM cohort_members WHERE cohort_id = ?)",
+    queryPattern: "SELECT DISTINCT actor_account_id, learner_id FROM event_log WHERE system_id = 'hero-mode' AND actor_account_id IS NOT NULL",
     zeroTolerance: true,
-    description: 'Must be 0: non-cohort learners must never see Hero Mode surfaces',
+    description: 'Must be 0 after joining observed accounts to the exported resolver classification; event presence alone is not enough',
   },
   {
     id: 'safety-07',
@@ -274,7 +274,7 @@ export const REQUIRED_SAFETY_METRICS = Object.freeze([
  *   valid: boolean,
  *   launchMetrics: Array<{id: string, name: string, mapped: boolean, extractionSource: string, reason?: string}>,
  *   safetyMetrics: Array<{id: string, name: string, mapped: boolean, extractionSource: string, reason?: string}>,
- *   summary: {total: number, mapped: number, serverExtractable: number, clientOnly: number, derived: number}
+ *   summary: {total: number, mapped: number, serverExtractable: number, clientOnly: number, derived: number, notObservableYet: number}
  * }}
  */
 export function validateMetricsMapping(metricsContract) {
@@ -285,12 +285,13 @@ export function validateMetricsMapping(metricsContract) {
     if (metric.canonicalMetric) {
       mapped = allCanonical.includes(metric.canonicalMetric);
     } else {
-      // Metrics without a canonical name are valid if they have a queryPattern,
-      // are derived from other metrics, or are classified as client-only (measured
-      // via browser telemetry rather than event_log).
+      // Metrics without a canonical name are valid if they have a real query
+      // path, are derived from other persisted sources, require browser
+      // telemetry, or are explicitly classified as not observable yet.
       mapped = metric.queryPattern !== null
         || metric.extractionSource === 'derived'
-        || metric.extractionSource === 'client-only';
+        || metric.extractionSource === 'client-only'
+        || metric.extractionSource === 'not-observable-yet';
     }
 
     const reason = !mapped
@@ -317,6 +318,7 @@ export function validateMetricsMapping(metricsContract) {
   const serverExtractable = allResults.filter(r => r.extractionSource === 'server-extractable').length;
   const clientOnly = allResults.filter(r => r.extractionSource === 'client-only').length;
   const derived = allResults.filter(r => r.extractionSource === 'derived').length;
+  const notObservableYet = allResults.filter(r => r.extractionSource === 'not-observable-yet').length;
 
   return {
     valid: allResults.every(r => r.mapped),
@@ -328,6 +330,7 @@ export function validateMetricsMapping(metricsContract) {
       serverExtractable,
       clientOnly,
       derived,
+      notObservableYet,
     },
   };
 }
@@ -386,6 +389,7 @@ function main() {
   console.log(`  Server-extractable: ${result.summary.serverExtractable}`);
   console.log(`  Client-only:        ${result.summary.clientOnly}`);
   console.log(`  Derived:            ${result.summary.derived}`);
+  console.log(`  Not observable yet: ${result.summary.notObservableYet}`);
 
   if (!result.valid) {
     console.log('\n[FAIL] Not all metrics are mapped:');
@@ -396,13 +400,21 @@ function main() {
     process.exit(1);
   }
 
-  console.log('\n[PASS] All 28 metrics are mapped to extraction sources.');
+  console.log('\n[PASS] All 28 metrics are classified to extraction sources or explicit observability gaps.');
 
   // Report client-only metrics (informational)
   const clientMetrics = [...result.launchMetrics, ...result.safetyMetrics].filter(m => m.extractionSource === 'client-only');
   if (clientMetrics.length > 0) {
     console.log(`\nClient-only metrics (${clientMetrics.length} — require browser telemetry, not event_log):`);
     for (const m of clientMetrics) {
+      console.log(`  - ${m.id}: ${m.name}`);
+    }
+  }
+
+  const notObservableMetrics = [...result.launchMetrics, ...result.safetyMetrics].filter(m => m.extractionSource === 'not-observable-yet');
+  if (notObservableMetrics.length > 0) {
+    console.log(`\nNot-observable-yet metrics (${notObservableMetrics.length} — no queryable production source yet):`);
+    for (const m of notObservableMetrics) {
       console.log(`  - ${m.id}: ${m.name}`);
     }
   }

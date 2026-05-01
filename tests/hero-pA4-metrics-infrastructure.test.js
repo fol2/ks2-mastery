@@ -30,7 +30,7 @@ describe('REQUIRED_LAUNCH_METRICS', () => {
   });
 
   it('each metric has a confidence classification (extractionSource)', () => {
-    const validSources = ['server-extractable', 'client-only', 'derived'];
+    const validSources = ['server-extractable', 'client-only', 'derived', 'not-observable-yet'];
     for (const m of REQUIRED_LAUNCH_METRICS) {
       assert.ok(
         validSources.includes(m.extractionSource),
@@ -73,7 +73,7 @@ describe('REQUIRED_SAFETY_METRICS', () => {
   });
 
   it('each metric has a confidence classification (extractionSource)', () => {
-    const validSources = ['server-extractable', 'client-only', 'derived'];
+    const validSources = ['server-extractable', 'client-only', 'derived', 'not-observable-yet'];
     for (const m of REQUIRED_SAFETY_METRICS) {
       assert.ok(
         validSources.includes(m.extractionSource),
@@ -127,7 +127,7 @@ describe('validateMetricsMapping', () => {
     const result = validateMetricsMapping({ ALL_HERO_METRICS });
     assert.equal(result.summary.total, 28);
     assert.equal(
-      result.summary.serverExtractable + result.summary.clientOnly + result.summary.derived,
+      result.summary.serverExtractable + result.summary.clientOnly + result.summary.derived + result.summary.notObservableYet,
       28,
     );
   });
@@ -142,7 +142,8 @@ describe('validateMetricsMapping', () => {
 
   it('reports unmapped metric when contract is empty', () => {
     const result = validateMetricsMapping({ ALL_HERO_METRICS: [] });
-    // Metrics with canonicalMetric will fail; those with queryPattern or derived still pass
+    // Metrics with canonicalMetric will fail; those with queryPattern, derived,
+    // client-only, or explicit not-observable-yet classifications still pass.
     const unmapped = [...result.launchMetrics, ...result.safetyMetrics].filter(m => !m.mapped);
     assert.ok(unmapped.length > 0, 'Expected some unmapped metrics with empty contract');
     assert.equal(result.valid, false);
@@ -228,13 +229,14 @@ describe('canonical metric cross-reference', () => {
     }
   });
 
-  it('metrics without canonicalMetric have alternative extraction (queryPattern, derived, or client-only)', () => {
+  it('metrics without canonicalMetric have an extraction path or explicit observability gap', () => {
     const allMetrics = [...REQUIRED_LAUNCH_METRICS, ...REQUIRED_SAFETY_METRICS];
     const withoutCanonical = allMetrics.filter(m => m.canonicalMetric === null);
     for (const m of withoutCanonical) {
       const hasAlternative = m.queryPattern !== null
         || m.extractionSource === 'derived'
-        || m.extractionSource === 'client-only';
+        || m.extractionSource === 'client-only'
+        || m.extractionSource === 'not-observable-yet';
       assert.ok(
         hasAlternative,
         `Metric ${m.id} has no canonicalMetric and no alternative extraction path`,

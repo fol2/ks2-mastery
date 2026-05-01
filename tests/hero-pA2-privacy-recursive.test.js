@@ -198,7 +198,7 @@ describe('stripPrivacyFields', () => {
 
 describe('PRIVACY_FORBIDDEN_FIELDS', () => {
   it('contains all expected fields', () => {
-    const expected = ['rawAnswer', 'rawPrompt', 'childFreeText', 'childInput', 'answerText', 'rawText', 'childContent'];
+    const expected = ['rawAnswer', 'rawPrompt', 'childFreeText', 'childInput', 'answerText', 'rawText', 'childContent', 'childName'];
     assert.deepEqual([...PRIVACY_FORBIDDEN_FIELDS], expected);
   });
 
