@@ -66,8 +66,8 @@ test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   // U8 Phase 5: Writing Try now inside More practice (not primary area).
   assert.match(html, /data-action="grammar-open-transfer"/);
   assert.match(html, /Writing Try/);
-  // U8 Phase 5: Primary CTA is "Start Smart Practice".
-  assert.match(html, /Start Smart Practice/);
+  // QG P14: primary CTA distinguishes short rounds from deeper practice.
+  assert.match(html, /Start Quick Practice/);
   assert.doesNotMatch(html, /Future subject module/);
 });
 

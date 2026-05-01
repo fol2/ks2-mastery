@@ -1491,6 +1491,31 @@ async function main(argv) {
     console.log(`SKIP: Runtime certification authority gate not applied to historical release ${manifestResult.manifest.contentReleaseId}`);
   }
 
+  // Gate 1d: Every distractor/adult-review flag must have register evidence.
+  const reviewCoverageResult = validateDistractorReviewCoverage(manifestResult.manifest, ROOT_DIR);
+  if (!reviewCoverageResult.pass) {
+    const reviewMismatches = [{
+      field: 'distractor-review-coverage',
+      message: reviewCoverageResult.error
+        || `Missing adultReviewDecision for ${reviewCoverageResult.missing.length} template(s)`,
+      claimed: 'all requiresAdultReview templates covered',
+      actual: reviewCoverageResult.error || reviewCoverageResult.missing,
+    }];
+
+    if (jsonOutput) {
+      console.log(JSON.stringify({ pass: false, gate: 'distractor-review-coverage', mismatches: reviewMismatches }, null, 2));
+    } else {
+      console.log(`FAIL: Distractor review coverage — ${reviewMismatches.length} mismatch(es)\n`);
+      for (const m of reviewMismatches) {
+        console.log(`  [${m.field}] ${m.message}`);
+        console.log(`    claimed: ${JSON.stringify(m.claimed)}`);
+        console.log(`    actual:  ${JSON.stringify(m.actual)}\n`);
+      }
+    }
+    process.exit(1);
+  }
+  console.log(`PASS: Distractor review coverage has adult decisions for ${reviewCoverageResult.covered.length} template(s)`);
+
   // Gate 2: Cross-validate report if provided
   if (reportPath) {
     if (!existsSync(reportPath)) {

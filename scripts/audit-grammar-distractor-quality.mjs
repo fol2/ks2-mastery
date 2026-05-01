@@ -16,7 +16,7 @@
  * Per-template flags:
  * - ambiguousConceptArea: true when template concept overlaps formal/informal,
  *   modal verbs, subject/object, subordinate/relative clause areas
- * - requiresAdultReview: mirrors ambiguousConceptArea (flags for human sign-off)
+ * - requiresAdultReview: true for ambiguous concepts or likely surface-cue risk
  *
  * Report-level:
  * - ambiguousTemplates: array of template IDs flagged for adult attention
@@ -95,6 +95,24 @@ function doesPromptDisambiguate(promptText) {
   return DISAMBIGUATION_PHRASES.some((phrase) => lower.includes(phrase));
 }
 
+function optionLengthCue(options, correctOption) {
+  const lengths = options.map((opt) => String(opt?.label || opt?.value || '').length);
+  const correctLength = String(correctOption?.label || correctOption?.value || '').length;
+  const shorter = lengths.filter((length) => length < correctLength);
+  const longer = lengths.filter((length) => length > correctLength);
+  const nearest = lengths
+    .filter((length) => length !== correctLength)
+    .map((length) => Math.abs(length - correctLength))
+    .sort((a, b) => a - b)[0] || 0;
+  return {
+    correctLength,
+    uniquelyLongest: shorter.length === lengths.length - 1,
+    uniquelyShortest: longer.length === lengths.length - 1,
+    nearestLengthDelta: nearest,
+    likelySurfaceCue: (shorter.length === lengths.length - 1 || longer.length === lengths.length - 1) && nearest >= 25,
+  };
+}
+
 function isAmbiguousTemplate(template) {
   const skillIds = template.skillIds || [];
   return skillIds.some((id) => AMBIGUOUS_SKILL_IDS.includes(id));
@@ -104,6 +122,7 @@ export function runDistractorAudit() {
   const results = [];
   let s0Count = 0;
   let s1Count = 0;
+  let surfaceCueCount = 0;
 
   const selectedResponseTemplates = GRAMMAR_TEMPLATE_METADATA.filter(
     (t) => t.isSelectedResponse,
@@ -139,6 +158,7 @@ export function runDistractorAudit() {
       const correctOptions = [];
       const incorrectOptions = [];
       const optionDetails = [];
+      let correctOptionObject = null;
 
       for (const opt of options) {
         const resp = { answer: inputType === 'multi_choice' ? [opt.value] : opt.value };
@@ -152,18 +172,29 @@ export function runDistractorAudit() {
           isCorrect,
           misconceptionTag,
           whyWrong,
+          correctOptionReason: isCorrect
+            ? (result?.feedbackLong || 'This option satisfies the grammar rule and the answer specification.')
+            : null,
+          rationale: isCorrect
+            ? (result?.feedbackLong || 'Correct option under the template answer specification.')
+            : (whyWrong || result?.minimalHint || 'Distractor does not satisfy the target grammar rule.'),
+          anotherAnswerCouldBeDefensible: false,
+          adultReviewRequired: false,
         };
 
         // Per-option defensibility fields for distractors
         if (!isCorrect) {
           detail.defensibleAlternative = isDefensibleAlternative(misconceptionTag);
           detail.promptDisambiguates = promptDisambiguates;
+          detail.anotherAnswerCouldBeDefensible = detail.defensibleAlternative && !promptDisambiguates;
+          detail.adultReviewRequired = detail.anotherAnswerCouldBeDefensible || ambiguousConceptArea;
         }
 
         optionDetails.push(detail);
 
         if (isCorrect) {
           correctOptions.push(opt.value);
+          correctOptionObject = opt;
         } else {
           incorrectOptions.push(opt.value);
         }
@@ -190,6 +221,14 @@ export function runDistractorAudit() {
         }
       }
 
+      const surfaceCue = correctOptionObject ? optionLengthCue(options, correctOptionObject) : null;
+      const surfaceCueRisk = Boolean(surfaceCue?.likelySurfaceCue);
+      if (surfaceCueRisk) surfaceCueCount++;
+      const adultReviewReasons = [
+        ...(ambiguousConceptArea ? ['ambiguous-concept-area'] : []),
+        ...(surfaceCueRisk ? ['likely-surface-cue'] : []),
+      ];
+
       templatesWithResults.add(template.id);
 
       results.push({
@@ -202,14 +241,23 @@ export function runDistractorAudit() {
         severity,
         issue,
         options: optionDetails,
+        correctOptionSurfaceCue: surfaceCue,
         ambiguousConceptArea,
-        requiresAdultReview: ambiguousConceptArea,
+        surfaceCueRisk,
+        adultReviewReasons,
+        requiresAdultReview: adultReviewReasons.length > 0,
       });
     }
   }
 
   // Only include ambiguous templates that actually produced auditable results
   const ambiguousTemplates = [...ambiguousSet].filter((id) => templatesWithResults.has(id));
+  const reviewRequiredTemplates = [...new Set(
+    results.filter((item) => item.requiresAdultReview).map((item) => item.templateId),
+  )].sort();
+  const surfaceCueTemplates = [...new Set(
+    results.filter((item) => item.surfaceCueRisk).map((item) => item.templateId),
+  )].sort();
 
   return {
     metadata: {
@@ -220,9 +268,12 @@ export function runDistractorAudit() {
       totalItems: results.length,
       s0Count,
       s1Count,
+      surfaceCueCount,
       pass: s0Count === 0 && s1Count === 0,
     },
     ambiguousTemplates,
+    reviewRequiredTemplates,
+    surfaceCueTemplates,
     results,
   };
 }
@@ -249,6 +300,7 @@ async function main() {
   console.log(`  Total items: ${audit.metadata.totalItems}`);
   console.log(`  S0 failures: ${audit.metadata.s0Count}`);
   console.log(`  S1 failures: ${audit.metadata.s1Count}`);
+  console.log(`  Surface-cue review flags: ${audit.metadata.surfaceCueCount}`);
   console.log(`  Pass: ${audit.metadata.pass}`);
   console.log(`  Output: ${outputPath}`);
 

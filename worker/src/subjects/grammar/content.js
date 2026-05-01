@@ -59,6 +59,34 @@ const QUESTION_TYPES = {
   fill: "Complete the sentence"
 };
 
+const P14_FIXED_DIAGNOSTIC_TEMPLATE_IDS = Object.freeze([
+  "question_mark_select",
+  "build_noun_phrase",
+  "explain_reason_choice",
+  "formality_pairs",
+  "fronted_adverbial_choose",
+  "parenthesis_fix_sentence",
+  "parenthesis_replace_choice",
+  "pronoun_cohesion_choice",
+  "relative_clause_complete",
+  "standard_english_pairs",
+  "standard_fix_sentence",
+  "active_passive_rewrite",
+  "apostrophe_possession_choice",
+  "combine_clauses_rewrite",
+  "expanded_noun_phrase_choice",
+  "fix_fronted_adverbial",
+  "modal_verb_choice",
+  "relative_clause_identify",
+  "speech_punctuation_fix",
+  "subject_object_choice",
+  "subordinate_clause_choice",
+  "tense_form_choice",
+  "tense_rewrite"
+]);
+
+const P14_FIXED_DIAGNOSTIC_TEMPLATE_ID_SET = new Set(P14_FIXED_DIAGNOSTIC_TEMPLATE_IDS);
+
 const SKILLS = {
   sentence_functions: {
     domain: "Sentence function",
@@ -537,6 +565,28 @@ const WORD_CLASS_ITEMS = [
       "noun",
       "preposition"
     ]
+  },
+  {
+    sentence: "The team cheered after the final whistle.",
+    underlined: "after",
+    correct: "preposition",
+    options: [
+      "preposition",
+      "conjunction",
+      "adverb",
+      "noun"
+    ]
+  },
+  {
+    sentence: "Maya and Tom carried the banner proudly.",
+    underlined: "and",
+    correct: "conjunction",
+    options: [
+      "conjunction",
+      "preposition",
+      "adverb",
+      "determiner"
+    ]
   }
 ];
 
@@ -581,6 +631,70 @@ const TOKEN_CLASS_ITEMS = [
       "it",
       "them",
       "they"
+    ],
+    misconception: "word_class_confusion"
+  },
+  {
+    targetLabel: "verbs",
+    className: "Verbs",
+    sentence: "Omar opened the box and counted the coins.",
+    correct: [
+      "opened",
+      "counted"
+    ],
+    misconception: "word_class_confusion"
+  },
+  {
+    targetLabel: "adjectives",
+    className: "Adjectives",
+    sentence: "A tiny green lizard hid under the warm stone.",
+    correct: [
+      "tiny",
+      "green",
+      "warm"
+    ],
+    misconception: "word_class_confusion"
+  },
+  {
+    targetLabel: "nouns",
+    className: "Nouns",
+    sentence: "An artist painted a dragon on the wall.",
+    correct: [
+      "artist",
+      "dragon",
+      "wall"
+    ],
+    misconception: "word_class_confusion"
+  },
+  {
+    targetLabel: "prepositions",
+    className: "Prepositions",
+    sentence: "Before lunch, the class walked through the garden.",
+    correct: [
+      "Before",
+      "through"
+    ],
+    misconception: "word_class_confusion"
+  },
+  {
+    targetLabel: "determiners",
+    className: "Determiners",
+    sentence: "Every child brought their own pencil to the quiz.",
+    correct: [
+      "Every",
+      "their",
+      "own",
+      "the"
+    ],
+    misconception: "word_class_confusion"
+  },
+  {
+    targetLabel: "adverbs",
+    className: "Adverbs",
+    sentence: "The choir sang softly but confidently on stage.",
+    correct: [
+      "softly",
+      "confidently"
     ],
     misconception: "word_class_confusion"
   }
@@ -1399,6 +1513,10 @@ const EXTRA_LEXICON = {
     [
       "The audience clapped loudly",
       "the choir took a bow"
+    ],
+    [
+      "The match ended",
+      "the crowd streamed towards the gates"
     ]
   ],
   colonLists: [
@@ -1477,6 +1595,14 @@ const EXTRA_LEXICON = {
         "potatoes",
         "onions"
       ]
+    },
+    {
+      intro: "The team packed three safety items",
+      items: [
+        "helmets",
+        "gloves",
+        "reflective jackets"
+      ]
     }
   ],
   dashBoundaries: [
@@ -1515,6 +1641,10 @@ const EXTRA_LEXICON = {
     [
       "Only one thing could save us",
       "the map in her rucksack"
+    ],
+    [
+      "The instruction was clear",
+      "leave the room quietly"
     ]
   ],
   speechQuestions: [
@@ -1649,6 +1779,17 @@ const EXTRA_LEXICON = {
       ],
       correct: "Jay chose the sugar-free ice cream from the van.",
       why: "The hyphen makes ‘sugar-free’ one combined describing idea for the ice cream."
+    },
+    {
+      ask: "Which sentence means the ticket covers the whole day?",
+      options: [
+        "We bought an all-day ticket for the tram.",
+        "We bought an all day ticket for the tram.",
+        "We bought every ticket during the day.",
+        "We bought a ticket from all the trams."
+      ],
+      correct: "We bought an all-day ticket for the tram.",
+      why: "The hyphen makes ‘all-day’ one compound modifier describing the ticket."
     }
   ],
   verbsRich: [
@@ -2051,7 +2192,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const item = pick(rng, WORD_CLASS_ITEMS);
+          const item = pickBySeed(seed + 7, WORD_CLASS_ITEMS);
           const sentenceHtml = escapeHtml(item.sentence).replace(item.underlined, `<u>${escapeHtml(item.underlined)}</u>`);
           return makeBaseQuestion(this, seed, {
             marks:1,
@@ -2091,8 +2232,7 @@ const TEMPLATES = [
       "word_classes"
     ],
     generator(seed) {
-          const rng = mulberry32(seed);
-          const item = pick(rng, TOKEN_CLASS_ITEMS);
+          const item = pickBySeed(seed + 3, TOKEN_CLASS_ITEMS);
           const tokens = item.sentence.replace(/([.,!?;:])/g, ' $1').split(/\s+/).filter(Boolean).filter(t => !/[.,!?;:]/.test(t));
           const unique = [...new Set(tokens)];
           return makeBaseQuestion(this, seed, {
@@ -3003,7 +3143,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const pair = pickBySeed(seed, EXTRA_LEXICON.clausePairs);
+          const pair = pickBySeed(seed + 2, EXTRA_LEXICON.clausePairs);
           const correct = ";";
           const options = [
             { value:";", label:";" },
@@ -3052,7 +3192,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const item = pickBySeed(seed, EXTRA_LEXICON.colonLists);
+          const item = pickBySeed(seed + 3, EXTRA_LEXICON.colonLists);
           const raw = ensureSentenceEnd(`${item.intro} ${item.items.join(", ")}`);
           const accepted = [ensureSentenceEnd(`${item.intro}: ${item.items.join(", ")}`)];
           const answerSpec = punctuationPatternAnswerSpec(accepted, [raw], {
@@ -3095,7 +3235,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const pair = pickBySeed(seed, EXTRA_LEXICON.dashBoundaries);
+          const pair = pickBySeed(seed + 5, EXTRA_LEXICON.dashBoundaries);
           const raw = ensureSentenceEnd(`${pair[0]} ${pair[1]}`);
           const accepted = dedupePlain([
             `${pair[0]} – ${pair[1]}.`,
@@ -3139,7 +3279,7 @@ const TEMPLATES = [
       "hyphen_ambiguity"
     ],
     generator(seed) {
-          const item = pickBySeed(seed, EXTRA_LEXICON.hyphenPrompts);
+          const item = pickBySeed(seed + 7, EXTRA_LEXICON.hyphenPrompts);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${escapeHtml(item.ask)}</p>`,
@@ -3635,7 +3775,7 @@ const TEMPLATES = [
           let distractors = [];
           let why = "";
           if (mode === 0) {
-            const pair = pick(rng, EXTRA_LEXICON.clausePairs);
+            const pair = pickBySeed(seed + 8, EXTRA_LEXICON.clausePairs);
             sentence = `${pair[0]}; ${pair[1]}.`;
             correct = "A semi-colon can join two closely related main clauses.";
             distractors = [
@@ -3645,7 +3785,7 @@ const TEMPLATES = [
             ];
             why = "Both sides of the semi-colon are complete clauses.";
           } else if (mode === 1) {
-            const list = pick(rng, EXTRA_LEXICON.colonLists);
+            const list = pickBySeed(seed, EXTRA_LEXICON.colonLists);
             sentence = `${list.intro}: ${list.items.join(", ")}.`;
             correct = "The words before the colon make a complete clause and the colon introduces a list.";
             distractors = [
@@ -3655,7 +3795,7 @@ const TEMPLATES = [
             ];
             why = "A colon often comes after a full clause and introduces a list or explanation.";
           } else {
-            const pair = pick(rng, EXTRA_LEXICON.dashBoundaries);
+            const pair = pickBySeed(seed, EXTRA_LEXICON.dashBoundaries);
             sentence = `${pair[0]} – ${pair[1]}.`;
             correct = "The dash creates a strong break before an explanation or afterthought.";
             distractors = [
@@ -4023,9 +4163,14 @@ const TEMPLATES = [
                 raw:"The hall to be honest needed a new coat of paint.",
                 accepted:"The hall, to be honest, needed a new coat of paint.",
                 why:"The phrase ‘to be honest’ is parenthetical commentary by the writer."
+              },
+              {
+                raw:"The cake according to Mum needed another ten minutes.",
+                accepted:"The cake, according to Mum, needed another ten minutes.",
+                why:"The phrase ‘according to Mum’ is extra information inserted into the sentence."
               }
             ];
-            const item = items[seed % items.length];
+            const item = items[(seed + 1) % items.length];
             const answerSpec = punctuationPatternAnswerSpec([item.accepted], [item.raw], {
               maxScore:2,
               misconception:"parenthesis_confusion",
@@ -4111,9 +4256,14 @@ const TEMPLATES = [
                 raw:"Mia drew a life size portrait of her brother.",
                 accepted:"Mia drew a life-size portrait of her brother.",
                 why:"The hyphen makes 'life-size' a single compound adjective describing the portrait."
+              },
+              {
+                raw:"The guide showed us a time saving route through town.",
+                accepted:"The guide showed us a time-saving route through town.",
+                why:"The hyphen makes 'time-saving' one compound adjective before the noun."
               }
             ];
-            const item = items[seed % items.length];
+            const item = items[(seed + 3) % items.length];
             const answerSpec = punctuationPatternAnswerSpec([item.accepted], [item.raw], {
               maxScore:2,
               misconception:"punctuation_precision",
@@ -4477,6 +4627,10 @@ const TEMPLATES = [
               [
                 { text:"Visitors are respectfully reminded to switch off mobile devices.", answer:"formal" },
                 { text:"Can everyone turn their phones off, please?", answer:"informal" }
+              ],
+              [
+                { text:"Applications must be submitted by midday.", answer:"formal" },
+                { text:"Get your forms in before lunch.", answer:"informal" }
               ]
             ];
             const rows = cases[seed % cases.length];
@@ -6733,6 +6887,26 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
       ],
       why: "'Castle' is the head noun. 'Their' is a possessive determiner showing ownership, not a pronoun standing alone for a noun.",
       misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Identify the head noun and the word class of the intensifier.",
+      example: "a very narrow wooden bridge",
+      fields: [
+        { label: "Head noun", correct: "bridge", options: ["very", "narrow", "wooden", "bridge"] },
+        { label: "Word class of 'very'", correct: "adverb", options: ["adverb", "adjective", "noun", "determiner"] }
+      ],
+      why: "'Bridge' is the head noun. 'Very' is an adverb because it modifies the adjective 'narrow'.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Identify the head noun and the word class of the place modifier.",
+      example: "the city museum entrance",
+      fields: [
+        { label: "Head noun", correct: "entrance", options: ["city", "museum", "entrance", "the"] },
+        { label: "Word class of 'museum'", correct: "noun", options: ["noun", "adjective", "determiner", "verb"] }
+      ],
+      why: "'Entrance' is the head noun. 'Museum' is a noun used before another noun to specify the kind of entrance.",
+      misconception: "word_class_confusion"
     }
   ],
 
@@ -7219,6 +7393,28 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
         { label: "Role of 'the heavy equipment'", correct: "object", options: ["subject", "object"] }
       ],
       why: "The sentence is active: the doer ('the children') performs the action. 'The heavy equipment' receives the carrying and is therefore the object.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "The vase was repaired by Uncle Ray after school.",
+      focus: "The vase",
+      fields: [
+        { label: "Voice of the sentence", correct: "passive", options: ["active", "passive"] },
+        { label: "Role of 'the vase'", correct: "subject", options: ["subject", "object"] }
+      ],
+      why: "The sentence is passive: the affected thing ('the vase') is the grammatical subject, while the doer appears in the 'by' phrase.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "The drummer struck the cymbal during the final song.",
+      focus: "the cymbal",
+      fields: [
+        { label: "Voice of the sentence", correct: "active", options: ["active", "passive"] },
+        { label: "Role of 'the cymbal'", correct: "object", options: ["subject", "object"] }
+      ],
+      why: "The sentence is active because the doer ('the drummer') performs the action. 'The cymbal' receives the action, so it is the object.",
       misconception: "subject_object_confusion"
     }
   ],
@@ -8196,6 +8392,786 @@ function isPunctuationSkill(skillId) {
   return PUNCTUATION_SKILL_IDS.includes(skillId);
 }
 
+const P14_NAMES = Object.freeze([
+  "Aisha",
+  "Ben",
+  "Cara",
+  "Dylan",
+  "Eli",
+  "Freya",
+  "Grace",
+  "Hassan",
+  "Imani",
+  "Jasper",
+  "Keira",
+  "Luca",
+  "Maya",
+  "Nina",
+  "Omar",
+  "Priya",
+  "Ravi",
+  "Sofia",
+  "Theo",
+  "Zara"
+]);
+
+const P14_OBJECTS = Object.freeze([
+  "the science folder",
+  "the red kite",
+  "the clay model",
+  "the library pass",
+  "the class trophy",
+  "the sports bib",
+  "the history poster",
+  "the blue lantern",
+  "the recipe card",
+  "the playground map"
+]);
+
+const P14_PLACES = Object.freeze([
+  "beside the hall doors",
+  "near the old oak tree",
+  "inside the quiet library",
+  "outside the science room",
+  "by the muddy pitch",
+  "under the covered walkway",
+  "at the museum entrance",
+  "behind the stage curtain",
+  "next to the art cupboard",
+  "beside the coach bay"
+]);
+
+const P14_ADVERBIALS = Object.freeze([
+  "After the whistle",
+  "Before the final bell",
+  "During the storm",
+  "At the edge of the field",
+  "With careful steps",
+  "Without any warning",
+  "In the morning sunlight",
+  "Beside the display board",
+  "After checking the list",
+  "During the museum visit",
+  "At the end of practice",
+  "With a steady hand"
+]);
+
+const P14_TIME_SIGNALS = Object.freeze([
+  "already",
+  "yesterday",
+  "by the time the bell rang",
+  "since Monday",
+  "last week",
+  "just",
+  "before lunch yesterday",
+  "by the time the coach arrived",
+  "today",
+  "after the rehearsal"
+]);
+
+const P14_REPORTED_CLAUSES = Object.freeze([
+  "we should leave now",
+  "the gate is locked",
+  "I found the missing badge",
+  "the library opens at nine",
+  "our team won the relay",
+  "the model needs more paint",
+  "I can hear thunder",
+  "the trip starts tomorrow"
+]);
+
+const P14_REPORTED_QUESTIONS = Object.freeze([
+  "should we leave now",
+  "is the gate locked",
+  "where did you find the missing badge",
+  "does the library open at nine",
+  "did our team win the relay",
+  "does the model need more paint",
+  "can you hear thunder",
+  "does the trip start tomorrow"
+]);
+
+function p14Pick(seed, list, salt = 0) {
+  return list[((Number(seed) || 0) + salt) % list.length];
+}
+
+function p14CaseNumber(seed, modulo, salt = 0) {
+  return ((Number(seed) || 0) + salt) % modulo;
+}
+
+function p14Article(nounPhrase) {
+  return /^[aeiou]/i.test(String(nounPhrase || "").trim()) ? "an" : "a";
+}
+
+function p14TransferConceptLabel(skillId) {
+  return String(skillId || "").replace(/_/g, " ");
+}
+
+function p14StandardEnglishItem(seed, family) {
+  const name = p14Pick(seed, P14_NAMES);
+  const object = p14Pick(seed, P14_OBJECTS, 2);
+  const place = p14Pick(seed, P14_PLACES, 4);
+  const cases = [
+    {
+      wrong: `The players was waiting ${place}.`,
+      correct: `The players were waiting ${place}.`,
+      rule: "A plural subject takes 'were' in Standard English.",
+      distractors: [
+        "Use 'was' because the action happened in the past.",
+        "Use 'be' because the sentence is informal.",
+        "Remove the verb because the place phrase is enough."
+      ],
+      choiceDistractors: [
+        `The players was waiting ${place}.`,
+        `The player were waiting ${place}.`,
+        `The players be waiting ${place}.`
+      ],
+      transferDistractors: [
+        `The players was waiting ${place}.`,
+        `The player were waiting ${place}.`,
+        `The players be waiting ${place}.`
+      ]
+    },
+    {
+      wrong: `${name} done ${object} before tea.`,
+      correct: `${name} did ${object} before tea.`,
+      rule: "Standard English uses 'did' for this simple past verb form.",
+      distractors: [
+        "Use 'done' whenever the action has finished.",
+        "Use 'do' because the action belongs to one person.",
+        "Use 'has did' to make the sentence more formal."
+      ],
+      choiceDistractors: [
+        `${name} done ${object} before tea.`,
+        `${name} do ${object} before tea.`,
+        `${name} has did ${object} before tea.`
+      ],
+      transferDistractors: [
+        `${name} done ${object} before tea.`,
+        `${name} do ${object} before tea.`,
+        `${name} has did ${object} before tea.`
+      ]
+    },
+    {
+      wrong: `${name} don't know where the meeting point is.`,
+      correct: `${name} doesn't know where the meeting point is.`,
+      rule: "A singular subject takes 'doesn't' in Standard English.",
+      distractors: [
+        "Use 'don't' because the sentence is negative.",
+        "Use 'didn't' because all negative verbs need past tense.",
+        "Use 'not know' because it sounds more formal."
+      ],
+      choiceDistractors: [
+        `${name} don't know where the meeting point is.`,
+        `${name} doesn't knows where the meeting point is.`,
+        `${name} not know where the meeting point is.`
+      ],
+      transferDistractors: [
+        `${name} don't know where the meeting point is.`,
+        `${name} doesn't knows where the meeting point is.`,
+        `${name} not know where the meeting point is.`
+      ]
+    },
+    {
+      wrong: `${name} seen ${object} ${place}.`,
+      correct: `${name} saw ${object} ${place}.`,
+      rule: "The simple past form here is 'saw'.",
+      distractors: [
+        "Use 'seen' without an auxiliary in formal writing.",
+        "Use 'has saw' because the object is specific.",
+        "Use 'see' because the sentence names the subject first."
+      ],
+      choiceDistractors: [
+        `${name} seen ${object} ${place}.`,
+        `${name} has saw ${object} ${place}.`,
+        `${name} see ${object} ${place}.`
+      ],
+      transferDistractors: [
+        `${name} seen ${object} ${place}.`,
+        `${name} has saw ${object} ${place}.`,
+        `${name} see ${object} ${place}.`
+      ]
+    }
+  ];
+  const item = cases[p14CaseNumber(seed, cases.length)];
+  if (family === "rewrite") {
+    return {
+      prompt: `Rewrite this sentence in Standard English: ${item.wrong}`,
+      correct: item.correct,
+      nearMisses: [item.wrong],
+      why: item.rule,
+      misconception: "standard_english_confusion"
+    };
+  }
+  if (family === "explain") {
+    return {
+      prompt: `Why is this sentence Standard English? ${item.correct}`,
+      correct: item.rule,
+      distractors: item.distractors,
+      why: item.rule,
+      misconception: "standard_english_confusion"
+    };
+  }
+  if (family === "transfer") {
+    return {
+      prompt: `Which sentence would fit a formal school newsletter about this idea: ${item.wrong}`,
+      correct: item.correct,
+      distractors: item.transferDistractors,
+      why: `Formal school writing needs the Standard English form. ${item.rule}`,
+      misconception: "standard_english_confusion"
+    };
+  }
+  return {
+    prompt: `Which correction fixes the Standard English error in this sentence? ${item.wrong}`,
+    correct: item.correct,
+    distractors: item.choiceDistractors,
+    why: item.rule,
+    misconception: "standard_english_confusion"
+  };
+}
+
+function p14FrontedAdverbialItem(seed, family) {
+  const opener = p14Pick(seed, P14_ADVERBIALS);
+  const name = p14Pick(seed, P14_NAMES, 3);
+  const object = p14Pick(seed, P14_OBJECTS, 5);
+  const clause = `${name} carried ${object} carefully`;
+  const correct = `${opener}, ${clause}.`;
+  const noComma = `${opener} ${clause}.`;
+  if (family === "rewrite") {
+    return {
+      prompt: `Add the missing comma after the fronted adverbial: ${noComma}`,
+      correct,
+      nearMisses: [noComma],
+      why: "A fronted adverbial normally takes a comma before the main clause.",
+      misconception: "fronted_adverbial_confusion"
+    };
+  }
+  if (family === "explain") {
+    return {
+      prompt: `Why does this sentence need a comma? ${correct}`,
+      correct: "The opening phrase is a fronted adverbial, so the comma separates it from the main clause.",
+      distractors: [
+        "The opening phrase is the subject, so the comma separates it from the verb.",
+        "The opening phrase is direct speech, so the comma separates it from the speaker.",
+        "The opening phrase is a list opener, so the comma separates it from the listed items."
+      ],
+      why: "The fronted adverbial comes before the main clause.",
+      misconception: "fronted_adverbial_confusion"
+    };
+  }
+  if (family === "transfer") {
+    return {
+      prompt: `Which sentence uses both a fronted adverbial and a correct main clause for this idea: ${opener} + ${clause}?`,
+      correct,
+      distractors: [
+        noComma,
+        `${opener}, carried ${object} carefully.`,
+        `${name}, carried ${object} carefully ${opener.toLowerCase()}.`
+      ],
+      why: "The correct sentence has a fronted adverbial, comma, subject and verb.",
+      misconception: "fronted_adverbial_confusion"
+    };
+  }
+  return {
+    prompt: `Which sentence is punctuated correctly for this idea: ${opener} + ${clause}?`,
+    correct,
+    distractors: [
+      noComma,
+      `${opener} ${name}, carried ${object} carefully.`,
+      `${opener}, ${name}, carried ${object} carefully.`
+    ],
+    why: "Only the fronted adverbial is separated from the main clause.",
+    misconception: "fronted_adverbial_confusion"
+  };
+}
+
+function p14SubjectObjectItem(seed, family) {
+  const name = p14Pick(seed, P14_NAMES);
+  const object = p14Pick(seed, P14_OBJECTS, 1);
+  const place = p14Pick(seed, P14_PLACES, 6);
+  const verb = p14Pick(seed, ["carried", "opened", "packed", "lifted", "painted", "cleaned"], 2);
+  const sentence = `${name} ${verb} ${object} ${place}.`;
+  const askSubject = p14CaseNumber(seed, 2) === 0;
+  const target = askSubject ? name : object;
+  const role = askSubject ? "subject" : "object";
+  const rule = askSubject
+    ? "The subject is the person or thing doing the action."
+    : "The object receives the action of the verb.";
+  if (family === "rewrite") {
+    return {
+      prompt: `Type the ${role} in this sentence: ${sentence}`,
+      correct: target,
+      nearMisses: [askSubject ? object : name],
+      why: rule,
+      misconception: "subject_object_confusion"
+    };
+  }
+  if (family === "explain") {
+    return {
+      prompt: `Why is '${target}' the ${role} in this sentence? ${sentence}`,
+      correct: rule,
+      distractors: [
+        "It is nearest to the full stop.",
+        "It is the longest noun phrase in the sentence.",
+        "It tells where the action happens."
+      ],
+      why: rule,
+      misconception: "subject_object_confusion"
+    };
+  }
+  if (family === "transfer") {
+    return {
+      prompt: `In the sentence '${sentence}', which answer matches both grammar roles?`,
+      correct: `subject: ${name}; object: ${object}`,
+      distractors: [
+        `subject: ${object}; object: ${name}`,
+        `subject: ${place}; object: ${object}`,
+        `subject: ${name}; object: ${verb}`
+      ],
+      why: `${name} does the action and ${object} receives it.`,
+      misconception: "subject_object_confusion"
+    };
+  }
+  return {
+    prompt: `Which words are the ${role} in this sentence? ${sentence}`,
+    correct: target,
+    distractors: [askSubject ? object : name, verb, place],
+    why: rule,
+    misconception: "subject_object_confusion"
+  };
+}
+
+function p14ClauseItem(seed, family) {
+  const name = p14Pick(seed, P14_NAMES, 4);
+  const object = p14Pick(seed, P14_OBJECTS, 7);
+  const subordinators = [
+    { word: "because", tail: "the wind was rising" },
+    { word: "although", tail: "the path was muddy" },
+    { word: "when", tail: "the whistle blew" },
+    { word: "if", tail: "the coach agreed" },
+    { word: "while", tail: "the class waited quietly" }
+  ];
+  const sub = p14Pick(seed, subordinators);
+  const main = `${name} checked ${object}`;
+  const subordinate = `${sub.word} ${sub.tail}`;
+  const combined = `${capFirst(subordinate)}, ${main}.`;
+  if (family === "rewrite") {
+    return {
+      prompt: `Combine the clauses with the subordinate clause first: ${main}. ${capFirst(subordinate)}.`,
+      correct: combined,
+      nearMisses: [`${capFirst(subordinate)} ${main}.`],
+      why: "A fronted subordinate clause is followed by a comma before the main clause.",
+      misconception: "subordinate_clause_confusion"
+    };
+  }
+  if (family === "explain") {
+    return {
+      prompt: `Why is '${subordinate}' a subordinate clause in this sentence? ${combined}`,
+      correct: "It depends on the main clause to complete the meaning.",
+      distractors: [
+        "It can stand alone as a complete sentence.",
+        "It is subordinate because it has no verb.",
+        "It is subordinate because it is the longest part."
+      ],
+      why: "A subordinate clause adds information but depends on a main clause.",
+      misconception: "subordinate_clause_confusion"
+    };
+  }
+  if (family === "transfer") {
+    return {
+      prompt: `Which sentence uses a subordinate clause and correct comma placement for these clauses: ${main}; ${subordinate}?`,
+      correct: combined,
+      distractors: [
+        `${capFirst(subordinate)} ${main}.`,
+        `${main}, ${subordinate}.`,
+        `${sub.word} ${sub.tail}.`
+      ],
+      why: "The subordinate clause comes first and is separated from the main clause.",
+      misconception: "subordinate_clause_confusion"
+    };
+  }
+  return {
+    prompt: `Which part is the subordinate clause? ${combined}`,
+    correct: subordinate,
+    distractors: [main, name, object],
+    why: "The subordinate clause begins with the subordinating conjunction and depends on the main clause.",
+    misconception: "subordinate_clause_confusion"
+  };
+}
+
+function p14TenseItem(seed, family) {
+  const name = p14Pick(seed, P14_NAMES, 2);
+  const object = p14Pick(seed, P14_OBJECTS, 3);
+  const verb = p14Pick(seed, [
+    { base: "finish", past: "finished", part: "finished", ing: "finishing" },
+    { base: "choose", past: "chose", part: "chosen", ing: "choosing" },
+    { base: "write", past: "wrote", part: "written", ing: "writing" },
+    { base: "break", past: "broke", part: "broken", ing: "breaking" },
+    { base: "hide", past: "hid", part: "hidden", ing: "hiding" },
+    { base: "take", past: "took", part: "taken", ing: "taking" }
+  ], 5);
+  const signal = p14Pick(seed, P14_TIME_SIGNALS);
+  const isPerfect = /already|since|just|today/i.test(signal);
+  const isPastPerfect = /by the time/i.test(signal);
+  const correctForm = isPastPerfect
+    ? `had ${verb.part}`
+    : isPerfect
+      ? `has ${verb.part}`
+      : verb.past;
+  const sentence = `${name} ${correctForm} ${object} ${signal}.`;
+  const distractors = [verb.past, `has ${verb.part}`, `had ${verb.part}`, `is ${verb.ing}`].filter((x, i, arr) => x !== correctForm && arr.indexOf(x) === i);
+  const rule = isPastPerfect
+    ? "The past perfect shows an action completed before another past event."
+    : isPerfect
+      ? "The present perfect links an earlier action to the present."
+      : "A finished past time signal needs the simple past form.";
+  if (family === "rewrite") {
+    const wrong = `${name} ${distractors[0]} ${object} ${signal}.`;
+    return {
+      prompt: `Correct the verb form: ${wrong}`,
+      correct: sentence,
+      nearMisses: [wrong],
+      why: rule,
+      misconception: "tense_confusion"
+    };
+  }
+  if (family === "explain") {
+    return {
+      prompt: `Why is '${correctForm}' the best verb form here? ${sentence}`,
+      correct: rule,
+      distractors: [
+        "It is correct because longer verb phrases are always more formal.",
+        "It is correct because the subject is a proper noun.",
+        "It is correct because every past action uses the same verb form."
+      ],
+      why: rule,
+      misconception: "tense_confusion"
+    };
+  }
+  if (family === "transfer") {
+    return {
+      prompt: `Choose the verb form that fits the time signal in this sentence: ${name} ___ ${object} ${signal}.`,
+      correct: correctForm,
+      distractors,
+      why: rule,
+      misconception: "tense_confusion"
+    };
+  }
+  return {
+    prompt: `Which sentence uses the verb form correctly for ${name}, ${object}, and the time signal '${signal}'?`,
+    correct: sentence,
+    distractors: distractors.slice(0, 3).map((form) => `${name} ${form} ${object} ${signal}.`),
+    why: rule,
+    misconception: "tense_confusion"
+  };
+}
+
+function p14SpeechItem(seed, family) {
+  const name = p14Pick(seed, P14_NAMES, 1);
+  const clause = p14Pick(seed, P14_REPORTED_CLAUSES, 3);
+  const spoken = capFirst(clause).replace(/\.$/, "");
+  const reporting = `${name} said`;
+  const correct = `"${spoken}," ${reporting}.`;
+  const raw = `${spoken}, ${reporting}.`;
+  if (family === "rewrite") {
+    return {
+      prompt: `Add the missing speech marks and comma: ${raw}`,
+      correct,
+      nearMisses: [`"${spoken}" ${reporting}.`, `${spoken}, ${reporting}.`],
+      why: "The spoken words need speech marks, and the comma belongs inside the closing speech mark.",
+      misconception: "speech_punctuation_confusion"
+    };
+  }
+  if (family === "explain") {
+    return {
+      prompt: `Why is the comma inside the speech marks here? ${correct}`,
+      correct: "The comma belongs to the spoken words before the reporting clause.",
+      distractors: [
+        "The comma is inside because the reporting clause is a question.",
+        "The comma is inside because all commas go before capital letters.",
+        "The comma is inside because the sentence has a proper noun."
+      ],
+      why: "Speech punctuation keeps the spoken words inside the speech marks.",
+      misconception: "speech_punctuation_confusion"
+    };
+  }
+  if (family === "transfer") {
+    const questionClause = p14Pick(seed, P14_REPORTED_QUESTIONS, 5);
+    const spokenQuestion = capFirst(questionClause).replace(/[.?!]+$/, "");
+    const question = `"${spokenQuestion}?" ${name} asked.`;
+    return {
+      prompt: `Which sentence correctly punctuates ${name}'s spoken question: ${spokenQuestion}?`,
+      correct: question,
+      distractors: [
+        `"${spokenQuestion}," ${name} asked?`,
+        `"${spokenQuestion}"? ${name} asked.`,
+        `${spokenQuestion}? ${name} asked.`
+      ],
+      why: "The question mark belongs inside the speech marks when the spoken words are a question.",
+      misconception: "speech_punctuation_confusion"
+    };
+  }
+  return {
+    prompt: `Which version punctuates ${name}'s direct speech correctly: ${spoken}?`,
+    correct,
+    distractors: [
+      `"${spoken}", ${reporting}.`,
+      `${spoken}," ${reporting}.`,
+      `"${spoken}" ${reporting}.`
+    ],
+    why: "The spoken words are enclosed in speech marks and the comma sits inside them.",
+    misconception: "speech_punctuation_confusion"
+  };
+}
+
+function p14NounPhraseItem(seed, family) {
+  const noun = p14Pick(seed, ["lantern", "notebook", "trophy", "kite", "badge", "painting", "glove", "rucksack"], 2);
+  const adjective = p14Pick(seed, ["silver", "muddy", "striped", "ancient", "bright", "cracked", "tiny", "heavy"], 4);
+  const second = p14Pick(seed, ["wooden", "school", "glass", "festival", "science", "sports", "library", "ceramic"], 6);
+  const place = p14Pick(seed, P14_PLACES, 8);
+  const phrase = `the ${adjective} ${second} ${noun} ${place}`;
+  const sentence = `${capFirst(phrase)} caught everyone's attention.`;
+  if (family === "rewrite") {
+    return {
+      prompt: `Type the expanded noun phrase from this sentence: ${sentence}`,
+      correct: phrase,
+      nearMisses: [`the ${noun}`, `${adjective} ${noun}`],
+      why: "The full phrase is centred on the noun and includes its modifiers.",
+      misconception: "noun_phrase_confusion"
+    };
+  }
+  if (family === "explain") {
+    return {
+      prompt: `Why is '${phrase}' an expanded noun phrase?`,
+      correct: "It is centred on a noun and includes extra words that describe or specify it.",
+      distractors: [
+        "It is a clause because it has a verb.",
+        "It is a fronted adverbial because it tells where something happens.",
+        "It is formal language because it has several adjectives."
+      ],
+      why: "An expanded noun phrase adds detail to the noun.",
+      misconception: "noun_phrase_confusion"
+    };
+  }
+  if (family === "transfer") {
+    return {
+      prompt: `Which sentence uses the expanded noun phrase '${phrase}' as the subject?`,
+      correct: sentence,
+      distractors: [
+        `Everyone noticed ${phrase}.`,
+        `${capFirst(place)}, everyone noticed the ${noun}.`,
+        `The ${noun} was noticed because it was ${adjective}.`
+      ],
+      why: "The expanded noun phrase comes before the verb and works as the subject.",
+      misconception: "noun_phrase_confusion"
+    };
+  }
+  return {
+    prompt: `Which option is the full expanded noun phrase in this sentence? ${sentence}`,
+    correct: phrase,
+    distractors: [
+      `the ${second} ${adjective} ${noun} ${place}`,
+      `the ${adjective} ${second} ${noun} near the office`,
+      `${p14Article(adjective)} ${adjective} ${second} ${noun} ${place}`
+    ],
+    why: "The whole noun phrase includes the noun and the words that belong with it.",
+    misconception: "noun_phrase_confusion"
+  };
+}
+
+function p14ParenthesisItem(seed, family) {
+  const name = p14Pick(seed, P14_NAMES, 7);
+  const object = p14Pick(seed, P14_OBJECTS, 9);
+  const extra = p14Pick(seed, [
+    "which had been missing all morning",
+    "a prize from the class challenge",
+    "as the teacher reminded us",
+    "the one with a broken handle",
+    "which everyone recognised at once",
+    "a present for the visitor"
+  ], 3);
+  const correct = `${name} found ${object}, ${extra}, near the office.`;
+  const noPair = `${name} found ${object}, ${extra} near the office.`;
+  if (family === "rewrite") {
+    return {
+      prompt: `Add the missing pair of commas around the parenthesis: ${noPair}`,
+      correct,
+      nearMisses: [noPair],
+      why: "The extra information is parenthesis, so paired commas show it can be lifted out.",
+      misconception: "parenthesis_confusion"
+    };
+  }
+  if (family === "explain") {
+    return {
+      prompt: `Why are paired commas used here? ${correct}`,
+      correct: "They mark extra information that could be removed without breaking the main sentence.",
+      distractors: [
+        "They mark the main action that must stay in the sentence for it to make sense.",
+        "They mark items in a list that cannot be removed without changing the sentence.",
+        "They mark the exact spoken words that must stay inside direct speech marks."
+      ],
+      why: "Parenthesis adds removable extra information.",
+      misconception: "parenthesis_confusion"
+    };
+  }
+  if (family === "transfer") {
+    return {
+      prompt: `Which sentence keeps its meaning if the parenthesis '${extra}' is removed?`,
+      correct,
+      distractors: [
+        `${name}, found ${object} ${extra}, near the office.`,
+        `${name} found, ${object} ${extra}, near the office.`,
+        `${name} found ${object} near, the office, ${extra}.`
+      ],
+      why: "The paired commas surround the removable extra information.",
+      misconception: "parenthesis_confusion"
+    };
+  }
+  return {
+    prompt: `Which sentence uses commas for parenthesis correctly around '${extra}'?`,
+    correct,
+    distractors: [
+      noPair,
+      `${name}, found ${object}, ${extra} near the office.`,
+      `${name} found ${object} ${extra}, near the office.`
+    ],
+    why: "Both sides of the parenthesis need a comma.",
+    misconception: "parenthesis_confusion"
+  };
+}
+
+function p14ItemForConcept(conceptId, family, seed) {
+  switch (conceptId) {
+    case "standard_english": return p14StandardEnglishItem(seed, family);
+    case "adverbials": return p14FrontedAdverbialItem(seed, family);
+    case "subject_object": return p14SubjectObjectItem(seed, family);
+    case "clauses": return p14ClauseItem(seed, family);
+    case "tense_aspect": return p14TenseItem(seed, family);
+    case "speech_punctuation": return p14SpeechItem(seed, family);
+    case "noun_phrases": return p14NounPhraseItem(seed, family);
+    case "parenthesis_commas": return p14ParenthesisItem(seed, family);
+    default: return p14StandardEnglishItem(seed, family);
+  }
+}
+
+function buildP14SelectedQuestion(template, seed, family) {
+  const rng = mulberry32(seed);
+  const item = p14ItemForConcept(template.skillIds[0], family, seed);
+  const correct = cleanSpaces(item.correct);
+  const distractors = dedupePlain(item.distractors || []).filter(option => option !== correct).slice(0, 3);
+  const answerSpec = exactAnswerSpec(correct, distractors, {
+    misconception: item.misconception,
+    feedbackLong: item.why,
+    answerText: correct
+  });
+  const transferLine = family === "transfer"
+    ? `This is a mixed-transfer check for ${p14TransferConceptLabel(template.skillIds[0])}.`
+    : "Use the grammar rule named in the question, not the longest option.";
+  return makeBaseQuestion(template, seed, {
+    marks: 1,
+    answerSpec,
+    stemHtml: `<p>${escapeHtml(item.prompt)}</p>`,
+    inputSpec: { type: "single_choice", label: "Choose one", options: buildChoiceOptions(rng, correct, distractors) },
+    solutionLines: [
+      transferLine,
+      item.why,
+      `The correct option is: ${correct}`
+    ],
+    evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+  });
+}
+
+function buildP14ConstructedQuestion(template, seed) {
+  const item = p14ItemForConcept(template.skillIds[0], "rewrite", seed);
+  const correct = cleanSpaces(item.correct);
+  const answerSpec = normalisedTextAnswerSpec(correct, item.nearMisses || [], {
+    misconception: item.misconception,
+    feedbackLong: item.why,
+    answerText: correct
+  });
+  return makeBaseQuestion(template, seed, {
+    marks: 1,
+    answerSpec,
+    stemHtml: `<p>${escapeHtml(item.prompt)}</p>`,
+    inputSpec: { type: "text", label: "Answer", placeholder: "Type the answer" },
+    solutionLines: [
+      item.why,
+      `One correct answer is: ${correct}`
+    ],
+    evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+  });
+}
+
+const P14_PRIORITY_CONCEPTS = Object.freeze([
+  Object.freeze({ id: "standard_english", key: "standard_english", label: "Standard English", domain: "Standard English" }),
+  Object.freeze({ id: "adverbials", key: "fronted_adverbials", label: "Fronted adverbials", domain: "Adverbials" }),
+  Object.freeze({ id: "subject_object", key: "subject_object", label: "Subject and object", domain: "Sentence roles" }),
+  Object.freeze({ id: "clauses", key: "subordinate_clauses", label: "Subordinate clauses", domain: "Clauses" }),
+  Object.freeze({ id: "tense_aspect", key: "tense_aspect", label: "Tense and aspect", domain: "Tense and aspect" }),
+  Object.freeze({ id: "speech_punctuation", key: "speech_punctuation", label: "Speech punctuation", domain: "Speech punctuation" }),
+  Object.freeze({ id: "noun_phrases", key: "expanded_noun_phrases", label: "Expanded noun phrases", domain: "Phrases" }),
+  Object.freeze({ id: "parenthesis_commas", key: "parenthesis_commas", label: "Parenthesis and commas", domain: "Parenthesis" })
+]);
+
+const P14_FAMILIES = Object.freeze([
+  Object.freeze({
+    suffix: "diagnostic_choice",
+    label: "diagnostic misconception choice",
+    family: "diagnostic",
+    questionType: "choose",
+    isSelectedResponse: true,
+    tags: ["qg-p14", "diagnostic", "misconception-choice"]
+  }),
+  Object.freeze({
+    suffix: "constructed_rewrite",
+    label: "constructed correction",
+    family: "rewrite",
+    questionType: "rewrite",
+    isSelectedResponse: false,
+    tags: ["qg-p14", "constructed-response", "repair"]
+  }),
+  Object.freeze({
+    suffix: "explain_why",
+    label: "explanation choice",
+    family: "explain",
+    questionType: "explain",
+    isSelectedResponse: true,
+    tags: ["qg-p14", "explanation", "why"]
+  }),
+  Object.freeze({
+    suffix: "mixed_transfer",
+    label: "mixed-transfer application",
+    family: "transfer",
+    questionType: "choose",
+    isSelectedResponse: true,
+    tags: ["qg-p14", "mixed-transfer", "deep-review", "sats-style"]
+  })
+]);
+
+const P14_PRIORITY_TEMPLATES = P14_PRIORITY_CONCEPTS.flatMap((concept) => (
+  P14_FAMILIES.map((family) => Object.freeze({
+    id: `qg_p14_${concept.key}_${family.suffix}`,
+    label: `${concept.label} ${family.label}`,
+    domain: concept.domain,
+    questionType: family.questionType,
+    difficulty: family.family === "transfer" ? 3 : 2,
+    satsFriendly: true,
+    isSelectedResponse: family.isSelectedResponse,
+    generative: true,
+    generatorFamilyId: `qg_p14_${concept.key}_${family.suffix}`,
+    requiresAnswerSpec: true,
+    answerSpecKind: family.isSelectedResponse ? "exact" : "normalisedText",
+    tags: family.tags,
+    skillIds: [concept.id],
+    generator(seed) {
+      if (family.family === "rewrite") return buildP14ConstructedQuestion(this, seed);
+      return buildP14SelectedQuestion(this, seed, family.family);
+    }
+  }))
+));
+
+TEMPLATES.push(...P14_PRIORITY_TEMPLATES);
+
 const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map(template => [template.id, template]));
 
 function stripLegacyHtml(value) {
@@ -8278,7 +9254,8 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p11-2026-04-30';
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p14-2026-05-01';
+export const GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS = Object.freeze(P14_FIXED_DIAGNOSTIC_TEMPLATE_IDS.slice());
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
 export const GRAMMAR_QUESTION_TYPES = Object.freeze(QUESTION_TYPES);
@@ -8306,6 +9283,8 @@ export function grammarTemplateMetadata(template = {}) {
     satsFriendly: Boolean(template.satsFriendly),
     isSelectedResponse: Boolean(template.isSelectedResponse),
     generative: Boolean(template.generative),
+    fixedDiagnostic: Boolean(template.fixedDiagnostic || P14_FIXED_DIAGNOSTIC_TEMPLATE_ID_SET.has(template.id)),
+    schedulePriority: template.schedulePriority || (P14_FIXED_DIAGNOSTIC_TEMPLATE_ID_SET.has(template.id) ? 'low' : 'normal'),
     generatorFamilyId: grammarTemplateGeneratorFamilyId(template),
     answerSpecKind: template.answerSpecKind || null,
     requiresAnswerSpec: Boolean(template.requiresAnswerSpec || template.answerSpecKind),

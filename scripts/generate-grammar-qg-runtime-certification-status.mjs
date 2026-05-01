@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Grammar QG P13 — Runtime certification status source generator.
+ * Grammar QG — Runtime certification status source generator.
  *
  * Converts the certified status-map artefact into a Worker-safe ES module.
  * The generated module is the runtime scheduling authority; it must be kept in
@@ -28,6 +28,11 @@ const VALID_RUNTIME_STATUSES = new Set([
   'blocked',
   'retire_candidate',
 ]);
+
+function releasePhaseLabel(releaseId) {
+  const match = String(releaseId || '').match(/grammar-qg-p(\d+)-/i);
+  return match ? `P${match[1]}` : 'release';
+}
 
 function normaliseEntry(rawEntry, source) {
   const templateId = rawEntry?.templateId || source?.templateId;
@@ -146,9 +151,10 @@ export function buildRuntimeCertificationStatus(statusMap, opts = {}) {
 export function buildGeneratedSource(runtimeStatus) {
   const rawEntriesJson = JSON.stringify(runtimeStatus.entries, null, 2);
   const statusCountsJson = JSON.stringify(runtimeStatus.statusCounts, null, 2);
+  const phaseLabel = releasePhaseLabel(runtimeStatus.releaseId);
 
   return `/**
- * Grammar QG P13 — generated runtime certification status.
+ * Grammar QG ${phaseLabel} — generated runtime certification status.
  *
  * Source artefact: ${runtimeStatus.sourcePath}
  * Content release: ${runtimeStatus.releaseId}

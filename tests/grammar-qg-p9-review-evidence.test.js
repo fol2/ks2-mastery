@@ -15,7 +15,6 @@ import {
   buildDraftRegister,
   finaliseRegister,
 } from '../scripts/generate-grammar-qg-review-register.mjs';
-import { GRAMMAR_TEMPLATE_METADATA } from '../worker/src/subjects/grammar/content.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -28,6 +27,13 @@ const REGISTER_PATH = path.resolve(
   'reports',
   'grammar',
   'grammar-qg-p9-content-review-register.json'
+);
+const INVENTORY_PATH = path.resolve(
+  __dirname,
+  '..',
+  'reports',
+  'grammar',
+  'grammar-qg-p9-question-inventory.json'
 );
 
 const ALL_CONCEPT_IDS = [
@@ -51,11 +57,13 @@ const ALL_CONCEPT_IDS = [
   'hyphen_ambiguity',
 ];
 
-const MANUAL_REVIEW_ONLY_TEMPLATES = GRAMMAR_TEMPLATE_METADATA
-  .filter((t) => t.answerSpecKind === 'manualReviewOnly')
-  .map((t) => t.id);
-
-const ALL_TEMPLATE_IDS = GRAMMAR_TEMPLATE_METADATA.map((t) => t.id);
+const p9Inventory = JSON.parse(fs.readFileSync(INVENTORY_PATH, 'utf8'));
+const ALL_TEMPLATE_IDS = Array.from(new Set(p9Inventory.items.map((item) => item.templateId))).sort();
+const MANUAL_REVIEW_ONLY_TEMPLATES = Array.from(new Set(
+  p9Inventory.items
+    .filter((item) => item.answerSpecKind === 'manualReviewOnly')
+    .map((item) => item.templateId),
+)).sort();
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
 

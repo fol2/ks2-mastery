@@ -1,0 +1,1329 @@
+{
+  "metadata": {
+    "contentReleaseId": "grammar-qg-p14-2026-05-01",
+    "generatedAt": "2026-05-01T13:33:55.048Z",
+    "templateCount": 110
+  },
+  "entries": [
+    {
+      "templateId": "sentence_type_table",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "question_mark_select",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "word_class_underlined_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "identify_words_in_sentence",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "expanded_noun_phrase_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "build_noun_phrase",
+      "decision": "approved_with_limitation",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "fronted_adverbial_choose",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "subordinate_clause_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "relative_clause_identify",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "relative_clause_complete",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "tense_form_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "tense_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "standard_english_pairs",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "pronoun_cohesion_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "formality_pairs",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "subject_object_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "modal_verb_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "parenthesis_replace_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "apostrophe_possession_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "explain_reason_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "decision": "approved_with_limitation",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc_semicolon_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc_hyphen_ambiguity_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc_apostrophe_possession_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_standard_english_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_tense_aspect_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_modal_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_formality_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_subject_object_identify",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_relative_clause_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "decision": "approved_with_limitation",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc2_boundary_punctuation_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc3_sentence_function_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc3_word_class_contrast_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "decision": "approved_with_limitation",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_active_passive_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_subject_object_classify_table",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_pronoun_referent_identify",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_formality_classify_table",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_modal_verb_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_hyphen_ambiguity_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_sentence_functions_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_word_classes_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_noun_phrases_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_clauses_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_relative_clauses_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_tense_aspect_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_pronouns_cohesion_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_formality_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_active_passive_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_subject_object_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_parenthesis_commas_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_speech_punctuation_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p3_apostrophe_possession_explain",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p4_sentence_speech_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p4_word_class_noun_phrase_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p4_adverbial_clause_boundary_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p4_relative_parenthesis_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p4_verb_form_register_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p4_cohesion_formality_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p4_voice_roles_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_standard_english_diagnostic_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_standard_english_constructed_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_standard_english_explain_why",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_standard_english_mixed_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_fronted_adverbials_diagnostic_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_fronted_adverbials_explain_why",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_fronted_adverbials_mixed_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_subject_object_diagnostic_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_subject_object_constructed_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_subject_object_explain_why",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_subject_object_mixed_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_subordinate_clauses_diagnostic_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_subordinate_clauses_constructed_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_subordinate_clauses_explain_why",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_subordinate_clauses_mixed_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_tense_aspect_diagnostic_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_tense_aspect_constructed_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_tense_aspect_explain_why",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_tense_aspect_mixed_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_speech_punctuation_diagnostic_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_speech_punctuation_constructed_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_speech_punctuation_explain_why",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_speech_punctuation_mixed_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_expanded_noun_phrases_diagnostic_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_expanded_noun_phrases_constructed_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_expanded_noun_phrases_explain_why",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_expanded_noun_phrases_mixed_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_parenthesis_commas_diagnostic_choice",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_parenthesis_commas_constructed_rewrite",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_parenthesis_commas_explain_why",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    },
+    {
+      "templateId": "qg_p14_parenthesis_commas_mixed_transfer",
+      "decision": "approved",
+      "severity": "none",
+      "evidence": [
+        "oracle",
+        "review",
+        "prompt-cue-render",
+        "distractor-audit",
+        "marking-matrix"
+      ]
+    }
+  ]
+}

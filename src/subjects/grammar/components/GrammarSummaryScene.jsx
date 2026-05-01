@@ -21,6 +21,15 @@ function isMiniTestSummary(summary) {
   return false;
 }
 
+function sessionDepthLabel(summary) {
+  const depth = summary?.sessionDepthClassification || summary?.varietyTelemetry?.sessionDepthClassification || '';
+  if (depth === 'deep-practice') return 'Deep practice complete';
+  if (depth === 'quick-practice') return 'Quick practice complete';
+  if (depth === 'mini-test-12') return 'Mini Test complete · 12 questions';
+  if (depth === 'mini-test-8' || summary?.mode === 'satsset') return 'Mini Test complete · 8 questions';
+  return 'Grammar round complete';
+}
+
 function SummaryCards({ cards }) {
   return (
     <div className="grammar-summary-cards" role="list">
@@ -298,7 +307,7 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
         data-grammar-phase-root="summary"
       >
         <section className="card grammar-summary-card-wrap" aria-labelledby="grammar-summary-title">
-          <div className="eyebrow">Mini Test complete</div>
+          <div className="eyebrow">{sessionDepthLabel(summary)}</div>
           <h2 className="section-title" id="grammar-summary-title">
             Nice work, {learner?.name || 'friend'} — results are in
           </h2>
@@ -347,7 +356,7 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
       data-grammar-phase-root="summary"
     >
       <section className="card grammar-summary-card-wrap" aria-labelledby="grammar-summary-title">
-        <div className="eyebrow">Grammar round complete</div>
+        <div className="eyebrow">{sessionDepthLabel(summary)}</div>
         <h2 className="section-title" id="grammar-summary-title">
           Nice work — round complete
         </h2>

@@ -1,29 +1,29 @@
 ---
 title: "Grammar answer-spec migration audit"
 type: audit
-status: p3-updated
-date: 2026-04-28
-plan: docs/plans/james/grammar/questions-generator/grammar-qg-p2.md
-unit: QG-P2
+status: p14-updated
+date: 2026-05-01
+plan: docs/plans/james/grammar/questions-generator/grammar-qg-p14.md
+unit: QG-P14
 ---
 
 # Grammar answer-spec migration audit
 
-This document is the per-template classification and shipped-state audit for the Grammar answer-spec migration. It inventories every one of the 70 Grammar templates (50 selected-response + 20 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. QG P2 ships the legacy constructed-response migration under `grammar-qg-p2-2026-04-28`; QG P3 extends the selected-response explanation bank under `grammar-qg-p3-2026-04-28`. The previous baselines remain frozen for regression comparison.
+This document is the per-template classification and shipped-state audit for the Grammar answer-spec migration. It inventories every one of the 110 Grammar templates (82 selected-response + 28 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. QG P2 ships the legacy constructed-response migration under `grammar-qg-p2-2026-04-28`; QG P3 extends the selected-response explanation bank under `grammar-qg-p3-2026-04-28`; QG P14 extends eight priority concepts under `grammar-qg-p14-2026-05-01`. The previous baselines remain frozen for regression comparison.
 
 The authoritative answer-spec kind list lives at `worker/src/subjects/grammar/answer-spec.js` (`ANSWER_SPEC_KINDS`). The six kinds are: `exact`, `normalisedText`, `acceptedSet`, `punctuationPattern`, `multiField`, `manualReviewOnly`. Every row below proposes one of those kinds; the gate test asserts the set membership.
 
-QG P2 makes this audit executable: every constructed-response template now sets `requiresAnswerSpec: true` and `answerSpecKind`, and each generated question emits hidden `question.answerSpec` data that passes `validateAnswerSpec()`. QG P3 adds 13 selected-response explanation templates that also emit hidden `exact` answer specs from day one. Legacy `markStringAnswer` remains as a compatibility adapter, but the shipped P2+P3 release has zero constructed-response templates left on that adapter path.
+QG P2 makes this audit executable: every constructed-response template now sets `requiresAnswerSpec: true` and `answerSpecKind`, and each generated question emits hidden `question.answerSpec` data that passes `validateAnswerSpec()`. QG P3 adds 13 selected-response explanation templates that also emit hidden `exact` answer specs from day one. QG P14 adds 24 selected-response templates with `exact` specs and 8 constructed-response templates with `normalisedText` specs. Legacy `markStringAnswer` remains as a compatibility adapter for historical comparison, but the shipped P14 release has zero constructed-response templates left on that adapter path.
 
 ---
 
 ## 1. Scope and ground rules
 
-- **70 templates total.** Confirmed by `GRAMMAR_TEMPLATES.length === 70` in `worker/src/subjects/grammar/content.js`. Split: 50 `isSelectedResponse: true`, 20 `isSelectedResponse: false`.
+- **110 templates total.** Confirmed by `GRAMMAR_TEMPLATES.length === 110` in `worker/src/subjects/grammar/content.js`. Split: 82 `isSelectedResponse: true`, 28 `isSelectedResponse: false`.
 - **P2 template migration shipped.** The 20 constructed-response templates now emit hidden answer specs directly.
-- **`contentReleaseId` bumped.** QG P3 uses `grammar-qg-p3-2026-04-28` and adds separate P3 fixtures. The QG P1 and QG P2 fixtures remain unchanged.
+- **P14 content release bumped.** QG P14 uses `grammar-qg-p14-2026-05-01` and adds separate P14 fixtures/evidence. The QG P1-QG P13 fixtures remain unchanged unless explicitly marked as historical gates.
 - **P1 focus concepts drive priority.** Six concepts were the confirmed thin-pool backlog before P1 expansion: `pronouns_cohesion`, `formality`, `active_passive`, `subject_object`, `modal_verbs`, `hyphen_ambiguity`. Every template carrying one of these concept ids in `skillIds` inherits **high** priority, so reliability work continues to land on the concepts that were previously fragile.
-- **Selected-response default is `exact`, except classify-table specs.** 48 selected-response rows use `exact`. Two P1 classify-table templates use `multiField` because they have per-row answers. These are additive migrations: the marking result is deterministic and no stored constructed-response evidence changes.
+- **Selected-response default is `exact`, except classify-table specs.** 78 selected-response rows use `exact`. Four classify-table templates use `multiField` because they have per-row answers. These are additive migrations: the marking result is deterministic and no stored constructed-response evidence changes.
 - **Constructed-response triage is per-concept.** Rewrite templates for `active_passive` and `tense_aspect` migrate to `normalisedText` (whitespace + case tolerance, single golden). Punctuation-surgery templates migrate to `punctuationPattern` (the marker keeps the punctuation characters literal and can opt into `optionalCommas`). Multi-way rewrites (`clauses` combine / join) use explicit `acceptedSet` alternatives. Open-ended builders and ambiguous rewrites are `manualReviewOnly` in P2, with neutral feedback and no auto-scored mastery or reward progression.
 
 ---
@@ -35,6 +35,7 @@ Every row records: template id, concept id(s), question type, current marking pa
 Current marking path column legend:
 - `selected: index match` — `isSelectedResponse: true`, the generator's `evaluate` closure compares `resp.answer === item.correct`.
 - `adapter: markStringAnswer` — `isSelectedResponse: false`, the generator's `evaluate` closure calls `markStringAnswer(respText, accepted, opts)`, which constructs a transient `acceptedSet` spec and delegates to `markByAnswerSpec`.
+- `answerSpec: <kind>` — the template already emits a declared hidden answer spec of that kind from first publication.
 
 Priority column legend: `high` (thin-pool concept or structurally fragile marking), `medium` (constructed-response migration needs a spec-kind change), `low` (additive migration, no marking-behaviour change).
 
@@ -120,21 +121,53 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p4_cohesion_formality_transfer` | `pronouns_cohesion, formality` | choose | answerSpec: exact | `exact` | selected option using pronouns with clear referents in the appropriate register | distractor with ambiguous pronoun reference or mismatched register | high | NO |
 | `qg_p4_voice_roles_transfer` | `active_passive, subject_object` | classify | answerSpec: multiField | `multiField` | each clause classified by voice and its subject/object roles identified | classification that swaps active/passive labels or confuses the grammatical subject with the agent | high | NO |
 | `qg_p4_possession_hyphen_clarity_transfer` | `apostrophes_possession, hyphen_ambiguity` | choose | answerSpec: exact | `exact` | selected option with correct possessive apostrophe and disambiguating hyphen | distractor that places the apostrophe for singular instead of plural or omits the hyphen | high | NO |
+| `qg_p14_standard_english_diagnostic_choice` | `standard_english` | choose | answerSpec: exact | `exact` | `Ben did the library pass before tea.` | `Ben done the library pass before tea.` (non-standard verb); `Ben did the library pass before tea` (missing full stop) | low | NO |
+| `qg_p14_standard_english_constructed_rewrite` | `standard_english` | rewrite | answerSpec: normalisedText | `normalisedText` | `Ben did the library pass before tea.` | `Ben done the library pass before tea.` (non-standard verb); `Ben does the library pass before tea.` (tense drift) | medium | YES |
+| `qg_p14_standard_english_explain_why` | `standard_english` | explain | answerSpec: exact | `exact` | `Standard English uses 'did' for this simple past verb form.` | `Standard English uses 'done' for this simple past verb form.` (wrong form); `It is formal.` (too vague) | low | NO |
+| `qg_p14_standard_english_mixed_transfer` | `standard_english` | choose | answerSpec: exact | `exact` | selected Standard English option in a short transfer context | distractor with non-standard agreement or tense drift | low | NO |
+| `qg_p14_fronted_adverbials_diagnostic_choice` | `adverbials` | choose | answerSpec: exact | `exact` | `Before the final bell, Eli carried the history poster carefully.` | `Before the final bell Eli carried the history poster carefully.` (missing comma); `Before, the final bell Eli carried the history poster carefully.` (comma misplaced) | low | NO |
+| `qg_p14_fronted_adverbials_constructed_rewrite` | `adverbials` | rewrite | answerSpec: normalisedText | `normalisedText` | `Before the final bell, Eli carried the history poster carefully.` | `Eli carried the history poster carefully before the final bell.` (not fronted); `Before the final bell Eli carried the history poster carefully.` (missing comma) | medium | YES |
+| `qg_p14_fronted_adverbials_explain_why` | `adverbials` | explain | answerSpec: exact | `exact` | `The opening phrase is a fronted adverbial, so the comma separates it from the main clause.` | `The opening phrase is the subject.` (wrong grammar role); `The comma marks direct speech.` (wrong punctuation function) | low | NO |
+| `qg_p14_fronted_adverbials_mixed_transfer` | `adverbials` | choose | answerSpec: exact | `exact` | selected option with a correctly punctuated fronted adverbial | distractor with the comma omitted or attached to the wrong phrase | low | NO |
+| `qg_p14_subject_object_diagnostic_choice` | `subject_object` | choose | answerSpec: exact | `exact` | `the clay model` | `Ben` (subject, not object); `the clay model.` (trailing punctuation) | high | NO |
+| `qg_p14_subject_object_constructed_rewrite` | `subject_object` | rewrite | answerSpec: normalisedText | `normalisedText` | `the clay model` | `Ben` (subject, not object); `the model` (drops the target adjective) | high | YES |
+| `qg_p14_subject_object_explain_why` | `subject_object` | explain | answerSpec: exact | `exact` | `The object receives the action of the verb.` | `The object performs the action.` (subject/object confusion); `It is the first noun phrase.` (position-only reasoning) | high | NO |
+| `qg_p14_subject_object_mixed_transfer` | `subject_object` | choose | answerSpec: exact | `exact` | `subject: Ben; object: the clay model` | `subject: the clay model; object: Ben` (roles swapped); `subject: Ben; object: made` (verb mislabelled as object) | high | NO |
+| `qg_p14_subordinate_clauses_diagnostic_choice` | `clauses` | choose | answerSpec: exact | `exact` | `although the path was muddy` | `Freya checked the recipe card` (main clause); `Although the path was muddy.` (capitalisation/trailing punctuation drift) | low | NO |
+| `qg_p14_subordinate_clauses_constructed_rewrite` | `clauses` | rewrite | answerSpec: normalisedText | `normalisedText` | `Although the path was muddy, Freya checked the recipe card.` | `The path was muddy and Freya checked the recipe card.` (coordination, not subordination); `Although the path was muddy Freya checked the recipe card.` (missing comma) | medium | YES |
+| `qg_p14_subordinate_clauses_explain_why` | `clauses` | explain | answerSpec: exact | `exact` | `It depends on the main clause to complete the meaning.` | `It can stand alone as a complete sentence.` (main-clause confusion); `It is a phrase with no verb.` (phrase/clause confusion) | low | NO |
+| `qg_p14_subordinate_clauses_mixed_transfer` | `clauses` | choose | answerSpec: exact | `exact` | selected sentence combining a subordinate clause with a main clause | distractor that uses coordination or leaves the subordinate clause stranded | low | NO |
+| `qg_p14_tense_aspect_diagnostic_choice` | `tense_aspect` | choose | answerSpec: exact | `exact` | `Dylan finished the class trophy yesterday.` | `Dylan has finished the class trophy yesterday.` (perfect form with finished past time); `Dylan finish the class trophy yesterday.` (agreement/tense error) | low | NO |
+| `qg_p14_tense_aspect_constructed_rewrite` | `tense_aspect` | rewrite | answerSpec: normalisedText | `normalisedText` | `Dylan finished the class trophy yesterday.` | `Dylan has finished the class trophy yesterday.` (wrong aspect for the time signal); `Dylan finishes the class trophy yesterday.` (present tense) | medium | YES |
+| `qg_p14_tense_aspect_explain_why` | `tense_aspect` | explain | answerSpec: exact | `exact` | `A finished past time signal needs the simple past form.` | `A finished past time signal needs the present perfect form.` (aspect confusion); `It sounds better.` (not grammatical reasoning) | low | NO |
+| `qg_p14_tense_aspect_mixed_transfer` | `tense_aspect` | choose | answerSpec: exact | `exact` | `finished` | `has finished` (wrong aspect for a finished past-time marker); `finish` (wrong tense/agreement) | low | NO |
+| `qg_p14_speech_punctuation_diagnostic_choice` | `speech_punctuation` | choose | answerSpec: exact | `exact` | `"Our team won the relay," Cara said.` | `"Our team won the relay" Cara said.` (missing comma); `"Our team won the relay", Cara said.` (comma outside speech marks) | low | NO |
+| `qg_p14_speech_punctuation_constructed_rewrite` | `speech_punctuation` | rewrite | answerSpec: normalisedText | `normalisedText` | `"Our team won the relay," Cara said.` | `"Our team won the relay" Cara said.` (missing comma); `Cara said, "Our team won the relay."` (valid speech structure but not the requested rewrite shape) | medium | YES |
+| `qg_p14_speech_punctuation_explain_why` | `speech_punctuation` | explain | answerSpec: exact | `exact` | `The comma belongs to the spoken words before the reporting clause.` | `The comma belongs after the closing speech mark.` (wrong placement); `The comma starts the reporting clause.` (wrong function) | low | NO |
+| `qg_p14_speech_punctuation_mixed_transfer` | `speech_punctuation` | choose | answerSpec: exact | `exact` | `"Can you hear thunder?" Cara asked.` | `"Can you hear thunder"? Cara asked.` (punctuation outside the speech marks); `"Can you hear thunder," Cara asked?` (wrong terminal mark inside the speech marks) | low | NO |
+| `qg_p14_expanded_noun_phrases_diagnostic_choice` | `noun_phrases` | choose | answerSpec: exact | `exact` | `the cracked ceramic kite beside the coach bay` | `the ceramic cracked kite beside the coach bay` (awkward adjective order); `the cracked ceramic kite` (drops the post-modifier) | low | NO |
+| `qg_p14_expanded_noun_phrases_constructed_rewrite` | `noun_phrases` | rewrite | answerSpec: normalisedText | `normalisedText` | `the cracked ceramic kite beside the coach bay` | `the ceramic cracked kite beside the coach bay` (wrong adjective order); `the cracked ceramic kite` (too short for the target phrase) | medium | YES |
+| `qg_p14_expanded_noun_phrases_explain_why` | `noun_phrases` | explain | answerSpec: exact | `exact` | `It is centred on a noun and includes extra words that describe or specify it.` | `It contains a finite verb and subject.` (clause confusion); `It is a complete sentence.` (sentence/phrase confusion) | low | NO |
+| `qg_p14_expanded_noun_phrases_mixed_transfer` | `noun_phrases` | choose | answerSpec: exact | `exact` | `The cracked ceramic kite beside the coach bay caught everyone's attention.` | `The kite cracked ceramic beside the coach bay caught everyone's attention.` (word order error); `The cracked ceramic kite caught everyone's attention.` (drops required detail) | low | NO |
+| `qg_p14_parenthesis_commas_diagnostic_choice` | `parenthesis_commas` | choose | answerSpec: exact | `exact` | `Imani found the science folder, which everyone recognised at once, near the office.` | `Imani found the science folder which everyone recognised at once near the office.` (missing parenthetical commas); `Imani found the science folder, which everyone recognised at once near the office.` (unclosed parenthesis) | low | NO |
+| `qg_p14_parenthesis_commas_constructed_rewrite` | `parenthesis_commas` | rewrite | answerSpec: normalisedText | `normalisedText` | `Imani found the science folder, which everyone recognised at once, near the office.` | `Imani found the science folder which everyone recognised at once near the office.` (missing commas); `Imani found the science folder (which everyone recognised at once) near the office.` (different punctuation family) | medium | YES |
+| `qg_p14_parenthesis_commas_explain_why` | `parenthesis_commas` | explain | answerSpec: exact | `exact` | `They mark extra information that could be removed without breaking the main sentence.` | `They introduce a list.` (wrong punctuation function); `They show direct speech.` (wrong punctuation family) | low | NO |
+| `qg_p14_parenthesis_commas_mixed_transfer` | `parenthesis_commas` | choose | answerSpec: exact | `exact` | selected sentence where commas mark removable extra information | distractor that leaves the extra information unmarked or uses list commas instead | low | NO |
 
 ### 2.1 Row count reconciliation
 
-The table above has exactly **78 rows**, one per template. The doc-gate test (§6) parses this table and asserts `rows.length === GRAMMAR_TEMPLATES.length` and that every proposed kind is in `ANSWER_SPEC_KINDS`.
+The table above has exactly **110 rows**, one per template. The doc-gate test (§6) parses this table and asserts `rows.length === GRAMMAR_TEMPLATES.length` and that every proposed kind is in `ANSWER_SPEC_KINDS`.
 
 ### 2.2 Proposed-spec distribution
 
-- `exact`: **54** rows (selected-response templates with one answer value, including 6 P4 mixed-transfer choose templates).
-- `normalisedText`: **5** rows (`tense_rewrite`, `active_passive_rewrite`, `proc2_standard_english_fix`, `proc2_passive_to_active`, `proc3_apostrophe_rewrite`).
+- `exact`: **78** rows (selected-response templates with one answer value, including 6 P4 mixed-transfer choose templates and 24 P14 selected-response templates).
+- `normalisedText`: **13** rows (`tense_rewrite`, `active_passive_rewrite`, `proc2_standard_english_fix`, `proc2_passive_to_active`, `proc3_apostrophe_rewrite`, plus the 8 P14 constructed-rewrite templates).
 - `acceptedSet`: **2** rows (`combine_clauses_rewrite`, `proc3_clause_join_rewrite`).
 - `punctuationPattern`: **9** rows (every punctuation-surgery fix template: `fix_fronted_adverbial`, `parenthesis_fix_sentence`, `speech_punctuation_fix`, `proc_fronted_adverbial_fix`, `proc_colon_list_fix`, `proc_dash_boundary_fix`, `proc_speech_punctuation_fix`, `proc3_parenthesis_commas_fix`, `proc3_hyphen_fix_meaning`).
 - `multiField`: **4** rows (`qg_subject_object_classify_table`, `qg_formality_classify_table`, `qg_p4_word_class_noun_phrase_transfer`, `qg_p4_voice_roles_transfer`).
 - `manualReviewOnly`: **4** rows in the table (`build_noun_phrase`, `standard_fix_sentence`, `proc2_fronted_adverbial_build`, `proc3_noun_phrase_build`). §3 additionally flags **2** explain templates as Phase 5 re-evaluation candidates for migration to `manualReviewOnly` once they become free-text, lifting the candidate list to **6**.
 
-Totals: 54 + 5 + 2 + 9 + 4 + 4 = 78.
+Totals: 78 + 13 + 2 + 9 + 4 + 4 = 110.
 
 ### 2.3 Constructed-response triage summary
 
@@ -145,6 +178,7 @@ Totals: 54 + 5 + 2 + 9 + 4 + 4 = 78.
 | `apostrophes_possession` rewrite | `proc3_apostrophe_rewrite` | `normalisedText` | Single golden phrase; whitespace/case tolerance is safe. |
 | `standard_english` fix (word-level) | `proc2_standard_english_fix` | `normalisedText` | Single fixture golden; full-form expansion (`does not` vs `doesn't`) is the one multi-way variant — deferred to Phase 5 `acceptedSet` upgrade if needed. |
 | `standard_english` fix (sentence-level) | `standard_fix_sentence` | `manualReviewOnly` | Multiple valid Standard English rewrites of the same non-standard input; teacher judgement needed to distinguish register-correct from content-preserving paraphrase. |
+| P14 priority constructed rewrites | `qg_p14_standard_english_constructed_rewrite`, `qg_p14_fronted_adverbials_constructed_rewrite`, `qg_p14_subject_object_constructed_rewrite`, `qg_p14_subordinate_clauses_constructed_rewrite`, `qg_p14_tense_aspect_constructed_rewrite`, `qg_p14_speech_punctuation_constructed_rewrite`, `qg_p14_expanded_noun_phrases_constructed_rewrite`, `qg_p14_parenthesis_commas_constructed_rewrite` | `normalisedText` | P14 publishes constrained rewrite prompts with one canonical target per seed. Whitespace and case tolerance is appropriate; distractors remain in the quality register and marking matrix. |
 | `clauses` combine / join | `combine_clauses_rewrite`, `proc3_clause_join_rewrite` | `acceptedSet` | Fixture already lists ≥ 2 valid orderings per seed; keeps partial-credit path for punctuation-only near-misses. |
 | `adverbials` fix (comma surgery) | `fix_fronted_adverbial`, `proc_fronted_adverbial_fix` | `punctuationPattern` | Punctuation-sensitive; accepts byte-identical pattern only; `optionalCommas` knob unused. |
 | `parenthesis_commas` surgery | `parenthesis_fix_sentence`, `proc3_parenthesis_commas_fix` | `punctuationPattern` | Punctuation-sensitive; the bracket variant uses literal `(` `)`, the comma variant uses literal `,`. |
@@ -189,8 +223,8 @@ Why high priority on thin-pool concepts specifically: each concept has fewer tem
 
 Every row where marking behaviour changes bumps `contentReleaseId` and invalidates stored attempt evidence against the prior release. Rows that are purely declarative (selected-response → `exact`, where the mark result is byte-identical for every stored attempt) do not bump.
 
-- **Rows requiring `contentReleaseId` bump: 20.** Every row marked `YES` in the table — all 20 legacy constructed-response templates. QG P2 batches these as one content release and pairs them with separate QG P2 fixtures.
-- **Rows NOT requiring `contentReleaseId` bump: 50.** Every selected-response row marked `NO` — legacy selected-response rows preserve option-value equality, and the new P1/P3 rows emit typed `answerSpec` data from day one. P1 and P3 content themselves bump the Grammar content release because the pool changed, but the answer-spec marking contract does not add a separate marking-behaviour bump.
+- **Rows requiring `contentReleaseId` bump: 28.** Every row marked `YES` in the table — all constructed-response templates. The 20 legacy constructed-response migrations were batched in QG P2; the 8 P14 constructed rewrites are new score-bearing content and are covered by the P14 content-release bump.
+- **Rows NOT requiring `contentReleaseId` bump: 82.** Every selected-response row marked `NO` — legacy selected-response rows preserve option-value equality, and the new P1/P3/P14 selected-response rows emit typed `answerSpec` data from day one. P1, P3, and P14 content themselves bump the Grammar content release because the pool changed, but the answer-spec marking contract does not add a separate marking-behaviour bump.
 - **`explain_reason_choice` and `proc2_boundary_punctuation_explain`:** flagged `medium` priority and `NO` bump because today they are selected-response. If Phase 5 migrates them to free-text explanation, that migration **is** a marking-behaviour change and bumps `contentReleaseId` at that time.
 - **`build_noun_phrase`, `standard_fix_sentence`, `proc2_fronted_adverbial_build`, `proc3_noun_phrase_build`:** `manualReviewOnly` migration **always** bumps `contentReleaseId`: the mark result shifts from `correct: true/false, score: 0..2` (adapter path) to `correct: false, score: 0, maxScore: 0, nonScored: true` (manual-review path). Stored attempt evidence must not be replayed as P2 mastery evidence.
 
@@ -223,7 +257,7 @@ These notes are now historical migration guidance plus future backlog boundaries
   4. Remaining rewrites (`normalisedText`) — 3 templates.
   5. Clause combine/join (`acceptedSet`) — 2 templates.
   6. Builders + ambiguous fixes (`manualReviewOnly`) — 4 templates.
-  7. Selected-response batch (`exact`/`multiField`) — 50 templates after QG P3, with the two P1 classify tables already carrying `multiField` and the 13 P3 explanation templates already carrying `exact`.
+  7. Selected-response batch (`exact`/`multiField`) — 82 templates after QG P14, with the four classify tables carrying `multiField` and the P3/P14 explanation templates already carrying `exact`.
   8. Explain-template re-evaluation (potential `manualReviewOnly` migration if they move to free-text) — still deferred to future content-expansion work.
 - **`params` usage.** Reserved parameters flagged above (`params.optionalCommas`, `params.acceptHyphenMinus`, `params.acceptQuoteStyle`) remain future enhancements. P2 relies on declared golden strings matching fixture output byte-for-byte.
 
