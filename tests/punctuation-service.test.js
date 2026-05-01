@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   createPunctuationContentIndexes,
@@ -10,7 +11,12 @@ import {
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
 import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 import { createMemoryState, updateMemoryState } from '../shared/punctuation/scheduler.js';
-import { createPunctuationService, PunctuationServiceError } from '../shared/punctuation/service.js';
+import {
+  createPunctuationService,
+  DEFAULT_PUNCTUATION_CONTENT_INDEXES,
+  DEFAULT_PUNCTUATION_RUNTIME_MANIFEST,
+  PunctuationServiceError,
+} from '../shared/punctuation/service.js';
 import { projectPunctuationStars } from '../src/subjects/punctuation/star-projection.js';
 import {
   DEFAULT_PUNCTUATION_PREFS,
@@ -79,6 +85,28 @@ test('punctuation service default runtime bank exposes P11 expansion depth', () 
   assert.equal(stats.total, 1268);
   assert.equal(stats.fresh, 1268);
   assert.equal(stats.publishedRewardUnits, 14);
+});
+
+test('punctuation service keeps the default P11 runtime manifest and indexes cached', () => {
+  const fixedItems = DEFAULT_PUNCTUATION_RUNTIME_MANIFEST.items.filter((item) => item.source === 'fixed');
+  const generatedItems = DEFAULT_PUNCTUATION_RUNTIME_MANIFEST.items.filter((item) => item.source === 'generated');
+
+  assert.equal(Object.isFrozen(DEFAULT_PUNCTUATION_RUNTIME_MANIFEST), true);
+  assert.equal(fixedItems.length, 148);
+  assert.equal(generatedItems.length, 1120);
+  assert.equal(DEFAULT_PUNCTUATION_CONTENT_INDEXES.items.length, 1268);
+  assert.equal(DEFAULT_PUNCTUATION_CONTENT_INDEXES.publishedRewardUnits.length, 14);
+});
+
+test('punctuation service default path reuses cached P11 runtime indexes', () => {
+  const source = readFileSync(new URL('../shared/punctuation/service.js', import.meta.url), 'utf8');
+  const factoryStart = source.indexOf('export function createPunctuationService');
+  const factoryDefaults = source.slice(factoryStart, source.indexOf('  const clock =', factoryStart));
+
+  assert.match(factoryDefaults, /manifest\s*=\s*DEFAULT_PUNCTUATION_RUNTIME_MANIFEST/);
+  assert.match(factoryDefaults, /indexes\s*=\s*indexesForManifest\(manifest\)/);
+  assert.doesNotMatch(factoryDefaults, /createPunctuationRuntimeManifest\s*\(/);
+  assert.doesNotMatch(factoryDefaults, /createPunctuationContentIndexes\s*\(manifest\)/);
 });
 
 test('punctuation default Smart Practice uses a six-question round', () => {

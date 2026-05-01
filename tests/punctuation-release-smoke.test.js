@@ -7,6 +7,7 @@ import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/pu
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
 import {
+  PUNCTUATION_DASH_ACCEPTANCE_SESSION_OPTIONS,
   PUNCTUATION_DASH_POLICY_VARIANTS,
   PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS,
   assertGeneratedActiveItemPolicy,
@@ -312,6 +313,24 @@ test('Punctuation P2 smoke helper builds accepted dash and Oxford-comma probes',
     answer: { typed: oxfordCommaAnswerFor(listSource) },
   });
   assert.equal(oxfordResult.correct, true);
+});
+
+test('Punctuation P11 smoke targets dash acceptance through guided dash practice', () => {
+  assert.deepEqual(PUNCTUATION_DASH_ACCEPTANCE_SESSION_OPTIONS, {
+    mode: 'guided',
+    guidedSkillId: 'dash_clause',
+    roundLength: '6',
+  });
+
+  const indexes = productionPunctuationIndexes();
+  const eligibleGuidedDashModes = new Set(
+    indexes.items
+      .filter((item) => item.skillIds?.includes('dash_clause') && Boolean(dashVariantAnswerFor(item, '-')))
+      .map((item) => item.mode),
+  );
+
+  assert.equal(eligibleGuidedDashModes.has('insert'), true);
+  assert.equal(eligibleGuidedDashModes.has('fix'), true);
 });
 
 test('Punctuation P2 smoke helper builds wrong generated answers with misconception evidence', () => {

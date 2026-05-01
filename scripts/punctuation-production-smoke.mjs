@@ -52,6 +52,12 @@ export const PUNCTUATION_DASH_POLICY_VARIANTS = Object.freeze([
   Object.freeze({ id: 'em-dash', label: 'em dash', mark: '—' }),
 ]);
 
+export const PUNCTUATION_DASH_ACCEPTANCE_SESSION_OPTIONS = Object.freeze({
+  mode: 'guided',
+  guidedSkillId: 'dash_clause',
+  roundLength: '6',
+});
+
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -575,7 +581,7 @@ async function smokePunctuationDashAcceptance({ origin, cookie, learnerId, revis
       learnerId,
       revision: currentRevision,
       label: `dashAcceptance.${variant.id}`,
-      sessionOptions: { mode: 'boundary', roundLength: '6' },
+      sessionOptions: PUNCTUATION_DASH_ACCEPTANCE_SESSION_OPTIONS,
       predicate: ({ source }) => Boolean(dashVariantAnswerFor(source, variant.mark)),
       answerForTarget: ({ source }) => {
         const typed = dashVariantAnswerFor(source, variant.mark);
@@ -583,6 +589,7 @@ async function smokePunctuationDashAcceptance({ origin, cookie, learnerId, revis
         return { typed };
       },
       expectedFeedbackKind: 'success',
+      maxAnsweredItems: 12,
     });
     currentRevision = result.revision;
     results.push({

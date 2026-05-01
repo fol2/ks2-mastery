@@ -64,6 +64,21 @@ const SESSION_MODE_LABELS = Object.freeze({
   structure: 'Structure focus',
 });
 
+export const DEFAULT_PUNCTUATION_RUNTIME_MANIFEST = createPunctuationRuntimeManifest({
+  manifest: PUNCTUATION_CONTENT_MANIFEST,
+  generatedPerFamily: PRODUCTION_DEPTH,
+});
+
+export const DEFAULT_PUNCTUATION_CONTENT_INDEXES = createPunctuationContentIndexes(
+  DEFAULT_PUNCTUATION_RUNTIME_MANIFEST,
+);
+
+function indexesForManifest(manifest) {
+  return manifest === DEFAULT_PUNCTUATION_RUNTIME_MANIFEST
+    ? DEFAULT_PUNCTUATION_CONTENT_INDEXES
+    : createPunctuationContentIndexes(manifest);
+}
+
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -1271,11 +1286,8 @@ export function createPunctuationService({
   repository = createNoopRepository(),
   now = Date.now,
   random = Math.random,
-  manifest = createPunctuationRuntimeManifest({
-    manifest: PUNCTUATION_CONTENT_MANIFEST,
-    generatedPerFamily: PRODUCTION_DEPTH,
-  }),
-  indexes = createPunctuationContentIndexes(manifest),
+  manifest = DEFAULT_PUNCTUATION_RUNTIME_MANIFEST,
+  indexes = indexesForManifest(manifest),
 } = {}) {
   const clock = () => timestamp(now);
   const activeReleaseId = manifest.releaseId || PUNCTUATION_RELEASE_ID;
