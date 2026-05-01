@@ -20,9 +20,9 @@ source_context:
 
 ## Run Boundary
 
-No post-change production 60-learner diagnostic has been run from this worktree.
+No post-change production 60-learner diagnostic has been captured for the merged PR #824 code.
 
-Reason: the P7 code is still uncommitted and not deployed. James required two independent reviews before commit, PR and merge; those review findings are closed. Running the approved production diagnostic before deployment would measure the old production code, not this P7 optimisation.
+Reason: PR #824 has merged after James's required independent reviews, but the deployed post-merge production diagnostic and route-cost refresh have not been run or captured. Running the approved production diagnostic before confirming the deployed merge would risk measuring the old production code, not this P7 optimisation.
 
 ## Local Post-Change Evidence
 

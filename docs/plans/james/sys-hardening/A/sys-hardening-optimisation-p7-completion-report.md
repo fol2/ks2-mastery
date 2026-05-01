@@ -1,7 +1,7 @@
 ---
 title: "System Hardening Optimisation P7 — Completion Report"
 type: completion-report
-status: ready-for-commit-pr-merge
+status: merged-operator-gated
 date: 2026-05-01
 phase: P7
 owner: james
@@ -20,9 +20,9 @@ source_context:
 
 ## Status
 
-P7 has passed independent review and is ready for commit, PR and merge. It is not ready for certification.
+P7 has passed independent review and was merged via PR #824 at `2026-05-01T23:04:26Z`. It is not ready for certification.
 
-Implementation evidence exists for a narrow bootstrap/D1 query-shape reduction. Post-change production diagnostic evidence does not exist yet because the code has not been committed, merged or deployed.
+Implementation evidence exists for a narrow bootstrap/D1 query-shape reduction. Post-change production diagnostic evidence does not exist yet because the deployed post-merge diagnostic and route-cost refresh have not been captured.
 
 ## Completed Artefacts
 
@@ -110,7 +110,7 @@ This branch must not be described as a 60-learner certification candidate until 
 
 ## Missing / Operator-Gated Evidence
 
-These P7 items remain blocked until after independent review, commit, PR merge and deploy:
+These P7 items remain blocked until a deployed post-merge diagnostic is run and captured:
 
 - post-change 60-learner production diagnostic;
 - redacted post-change tail correlation;
