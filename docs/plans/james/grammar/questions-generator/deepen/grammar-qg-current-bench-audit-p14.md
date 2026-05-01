@@ -1,13 +1,14 @@
 # Grammar QG Current Bench Audit — P14 line
 
-Source: uploaded lean ZIP `ks2-mastery-lean-04302325.zip`, local import of `worker/src/subjects/grammar/content.js`.
+Source: active P14 worktree inventory `reports/grammar/grammar-qg-p14-render-inventory.json`, content release `grammar-qg-p14-2026-05-01`.
 
 ## Key numbers
 
-- Current template families: 78
-- Current 30-seed generated instances: 2340
-- Current template-family problem: many certified templates are shallow fixed banks, so certification count overstates learner-visible variety.
-- Low-diversity families with 1–3 learner-visible surfaces across 30 seeds: 23
+- Current template families: 110
+- Current 30-seed generated instances: 3300
+- P14 added 32 production-candidate depth families to the earlier 78-family bench.
+- Remaining template-family problem: 23 legacy fixed-bank diagnostic families still have only 1-3 learner-visible surfaces across 30 seeds, so they remain the first manual-bench deepening targets after P14.
+- Low-diversity families with 1-3 learner-visible surfaces across 30 seeds: 23
 
 ## Low-diversity families to deepen first
 
@@ -39,4 +40,4 @@ Source: uploaded lean ZIP `ks2-mastery-lean-04302325.zip`, local import of `work
 
 ## Action from this audit
 
-The manual bench expansion pack should not only add more generated seeds. It should add new hand-authored template families, especially for the low-diversity families listed above, and should be integrated as draft-only until quality gates pass.
+The manual bench expansion pack is additive to the P14 production-candidate line. It should add new hand-authored template families, especially for the low-diversity families listed above, and should remain draft-only until oracle, marking, adult-review and learner-visible diversity gates pass against the current 110-family / 3300-instance baseline.
