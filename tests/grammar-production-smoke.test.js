@@ -36,6 +36,36 @@ function readItemFromQuestion(question) {
   };
 }
 
+function optionValues(options) {
+  return new Set((Array.isArray(options) ? options : []).map((option) => (
+    Array.isArray(option) ? option[0] : (typeof option === 'string' ? option : option?.value)
+  )));
+}
+
+function assertFixtureResponseUsesVisibleInputs(question, response) {
+  const spec = question?.inputSpec || {};
+  if (spec.type === 'multi') {
+    for (const field of spec.fields || []) {
+      const value = response?.[field.key];
+      assert.ok(
+        optionValues(field.options).has(value),
+        `${question.templateId}.${field.key} response must use a visible option`,
+      );
+    }
+    return;
+  }
+  if (spec.type === 'table_choice') {
+    const globalOptions = optionValues(spec.columns);
+    for (const row of spec.rows || []) {
+      const allowed = Array.isArray(row.options) && row.options.length ? optionValues(row.options) : globalOptions;
+      assert.ok(
+        allowed.has(response?.[row.key]),
+        `${question.templateId}.${row.key} response must use a visible option`,
+      );
+    }
+  }
+}
+
 test('Grammar production smoke answers from the production-visible option set', () => {
   const question = smokeQuestion();
   assert.equal(question.templateId, 'qg_modal_verb_explain');
@@ -212,6 +242,7 @@ test('Grammar production smoke has visible-data probes for every answer-spec fam
     const question = createGrammarQuestion({ templateId: fixture.templateId, seed: fixture.seed });
     const readItem = readItemFromQuestion(question);
     const response = visibleResponseForAnswerSpecFamily(readItem);
+    assertFixtureResponseUsesVisibleInputs(question, response);
     const result = evaluateGrammarQuestion(question, response);
     if (fixture.family === 'manualReviewOnly') {
       assert.equal(result.correct, false, fixture.family);
