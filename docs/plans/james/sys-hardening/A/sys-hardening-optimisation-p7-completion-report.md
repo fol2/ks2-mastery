@@ -14,15 +14,16 @@ source_context:
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-post-change-run-report.md
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-path-decision.md
   - reports/capacity/evidence/2026-05-01-p7-statement-family-summary.json
+  - reports/capacity/evidence/2026-05-02-p7-production-bootstrap-probe.json
 ---
 
 # System Hardening Optimisation P7 — Completion Report
 
 ## Status
 
-P7 has passed independent review and was merged via PR #824 at `2026-05-01T23:04:26Z`. It is not ready for certification.
+P7 has passed independent review and was merged via PR #824 at `2026-05-01T23:04:26Z`. A low-risk production demo bootstrap probe confirmed the merged Worker shape. P7 is not ready for certification.
 
-Implementation evidence exists for a narrow bootstrap/D1 query-shape reduction. Post-change production diagnostic evidence does not exist yet because the deployed post-merge diagnostic and route-cost refresh have not been captured.
+Implementation evidence exists for a narrow bootstrap/D1 query-shape reduction. A deployed single-demo bootstrap probe exists, but post-change 60-learner production diagnostic evidence and route-cost refresh evidence do not exist yet.
 
 ## Completed Artefacts
 
@@ -32,6 +33,7 @@ Implementation evidence exists for a narrow bootstrap/D1 query-shape reduction. 
 - `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-path-decision.md`
 - `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-completion-report.md`
 - `reports/capacity/evidence/2026-05-01-p7-statement-family-summary.json`
+- `reports/capacity/evidence/2026-05-02-p7-production-bootstrap-probe.json`
 
 P6 handoff ambiguity was also repaired by marking `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-60-diagnostic-decision.md` as historical pre-approval evidence superseded by the approved P6 run report and path decision.
 
@@ -91,6 +93,16 @@ Results:
 - whitespace check: passed;
 - P7 redaction scan across this worktree's P7 docs and JSON evidence: no matches.
 
+Deployed production confirmation:
+
+- `reports/capacity/evidence/2026-05-02-p7-production-bootstrap-probe.json`
+- production demo session returned HTTP 201;
+- production `GET /api/bootstrap` returned HTTP 200;
+- `meta.capacity.queryCount` was 9;
+- `meta.capacity.d1RowsWritten` was 0;
+- bootstrap mode remained `selected-learner-bounded`;
+- capacity mode remained `public-bounded`.
+
 ## Independent Review Closure
 
 James required two independent reviews before commit, PR and merge. Both are closed:
@@ -110,7 +122,7 @@ This branch must not be described as a 60-learner certification candidate until 
 
 ## Missing / Operator-Gated Evidence
 
-These P7 items remain blocked until a deployed post-merge diagnostic is run and captured:
+These P7 items remain blocked until an approved 60-learner production diagnostic is run and captured:
 
 - post-change 60-learner production diagnostic;
 - redacted post-change tail correlation;

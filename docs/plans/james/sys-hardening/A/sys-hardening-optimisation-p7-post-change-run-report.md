@@ -12,6 +12,7 @@ source_context:
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-baseline.md
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-statement-family-summary.md
   - reports/capacity/evidence/2026-05-01-p7-statement-family-summary.json
+  - reports/capacity/evidence/2026-05-02-p7-production-bootstrap-probe.json
   - tests/worker-bootstrap-capacity.test.js
   - tests/worker-query-budget.test.js
 ---
@@ -22,7 +23,31 @@ source_context:
 
 No post-change production 60-learner diagnostic has been captured for the merged PR #824 code.
 
-Reason: PR #824 has merged after James's required independent reviews, but the deployed post-merge production diagnostic and route-cost refresh have not been run or captured. Running the approved production diagnostic before confirming the deployed merge would risk measuring the old production code, not this P7 optimisation.
+Reason: PR #824 has merged after James's required independent reviews, and a deployed single-demo bootstrap probe confirmed the P7 query shape. The approved 60-learner production diagnostic and route-cost refresh have not been run or captured.
+
+## Deployed Merge Confirmation
+
+Evidence path:
+
+- `reports/capacity/evidence/2026-05-02-p7-production-bootstrap-probe.json`
+
+The deployed production probe used a same-origin demo session and did not persist raw cookies, session material or raw request ids. It is diagnostic-only and not a 60-learner run.
+
+Observed production result:
+
+| Metric | Observed |
+| --- | ---: |
+| Demo session HTTP status | 201 |
+| Bootstrap HTTP status | 200 |
+| Full-bootstrap query count | 9 |
+| D1 rows written | 0 |
+| Response learners | 1 |
+
+Observed production mode:
+
+- bootstrap mode: `selected-learner-bounded`
+- capacity mode: `public-bounded`
+- capacity version: 4
 
 ## Local Post-Change Evidence
 
@@ -59,7 +84,7 @@ This second count is higher than the valid-demo public path because it covers th
 
 P7-U3 remains operator-gated for route-cost closure.
 
-The local tests continue to cover the `POST /api/bootstrap` not-modified path and cache invalidation behaviour, but no post-change production route-cost refresh has been generated from this undeployed worktree. Therefore `not-modified-bootstrap` remains a missing/gated route family in the 1000-learner budget with the existing `requires-production-operator` reason until the deployed post-change diagnostic and route-cost refresh are run.
+The local tests continue to cover the `POST /api/bootstrap` not-modified path and cache invalidation behaviour, but no post-change production route-cost refresh has been generated from the deployed PR #824 code. Therefore `not-modified-bootstrap` remains a missing/gated route family in the 1000-learner budget with the existing `requires-production-operator` reason until the deployed post-change diagnostic and route-cost refresh are run.
 
 ## Production Diagnostic Status
 
@@ -75,7 +100,7 @@ Required P7 run shape remains pending:
 - redacted statement map committed
 - route-cost/budget regenerated from the post-change evidence
 
-This report does not claim that bootstrap P95 improved in production.
+This report confirms the deployed single-demo bootstrap query shape only. It does not claim that bootstrap P95 improved in production.
 
 ## Certification Boundary
 
