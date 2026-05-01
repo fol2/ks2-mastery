@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "fixedItems": 148,
+  "fixedExpansionItems": 56,
+  "generatedFamilies": 25,
+  "templatesPerFamilyMin": 40,
+  "templatesPerFamilyMax": 40,
+  "productionDepth": 40,
+  "capacityDepth": 40,
+  "generatedItems": 1000,
+  "totalRuntimePool": 1148,
+  "uniqueGeneratedModels": 730,
+  "generatedModelDuplicateGroups": 270,
+  "uniqueGeneratedStems": 864,
+  "generatedStemDuplicateGroups": 136,
+  "manifestErrors": [],
+  "familyTemplateProblems": [],
+  "generatedModelFailures": [],
+  "fixedExpansionChoiceFailures": []
+}

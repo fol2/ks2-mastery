@@ -1,0 +1,46 @@
+--- shared/punctuation/scheduler.js
++++ shared/punctuation/scheduler.js
+@@ -177,7 +177,9 @@
+   const mode = session?.mode || prefs.mode || 'smart';
+   const answeredCount = Number(session?.answeredCount) || 0;
+   const rotate = (cycle) => {
+-    const start = answeredCount % cycle.length;
++    const rawOffset = Number(session?.modeStartOffset);
++    const modeStartOffset = Number.isFinite(rawOffset) ? Math.max(0, Math.floor(rawOffset)) : 0;
++    const start = (answeredCount + modeStartOffset) % cycle.length;
+     return [...cycle.slice(start), ...cycle.slice(0, start)];
+   };
+   if (mode === 'guided') {
+--- shared/punctuation/service.js
++++ shared/punctuation/service.js
+@@ -347,6 +347,7 @@
+     releaseId: typeof value.releaseId === 'string' ? value.releaseId : PUNCTUATION_RELEASE_ID,
+     mode,
+     length: Math.max(1, normaliseNonNegativeInteger(value.length, 4)),
++    modeStartOffset: normaliseNonNegativeInteger(value.modeStartOffset, 0),
+     phase: value.phase === 'feedback' ? 'feedback' : 'active-item',
+     startedAt: normaliseTimestamp(value.startedAt, 0),
+     updatedAt: normaliseTimestamp(value.updatedAt, 0),
+@@ -783,6 +784,14 @@
+   return Math.min(MAX_GPS_QUEUE_LENGTH, Math.max(1, Number.parseInt(value, 10) || 4));
+ }
+ 
++function modeStartOffsetForSession(progress = {}, mode = 'smart') {
++  const rotatingModes = new Set(['smart', 'endmarks', 'apostrophe', 'speech', 'comma_flow', 'boundary', 'structure']);
++  if (!rotatingModes.has(mode)) return 0;
++  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
++  const meaningfulAttempts = attempts.filter((attempt) => typeof attempt?.mode === 'string' || typeof attempt?.itemMode === 'string');
++  return meaningfulAttempts.length % 6;
++}
++
+ function prefsForSession(session = {}, fallback = {}) {
+   return normalisePunctuationPrefs({
+     ...fallback,
+@@ -1460,6 +1469,7 @@
+         releaseId: activeReleaseId,
+         mode: prefs.mode,
+         length: roundLengthForSession(prefs, options),
++        modeStartOffset: modeStartOffsetForSession(current.progress, prefs.mode),
+         phase: 'active-item',
+         startedAt: clock(),
+         updatedAt: clock(),

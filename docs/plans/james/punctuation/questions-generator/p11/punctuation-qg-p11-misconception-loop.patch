@@ -1,0 +1,66 @@
+--- shared/punctuation/scheduler.js
++++ shared/punctuation/scheduler.js
+@@ -724,6 +724,7 @@
+     return {
+       item: misconceptionResult.item,
+       reason: misconceptionResult.reason,
++      misconceptionTag: misconceptionResult.misconceptionTag || '',
+       targetMode: misconceptionResult.item?.mode || null,
+       targetClusterId: misconceptionResult.item?.clusterId || null,
+       weakFocus: null,
+--- shared/punctuation/service.js
++++ shared/punctuation/service.js
+@@ -355,6 +355,7 @@
+     currentItemId: typeof value.currentItemId === 'string' ? value.currentItemId : '',
+     currentItem: normaliseItemForState(value.currentItem),
+     recentItemIds: normaliseStringArray(value.recentItemIds).slice(-10),
++    retriedMisconceptions: normaliseStringArray(value.retriedMisconceptions).slice(-20),
+     securedUnits: normaliseStringArray(value.securedUnits),
+     misconceptionTags: normaliseStringArray(value.misconceptionTags),
+     guidedSkillId,
+@@ -1133,6 +1134,7 @@
+   let draftSession = {
+     ...session,
+     recentItemIds: [],
++    retriedMisconceptions: [],
+     currentItemId: '',
+     answeredCount: 0,
+   };
+@@ -1195,6 +1197,14 @@
+   // U11: track scheduler reason and per-session signature exposure for telemetry.
+   const itemSignature = selection.item.variantSignature || '';
+   const prevSignatures = Array.isArray(session.selectedSignatures) ? session.selectedSignatures : [];
++  const isMisconceptionRetry = (selection.reason || 'fallback') === 'misconception-retry';
++  const retryTag = isMisconceptionRetry && typeof selection.misconceptionTag === 'string'
++    ? selection.misconceptionTag
++    : '';
++  const previousRetriedMisconceptions = normaliseStringArray(session.retriedMisconceptions).slice(-20);
++  const nextRetriedMisconceptions = retryTag
++    ? [...new Set([...previousRetriedMisconceptions, retryTag])].slice(-20)
++    : previousRetriedMisconceptions;
+   const nextSession = {
+     ...session,
+     phase: 'active-item',
+@@ -1202,13 +1212,13 @@
+     currentItemId: selection.item.id,
+     currentItem: normaliseItemForState(selection.item),
+     recentItemIds: [...(session.recentItemIds || []), selection.item.id].slice(-10),
++    retriedMisconceptions: nextRetriedMisconceptions,
+     weakFocus: session.mode === 'weak' ? normaliseWeakFocus(selection.weakFocus) : null,
+     selectionReason: selection.reason || 'fallback',
+     selectedSignatures: itemSignature
+       ? [...prevSignatures, itemSignature].slice(-20)
+       : prevSignatures,
+   };
+-  const isMisconceptionRetry = (selection.reason || 'fallback') === 'misconception-retry';
+   return {
+     version: PUNCTUATION_SERVICE_STATE_VERSION,
+     phase: 'active-item',
+@@ -1468,6 +1478,7 @@
+         currentItemId: '',
+         currentItem: null,
+         recentItemIds: [],
++        retriedMisconceptions: [],
+         securedUnits: [],
+         misconceptionTags: [],
+         guidedSkillId,
