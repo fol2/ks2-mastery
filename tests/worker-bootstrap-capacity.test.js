@@ -369,6 +369,45 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   server.close();
 });
 
+test('P7 public demo bootstrap reuses authenticated account snapshot and ratchets query count', async () => {
+  const server = createProductionServer();
+  try {
+    const demoResponse = await postJson(server, '/api/demo/session', {});
+    assert.equal(demoResponse.status, 201);
+    const cookie = cookieFrom(demoResponse);
+    assert.ok(cookie, 'demo session cookie should be set');
+
+    server.DB.clearQueryLog();
+    const response = await server.fetchRaw(`${BASE_URL}/api/bootstrap`, {
+      headers: { cookie },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
+    assert.equal(payload.meta?.capacity?.queryCount, 9,
+      'P7 removes the duplicate bootstrap account read and demo-active guard read from the 11-query P6 shape.');
+    assert.equal(payload.meta.capacity.d1RowsWritten, 0);
+    assert.ok(payload.bootstrapCapacity, 'bootstrap capacity metadata remains present');
+    assert.equal(payload.bootstrapCapacity.mode, 'public-bounded');
+
+    const queryLog = server.DB.takeQueryLog();
+    assert.equal(
+      queryLog.some((entry) => entry.operation === 'first' && /^\s*SELECT \* FROM adult_accounts WHERE id = \?/i.test(entry.sql)),
+      false,
+      'bootstrap should reuse ensureAccount() row instead of re-reading the adult account',
+    );
+    assert.equal(
+      queryLog.some((entry) => entry.operation === 'first' && /SELECT id, account_type, demo_expires_at\s+FROM adult_accounts\s+WHERE id = \?/i.test(entry.sql)),
+      false,
+      'valid demo bootstrap should reuse the authenticated account snapshot before the fallback active-demo guard',
+    );
+  } finally {
+    server.close();
+  }
+});
+
 test('production bootstrap still requires an authenticated session before capacity checks', async () => {
   const server = createProductionServer();
   const response = await server.fetchRaw(`${BASE_URL}/api/bootstrap`);

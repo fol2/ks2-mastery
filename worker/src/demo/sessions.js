@@ -384,6 +384,10 @@ export async function requireActiveDemoAccount(db, accountId, now = Date.now()) 
   return account;
 }
 
+export function hasActiveDemoAccountSnapshot(account, now = Date.now()) {
+  return account?.account_type === 'demo' && Number(account.demo_expires_at) > now;
+}
+
 export async function resetDemoAccount({ env, request, session, now = Date.now(), capacity = null } = {}) {
   const db = requireDatabaseWithCapacity(env, capacity);
   requireSameOrigin(request, env);

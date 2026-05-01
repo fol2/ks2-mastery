@@ -24,12 +24,13 @@ import { createApiPlatformRepositories } from '../src/platform/core/repositories
 // Note: count-based budgets detect ADDED queries but not replaced-bounded-with-unbounded at the same count.
 // ---------------------------------------------------------------------------
 
-// Measured: 11 queries for a 3-learner bounded POST bootstrap (ops_status
-// JOIN + ensureAccount upsert + account lookup + monster_visual_config +
-// membership list + list_revision + child_subject_state unbounded +
-// game_state + practice_sessions + event_log + spelling content).
+// P7 measured: 10 queries for a 3-learner bounded POST bootstrap (ops_status
+// JOIN + ensureAccount upsert + reused account snapshot +
+// monster_visual_config + membership list + list_revision +
+// child_subject_state unbounded + game_state + practice_sessions +
+// event_log + spelling content). P7 removed the duplicate account point read.
 // Headroom +1.
-const MEASURED_BOOTSTRAP_MULTI_LEARNER = 11;
+const MEASURED_BOOTSTRAP_MULTI_LEARNER = 10;
 const BUDGET_BOOTSTRAP_MULTI_LEARNER = MEASURED_BOOTSTRAP_MULTI_LEARNER + 1;
 
 // Measured: 5 queries for the notModified probe (ops_status JOIN +
@@ -49,10 +50,10 @@ const BUDGET_COMMAND_HOT_PATH = 13;
 // access check + practice_sessions query). Headroom +1.
 const BUDGET_PARENT_RECENT_SESSIONS = 7;
 
-// Measured: 11 queries for GET bootstrap full bundle (identical query
-// set to POST bounded — the GET path is upgraded to v2 bounded on the
-// public read-models path). Headroom +1.
-const MEASURED_BOOTSTRAP_GET_FULL = 11;
+// P7 measured: 10 queries for GET bootstrap full bundle (identical query
+// set to POST bounded, with the route-level account snapshot reused by the
+// repository bootstrap path). Headroom +1.
+const MEASURED_BOOTSTRAP_GET_FULL = 10;
 const BUDGET_BOOTSTRAP_GET_FULL = MEASURED_BOOTSTRAP_GET_FULL + 1;
 
 // Measured: 4 queries for Hero read-model GET (ops_status JOIN +
@@ -368,7 +369,7 @@ test('U3 query budget: POST bootstrap multi-learner bounded ≤ BUDGET_BOOTSTRAP
     assert.equal(
       capacity.queryCount,
       MEASURED_BOOTSTRAP_MULTI_LEARNER,
-      `POST bootstrap multi-learner queryCount should stay at the measured P1 count ${MEASURED_BOOTSTRAP_MULTI_LEARNER}; measured ${capacity.queryCount}`,
+      `POST bootstrap multi-learner queryCount should stay at the measured P7 count ${MEASURED_BOOTSTRAP_MULTI_LEARNER}; measured ${capacity.queryCount}`,
     );
 
     // D1 rows read must be bounded — not scanning full history.
@@ -524,7 +525,7 @@ test('U3 query budget: GET bootstrap full bundle ≤ BUDGET_BOOTSTRAP_GET_FULL',
     assert.equal(
       capacity.queryCount,
       MEASURED_BOOTSTRAP_GET_FULL,
-      `GET bootstrap full bundle queryCount should stay at the measured P1 count ${MEASURED_BOOTSTRAP_GET_FULL}; measured ${capacity.queryCount}`,
+      `GET bootstrap full bundle queryCount should stay at the measured P7 count ${MEASURED_BOOTSTRAP_GET_FULL}; measured ${capacity.queryCount}`,
     );
 
     // GET full must be at least as expensive as the notModified short-circuit.

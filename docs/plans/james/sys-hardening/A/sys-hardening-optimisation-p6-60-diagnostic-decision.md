@@ -1,12 +1,15 @@
 ---
 title: "System Hardening Optimisation P6 — 60-Learner Diagnostic Decision"
 type: decision-record
-status: complete
+status: historical-pre-approval
 date: 2026-05-01
 phase: P6
 classification: 60-diagnostic-setup-blocked
 certifying: false
 language: en-GB
+superseded_by:
+  - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-60-approved-run-report.md
+  - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-path-decision.md
 ---
 
 # System Hardening Optimisation P6 — 60-Learner Diagnostic Decision
@@ -14,6 +17,8 @@ language: en-GB
 ## Source Boundary
 
 This decision is bound to `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6.md` and the P6 dry-run planner output. It does not include a completed live production 60-learner run.
+
+Historical note: this decision was superseded by the approved 2026-05-01 P6 production diagnostic, recorded in `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-60-approved-run-report.md` and `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p6-path-decision.md`. It remains useful only as the pre-approval setup-blocked record.
 
 ## Run ID and Evidence Artefacts
 

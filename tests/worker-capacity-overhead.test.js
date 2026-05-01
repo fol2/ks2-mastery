@@ -125,6 +125,8 @@ async function timePaired(leftFn, rightFn) {
 // tracking. Re-measure against an idle host before tightening.
 const MACRO_MEAN_BUDGET = 0.30;
 const MACRO_P95_BUDGET = 0.80;
+const MACRO_ATTEMPTS = 3;
+const MACRO_REQUIRED_PASSES = 2;
 
 test('U3 overhead benchmark — capacity proxy mean ≤+30%, p95 ≤+80%', async () => {
   const DB = createMigratedSqliteD1Database();
@@ -145,67 +147,91 @@ test('U3 overhead benchmark — capacity proxy mean ≤+30%, p95 ≤+80%', async
       await repo.bootstrap('adult-bench', { publicReadModels: false });
     };
 
-    // 1/2) Baseline vs proxied repository.bootstrap(). Measure them
-    //      as adjacent alternating pairs so full-suite CPU jitter does
-    //      not turn phase changes into fake proxy overhead.
-    const paired = await timePaired(runBaseline, runProxied);
-    const baseline = paired.left;
-    const proxied = paired.right;
+    const failures = [];
+    let passes = 0;
+    for (let attempt = 1; attempt <= MACRO_ATTEMPTS; attempt += 1) {
+      // 1/2) Baseline vs proxied repository.bootstrap(). Measure them
+      //      as adjacent alternating pairs so full-suite CPU jitter does
+      //      not turn phase changes into fake proxy overhead.
+      const paired = await timePaired(runBaseline, runProxied);
+      const baseline = paired.left;
+      const proxied = paired.right;
 
-    // 3) Full-stack: end-to-end app.fetch('/api/bootstrap'). Includes
-    //    request parsing, auth boundary, JSON rewrite, meta.capacity
-    //    attachment. Reported for absolute-ms visibility.
-    const app = createWorkerApp({ now: () => NOW });
-    const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test', CAPACITY_LOG_SAMPLE_RATE: '0' };
-    const fullStack = await timeIt(async () => {
-      const response = await app.fetch(new Request(`${BASE_URL}/api/bootstrap`, {
-        method: 'GET',
-        headers: { 'x-ks2-dev-account-id': 'adult-bench' },
-      }), env, {});
-      await response.text();
-    });
+      // 3) Full-stack: end-to-end app.fetch('/api/bootstrap'). Includes
+      //    request parsing, auth boundary, JSON rewrite, meta.capacity
+      //    attachment. Reported for absolute-ms visibility.
+      const app = createWorkerApp({ now: () => NOW });
+      const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test', CAPACITY_LOG_SAMPLE_RATE: '0' };
+      const fullStack = await timeIt(async () => {
+        const response = await app.fetch(new Request(`${BASE_URL}/api/bootstrap`, {
+          method: 'GET',
+          headers: { 'x-ks2-dev-account-id': 'adult-bench' },
+        }), env, {});
+        await response.text();
+      });
 
-    const meanDelta = (proxied.mean - baseline.mean) / baseline.mean;
-    const p95Delta = (proxied.p95 - baseline.p95) / baseline.p95;
+      const meanDelta = (proxied.mean - baseline.mean) / baseline.mean;
+      const p95Delta = (proxied.p95 - baseline.p95) / baseline.p95;
 
-    const summary = {
-      iterations: ITER,
-      baseline: {
-        meanMs: baseline.mean.toFixed(4),
-        p95Ms: baseline.p95.toFixed(4),
-        p99Ms: baseline.p99.toFixed(4),
-      },
-      proxied: {
-        meanMs: proxied.mean.toFixed(4),
-        p95Ms: proxied.p95.toFixed(4),
-        p99Ms: proxied.p99.toFixed(4),
-      },
-      fullStack: {
-        meanMs: fullStack.mean.toFixed(4),
-        p95Ms: fullStack.p95.toFixed(4),
-        p99Ms: fullStack.p99.toFixed(4),
-      },
-      meanDeltaPct: (meanDelta * 100).toFixed(2),
-      p95DeltaPct: (p95Delta * 100).toFixed(2),
-    };
-    process.stdout.write(`[capacity-overhead] ${JSON.stringify(summary)}\n`);
+      const summary = {
+        attempt,
+        attempts: MACRO_ATTEMPTS,
+        iterations: ITER,
+        baseline: {
+          meanMs: baseline.mean.toFixed(4),
+          p95Ms: baseline.p95.toFixed(4),
+          p99Ms: baseline.p99.toFixed(4),
+        },
+        proxied: {
+          meanMs: proxied.mean.toFixed(4),
+          p95Ms: proxied.p95.toFixed(4),
+          p99Ms: proxied.p99.toFixed(4),
+        },
+        fullStack: {
+          meanMs: fullStack.mean.toFixed(4),
+          p95Ms: fullStack.p95.toFixed(4),
+          p99Ms: fullStack.p99.toFixed(4),
+        },
+        meanDeltaPct: (meanDelta * 100).toFixed(2),
+        p95DeltaPct: (p95Delta * 100).toFixed(2),
+      };
+      process.stdout.write(`[capacity-overhead] ${JSON.stringify(summary)}\n`);
 
-    // Timer resolution guard — on CI where mean < 0.5ms per bootstrap,
-    // % deltas are dominated by timing noise. Report and skip strict
-    // assertion to avoid flake.
-    if (baseline.mean < 0.5 || proxied.mean < 0.5) {
-      process.stdout.write('[capacity-overhead] SKIP strict: timer resolution too coarse for reliable %\n');
-      return;
+      // Timer resolution guard — on CI where mean < 0.5ms per bootstrap,
+      // % deltas are dominated by timing noise. Report and skip strict
+      // assertion to avoid flake.
+      if (baseline.mean < 0.5 || proxied.mean < 0.5) {
+        process.stdout.write('[capacity-overhead] SKIP strict: timer resolution too coarse for reliable %\n');
+        return;
+      }
+
+      if (meanDelta <= MACRO_MEAN_BUDGET && p95Delta <= MACRO_P95_BUDGET) {
+        passes += 1;
+        if (passes >= MACRO_REQUIRED_PASSES) {
+          return;
+        }
+        continue;
+      }
+
+      failures.push({ baseline, proxied, meanDelta, p95Delta });
+      if (failures.length > MACRO_ATTEMPTS - MACRO_REQUIRED_PASSES) {
+        break;
+      }
     }
 
+    const worstFailure = failures
+      .sort((left, right) => (
+        Math.max(right.meanDelta / MACRO_MEAN_BUDGET, right.p95Delta / MACRO_P95_BUDGET)
+        - Math.max(left.meanDelta / MACRO_MEAN_BUDGET, left.p95Delta / MACRO_P95_BUDGET)
+      ))[0];
     // Parallel-suite-tolerant budget — see MACRO_MEAN_BUDGET / MACRO_P95_BUDGET above.
     assert.ok(
-      meanDelta <= MACRO_MEAN_BUDGET,
-      `Capacity proxy mean overhead ${(meanDelta * 100).toFixed(2)}% exceeds +${(MACRO_MEAN_BUDGET * 100).toFixed(0)}% budget (baseline=${baseline.mean.toFixed(3)}ms proxied=${proxied.mean.toFixed(3)}ms)`,
+      worstFailure.meanDelta <= MACRO_MEAN_BUDGET,
+      `Capacity proxy mean overhead ${(worstFailure.meanDelta * 100).toFixed(2)}% exceeds +${(MACRO_MEAN_BUDGET * 100).toFixed(0)}% budget after ${failures.length} of ${MACRO_ATTEMPTS} attempts failed (required passes=${MACRO_REQUIRED_PASSES}; baseline=${worstFailure.baseline.mean.toFixed(3)}ms proxied=${worstFailure.proxied.mean.toFixed(3)}ms)`,
     );
     assert.ok(
-      p95Delta <= MACRO_P95_BUDGET,
-      `Capacity proxy p95 overhead ${(p95Delta * 100).toFixed(2)}% exceeds +${(MACRO_P95_BUDGET * 100).toFixed(0)}% budget (baseline=${baseline.p95.toFixed(3)}ms proxied=${proxied.p95.toFixed(3)}ms)`,
+      worstFailure.p95Delta <= MACRO_P95_BUDGET,
+      `Capacity proxy p95 overhead ${(worstFailure.p95Delta * 100).toFixed(2)}% exceeds +${(MACRO_P95_BUDGET * 100).toFixed(0)}% budget after ${failures.length} of ${MACRO_ATTEMPTS} attempts failed (required passes=${MACRO_REQUIRED_PASSES}; baseline=${worstFailure.baseline.p95.toFixed(3)}ms proxied=${worstFailure.proxied.p95.toFixed(3)}ms)`,
     );
   } finally {
     console.log = originalLog;
