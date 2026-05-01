@@ -41,7 +41,7 @@ P7 has a reviewed, merged narrow implementation candidate and local query-count 
    Yes. 60 learners remain uncertified.
 
 6. **What is the next phase?**
-   Continue P7 through merge, deploy and an approved post-change 60-learner diagnostic. If that run passes once with complete telemetry, the next path is repeat-governance, not direct certification. If it still fails and remains D1-dominated, continue deeper bootstrap/D1 work.
+   Continue P7 through deployed-merge confirmation and an approved post-change 60-learner diagnostic. If that run passes once with complete telemetry, the next path is repeat-governance, not direct certification. If it still fails and remains D1-dominated, continue deeper bootstrap/D1 work.
 
 ## Rejected Decisions
 
