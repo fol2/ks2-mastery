@@ -494,6 +494,7 @@ export function SpellingSetupScene({
             <SetupStatGrid stats={stats} />
             <SubjectCompanionPanel
               subjectId="spelling"
+              visible
               monsters={(Array.isArray(codex) ? codex : [])
                 .filter((e) => e?.progress?.caught)
                 .map((e) => ({ name: e.monster?.name || e.monster?.id || '?', discovered: true }))}

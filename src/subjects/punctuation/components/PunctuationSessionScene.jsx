@@ -360,11 +360,10 @@ function ActiveItemBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
     ? `punctuation-session-error-${String(session.id || 'current').replace(/[^A-Za-z0-9_-]/g, '-')}`
     : '';
 
-  // Header line: `Question N of M · Skill · Mode`. Skill collapses when
-  // the item carries no mapped skillIds (fresh / non-canonical payloads),
-  // so the line never reads `"Question 1 of 4 ·  · Smart review"`.
-  const headerPartsTop = [progressLabel, skillName, modeLabel].filter(Boolean);
-  const headerTop = headerPartsTop.join(' · ');
+  // SessionHUD is the single source for question count and mode copy. The
+  // hero eyebrow keeps only the item skill, so it does not duplicate progress
+  // language above the shared HUD.
+  const headerTop = skillName || '';
 
   return (
     <section
@@ -388,12 +387,14 @@ function ActiveItemBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
           extraBackdropClassName="punctuation-hero-backdrop"
         />
         <div className="punctuation-session-hero-content">
-          <div
-            className="eyebrow punctuation-session-progress"
-            data-punctuation-session-progress
-          >
-            {headerTop}
-          </div>
+          {headerTop ? (
+            <div
+              className="eyebrow punctuation-session-progress"
+              data-punctuation-session-progress
+            >
+              {headerTop}
+            </div>
+          ) : null}
           {/*
             Phase 4 U7: engine-sourced item prompts (e.g. "Correct the
             comma after the fronted adverbial.") pass through the child-
@@ -755,7 +756,7 @@ export function PunctuationSessionScene({ ui, actions }) {
     ? <FeedbackBranch ui={ui} actions={actions} heroUrl={sceneUrl} previousHeroUrl={previousHeroUrl} />
     : <ActiveItemBranch ui={ui} actions={actions} heroUrl={sceneUrl} previousHeroUrl={previousHeroUrl} />;
   return (
-    <PracticeStage subjectId="punctuation" scene="session" backdrop="punctuation-map">
+    <PracticeStage subjectId="punctuation" scene="session" backdrop="punctuation-map" motion={phase === 'feedback' ? 'celebration' : 'active'}>
       {branch}
     </PracticeStage>
   );

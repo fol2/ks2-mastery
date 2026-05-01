@@ -2797,35 +2797,31 @@ test('U5: regular summary renders exactly five summary cards', () => {
   assert.match(html, /Monster progress/);
 });
 
-test('U5: regular summary primary action row has three buttons (Practise missed, Start another round, Open Grammar Bank)', () => {
+test('P4 U4: regular summary uses one shared primary action and secondary routes', () => {
   const { harness } = u5RunRegularToSummary();
   const html = u5ScopeToSummaryHtml(harness.render());
 
-  const primaryRow = html.match(
-    /<div class="grammar-summary-primary-actions"[^>]*>[\s\S]*?<\/div>/,
-  )?.[0];
-  assert.ok(primaryRow, 'primary action row rendered');
+  assert.match(html, /data-session-summary-frame/);
+  assert.match(html, /data-action="grammar-start-again"[^>]*>Start another round</);
+  assert.match(html, /data-action="grammar-open-concept-bank"[^>]*>Open Grammar Bank</);
+  assert.match(
+    html,
+    /<button[^>]*(?:data-action="grammar-open-analytics"[^>]*aria-label="Open adult report"|aria-label="Open adult report"[^>]*data-action="grammar-open-analytics")[^>]*>Grown-up view</,
+  );
 
-  assert.match(primaryRow, /data-action="grammar-practise-missed"[^>]*>Practise missed</);
-  assert.match(primaryRow, /data-action="grammar-start-again"[^>]*>Start another round</);
-  assert.match(primaryRow, /data-action="grammar-open-concept-bank"[^>]*>Open Grammar Bank</);
-
-  // Exactly three buttons in the primary row — no drift.
-  const buttonCount = (primaryRow.match(/<button /g) || []).length;
-  assert.equal(buttonCount, 3, 'primary row must hold exactly three buttons');
+  const primaryCount = (html.match(/class="btn primary(?: [^"]*)?"/g) || []).length;
+  assert.equal(primaryCount, 1, 'shared summary frame must render exactly one primary action');
+  assert.doesNotMatch(html, /grammar-summary-primary-actions/);
 });
 
-test('U5: regular summary secondary row holds the Grown-up view button with aria-label="Open adult report"', () => {
+test('P4 U4: regular summary keeps the Grown-up view route in the shared action row', () => {
   const { harness } = u5RunRegularToSummary();
   const html = u5ScopeToSummaryHtml(harness.render());
 
-  const secondaryRow = html.match(
-    /<div class="grammar-summary-secondary-actions"[^>]*>[\s\S]*?<\/div>/,
-  )?.[0];
-  assert.ok(secondaryRow, 'secondary action row rendered');
-  assert.match(secondaryRow, /data-action="grammar-open-analytics"/);
-  assert.match(secondaryRow, /aria-label="Open adult report"/);
-  assert.match(secondaryRow, />Grown-up view</);
+  assert.match(html, /data-action="grammar-open-analytics"/);
+  assert.match(html, /aria-label="Open adult report"/);
+  assert.match(html, />Grown-up view</);
+  assert.doesNotMatch(html, /grammar-summary-secondary-actions/);
 });
 
 test('U5: Grown-up view dispatches grammar-open-analytics and flips phase to analytics', () => {
@@ -2914,22 +2910,19 @@ test('U5: mini-test summary renders score card plus Review answers + Fix missed 
   assert.match(scoreBlock, /1 of 8 correct/);
   assert.match(scoreBlock, /13% accuracy/);
 
-  // Primary actions row: `Review answers` + `Fix missed concepts`. Exactly two.
-  const primaryRow = html.match(
-    /<div class="grammar-summary-primary-actions"[^>]*>[\s\S]*?<\/div>/,
-  )?.[0];
-  assert.ok(primaryRow, 'mini-test primary actions row rendered');
-  assert.match(primaryRow, />Review answers</);
-  assert.match(primaryRow, />Fix missed concepts</);
-  assert.match(primaryRow, /data-action="grammar-practise-missed"/);
+  // Shared action row: `Fix missed concepts` is the only primary action;
+  // `Review answers` stays available as a secondary scroll affordance.
+  assert.match(html, />Review answers</);
+  assert.match(html, />Fix missed concepts</);
+  assert.match(html, /data-action="grammar-practise-missed"/);
 
-  const buttonCount = (primaryRow.match(/<button /g) || []).length;
-  assert.equal(buttonCount, 2, 'mini-test primary row holds exactly two buttons');
+  const primaryCount = (html.match(/class="btn primary(?: [^"]*)?"/g) || []).length;
+  assert.equal(primaryCount, 1, 'mini-test summary must hold exactly one primary action');
 
   // The old generic buttons `Start another round` + `Back to Grammar setup`
   // must NOT appear on the mini-test summary variant.
-  assert.doesNotMatch(primaryRow, /Start another round/);
-  assert.doesNotMatch(primaryRow, /Back to Grammar setup/);
+  assert.doesNotMatch(html, /Start another round/);
+  assert.doesNotMatch(html, /Back to Grammar setup/);
 
   // `GrammarMiniTestReview` is still mounted below the summary card, so the
   // adjacent review section is present (contains its own `Mini Test results`
@@ -3120,48 +3113,42 @@ test('U5 follower T4: mini-test Fix missed concepts button renders disabled when
   });
 
   const html = harness.render();
-  const primaryRow = html.match(
-    /<div class="grammar-summary-primary-actions"[^>]*>[\s\S]*?<\/div>/,
-  )?.[0];
-  assert.ok(primaryRow, 'mini-test primary actions row rendered');
 
-  const fixButton = primaryRow.match(
+  const fixButton = html.match(
     /<button[^>]*data-action="grammar-practise-missed"[^>]*>[^<]*<\/button>/,
   )?.[0];
   assert.ok(fixButton, 'Fix missed concepts button rendered');
   assert.match(fixButton, /disabled/, 'Fix missed concepts button carries the disabled attribute when no misses');
 });
 
-test('U5 follower T5: mini-test primary row puts Fix missed concepts first with the primary variant and Review answers second as secondary', () => {
+test('P4 U4 follower T5: mini-test frame puts Fix missed concepts first as the only primary action', () => {
   const { harness } = u4HarnessWithMiniSet();
   // Leave every question Blank so the resolver finds a missed concept id
   // and the primary button is enabled.
   harness.dispatch('grammar-finish-mini-test');
 
   const html = harness.render();
-  const primaryRow = html.match(
-    /<div class="grammar-summary-primary-actions"[^>]*>[\s\S]*?<\/div>/,
-  )?.[0];
-  assert.ok(primaryRow, 'mini-test primary actions row rendered');
 
   // Button order -- Fix missed concepts must appear before Review answers.
-  const fixIndex = primaryRow.indexOf('>Fix missed concepts<');
-  const reviewIndex = primaryRow.indexOf('>Review answers<');
-  assert.ok(fixIndex >= 0 && reviewIndex >= 0, 'both mini-test primary buttons rendered');
+  const fixIndex = html.indexOf('>Fix missed concepts<');
+  const reviewIndex = html.indexOf('>Review answers<');
+  assert.ok(fixIndex >= 0 && reviewIndex >= 0, 'both mini-test next-step buttons rendered');
   assert.ok(fixIndex < reviewIndex, 'Fix missed concepts renders before Review answers');
 
   // Variants -- Fix missed concepts carries `btn primary`, Review answers
   // carries `btn secondary`.
   assert.match(
-    primaryRow,
+    html,
     /<button[^>]*class="btn primary"[^>]*data-action="grammar-practise-missed"[^>]*>Fix missed concepts</,
     'Fix missed concepts is the primary variant',
   );
   assert.match(
-    primaryRow,
+    html,
     /<button[^>]*class="btn secondary"[^>]*data-action="grammar-review-mini-test"[^>]*>Review answers</,
     'Review answers is the secondary variant',
   );
+  const primaryCount = (html.match(/class="btn primary(?: [^"]*)?"/g) || []).length;
+  assert.equal(primaryCount, 1, 'mini-test frame renders exactly one primary button');
 });
 
 // ---------------------------------------------------------------------------

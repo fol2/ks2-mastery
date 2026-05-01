@@ -19,11 +19,13 @@
  *   subjectId        — string: 'spelling' | 'punctuation' | 'grammar'
  *   outcome          — string: 'secure' | 'improving' | 'needs-practice' | 'review-complete'
  *   title            — string: session headline
+ *   subtitle         — optional string/node: session support copy
  *   highlights       — array of strings: what went well
  *   misconceptions   — array of strings: areas to revisit (hidden if empty)
  *   progressDelta    — array of {label, from, to}: progress change indicators
- *   nextPrimaryAction — object: {label, dataAction, onClick}
- *   secondaryActions — array of {label, dataAction, variant, onClick}
+ *   nextPrimaryAction — object: {label, dataAction, onClick, disabled}
+ *   secondaryActions — array of {label, dataAction, variant, onClick, disabled}
+ *   children         — optional subject-specific summary detail sections
  *
  * Slot composition:
  *   - Uses SectionHeader for section headings (3-adopter gate contribution).
@@ -41,27 +43,53 @@ const OUTCOME_LABELS = {
   'review-complete': 'Review complete',
 };
 
+function summaryButtonProps(action, fallbackVariant) {
+  const forwarded = {};
+  for (const key of Object.keys(action || {})) {
+    if (key.startsWith('data-') || key.startsWith('aria-')) {
+      forwarded[key] = action[key];
+    } else if (
+      key === 'id' || key === 'name' || key === 'value' || key === 'form'
+      || key === 'style' || key === 'tabIndex' || key === 'role' || key === 'title'
+    ) {
+      forwarded[key] = action[key];
+    }
+  }
+  return {
+    ...forwarded,
+    variant: action.variant || fallbackVariant,
+    size: action.size || 'md',
+    busy: Boolean(action.busy),
+    disabled: Boolean(action.disabled),
+    dataAction: action.dataAction,
+    dataValue: action.dataValue,
+    startIcon: action.startIcon,
+    endIcon: action.endIcon,
+    onClick: action.onClick,
+    'aria-label': action.ariaLabel,
+  };
+}
+
 export function SessionSummaryFrame({
   subjectId,
   outcome,
   title,
+  subtitle,
   highlights = [],
   misconceptions = [],
   progressDelta = [],
   nextPrimaryAction,
   secondaryActions = [],
+  children,
 }) {
   const outcomeLabel = OUTCOME_LABELS[outcome] || outcome || '';
   const hasHighlights = Array.isArray(highlights) && highlights.length > 0;
   const hasMisconceptions = Array.isArray(misconceptions) && misconceptions.length > 0;
   const hasProgress = Array.isArray(progressDelta) && progressDelta.length > 0;
+  const hasDetails = children !== null && children !== undefined;
 
   const primaryButton = nextPrimaryAction ? (
-    <Button
-      variant="primary"
-      dataAction={nextPrimaryAction.dataAction}
-      onClick={nextPrimaryAction.onClick}
-    >
+    <Button {...summaryButtonProps(nextPrimaryAction, 'primary')}>
       {nextPrimaryAction.label}
     </Button>
   ) : null;
@@ -70,9 +98,7 @@ export function SessionSummaryFrame({
     ? secondaryActions.map((action) => (
         <Button
           key={action.dataAction}
-          variant={action.variant || 'secondary'}
-          dataAction={action.dataAction}
-          onClick={action.onClick}
+          {...summaryButtonProps(action, 'secondary')}
         >
           {action.label}
         </Button>
@@ -89,6 +115,7 @@ export function SessionSummaryFrame({
       <SectionHeader
         eyebrow={outcomeLabel}
         title={title}
+        subtitle={subtitle}
         level={2}
         className="session-summary-frame-header"
       />
@@ -139,6 +166,12 @@ export function SessionSummaryFrame({
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+
+      {hasDetails ? (
+        <div className="session-summary-frame-details" data-summary-details>
+          {children}
         </div>
       ) : null}
 

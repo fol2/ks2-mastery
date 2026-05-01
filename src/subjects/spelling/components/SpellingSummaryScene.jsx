@@ -1,8 +1,7 @@
-import { Button } from '../../../platform/ui/Button.jsx';
 import { SessionSummaryFrame } from '../../../platform/ui/SessionSummaryFrame.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
-import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
-import { AnimatedPromptCard, PathProgress, Ribbon } from './SpellingCommon.jsx';
+import { ArrowRightIcon } from './spelling-icons.jsx';
+import { AnimatedPromptCard, PathProgress } from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import {
   guardianPracticeActionLabel,
@@ -148,34 +147,73 @@ function SummaryPatternQuestMissList({ mistakes = [] }) {
   );
 }
 
-// U6: Thin adapter mapping existing spelling summary view-model to
-// SessionSummaryFrame props. Preserves existing feedback copy and
-// next-action route dispatch. Display-only — no mastery mutation.
-function SpellingSummaryFrameAdapter({ summary, actions }) {
+// P4 U4: Thin adapter mapping existing spelling summary view-model to
+// SessionSummaryFrame props. The shared frame now owns the headline and
+// next-step hierarchy; spelling keeps Guardian/Boss/Pattern Quest detail
+// sections as subject-specific content.
+function SpellingSummaryFrameAdapter({
+  summary,
+  actions,
+  accent,
+  pending,
+  pendingCommand,
+  runtimeReadOnly,
+  submitLock,
+  isGuardianSummary,
+  isBossSummary,
+  isPatternQuestSummary,
+  children,
+}) {
   if (!summary) return null;
   const toneGood = !summary.mistakes || !summary.mistakes.length;
   const outcome = toneGood ? 'secure' : 'needs-practice';
   const title = summaryHeadline(summary);
-  const highlights = [];
-  if (summary.cards) {
-    for (const card of summary.cards) {
-      if (card && card.label && card.value !== undefined) {
-        highlights.push(`${card.label}: ${card.value}`);
-      }
-    }
-  }
-  const misconceptions = [];
-  if (summary.mistakes && summary.mistakes.length) {
-    for (const word of summary.mistakes) {
-      if (word && word.word) misconceptions.push(word.word);
-    }
-  }
-  const nextPrimaryAction = {
+  const subtitle = summaryRibbonSub(summary);
+  const disabled = Boolean(runtimeReadOnly || pending || submitLock.locked);
+  const mistakeCount = Array.isArray(summary.mistakes) ? summary.mistakes.length : 0;
+  const hasMistakes = mistakeCount > 0;
+  const primaryStartAgain = {
+    label: pendingCommand === 'start-session' ? 'Starting...' : 'Start another round',
+    dataAction: 'spelling-start-again',
+    style: { '--btn-accent': accent },
+    endIcon: <ArrowRightIcon />,
+    disabled,
+    onClick: (event) => submitLock.run(async () => renderAction(actions, event, 'spelling-start-again')),
+  };
+  const primaryDrill = {
+    label: isGuardianSummary ? guardianPracticeActionLabel() : `Drill all ${mistakeCount}`,
+    dataAction: 'spelling-drill-all',
+    size: 'sm',
+    endIcon: <ArrowRightIcon />,
+    disabled,
+    onClick: (event) => submitLock.run(async () => renderAction(actions, event, 'spelling-drill-all')),
+  };
+  const primaryBack = {
     label: 'Back to dashboard',
     dataAction: 'spelling-back',
+    style: { '--btn-accent': accent },
+    endIcon: <ArrowRightIcon />,
     onClick: (event) => renderAction(actions, event, 'spelling-back'),
   };
+  const nextPrimaryAction = isPatternQuestSummary
+    ? primaryBack
+    : isBossSummary
+      ? primaryStartAgain
+    : (hasMistakes ? primaryDrill : primaryStartAgain);
   const secondaryActions = [
+    ...(isPatternQuestSummary ? [] : [{
+      label: 'Back to dashboard',
+      dataAction: 'spelling-back',
+      variant: 'ghost',
+      onClick: (event) => renderAction(actions, event, 'spelling-back'),
+    }]),
+    ...(hasMistakes && !isBossSummary && !isPatternQuestSummary ? [{
+      label: pendingCommand === 'start-session' ? 'Starting...' : 'Start another round',
+      dataAction: 'spelling-start-again',
+      variant: 'secondary',
+      disabled,
+      onClick: (event) => submitLock.run(async () => renderAction(actions, event, 'spelling-start-again')),
+    }] : []),
     {
       label: 'Open word bank',
       dataAction: 'spelling-open-word-bank',
@@ -188,12 +226,15 @@ function SpellingSummaryFrameAdapter({ summary, actions }) {
       subjectId="spelling"
       outcome={outcome}
       title={title}
-      highlights={highlights}
-      misconceptions={misconceptions}
+      subtitle={subtitle}
+      highlights={[]}
+      misconceptions={[]}
       progressDelta={[]}
       nextPrimaryAction={nextPrimaryAction}
       secondaryActions={secondaryActions}
-    />
+    >
+      {children}
+    </SessionSummaryFrame>
   );
 }
 
@@ -228,7 +269,6 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
     postMega: isPostMegaSummary,
     postMegaBranch: summaryPostMegaBranch,
   });
-  const toneGood = !summary.mistakes.length;
   const isGuardianSummary = summary.mode === 'guardian';
   // U10: Boss rounds render a dedicated summary branch — no drill-all, no
   // per-word chips, no retry CTAs. The service already rewrites
@@ -251,6 +291,7 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
   //     "Back to dashboard" keeps the Pattern Quest chooser-first UX until a
   //     P2.5 iteration threads patternId through summary state.
   const isPatternQuestSummary = summary.mode === 'pattern-quest';
+  const hasSummaryMistakes = Array.isArray(summary.mistakes) && summary.mistakes.length > 0;
   // When we exit a Guardian round the postMastery snapshot reflects the
   // post-advance state — so `nextGuardianDueDay` already tells us when the
   // learner should return. If postMastery is unavailable (e.g. SSR before
@@ -285,153 +326,72 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
           innerClassName="summary-card-inner"
         >
           <h3 className="summary-title sr-only">Session summary</h3>
-          <Ribbon
-            tone={toneGood ? 'good' : 'warn'}
-            icon={toneGood ? <CheckIcon /> : '!'}
-            headline={summaryHeadline(summary)}
-            sub={summaryRibbonSub(summary)}
-          />
+          <SpellingSummaryFrameAdapter
+            summary={summary}
+            actions={actions}
+            accent={accent}
+            pending={pending}
+            pendingCommand={pendingCommand}
+            runtimeReadOnly={runtimeReadOnly}
+            submitLock={submitLock}
+            isGuardianSummary={isGuardianSummary}
+            isBossSummary={isBossSummary}
+            isPatternQuestSummary={isPatternQuestSummary}
+          >
+            <SummaryStatGrid cards={summary.cards} />
 
-          <SummaryStatGrid cards={summary.cards} />
+            {isGuardianSummary ? <SummaryGuardianBand cards={guardianCards} /> : null}
+            {isBossSummary ? <SummaryBossBand summary={summary} /> : null}
 
-          {isGuardianSummary ? <SummaryGuardianBand cards={guardianCards} /> : null}
-          {isBossSummary ? <SummaryBossBand summary={summary} /> : null}
-
-          {isBossSummary ? (
-            <SummaryBossMissList mistakes={summary.mistakes} />
-          ) : isPatternQuestSummary ? (
-            <SummaryPatternQuestMissList mistakes={summary.mistakes} />
-          ) : summary.mistakes.length ? (
-            isGuardianSummary ? (
-              // U3: Guardian summaries replace the legacy "Drill all" + per-word
-              // "Drill" chip cluster with a single Practice button. The
-              // dispatched action is still `spelling-drill-all` (the module
-              // handler branches on `ui.summary.mode === 'guardian'` to force
-              // `practiceOnly: true`); hiding the per-word chips stops a child
-              // from starting a single-word drill that would bypass the
-              // Guardian-origin practiceOnly gating.
-              //
-              // Copy sourced from `guardianPracticeActionLabel()` +
-              // `guardianSummaryCopy()` — see view-model notes on the
-              // identity-separation rationale. Every string here lives in one
-              // place, so a rename is a one-file change across scene, test
-              // fixtures, and telemetry.
-              <div className="summary-drill summary-drill--guardian">
-                <div className="summary-drill-head">
-                  <h4>Words that wobbled today</h4>
-                  <span className="small muted">{guardianSummaryCopy()}</span>
+            {isBossSummary ? (
+              <SummaryBossMissList mistakes={summary.mistakes} />
+            ) : isPatternQuestSummary ? (
+              <SummaryPatternQuestMissList mistakes={summary.mistakes} />
+            ) : hasSummaryMistakes ? (
+              isGuardianSummary ? (
+                // Guardian summaries now use SessionSummaryFrame's single
+                // primary action for practice. This detail block stays
+                // read-only so the recovery schedule copy remains visible
+                // without rendering a second primary CTA.
+                <div className="summary-drill summary-drill--guardian">
+                  <div className="summary-drill-head">
+                    <h4>Words that wobbled today</h4>
+                    <span className="small muted">{guardianSummaryCopy()}</span>
+                  </div>
+                  <div className="summary-drill-chips">
+                    {summary.mistakes.map((word) => (
+                      <span className="fchip fchip--static" key={word.slug}>{word.word}</span>
+                    ))}
+                  </div>
                 </div>
-                <div className="summary-drill-chips">
-                  {summary.mistakes.map((word) => (
-                    <span className="fchip fchip--static" key={word.slug}>{word.word}</span>
-                  ))}
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    dataAction="spelling-drill-all"
-                    disabled={runtimeReadOnly || pending || submitLock.locked}
-                    onClick={(event) => {
-                      submitLock.run(async () => renderAction(actions, event, 'spelling-drill-all'));
-                    }}
-                  >
-                    {guardianPracticeActionLabel()} <ArrowRightIcon />
-                  </Button>
+              ) : (
+                <div className="summary-drill">
+                  <div className="summary-drill-head">
+                    <h4>Words that need another go</h4>
+                    <span className="small muted">A quick drill cycles each of these again before you close the round.</span>
+                  </div>
+                  <div className="summary-drill-chips">
+                    {summary.mistakes.map((word) => (
+                      <button
+                        type="button"
+                        className="fchip"
+                        data-action="spelling-drill-single"
+                        data-slug={word.slug}
+                        key={word.slug}
+                        disabled={runtimeReadOnly || pending || submitLock.locked}
+                        onClick={(event) => {
+                          submitLock.run(async () => renderAction(actions, event, 'spelling-drill-single', { slug: word.slug }));
+                        }}
+                      >
+                        {word.word}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="summary-drill">
-                <div className="summary-drill-head">
-                  <h4>Words that need another go</h4>
-                  <span className="small muted">A quick drill cycles each of these again before you close the round.</span>
-                </div>
-                <div className="summary-drill-chips">
-                  {summary.mistakes.map((word) => (
-                    <button
-                      type="button"
-                      className="fchip"
-                      data-action="spelling-drill-single"
-                      data-slug={word.slug}
-                      key={word.slug}
-                      disabled={runtimeReadOnly || pending || submitLock.locked}
-                      onClick={(event) => {
-                        submitLock.run(async () => renderAction(actions, event, 'spelling-drill-single', { slug: word.slug }));
-                      }}
-                    >
-                      {word.word}
-                    </button>
-                  ))}
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    dataAction="spelling-drill-all"
-                    disabled={runtimeReadOnly || pending || submitLock.locked}
-                    onClick={(event) => {
-                      submitLock.run(async () => renderAction(actions, event, 'spelling-drill-all'));
-                    }}
-                  >
-                    Drill all {summary.mistakes.length} <ArrowRightIcon />
-                  </Button>
-                </div>
-              </div>
-            )
-          ) : null}
-
-          <div className="summary-actions">
-            {isPatternQuestSummary ? (
-              // U11 Fix 7: Pattern Quest summaries only offer "Back to
-              // dashboard" as the primary action — the legacy
-              // `spelling-start-again` dispatch does NOT thread `patternId`,
-              // so re-starting from a Pattern Quest summary would either
-              // launch a different mode (pref default) or re-launch without
-              // a pattern id and refuse. Routing back to the dashboard keeps
-              // the chooser-first flow until summary state threads the
-              // patternId through for a P2.5 iteration.
-              <Button
-                variant="primary"
-                size="lg"
-                style={{ '--btn-accent': accent }}
-                dataAction="spelling-back"
-                onClick={(event) => renderAction(actions, event, 'spelling-back')}
-              >
-                Back to dashboard <ArrowRightIcon />
-              </Button>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  dataAction="spelling-back"
-                  onClick={(event) => renderAction(actions, event, 'spelling-back')}
-                >
-                  Back to dashboard
-                </Button>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  style={{ '--btn-accent': accent }}
-                  dataAction="spelling-start-again"
-                  disabled={runtimeReadOnly || pending || submitLock.locked}
-                  onClick={(event) => {
-                    submitLock.run(async () => renderAction(actions, event, 'spelling-start-again'));
-                  }}
-                >
-                  {pendingCommand === 'start-session' ? 'Starting...' : 'Start another round'} <ArrowRightIcon />
-                </Button>
-              </>
-            )}
-            <button
-              type="button"
-              className="summary-bank-link"
-              data-action="spelling-open-word-bank"
-              onClick={(event) => renderAction(actions, event, 'spelling-open-word-bank')}
-            >
-              Open word bank <ArrowRightIcon />
-            </button>
-          </div>
+              )
+            ) : null}
+          </SpellingSummaryFrameAdapter>
         </AnimatedPromptCard>
-        {/* U6: Shared summary engine adoption — SessionSummaryFrame renders
-            alongside the existing visual shell. Display-only, no mutation. */}
-        <SpellingSummaryFrameAdapter summary={summary} actions={actions} />
       </div>
     </div>
   );

@@ -61,6 +61,10 @@ export function AdminVisualEngineSection() {
       data={SUBJECT_IDS}
       refreshedAt={Date.now()}
     >
+      <p className="small muted admin-visual-engine-note" data-testid="visual-engine-diagnostic-only">
+        Diagnostic only. This panel does not write assets, themes, motion profiles, or learner state.
+      </p>
+
       {/* Subject Theme Tokens */}
       <SectionHeader
         eyebrow="Theme Registry"
@@ -104,10 +108,10 @@ export function AdminVisualEngineSection() {
       />
       <div data-testid="monster-availability">
         {Object.entries(MONSTERS_BY_SUBJECT).map(([subjectKey, monsterIds]) => (
-          <div key={subjectKey} style={{ marginBottom: 12 }}>
+          <div key={subjectKey} className="admin-visual-engine-subject-row">
             <strong>{subjectKey}:</strong>{' '}
             {monsterIds.map((mId) => (
-              <span key={mId} className="chip" style={{ marginRight: 4 }}>
+              <span key={mId} className="chip admin-visual-engine-chip">
                 {MONSTERS[mId]?.name || mId}
               </span>
             ))}
@@ -150,7 +154,7 @@ export function AdminVisualEngineSection() {
       <div data-testid="visual-contexts">
         <p><strong>Registered contexts:</strong>{' '}
           {MONSTER_VISUAL_CONTEXTS.map((ctx) => (
-            <span key={ctx} className="chip" style={{ marginRight: 4 }}>{ctx}</span>
+            <span key={ctx} className="chip admin-visual-engine-chip">{ctx}</span>
           ))}
         </p>
         <p><strong>Config source:</strong> {BUNDLED_MONSTER_VISUAL_CONFIG.source}</p>
@@ -168,11 +172,11 @@ export function AdminVisualEngineSection() {
       />
       <div data-testid="motion-profiles">
         {MONSTER_VISUAL_MOTION_PROFILE_OPTIONS.map((profile) => (
-          <div key={profile} style={{ marginBottom: 4 }}>
+          <div key={profile} className="admin-visual-engine-motion-row">
             <code>{profile}</code>:{' '}
             {motionProfiles.has(profile)
               ? <span className="chip">{motionProfiles.get(profile).length} binding(s)</span>
-              : <span className="chip" style={{ opacity: 0.5 }}>unused</span>
+              : <span className="chip admin-visual-engine-chip-muted">unused</span>
             }
           </div>
         ))}

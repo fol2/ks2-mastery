@@ -2,7 +2,9 @@
 
 **Source boundary**: Git evidence only. No production evidence gathered (deferred: requires human verification).
 
-**Status**: Implemented and locally verified.
+**Status**: Implemented and locally source-verified. Production visual correctness remains unproven.
+
+**P4 entry note**: P4 starts from the position that P3 established useful source-level primitives, but did not prove deployed visual correctness, live interaction behaviour, or production bundle health.
 
 ---
 
@@ -20,7 +22,14 @@
 | #781  | U4   | Practice stage and background scroller engine |
 | #783  | U7   | Home dashboard hero perspective engine |
 | #784  | U8   | Admin visual asset and property diagnostics |
-| #786  | U9   | Guardrails, completion report, and release evidence |
+| #788  | U9   | Guardrails, completion report, and release evidence |
+
+### Post-completion fixes
+
+| PR    | Scope |
+|-------|-------|
+| #791  | Phase 4 delivery review fixes: Node/test evidence and source-level visual verification note |
+| #793  | Phase 4 blockers: P3 inline-style classification, 254-site budget reconciliation, and test-count correction |
 
 ---
 
@@ -78,9 +87,9 @@
 
 ## Approved Visual Changes
 
-No intentional visual changes were approved in P3. All migrations preserve existing appearance — the primitives render identical output to the pre-migration inline/class-based implementations.
+No intentional production visual changes were approved in P3. Source-level migration was intended to preserve existing behaviour, but some new primitives add wrappers or additional markup and therefore are not claimed as byte-identical to the pre-P3 output.
 
-**Visual verification note**: Source-level verification confirms all migrated components produce byte-identical HTML output (same CSS classes, same custom property values, same DOM structure). The SubjectThemeScope wrapper adds one non-visible container `<div>` with no visual styling. The SessionHUD, SessionSummaryFrame, and SubjectCompanionPanel (hidden by default) add content but do not alter existing layout. PracticeStage wraps existing content without positional change. No colour values were altered — only the source (CSS variable vs inline literal) changed. Screenshots of the live app are not captured in this report (DEFERRED: requires human verification on deployed build).
+**Visual verification note**: Source-level verification covered parser and contract expectations only. `SubjectThemeScope` adds one non-visible container `<div>`. `SessionHUD`, `SessionSummaryFrame`, `SubjectCompanionPanel`, `PracticeStage`, and `HomeHeroScene` introduce new structural or optional content paths that require P4 visual consolidation before they can be called a complete visual engine. Screenshots of the live app are not captured in this report (DEFERRED: requires human verification on deployed build).
 
 ---
 
@@ -148,6 +157,7 @@ All 6 integration points are implemented and locally verified:
 - **Production smoke tests**: NOT run (requires deployed build + human review)
 - **Screenshot approval**: NOT captured (requires visual regression tooling)
 - **Live verification**: NOT performed (requires human navigating production)
+- **Production Visual Engine readiness**: NOT proven; P4 must capture deployed or explicit non-claim evidence before closure.
 - **SegmentedControl primitive**: Deferred from P2, remains deferred
 
 ---

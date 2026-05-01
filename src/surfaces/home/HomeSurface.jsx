@@ -81,83 +81,79 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
         currentScreen="dashboard"
       />
 
-      <div className="hero-paper" style={{ '--hero-bg': `url('${heroBg}')` }}>
-        <div className="hero-art" aria-hidden="true" />
-        <MonsterMeadow monsters={meadowMonsters} maxSlots={10} />
-        <div className="hero-mission">
-          <div className="greet">
-            <b>{greet}, {model.learner?.name || 'there'}.</b>{' '}
-            {companionName ? `${companionName} is ready for round ${model.roundNumber || 1}.` : 'A fresh round is waiting.'}
-          </div>
-          {heroActive ? (
-            <>
-              <HeroQuestCard hero={hero} actions={actions} />
-              <HeroCampPanel
-                readModel={model.heroReadModel}
-                heroClient={model.heroClient}
-                learnerId={model.learner?.id}
-                onRefresh={actions.refreshHeroQuest}
-              />
-            </>
-          ) : (
-            <>
-              {recommendation ? (
-                <>
-                  <h1 className="mission">
-                    Today's practice is <em>waiting.</em>
-                  </h1>
-                  <div className="hero-best-round" data-best-round-subject={recommendation.subjectId}>
-                    <div className="hero-best-round-label">Today's best round:{' '}
-                      <strong>{recommendation.subjectName}</strong>
-                    </div>
-                    <div className="hero-best-round-detail">
-                      {recommendation.monsterCompanion
-                        ? `${recommendation.monsterCompanion} has ${formatDueCount(recommendation.due)} due.`
-                        : `${formatDueCount(recommendation.due)} due for you.`}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <h1 className="mission">
-                  Today's words are <em>waiting.</em>
-                  <br />
-                  {dueCopy(dueTotal)}
-                </h1>
-              )}
-              <div className="hero-cta-row">
-                <Button
-                  size="xl"
-                  dataAction="open-subject"
-                  data-subject-id={ctaSubjectId}
-                  onClick={() => actions.openSubject(ctaSubjectId)}
-                >
-                  {ctaLabel} <IconArrowRight />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="xl"
-                  onClick={actions.openCodex}
-                >
-                  Open codex
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
       <HomeHeroScene
         learner={model.learner}
         readySubjects={subjectCards}
         todayFocus={recommendation ? `Today's best: ${recommendation.subjectName}` : undefined}
         creatureHighlights={meadowMonsters.slice(0, 3).map((m) => m.name).filter(Boolean)}
-        primaryAction={{
-          label: ctaLabel,
-          dataAction: 'open-subject',
-          onClick: () => actions.openSubject(ctaSubjectId),
-        }}
-        secondaryActions={[{ label: 'Open codex', dataAction: 'open-codex', onClick: actions.openCodex }]}
         heroQuest={hero}
+        heroPanel={(
+          <div className="hero-paper" style={{ '--hero-bg': `url('${heroBg}')` }}>
+            <div className="hero-art" aria-hidden="true" />
+            <MonsterMeadow monsters={meadowMonsters} maxSlots={10} />
+            <div className="hero-mission">
+              <div className="greet">
+                <b>{greet}, {model.learner?.name || 'there'}.</b>{' '}
+                {companionName ? `${companionName} is ready for round ${model.roundNumber || 1}.` : 'A fresh round is waiting.'}
+              </div>
+              {heroActive ? (
+                <>
+                  <HeroQuestCard hero={hero} actions={actions} />
+                  <HeroCampPanel
+                    readModel={model.heroReadModel}
+                    heroClient={model.heroClient}
+                    learnerId={model.learner?.id}
+                    onRefresh={actions.refreshHeroQuest}
+                  />
+                </>
+              ) : (
+                <>
+                  {recommendation ? (
+                    <>
+                      <h1 className="mission">
+                        Today's practice is <em>waiting.</em>
+                      </h1>
+                      <div className="hero-best-round" data-best-round-subject={recommendation.subjectId}>
+                        <div className="hero-best-round-label">Today's best round:{' '}
+                          <strong>{recommendation.subjectName}</strong>
+                        </div>
+                        <div className="hero-best-round-detail">
+                          {recommendation.monsterCompanion
+                            ? `${recommendation.monsterCompanion} has ${formatDueCount(recommendation.due)} due.`
+                            : `${formatDueCount(recommendation.due)} due for you.`}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <h1 className="mission">
+                      Today's words are <em>waiting.</em>
+                      <br />
+                      {dueCopy(dueTotal)}
+                    </h1>
+                  )}
+                  <div className="hero-cta-row">
+                    <Button
+                      size="xl"
+                      dataAction="open-subject"
+                      data-subject-id={ctaSubjectId}
+                      onClick={() => actions.openSubject(ctaSubjectId)}
+                    >
+                      {ctaLabel} <IconArrowRight />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="xl"
+                      dataAction="open-codex"
+                      onClick={actions.openCodex}
+                    >
+                      Open codex
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       >
         <div className="home-section-head">
           <h2 className="section-title">Your subjects</h2>

@@ -1707,7 +1707,7 @@ test('U3 session scene: GPS submit label reads "Save answer" (session-ui contrac
   assert.doesNotMatch(html, /<button[^>]*data-punctuation-submit[^>]*>Check<\/button>/);
 });
 
-test('U3 session scene: header renders "Question N of M · Skill · Mode" when item carries skillIds', () => {
+test('U3 session scene: hero keeps skill copy while SessionHUD owns question count and mode', () => {
   const harness = sessionHarnessWithItem({
     mode: 'insert',
     sessionMode: 'smart',
@@ -1727,7 +1727,12 @@ test('U3 session scene: header renders "Question N of M · Skill · Mode" when i
     },
   });
   const html = harness.render();
-  assert.match(html, /Question 3 of 4 · Capital letters and sentence endings · Smart review/);
+  assert.match(html, /Capital letters and sentence endings/);
+  assert.match(
+    html,
+    /<div class="session-hud-title"[^>]*>Question 3 of 4<span class="session-hud-mode">Smart review<\/span><\/div>/,
+  );
+  assert.doesNotMatch(html, /Question 3 of 4 · Capital letters and sentence endings · Smart review/);
 });
 
 test('U3 session scene: feedback phase shows headline + body + Continue by default, model behind reveal', () => {

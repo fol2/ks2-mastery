@@ -31,14 +31,14 @@ const BUTTON_CONSUMERS = [
   // to <Button>. Adding the surface to the allowlist locks the adoption
   // — a future refactor that removes the import would now fail this test.
   'src/subjects/spelling/components/SpellingSetupScene.jsx',
-  // P3 U2: Action Engine pass 1 — session + summary scenes fully migrated
-  // to <Button> primitive. All raw .btn call sites in these files retired.
+  // P4 U2/U4: HomeHeroScene uses Button for fallback hero actions, while
+  // summary action ownership moved into SessionSummaryFrame. Summary scenes
+  // now consume Button indirectly through that shared frame.
+  'src/platform/ui/HomeHeroScene.jsx',
   'src/subjects/spelling/components/SpellingSessionScene.jsx',
   'src/subjects/grammar/components/GrammarSessionScene.jsx',
   'src/subjects/punctuation/components/PunctuationSessionScene.jsx',
-  'src/subjects/spelling/components/SpellingSummaryScene.jsx',
-  'src/subjects/grammar/components/GrammarSummaryScene.jsx',
-  'src/subjects/punctuation/components/PunctuationSummaryScene.jsx',
+  'src/platform/ui/SessionSummaryFrame.jsx',
 ];
 
 // P2 U2: closed allowlist of production surfaces that have adopted the
@@ -74,12 +74,18 @@ function readFile(relative) {
   return readFileSync(path.join(rootDir, relative), 'utf8');
 }
 
+function buttonImportPatternFor(file) {
+  return file.startsWith('src/platform/ui/')
+    ? /import\s*\{[^}]*\bButton\b[^}]*\}\s*from\s*['"]\.\/Button(\.jsx)?['"]/
+    : /import\s*\{[^}]*\bButton\b[^}]*\}\s*from\s*['"][^'"]*platform\/ui\/Button(\.jsx)?['"]/;
+}
+
 test('every U1 surface imports the shared Button primitive', () => {
   for (const file of BUTTON_CONSUMERS) {
     const source = readFile(file);
     assert.match(
       source,
-      /import\s*\{[^}]*\bButton\b[^}]*\}\s*from\s*['"][^'"]*platform\/ui\/Button(\.jsx)?['"]/,
+      buttonImportPatternFor(file),
       `${file} must import Button from the shared primitive at src/platform/ui/Button.jsx. ` +
       'If this surface legitimately no longer needs the primitive, update the BUTTON_CONSUMERS '
       + 'allowlist deliberately.',
@@ -93,11 +99,13 @@ test('every U1 surface imports the shared Button primitive', () => {
   }
 });
 
-test('Button has ≥ 12 unique production import sites at P3 U2 close', () => {
-  // P2 U1 mandated 5 minimum. P3 U2 adds 6 session + summary scenes.
+test('Button has ≥ 11 direct production import sites after P4 summary consolidation', () => {
+  // P2 U1 mandated 5 minimum. P3 added session/summary surfaces; P4 then
+  // centralised summary CTA rendering in SessionSummaryFrame, reducing direct
+  // summary-scene imports without reducing Button coverage.
   assert.ok(
-    BUTTON_CONSUMERS.length >= 12,
-    `P3 U2 minimum is 12 Button consumers; got ${BUTTON_CONSUMERS.length}.`,
+    BUTTON_CONSUMERS.length >= 11,
+    `P4 minimum is 11 direct Button consumers; got ${BUTTON_CONSUMERS.length}.`,
   );
 });
 

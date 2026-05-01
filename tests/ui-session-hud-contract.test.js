@@ -52,7 +52,8 @@ test('U3 SessionHUD: safeAnswered cannot exceed safeTotal', () => {
 
 test('U3 SessionHUD: remainingCount floored to 0', () => {
   assert.ok(
-    HUD_SOURCE.includes('Math.max(0, remainingCount)'),
+    HUD_SOURCE.includes('Math.max(0, remainingNumber)') &&
+      HUD_SOURCE.includes('Math.min(safeTotal, Math.max(0, remainingNumber))'),
     'SessionHUD must floor remainingCount to 0',
   );
 });

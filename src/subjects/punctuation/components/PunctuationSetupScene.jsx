@@ -310,7 +310,7 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
 
   return (
-    <PracticeStage subjectId="punctuation" scene="setup" backdrop="punctuation-map">
+    <PracticeStage subjectId="punctuation" scene="setup" backdrop="punctuation-map" motion="calm">
     <section
       className="card border-top punctuation-surface punctuation-setup-scene punctuation-mission-dashboard"
       data-punctuation-phase="setup"
@@ -436,6 +436,7 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
 
             <SubjectCompanionPanel
               subjectId="punctuation"
+              visible
               monsters={dashboard.activeMonsters.map((m) => ({
                 name: punctuationMonsterDisplayName(m.id),
                 discovered: (m.displayStars ?? m.totalStars) > 0,

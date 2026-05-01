@@ -214,7 +214,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
   const openConceptBank = () => actions.dispatch('grammar-open-concept-bank');
 
   return (
-    <PracticeStage subjectId="grammar" scene="setup" backdrop="library">
+    <PracticeStage subjectId="grammar" scene="setup" backdrop="library" motion="calm">
     <section
       className="grammar-dashboard"
       aria-labelledby="grammar-dashboard-title"
@@ -341,6 +341,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
 
               <SubjectCompanionPanel
                 subjectId="grammar"
+                visible
                 monsters={dashboard.monsterStrip.map((entry) => ({
                   name: entry.name,
                   discovered: entry.displayState !== 'not-found',

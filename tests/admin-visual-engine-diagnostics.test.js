@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -107,6 +107,26 @@ test('AdminVisualEngineSection contains no form elements, buttons, or mutation h
   // No onClick handlers in the rendered body content (buttons in AdminPanelFrame header are OK)
   // The section body should be purely display-oriented
   assert.ok(!html.includes('onSubmit'), 'Should not contain onSubmit handlers');
+});
+
+test('P4 U7: AdminVisualEngineSection is diagnostic-only and has no inline style props', async () => {
+  const html = await renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { AdminVisualEngineSection } from ${absoluteSpecifier('src/surfaces/hubs/AdminVisualEngineSection.jsx')};
+    const markup = renderToStaticMarkup(React.createElement(AdminVisualEngineSection));
+    console.log(markup);
+  `);
+  const source = readFileSync(
+    path.join(rootDir, 'src/surfaces/hubs/AdminVisualEngineSection.jsx'),
+    'utf8',
+  );
+
+  assert.ok(html.includes('data-testid="visual-engine-diagnostic-only"'));
+  assert.match(html, /Diagnostic only/);
+  assert.ok(!html.includes('style='), 'Admin visual diagnostics should use CSS classes rather than inline style attributes');
+  assert.doesNotMatch(source, /\sstyle=\{/, 'AdminVisualEngineSection should not add inline style props');
+  assert.doesNotMatch(source, /onClick|onSubmit|fetch\(|\/api\//, 'AdminVisualEngineSection must stay read-only');
 });
 
 // ---------- Test 3: Placeholder reported as "placeholder" not "broken" ---------- //

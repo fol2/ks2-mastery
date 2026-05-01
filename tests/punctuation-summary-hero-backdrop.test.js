@@ -83,8 +83,11 @@ test('U6 Summary: `.punctuation-summary-hero-content .section-title` renders the
   assert.match(html, /<div class="punctuation-summary-hero-content">/);
   // Section title renders inside the content wrapper.
   assert.match(html, /<h2 class="section-title">[^<]+<\/h2>/);
-  // Eyebrow literal "Summary" still lives in the content wrapper.
-  assert.match(html, /<div class="eyebrow">Summary<\/div>/);
+  // P4 U4: SessionSummaryFrame owns the headline region, so the hero no
+  // longer renders a second literal "Summary" eyebrow above the shared
+  // frame title.
+  assert.match(html, /data-session-summary-frame/);
+  assert.doesNotMatch(html, /<div class="eyebrow">Summary<\/div>/);
 });
 
 test('U6 Summary: preserves the data-punctuation-summary section attribute', () => {
