@@ -360,7 +360,7 @@ export function PunctuationMapScene({ ui, actions }) {
       <header className="punctuation-map-topbar">
         <button
           type="button"
-          className="btn ghost sm"
+          className="btn ghost"
           disabled={navigationDisabled}
           aria-disabled={navigationDisabled ? 'true' : 'false'}
           data-action="punctuation-close-map"

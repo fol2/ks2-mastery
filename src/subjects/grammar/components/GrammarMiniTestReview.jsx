@@ -107,7 +107,7 @@ function ReviewItem({ question, index, onPractiseLater, disabled }) {
           <div className="grammar-mini-review-actions">
             <button
               type="button"
-              className="btn secondary sm"
+              className="btn secondary"
               data-action="grammar-focus-concept"
               data-concept-id={conceptId}
               disabled={disabled}

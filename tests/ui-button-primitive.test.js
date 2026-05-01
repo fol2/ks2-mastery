@@ -113,6 +113,21 @@ test('Button renders the bare `.btn` class when size is the md default', async (
   assert.doesNotMatch(html, /class="[^"]*\bmd\b[^"]*"/, 'md size must NOT emit a literal `md` class');
 });
 
+test('Button treats removed size="sm" as the bare `.btn` size in production', async () => {
+  const html = await renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { Button } from ${absoluteSpecifier('src/platform/ui/Button.jsx')};
+    process.env.NODE_ENV = 'production';
+    const html = renderToStaticMarkup(
+      <Button variant="secondary" size="sm">Review</Button>
+    );
+    console.log(html);
+  `);
+  assert.match(html, /class="btn secondary"/, 'removed sm size must fall back to the bare `.btn secondary` classes');
+  assert.doesNotMatch(html, /class="[^"]*\bsm\b[^"]*"/, 'removed sm size must not emit a stale `sm` class');
+});
+
 // ---------- Happy path: locator-preservation byte parity ---------- //
 
 test('Button forwards data-action, data-value, and arbitrary data-* attributes byte-identical to a hand-rolled <button>', async () => {

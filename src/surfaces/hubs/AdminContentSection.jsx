@@ -707,7 +707,7 @@ function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
           Archived entries
         </h4>
         <button
-          className="btn ghost sm"
+          className="btn ghost"
           type="button"
           aria-expanded={archiveOpen ? 'true' : 'false'}
           aria-controls="grammar-writing-try-admin-archive-list"

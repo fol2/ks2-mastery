@@ -115,7 +115,7 @@ function ConceptCard({ card, onPractise, onOpenDetail }) {
         <div className="grammar-bank-card-actions">
           <button
             type="button"
-            className="btn primary sm"
+            className="btn primary"
             data-action="grammar-focus-concept"
             data-concept-id={card.id}
             onClick={() => onPractise(card.id)}
@@ -124,7 +124,7 @@ function ConceptCard({ card, onPractise, onOpenDetail }) {
           </button>
           <button
             type="button"
-            className="btn ghost sm"
+            className="btn ghost"
             data-action="grammar-concept-detail-open"
             data-concept-id={card.id}
             data-focus-return-id={returnId}
@@ -202,7 +202,7 @@ export function GrammarConceptBankScene({
       <header className="grammar-bank-topbar">
         <button
           type="button"
-          className="btn ghost sm"
+          className="btn ghost"
           data-action="grammar-close-concept-bank"
           aria-label="Back to Grammar Garden dashboard"
           onClick={() => actions?.dispatch?.('grammar-close-concept-bank')}

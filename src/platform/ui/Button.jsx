@@ -113,12 +113,25 @@ export function Button({
   const isDisabled = Boolean(disabled) || isBusy;
 
   // `size === 'md'` renders as the bare `.btn` (per plan U1 Approach).
-  // Other sizes append the matching modifier — `.btn sm` / `.btn lg` /
-  // `.btn xl` — exactly mirroring the hand-rolled class strings the
-  // migrating call-sites already use.
+  // Other sizes append the matching modifier — `.btn lg` / `.btn xl`.
+  // `.btn.sm` was eliminated in PR-A (WCAG 2.5.5 / KS2 tap-target floor).
   const classes = ['btn'];
   if (variant) classes.push(variant);
-  if (size && size !== 'md') classes.push(size);
+  if (size && size !== 'md') {
+    if (size === 'sm') {
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.warn(
+          'Button: size="sm" was removed in PR-A (WCAG 2.5.5 / KS2 tap-target floor). '
+          + 'See notes/specs/PR-A-tap-target-spec.md or '
+          + 'notes/ks2-mastery-design-baseline.md §3 for context. '
+          + 'Use default size or rework the surface to honour --tap-min (44px).',
+        );
+      }
+    } else {
+      classes.push(size);
+    }
+  }
   if (className) classes.push(className);
 
   const buttonProps = {

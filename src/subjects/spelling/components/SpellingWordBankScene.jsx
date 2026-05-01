@@ -403,7 +403,7 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
           {wordBankMeta.hasNextPage ? (
             <button
               type="button"
-              className="btn ghost sm"
+              className="btn ghost"
               data-action="spelling-word-bank-load-more"
               onClick={(event) => renderAction(actions, event, 'spelling-word-bank-load-more')}
             >
@@ -521,7 +521,7 @@ export function SpellingWordBankScene({
         <header className="word-bank-topbar">
           <button
             type="button"
-            className="btn ghost sm"
+            className="btn ghost"
             data-action="spelling-close-word-bank"
             onClick={(event) => renderAction(actions, event, 'spelling-close-word-bank')}
           >

@@ -48,6 +48,11 @@
   --shadow-lg: 0 2px 4px rgba(29,43,58,0.05), 0 16px 40px rgba(29,43,58,0.10);
   --shadow-glow: 0 0 0 4px rgba(62,111,168,0.18);
 
+  /* Touch-target minimum - WCAG 2.5.5 AAA, elevated to baseline for KS2.
+     Child-facing surfaces (mastery / assessment / reward / onboarding)
+     must honour this floor on every interactive element. */
+  --tap-min: 44px;
+
   /* Typography */
   --font-display: "Fraunces", Georgia, "Iowan Old Style", serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -514,6 +519,10 @@ textarea:focus-visible {
   padding: 10px 14px;
   font-weight: 800;
   transition: transform 0.05s ease, filter 0.15s ease, background 0.15s ease;
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .btn:hover { filter: brightness(0.98); }
 .btn:active { transform: translateY(1px); }
@@ -525,7 +534,6 @@ textarea:focus-visible {
 .btn.good { background: var(--good-soft); border-color: #b8dfca; color: var(--good); }
 .btn.warn { background: var(--warn-soft); border-color: #edd9ae; color: var(--warn-strong); }
 .btn.bad { background: var(--bad-soft); border-color: #f0c8c5; color: var(--bad); }
-.btn.sm { padding: 8px 12px; font-size: 0.92rem; }
 .btn.lg { padding: 12px 16px; }
 .btn.xl {
   display: inline-flex;
@@ -554,6 +562,12 @@ textarea:focus-visible {
 .chip.new { background: #f4f6f8; color: #546171; border-color: #d9e0e7; }
 .chip.learning { background: #e8f1fb; color: #2f6fae; border-color: #bdd5ef; }
 .chip.active { color: white; }
+button.chip,
+.chip[role="button"] {
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+}
 
 .stat-grid {
   display: grid;
@@ -6190,23 +6204,23 @@ textarea:focus-visible {
   margin: 0 2px;
   color: var(--on-hero-chip-ink);
 }
-.spelling-in-session .btn.sm.bad {
+.spelling-in-session .btn.bad {
   background: color-mix(in oklab, var(--bad-soft) 85%, var(--panel));
   color: var(--bad-strong);
   border-color: color-mix(in oklab, var(--bad) 45%, var(--ink));
 }
-.spelling-in-session .btn.sm.bad:hover {
+.spelling-in-session .btn.bad:hover {
   /* Hover feedback: darken the chip slightly and lift the border toward the
      saturated bad hue so the button reads as interactive on the hero art. */
   background: color-mix(in oklab, var(--bad-soft) 65%, var(--panel));
   border-color: color-mix(in oklab, var(--bad) 60%, var(--ink));
 }
-.spelling-in-session.hero-dark .btn.sm.bad {
+.spelling-in-session.hero-dark .btn.bad {
   background: color-mix(in oklab, var(--bad-soft) 30%, rgba(0,0,0,0.55));
   color: #ffdcd7;
   border-color: color-mix(in oklab, var(--bad) 55%, white);
 }
-.spelling-in-session.hero-dark .btn.sm.bad:hover {
+.spelling-in-session.hero-dark .btn.bad:hover {
   background: color-mix(in oklab, var(--bad-soft) 45%, rgba(0,0,0,0.45));
   border-color: color-mix(in oklab, var(--bad) 70%, white);
 }
@@ -6215,7 +6229,8 @@ textarea:focus-visible {
    from the base .btn rule; the session variant just adds the
    square shape + glow-when-playing. */
 .btn.icon {
-  width: 42px; height: 42px;
+  width: var(--tap-min);
+  height: var(--tap-min);
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -6831,6 +6846,7 @@ textarea:focus-visible {
   letter-spacing: 0.01em;
   white-space: nowrap;
   cursor: pointer;
+  min-height: var(--tap-min);
   transition: background var(--dur) var(--ease-out),
               border-color var(--dur) var(--ease-out),
               color var(--dur) var(--ease-out);
@@ -12909,7 +12925,7 @@ html { scroll-behavior: smooth; }
   font-weight: 700;
   color: var(--ink-2);
   cursor: pointer;
-  min-height: 36px;
+  min-height: var(--tap-min);
   transition: background var(--dur, 240ms) var(--ease-out, cubic-bezier(.2,.8,.2,1)),
               border-color var(--dur, 240ms) var(--ease-out, cubic-bezier(.2,.8,.2,1)),
               color var(--dur, 240ms) var(--ease-out, cubic-bezier(.2,.8,.2,1));

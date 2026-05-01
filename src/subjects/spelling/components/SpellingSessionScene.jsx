@@ -413,7 +413,6 @@ export function SpellingSessionScene({
           <div className="session-footer-right">
             <Button
               variant="bad"
-              size="sm"
               dataAction="spelling-end-early"
               disabled={runtimeReadOnly || pending}
               onClick={(event) => renderAction(actions, event, 'spelling-end-early')}
