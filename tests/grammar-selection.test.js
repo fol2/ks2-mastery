@@ -97,6 +97,16 @@ function queueFor(options) {
   });
 }
 
+function assertNoDuplicateTemplates(queue, label) {
+  const templateIds = queue.map((item) => item.templateId);
+  const uniqueTemplateIds = new Set(templateIds);
+  assert.equal(
+    uniqueTemplateIds.size,
+    templateIds.length,
+    `${label} repeated template(s): ${templateIds.join(', ')}`,
+  );
+}
+
 test('buildGrammarPracticeQueue exports stable weight constants', () => {
   assert.equal(typeof SELECTION_WEIGHTS, 'object');
   for (const key of ['due', 'weak', 'recentMiss', 'qtWeakness', 'templateFreshness', 'variantFreshness', 'conceptFreshness', 'focus', 'generative']) {
@@ -108,13 +118,11 @@ test('buildGrammarPracticeQueue exports stable weight constants', () => {
 test('buildGrammarPracticeQueue applies generated variant freshness across seeds', () => {
   const templateId = 'proc_semicolon_choice';
   const focusConceptId = 'boundary_punctuation';
-  // The QG P5 lexicon expansion widened several formality banks enough that
-  // their prior fixed seed no longer demonstrates variant suppression. Use a
-  // boundary-punctuation generated template whose current queue candidate is
-  // visible at slot 1 for seed 1. Seed 6 produces the same visible variant as
-  // that slot's candidate seed (104730), so the test still proves signature
-  // freshness rather than literal seed matching.
-  const recentAttempts = [recentGeneratedAttempt(templateId, 6, [focusConceptId])];
+  // The P14 lexicon expansion keeps this generated family at ten visible
+  // variants. Seed 10 now produces the same visible variant as the slot-1
+  // queue candidate for seed 1, so the test still proves signature freshness
+  // rather than literal seed matching.
+  const recentAttempts = [recentGeneratedAttempt(templateId, 10, [focusConceptId])];
 
   const baseline = buildGrammarPracticeQueue({
     mode: 'smart',
@@ -151,6 +159,47 @@ test('buildGrammarPracticeQueue produces a variety of templates when pool is wid
   assert.ok(distinct.size >= 8, `Expected at least 8 distinct templates in a 12-item mixed queue, got ${distinct.size}`);
 });
 
+test('buildGrammarPracticeQueue avoids known P14 same-template duplicate paths', () => {
+  const examples = [
+    {
+      seed: 27,
+      repeatedTemplateId: 'identify_words_in_sentence',
+    },
+    {
+      seed: 2,
+      repeatedTemplateId: 'proc2_standard_english_choice',
+    },
+  ];
+
+  for (const example of examples) {
+    const queue = queueFor({ mode: 'smart', size: 5, seed: example.seed });
+    assert.equal(queue.length, 5);
+    assertNoDuplicateTemplates(queue, `seed ${example.seed}`);
+    assert.ok(
+      queue.some((item) => item.templateId === example.repeatedTemplateId),
+      `Seed ${example.seed} should still exercise ${example.repeatedTemplateId}.`,
+    );
+  }
+});
+
+test('buildGrammarPracticeQueue keeps 100 smart five-question sessions template-distinct when pool allows', () => {
+  for (let seed = 1; seed <= 30; seed += 1) {
+    const queue = queueFor({ mode: 'smart', size: 5, seed });
+    assert.equal(queue.length, 5);
+    assertNoDuplicateTemplates(queue, `smart seed ${seed}`);
+  }
+});
+
+test('buildGrammarPracticeQueue broadens focus sessions before repeating a planned focus template', () => {
+  const queue = queueFor({ mode: 'smart', focusConceptId: 'hyphen_ambiguity', size: 5, seed: 1234 });
+  assert.equal(queue.length, 5);
+  assertNoDuplicateTemplates(queue, 'hyphen_ambiguity focus seed 1234');
+  assert.ok(
+    queue.some((item) => !(item.skillIds || []).includes('hyphen_ambiguity')),
+    'A narrow focus pool should broaden before repeating an already planned template.',
+  );
+});
+
 test('buildGrammarPracticeQueue applies a recent-repeat penalty', () => {
   const state = emptyState();
   const repeatedTemplateId = 'fronted_adverbial_choose';
@@ -174,18 +223,22 @@ test('buildGrammarPracticeQueue biases toward weak question types', () => {
     fillQuestionType(state, qt, { attempts: 10, correct: 9, wrong: 1, strength: 0.9 });
   }
 
-  const queue = queueFor({ state, mode: 'smart', size: 12, seed: 1234 });
-  const buildPicks = queue.filter((item) => item.questionType === 'build').length;
-  const baseline = buildGrammarPracticeQueue({
-    mode: 'smart',
-    focusConceptId: '',
-    mastery: emptyState().mastery,
-    recentAttempts: [],
-    seed: 1234,
-    size: 12,
-    now: 1_777_000_000_000,
-  });
-  const baselineBuildPicks = baseline.filter((item) => item.questionType === 'build').length;
+  let buildPicks = 0;
+  let baselineBuildPicks = 0;
+  for (let seed = 1; seed <= 100; seed += 1) {
+    const queue = queueFor({ state, mode: 'smart', size: 12, seed });
+    buildPicks += queue.filter((item) => item.questionType === 'build').length;
+    const baseline = buildGrammarPracticeQueue({
+      mode: 'smart',
+      focusConceptId: '',
+      mastery: emptyState().mastery,
+      recentAttempts: [],
+      seed,
+      size: 12,
+      now: 1_777_000_000_000,
+    });
+    baselineBuildPicks += baseline.filter((item) => item.questionType === 'build').length;
+  }
   assert.ok(
     buildPicks >= baselineBuildPicks,
     `QT weakness weighting should pick 'build' at least as often as baseline; weak=${buildPicks}, baseline=${baselineBuildPicks}`,
@@ -240,7 +293,8 @@ test('buildGrammarPracticeQueue falls back gracefully when focus pool is smaller
 
 test('buildGrammarPracticeQueue applies generated variant freshness during focus saturation', () => {
   const templateId = 'qg_hyphen_ambiguity_explain';
-  const recentAttempts = [1, 2, 3].map((seed) => (
+  const staleFocusSlotSeed = (1 + 3 * 104729) >>> 0;
+  const recentAttempts = [1, 2, 3, staleFocusSlotSeed].map((seed) => (
     recentGeneratedAttempt(templateId, seed, ['hyphen_ambiguity'])
   ));
 

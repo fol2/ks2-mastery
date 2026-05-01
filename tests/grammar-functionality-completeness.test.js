@@ -625,12 +625,13 @@ test('Grammar QG P4 baseline captures the final mixed-transfer denominator', () 
   assert.equal(content.conceptsMissingMixedTransferCoverage.length, 0);
   assert.equal(content.p4MixedTransferComplete, true);
 
-  // Distribution matches live content
+  // Historical P4 distribution remains frozen; live content now carries the
+  // P14 depth expansion above that denominator.
   assert.equal(GRAMMAR_CONCEPTS.length, content.conceptCount);
   assert.equal(GRAMMAR_CLIENT_CONCEPTS.length, content.conceptCount);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, content.templateCount);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((t) => t.isSelectedResponse).length, content.selectedResponseCount);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((t) => !t.isSelectedResponse).length, content.constructedResponseCount);
+  assert.ok(GRAMMAR_TEMPLATE_METADATA.length > content.templateCount);
+  assert.ok(GRAMMAR_TEMPLATE_METADATA.filter((t) => t.isSelectedResponse).length > content.selectedResponseCount);
+  assert.ok(GRAMMAR_TEMPLATE_METADATA.filter((t) => !t.isSelectedResponse).length > content.constructedResponseCount);
   assert.deepEqual(Object.keys(GRAMMAR_QUESTION_TYPES).sort(), content.questionTypes.slice().sort());
 
   const actualPerQT = {};
@@ -641,8 +642,12 @@ test('Grammar QG P4 baseline captures the final mixed-transfer denominator', () 
       actualPerConcept[conceptId] = (actualPerConcept[conceptId] || 0) + 1;
     }
   }
-  assert.deepEqual(actualPerQT, content.perQuestionType);
-  assert.deepEqual(actualPerConcept, content.perConcept);
+  for (const [questionType, count] of Object.entries(content.perQuestionType)) {
+    assert.ok((actualPerQT[questionType] || 0) >= count, questionType);
+  }
+  for (const [conceptId, count] of Object.entries(content.perConcept)) {
+    assert.ok((actualPerConcept[conceptId] || 0) >= count, conceptId);
+  }
 });
 
 // -----------------------------------------------------------------------------
@@ -681,12 +686,13 @@ test('Grammar QG P6 baseline captures the depth and stability denominator', () =
   assert.equal(content.deepLowDepthFamilyCount, 0);
   assert.deepEqual(content.thinPoolConcepts, []);
 
-  // Distribution matches live content
+  // Historical P6 distribution remains frozen; live content now carries the
+  // P14 depth expansion above that denominator.
   assert.equal(GRAMMAR_CONCEPTS.length, content.conceptCount);
   assert.equal(GRAMMAR_CLIENT_CONCEPTS.length, content.conceptCount);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, content.templateCount);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((t) => t.isSelectedResponse).length, content.selectedResponseCount);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((t) => !t.isSelectedResponse).length, content.constructedResponseCount);
+  assert.ok(GRAMMAR_TEMPLATE_METADATA.length > content.templateCount);
+  assert.ok(GRAMMAR_TEMPLATE_METADATA.filter((t) => t.isSelectedResponse).length > content.selectedResponseCount);
+  assert.ok(GRAMMAR_TEMPLATE_METADATA.filter((t) => !t.isSelectedResponse).length > content.constructedResponseCount);
   assert.deepEqual(Object.keys(GRAMMAR_QUESTION_TYPES).sort(), content.questionTypes.slice().sort());
 
   const actualPerQT = {};
@@ -697,6 +703,10 @@ test('Grammar QG P6 baseline captures the depth and stability denominator', () =
       actualPerConcept[conceptId] = (actualPerConcept[conceptId] || 0) + 1;
     }
   }
-  assert.deepEqual(actualPerQT, content.perQuestionType);
-  assert.deepEqual(actualPerConcept, content.perConcept);
+  for (const [questionType, count] of Object.entries(content.perQuestionType)) {
+    assert.ok((actualPerQT[questionType] || 0) >= count, questionType);
+  }
+  for (const [conceptId, count] of Object.entries(content.perConcept)) {
+    assert.ok((actualPerConcept[conceptId] || 0) >= count, conceptId);
+  }
 });

@@ -1,0 +1,1038 @@
+{
+  "reportId": "grammar-qg-p14-learner-surface-audit",
+  "contentReleaseId": "grammar-qg-p14-2026-05-01",
+  "generatedAt": "2026-05-01T16:23:11.498Z",
+  "pathCount": 8,
+  "pass": true,
+  "failures": [],
+  "paths": [
+    {
+      "pathId": "first-time-smart",
+      "label": "First-time smart practice",
+      "mode": "smart",
+      "size": 5,
+      "seed": 87,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "first-time-smart",
+          "slot": 1,
+          "templateId": "build_noun_phrase",
+          "seed": 87,
+          "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ opened the door.",
+          "visibleOptionsOrFields": [
+            {
+              "label": "Part 1",
+              "options": [
+                [
+                  "",
+                  "Choose"
+                ],
+                [
+                  "The tall",
+                  "The tall"
+                ],
+                [
+                  "Quickly",
+                  "Quickly"
+                ],
+                [
+                  "Because",
+                  "Because"
+                ]
+              ]
+            },
+            {
+              "label": "Part 2",
+              "options": [
+                [
+                  "",
+                  "Choose"
+                ],
+                [
+                  "captain",
+                  "captain"
+                ],
+                [
+                  "shouted",
+                  "shouted"
+                ],
+                [
+                  "after",
+                  "after"
+                ]
+              ]
+            },
+            {
+              "label": "Part 3",
+              "options": [
+                [
+                  "",
+                  "Choose"
+                ],
+                [
+                  "with curly hair",
+                  "with curly hair"
+                ],
+                [
+                  "very loudly",
+                  "very loudly"
+                ],
+                [
+                  "and waved",
+                  "and waved"
+                ]
+              ]
+            }
+          ],
+          "targetCue": {
+            "type": "target-sentence",
+            "targetKind": "sentence",
+            "targetText": "___ opened the door.",
+            "targetOccurrence": 1
+          },
+          "readAloudText": "Build a noun phrase of at least three words to complete the sentence below. ___ opened the door. The sentence is: ___ opened the door.",
+          "expectedAnswerShape": "manualReviewOnly",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 1"
+        },
+        {
+          "pathId": "first-time-smart",
+          "slot": 2,
+          "templateId": "proc3_noun_phrase_build",
+          "seed": 104816,
+          "promptText": "Use all the words to build an expanded noun phrase that could complete the sentence. Words: the / heavy / green / trophy ___ rested near the gate.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "manualReviewOnly",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 2"
+        },
+        {
+          "pathId": "first-time-smart",
+          "slot": 3,
+          "templateId": "proc3_parenthesis_commas_fix",
+          "seed": 209545,
+          "promptText": "Add commas to show the parenthesis. Her answer I think was correct.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "punctuationPattern",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 3"
+        },
+        {
+          "pathId": "first-time-smart",
+          "slot": 4,
+          "templateId": "qg_p4_verb_form_register_transfer",
+          "seed": 314274,
+          "promptText": "Which option combines the correct past tense, a modal showing possibility, AND Standard English? A report about what happened during a science experiment yesterday.",
+          "visibleOptionsOrFields": [
+            "The mixture changed colour, which can indicate a chemical reaction.",
+            "The mixture changed colour, which could of indicated a chemical reaction.",
+            "The mixture changes colour, which could indicate a chemical reaction.",
+            "The mixture changed colour, which could indicate a chemical reaction."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 4"
+        },
+        {
+          "pathId": "first-time-smart",
+          "slot": 5,
+          "templateId": "expanded_noun_phrase_choice",
+          "seed": 419003,
+          "promptText": "Which option is an expanded noun phrase?",
+          "visibleOptionsOrFields": [
+            "the cracked blue mug beside the sink",
+            "washed the plates",
+            "because the sink was full",
+            "very carefully"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 5"
+        }
+      ]
+    },
+    {
+      "pathId": "returning-smart",
+      "label": "Returning smart practice",
+      "mode": "smart",
+      "size": 5,
+      "seed": 143,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "returning-smart",
+          "slot": 1,
+          "templateId": "qg_p14_subject_object_explain_why",
+          "seed": 143,
+          "promptText": "Why is 'the class trophy' the object in this sentence? Dylan opened the class trophy beside the coach bay.",
+          "visibleOptionsOrFields": [
+            "It is the longest noun phrase in the sentence.",
+            "The object receives the action of the verb.",
+            "It is nearest to the full stop.",
+            "It tells where the action happens."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 1"
+        },
+        {
+          "pathId": "returning-smart",
+          "slot": 2,
+          "templateId": "qg_modal_verb_explain",
+          "seed": 104872,
+          "promptText": "In this sentence, what does the modal verb must show? You must wear a helmet on the climbing wall.",
+          "visibleOptionsOrFields": [
+            "It makes the sentence a question.",
+            "It shows the action happened yesterday.",
+            "It shows a rule or strong obligation.",
+            "It shows a weak possibility."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 2"
+        },
+        {
+          "pathId": "returning-smart",
+          "slot": 3,
+          "templateId": "proc3_clause_join_rewrite",
+          "seed": 209601,
+          "promptText": "Combine these ideas into one sentence using when. The lights went out. Everyone fell silent.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "acceptedSet",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 3"
+        },
+        {
+          "pathId": "returning-smart",
+          "slot": 4,
+          "templateId": "qg_p3_subject_object_explain",
+          "seed": 314330,
+          "promptText": "Why is 'Before lunch' not the subject? Before lunch, Aisha packed the kit.",
+          "visibleOptionsOrFields": [
+            "Before lunch is the verb phrase.",
+            "Before lunch is the object because it receives packing.",
+            "Before lunch is the subject because it comes first.",
+            "Before lunch is an adverbial; Aisha does the action."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 4"
+        },
+        {
+          "pathId": "returning-smart",
+          "slot": 5,
+          "templateId": "proc3_noun_phrase_build",
+          "seed": 419059,
+          "promptText": "Use all the words to build an expanded noun phrase that could complete the sentence. Words: the / large / striped / bucket ___ was still on the shelf.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "manualReviewOnly",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 5"
+        }
+      ]
+    },
+    {
+      "pathId": "focus-concept",
+      "label": "Focus concept practice",
+      "mode": "smart",
+      "size": 5,
+      "seed": 1234,
+      "focusConceptId": "hyphen_ambiguity",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "focus-concept",
+          "slot": 1,
+          "templateId": "proc_hyphen_ambiguity_choice",
+          "seed": 1234,
+          "promptText": "Which sentence means the shark eats people?",
+          "visibleOptionsOrFields": [
+            "We saw a man-eating shark near the rocks.",
+            "We saw a man eating shark near the rocks.",
+            "We saw a hungry shark near the rocks.",
+            "We saw a shark near a man on the rocks."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 1"
+        },
+        {
+          "pathId": "focus-concept",
+          "slot": 2,
+          "templateId": "proc3_hyphen_fix_meaning",
+          "seed": 105963,
+          "promptText": "Rewrite the sentence with a hyphen to make the meaning clear. We crossed the narrow, fast flowing stream.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "punctuationPattern",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 2"
+        },
+        {
+          "pathId": "focus-concept",
+          "slot": 3,
+          "templateId": "qg_hyphen_ambiguity_explain",
+          "seed": 210692,
+          "promptText": "Why does the hyphen matter in twenty-four children rather than twenty four children?",
+          "visibleOptionsOrFields": [
+            "The hyphen marks a question.",
+            "The hyphen separates two different groups of children.",
+            "The hyphen shows possession by the number.",
+            "The hyphen links twenty and four as a single compound number."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 3"
+        },
+        {
+          "pathId": "focus-concept",
+          "slot": 4,
+          "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+          "seed": 315421,
+          "promptText": "Which option uses the possessive apostrophe AND the hyphen to prevent a misreading? My sister's hand painted vase sits on the shelf.",
+          "visibleOptionsOrFields": [
+            "My sister's hand-painted vase sits on the shelf.",
+            "My sisters hand-painted vase sits on the shelf.",
+            "My sister's hand painted vase sits on the shelf.",
+            "My sisters' hand-painted vase sits on the shelf."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 4"
+        },
+        {
+          "pathId": "focus-concept",
+          "slot": 5,
+          "templateId": "subordinate_clause_choice",
+          "seed": 420150,
+          "promptText": "Which option is the subordinate clause in the sentence below? After the lights dimmed, the play began.",
+          "visibleOptionsOrFields": [
+            "After the lights dimmed",
+            "the play began",
+            "the lights",
+            "dimmed the play"
+          ],
+          "targetCue": {
+            "type": "target-sentence",
+            "targetKind": "sentence",
+            "targetText": "After the lights dimmed, the play began.",
+            "targetOccurrence": 1
+          },
+          "readAloudText": "Which option is the subordinate clause in the sentence below? After the lights dimmed, the play began. The sentence is: After the lights dimmed, the play began.",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 5"
+        }
+      ]
+    },
+    {
+      "pathId": "trouble-spots",
+      "label": "Trouble spots",
+      "mode": "trouble",
+      "size": 5,
+      "seed": 221,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "trouble-spots",
+          "slot": 1,
+          "templateId": "qg_p14_tense_aspect_diagnostic_choice",
+          "seed": 221,
+          "promptText": "Which sentence uses the verb form correctly for Dylan, the class trophy, and the time signal 'yesterday'?",
+          "visibleOptionsOrFields": [
+            "Dylan is hiding the class trophy yesterday.",
+            "Dylan hid the class trophy yesterday.",
+            "Dylan has hidden the class trophy yesterday.",
+            "Dylan had hidden the class trophy yesterday."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 1"
+        },
+        {
+          "pathId": "trouble-spots",
+          "slot": 2,
+          "templateId": "proc3_clause_join_rewrite",
+          "seed": 104950,
+          "promptText": "Combine these ideas into one sentence using if. You need help. Call the office.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "acceptedSet",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 2"
+        },
+        {
+          "pathId": "trouble-spots",
+          "slot": 3,
+          "templateId": "qg_formality_classify_table",
+          "seed": 209679,
+          "promptText": "Classify each sentence as formal or informal.",
+          "visibleOptionsOrFields": [
+            {
+              "rowLabel": "Applications must be submitted by midday.",
+              "options": [
+                "formal",
+                "informal"
+              ]
+            },
+            {
+              "rowLabel": "Get your forms in before lunch.",
+              "options": [
+                "formal",
+                "informal"
+              ]
+            }
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "multiField",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 3"
+        },
+        {
+          "pathId": "trouble-spots",
+          "slot": 4,
+          "templateId": "tense_rewrite",
+          "seed": 314408,
+          "promptText": "Rewrite the sentence in the present perfect. I finish my homework.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 4"
+        },
+        {
+          "pathId": "trouble-spots",
+          "slot": 5,
+          "templateId": "proc2_pronoun_cohesion_choice",
+          "seed": 419137,
+          "promptText": "Which version keeps the meaning clearest?",
+          "visibleOptionsOrFields": [
+            "Amira gave the ticket to Noah because she was carrying too many bags.",
+            "Amira gave Noah the ticket because she was carrying too many bags.",
+            "Amira gave Noah the ticket because Amira was carrying too many bags.",
+            "Amira gave Noah it because Amira was carrying too many bags."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 5"
+        }
+      ]
+    },
+    {
+      "pathId": "mini-test",
+      "label": "Mini-test",
+      "mode": "satsset",
+      "size": 8,
+      "seed": 17,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "mini-test",
+          "slot": 1,
+          "templateId": "qg_p4_voice_roles_transfer",
+          "seed": 17,
+          "promptText": "Identify the voice and the grammatical role of the underlined noun phrase. The letter was posted by Grandma yesterday afternoon.",
+          "visibleOptionsOrFields": [
+            {
+              "rowLabel": "Voice of the sentence",
+              "options": [
+                "active",
+                "passive"
+              ]
+            },
+            {
+              "rowLabel": "Role of 'the letter'",
+              "options": [
+                "subject",
+                "object"
+              ]
+            }
+          ],
+          "targetCue": {
+            "type": "underline",
+            "targetKind": "noun-phrase",
+            "targetText": "The letter",
+            "targetOccurrence": 1
+          },
+          "readAloudText": "Identify the voice and the grammatical role of the underlined noun phrase. The letter was posted by Grandma yesterday afternoon. The underlined noun phrase is: The letter.",
+          "expectedAnswerShape": "multiField",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 1"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 2,
+          "templateId": "apostrophe_possession_choice",
+          "seed": 104746,
+          "promptText": "Choose the correct phrase to complete the sentence: We found the ___ bowl behind the sofa.",
+          "visibleOptionsOrFields": [
+            "dogs",
+            "dog's",
+            "dogs'",
+            "dogs's"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 2"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 3,
+          "templateId": "qg_p3_tense_aspect_explain",
+          "seed": 209475,
+          "promptText": "Why is 'are building' present progressive? The pupils are building a model bridge.",
+          "visibleOptionsOrFields": [
+            "It shows an action in progress now using are plus an -ing verb.",
+            "It shows an action finished yesterday.",
+            "It is past perfect because it has two verbs.",
+            "It is a modal verb phrase showing obligation."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 3"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 4,
+          "templateId": "parenthesis_replace_choice",
+          "seed": 314204,
+          "promptText": "What punctuation could be used instead of brackets in the sentence below? Hassan (our team captain) organised the warm-up.",
+          "visibleOptionsOrFields": [
+            "commas",
+            "question marks",
+            "colons",
+            "full stops"
+          ],
+          "targetCue": {
+            "type": "target-sentence",
+            "targetKind": "sentence",
+            "targetText": "Hassan (our team captain) organised the warm-up.",
+            "targetOccurrence": 1
+          },
+          "readAloudText": "What punctuation could be used instead of brackets in the sentence below? Hassan (our team captain) organised the warm-up. The sentence is: Hassan (our team captain) organised the warm-up.",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 4"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 5,
+          "templateId": "relative_clause_identify",
+          "seed": 418933,
+          "promptText": "Which sentence contains a relative clause?",
+          "visibleOptionsOrFields": [
+            "The runner whose shoe had split stopped near the bench.",
+            "When the runner's shoe split, he stopped near the bench.",
+            "The runner stopped near the bench with a split shoe.",
+            "Stopping near the bench, the runner had a split shoe."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 5"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 6,
+          "templateId": "qg_p14_standard_english_explain_why",
+          "seed": 523662,
+          "promptText": "Why is this sentence Standard English? Cara doesn't know where the meeting point is.",
+          "visibleOptionsOrFields": [
+            "A singular subject takes 'doesn't' in Standard English.",
+            "Use 'not know' because it sounds more formal.",
+            "Use 'don't' because the sentence is negative.",
+            "Use 'didn't' because all negative verbs need past tense."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 6"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 7,
+          "templateId": "proc2_standard_english_fix",
+          "seed": 628391,
+          "promptText": "Rewrite the sentence in Standard English. Ruby don't know the answer yet.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 7"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 8,
+          "templateId": "qg_p3_word_classes_explain",
+          "seed": 733120,
+          "promptText": "Why is the word 'bright' an adjective here? The bright lantern swung above the door.",
+          "visibleOptionsOrFields": [
+            "It names the action in the sentence.",
+            "It joins two clauses together.",
+            "It replaces a noun phrase to avoid repetition.",
+            "It describes the noun lantern."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 8"
+        }
+      ]
+    },
+    {
+      "pathId": "deep-practice",
+      "label": "Deep practice",
+      "mode": "smart",
+      "size": 15,
+      "seed": 501,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "deep-practice",
+          "slot": 1,
+          "templateId": "qg_p14_tense_aspect_explain_why",
+          "seed": 501,
+          "promptText": "Why is 'wrote' the best verb form here? Dylan wrote the class trophy yesterday.",
+          "visibleOptionsOrFields": [
+            "It is correct because the subject is a proper noun.",
+            "It is correct because longer verb phrases are always more formal.",
+            "A finished past time signal needs the simple past form.",
+            "It is correct because every past action uses the same verb form."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 1"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 2,
+          "templateId": "speech_punctuation_fix",
+          "seed": 105230,
+          "promptText": "Punctuate the direct speech correctly. \"Have you packed the torch\" asked Dad.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "punctuationPattern",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 2"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 3,
+          "templateId": "qg_p14_subject_object_diagnostic_choice",
+          "seed": 209959,
+          "promptText": "Which words are the object in this sentence? Zara lifted the science folder under the covered walkway.",
+          "visibleOptionsOrFields": [
+            "lifted",
+            "under the covered walkway",
+            "the science folder",
+            "Zara"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 3"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 4,
+          "templateId": "qg_p14_expanded_noun_phrases_constructed_rewrite",
+          "seed": 314688,
+          "promptText": "Type the expanded noun phrase from this sentence: The bright library trophy at the museum entrance caught everyone's attention.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 4"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 5,
+          "templateId": "qg_p3_sentence_functions_explain",
+          "seed": 419417,
+          "promptText": "Why is this sentence a question? Where did the caretaker leave the keys?",
+          "visibleOptionsOrFields": [
+            "It gives information about where the keys are.",
+            "It asks for information directly, so it is a question.",
+            "It is a grammatical exclamation because it ends with a question mark.",
+            "It tells the caretaker to leave the keys somewhere."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 5"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 6,
+          "templateId": "qg_p3_noun_phrases_explain",
+          "seed": 524146,
+          "promptText": "Why is this not a noun phrase? quickly opened the gate",
+          "visibleOptionsOrFields": [
+            "It is a determiner phrase because it ends with gate.",
+            "It is a noun phrase because it has four words.",
+            "It contains a verb phrase, so it is part of a clause rather than a noun phrase.",
+            "It is a noun phrase because quickly describes a noun."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 6"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 7,
+          "templateId": "qg_p14_speech_punctuation_explain_why",
+          "seed": 628875,
+          "promptText": "Why is the comma inside the speech marks here? \"I can hear thunder,\" Ravi said.",
+          "visibleOptionsOrFields": [
+            "The comma belongs to the spoken words before the reporting clause.",
+            "The comma is inside because the reporting clause is a question.",
+            "The comma is inside because all commas go before capital letters.",
+            "The comma is inside because the sentence has a proper noun."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 7"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 8,
+          "templateId": "qg_p14_subject_object_explain_why",
+          "seed": 733604,
+          "promptText": "Why is 'Eli' the subject in this sentence? Eli painted the sports bib beside the hall doors.",
+          "visibleOptionsOrFields": [
+            "It tells where the action happens.",
+            "The subject is the person or thing doing the action.",
+            "It is the longest noun phrase in the sentence.",
+            "It is nearest to the full stop."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 8"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 9,
+          "templateId": "proc_colon_list_fix",
+          "seed": 838333,
+          "promptText": "Rewrite the sentence with a colon in the correct place. Three countries were represented at the fair France, Japan, Brazil.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "punctuationPattern",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 9"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 10,
+          "templateId": "subject_object_choice",
+          "seed": 943062,
+          "promptText": "In the sentence below, what is the subject? During the storm, the old roof leaked.",
+          "visibleOptionsOrFields": [
+            "During the storm",
+            "the old roof",
+            "leaked",
+            "the storm"
+          ],
+          "targetCue": {
+            "type": "target-sentence",
+            "targetKind": "sentence",
+            "targetText": "During the storm, the old roof leaked.",
+            "targetOccurrence": 1
+          },
+          "readAloudText": "In the sentence below, what is the subject? During the storm, the old roof leaked. The sentence is: During the storm, the old roof leaked.",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 10"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 11,
+          "templateId": "apostrophe_possession_choice",
+          "seed": 1047791,
+          "promptText": "Choose the correct phrase to complete the sentence: The ___ coats were hanging by the door.",
+          "visibleOptionsOrFields": [
+            "children's",
+            "childrens'",
+            "childrens",
+            "child's"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 11"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 12,
+          "templateId": "qg_hyphen_ambiguity_explain",
+          "seed": 1152520,
+          "promptText": "Why does the hyphen matter in man-eating shark rather than man eating shark?",
+          "visibleOptionsOrFields": [
+            "The hyphen shows that a man is eating a shark.",
+            "The hyphen turns the phrase into direct speech.",
+            "The hyphen shows that the shark eats people.",
+            "The hyphen shows plural possession."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 12"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 13,
+          "templateId": "qg_p14_expanded_noun_phrases_explain_why",
+          "seed": 1257249,
+          "promptText": "Why is 'the cracked ceramic kite behind the stage curtain' an expanded noun phrase?",
+          "visibleOptionsOrFields": [
+            "It is a fronted adverbial because it tells where something happens.",
+            "It is formal language because it has several adjectives.",
+            "It is a clause because it has a verb.",
+            "It is centred on a noun and includes extra words that describe or specify it."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 13"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 14,
+          "templateId": "qg_p3_active_passive_explain",
+          "seed": 1361978,
+          "promptText": "Why might a writer choose the passive voice here? The window was broken during lunch.",
+          "visibleOptionsOrFields": [
+            "It makes the sentence a command.",
+            "It proves that the action is still happening now.",
+            "It foregrounds the broken window and does not name the doer.",
+            "It shows that the window did the breaking."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 14"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 15,
+          "templateId": "qg_p14_speech_punctuation_mixed_transfer",
+          "seed": 1466707,
+          "promptText": "Which sentence correctly punctuates Imani's spoken question: Should we leave now?",
+          "visibleOptionsOrFields": [
+            "\"Should we leave now,\" Imani asked?",
+            "\"Should we leave now\"? Imani asked.",
+            "\"Should we leave now?\" Imani asked.",
+            "Should we leave now? Imani asked."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 15"
+        }
+      ]
+    },
+    {
+      "pathId": "post-feedback-similar-problem",
+      "label": "Post-feedback similar problem",
+      "mode": "smart",
+      "size": 2,
+      "seed": 41,
+      "allowExplicitRepeats": true,
+      "duplicateTemplateIds": [
+        "qg_p14_standard_english_constructed_rewrite"
+      ],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "post-feedback-similar-problem",
+          "slot": 1,
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
+          "seed": 41,
+          "promptText": "Rewrite this sentence in Standard English: Ben done the library pass before tea.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": true,
+          "explicitRetryReason": "",
+          "whySelected": "Original marked item before similar-problem action."
+        },
+        {
+          "pathId": "post-feedback-similar-problem",
+          "slot": 2,
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
+          "seed": 2654435802,
+          "promptText": "Rewrite this sentence in Standard English: Cara don't know where the meeting point is.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": true,
+          "explicitRetryReason": "similar-problem-after-feedback",
+          "whySelected": "Similar-problem action deliberately keeps the same template with a new generated variant."
+        }
+      ]
+    },
+    {
+      "pathId": "retry-queue-after-miss",
+      "label": "Retry queue after miss",
+      "mode": "smart",
+      "size": 2,
+      "seed": 73,
+      "allowExplicitRepeats": true,
+      "duplicateTemplateIds": [
+        "qg_p14_tense_aspect_constructed_rewrite"
+      ],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "retry-queue-after-miss",
+          "slot": 1,
+          "templateId": "qg_p14_tense_aspect_constructed_rewrite",
+          "seed": 73,
+          "promptText": "Correct the verb form: Priya finished the history poster since Monday.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": true,
+          "explicitRetryReason": "",
+          "whySelected": "Missed item that creates a retry queue entry."
+        },
+        {
+          "pathId": "retry-queue-after-miss",
+          "slot": 2,
+          "templateId": "qg_p14_tense_aspect_constructed_rewrite",
+          "seed": 73,
+          "promptText": "Correct the verb form: Priya finished the history poster since Monday.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": true,
+          "explicitRetryReason": "retry-queue-repair-after-miss",
+          "whySelected": "Retry queue returns the missed item deliberately."
+        }
+      ]
+    }
+  ]
+}

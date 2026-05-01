@@ -274,6 +274,7 @@ function weightFor(template, context) {
     weight *= SELECTION_WEIGHTS.focus;
   }
   if (template.generative) weight *= SELECTION_WEIGHTS.generative;
+  if (template.fixedDiagnostic || template.schedulePriority === 'low') weight *= 0.35;
 
   return Math.max(0.05, weight);
 }
@@ -398,29 +399,74 @@ export function buildGrammarPracticeQueue({
   size = 1,
   now = Date.now(),
   includeBlocked = false,
+  avoidTemplateIds = [],
 } = {}) {
   const safeSize = Math.max(0, Math.floor(Number(size) || 0));
   if (safeSize === 0) return [];
   const normalisedFocus = normaliseFocus(focusConceptId);
   const unfilteredPool = focusAwarePool(mode, normalisedFocus, safeSize);
   const pool = includeBlocked ? unfilteredPool : unfilteredPool.filter((t) => !isTemplateBlocked(t.id));
+  const unfilteredBroadPool = GRAMMAR_TEMPLATE_METADATA.filter((template) => templateFitsMode(template, mode));
+  const modeBroadPool = unfilteredBroadPool.length > 0 ? unfilteredBroadPool : GRAMMAR_TEMPLATE_METADATA.slice();
+  const broadPool = includeBlocked ? modeBroadPool : modeBroadPool.filter((t) => !isTemplateBlocked(t.id));
   const nowTs = Number(now) || Date.now();
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
   const workingRecentVariants = recentVariantIndex(recentAttempts);
+  const plannedTemplateIds = new Set(
+    [...(avoidTemplateIds instanceof Set ? avoidTemplateIds : (Array.isArray(avoidTemplateIds) ? avoidTemplateIds : []))]
+      .filter((id) => typeof id === 'string' && id),
+  );
   const queue = [];
 
+  function unplannedTemplates(candidatePool) {
+    return candidatePool.filter((template) => !plannedTemplateIds.has(template.id));
+  }
+
+  function templateFreshPool(candidatePool) {
+    const fresh = unplannedTemplates(candidatePool);
+    return fresh.length > 0 ? fresh : candidatePool;
+  }
+
+  function templateFreshPoolWithBroadFallback(candidatePool) {
+    if (candidatePool.length === 0) return candidatePool;
+    const fresh = unplannedTemplates(candidatePool);
+    if (fresh.length > 0) return fresh;
+    const broadFresh = unplannedTemplates(broadPool);
+    return broadFresh.length > 0 ? broadFresh : candidatePool;
+  }
+
+  function variantFreshPoolWithBroadFallback(candidatePool, candidateSeed) {
+    if (candidatePool.length === 0) return candidatePool;
+    const templateFresh = templateFreshPool(candidatePool);
+    const variantFresh = templateFresh.filter(
+      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed),
+    );
+    if (variantFresh.length > 0) return variantFresh;
+    const broadFresh = unplannedTemplates(broadPool).filter(
+      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed),
+    );
+    return broadFresh.length > 0 ? broadFresh : templateFresh;
+  }
+
+  function pushQueueEntry(template, candidateSeed) {
+    queue.push(queueEntry(template));
+    plannedTemplateIds.add(template.id);
+    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
+    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
+  }
+
   if (normalisedFocus) {
-    const focusTemplates = pool.filter((template) => (template.skillIds || []).includes(normalisedFocus));
+    const focusTemplates = templateFreshPool(
+      pool.filter((template) => (template.skillIds || []).includes(normalisedFocus)),
+    );
     if (focusTemplates.length > 0 && focusTemplates.length < safeSize) {
       for (const template of focusTemplates) {
         if (queue.length >= safeSize) break;
         const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
         const recentVariants = workingRecentVariants;
         if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
-        queue.push(queueEntry(template));
-        workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
-        addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
+        pushQueueEntry(template, candidateSeed);
       }
     }
   }
@@ -430,7 +476,10 @@ export function buildGrammarPracticeQueue({
     const recentTemplates = recentTemplateIndex(workingRecent);
     const recentConcepts = recentConceptIndex(workingRecent);
     const recentVariants = workingRecentVariants;
-    const priorityPool = urgentTemplatePool(pool, mastery, recentConcepts, nowTs);
+    const priorityPool = variantFreshPoolWithBroadFallback(
+      templateFreshPoolWithBroadFallback(urgentTemplatePool(pool, mastery, recentConcepts, nowTs)),
+      candidateSeed,
+    );
     if (priorityPool.length > 0) {
       const template = pickTemplate({
         pool: priorityPool,
@@ -443,9 +492,7 @@ export function buildGrammarPracticeQueue({
         candidateSeed,
         nowTs,
       });
-      queue.push(queueEntry(template));
-      workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
-      addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
+      pushQueueEntry(template, candidateSeed);
     }
   }
 
@@ -455,7 +502,7 @@ export function buildGrammarPracticeQueue({
     const recentConcepts = recentConceptIndex(workingRecent);
     const recentVariants = workingRecentVariants;
     const template = pickTemplate({
-      pool,
+      pool: variantFreshPoolWithBroadFallback(pool, candidateSeed),
       rng,
       mastery,
       focusConceptId: normalisedFocus,
@@ -465,9 +512,7 @@ export function buildGrammarPracticeQueue({
       candidateSeed,
       nowTs,
     });
-    queue.push(queueEntry(template));
-    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
-    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
+    pushQueueEntry(template, candidateSeed);
   }
   return queue;
 }

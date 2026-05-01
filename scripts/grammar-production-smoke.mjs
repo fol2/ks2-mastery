@@ -79,13 +79,13 @@ export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
     family: 'normalisedText',
     templateId: 'tense_rewrite',
     seed: 0,
-    response: Object.freeze({ answer: 'The dog was chasing the cat.' }),
+    response: Object.freeze({ answer: 'Ravi will have read the final chapter by Monday.' }),
   }),
   Object.freeze({
     family: 'punctuationPattern',
     templateId: 'fix_fronted_adverbial',
     seed: 0,
-    response: Object.freeze({ answer: 'Before sunrise, the campers packed their bags.' }),
+    response: Object.freeze({ answer: 'After the concert, the audience cheered loudly.' }),
   }),
   Object.freeze({
     family: 'acceptedSet',

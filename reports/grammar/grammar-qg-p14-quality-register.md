@@ -1,0 +1,3074 @@
+# Grammar QG P14 — Quality Register
+
+**Content Release:** grammar-qg-p14-2026-05-01
+**Generated:** 2026-05-01T16:23:10.816Z
+**Templates:** 110
+**Approved:** 106 | **Blocked:** 0
+**High-risk (1..15 seeds):** 36
+**Adult review decisions:** 33
+
+## Summary Table
+
+| # | Template ID | Decision | Severity | Seed Window | Final Action |
+|---|-------------|----------|----------|-------------|--------------|
+| 1 | `sentence_type_table` | approved | - | 1..10 | ship |
+| 2 | `question_mark_select` | approved | - | 1..10 | ship |
+| 3 | `word_class_underlined_choice` | approved | - | 1..15 | ship |
+| 4 | `identify_words_in_sentence` | approved | - | 1..15 | ship |
+| 5 | `expanded_noun_phrase_choice` | approved | - | 1..10 | ship |
+| 6 | `build_noun_phrase` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 7 | `fronted_adverbial_choose` | approved | - | 1..10 | ship |
+| 8 | `fix_fronted_adverbial` | approved | - | 1..15 | ship |
+| 9 | `subordinate_clause_choice` | approved | - | 1..15 | ship |
+| 10 | `combine_clauses_rewrite` | approved | - | 1..15 | ship |
+| 11 | `relative_clause_identify` | approved | - | 1..10 | ship |
+| 12 | `relative_clause_complete` | approved | - | 1..10 | ship |
+| 13 | `tense_form_choice` | approved | - | 1..10 | ship |
+| 14 | `tense_rewrite` | approved | - | 1..15 | ship |
+| 15 | `standard_english_pairs` | approved | - | 1..10 | ship |
+| 16 | `pronoun_cohesion_choice` | approved | - | 1..10 | ship |
+| 17 | `formality_pairs` | approved | - | 1..10 | ship |
+| 18 | `active_passive_rewrite` | approved | - | 1..15 | ship |
+| 19 | `subject_object_choice` | approved | - | 1..15 | ship |
+| 20 | `modal_verb_choice` | approved | - | 1..10 | ship |
+| 21 | `parenthesis_replace_choice` | approved | - | 1..15 | ship |
+| 22 | `parenthesis_fix_sentence` | approved | - | 1..15 | ship |
+| 23 | `speech_punctuation_fix` | approved | - | 1..15 | ship |
+| 24 | `apostrophe_possession_choice` | approved | - | 1..10 | ship |
+| 25 | `explain_reason_choice` | approved | - | 1..10 | ship |
+| 26 | `standard_fix_sentence` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 27 | `proc_fronted_adverbial_fix` | approved | - | 1..15 | ship |
+| 28 | `proc_semicolon_choice` | approved | - | 1..15 | ship |
+| 29 | `proc_colon_list_fix` | approved | - | 1..15 | ship |
+| 30 | `proc_dash_boundary_fix` | approved | - | 1..15 | ship |
+| 31 | `proc_hyphen_ambiguity_choice` | approved | - | 1..10 | ship |
+| 32 | `proc_speech_punctuation_fix` | approved | - | 1..15 | ship |
+| 33 | `proc_apostrophe_possession_choice` | approved | - | 1..10 | ship |
+| 34 | `proc2_standard_english_choice` | approved | - | 1..10 | ship |
+| 35 | `proc2_standard_english_fix` | approved | - | 1..15 | ship |
+| 36 | `proc2_tense_aspect_choice` | approved | - | 1..10 | ship |
+| 37 | `proc2_modal_choice` | approved | - | 1..10 | ship |
+| 38 | `proc2_formality_choice` | approved | - | 1..10 | ship |
+| 39 | `proc2_pronoun_cohesion_choice` | approved | - | 1..10 | ship |
+| 40 | `proc2_subject_object_identify` | approved | - | 1..10 | ship |
+| 41 | `proc2_passive_to_active` | approved | - | 1..15 | ship |
+| 42 | `proc2_relative_clause_choice` | approved | - | 1..10 | ship |
+| 43 | `proc2_fronted_adverbial_build` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 44 | `proc2_boundary_punctuation_explain` | approved | - | 1..10 | ship |
+| 45 | `proc3_sentence_function_choice` | approved | - | 1..10 | ship |
+| 46 | `proc3_word_class_contrast_choice` | approved | - | 1..10 | ship |
+| 47 | `proc3_noun_phrase_build` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 48 | `proc3_clause_join_rewrite` | approved | - | 1..15 | ship |
+| 49 | `proc3_parenthesis_commas_fix` | approved | - | 1..15 | ship |
+| 50 | `proc3_hyphen_fix_meaning` | approved | - | 1..15 | ship |
+| 51 | `qg_active_passive_choice` | approved | - | 1..10 | ship |
+| 52 | `qg_subject_object_classify_table` | approved | - | 1..10 | ship |
+| 53 | `qg_pronoun_referent_identify` | approved | - | 1..10 | ship |
+| 54 | `qg_formality_classify_table` | approved | - | 1..10 | ship |
+| 55 | `qg_modal_verb_explain` | approved | - | 1..10 | ship |
+| 56 | `qg_hyphen_ambiguity_explain` | approved | - | 1..10 | ship |
+| 57 | `qg_p3_sentence_functions_explain` | approved | - | 1..10 | ship |
+| 58 | `qg_p3_word_classes_explain` | approved | - | 1..10 | ship |
+| 59 | `qg_p3_noun_phrases_explain` | approved | - | 1..10 | ship |
+| 60 | `qg_p3_clauses_explain` | approved | - | 1..10 | ship |
+| 61 | `qg_p3_relative_clauses_explain` | approved | - | 1..10 | ship |
+| 62 | `qg_p3_tense_aspect_explain` | approved | - | 1..10 | ship |
+| 63 | `qg_p3_pronouns_cohesion_explain` | approved | - | 1..10 | ship |
+| 64 | `qg_p3_formality_explain` | approved | - | 1..10 | ship |
+| 65 | `qg_p3_active_passive_explain` | approved | - | 1..10 | ship |
+| 66 | `qg_p3_subject_object_explain` | approved | - | 1..10 | ship |
+| 67 | `qg_p3_parenthesis_commas_explain` | approved | - | 1..10 | ship |
+| 68 | `qg_p3_speech_punctuation_explain` | approved | - | 1..10 | ship |
+| 69 | `qg_p3_apostrophe_possession_explain` | approved | - | 1..10 | ship |
+| 70 | `proc3_apostrophe_rewrite` | approved | - | 1..15 | ship |
+| 71 | `qg_p4_sentence_speech_transfer` | approved | - | 1..10 | ship |
+| 72 | `qg_p4_word_class_noun_phrase_transfer` | approved | - | 1..15 | ship |
+| 73 | `qg_p4_adverbial_clause_boundary_transfer` | approved | - | 1..10 | ship |
+| 74 | `qg_p4_relative_parenthesis_transfer` | approved | - | 1..10 | ship |
+| 75 | `qg_p4_verb_form_register_transfer` | approved | - | 1..10 | ship |
+| 76 | `qg_p4_cohesion_formality_transfer` | approved | - | 1..10 | ship |
+| 77 | `qg_p4_voice_roles_transfer` | approved | - | 1..15 | ship |
+| 78 | `qg_p4_possession_hyphen_clarity_transfer` | approved | - | 1..10 | ship |
+| 79 | `qg_p14_standard_english_diagnostic_choice` | approved | - | 1..10 | ship |
+| 80 | `qg_p14_standard_english_constructed_rewrite` | approved | - | 1..15 | ship |
+| 81 | `qg_p14_standard_english_explain_why` | approved | - | 1..10 | ship |
+| 82 | `qg_p14_standard_english_mixed_transfer` | approved | - | 1..10 | ship |
+| 83 | `qg_p14_fronted_adverbials_diagnostic_choice` | approved | - | 1..10 | ship |
+| 84 | `qg_p14_fronted_adverbials_constructed_rewrite` | approved | - | 1..15 | ship |
+| 85 | `qg_p14_fronted_adverbials_explain_why` | approved | - | 1..10 | ship |
+| 86 | `qg_p14_fronted_adverbials_mixed_transfer` | approved | - | 1..10 | ship |
+| 87 | `qg_p14_subject_object_diagnostic_choice` | approved | - | 1..10 | ship |
+| 88 | `qg_p14_subject_object_constructed_rewrite` | approved | - | 1..15 | ship |
+| 89 | `qg_p14_subject_object_explain_why` | approved | - | 1..10 | ship |
+| 90 | `qg_p14_subject_object_mixed_transfer` | approved | - | 1..10 | ship |
+| 91 | `qg_p14_subordinate_clauses_diagnostic_choice` | approved | - | 1..10 | ship |
+| 92 | `qg_p14_subordinate_clauses_constructed_rewrite` | approved | - | 1..15 | ship |
+| 93 | `qg_p14_subordinate_clauses_explain_why` | approved | - | 1..10 | ship |
+| 94 | `qg_p14_subordinate_clauses_mixed_transfer` | approved | - | 1..10 | ship |
+| 95 | `qg_p14_tense_aspect_diagnostic_choice` | approved | - | 1..10 | ship |
+| 96 | `qg_p14_tense_aspect_constructed_rewrite` | approved | - | 1..15 | ship |
+| 97 | `qg_p14_tense_aspect_explain_why` | approved | - | 1..10 | ship |
+| 98 | `qg_p14_tense_aspect_mixed_transfer` | approved | - | 1..10 | ship |
+| 99 | `qg_p14_speech_punctuation_diagnostic_choice` | approved | - | 1..10 | ship |
+| 100 | `qg_p14_speech_punctuation_constructed_rewrite` | approved | - | 1..15 | ship |
+| 101 | `qg_p14_speech_punctuation_explain_why` | approved | - | 1..10 | ship |
+| 102 | `qg_p14_speech_punctuation_mixed_transfer` | approved | - | 1..10 | ship |
+| 103 | `qg_p14_expanded_noun_phrases_diagnostic_choice` | approved | - | 1..10 | ship |
+| 104 | `qg_p14_expanded_noun_phrases_constructed_rewrite` | approved | - | 1..15 | ship |
+| 105 | `qg_p14_expanded_noun_phrases_explain_why` | approved | - | 1..10 | ship |
+| 106 | `qg_p14_expanded_noun_phrases_mixed_transfer` | approved | - | 1..10 | ship |
+| 107 | `qg_p14_parenthesis_commas_diagnostic_choice` | approved | - | 1..10 | ship |
+| 108 | `qg_p14_parenthesis_commas_constructed_rewrite` | approved | - | 1..15 | ship |
+| 109 | `qg_p14_parenthesis_commas_explain_why` | approved | - | 1..10 | ship |
+| 110 | `qg_p14_parenthesis_commas_mixed_transfer` | approved | - | 1..10 | ship |
+
+## Detailed Judgements
+
+### `sentence_type_table`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
+- **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Tick one box in each row to show the sentence function." → correct
+  - Feedback: How loudly the drums were beating! → exclamation | Why is the gate still open? → question | Our c...
+- Seed 2: "Tick one box in each row to show the sentence function." → correct
+  - Feedback: Can we finish the poster tomorrow? → question | How loudly the drums were beating! → exclamation ...
+- Seed 3: "Tick one box in each row to show the sentence function." → correct
+  - Feedback: Where did you put the compass? → question | How loudly the drums were beating! → exclamation | Ou...
+
+### `question_mark_select`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce a valid checkbox set with correct golden selection
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions, speech_punctuation'
+- **Distractor quality:** 4 options per seed (multi-select), distractors drawn from related misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Tick all the sentences that must end with a question mark." → correct
+  - Feedback: The sentences needing question marks are: Did the train arrive before noon; Is the platform open ...
+- Seed 2: "Tick all the sentences that must end with a question mark." → correct
+  - Feedback: The sentences needing question marks are: Do you know the way to the hall; Can the guide meet us ...
+- Seed 3: "Tick all the sentences that must end with a question mark." → correct
+  - Feedback: The sentences needing question marks are: Is Maya bringing the tickets; Did Omar pack the map.
+
+### `word_class_underlined_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which word class is the underlined word in the sentence below? We scrambled c..." → correct
+  - Feedback: The underlined word is verb.
+- Seed 2: "Which word class is the underlined word in the sentence below? The team cheer..." → correct
+  - Feedback: The underlined word is preposition.
+- Seed 3: "Which word class is the underlined word in the sentence below? Maya and Tom c..." → correct
+  - Feedback: The underlined word is conjunction.
+- Seed 4: "Which word class is the underlined word in the sentence below? On sunny days,..." → correct
+  - Feedback: The underlined word is adverb.
+- Seed 5: "Which word class is the underlined word in the sentence below? After the stor..." → correct
+  - Feedback: The underlined word is preposition.
+
+### `identify_words_in_sentence`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce a valid checkbox set with correct golden selection
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes'
+- **Distractor quality:** 8 options per seed (multi-select), distractors drawn from related misconceptions
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Select all the pronouns in the sentence below. She handed it to them before t..." → correct
+  - Feedback: The correct words are: She, it, them, they.
+- Seed 2: "Select all the verbs in the sentence below. Omar opened the box and counted t..." → correct
+  - Feedback: The correct words are: opened, counted.
+- Seed 3: "Select all the adjectives in the sentence below. A tiny green lizard hid unde..." → correct
+  - Feedback: The correct words are: tiny, green, warm.
+- Seed 4: "Select all the nouns in the sentence below. An artist painted a dragon on the..." → correct
+  - Feedback: The correct words are: artist, dragon, wall.
+- Seed 5: "Select all the prepositions in the sentence below. Before lunch, the class wa..." → correct
+  - Feedback: The correct words are: Before, through.
+
+### `expanded_noun_phrase_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option is an expanded noun phrase?" → correct
+  - Feedback: The correct answer is: the tall boy with muddy boots.
+- Seed 2: "Which option is an expanded noun phrase?" → correct
+  - Feedback: The correct answer is: the silver key under the mat.
+- Seed 3: "Which option is an expanded noun phrase?" → correct
+  - Feedback: The correct answer is: the cracked blue mug beside the sink.
+
+### `build_noun_phrase`
+
+- **Decision:** approved_with_limitation
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'noun_phrases'; some seeds produce incorrect marking
+- **Distractor quality:** N/A
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Final action:** ship-with-monitoring
+
+**Concrete examples:**
+
+- Seed 1: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 2: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 3: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 4: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 5: "Build a noun phrase of at least three words to complete the sentence below. _..." → non-scored
+  - Feedback: Your noun phrase has been saved for review. It is not auto-marked for mastery.
+
+### `fronted_adverbial_choose`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence starts with a fronted adverbial?" → correct
+  - Feedback: The correct answer is: During the storm, the old gate rattled loudly.
+- Seed 2: "Which sentence starts with a fronted adverbial?" → correct
+  - Feedback: The correct answer is: After dinner, Kal is going to her room.
+- Seed 3: "Which sentence starts with a fronted adverbial?" → correct
+  - Feedback: The correct answer is: In the morning, the market opens early.
+
+### `fix_fronted_adverbial`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Copy the sentence and add the comma after the fronted adverbial. Later that a..." → correct
+  - Feedback: The correct sentence is: Later that afternoon, our team finally scored.
+- Seed 2: "Copy the sentence and add the comma after the fronted adverbial. With great c..." → correct
+  - Feedback: The correct sentence is: With great care, Imani folded the fragile map.
+- Seed 3: "Copy the sentence and add the comma after the fronted adverbial. At the edge ..." → correct
+  - Feedback: The correct sentence is: At the edge of the field, the fox paused.
+- Seed 4: "Copy the sentence and add the comma after the fronted adverbial. Without warn..." → correct
+  - Feedback: The correct sentence is: Without warning, the lights flickered.
+- Seed 5: "Copy the sentence and add the comma after the fronted adverbial. Before the l..." → correct
+  - Feedback: The correct sentence is: Before the lesson, Ravi sharpened the pencils.
+
+### `subordinate_clause_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
+  - Accepted example: Although the wind was strong
+  - Rejected alternative: the boat reached
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option is the subordinate clause in the sentence below? Although the wi..." → correct
+  - Feedback: The subordinate clause is: Although the wind was strong.
+- Seed 2: "Which option is the subordinate clause in the sentence below? When the bell r..." → correct
+  - Feedback: The subordinate clause is: When the bell rang.
+- Seed 3: "Which option is the subordinate clause in the sentence below? Because the riv..." → correct
+  - Feedback: The subordinate clause is: Because the river was high.
+- Seed 4: "Which option is the subordinate clause in the sentence below? Before the coac..." → correct
+  - Feedback: The subordinate clause is: Before the coach arrived.
+- Seed 5: "Which option is the subordinate clause in the sentence below? While the kettl..." → correct
+  - Feedback: The subordinate clause is: While the kettle boiled.
+
+### `combine_clauses_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Combine the ideas into one sentence using when. The gate opened. The children..." → correct
+  - Feedback: A correct answer is: When the gate opened, the children ran outside.
+- Seed 2: "Combine the ideas into one sentence using if. The weather improves. We will h..." → correct
+  - Feedback: A correct answer is: If the weather improves, we will hold sports day outside.
+- Seed 3: "Combine the ideas into one sentence using because. Sam wore gloves. It was cold." → correct
+  - Feedback: A correct answer is: Sam wore gloves because it was cold.
+- Seed 4: "Combine the ideas into one sentence using although. The puzzle was hard. Nina..." → correct
+  - Feedback: A correct answer is: Although the puzzle was hard, Nina solved it.
+- Seed 5: "Combine the ideas into one sentence using before. The visitors left. They tha..." → correct
+  - Feedback: A correct answer is: Before the visitors left, they thanked the guide.
+
+### `relative_clause_identify`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The teacher who organised the trip checked the register.
+  - Rejected alternative: When the teacher organised the trip, she checked the register.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence contains a relative clause?" → correct
+  - Feedback: The correct sentence is: The teacher who organised the trip checked the register.
+- Seed 2: "Which sentence contains a relative clause?" → correct
+  - Feedback: The correct sentence is: The trophy, which gleamed in the cabinet, belonged to our team.
+- Seed 3: "Which sentence contains a relative clause?" → correct
+  - Feedback: The correct sentence is: The runner whose shoe had split stopped near the bench.
+
+### `relative_clause_complete`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: that was locked outside
+  - Rejected alternative: because it was outside
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Complete the sentence with the best relative clause. The bicycle ___ belonged..." → correct
+  - Feedback: The best completion is: that was locked outside.
+- Seed 2: "Complete the sentence with the best relative clause. The puppy ___ fell aslee..." → correct
+  - Feedback: The best completion is: that had chased the ball.
+- Seed 3: "Complete the sentence with the best relative clause. The museum ___ opened ea..." → correct
+  - Feedback: The best completion is: which displays Roman coins.
+
+### `tense_form_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best verb form to complete the sentence. Last night, the guide ___..." → correct
+  - Feedback: The correct form is: marked.
+- Seed 2: "Choose the best verb form to complete the sentence. By the time the coach arr..." → correct
+  - Feedback: The correct form is: had collected.
+- Seed 3: "Choose the best verb form to complete the sentence. By the time we arrived, t..." → correct
+  - Feedback: The correct form is: had / started.
+
+### `tense_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite the sentence in the past perfect. They finish the model before lunch." → correct
+  - Feedback: A correct answer is: They had finished the model before lunch.
+- Seed 2: "Rewrite the sentence in the past progressive. The dog chases the cat." → correct
+  - Feedback: A correct answer is: The dog was chasing the cat.
+- Seed 3: "Rewrite the sentence in the present perfect. We tidy the classroom." → correct
+  - Feedback: A correct answer is: We have tidied the classroom.
+- Seed 4: "Rewrite the sentence in the future perfect. The class completes the display b..." → correct
+  - Feedback: A correct answer is: The class will have completed the display by Friday.
+- Seed 5: "Rewrite the sentence in the past progressive. Maya paints the scenery." → correct
+  - Feedback: A correct answer is: Maya was painting the scenery.
+
+### `standard_english_pairs`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce answerable multi-field questions with correct golden marking
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Distractor quality:** N/A
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the correct verb form in each pair to complete the sentences using Sta..." → correct
+  - Feedback: Correct choices: saw; did.
+- Seed 2: "Choose the correct verb form in each pair to complete the sentences using Sta..." → correct
+  - Feedback: Correct choices: were; doesn't.
+- Seed 3: "Choose the correct verb form in each pair to complete the sentences using Sta..." → correct
+  - Feedback: Correct choices: saw; did.
+
+### `pronoun_cohesion_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'pronouns_cohesion'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which version is clearest and avoids awkward repetition without becoming conf..." → correct
+  - Feedback: The clearest version is: Ben gave Luca the map because he was carrying too many bags.
+- Seed 2: "Which version is clearest and avoids awkward repetition without becoming conf..." → correct
+  - Feedback: The clearest version is: Nina told Sofia that Nina would meet her by the gate.
+- Seed 3: "Which version is clearest and avoids awkward repetition without becoming conf..." → correct
+  - Feedback: The clearest version is: Omar put his ticket in his pocket before he boarded the bus.
+
+### `formality_pairs`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce answerable multi-field questions with correct golden marking
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'formality'
+- **Distractor quality:** N/A
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Circle the most formal option in each underlined pair below to complete the p..." → correct
+  - Feedback: Correct formal choices: assisted; verify; take place.
+- Seed 2: "Circle the most formal option in each underlined pair below to complete the p..." → correct
+  - Feedback: Correct formal choices: established; requested; compete.
+- Seed 3: "Circle the most formal option in each underlined pair below to complete the p..." → correct
+  - Feedback: Correct formal choices: discover; enter; request.
+
+### `active_passive_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite the sentence in the active. The lantern was carried by Sofia." → correct
+  - Feedback: A correct answer is: Sofia carried the lantern.
+- Seed 2: "Rewrite the sentence in the passive. Keep the same tense. The chef baked the ..." → correct
+  - Feedback: A correct answer is: The bread was baked by the chef.
+- Seed 3: "Rewrite the sentence in the passive. Keep the same tense. Grace opened the wi..." → correct
+  - Feedback: A correct answer is: The window was opened by Grace.
+- Seed 4: "Rewrite the sentence in the active. The rucksack is packed by Hassan." → correct
+  - Feedback: A correct answer is: Hassan packs the rucksack.
+- Seed 5: "Rewrite the sentence in the passive. Keep the same tense. The caretaker locks..." → correct
+  - Feedback: A correct answer is: The gate is locked by the caretaker.
+
+### `subject_object_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
+  - Accepted example: the heavy gate
+  - Rejected alternative: Maya
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "In the sentence below, what is the object? Maya opened the heavy gate after l..." → correct
+  - Feedback: The object is: the heavy gate.
+- Seed 2: "In the sentence below, what is the subject? During the storm, the old roof le..." → correct
+  - Feedback: The subject is: the old roof.
+- Seed 3: "In the sentence below, what is the object? The guide lifted the lantern caref..." → correct
+  - Feedback: The object is: the lantern.
+- Seed 4: "In the sentence below, what is the subject? After lunch, the tired goalkeeper..." → correct
+  - Feedback: The subject is: the tired goalkeeper.
+- Seed 5: "In the sentence below, what is the subject? At the museum, the curator unlock..." → correct
+  - Feedback: The subject is: the curator.
+
+### `modal_verb_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'modal_verbs'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The bus might arrive at nine.
+  - Rejected alternative: The bus will arrive at nine.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence shows a possibility, not certainty?" → correct
+  - Feedback: The correct answer is: The bus might arrive at nine..
+- Seed 2: "Which modal verb best completes the sentence to show permission? You ___ use ..." → correct
+  - Feedback: The correct answer is: may.
+- Seed 3: "Which sentence shows the least certainty that the team will win?" → correct
+  - Feedback: The correct answer is: The team might win..
+
+### `parenthesis_replace_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "What punctuation could be used instead of brackets in the sentence below? The..." → correct
+  - Feedback: The correct answer is: dashes.
+- Seed 2: "What punctuation could be used instead of brackets in the sentence below? My ..." → correct
+  - Feedback: The correct answer is: commas.
+- Seed 3: "What punctuation could be used instead of brackets in the sentence below? The..." → correct
+  - Feedback: The correct answer is: dashes.
+- Seed 4: "What punctuation could be used instead of brackets in the sentence below? Has..." → correct
+  - Feedback: The correct answer is: commas.
+- Seed 5: "What punctuation could be used instead of brackets in the sentence below? The..." → correct
+  - Feedback: The correct answer is: dashes.
+
+### `parenthesis_fix_sentence`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Insert a pair of brackets in the correct place. The trophy made of silver sto..." → correct
+  - Feedback: A correct answer is: The trophy (made of silver) stood in the cabinet.
+- Seed 2: "Insert a pair of brackets in the correct place. My uncle a keen cyclist repai..." → correct
+  - Feedback: A correct answer is: My uncle (a keen cyclist) repaired the puncture.
+- Seed 3: "Insert a pair of brackets in the correct place. The library which opened last..." → correct
+  - Feedback: A correct answer is: The library (which opened last year) has a new reading room.
+- Seed 4: "Insert a pair of brackets in the correct place. Hassan our team captain organ..." → correct
+  - Feedback: A correct answer is: Hassan (our team captain) organised the warm-up.
+- Seed 5: "Insert a pair of brackets in the correct place. The old oak tree over two hun..." → correct
+  - Feedback: A correct answer is: The old oak tree (over two hundred years old) shaded the path.
+
+### `speech_punctuation_fix`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Punctuate the direct speech correctly. The guide said "Follow the red arrows."" → correct
+  - Feedback: A correct answer is: The guide said, “Follow the red arrows.”
+- Seed 2: "Punctuate the direct speech correctly. "What a huge wave that was" shouted Ben." → correct
+  - Feedback: A correct answer is: “What a huge wave that was!” shouted Ben.
+- Seed 3: "Punctuate the direct speech correctly. Maya whispered "Please wait outside."" → correct
+  - Feedback: A correct answer is: Maya whispered, “Please wait outside.”
+- Seed 4: "Punctuate the direct speech correctly. "Where are you going" asked Mum." → correct
+  - Feedback: A correct answer is: “Where are you going?” asked Mum.
+- Seed 5: "Punctuate the direct speech correctly. Dad shouted "Run inside!"" → correct
+  - Feedback: A correct answer is: Dad shouted, “Run inside!”
+
+### `apostrophe_possession_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the correct phrase to complete the sentence: The ___ coats were hangin..." → correct
+  - Feedback: The correct answer is: children's.
+- Seed 2: "Choose the correct phrase to complete the sentence: The ___ playground was cl..." → correct
+  - Feedback: The correct answer is: girls'.
+- Seed 3: "Choose the correct phrase to complete the sentence: We admired the ___ painti..." → correct
+  - Feedback: The correct answer is: artist's.
+
+### `explain_reason_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials, standard_english'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: Because Standard English uses ‘did’, not ‘done’, in that sentence.
+  - Rejected alternative: Because ‘homework’ cannot be the object.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is 'We was ready' wrong in Standard English?" → correct
+  - Feedback: The best explanation is: Because Standard English uses ‘were’ with ‘we’..
+- Seed 2: "Why is there a comma after the opening words in this sentence? Without warnin..." → correct
+  - Feedback: The best explanation is: Because the opening words are a fronted adverbial..
+- Seed 3: "Why is 'She don't know' wrong in Standard English?" → correct
+  - Feedback: The best explanation is: Because Standard English uses ‘doesn't’ with ‘she’..
+
+### `standard_fix_sentence`
+
+- **Decision:** approved_with_limitation
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship-with-monitoring
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite the sentence in Standard English. They was waiting by the gate." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
+- Seed 2: "Rewrite the sentence in Standard English. She seen the poster yesterday." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
+- Seed 3: "Rewrite the sentence in Standard English. The players was ready for the start." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
+- Seed 4: "Rewrite the sentence in Standard English. Maya done her reading record." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
+- Seed 5: "Rewrite the sentence in Standard English. I done my homework before tea." → non-scored
+  - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
+
+### `proc_fronted_adverbial_fix`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite the sentence with the punctuation corrected. With great care Ava lock..." → correct
+  - Feedback: A correct answer is: With great care, Ava locked the window.
+- Seed 2: "Rewrite the sentence with the punctuation corrected. With great care Noah fou..." → correct
+  - Feedback: A correct answer is: With great care, Noah found the map.
+- Seed 3: "Rewrite the sentence with the punctuation corrected. With great care Ava carr..." → correct
+  - Feedback: A correct answer is: With great care, Ava carried the trophy.
+- Seed 4: "Rewrite the sentence with the punctuation corrected. After the final whistle ..." → correct
+  - Feedback: A correct answer is: After the final whistle, Noah carried the gate.
+- Seed 5: "Rewrite the sentence with the punctuation corrected. With great care Nora fou..." → correct
+  - Feedback: A correct answer is: With great care, Nora found the gate.
+
+### `proc_semicolon_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'boundary_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which punctuation mark best completes the sentence below? The bell rang ___ t..." → correct
+  - Feedback: The best answer is: The bell rang; the pupils hurried inside.
+- Seed 2: "Which punctuation mark best completes the sentence below? The wind strengthen..." → correct
+  - Feedback: The best answer is: The wind strengthened; the tent flapped wildly.
+- Seed 3: "Which punctuation mark best completes the sentence below? The bus arrived ___..." → correct
+  - Feedback: The best answer is: The bus arrived; everyone grabbed their bags.
+- Seed 4: "Which punctuation mark best completes the sentence below? The sun broke throu..." → correct
+  - Feedback: The best answer is: The sun broke through the clouds; the ice on the pond started to melt.
+- Seed 5: "Which punctuation mark best completes the sentence below? The tide was rising..." → correct
+  - Feedback: The best answer is: The tide was rising quickly; the fishermen hauled in their nets.
+
+### `proc_colon_list_fix`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'boundary_punctuation'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite the sentence with a colon in the correct place. The club offered thre..." → correct
+  - Feedback: A correct answer is: The club offered three prizes: a medal, a certificate, a book token.
+- Seed 2: "Rewrite the sentence with a colon in the correct place. The recipe called for..." → correct
+  - Feedback: A correct answer is: The recipe called for five ingredients: flour, butter, eggs, sugar, milk.
+- Seed 3: "Rewrite the sentence with a colon in the correct place. Three countries were ..." → correct
+  - Feedback: A correct answer is: Three countries were represented at the fair: France, Japan, Brazil.
+- Seed 4: "Rewrite the sentence with a colon in the correct place. The explorer carried ..." → correct
+  - Feedback: A correct answer is: The explorer carried four essential supplies: a compass, a water bottle, a r...
+- Seed 5: "Rewrite the sentence with a colon in the correct place. The school banned thr..." → correct
+  - Feedback: A correct answer is: The school banned three items from the playground: skateboards, glass bottle...
+
+### `proc_dash_boundary_fix`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'boundary_punctuation'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite the sentence with a dash in the correct place. The message was clear ..." → correct
+  - Feedback: A correct answer is: The message was clear – everyone must leave the building at once.
+- Seed 2: "Rewrite the sentence with a dash in the correct place. He remembered just one..." → correct
+  - Feedback: A correct answer is: He remembered just one rule – never open the gate after dark.
+- Seed 3: "Rewrite the sentence with a dash in the correct place. The result surprised u..." → correct
+  - Feedback: A correct answer is: The result surprised us all – the youngest team had won.
+- Seed 4: "Rewrite the sentence with a dash in the correct place. Only one thing could s..." → correct
+  - Feedback: A correct answer is: Only one thing could save us – the map in her rucksack.
+- Seed 5: "Rewrite the sentence with a dash in the correct place. The instruction was cl..." → correct
+  - Feedback: A correct answer is: The instruction was clear – leave the room quietly.
+
+### `proc_hyphen_ambiguity_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence means the child is six years old?" → correct
+  - Feedback: The clearer answer is: The six-year-old child ran across the park.
+- Seed 2: "Which sentence means the ice cream is sugar free?" → correct
+  - Feedback: The clearer answer is: Jay chose the sugar-free ice cream from the van.
+- Seed 3: "Which sentence means the ticket covers the whole day?" → correct
+  - Feedback: The clearer answer is: We bought an all-day ticket for the tram.
+
+### `proc_speech_punctuation_fix`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Punctuate the direct speech correctly. Ben said "Shut the gate behind you!"" → correct
+  - Feedback: A correct answer is: Ben said, "Shut the gate behind you!"
+- Seed 2: "Punctuate the direct speech correctly. "What a huge wave that was" asked Ava." → correct
+  - Feedback: A correct answer is: "What a huge wave that was!" asked Ava.
+- Seed 3: "Punctuate the direct speech correctly. "Why are your boots muddy" said Ava." → correct
+  - Feedback: A correct answer is: "Why are your boots muddy?" said Ava.
+- Seed 4: "Punctuate the direct speech correctly. the guide asked "Bring the torch with ..." → correct
+  - Feedback: A correct answer is: the guide asked, "Bring the torch with you!"
+- Seed 5: "Punctuate the direct speech correctly. "What a huge wave that was" whispered ..." → correct
+  - Feedback: A correct answer is: "What a huge wave that was!" whispered Ben.
+
+### `proc_apostrophe_possession_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the correct phrase for more than one girl and their coats." → correct
+  - Feedback: The correct answer is: the girls' coats
+- Seed 2: "Choose the correct phrase for people and their tickets." → correct
+  - Feedback: The correct answer is: the people's tickets
+- Seed 3: "Choose the correct phrase for one dog and its tickets." → correct
+  - Feedback: The correct answer is: the dog's tickets
+
+### `proc2_standard_english_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence is written in Standard English?" → correct
+  - Feedback: The correct answer is: Ava doesn't know why the gate is locked.
+- Seed 2: "Which sentence is written in Standard English?" → correct
+  - Feedback: The correct answer is: Noah doesn't know where the hall is.
+- Seed 3: "Which sentence is written in Standard English?" → correct
+  - Feedback: The correct answer is: Ava doesn't know where the hall is.
+
+### `proc2_standard_english_fix`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite the sentence in Standard English. Ava don't know why the gate is locked." → correct
+  - Feedback: A correct answer is: Ava doesn't know why the gate is locked.
+- Seed 2: "Rewrite the sentence in Standard English. Noah don't know where the hall is." → correct
+  - Feedback: A correct answer is: Noah doesn't know where the hall is.
+- Seed 3: "Rewrite the sentence in Standard English. Ava don't know where the hall is." → correct
+  - Feedback: A correct answer is: Ava doesn't know where the hall is.
+- Seed 4: "Rewrite the sentence in Standard English. Noah seen the comet last night." → correct
+  - Feedback: A correct answer is: Noah saw the comet last night.
+- Seed 5: "Rewrite the sentence in Standard English. Nora don't know the answer yet." → correct
+  - Feedback: A correct answer is: Nora doesn't know the answer yet.
+
+### `proc2_tense_aspect_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the verb form that best completes the sentence: By the time the coach ..." → correct
+  - Feedback: By the time the coach arrived, The pupils had finished the project.
+- Seed 2: "Choose the verb form that best completes the sentence: last night, He ___ the..." → correct
+  - Feedback: Last night, He started the bag.
+- Seed 3: "Choose the verb form that best completes the sentence: last night, He ___ the..." → correct
+  - Feedback: Last night, He started the project.
+
+### `proc2_modal_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'modal_verbs'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: must
+  - Rejected alternative: should
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the modal verb that best fits the meaning: This is a rule on the climb..." → correct
+  - Feedback: The correct answer is: must. ‘Must’ shows strongest obligation.
+- Seed 2: "Choose the modal verb that best fits the meaning: The clouds are dark, but th..." → correct
+  - Feedback: The correct answer is: might. ‘Might’ shows possibility, not certainty.
+- Seed 3: "Choose the modal verb that best fits the meaning: You are giving advice to a ..." → correct
+  - Feedback: The correct answer is: should. ‘Should’ is the modal of advice here.
+
+### `proc2_formality_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'formality'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: I am writing to request two extra chairs for the hall.
+  - Rejected alternative: I just wanted to ask if we could maybe have extra chairs.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence would be most suitable for a formal letter to the headteacher?" → correct
+  - Feedback: The correct answer is: I am writing to request two extra chairs for the hall.
+- Seed 2: "Which sentence sounds most formal?" → correct
+  - Feedback: The correct answer is: The club was established last year.
+- Seed 3: "Choose the sentence that best fits a formal report." → correct
+  - Feedback: The correct answer is: Several pupils were absent from the visit.
+
+### `proc2_pronoun_cohesion_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'pronouns_cohesion'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which version keeps the meaning clearest?" → correct
+  - Feedback: The clearest answer is: Amira gave Ava the ticket because Amira was carrying too many bags.
+- Seed 2: "Which version keeps the meaning clearest?" → correct
+  - Feedback: The clearest answer is: Jay gave Noah the torch because Noah needed it for the next lesson.
+- Seed 3: "Which version keeps the meaning clearest?" → correct
+  - Feedback: The clearest answer is: Jay gave Ava the ticket because Ava was leaving first.
+
+### `proc2_subject_object_identify`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
+  - Accepted example: the sketchbook
+  - Rejected alternative: Ava
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which words are the object in this sentence? With great care, Ava lifted the ..." → correct
+  - Feedback: The correct answer is: the sketchbook
+- Seed 2: "Which word or words are the subject in this sentence? With great care, Noah p..." → correct
+  - Feedback: The correct answer is: Noah
+- Seed 3: "Which words are the object in this sentence? With great care, Ava lifted the ..." → correct
+  - Feedback: The correct answer is: the lantern
+
+### `proc2_passive_to_active`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite the sentence in the active voice. The lantern is lifted by Amira this..." → correct
+  - Feedback: A correct answer is: Amira lifts the lantern this morning.
+- Seed 2: "Rewrite the sentence in the active voice. The map is packed by Jay after the ..." → correct
+  - Feedback: A correct answer is: Jay packs the map after the match.
+- Seed 3: "Rewrite the sentence in the active voice. The lantern is lifted by Jay." → correct
+  - Feedback: A correct answer is: Jay lifts the lantern.
+- Seed 4: "Rewrite the sentence in the active voice. The map was packed by Ruby." → correct
+  - Feedback: A correct answer is: Ruby packed the map.
+- Seed 5: "Rewrite the sentence in the active voice. The picnic basket was packed by Jay..." → correct
+  - Feedback: A correct answer is: Jay packed the picnic basket after the match.
+
+### `proc2_relative_clause_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The book that belonged to the club was easy to spot.
+  - Rejected alternative: When everyone wanted the book, it was easy to spot.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence contains a relative clause?" → correct
+  - Feedback: The correct answer is: The book that belonged to the club was easy to spot.
+- Seed 2: "Which sentence contains a relative clause?" → correct
+  - Feedback: The correct answer is: The bag which Ben packed carefully was easy to spot.
+- Seed 3: "Which sentence contains a relative clause?" → correct
+  - Feedback: The correct answer is: The book which Ben packed carefully was easy to spot.
+
+### `proc2_fronted_adverbial_build`
+
+- **Decision:** approved_with_limitation
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'adverbials'; some seeds produce incorrect marking
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship-with-monitoring
+
+**Concrete examples:**
+
+- Seed 1: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
+- Seed 2: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
+- Seed 3: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
+- Seed 4: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
+- Seed 5: "Use this opening phrase and clause to build one correct sentence. Opening phr..." → non-scored
+  - Feedback: Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.
+
+### `proc2_boundary_punctuation_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'boundary_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: The words before the colon make a complete clause and the colon introduces a list.
+  - Rejected alternative: The colon replaces speech marks.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is the punctuation in this sentence effective? For the picnic we packed t..." → correct
+  - Feedback: The best explanation is: The words before the colon make a complete clause and the colon introduc...
+- Seed 2: "Why is the punctuation in this sentence effective? The plan was simple – foll..." → correct
+  - Feedback: The best explanation is: The dash creates a strong break before an explanation or afterthought.
+- Seed 3: "Why is the punctuation in this sentence effective? The rain stopped; the play..." → correct
+  - Feedback: The best explanation is: A semi-colon can join two closely related main clauses.
+
+### `proc3_sentence_function_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence is a command?" → correct
+  - Feedback: The correct sentence is: Close the gate before the dog runs out.
+- Seed 2: "Which sentence is a command?" → correct
+  - Feedback: The correct sentence is: Bring the blue folder to the hall.
+- Seed 3: "Which sentence is a command?" → correct
+  - Feedback: The correct sentence is: Close the gate before the dog runs out.
+
+### `proc3_word_class_contrast_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "In the sentence Afterwards, Ben hurried inside., what is the word Afterwards?" → correct
+  - Feedback: ‘Afterwards’ tells us when Ben hurried, so it is an adverb.
+- Seed 2: "In the sentence The muddy boots were by the door., what is the word The?" → correct
+  - Feedback: ‘The’ introduces the noun phrase ‘the muddy boots’, so it is a determiner.
+- Seed 3: "In the sentence Those are muddy., what is the word Those?" → correct
+  - Feedback: ‘Those’ stands in place of a noun, so it is a pronoun here.
+
+### `proc3_noun_phrase_build`
+
+- **Decision:** approved_with_limitation
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'noun_phrases'; some seeds produce incorrect marking
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship-with-monitoring
+
+**Concrete examples:**
+
+- Seed 1: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 2: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 3: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 4: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
+- Seed 5: "Use all the words to build an expanded noun phrase that could complete the se..." → non-scored
+  - Feedback: Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.
+
+### `proc3_clause_join_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Combine these ideas into one sentence using because. We stayed inside. It was..." → correct
+  - Feedback: A correct answer is: We stayed inside because it was raining.
+- Seed 2: "Combine these ideas into one sentence using because. Ben hurried home. He had..." → correct
+  - Feedback: A correct answer is: Ben hurried home because he had forgotten his kit.
+- Seed 3: "Combine these ideas into one sentence using because. Mia smiled. She had foun..." → correct
+  - Feedback: A correct answer is: Mia smiled because she had found the missing map.
+- Seed 4: "Combine these ideas into one sentence using although. Mia was tired. She fini..." → correct
+  - Feedback: A correct answer is: Although Mia was tired, she finished the race.
+- Seed 5: "Combine these ideas into one sentence using although. The path was muddy. The..." → correct
+  - Feedback: A correct answer is: Although the path was muddy, the walkers kept going.
+
+### `proc3_parenthesis_commas_fix`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Add commas to show the parenthesis. Our new puppy to my surprise slept throug..." → correct
+  - Feedback: A correct answer is: Our new puppy, to my surprise, slept through the storm.
+- Seed 2: "Add commas to show the parenthesis. The coach without any warning changed the..." → correct
+  - Feedback: A correct answer is: The coach, without any warning, changed the teams.
+- Seed 3: "Add commas to show the parenthesis. The old bridge as everyone knew was unsafe." → correct
+  - Feedback: A correct answer is: The old bridge, as everyone knew, was unsafe.
+- Seed 4: "Add commas to show the parenthesis. The visitors despite the rain stayed unti..." → correct
+  - Feedback: A correct answer is: The visitors, despite the rain, stayed until the end.
+- Seed 5: "Add commas to show the parenthesis. Her answer I think was correct." → correct
+  - Feedback: A correct answer is: Her answer, I think, was correct.
+
+### `proc3_hyphen_fix_meaning`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite the sentence with a hyphen to make the meaning clear. The team needed..." → correct
+  - Feedback: A correct answer is: The team needed a well-earned break after the match.
+- Seed 2: "Rewrite the sentence with a hyphen to make the meaning clear. Ben wore his br..." → correct
+  - Feedback: A correct answer is: Ben wore his brand-new trainers to the park.
+- Seed 3: "Rewrite the sentence with a hyphen to make the meaning clear. We crossed the ..." → correct
+  - Feedback: A correct answer is: We crossed the narrow, fast-flowing stream.
+- Seed 4: "Rewrite the sentence with a hyphen to make the meaning clear. The school held..." → correct
+  - Feedback: A correct answer is: The school held a fun-filled sports day on Friday.
+- Seed 5: "Rewrite the sentence with a hyphen to make the meaning clear. Mia drew a life..." → correct
+  - Feedback: A correct answer is: Mia drew a life-size portrait of her brother.
+
+### `qg_active_passive_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence is written in the passive voice?" → correct
+  - Feedback: The hall receives the action, so it comes first in the passive sentence.
+- Seed 2: "Which sentence is written in the passive voice?" → correct
+  - Feedback: The passive voice focuses on the scenery rather than the person doing the painting.
+- Seed 3: "Which sentence is written in the passive voice?" → correct
+  - Feedback: The hedges receive the action and come first in the passive sentence.
+
+### `qg_subject_object_classify_table`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Classify each named noun phrase as the subject or object." → correct
+  - Feedback: The subject does the action; the object receives it.
+- Seed 2: "Classify each named noun phrase as the subject or object." → correct
+  - Feedback: The subject does the action; the object receives it.
+- Seed 3: "Classify each named noun phrase as the subject or object." → correct
+  - Feedback: The subject does the action; the object receives it.
+
+### `qg_pronoun_referent_identify`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'pronouns_cohesion'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "In this sentence, what does the pronoun he refer to? Sam thanked Oliver after..." → correct
+  - Feedback: The pronoun 'he' refers to Oliver because Oliver returned the book.
+- Seed 2: "In this sentence, what does the pronoun they refer to? The pupils moved the b..." → correct
+  - Feedback: The pronoun 'they' refers to the pupils because the pupils finished lunch.
+- Seed 3: "In this sentence, what does the pronoun she refer to? Mia handed the trophy t..." → correct
+  - Feedback: The pronoun 'she' refers to Ava because Ava won the race and received the trophy.
+
+### `qg_formality_classify_table`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'formality'
+- **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Classify each sentence as formal or informal." → correct
+  - Feedback: Formal writing avoids chatty phrasing and uses precise vocabulary.
+- Seed 2: "Classify each sentence as formal or informal." → correct
+  - Feedback: Formal writing avoids chatty phrasing and uses precise vocabulary.
+- Seed 3: "Classify each sentence as formal or informal." → correct
+  - Feedback: Formal writing avoids chatty phrasing and uses precise vocabulary.
+
+### `qg_modal_verb_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'modal_verbs'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
+  - Accepted example: It shows possibility, not certainty.
+  - Rejected alternative: It names the person doing the action.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "In this sentence, what does the modal verb might show? The clouds are dark, s..." → correct
+  - Feedback: 'Might' shows that rain is possible but not certain.
+- Seed 2: "In this sentence, what does the modal verb should show? You should check your..." → correct
+  - Feedback: 'Should' commonly gives advice or a recommendation.
+- Seed 3: "In this sentence, what does the modal verb may show? May I borrow the scissor..." → correct
+  - Feedback: 'May' can ask for or grant permission.
+
+### `qg_hyphen_ambiguity_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: The hyphen shows that 'well-known' is one describing idea before 'author'.
+  - Rejected alternative: The hyphen shows the author owns a well.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why does the hyphen matter in small-animal hospital rather than small animal ..." → correct
+  - Feedback: The hyphen joins 'small' and 'animal' so they work together before 'hospital'.
+- Seed 2: "Why does the hyphen matter in last-minute poster rather than last minute poster?" → correct
+  - Feedback: The compound adjective comes before the noun, so the hyphen protects the intended meaning.
+- Seed 3: "Why does the hyphen matter in well-known author rather than well known author?" → correct
+  - Feedback: Compound adjectives before a noun use a hyphen to show they form a single modifier.
+
+### `qg_p3_sentence_functions_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is this sentence a question? Where did the caretaker leave the keys?" → correct
+  - Feedback: A question asks something directly; the question mark supports that function.
+- Seed 2: "Why is this sentence a statement? The caretaker left the keys beside the offi..." → correct
+  - Feedback: A statement tells the reader something and does not ask, order, or exclaim.
+- Seed 3: "Why is this a grammatical exclamation? What an enormous wave that was!" → correct
+  - Feedback: KS2 grammatical exclamations often begin with What or How and show strong feeling.
+
+### `qg_p3_word_classes_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: It begins the phrase before assembly and shows a time relationship.
+  - Rejected alternative: It replaces the noun pupils.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is the word 'carefully' an adverb here? Maya carefully folded the map." → correct
+  - Feedback: Adverbs can modify verbs by telling how, when, where, or how often.
+- Seed 2: "Why is the word 'before' a preposition here? The pupils waited before assembly." → correct
+  - Feedback: A preposition usually links a noun phrase to the rest of the sentence by time, place, or cause.
+- Seed 3: "Why is the word 'because' a conjunction here? Luca whispered because the baby..." → correct
+  - Feedback: A conjunction can join clauses and show the relationship between their ideas.
+
+### `qg_p3_noun_phrases_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: It contains a verb phrase, so it is part of a clause rather than a noun phrase.
+  - Rejected alternative: It is a noun phrase because it has four words.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is this an expanded noun phrase? the book with a torn cover" → correct
+  - Feedback: A preposition phrase can expand a noun phrase by adding detail about the noun.
+- Seed 2: "Why is this not a noun phrase? quickly opened the gate" → correct
+  - Feedback: Length is not enough: a noun phrase must centre on a noun, not a verb.
+- Seed 3: "Why is the underlined group a noun phrase? The nervous goalkeeper from Year 6..." → correct
+  - Feedback: Extra words before and after the noun can belong inside the same noun phrase.
+
+### `qg_p3_clauses_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: It introduces a subordinate clause showing contrast with the main clause.
+  - Rejected alternative: It shows that the two clauses mean exactly the same thing.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why does the conjunction 'although' fit this sentence? Although Mia was tired..." → correct
+  - Feedback: Although links a contrasting subordinate clause to a main clause.
+- Seed 2: "Why is this a main clause? The class cheered when the curtain rose. Focus: Th..." → correct
+  - Feedback: The main clause carries the core meaning and can usually stand alone.
+- Seed 3: "Why is the clause beginning with 'if' subordinate? If the gate is locked, wai..." → correct
+  - Feedback: Conditional clauses beginning with if often depend on a main clause.
+
+### `qg_p3_relative_clauses_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: It adds information about the noun plant.
+  - Rejected alternative: It is an adverbial telling how the plant needed water.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is the clause 'which stood by the window' a relative clause? The plant wh..." → correct
+  - Feedback: Which can introduce a relative clause that gives more detail about a thing.
+- Seed 2: "Why is the clause 'that everyone wanted' a relative clause? The book that eve..." → correct
+  - Feedback: Relative clauses can define or identify the noun they follow.
+- Seed 3: "Why is this not a relative clause? When the show ended, the actors bowed." → correct
+  - Feedback: A relative clause attaches to a noun; a when-clause here tells time.
+
+### `qg_p3_tense_aspect_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: It shows a continuing action in the past that happened before another past event.
+  - Rejected alternative: It is simple past because the doors opened yesterday.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is 'had packed' past perfect? By the time the coach arrived, Sam had pack..." → correct
+  - Feedback: Past perfect uses had plus a past participle to show an earlier past action.
+- Seed 2: "Why is 'was reading' past progressive? Maya was reading when the bell rang." → correct
+  - Feedback: Progressive forms use a form of be plus an -ing verb to show an action in progress.
+- Seed 3: "Why is 'are building' present progressive? The pupils are building a model br..." → correct
+  - Feedback: Present progressive uses am, is, or are with an -ing verb.
+
+### `qg_p3_pronouns_cohesion_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'pronouns_cohesion'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: It could refer to the cage or the hutch, so a noun would remove ambiguity.
+  - Rejected alternative: It must refer to hutch because hutch is nearer.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is the pronoun 'she' unclear here? Maya gave Priya the note because she n..." → correct
+  - Feedback: Pronouns should make links clear; ambiguity weakens cohesion.
+- Seed 2: "Why is repeating 'the trophy' clearer here? The shelf was above the trophy, b..." → correct
+  - Feedback: Sometimes repeating a noun is better than using a pronoun with an unclear referent.
+- Seed 3: "Why does 'they' work in this sentence? The pupils packed the benches after th..." → correct
+  - Feedback: A plural pronoun should point clearly to a plural noun phrase.
+
+### `qg_p3_formality_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'formality'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: It uses chatty wording that suits speech more than formal writing.
+  - Rejected alternative: It is informal because it contains a noun phrase.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is this sentence informal? Hang on a minute while we get started." → correct
+  - Feedback: Informal register often sounds conversational and relaxed.
+- Seed 2: "Why is 'request' the more formal choice? We request that pupils return the fo..." → correct
+  - Feedback: Formal vocabulary often chooses precise words that fit the audience and purpose.
+- Seed 3: "Why is this version more formal? The equipment was inspected before use." → correct
+  - Feedback: Formal writing can use impersonal structures when the action matters more than the doer.
+
+### `qg_p3_active_passive_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: Aisha is still the doer, but the scenery has been moved to the subject position.
+  - Rejected alternative: The scenery becomes the person doing the painting.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is this sentence active? The caretaker cleaned the hall." → correct
+  - Feedback: In active voice, the doer normally comes before the verb as the subject.
+- Seed 2: "Why might a writer choose the passive voice here? The window was broken durin..." → correct
+  - Feedback: Passive voice can focus attention on the thing affected or leave the doer unnamed.
+- Seed 3: "Why is this not passive voice? Maya was carrying the heavy box." → correct
+  - Feedback: A form of be alone is not enough for passive voice; check the doer and the past participle.
+
+### `qg_p3_subject_object_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The soup receives the action of tasting.
+  - Rejected alternative: The soup is an adverbial because it tells when.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is 'the soup' the object? The chef tasted the soup." → correct
+  - Feedback: The object is often the noun phrase that the action is done to.
+- Seed 2: "Why is 'Before lunch' not the subject? Before lunch, Aisha packed the kit." → correct
+  - Feedback: A fronted adverbial can come first, but the subject is still who or what does the verb.
+- Seed 3: "Why is the expanded noun phrase the subject? The tall goalkeeper with red glo..." → correct
+  - Feedback: A subject can be an expanded noun phrase, not just a single word.
+
+### `qg_p3_parenthesis_commas_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: The commas separate items in a list, not removable extra information.
+  - Rejected alternative: They mark a relative clause about pencils.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why do the dashes mark parenthesis here? The hall - usually quiet - was full ..." → correct
+  - Feedback: Dashes can mark parenthesis when they enclose removable extra information.
+- Seed 2: "Why do the brackets mark parenthesis here? The trip (which had been delayed) ..." → correct
+  - Feedback: Brackets can mark parenthetical information that is not essential to the main clause.
+- Seed 3: "Why are these commas not marking parenthesis? We packed pencils, rulers, glue..." → correct
+  - Feedback: List commas separate items; parenthesis commas enclose extra information.
+
+### `qg_p3_speech_punctuation_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is there a comma before the closing speech mark? "I found the map," said ..." → correct
+  - Feedback: When a reporting clause follows a statement in direct speech, the comma is part of the spoken sec...
+- Seed 2: "Why is there a comma after the reporting clause? Priya said, "I found the map."" → correct
+  - Feedback: A comma often separates a reporting clause from the direct speech that follows.
+- Seed 3: "Why is the exclamation mark inside the speech marks? "Watch out!" shouted Sam." → correct
+  - Feedback: Punctuation that belongs to the spoken words is placed inside the speech marks.
+
+### `qg_p3_apostrophe_possession_explain`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is the apostrophe after the s? the girls' bags" → correct
+  - Feedback: For a regular plural owner ending in s, the apostrophe usually comes after the s.
+- Seed 2: "Why is this apostrophe + s? the children's coats" → correct
+  - Feedback: Irregular plural owners that do not end in s usually use apostrophe + s.
+- Seed 3: "Why does this phrase show possession, not omission? the teacher's desk" → correct
+  - Feedback: Possessive apostrophes show ownership; contraction apostrophes show missing letters.
+
+### `proc3_apostrophe_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite this phrase using the correct possessive apostrophe. the coats belong..." → correct
+  - Feedback: A correct answer is: Luca's coats
+- Seed 2: "Rewrite this phrase using the correct possessive apostrophe. the tickets belo..." → correct
+  - Feedback: A correct answer is: Noah's tickets
+- Seed 3: "Rewrite this phrase using the correct possessive apostrophe. the tickets belo..." → correct
+  - Feedback: A correct answer is: Zac's tickets
+- Seed 4: "Rewrite this phrase using the correct possessive apostrophe. the lunchboxes b..." → correct
+  - Feedback: A correct answer is: Mia's lunchboxes
+- Seed 5: "Rewrite this phrase using the correct possessive apostrophe. the coats belong..." → correct
+  - Feedback: A correct answer is: the children's coats
+
+### `qg_p4_sentence_speech_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions, speech_punctuation'
+- **Distractor quality:** 3 options per seed, 2 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option correctly punctuates the direct speech AND keeps the whole sente..." → correct
+  - Feedback: The whole sentence is a question (sentence function), so the question mark comes outside the clos...
+- Seed 2: "Which option correctly punctuates the speech AND makes the sentence a stateme..." → correct
+  - Feedback: The whole sentence is a statement (reporting what was said). The speech inside is a command. The ...
+- Seed 3: "Which option correctly punctuates the direct speech AND identifies the senten..." → correct
+  - Feedback: The whole sentence begins with 'What a surprise' making it a grammatical exclamation. The speech ...
+
+### `qg_p4_word_class_noun_phrase_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes, noun_phrases'
+- **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Identify the head noun and its word class in this expanded noun phrase. the r..." → correct
+  - Feedback: The head noun is the main word the phrase is built around. 'Rusty' is an adjective modifying the ...
+- Seed 2: "Identify the head noun and the word class of the modifier before it. a terrif..." → correct
+  - Feedback: 'Storm' is the head noun. 'Mountain' is a noun used as a modifier (a noun adjunct), not an adject...
+- Seed 3: "Identify the head noun and the word class of the underlined word in this noun..." → correct
+  - Feedback: 'Firefighters' is the head noun. 'Incredibly' is an adverb modifying the adjective 'brave', not i...
+- Seed 4: "Identify the head noun and the word class of the first word in this noun phra..." → correct
+  - Feedback: 'Lesson' is the head noun the phrase centres on. 'Every' is a determiner specifying which lesson,...
+- Seed 5: "Identify the head noun and the word class of the describing word. the brightl..." → correct
+  - Feedback: 'Fence' is the head noun. 'Painted' here is used as an adjective describing the fence, not as a v...
+
+### `qg_p4_adverbial_clause_boundary_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials, clauses, boundary_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: Before the bell rang, the children lined up quietly.
+  - Rejected alternative: Before the bell rang; the children lined up quietly.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option correctly joins a fronted adverbial to a main clause AND uses th..." → correct
+  - Feedback: A fronted adverbial clause needs a comma after it to mark the boundary between the adverbial and ...
+- Seed 2: "Which option correctly punctuates the sentence with a fronted adverbial AND i..." → correct
+  - Feedback: The adverbial 'After the storm cleared' needs a comma to show where the subordinate clause ends a...
+- Seed 3: "Which option places the comma correctly when the adverbial clause appears at ..." → correct
+  - Feedback: 'Although the path was icy' is a subordinate adverbial clause showing concession. It needs a comm...
+
+### `qg_p4_relative_parenthesis_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses, parenthesis_commas'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The oak tree, which was planted by the village founders, has stood for two hundred years.
+  - Rejected alternative: The oak tree which, was planted by the village founders, has stood for two hundred years.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option correctly adds a relative clause as parenthesis with commas? The..." → correct
+  - Feedback: A non-defining relative clause adds extra information about a specific noun and needs commas at b...
+- Seed 2: "Which option correctly punctuates the non-defining relative clause as parenth..." → correct
+  - Feedback: The relative clause 'who teaches Year 6' is extra information about Mrs Patel. It needs a comma b...
+- Seed 3: "Which option correctly uses commas around the relative clause as parenthesis?..." → correct
+  - Feedback: The relative clause adds extra information about the Thames. It is parenthetical, so both commas ...
+
+### `qg_p4_verb_form_register_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect, modal_verbs, standard_english'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: Your child will need a packed lunch and should wear comfortable shoes.
+  - Rejected alternative: Your child will need a packed lunch and must of worn comfortable shoes.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option uses the correct tense, an appropriate modal verb, AND Standard ..." → correct
+  - Feedback: The future tense ('will need') matches the upcoming trip. 'Should wear' is a suitable modal for a...
+- Seed 2: "Which option combines the correct past tense, a modal showing possibility, AN..." → correct
+  - Feedback: Past tense ('changed') matches yesterday. 'Could indicate' shows possibility. 'Could of' is non-s...
+- Seed 3: "Which option uses the present perfect tense, a modal of certainty, AND Standa..." → correct
+  - Feedback: Present perfect ('has been found') shows the action is relevant now. 'Must belong' expresses cert...
+
+### `qg_p4_cohesion_formality_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'pronouns_cohesion, formality'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The council has approved the plans. It will begin work in September.
+  - Rejected alternative: The council has approved the plans. Them lot will begin work in September.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option replaces the repeated noun with a pronoun AND maintains formal r..." → correct
+  - Feedback: 'It' avoids repetition of 'the council' (cohesion) while keeping the formal tone. 'They're gonna'...
+- Seed 2: "Which option improves cohesion AND keeps the writing formal? The museum opens..." → correct
+  - Feedback: Joining the clauses avoids repeating 'The museum' (cohesion) and keeps formal vocabulary ('closes...
+- Seed 3: "Which option uses a pronoun for cohesion AND keeps formal vocabulary? Dr Pate..." → correct
+  - Feedback: 'She then explained' uses a pronoun to avoid repetition (cohesion) while maintaining formal langu...
+
+### `qg_p4_voice_roles_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds produce a valid table with unambiguous row answers
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive, subject_object'
+- **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: The sentence is passive because the action is done TO the trophy. In a passive sentence, the thin...
+- Seed 2: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: The sentence is active because the doer ('the goalkeeper') comes first and does the action. 'The ...
+- Seed 3: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: This is passive voice: the thing affected ('the cake') has been moved to the subject position. Ev...
+- Seed 4: "Identify the voice and the grammatical role of the underlined noun phrase. Le..." → correct
+  - Feedback: The sentence is active because the doer ('Lena') performs the action. 'The scenery' receives the ...
+- Seed 5: "Identify the voice and the grammatical role of the underlined noun phrase. Th..." → correct
+  - Feedback: This is passive voice: the affected thing ('the windows') is the grammatical subject. The doer ('...
+
+### `qg_p4_possession_hyphen_clarity_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession, hyphen_ambiguity'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option correctly uses both the possessive apostrophe AND a hyphen to av..." → correct
+  - Feedback: A hyphen in 'well-known' links the compound adjective before the noun, avoiding the misreading 'w...
+- Seed 2: "Which option uses the apostrophe for possession AND the hyphen to clarify mea..." → correct
+  - Feedback: 'Children's' uses an apostrophe before 's' because 'children' is an irregular plural. 'Long-await...
+- Seed 3: "Which option correctly shows plural possession AND uses a hyphen to avoid mis..." → correct
+  - Feedback: 'Players'' has the apostrophe after the 's' because multiple players own the medals (plural posse...
+
+### `qg_p14_standard_english_diagnostic_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which correction fixes the Standard English error in this sentence? Ben done ..." → correct
+  - Feedback: Standard English uses 'did' for this simple past verb form.
+- Seed 2: "Which correction fixes the Standard English error in this sentence? Cara don'..." → correct
+  - Feedback: A singular subject takes 'doesn't' in Standard English.
+- Seed 3: "Which correction fixes the Standard English error in this sentence? Dylan see..." → correct
+  - Feedback: The simple past form here is 'saw'.
+
+### `qg_p14_standard_english_constructed_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Rewrite this sentence in Standard English: Ben done the library pass before tea." → correct
+  - Feedback: Standard English uses 'did' for this simple past verb form.
+- Seed 2: "Rewrite this sentence in Standard English: Cara don't know where the meeting ..." → correct
+  - Feedback: A singular subject takes 'doesn't' in Standard English.
+- Seed 3: "Rewrite this sentence in Standard English: Dylan seen the sports bib behind t..." → correct
+  - Feedback: The simple past form here is 'saw'.
+- Seed 4: "Rewrite this sentence in Standard English: The players was waiting next to th..." → correct
+  - Feedback: A plural subject takes 'were' in Standard English.
+- Seed 5: "Rewrite this sentence in Standard English: Freya done the blue lantern before..." → correct
+  - Feedback: Standard English uses 'did' for this simple past verb form.
+
+### `qg_p14_standard_english_explain_why`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is this sentence Standard English? Ben did the library pass before tea." → correct
+  - Feedback: Standard English uses 'did' for this simple past verb form.
+- Seed 2: "Why is this sentence Standard English? Cara doesn't know where the meeting po..." → correct
+  - Feedback: A singular subject takes 'doesn't' in Standard English.
+- Seed 3: "Why is this sentence Standard English? Dylan saw the sports bib behind the st..." → correct
+  - Feedback: The simple past form here is 'saw'.
+
+### `qg_p14_standard_english_mixed_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence would fit a formal school newsletter about this idea: Ben done..." → correct
+  - Feedback: Formal school writing needs the Standard English form. Standard English uses 'did' for this simpl...
+- Seed 2: "Which sentence would fit a formal school newsletter about this idea: Cara don..." → correct
+  - Feedback: Formal school writing needs the Standard English form. A singular subject takes 'doesn't' in Stan...
+- Seed 3: "Which sentence would fit a formal school newsletter about this idea: Dylan se..." → correct
+  - Feedback: Formal school writing needs the Standard English form. The simple past form here is 'saw'.
+
+### `qg_p14_fronted_adverbials_diagnostic_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence is punctuated correctly for this idea: Before the final bell +..." → correct
+  - Feedback: Only the fronted adverbial is separated from the main clause.
+- Seed 2: "Which sentence is punctuated correctly for this idea: During the storm + Frey..." → correct
+  - Feedback: Only the fronted adverbial is separated from the main clause.
+- Seed 3: "Which sentence is punctuated correctly for this idea: At the edge of the fiel..." → correct
+  - Feedback: Only the fronted adverbial is separated from the main clause.
+
+### `qg_p14_fronted_adverbials_constructed_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Add the missing comma after the fronted adverbial: Before the final bell Eli ..." → correct
+  - Feedback: A fronted adverbial normally takes a comma before the main clause.
+- Seed 2: "Add the missing comma after the fronted adverbial: During the storm Freya car..." → correct
+  - Feedback: A fronted adverbial normally takes a comma before the main clause.
+- Seed 3: "Add the missing comma after the fronted adverbial: At the edge of the field G..." → correct
+  - Feedback: A fronted adverbial normally takes a comma before the main clause.
+- Seed 4: "Add the missing comma after the fronted adverbial: With careful steps Hassan ..." → correct
+  - Feedback: A fronted adverbial normally takes a comma before the main clause.
+- Seed 5: "Add the missing comma after the fronted adverbial: Without any warning Imani ..." → correct
+  - Feedback: A fronted adverbial normally takes a comma before the main clause.
+
+### `qg_p14_fronted_adverbials_explain_why`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why does this sentence need a comma? Before the final bell, Eli carried the h..." → correct
+  - Feedback: The fronted adverbial comes before the main clause.
+- Seed 2: "Why does this sentence need a comma? During the storm, Freya carried the blue..." → correct
+  - Feedback: The fronted adverbial comes before the main clause.
+- Seed 3: "Why does this sentence need a comma? At the edge of the field, Grace carried ..." → correct
+  - Feedback: The fronted adverbial comes before the main clause.
+
+### `qg_p14_fronted_adverbials_mixed_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence uses both a fronted adverbial and a correct main clause for th..." → correct
+  - Feedback: The correct sentence has a fronted adverbial, comma, subject and verb.
+- Seed 2: "Which sentence uses both a fronted adverbial and a correct main clause for th..." → correct
+  - Feedback: The correct sentence has a fronted adverbial, comma, subject and verb.
+- Seed 3: "Which sentence uses both a fronted adverbial and a correct main clause for th..." → correct
+  - Feedback: The correct sentence has a fronted adverbial, comma, subject and verb.
+
+### `qg_p14_subject_object_diagnostic_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
+  - Accepted example: the clay model
+  - Rejected alternative: behind the stage curtain
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which words are the object in this sentence? Ben lifted the clay model behind..." → correct
+  - Feedback: The object receives the action of the verb.
+- Seed 2: "Which words are the subject in this sentence? Cara painted the library pass n..." → correct
+  - Feedback: The subject is the person or thing doing the action.
+- Seed 3: "Which words are the object in this sentence? Dylan cleaned the class trophy b..." → correct
+  - Feedback: The object receives the action of the verb.
+
+### `qg_p14_subject_object_constructed_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Type the object in this sentence: Ben lifted the clay model behind the stage ..." → correct
+  - Feedback: The object receives the action of the verb.
+- Seed 2: "Type the subject in this sentence: Cara painted the library pass next to the ..." → correct
+  - Feedback: The subject is the person or thing doing the action.
+- Seed 3: "Type the object in this sentence: Dylan cleaned the class trophy beside the c..." → correct
+  - Feedback: The object receives the action of the verb.
+- Seed 4: "Type the subject in this sentence: Eli carried the sports bib beside the hall..." → correct
+  - Feedback: The subject is the person or thing doing the action.
+- Seed 5: "Type the object in this sentence: Freya opened the history poster near the ol..." → correct
+  - Feedback: The object receives the action of the verb.
+
+### `qg_p14_subject_object_explain_why`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
+  - Accepted example: The object receives the action of the verb.
+  - Rejected alternative: It tells where the action happens.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is 'the clay model' the object in this sentence? Ben lifted the clay mode..." → correct
+  - Feedback: The object receives the action of the verb.
+- Seed 2: "Why is 'Cara' the subject in this sentence? Cara painted the library pass nex..." → correct
+  - Feedback: The subject is the person or thing doing the action.
+- Seed 3: "Why is 'the class trophy' the object in this sentence? Dylan cleaned the clas..." → correct
+  - Feedback: The object receives the action of the verb.
+
+### `qg_p14_subject_object_mixed_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
+  - Accepted example: subject: Ben; object: the clay model
+  - Rejected alternative: subject: Ben; object: lifted
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "In the sentence 'Ben lifted the clay model behind the stage curtain.', which ..." → correct
+  - Feedback: Ben does the action and the clay model receives it.
+- Seed 2: "In the sentence 'Cara painted the library pass next to the art cupboard.', wh..." → correct
+  - Feedback: Cara does the action and the library pass receives it.
+- Seed 3: "In the sentence 'Dylan cleaned the class trophy beside the coach bay.', which..." → correct
+  - Feedback: Dylan does the action and the class trophy receives it.
+
+### `qg_p14_subordinate_clauses_diagnostic_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: although the path was muddy
+  - Rejected alternative: the recipe card
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which part is the subordinate clause? Although the path was muddy, Freya chec..." → correct
+  - Feedback: The subordinate clause begins with the subordinating conjunction and depends on the main clause.
+- Seed 2: "Which part is the subordinate clause? When the whistle blew, Grace checked th..." → correct
+  - Feedback: The subordinate clause begins with the subordinating conjunction and depends on the main clause.
+- Seed 3: "Which part is the subordinate clause? If the coach agreed, Hassan checked the..." → correct
+  - Feedback: The subordinate clause begins with the subordinating conjunction and depends on the main clause.
+
+### `qg_p14_subordinate_clauses_constructed_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Combine the clauses with the subordinate clause first: Freya checked the reci..." → correct
+  - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
+- Seed 2: "Combine the clauses with the subordinate clause first: Grace checked the play..." → correct
+  - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
+- Seed 3: "Combine the clauses with the subordinate clause first: Hassan checked the sci..." → correct
+  - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
+- Seed 4: "Combine the clauses with the subordinate clause first: Imani checked the red ..." → correct
+  - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
+- Seed 5: "Combine the clauses with the subordinate clause first: Jasper checked the cla..." → correct
+  - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
+
+### `qg_p14_subordinate_clauses_explain_why`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
+  - Accepted example: It depends on the main clause to complete the meaning.
+  - Rejected alternative: It is subordinate because it is the longest part.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is 'although the path was muddy' a subordinate clause in this sentence? A..." → correct
+  - Feedback: A subordinate clause adds information but depends on a main clause.
+- Seed 2: "Why is 'when the whistle blew' a subordinate clause in this sentence? When th..." → correct
+  - Feedback: A subordinate clause adds information but depends on a main clause.
+- Seed 3: "Why is 'if the coach agreed' a subordinate clause in this sentence? If the co..." → correct
+  - Feedback: A subordinate clause adds information but depends on a main clause.
+
+### `qg_p14_subordinate_clauses_mixed_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: Although the path was muddy, Freya checked the recipe card.
+  - Rejected alternative: although the path was muddy.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence uses a subordinate clause and correct comma placement for thes..." → correct
+  - Feedback: The subordinate clause comes first and is separated from the main clause.
+- Seed 2: "Which sentence uses a subordinate clause and correct comma placement for thes..." → correct
+  - Feedback: The subordinate clause comes first and is separated from the main clause.
+- Seed 3: "Which sentence uses a subordinate clause and correct comma placement for thes..." → correct
+  - Feedback: The subordinate clause comes first and is separated from the main clause.
+
+### `qg_p14_tense_aspect_diagnostic_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence uses the verb form correctly for Dylan, the class trophy, and ..." → correct
+  - Feedback: A finished past time signal needs the simple past form.
+- Seed 2: "Which sentence uses the verb form correctly for Eli, the sports bib, and the ..." → correct
+  - Feedback: The past perfect shows an action completed before another past event.
+- Seed 3: "Which sentence uses the verb form correctly for Freya, the history poster, an..." → correct
+  - Feedback: The present perfect links an earlier action to the present.
+
+### `qg_p14_tense_aspect_constructed_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Correct the verb form: Dylan has finished the class trophy yesterday." → correct
+  - Feedback: A finished past time signal needs the simple past form.
+- Seed 2: "Correct the verb form: Eli chose the sports bib by the time the bell rang." → correct
+  - Feedback: The past perfect shows an action completed before another past event.
+- Seed 3: "Correct the verb form: Freya wrote the history poster since Monday." → correct
+  - Feedback: The present perfect links an earlier action to the present.
+- Seed 4: "Correct the verb form: Grace has broken the blue lantern last week." → correct
+  - Feedback: A finished past time signal needs the simple past form.
+- Seed 5: "Correct the verb form: Hassan hid the recipe card just." → correct
+  - Feedback: The present perfect links an earlier action to the present.
+
+### `qg_p14_tense_aspect_explain_why`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is 'finished' the best verb form here? Dylan finished the class trophy ye..." → correct
+  - Feedback: A finished past time signal needs the simple past form.
+- Seed 2: "Why is 'had chosen' the best verb form here? Eli had chosen the sports bib by..." → correct
+  - Feedback: The past perfect shows an action completed before another past event.
+- Seed 3: "Why is 'has written' the best verb form here? Freya has written the history p..." → correct
+  - Feedback: The present perfect links an earlier action to the present.
+
+### `qg_p14_tense_aspect_mixed_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the verb form that fits the time signal in this sentence: Dylan ___ th..." → correct
+  - Feedback: A finished past time signal needs the simple past form.
+- Seed 2: "Choose the verb form that fits the time signal in this sentence: Eli ___ the ..." → correct
+  - Feedback: The past perfect shows an action completed before another past event.
+- Seed 3: "Choose the verb form that fits the time signal in this sentence: Freya ___ th..." → correct
+  - Feedback: The present perfect links an earlier action to the present.
+
+### `qg_p14_speech_punctuation_diagnostic_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which version punctuates Cara's direct speech correctly: Our team won the relay?" → correct
+  - Feedback: The spoken words are enclosed in speech marks and the comma sits inside them.
+- Seed 2: "Which version punctuates Dylan's direct speech correctly: The model needs mor..." → correct
+  - Feedback: The spoken words are enclosed in speech marks and the comma sits inside them.
+- Seed 3: "Which version punctuates Eli's direct speech correctly: I can hear thunder?" → correct
+  - Feedback: The spoken words are enclosed in speech marks and the comma sits inside them.
+
+### `qg_p14_speech_punctuation_constructed_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Add the missing speech marks and comma: Our team won the relay, Cara said." → correct
+  - Feedback: The spoken words need speech marks, and the comma belongs inside the closing speech mark.
+- Seed 2: "Add the missing speech marks and comma: The model needs more paint, Dylan said." → correct
+  - Feedback: The spoken words need speech marks, and the comma belongs inside the closing speech mark.
+- Seed 3: "Add the missing speech marks and comma: I can hear thunder, Eli said." → correct
+  - Feedback: The spoken words need speech marks, and the comma belongs inside the closing speech mark.
+- Seed 4: "Add the missing speech marks and comma: The trip starts tomorrow, Freya said." → correct
+  - Feedback: The spoken words need speech marks, and the comma belongs inside the closing speech mark.
+- Seed 5: "Add the missing speech marks and comma: We should leave now, Grace said." → correct
+  - Feedback: The spoken words need speech marks, and the comma belongs inside the closing speech mark.
+
+### `qg_p14_speech_punctuation_explain_why`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is the comma inside the speech marks here? "Our team won the relay," Cara..." → correct
+  - Feedback: Speech punctuation keeps the spoken words inside the speech marks.
+- Seed 2: "Why is the comma inside the speech marks here? "The model needs more paint," ..." → correct
+  - Feedback: Speech punctuation keeps the spoken words inside the speech marks.
+- Seed 3: "Why is the comma inside the speech marks here? "I can hear thunder," Eli said." → correct
+  - Feedback: Speech punctuation keeps the spoken words inside the speech marks.
+
+### `qg_p14_speech_punctuation_mixed_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence correctly punctuates Cara's spoken question: Can you hear thun..." → correct
+  - Feedback: The question mark belongs inside the speech marks when the spoken words are a question.
+- Seed 2: "Which sentence correctly punctuates Dylan's spoken question: Does the trip st..." → correct
+  - Feedback: The question mark belongs inside the speech marks when the spoken words are a question.
+- Seed 3: "Which sentence correctly punctuates Eli's spoken question: Should we leave now?" → correct
+  - Feedback: The question mark belongs inside the speech marks when the spoken words are a question.
+
+### `qg_p14_expanded_noun_phrases_diagnostic_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option is the full expanded noun phrase in this sentence? The cracked c..." → correct
+  - Feedback: The whole noun phrase includes the noun and the words that belong with it.
+- Seed 2: "Which option is the full expanded noun phrase in this sentence? The tiny wood..." → correct
+  - Feedback: The whole noun phrase includes the noun and the words that belong with it.
+- Seed 3: "Which option is the full expanded noun phrase in this sentence? The heavy sch..." → correct
+  - Feedback: The whole noun phrase includes the noun and the words that belong with it.
+
+### `qg_p14_expanded_noun_phrases_constructed_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Type the expanded noun phrase from this sentence: The cracked ceramic kite be..." → correct
+  - Feedback: The full phrase is centred on the noun and includes its modifiers.
+- Seed 2: "Type the expanded noun phrase from this sentence: The tiny wooden badge besid..." → correct
+  - Feedback: The full phrase is centred on the noun and includes its modifiers.
+- Seed 3: "Type the expanded noun phrase from this sentence: The heavy school painting n..." → correct
+  - Feedback: The full phrase is centred on the noun and includes its modifiers.
+- Seed 4: "Type the expanded noun phrase from this sentence: The silver glass glove insi..." → correct
+  - Feedback: The full phrase is centred on the noun and includes its modifiers.
+- Seed 5: "Type the expanded noun phrase from this sentence: The muddy festival rucksack..." → correct
+  - Feedback: The full phrase is centred on the noun and includes its modifiers.
+
+### `qg_p14_expanded_noun_phrases_explain_why`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why is 'the cracked ceramic kite beside the coach bay' an expanded noun phrase?" → correct
+  - Feedback: An expanded noun phrase adds detail to the noun.
+- Seed 2: "Why is 'the tiny wooden badge beside the hall doors' an expanded noun phrase?" → correct
+  - Feedback: An expanded noun phrase adds detail to the noun.
+- Seed 3: "Why is 'the heavy school painting near the old oak tree' an expanded noun phr..." → correct
+  - Feedback: An expanded noun phrase adds detail to the noun.
+
+### `qg_p14_expanded_noun_phrases_mixed_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence uses the expanded noun phrase 'the cracked ceramic kite beside..." → correct
+  - Feedback: The expanded noun phrase comes before the verb and works as the subject.
+- Seed 2: "Which sentence uses the expanded noun phrase 'the tiny wooden badge beside th..." → correct
+  - Feedback: The expanded noun phrase comes before the verb and works as the subject.
+- Seed 3: "Which sentence uses the expanded noun phrase 'the heavy school painting near ..." → correct
+  - Feedback: The expanded noun phrase comes before the verb and works as the subject.
+
+### `qg_p14_parenthesis_commas_diagnostic_choice`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence uses commas for parenthesis correctly around 'which everyone r..." → correct
+  - Feedback: Both sides of the parenthesis need a comma.
+- Seed 2: "Which sentence uses commas for parenthesis correctly around 'a present for th..." → correct
+  - Feedback: Both sides of the parenthesis need a comma.
+- Seed 3: "Which sentence uses commas for parenthesis correctly around 'which had been m..." → correct
+  - Feedback: Both sides of the parenthesis need a comma.
+
+### `qg_p14_parenthesis_commas_constructed_rewrite`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..15
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** Constructed-response: no distractors (free text input)
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Add the missing pair of commas around the parenthesis: Imani found the scienc..." → correct
+  - Feedback: The extra information is parenthesis, so paired commas show it can be lifted out.
+- Seed 2: "Add the missing pair of commas around the parenthesis: Jasper found the red k..." → correct
+  - Feedback: The extra information is parenthesis, so paired commas show it can be lifted out.
+- Seed 3: "Add the missing pair of commas around the parenthesis: Keira found the clay m..." → correct
+  - Feedback: The extra information is parenthesis, so paired commas show it can be lifted out.
+- Seed 4: "Add the missing pair of commas around the parenthesis: Luca found the library..." → correct
+  - Feedback: The extra information is parenthesis, so paired commas show it can be lifted out.
+- Seed 5: "Add the missing pair of commas around the parenthesis: Maya found the class t..." → correct
+  - Feedback: The extra information is parenthesis, so paired commas show it can be lifted out.
+
+### `qg_p14_parenthesis_commas_explain_why`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Why are paired commas used here? Imani found the science folder, which everyo..." → correct
+  - Feedback: Parenthesis adds removable extra information.
+- Seed 2: "Why are paired commas used here? Jasper found the red kite, a present for the..." → correct
+  - Feedback: Parenthesis adds removable extra information.
+- Seed 3: "Why are paired commas used here? Keira found the clay model, which had been m..." → correct
+  - Feedback: Parenthesis adds removable extra information.
+
+### `qg_p14_parenthesis_commas_mixed_transfer`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence keeps its meaning if the parenthesis 'which everyone recognise..." → correct
+  - Feedback: The paired commas surround the removable extra information.
+- Seed 2: "Which sentence keeps its meaning if the parenthesis 'a present for the visito..." → correct
+  - Feedback: The paired commas surround the removable extra information.
+- Seed 3: "Which sentence keeps its meaning if the parenthesis 'which had been missing a..." → correct
+  - Feedback: The paired commas surround the removable extra information.

@@ -83,14 +83,14 @@ describe('Grammar QG P12 manifest shape', () => {
   it('--phase CLI arg overrides default certificationPhase', () => {
     const tmpDir = mkdtempSync(path.join(os.tmpdir(), 'grammar-qg-manifest-'));
     try {
-      execSync(`node "${GENERATOR_SCRIPT}" --phase=grammar-qg-p99 --output-dir="${tmpDir}"`, { cwd: ROOT_DIR });
+      execSync(`node "${GENERATOR_SCRIPT}" --phase=grammar-qg-p99 --release=grammar-qg-p11-2026-04-30 --output-dir="${tmpDir}"`, { cwd: ROOT_DIR });
 
       // The manifest filename is derived from content release, not the phase override.
       const generatedPath = path.join(tmpDir, 'grammar-qg-p11-certification-manifest.json');
       const regenManifest = JSON.parse(fs.readFileSync(generatedPath, 'utf8'));
       assert.equal(regenManifest.certificationPhase, 'grammar-qg-p99');
 
-      execSync(`node "${GENERATOR_SCRIPT}" --phase=grammar-qg-p12 --output-dir="${tmpDir}"`, { cwd: ROOT_DIR });
+      execSync(`node "${GENERATOR_SCRIPT}" --phase=grammar-qg-p12 --release=grammar-qg-p11-2026-04-30 --output-dir="${tmpDir}"`, { cwd: ROOT_DIR });
       const restored = JSON.parse(fs.readFileSync(generatedPath, 'utf8'));
       assert.equal(restored.certificationPhase, 'grammar-qg-p12');
     } finally {

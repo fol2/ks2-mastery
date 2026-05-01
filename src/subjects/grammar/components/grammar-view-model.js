@@ -146,7 +146,7 @@ export const GRAMMAR_BANK_CLUSTER_FILTER_IDS = Object.freeze(new Set([
 // and must not mention any forbidden term.
 export const GRAMMAR_DASHBOARD_HERO = Object.freeze({
   title: 'Grammar Garden',
-  subtitle: "One short round. Fix tricky sentences. Grow your Grammar creatures.",
+  subtitle: 'Choose quick practice, deep practice, or a mini-test. Grow your Grammar creatures with real variety.',
 });
 
 // Hero copy for the Grammar Bank scene. Child-facing only — kept frozen so

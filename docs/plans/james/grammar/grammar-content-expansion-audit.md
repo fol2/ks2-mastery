@@ -5,15 +5,15 @@ status: p5-updated
 date: 2026-04-28
 plan: docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md
 unit: U12
-contentReleaseId: grammar-qg-p11-2026-04-30
+contentReleaseId: grammar-qg-p14-2026-05-01
 contentReleaseBump: yes
 ---
 
 # Grammar content-expansion audit (Phase 5 backlog)
 
-This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the P1 generator expansion that landed six focused generated templates, the P2 constructed-response marking migration that made the 57-template release fully declarative, and the P3 explanation-depth expansion that adds 13 selected-response explanation templates. The current `GRAMMAR_CONTENT_RELEASE_ID` is `grammar-qg-p5-2026-04-28`; the legacy, QG P1, and QG P2 fixtures remain frozen for historical compatibility checks.
+This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the QG lineage through P14: P1 generator expansion, P2 declarative constructed-response marking, P3 explanation breadth, P4 mixed-transfer coverage, P5/P6 depth and stability hardening, P8-P11 production-certification content and delivery work, P12/P13 evidence/certification locks, and P14 learner-variety expansion. The current `GRAMMAR_CONTENT_RELEASE_ID` is `grammar-qg-p14-2026-05-01`; historical fixtures remain frozen for compatibility checks rather than being overwritten.
 
-The audit is produced by reading `worker/src/subjects/grammar/content.js` at the current Grammar content release id and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 70 templates in the audited pool.
+The audit is produced by reading `worker/src/subjects/grammar/content.js` at the current Grammar content release id and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 110 distinct templates in the audited pool: 82 selected-response, 28 constructed-response, 84 generated, and 26 fixed.
 
 An executable generator audit now backs this document:
 
@@ -44,24 +44,24 @@ Each concept row records the eight audit fields required by the Phase 4 plan (`�
 
 | Concept id | Templates | Types present | Types absent | Misconceptions covered | SR / CR | Thin-pool | Priority |
 |---|---|---|---|---|---|---|---|
-| sentence_functions | 4 | classify, identify, choose, explain | fill, fix, rewrite, build | sentence_function_confusion | 4 / 0 | false | low |
-| word_classes | 4 | identify, choose, explain | classify, fill, fix, rewrite, build | word_class_confusion | 4 / 0 | false | low |
-| noun_phrases | 4 | choose, build, explain | classify, identify, fill, fix, rewrite | noun_phrase_confusion | 2 / 2 | false | low |
-| adverbials | 5 | choose, fix, explain, build | classify, identify, fill, rewrite | fronted_adverbial_confusion | 2 / 3 | false | low |
-| clauses | 4 | identify, rewrite, explain | classify, choose, fill, fix, build | subordinate_clause_confusion | 2 / 2 | false | low |
-| relative_clauses | 4 | choose, build, identify, explain | classify, fill, fix, rewrite | relative_clause_confusion | 4 / 0 | false | low |
-| tense_aspect | 4 | fill, rewrite, explain | classify, identify, choose, fix, build | tense_confusion | 3 / 1 | false | low |
-| standard_english | 5 | choose, explain, fix | classify, identify, fill, rewrite, build | standard_english_confusion | 3 / 2 | false | low |
-| pronouns_cohesion | 4 | choose, identify, explain | classify, fill, fix, rewrite, build | pronoun_cohesion_confusion | 4 / 0 | false | high |
-| formality | 4 | choose, classify, explain | identify, fill, fix, rewrite, build | formality_confusion | 4 / 0 | false | high |
-| active_passive | 4 | rewrite, choose, explain | classify, identify, fill, fix, build | active_passive_confusion | 2 / 2 | false | high |
-| subject_object | 4 | identify, classify, explain | choose, fill, fix, rewrite, build | subject_object_confusion | 4 / 0 | false | high |
-| modal_verbs | 3 | choose, explain, fill | classify, identify, fix, rewrite, build | modal_verb_confusion | 3 / 0 | false | high |
-| parenthesis_commas | 4 | choose, fix, explain | classify, identify, fill, rewrite, build | parenthesis_confusion | 2 / 2 | false | low |
-| speech_punctuation | 4 | identify, fix, explain | classify, choose, fill, rewrite, build | speech_punctuation_confusion | 2 / 2 | false | low |
-| apostrophes_possession | 4 | choose, explain, rewrite | classify, identify, fill, fix, build | apostrophe_possession_confusion | 3 / 1 | false | low |
-| boundary_punctuation | 4 | choose, fix, explain | classify, identify, fill, rewrite, build | boundary_punctuation_confusion | 2 / 2 | false | low |
-| hyphen_ambiguity | 3 | choose, explain, fix | classify, identify, fill, rewrite, build | hyphen_ambiguity_confusion | 2 / 1 | false | high |
+| sentence_functions | 5 | classify, identify, choose, explain | fill, fix, rewrite, build | sentence_function_confusion | 5 / 0 | false | low |
+| word_classes | 5 | classify, identify, choose, explain | fill, fix, rewrite, build | word_class_confusion | 5 / 0 | false | low |
+| noun_phrases | 9 | classify, choose, rewrite, build, explain | identify, fill, fix | noun_phrase_confusion | 6 / 3 | false | low |
+| adverbials | 10 | choose, fix, rewrite, build, explain | classify, identify, fill | fronted_adverbial_confusion | 6 / 4 | false | low |
+| clauses | 9 | identify, choose, rewrite, explain | classify, fill, fix, build | subordinate_clause_confusion | 6 / 3 | false | low |
+| relative_clauses | 5 | identify, choose, build, explain | classify, fill, fix, rewrite | relative_clause_confusion | 5 / 0 | false | low |
+| tense_aspect | 9 | choose, fill, rewrite, explain | classify, identify, fix, build | tense_confusion | 7 / 2 | false | low |
+| standard_english | 10 | choose, fix, rewrite, explain | classify, identify, fill, build | standard_english_confusion | 7 / 3 | false | low |
+| pronouns_cohesion | 5 | identify, choose, explain | classify, fill, fix, rewrite, build | pronoun_cohesion_confusion | 5 / 0 | false | high |
+| formality | 5 | classify, choose, explain | identify, fill, fix, rewrite, build | formality_confusion | 5 / 0 | false | high |
+| active_passive | 5 | classify, choose, rewrite, explain | identify, fill, fix, build | active_passive_confusion | 3 / 2 | false | high |
+| subject_object | 9 | classify, identify, choose, rewrite, explain | fill, fix, build | subject_object_confusion | 8 / 1 | false | high |
+| modal_verbs | 4 | choose, fill, explain | classify, identify, fix, rewrite, build | modal_verb_confusion | 4 / 0 | false | high |
+| parenthesis_commas | 9 | choose, fix, rewrite, explain | classify, identify, fill, build | parenthesis_confusion | 6 / 3 | false | low |
+| speech_punctuation | 9 | identify, choose, fix, rewrite, explain | classify, fill, build | speech_punctuation_confusion | 6 / 3 | false | low |
+| apostrophes_possession | 5 | choose, rewrite, explain | classify, identify, fill, fix, build | apostrophe_possession_confusion | 4 / 1 | false | low |
+| boundary_punctuation | 5 | choose, fix, explain | classify, identify, fill, rewrite, build | boundary_punctuation_confusion | 3 / 2 | false | low |
+| hyphen_ambiguity | 4 | choose, fix, explain | classify, identify, fill, rewrite, build | hyphen_ambiguity_confusion | 3 / 1 | false | high |
 
 Row count: **18**. Thin-pool rows where the flag is `true`: **0**. The six P1 focus concepts (`pronouns_cohesion`, `formality`, `active_passive`, `subject_object`, `modal_verbs`, `hyphen_ambiguity`) are no longer thin-pool but stay priority `high`.
 
@@ -79,8 +79,9 @@ Before P1, two concepts were both at the two-template floor and limited to a sin
 | `active_passive_rewrite` | rewrite | constructed (textarea) |
 | `proc2_passive_to_active` | rewrite | constructed (textarea) |
 | `qg_p3_active_passive_explain` | explain | selected (single_choice) |
+| `qg_p4_voice_roles_transfer` | classify | selected (table_choice) |
 
-The new generated selected-response entry point lets a learner practise the concept before moving into rewrite-heavy work.
+The generated selected-response entry point lets a learner practise the concept before moving into rewrite-heavy work. P4 also added cross-concept voice/role transfer, so the current table has four active question-type families.
 
 ### `subject_object` — now `classify` + `identify` + `explain`
 
@@ -90,8 +91,13 @@ The new generated selected-response entry point lets a learner practise the conc
 | `subject_object_choice` | identify | selected (single_choice) |
 | `proc2_subject_object_identify` | identify | selected (single_choice) |
 | `qg_p3_subject_object_explain` | explain | selected (single_choice) |
+| `qg_p14_subject_object_diagnostic_choice` | choose | selected (single_choice) |
+| `qg_p14_subject_object_constructed_rewrite` | rewrite | constructed (textarea) |
+| `qg_p14_subject_object_explain_why` | explain | selected (single_choice) |
+| `qg_p14_subject_object_mixed_transfer` | classify | selected (table_choice) |
+| `qg_p4_voice_roles_transfer` | classify | selected (table_choice) |
 
-The new classify-table variant still stays deterministic and selected-response, but it changes the learner task from one named sentence to per-row role classification.
+The classify-table variant still stays deterministic and selected-response, but it changes the learner task from one named sentence to per-row role classification. P14 adds misconception-choice, constructed rewrite, explain-why and mixed-transfer coverage for the same concept.
 
 ---
 
@@ -122,7 +128,7 @@ QG P3 closes the breadth gap by adding 13 deterministic selected-response explan
 - `qg_p3_speech_punctuation_explain`
 - `qg_p3_apostrophe_possession_explain`
 
-Every Grammar concept now has at least one explanation template. Future phases can still deepen explanation variety, but the cross-cutting P3 breadth gate is complete. Priority: **high**.
+Every Grammar concept now has at least one explanation template. P14 deepens eight priority concepts with dedicated `explain_why` templates, lifting the live explain-template count to 25. Future phases can still deepen explanation variety, but the cross-cutting P3 breadth gate remains complete. Priority: **high**.
 
 ---
 
@@ -182,7 +188,7 @@ Each P1 focus concept below keeps five proposed follow-up templates. P1 has alre
 
 ## Release-id discipline
 
-Every future proposal above is a content-release candidate. P1 touched `content.js`, added generated templates with typed `answerSpec`, and bumped `GRAMMAR_CONTENT_RELEASE_ID` to `grammar-qg-p1-2026-04-28`. P2 kept the same 57-template denominator, migrated every constructed-response template to explicit declarative marking, and bumped the active release id to `grammar-qg-p2-2026-04-28`. P3 expands the pool to 70 templates and bumps the active release id to `grammar-qg-p3-2026-04-28`. The previous `grammar-legacy-reviewed-2026-04-24`, QG P1, and QG P2 baselines remain frozen rather than overwritten.
+Every future proposal above is a content-release candidate. P1 touched `content.js`, added generated templates with typed `answerSpec`, and bumped `GRAMMAR_CONTENT_RELEASE_ID` to `grammar-qg-p1-2026-04-28`. P2 kept the same 57-template denominator, migrated every constructed-response template to explicit declarative marking, and bumped the active release id to `grammar-qg-p2-2026-04-28`. P3 expanded the pool to 70 templates, P4 added mixed transfer, P5/P6 hardened depth and wording, P8-P11 completed certification-facing content changes, P12/P13 froze certification evidence for P11, and P14 expands learner variety to 110 templates under `grammar-qg-p14-2026-05-01`. Historical baselines remain frozen rather than overwritten.
 
 When a later phase lands any of the remaining proposals, the PR author must:
 
@@ -206,22 +212,28 @@ When a later phase lands any of the remaining proposals, the PR author must:
 ## Audit completeness cross-check
 
 - Every template id enumerated in the new-template-ideas section is **new** (does not already appear in `GRAMMAR_TEMPLATES`). The lone exception is `subject_object_choice`, which is a proposed future template id that happens to collide with an existing id; the implementer must rename the new proposal (suggested: `subject_object_choose_between`) before shipping. The audit keeps the current name to preserve reviewer recognition.
-- The original Phase 4 scope-lock claim was 51 templates across 18 concepts. P1 added six generated templates, P2 migrated marking without changing the denominator, and P3 adds 13 selected-response explanation templates, so the current pool is 70 distinct templates.
-- The 18 rows in the concept table now sum to 72 template-concept pair-assignments. Two templates map to two concepts each (`question_mark_select` on `sentence_functions` + `speech_punctuation`; `explain_reason_choice` on `adverbials` + `standard_english`), so 70 distinct templates inflate to 72 pair-assignments.
-- Current aggregate counts (50 SR + 20 CR = 70) describe **distinct templates**, not pair-assignments. The SR column in the table above sums to 52 (not 50) because the two multi-concept templates are both SR and therefore counted in two rows.
+- The original Phase 4 scope-lock claim was 51 templates across 18 concepts. P14's current pool is 110 distinct templates: 82 selected-response and 28 constructed-response.
+- The 18 rows in the concept table now sum to 122 template-concept pair-assignments. Ten templates map to multiple concepts: `question_mark_select`, `explain_reason_choice`, and eight P4 mixed-transfer templates.
+- Current aggregate counts (82 SR + 28 CR = 110) describe **distinct templates**, not pair-assignments. The SR column in the table above sums to 94 because multi-concept selected-response templates are counted once per concept row.
 
 ---
 
 ## Summary counts
 
 - Concepts audited: **18**
-- Templates audited: **70**
+- Templates audited: **110**
+- Generated templates: **84**
+- Fixed templates: **26**
+- Selected-response / constructed-response: **82 / 28**
+- Template-concept pair-assignments: **122**
 - Thin-pool concepts (ground truth): **0**
 - Former single-question-type thin-pool concepts resolved in P1 and deepened in P3: **2** (`active_passive`, `subject_object`)
-- Concepts with an `explain` template today: **18 / 18**. Five concepts already had explain coverage before P3; P3 adds coverage for the remaining 13 concepts.
+- Concepts with an `explain` template today: **18 / 18**. Five concepts already had explain coverage before P3; P3 adds coverage for the remaining 13 concepts; P14 deepens eight priority concepts with misconception-grounded `explain_why` variants.
+- Mixed-transfer templates: **16**, covering **18 / 18** concepts.
+- Low-depth generated families below the live diversity floor: **0**.
 - Future template ideas proposed: **30** (five per P1 focus concept × six concepts)
 - Phase 5 release-id bumps implied (one per new-template PR landed, assuming each ships atomically): up to **30**
-- `contentReleaseId` bumps produced by QG work so far: **3** (`grammar-qg-p1-2026-04-28`, `grammar-qg-p2-2026-04-28`, `grammar-qg-p3-2026-04-28`)
+- Current QG content release: **`grammar-qg-p14-2026-05-01`**
 
 ---
 
@@ -230,5 +242,5 @@ When a later phase lands any of the remaining proposals, the PR author must:
 - Plan: `docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md` §U12 (~line 929).
 - Invariants: `docs/plans/james/grammar/grammar-phase4-invariants.md`.
 - Answer-spec audit (sibling Phase 5 backlog): `docs/plans/james/grammar/grammar-answer-spec-audit.md`.
-- Content source: `worker/src/subjects/grammar/content.js` at `GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p3-2026-04-28'`.
+- Content source: `worker/src/subjects/grammar/content.js` at `GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p14-2026-05-01'`.
 - Concept list: `src/platform/game/mastery/grammar.js` — `GRAMMAR_AGGREGATE_CONCEPTS`.

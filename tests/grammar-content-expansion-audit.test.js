@@ -212,15 +212,16 @@ test('audit records active_passive and subject_object as P1-resolved brittle con
   assert.match(section, /qg_subject_object_classify_table/);
   assert.match(section, /qg_p3_subject_object_explain/);
 
-  // Double-check the concept table agrees: both concepts now have two
-  // question types present.
+  // Double-check the concept table agrees with the live P14 coverage, while
+  // preserving the P1 proof that both brittle concepts are no longer
+  // single-family pools.
   const rows = parseConceptTable(source);
   const ap = rows.find((row) => row.conceptId === 'active_passive');
   const so = rows.find((row) => row.conceptId === 'subject_object');
   assert.ok(ap, 'active_passive row missing.');
   assert.ok(so, 'subject_object row missing.');
-  assert.deepEqual(ap.typesPresent.slice().sort(), ['choose', 'explain', 'rewrite']);
-  assert.deepEqual(so.typesPresent.slice().sort(), ['classify', 'explain', 'identify']);
+  assert.deepEqual(ap.typesPresent.slice().sort(), ['choose', 'classify', 'explain', 'rewrite'].sort());
+  assert.deepEqual(so.typesPresent.slice().sort(), ['choose', 'classify', 'explain', 'identify', 'rewrite'].sort());
 });
 
 test('each P1 focus concept lists at least five future template ideas', () => {

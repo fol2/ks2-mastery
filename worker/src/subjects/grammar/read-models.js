@@ -212,6 +212,37 @@ function safeGoal(goal, now = Date.now()) {
   return output;
 }
 
+function safeVarietyTelemetry(raw) {
+  if (!isPlainObject(raw)) return null;
+  const elapsedByDepthType = {};
+  if (isPlainObject(raw.elapsedByDepthType)) {
+    for (const [depth, value] of Object.entries(raw.elapsedByDepthType)) {
+      if (!isPlainObject(value)) continue;
+      const attempts = Math.max(0, Math.floor(Number(value.attempts) || 0));
+      const totalElapsedMs = Math.max(0, Math.floor(Number(value.totalElapsedMs) || 0));
+      elapsedByDepthType[depth] = {
+        attempts,
+        totalElapsedMs,
+        averageElapsedMs: attempts > 0 ? Math.round(totalElapsedMs / attempts) : null,
+      };
+    }
+  }
+  return {
+    sessionDepthClassification: typeof raw.sessionDepthClassification === 'string'
+      ? raw.sessionDepthClassification
+      : 'quick-practice',
+    templateExposureCount: Math.max(0, Math.floor(Number(raw.templateExposureCount) || 0)),
+    sessionTemplateDuplicateCount: Math.max(0, Math.floor(Number(raw.sessionTemplateDuplicateCount) || 0)),
+    sessionUniqueTemplateCount: Math.max(0, Math.floor(Number(raw.sessionUniqueTemplateCount) || 0)),
+    sessionUniqueConceptCount: Math.max(0, Math.floor(Number(raw.sessionUniqueConceptCount) || 0)),
+    lowDiversityTemplateExposureCount: Math.max(0, Math.floor(Number(raw.lowDiversityTemplateExposureCount) || 0)),
+    inputTypeExposureCounts: isPlainObject(raw.inputTypeExposureCounts) ? cloneSerialisable(raw.inputTypeExposureCounts) : {},
+    templateInputTypeExposureCounts: isPlainObject(raw.templateInputTypeExposureCounts) ? cloneSerialisable(raw.templateInputTypeExposureCounts) : {},
+    elapsedByDepthType,
+    abandonRateByTemplateInputType: isPlainObject(raw.abandonRateByTemplateInputType) ? cloneSerialisable(raw.abandonRateByTemplateInputType) : {},
+  };
+}
+
 function safeSummary(summary) {
   if (!isPlainObject(summary)) return null;
   const answered = Number.isFinite(Number(summary.answered)) ? Number(summary.answered) : 0;
@@ -231,6 +262,10 @@ function safeSummary(summary) {
     totalMarks: Number.isFinite(Number(summary.totalMarks)) ? Number(summary.totalMarks) : 0,
     targetCount: Number.isFinite(Number(summary.targetCount)) ? Number(summary.targetCount) : 0,
     goal: safeGoal(summary.goal, summary.completedAt),
+    sessionDepthClassification: typeof summary.sessionDepthClassification === 'string'
+      ? summary.sessionDepthClassification
+      : '',
+    varietyTelemetry: safeVarietyTelemetry(summary.varietyTelemetry),
   };
   if (Object.prototype.hasOwnProperty.call(summary, 'timedOut')) {
     output.timedOut = Boolean(summary.timedOut);
@@ -425,6 +460,10 @@ function safeSession(session, now = Date.now()) {
     currentItem: safeCurrentItem(session.currentItem),
     goal: safeGoal(session.goal, now),
     miniTest: safeMiniTest(session.miniTest, now),
+    sessionDepthClassification: typeof session.varietyTelemetry?.sessionDepthClassification === 'string'
+      ? session.varietyTelemetry.sessionDepthClassification
+      : (typeof session.sessionDepthClassification === 'string' ? session.sessionDepthClassification : ''),
+    varietyTelemetry: safeVarietyTelemetry(session.varietyTelemetry),
     repair: isPlainObject(session.repair)
       ? {
         retryingCurrent: Boolean(session.repair.retryingCurrent),

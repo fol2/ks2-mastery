@@ -4,8 +4,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 
-import { GRAMMAR_TEMPLATE_METADATA } from '../worker/src/subjects/grammar/content.js';
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
 const REPORTS_DIR = path.resolve(ROOT_DIR, 'reports', 'grammar');
@@ -30,8 +28,7 @@ describe('P9 Inventory Manifest: item count', () => {
 });
 
 describe('P9 Inventory Manifest: templateDenominator', () => {
-  it('manifest templateDenominator matches actual GRAMMAR_TEMPLATE_METADATA length (78)', () => {
-    assert.equal(manifest.templateDenominator, GRAMMAR_TEMPLATE_METADATA.length);
+  it('manifest templateDenominator preserves the frozen P9 denominator (78)', () => {
     assert.equal(manifest.templateDenominator, 78);
   });
 

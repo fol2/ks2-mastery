@@ -329,9 +329,9 @@ test('parent hub read model includes Grammar evidence without replacing Spelling
   assert.equal(grammarDueWork.recommendedMode, 'trouble');
   assert.equal(model.grammarEvidence.weakConcepts[0].id, 'adverbials');
   assert.equal(model.grammarEvidence.questionTypeSummary[0].id, 'choose');
-  assert.equal(model.grammarEvidence.coverageDiagnostics.releaseId, 'grammar-qg-p6-2026-04-29');
-  assert.equal(model.grammarEvidence.coverageDiagnostics.templateCount, 78);
-  assert.equal(model.grammarEvidence.coverageDiagnostics.generatedTemplateCount, 52);
+  assert.equal(model.grammarEvidence.coverageDiagnostics.releaseId, 'grammar-qg-p14-2026-05-01');
+  assert.equal(model.grammarEvidence.coverageDiagnostics.templateCount, 110);
+  assert.equal(model.grammarEvidence.coverageDiagnostics.generatedTemplateCount, 84);
   assert.deepEqual(model.grammarEvidence.coverageDiagnostics.thinPoolWarnings, []);
   assert.equal(Object.hasOwn(model.grammarEvidence.coverageDiagnostics, 'answerSpec'), false);
   assert.equal(model.grammarEvidence.recentActivity[0].itemId, 'fronted-adverbial-choice:101');
@@ -1150,9 +1150,9 @@ test('hub coverage diagnostics include P4 template count', () => {
   });
 
   // P4 adds 8 mixed-transfer templates (6 choose + 2 classify) to the 70 P3 total
-  assert.equal(model.grammarEvidence.coverageDiagnostics.templateCount, 78);
-  assert.equal(model.grammarEvidence.coverageDiagnostics.generatedTemplateCount, 52);
-  assert.equal(model.grammarEvidence.coverageDiagnostics.releaseId, 'grammar-qg-p6-2026-04-29');
+  assert.equal(model.grammarEvidence.coverageDiagnostics.templateCount, 110);
+  assert.equal(model.grammarEvidence.coverageDiagnostics.generatedTemplateCount, 84);
+  assert.equal(model.grammarEvidence.coverageDiagnostics.releaseId, 'grammar-qg-p14-2026-05-01');
   // Ensure answerSpec internals do not leak into coverage diagnostics
   assert.equal(Object.hasOwn(model.grammarEvidence.coverageDiagnostics, 'answerSpec'), false);
   assert.equal(Object.hasOwn(model.grammarEvidence.coverageDiagnostics, 'golden'), false);

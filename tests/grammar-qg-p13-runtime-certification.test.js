@@ -31,9 +31,9 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
-const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p11-certification-status-map.json');
+const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p14-certification-status-map.json');
 const GENERATED_PATH = path.resolve(ROOT_DIR, 'worker', 'src', 'subjects', 'grammar', 'certification-status.generated.js');
-const MANIFEST_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p11-certification-manifest.json');
+const MANIFEST_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p14-certification-manifest.json');
 
 const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
@@ -46,13 +46,13 @@ function cloneStatusMap(overrides = {}) {
 }
 
 describe('P13 runtime certification source', () => {
-  it('uses the frozen P11 content release', () => {
-    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p11-2026-04-30');
+  it('uses the active P14 content release', () => {
+    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p14-2026-05-01');
     assert.equal(GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID, GRAMMAR_CONTENT_RELEASE_ID);
   });
 
   it('contains exactly one runtime entry for each current template', () => {
-    assert.equal(GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT, 78);
+    assert.equal(GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT, 110);
     assert.equal(Object.keys(CERTIFICATION_STATUS_MAP).length, GRAMMAR_TEMPLATE_METADATA.length);
     for (const template of GRAMMAR_TEMPLATE_METADATA) {
       assert.ok(CERTIFICATION_STATUS_MAP[template.id], `Missing runtime status entry: ${template.id}`);
@@ -61,7 +61,7 @@ describe('P13 runtime certification source', () => {
 
   it('preserves approved_with_limitation diagnostics instead of flattening them', () => {
     assert.deepEqual(GRAMMAR_RUNTIME_CERTIFICATION_STATUS_COUNTS, {
-      approved: 74,
+      approved: 106,
       approved_with_limitation: 4,
     });
 
@@ -143,13 +143,13 @@ describe('P13 runtime certification generator', () => {
     });
 
     const runtimeStatus = buildRuntimeCertificationStatus(historicalStatusMap, { statusMapPath: STATUS_MAP_PATH });
-    assert.equal(runtimeStatus.templateCount, 78);
+    assert.equal(runtimeStatus.templateCount, 110);
     assert.equal('__historical_retired_template__' in runtimeStatus.entries, false);
   });
 });
 
 describe('P13 validator runtime authority gate', () => {
-  it('passes against the committed P11 manifest and runtime source', () => {
+  it('passes against the committed P14 manifest and runtime source', () => {
     const result = validateRuntimeCertificationAuthority(manifest, { rootDir: ROOT_DIR });
     assert.equal(result.pass, true, JSON.stringify(result.mismatches, null, 2));
   });

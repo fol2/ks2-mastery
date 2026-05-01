@@ -20,8 +20,11 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
 const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p9-certification-status-map.json');
+const INVENTORY_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p9-question-inventory.json');
 
 const statusMapJson = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
+const inventoryJson = JSON.parse(fs.readFileSync(INVENTORY_PATH, 'utf8'));
+const P9_TEMPLATE_IDS = Array.from(new Set(inventoryJson.items.map((item) => item.templateId))).sort();
 
 // --- Status map structural tests ---
 
@@ -30,10 +33,10 @@ describe('P9 Certification Status Map: completeness', () => {
     assert.equal(Object.keys(statusMapJson).length, 78);
   });
 
-  it('every GRAMMAR_TEMPLATE_METADATA template exists in the status map', () => {
+  it('every frozen P9 inventory template exists in the status map', () => {
     const mapKeys = new Set(Object.keys(statusMapJson));
-    for (const template of GRAMMAR_TEMPLATE_METADATA) {
-      assert.ok(mapKeys.has(template.id), `Missing template in status map: ${template.id}`);
+    for (const templateId of P9_TEMPLATE_IDS) {
+      assert.ok(mapKeys.has(templateId), `Missing template in status map: ${templateId}`);
     }
   });
 
@@ -60,14 +63,21 @@ describe('P9 Certification Status Map: completeness', () => {
 });
 
 describe('P9 historical status map and active runtime coverage', () => {
-  it('CERTIFICATION_STATUS_MAP has all 78 template keys', () => {
-    assert.equal(Object.keys(CERTIFICATION_STATUS_MAP).length, 78);
+  it('active CERTIFICATION_STATUS_MAP covers the live template denominator', () => {
+    assert.equal(Object.keys(CERTIFICATION_STATUS_MAP).length, GRAMMAR_TEMPLATE_METADATA.length);
   });
 
-  it('active runtime map covers every historical P9 template ID', () => {
+  it('active runtime map covers every live template ID', () => {
     for (const template of GRAMMAR_TEMPLATE_METADATA) {
       const moduleEntry = CERTIFICATION_STATUS_MAP[template.id];
       assert.ok(moduleEntry, `Module missing template: ${template.id}`);
+    }
+  });
+
+  it('active runtime map still covers every historical P9 template ID', () => {
+    for (const templateId of P9_TEMPLATE_IDS) {
+      const moduleEntry = CERTIFICATION_STATUS_MAP[templateId];
+      assert.ok(moduleEntry, `Module missing historical P9 template: ${templateId}`);
     }
   });
 
