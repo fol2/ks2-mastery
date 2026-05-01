@@ -30,7 +30,7 @@ function runAuditCli(args) {
 
 // ─── U7: Duplicate stem/model cluster review tests ──────────────────────────
 
-test('U7: audit with no mode-scoped duplicate stems at depth 4 reports 0 clusters', () => {
+test('U7: audit with no depth-4 mode-scoped duplicate stems has no gate-blocking clusters', () => {
   const audit = runPunctuationContentAudit({
     seed: 'u7-no-dupes-depth4',
     generatedPerFamily: 4,
@@ -47,13 +47,9 @@ test('U7: audit with no mode-scoped duplicate stems at depth 4 reports 0 cluster
     requestedDepth: 4,
   });
 
-  // Mode-scoped clusters are 0 at current content
-  assert.equal(report.stemModelClusters.length, 0,
-    `Expected 0 mode-scoped clusters, got ${report.stemModelClusters.length}`);
-
-  // The formatted output reflects "0 clusters"
-  const text = formatReviewerReport(report);
-  assert.match(text, /0 clusters/);
+  const depth4Clusters = report.stemModelClusters.filter((cluster) => cluster.visibleAtDepths.includes(4));
+  assert.deepEqual(depth4Clusters, []);
+  assert.equal(report.stemReviewValidation.ok, true);
 });
 
 test('U7: duplicate stems at depth 6 are surfaced in reviewer report when artificially injected', () => {
@@ -119,9 +115,12 @@ test('U7: two templates sharing normalised stem but different modes are scoped s
   // Existing non-mode-scoped duplicates exist
   assert.ok(audit8.duplicates.generated.stems.length > 0,
     'Non-mode-scoped stem duplicates exist at depth 8');
-  // Mode-scoped clusters are empty (the duplicates are cross-mode)
-  assert.equal(allClusters.length, 0,
-    'Mode-scoped clusters must be 0 because all duplicates are cross-mode');
+  // P11 can surface candidate-depth same-mode clusters for later review, but
+  // depth-4 remains clear for the historical release gate.
+  assert.deepEqual(
+    allClusters.filter((cluster) => cluster.visibleAtDepths.includes(4)),
+    [],
+  );
 });
 
 test('U7: --require-stem-review with unreviewed clusters at requested depth fails', () => {
@@ -257,7 +256,7 @@ test('U7: invalid decision value counts as unreviewed', () => {
   assert.deepEqual(result.unreviewed, ['some test stem::insert']);
 });
 
-test('U7: CLI --require-stem-review at production depth passes (no mode-scoped clusters)', () => {
+test('U7: CLI --require-stem-review at depth 4 passes when candidate clusters are outside requested depth', () => {
   const result = runAuditCli([
     '--strict',
     '--generated-per-family', '4',
@@ -267,7 +266,7 @@ test('U7: CLI --require-stem-review at production depth passes (no mode-scoped c
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /Duplicate Stem\/Model Clusters/);
-  assert.match(result.stdout, /0 clusters/);
+  assert.match(result.stdout, /depth-4: no/);
 });
 
 test('U7: buildStemModelClusters returns depth-annotated cluster objects', () => {

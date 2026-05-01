@@ -12,7 +12,7 @@ import {
   PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER as VM_CLUSTER_TO_MONSTER,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
 const OLD_RELEASE_ID = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
 const DAY_MS = 24 * 60 * 60 * 1000;
 

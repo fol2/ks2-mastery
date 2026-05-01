@@ -313,15 +313,17 @@ export const PUNCTUATION_DASHBOARD_HERO = Object.freeze({
 
 // --- Setup round-length toggle options -------------------------------------
 
-// The three stops the child Setup toggle exposes. Tighter subset of the
-// service-contract `PUNCTUATION_ROUND_LENGTHS` superset (which accepts
-// 1 / 2 / 3 / 4 / 6 / 8 / 12 / 'all' so the /start Worker command can still
-// honour legacy per-skill drills). The Setup dispatch handler validates
-// against THIS narrower enum so a rogue payload cannot smuggle an off-menu
-// length (e.g. 'all' or '1') in via the primary dashboard control
-// (adv-234-001). Shared so the Scene and the module handler agree byte-
-// for-byte on what a legitimate Setup round-length dispatch looks like.
-export const PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS = Object.freeze(['4', '8', '12']);
+// The four stops the child Setup toggle exposes. P11 makes six questions the
+// standard Smart Practice default while preserving four as a deliberate quick
+// rescue option. This is still a tighter subset of the service-contract
+// `PUNCTUATION_ROUND_LENGTHS` superset (which accepts 1 / 2 / 3 / 4 / 6 / 8 /
+// 12 / 'all' so the /start Worker command can still honour legacy per-skill
+// drills). The Setup dispatch handler validates against THIS narrower enum so
+// a rogue payload cannot smuggle an off-menu length (e.g. 'all' or '1') in via
+// the primary dashboard control (adv-234-001). Shared so the Scene and the
+// module handler agree byte-for-byte on what a legitimate Setup round-length
+// dispatch looks like.
+export const PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS = Object.freeze(['4', '6', '8', '12']);
 
 // --- Forbidden-terms fixture -----------------------------------------------
 

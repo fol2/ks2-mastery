@@ -15,7 +15,8 @@ export {
 };
 
 export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
-export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
+export const PUNCTUATION_GENERATED_ITEM_SEED = 'punctuation-r4-full-14-skill-structure';
 
 export const PUNCTUATION_PHASES = Object.freeze([
   'setup',
@@ -61,7 +62,7 @@ export const PUNCTUATION_ROUND_LENGTHS = Object.freeze(['1', '2', '3', '4', '6',
 
 export const DEFAULT_PUNCTUATION_PREFS = Object.freeze({
   mode: 'smart',
-  roundLength: '4',
+  roundLength: '6',
 });
 
 function isPlainObject(value) {

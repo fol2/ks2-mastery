@@ -8,10 +8,14 @@ import {
   PUNCTUATION_RELEASE_ID,
 } from '../shared/punctuation/content.js';
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
-import { createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
+import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 import { createMemoryState, updateMemoryState } from '../shared/punctuation/scheduler.js';
 import { createPunctuationService, PunctuationServiceError } from '../shared/punctuation/service.js';
 import { projectPunctuationStars } from '../src/subjects/punctuation/star-projection.js';
+import {
+  DEFAULT_PUNCTUATION_PREFS,
+  normalisePunctuationPrefs,
+} from '../src/subjects/punctuation/service-contract.js';
 
 const GENERATED_METADATA_FORBIDDEN_ON_ACTIVE_ITEM = Object.freeze([
   'templateId',
@@ -57,7 +61,7 @@ function correctAnswerFor(item) {
   return { typed: item.model };
 }
 
-test('punctuation service default runtime bank exposes P2 fixed-anchor depth', () => {
+test('punctuation service default runtime bank exposes P11 expansion depth', () => {
   const service = createPunctuationService({
     repository: makeRepository(),
     now: () => 1_800_000_000_000,
@@ -65,16 +69,30 @@ test('punctuation service default runtime bank exposes P2 fixed-anchor depth', (
   });
   const stats = service.getStats('learner-a');
   const runtimeManifest = createPunctuationRuntimeManifest({
-    generatedPerFamily: 4,
+    generatedPerFamily: PRODUCTION_DEPTH,
   });
   const fixedItems = runtimeManifest.items.filter((item) => item.source === 'fixed');
   const generatedItems = runtimeManifest.items.filter((item) => item.source === 'generated');
 
-  assert.equal(fixedItems.length, 92);
-  assert.equal(generatedItems.length, 100);
-  assert.equal(stats.total, 192);
-  assert.equal(stats.fresh, 192);
+  assert.equal(fixedItems.length, 148);
+  assert.equal(generatedItems.length, 1120);
+  assert.equal(stats.total, 1268);
+  assert.equal(stats.fresh, 1268);
   assert.equal(stats.publishedRewardUnits, 14);
+});
+
+test('punctuation default Smart Practice uses a six-question round', () => {
+  const service = createPunctuationService({
+    repository: makeRepository(),
+    now: () => 1_800_000_000_000,
+    random: () => 0,
+  });
+  const start = service.startSession('learner-a').state;
+
+  assert.equal(DEFAULT_PUNCTUATION_PREFS.roundLength, '6');
+  assert.deepEqual(normalisePunctuationPrefs({}), DEFAULT_PUNCTUATION_PREFS);
+  assert.equal(start.session.mode, 'smart');
+  assert.equal(start.session.length, 6);
 });
 
 test('punctuation service follows setup -> active-item -> feedback -> active-item -> summary', () => {
@@ -388,14 +406,26 @@ test('previous release reward units do not count towards the current release den
 });
 
 test('spaced clean attempts emit a secure-unit event once', () => {
+  const sentenceEndingItem = PUNCTUATION_CONTENT_MANIFEST.items.find((item) => item.id === 'se_choose_exclaim');
+  assert.ok(sentenceEndingItem, 'fixture item must exist');
+  const singleItemManifest = {
+    ...PUNCTUATION_CONTENT_MANIFEST,
+    items: [sentenceEndingItem],
+    generatorFamilies: [],
+  };
   const repository = makeRepository();
   let now = 24 * 60 * 60 * 1000;
-  const service = createPunctuationService({ repository, now: () => now, random: () => 0 });
+  const service = createPunctuationService({
+    repository,
+    now: () => now,
+    random: () => 0,
+    manifest: singleItemManifest,
+  });
   let unitEvents = [];
   for (const day of [1, 5, 9]) {
     now = day * 24 * 60 * 60 * 1000;
     const start = service.startSession('learner-a', { mode: 'endmarks', roundLength: '1' }).state;
-    const submit = service.submitAnswer('learner-a', start, { choiceIndex: 1 });
+    const submit = service.submitAnswer('learner-a', start, correctAnswerFor(start.session.currentItem));
     unitEvents = unitEvents.concat(submit.events.filter((event) => event.type === PUNCTUATION_EVENT_TYPES.UNIT_SECURED));
   }
   assert.equal(unitEvents.length, 1);

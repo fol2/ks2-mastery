@@ -14,12 +14,12 @@ import {
 } from '../shared/punctuation/content.js';
 
 const P2_U3_PRIORITY_FIXED_TARGETS = Object.freeze({
-  sentence_endings: 8,
-  apostrophe_contractions: 8,
-  comma_clarity: 8,
-  semicolon_list: 8,
-  hyphen: 8,
-  dash_clause: 8,
+  sentence_endings: 12,
+  apostrophe_contractions: 12,
+  comma_clarity: 12,
+  semicolon_list: 12,
+  hyphen: 12,
+  dash_clause: 12,
 });
 
 const STABLE_PUNCTUATION_REWARD_UNIT_IDS = Object.freeze([

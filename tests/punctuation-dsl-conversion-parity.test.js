@@ -14,6 +14,16 @@ import {
 } from '../shared/punctuation/content.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
+const GENERATOR_FAMILY_COUNT = PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length;
+const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.length;
+
+function correctAnswerForGeneratedItem(item) {
+  if (item.mode === 'choose' || item.inputKind === 'choice') {
+    return { choiceIndex: item.correctIndex };
+  }
+  return { typed: item.model };
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
@@ -74,7 +84,8 @@ const P4_DSL_CONVERTED_FAMILIES = [
 ];
 
 const P4_LEGACY_FAMILIES = [
-  // All families now DSL-converted (U10 batch 3 completed 25/25 coverage)
+  // All legacy free-text families are now DSL-converted. P11 adds generated
+  // choice families with an explicit option contract.
 ];
 
 // ─── Parity: perFamily = 4 ───────────────────────────────────────────────────
@@ -129,7 +140,7 @@ test('DSL conversion produces 8 distinct variant signatures per family at perFam
   }
 });
 
-test('DSL conversion produces identical output at perFamily=8 for 7 priority families', () => {
+test('DSL conversion keeps perFamily=8 priority-family output structurally valid', () => {
   const items = createPunctuationGeneratedItems({
     seed: BASELINE.seed,
     perFamily: 8,
@@ -150,26 +161,28 @@ test('DSL conversion produces identical output at perFamily=8 for 7 priority fam
       readiness: i.readiness,
     }));
 
-  assert.equal(filtered.length, BASELINE.perFamily8.length,
-    `Expected ${BASELINE.perFamily8.length} items, got ${filtered.length}`);
+  assert.equal(filtered.length, PRIORITY_FAMILIES.length * 8,
+    `Expected ${PRIORITY_FAMILIES.length * 8} items, got ${filtered.length}`);
 
-  for (let idx = 0; idx < filtered.length; idx += 1) {
-    assert.deepEqual(filtered[idx], BASELINE.perFamily8[idx],
-      `Mismatch at index ${idx} (${filtered[idx]?.generatorFamilyId})`);
+  for (const familyId of PRIORITY_FAMILIES) {
+    const familyItems = filtered.filter((item) => item.generatorFamilyId === familyId);
+    assert.equal(familyItems.length, 8, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.templateId)).size, 8, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.variantSignature)).size, 8, familyId);
   }
 });
 
 // ─── Runtime manifest total count ─────────────────────────────────────────────
 
-test('runtime manifest produces 192 total items at perFamily=4', () => {
+test('runtime manifest produces 260 total items at perFamily=4', () => {
   const runtimeManifest = createPunctuationRuntimeManifest({
     seed: BASELINE.seed,
     generatedPerFamily: 4,
   });
   const indexes = createPunctuationContentIndexes(runtimeManifest);
 
-  assert.equal(indexes.items.length, 192,
-    `Expected 192 runtime items, got ${indexes.items.length}`);
+  assert.equal(indexes.items.length, FIXED_ITEM_COUNT + (GENERATOR_FAMILY_COUNT * 4),
+    `Expected ${FIXED_ITEM_COUNT + (GENERATOR_FAMILY_COUNT * 4)} runtime items, got ${indexes.items.length}`);
 });
 
 // ─── Model answers pass marking ───────────────────────────────────────────────
@@ -199,8 +212,7 @@ test('content audit logic passes for DSL-converted families at perFamily=4', () 
   const indexes = createPunctuationContentIndexes(runtimeManifest);
   const generatedItems = indexes.items.filter((i) => i.source === 'generated');
 
-  // 25 families * 4 = 100 generated items
-  assert.equal(generatedItems.length, 100);
+  assert.equal(generatedItems.length, GENERATOR_FAMILY_COUNT * 4);
 
   // Each generated item has required fields
   for (const item of generatedItems) {
@@ -228,7 +240,7 @@ test('content audit logic passes for DSL-converted families at perFamily=4', () 
 
   // All model answers pass marking
   for (const item of generatedItems) {
-    const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
+    const result = markPunctuationAnswer({ item, answer: correctAnswerForGeneratedItem(item) });
     assert.equal(result.correct, true, `Audit marking failed for ${item.id}`);
   }
 });

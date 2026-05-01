@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { buildPunctuationLearnerReadModel } from '../src/subjects/punctuation/read-model.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
 const OLD_RELEASE_ID = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
 
 function masteryKeyForRelease(releaseId, clusterId, rewardUnitId) {

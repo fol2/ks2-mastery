@@ -213,8 +213,8 @@ test('punctuation Setup scene renders platform LengthPicker with punctuation-set
   assert.match(html, /role="radiogroup"/);
   assert.match(html, /aria-label="Round length"/);
 
-  // Three round-length options (PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS
-  // is frozen at ['4', '8', '12']). Each option carries:
+  // Four round-length options (PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS
+  // is frozen at ['4', '6', '8', '12']). Each option carries:
   //   * `data-action="punctuation-set-round-length"` (Punctuation's
   //     dispatch action name)
   //   * `data-value="…"` (the `includeDataValue=true` prop preserves
@@ -223,9 +223,11 @@ test('punctuation Setup scene renders platform LengthPicker with punctuation-set
   //   * NO `data-pref` attribute (Punctuation omits `prefKey` — the
   //     pre-U4 `RoundLengthToggle` used `data-value` alone).
   assert.match(html, /data-action="punctuation-set-round-length"[^>]*value="4"/);
+  assert.match(html, /data-action="punctuation-set-round-length"[^>]*value="6"/);
   assert.match(html, /data-action="punctuation-set-round-length"[^>]*value="8"/);
   assert.match(html, /data-action="punctuation-set-round-length"[^>]*value="12"/);
   assert.match(html, /data-value="4"/);
+  assert.match(html, /data-value="6"/);
   assert.match(html, /data-value="8"/);
   assert.match(html, /data-value="12"/);
   // `data-pref` must NOT appear on any `.length-option` — Punctuation

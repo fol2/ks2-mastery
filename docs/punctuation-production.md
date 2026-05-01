@@ -9,7 +9,7 @@ The release deliberately keeps the learner engine first. Monsters and Codex rewa
 Release id:
 
 ```txt
-punctuation-r4-full-14-skill-structure
+punctuation-qg-p11-2026-05-01
 ```
 
 Published skills:
@@ -81,10 +81,10 @@ Generated practice now runs through a deterministic compiler. Each published gen
 
 Generated item guardrails:
 
-- The production runtime service uses `generatedPerFamily: 4`, giving 100 generated items and 192 runtime items after the P2 fixed-anchor expansion while keeping the published reward denominator unchanged at 14. Lower-level generator and audit compatibility fixtures still exercise `generatedPerFamily: 1`.
+- The production runtime service uses `generatedPerFamily: 40` for P11, giving 1120 generated items and 1268 runtime items after the manual fixed-bank expansion while keeping the published reward denominator unchanged at 14. Historical P10 evidence still references the old `generatedPerFamily: 4` / 192-item runtime and is now treated as compatibility evidence, not the current production count.
 - Each generated item carries a stable internal `templateId` and opaque `variantSignature`. The scheduler uses recent signatures to avoid equivalent retries, and Star evidence uses signatures before item ids when a generated surface has an available signature. The `templateId` stays server-only; only the opaque signature may cross to the active generated item read model.
 - Template-bank expansion appends new templates after the first two legacy templates. The first generated runtime variant is preserved when the bank grows.
-- The audit command `npm run audit:punctuation-content -- --strict --generated-per-family 4` checks generated family coverage, validator coverage, duplicate variant signatures, distinct signature counts, and generated model-answer marking. Duplicate stems/models remain reported for content review; add `--fail-on-duplicate-generated-content` when a review specifically wants those surfaced as hard failures.
+- The audit command `npm run audit:punctuation-content -- --strict --generated-per-family 40` checks generated family coverage, validator coverage, duplicate variant signatures, distinct signature counts, and generated model-answer marking. Duplicate stems/models remain reported for content review; add `--fail-on-duplicate-generated-content` when a review specifically wants those surfaced as hard failures.
 
 Sentence-combining practice is now ported as a Worker-owned item mode rather than a separate browser session. Smart review and focused cluster sessions include `combine` at controlled frequency, weak spots can target weak `skill::combine` facets, and unsupported clusters fall back to their available item modes instead of exposing an empty queue.
 
@@ -323,9 +323,9 @@ npm run smoke:production:punctuation
 
 The smoke creates an isolated demo session on production, confirms `punctuationProduction` is enabled, completes one Worker-backed Smart review item through summary, completes one GPS test item through delayed review, checks Parent Hub Punctuation evidence for hidden-field redaction, and starts a Worker-backed English Spelling session with a redacted prompt token. This keeps the Punctuation rollout gate tied to the live subject command boundary while also proving the reference Spelling subject still starts correctly.
 
-For P2, the same smoke also verifies the deployed Punctuation read model reports release `punctuation-r4-full-14-skill-structure`, 192 runtime items, and 14 published reward units. It drives bounded command-boundary searches for a generated active item, submits an intentionally incorrect generated answer to confirm misconception evidence without generated internals, proves spaced hyphen / en dash / em dash dash-clause marking, and proves a default list-comma item accepts an Oxford comma unless its validator explicitly forbids the final comma.
+For P11, the same smoke also verifies the deployed Punctuation read model reports release `punctuation-qg-p11-2026-05-01`, 1268 runtime items, and 14 published reward units. It drives bounded command-boundary searches for a generated active item, submits an intentionally incorrect generated answer to confirm misconception evidence without generated internals, proves spaced hyphen / en dash / em dash dash-clause marking, and proves a default list-comma item accepts an Oxford comma unless its validator explicitly forbids the final comma.
 
-The production-smoke report separates live evidence from local release-manifest expectations. `productionObserved` is read from deployed command responses and contains the release id, runtime item total, reward-unit count, and generated command-path probe. `localReleaseManifestExpectation` is the local manifest/audit expectation for this release (`generatedPerFamily: 4`, 92 fixed items, 100 generated items, 192 runtime items, 14 published reward units); it is not a production-observed generated-item count.
+The production-smoke report separates live evidence from local release-manifest expectations. `productionObserved` is read from deployed command responses and contains the release id, runtime item total, reward-unit count, and generated command-path probe. `localReleaseManifestExpectation` is the local manifest/audit expectation for this release (`generatedPerFamily: 40`, 148 fixed items, 1120 generated items, 1268 runtime items, 14 published reward units); it is not a production-observed generated-item count.
 
 This gate does not assert a deployed commit or build hash. The demo-accessible production APIs used by the smoke do not expose `BUILD_HASH`, so commit-level deployment identity remains separate Cloudflare/GitHub deployment evidence rather than part of this release-smoke command.
 

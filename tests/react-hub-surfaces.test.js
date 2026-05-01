@@ -43,7 +43,7 @@ test('React Admin Operations surface renders content, audit, account roles, and 
   assert.match(html, /Readable learners/);
   assert.match(html, /Grammar diagnostics/);
   assert.match(html, /Punctuation diagnostics/);
-  assert.match(html, /punctuation-r4-full-14-skill-structure/);
+  assert.match(html, /punctuation-qg-p11-2026-05-01/);
   assert.match(html, /Open Punctuation analytics/);
   assert.match(html, /Choose the correct sentence/);
 

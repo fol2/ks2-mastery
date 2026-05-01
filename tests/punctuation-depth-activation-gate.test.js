@@ -10,7 +10,7 @@ import { BLOCKING_DECISIONS, DECISION_STATES } from '../shared/punctuation/revie
 
 // ─── Test helpers ───────────────────────────────────────────────────────────
 
-const FIXED_ITEM_COUNT = 92;
+const FIXED_ITEM_COUNT = 148;
 const FAMILY_COUNT = 25;
 
 function makePassingOptions(overrides = {}) {
@@ -39,7 +39,7 @@ function makePassingOptions(overrides = {}) {
     speechOraclePass: true,
     semanticLintPass: true,
     productionGatePass: true,
-    currentReleaseId: 'punctuation-r4-full-14-skill-structure',
+    currentReleaseId: 'punctuation-qg-p11-2026-05-01',
     expectedRuntimeCount: FIXED_ITEM_COUNT + FAMILY_COUNT * 6,
     fixedItemCount: FIXED_ITEM_COUNT,
     familyCount: FAMILY_COUNT,
@@ -329,8 +329,8 @@ test('deployment-commit-sha fails when missing', () => {
 
 // ─── PRODUCTION_DEPTH import verification ───────────────────────────────────
 
-test('PRODUCTION_DEPTH is imported and used as baseline (currently 4)', () => {
-  assert.equal(PRODUCTION_DEPTH, 4);
+test('PRODUCTION_DEPTH is imported and used as P11 baseline', () => {
+  assert.equal(PRODUCTION_DEPTH, 40);
 });
 
 // ─── Cross-mode clusters accept string or object format ─────────────────────

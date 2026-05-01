@@ -17,7 +17,7 @@ const STOP_WORDS = new Set([
 function productionPool() {
   const generated = createPunctuationGeneratedItems({
     manifest: PUNCTUATION_CONTENT_MANIFEST,
-    seed: PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation',
+    seed: PUNCTUATION_CONTENT_MANIFEST.generatedSeed || PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation',
     perFamily: PRODUCTION_DEPTH,
   });
   return [
@@ -66,12 +66,12 @@ function generatedItem(pool, familyId) {
   return item;
 }
 
-test('P10: depth-4 production pool shape is stable', () => {
+test('P10 lexical preservation covers the expanded P11 production pool', () => {
   const pool = productionPool();
-  assert.equal(PRODUCTION_DEPTH, 4);
-  assert.equal(pool.length, 192);
-  assert.equal(pool.filter((item) => item._source === 'fixed').length, 92);
-  assert.equal(pool.filter((item) => item._source === 'generated').length, 100);
+  assert.equal(PRODUCTION_DEPTH, 40);
+  assert.equal(pool.length, 1268);
+  assert.equal(pool.filter((item) => item._source === 'fixed').length, 148);
+  assert.equal(pool.filter((item) => item._source === 'generated').length, 1120);
 });
 
 test('P10: generated closed insert/fix items reject known lexical substitutions', () => {

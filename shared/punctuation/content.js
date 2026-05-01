@@ -1,7 +1,12 @@
-import { PUNCTUATION_CURRENT_RELEASE_ID } from '../../src/subjects/punctuation/service-contract.js';
+import {
+  PUNCTUATION_CURRENT_RELEASE_ID,
+  PUNCTUATION_GENERATED_ITEM_SEED,
+} from '../../src/subjects/punctuation/service-contract.js';
+import { PUNCTUATION_FIXED_EXPANSION_ITEMS } from './fixed-expansion-items.js';
 
 export const PUNCTUATION_SUBJECT_ID = 'punctuation';
 export const PUNCTUATION_RELEASE_ID = PUNCTUATION_CURRENT_RELEASE_ID;
+export { PUNCTUATION_GENERATED_ITEM_SEED };
 
 export const PUNCTUATION_READINESS_ROWS = Object.freeze([
   'retrieve_discriminate',
@@ -2215,6 +2220,7 @@ export const PUNCTUATION_ITEMS = Object.freeze([
 
     source: 'fixed',
   },
+  ...PUNCTUATION_FIXED_EXPANSION_ITEMS,
 ]);
 
 export const PUNCTUATION_REWARD_UNITS = Object.freeze([
@@ -2359,11 +2365,27 @@ export const PUNCTUATION_REWARD_UNITS = Object.freeze([
 
 export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
   {
+    id: 'gen_sentence_endings_choose',
+    skillId: 'sentence_endings',
+    rewardUnitId: 'sentence-endings-core',
+    published: true,
+    mode: 'choose',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
     id: 'gen_sentence_endings_insert',
     skillId: 'sentence_endings',
     rewardUnitId: 'sentence-endings-core',
     published: true,
     mode: 'insert',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
+    id: 'gen_apostrophe_possession_choose',
+    skillId: 'apostrophe_possession',
+    rewardUnitId: 'apostrophe-possession-core',
+    published: true,
+    mode: 'choose',
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2396,6 +2418,14 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'speech-core',
     published: true,
     mode: 'insert',
+    deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
+  },
+  {
+    id: 'gen_list_commas_choose',
+    skillId: 'list_commas',
+    rewardUnitId: 'list-commas-core',
+    published: true,
+    mode: 'choose',
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2563,6 +2593,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
 export const PUNCTUATION_CONTENT_MANIFEST = Object.freeze({
   subjectId: PUNCTUATION_SUBJECT_ID,
   releaseId: PUNCTUATION_RELEASE_ID,
+  generatedSeed: PUNCTUATION_GENERATED_ITEM_SEED,
   releaseName: 'Punctuation 14-skill production release',
   partialReleaseLabel: 'Published Punctuation release',
   fullSkillCount: PUNCTUATION_SKILLS.length,

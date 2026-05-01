@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "phase": "punctuation-qg-p11",
+  "releaseId": "punctuation-qg-p11-2026-05-01",
+  "generatedSeed": "punctuation-r4-full-14-skill-structure",
+  "updatedAt": "2026-05-01T00:00:00.000Z",
+  "acceptance": {
+    "questionCount": {
+      "accepted": true,
+      "status": "accepted_source",
+      "evidence": "P11 source runtime exposes 148 fixed items, 1120 generated items, 1268 total runtime items, and 196 choice items."
+    },
+    "clickJourney": {
+      "accepted": true,
+      "status": "accepted_source",
+      "evidence": "scripts/audit-punctuation-qg-p11-product.mjs passes fresh, standard, one-wrong, always-wrong, guided, weak, GPS, due, spaced-return, post-secure, and same-day grinding journey checks."
+    },
+    "defaultSessionLength": {
+      "accepted": true,
+      "status": "accepted_source",
+      "evidence": "DEFAULT_PUNCTUATION_PREFS.roundLength is 6 and service start paths use the shared default."
+    },
+    "starPacing": {
+      "accepted": true,
+      "status": "accepted_source",
+      "evidence": "Punctuation star projection and view-model tests keep same-day practice below secure/mastery completion without spaced independent evidence."
+    },
+    "questionSurfaceReview": {
+      "accepted": true,
+      "status": "accepted_independent_review",
+      "evidence": "reports/punctuation/punctuation-qg-p11-surface-pack.json covers 1268 current items, all 192 historical P10 depth-4 item ids, 27 simulated product journeys, and first-click/retry/mixed/due/spaced-return service evidence. Independent engineering and contract reviewers both passed this source-level surface review on 2026-05-01."
+    },
+    "liveJourneySmoke": {
+      "accepted": false,
+      "status": "not_run",
+      "origin": "",
+      "releaseId": "",
+      "timestamp": "",
+      "artefactPath": "",
+      "evidence": "Live authenticated child journey smoke can only be accepted after the release is deployed."
+    }
+  }
+}

@@ -210,25 +210,34 @@ test('punctuation-production.md documents the Punctuation Doctor diagnostic', ()
 
 test('punctuation-production.md documents generated practice guardrails', () => {
   for (const pattern of [
+    /generatedPerFamily:\s*40/,
     /generatedPerFamily:\s*4/,
-    /generatedPerFamily:\s*1/,
     /templateId/,
     /variantSignature/,
     /runtime AI/,
     /audit:punctuation-content/,
-    /generated-per-family 4/,
+    /generated-per-family 40/,
+    /1268 runtime items/,
   ]) {
     assert.match(docContent, pattern);
+  }
+
+  for (const stalePattern of [/generatedPerFamily:\s*1\b/, /generated-per-family 4\b/]) {
+    assert.doesNotMatch(docContent, stalePattern);
   }
 });
 
 test('punctuation generator plan documents the current runtime bank', () => {
-  assert.match(planDocContent, /production runtime service now creates \*\*4 generated items/i);
-  assert.match(planDocContent, /\*\*171 Punctuation items\*\*/);
-  assert.match(planDocContent, /Current runtime total:\s+171/);
-  assert.match(planDocContent, /\|\s*4, current\s*\|\s*171\s*\|/);
+  assert.match(planDocContent, /P11 update, 1 May 2026/i);
+  assert.match(planDocContent, /generatedPerFamily:\s*40/);
+  assert.match(planDocContent, /\*\*1268 Punctuation items\*\*/);
+  assert.match(planDocContent, /148 fixed items \+ 1120 generated items/);
+  assert.match(planDocContent, /P11 runtime pool:\s*\*\*1268 items\*\*/);
 
   for (const stalePattern of [
+    /production runtime service now creates \*\*4 generated items/i,
+    /Current runtime total:\s+171/,
+    /\|\s*4, current\s*\|\s*171\s*\|/,
     /current runtime setting creates \*\*1 generated item/i,
     /const GENERATED_ITEMS_PER_FAMILY = 1;/,
     /Current runtime total:\s+96/,

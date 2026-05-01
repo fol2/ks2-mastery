@@ -88,6 +88,18 @@ function gitBlobSha256(root, commitSha, relativePath) {
   return createHash('sha256').update(content).digest('hex');
 }
 
+function currentGitHead(root) {
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    return '';
+  }
+}
+
 function validateSource(errors, warnings, manifest, root, certifying) {
   if (!requireObject(errors, manifest.source, 'source')) return;
   const { source } = manifest;
@@ -112,6 +124,11 @@ function validateSource(errors, warnings, manifest, root, certifying) {
   }
 
   if (Array.isArray(git.verifiedPaths) && isPlainObject(git.pathHashes)) {
+    const headSha = currentGitHead(root);
+    const validateWorkingTreeHashes = !headSha || git.commitSha === headSha;
+    if (!validateWorkingTreeHashes) {
+      warnings.push(`source.git.commitSha is historical (${git.commitSha}); current working-tree path hashes are not certification evidence`);
+    }
     for (const relativePath of git.verifiedPaths) {
       if (typeof relativePath !== 'string' || !relativePath) {
         addError(errors, 'source.git.verifiedPaths entries must be non-empty strings');
@@ -124,7 +141,7 @@ function validateSource(errors, warnings, manifest, root, certifying) {
       }
       const expectedHash = git.pathHashes[relativePath];
       requireSha256(errors, expectedHash, `source.git.pathHashes.${relativePath}`);
-      if (/^[0-9a-f]{64}$/.test(String(expectedHash || ''))) {
+      if (validateWorkingTreeHashes && /^[0-9a-f]{64}$/.test(String(expectedHash || ''))) {
         const actualHash = sha256File(absolutePath);
         if (actualHash !== expectedHash) {
           addError(errors, `path hash mismatch for ${relativePath}: manifest=${expectedHash}, actual=${actualHash}`);

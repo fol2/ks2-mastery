@@ -25,7 +25,7 @@ const BASE_STATE = {
     correctCount: 2,
     total: 4,
     mode: 'smart',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
     sessionId: 'session-abc',
     reviewRows: [
       {
@@ -325,7 +325,7 @@ test('active generated currentItem exposes only an opaque variant signature', ()
       phase: 'active-item',
       session: {
         id: 'session-generated',
-        releaseId: 'punctuation-r4-full-14-skill-structure',
+        releaseId: 'punctuation-qg-p11-2026-05-01',
         mode: 'smart',
         length: 1,
         phase: 'active-item',
@@ -367,7 +367,7 @@ test('feedback generated currentItem omits the active-item variant signature tra
       phase: 'feedback',
       session: {
         id: 'session-generated',
-        releaseId: 'punctuation-r4-full-14-skill-structure',
+        releaseId: 'punctuation-qg-p11-2026-05-01',
         mode: 'smart',
         length: 1,
         phase: 'feedback',
@@ -606,7 +606,7 @@ test('clean payloads with all allowed fields pass redaction', () => {
     stats: { total: 14, secure: 0, publishedRewardUnits: 14, securedRewardUnits: 0 },
     analytics: { bySessionMode: [], byItemMode: [], weakestFacets: [] },
     content: {
-      releaseId: 'punctuation-r4-full-14-skill-structure',
+      releaseId: 'punctuation-qg-p11-2026-05-01',
       skills: [{ id: 'speech', name: 'Speech', clusterId: 'speech' }],
     },
     // contextPack is intentionally passed but not exposed on the child payload (U8).
@@ -629,7 +629,7 @@ test('clean payloads with all allowed fields pass redaction', () => {
 // U2: starView wiring into Worker read-model
 // ---------------------------------------------------------------------------
 
-const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
 
 function masteryKey(clusterId, rewardUnitId) {
   return `punctuation:${CURRENT_RELEASE_ID}:${clusterId}:${rewardUnitId}`;
@@ -911,7 +911,7 @@ test('P3 U7: clean generated-item read-model contains zero forbidden keys (happy
       phase: 'active-item',
       session: {
         id: 'session-u7-happy',
-        releaseId: 'punctuation-r4-full-14-skill-structure',
+        releaseId: 'punctuation-qg-p11-2026-05-01',
         mode: 'smart',
         length: 4,
         phase: 'active-item',
@@ -961,7 +961,7 @@ test('P3 U7: variantSignature IS present on active generated currentItem (explic
       phase: 'active-item',
       session: {
         id: 'session-u7-allowance',
-        releaseId: 'punctuation-r4-full-14-skill-structure',
+        releaseId: 'punctuation-qg-p11-2026-05-01',
         mode: 'smart',
         length: 4,
         phase: 'active-item',
@@ -1004,7 +1004,7 @@ test('P3 U7: variantSignature is STRIPPED from feedback-phase currentItem (no le
       phase: 'feedback',
       session: {
         id: 'session-u7-fb',
-        releaseId: 'punctuation-r4-full-14-skill-structure',
+        releaseId: 'punctuation-qg-p11-2026-05-01',
         mode: 'smart',
         length: 4,
         phase: 'feedback',

@@ -40,7 +40,7 @@ const BASE_ACTIVE_STATE = {
   phase: 'active-item',
   session: {
     id: 'session-p4-redaction',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
     mode: 'smart',
     length: 4,
     phase: 'active-item',
@@ -75,7 +75,7 @@ const BASE_SUMMARY_STATE = {
     correctCount: 3,
     total: 4,
     mode: 'smart',
-    releaseId: 'punctuation-r4-full-14-skill-structure',
+    releaseId: 'punctuation-qg-p11-2026-05-01',
     sessionId: 'session-p4-summary',
     reviewRows: [
       {
@@ -217,7 +217,7 @@ test('P4-U13: tests field in content payload trips recursive scan', () => {
   assert.throws(
     () => buildSafeSummary({}, {
       content: {
-        releaseId: 'punctuation-r4-full-14-skill-structure',
+        releaseId: 'punctuation-qg-p11-2026-05-01',
         skills: [{ id: 'speech', name: 'Speech', clusterId: 'speech', tests: { accept: ['ok'] } }],
       },
     }),
@@ -396,7 +396,7 @@ test('P4-U13: full P4-poisoned session (telemetry fields only) produces a clean 
     phase: 'active-item',
     session: {
       id: 'session-p4-full-poison',
-      releaseId: 'punctuation-r4-full-14-skill-structure',
+      releaseId: 'punctuation-qg-p11-2026-05-01',
       mode: 'smart',
       length: 4,
       phase: 'active-item',

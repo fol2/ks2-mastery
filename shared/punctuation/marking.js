@@ -1076,13 +1076,17 @@ function markTransfer(item, answer) {
     const { commaPlacement, hasFinalComma } = listCommaOk(text, words, {
       allowFinalComma: validator.allowFinalComma !== false,
     });
+    const anchoredList = opening
+      ? anchoredListSentence(text, validator, terminalMarkFromModel(item))
+      : null;
+    const listPunctuationOk = anchoredList ? anchoredList.listOk : commaPlacement;
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
     const sentenceOk = transferSentenceOk(item, text);
-    const correct = wordsOk && commaPlacement && capitalOk && terminalOk && sentenceOk;
+    const correct = wordsOk && listPunctuationOk && capitalOk && terminalOk && sentenceOk;
     const tags = [];
     if (!wordsOk) tags.push('comma.list_words_changed');
-    if (!commaPlacement) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'comma.list_separator_missing');
+    if (!listPunctuationOk) tags.push(hasFinalComma ? 'comma.unnecessary_final_comma' : 'comma.list_separator_missing');
     if (!capitalOk) tags.push('comma.capitalisation_missing');
     if (!terminalOk) tags.push('comma.terminal_missing');
     if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
@@ -1102,7 +1106,7 @@ function markTransfer(item, answer) {
       misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
       facets: [
         facet('preservation', wordsOk),
-        facet('comma_placement', commaPlacement),
+        facet('comma_placement', listPunctuationOk),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
         ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),

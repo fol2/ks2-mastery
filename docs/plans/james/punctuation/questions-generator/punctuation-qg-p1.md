@@ -1,6 +1,8 @@
+P11 update, 1 May 2026: the current release uses `generatedPerFamily: 40`, with **1268 Punctuation items** in the runtime pool: **148 fixed items + 1120 generated items**. The 28 April P1 figures below are kept as historical audit context, not as the current production contract.
+
 I reviewed the Punctuation subject as a static source audit from GitHub. I could not run the repo locally in the original audit, so the first baseline numbers came from the source/manifest rather than a live database crawl.
 
-The main answer: **Punctuation is not using AI to generate questions at runtime.** It uses a **human-authored fixed item bank** plus a **deterministic template generator**. As of 28 April 2026, the production runtime service now creates **4 generated items per published generator family**, so the practical runtime pool is **171 Punctuation items**: **71 fixed evidence items + 100 generated items**. The earlier 96-item figure in this plan is the original audit baseline, not the current runtime setting.
+The main answer: **Punctuation is not using AI to generate questions at runtime.** It uses a **human-authored fixed item bank** plus a **deterministic template generator**. In the original 28 April 2026 P1 audit snapshot, the production runtime service created **4 generated items per published generator family**, so the practical P1 runtime pool was **171 Punctuation items**: **71 fixed evidence items + 100 generated items**. The earlier 96-item figure in this plan is the original audit baseline, not the current runtime setting.
 
 ## 1. What Punctuation currently covers
 
@@ -39,25 +41,25 @@ First, there is a **fixed item bank** in `shared/punctuation/content.js`. These 
 
 Second, there are **published generator families**. The generator takes a family, a skill, a seed, and a variant index, then chooses from a deterministic template bank or from a context pack. It builds a generated item with a stable ID, model answer, validator/rubric, misconception tags, readiness tags, and `source: 'generated'`. ([GitHub][3])
 
-Third, the production service now sets:
+Third, the P1 production service set:
 
 ```js
 const GENERATED_ITEMS_PER_FAMILY = 4;
 ```
 
-and imports `createPunctuationRuntimeManifest`, so the runtime pool adds four generated items per family. ([GitHub][4])
+and imported `createPunctuationRuntimeManifest`, so the P1 runtime pool added four generated items per family. ([GitHub][4])
 
 So the current engine is a **deterministic template generator**, not a generative AI system. That is the right quality direction.
 
 ## 3. How many questions do we have?
 
-Current runtime count as of 28 April 2026:
+P1 runtime count as of 28 April 2026:
 
 ```text
 Fixed evidence items:      71
 Generated families:        25
 Generated per family:       4
-Current runtime total:    171
+P1 runtime total:        171
 ```
 
 The formula is:
@@ -73,15 +75,15 @@ So:
 |                    0 |            71 |
 | 1, original baseline |            96 |
 |                    2 |           121 |
-|           4, current |           171 |
+|                4, P1 |           171 |
 |                    5 |           196 |
 |                   10 |           321 |
 
-But be careful: increasing `generatedPerFamily` alone does not automatically mean genuinely new learning content. The generator can keep creating IDs, but if the template bank has only a small number of unique templates per family, the child may see repeated structures with different IDs. The guardrail audit now requires four generated variants per published family for the release build; increasing beyond the current setting should still be paired with richer template banks, context packs, and signature-level duplicate checks. ([GitHub][3])
+But be careful: increasing `generatedPerFamily` alone does not automatically mean genuinely new learning content. The generator can keep creating IDs, but if the template bank has only a small number of unique templates per family, the child may see repeated structures with different IDs. The P1 guardrail audit required four generated variants per published family for that release build; increasing beyond that setting should still be paired with richer template banks, context packs, and signature-level duplicate checks. ([GitHub][3])
 
-By skill, the current practical runtime coverage is approximately:
+By skill, the P1 practical runtime coverage was approximately:
 
-| Skill                   | Fixed items | Generator families | Current runtime items |
+| Skill                   | Fixed items | Generator families | P1 runtime items |
 | ----------------------- | ----------: | -----------------: | --------------------: |
 | sentence endings        |           4 |                  1 |                     8 |
 | list commas             |           6 |                  2 |                    14 |
@@ -103,7 +105,7 @@ One caveat: some paragraph items are multi-skill, for example apostrophe contrac
 
 ## 4. Existing question quality: overall judgement
 
-The current quality is **good as a first production slice**. The 171-item runtime bank reaches the near-term size target, but the pool is still shallow for long-term mastery unless the next slices keep improving variation, validators, and spaced evidence.
+The P1 quality was **good as a first production slice**. The 171-item runtime bank reached the near-term size target, but the pool was still shallow for long-term mastery unless the next slices kept improving variation, validators, and spaced evidence.
 
 The good parts:
 
@@ -250,11 +252,11 @@ Sixth, change retry behaviour. After a mistake, do not just show the same item a
 
 ## 7. Expansion target
 
-Current runtime pool: **171 items**. Original audit baseline: **96 items**.
+P11 runtime pool: **1268 items**. P1 runtime pool: **171 items**. Original audit baseline: **96 items**.
 
-Near-term safe target: **150–200 runtime items**. This is now met numerically; the remaining near-term work is quality depth, not raw count.
+Near-term safe target: **150–200 runtime items**. This is now met numerically; the remaining work is quality depth, learner journey evidence, and live smoke proof rather than raw count.
 
-Strong product target: **280–420 runtime items**, roughly **20–30 per skill**, with enough variation for spaced retrieval and secure mastery.
+Strong product target: **280–420 runtime items**, roughly **20–30 per skill**, with enough variation for spaced retrieval and secure mastery. P11 exceeds that raw count target, so the contract risk moves to surface variety, review coverage, and whether children actually experience the expanded bank through Smart, guided, weak-spot, GPS, due, and spaced-return journeys.
 
 A good target shape:
 
@@ -287,7 +289,7 @@ Do this in order:
 
 **P4 — Expand context packs.** Use context packs to safely create fresh surface contexts, but keep the grammar/punctuation rule and validator deterministic.
 
-My blunt judgement: the current Punctuation content is directionally good and much safer than AI-generated questions. The runtime pool has reached the near-term size target, but the mastery ambition still needs a better deterministic template engine, more template variety, stronger QA tests, and scheduler rules that reward varied evidence rather than repeated correctness.
+My blunt judgement: the current Punctuation content is directionally good and much safer than AI-generated questions. P11 has taken the runtime pool beyond the raw count target, but the mastery ambition still needs continued template variety, stronger QA tests, and scheduler rules that reward varied evidence rather than repeated correctness.
 
 [1]: https://github.com/fol2/ks2-mastery "GitHub - fol2/ks2-mastery: KS2 Unified — browser-side React prototype of a KS2 (UK Year 5/6) study app · GitHub"
 [2]: https://github.com/fol2/ks2-mastery/blob/main/shared/punctuation/content.js "ks2-mastery/shared/punctuation/content.js at main · fol2/ks2-mastery · GitHub"

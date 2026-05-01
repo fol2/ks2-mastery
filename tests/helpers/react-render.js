@@ -712,7 +712,7 @@ export function renderHubSurfaceFixture({
         recentSessions: [],
         dailyGoal: { targetAttempts: 4, attemptsToday: 1, correctToday: 0, completed: false, progressPercent: 25 },
         streak: { currentDays: 1, bestDays: 1, activeDays: 1 },
-        releaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+        releaseDiagnostics: { releaseId: 'punctuation-qg-p11-2026-05-01', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
       },
       exportEntryPoints: [{ action: 'platform-export-learner', label: 'Export current learner' }],
       accessibleLearners: [{ learnerId: 'learner-a', learnerName: 'Ava', yearGroup: 'Y5', membershipRoleLabel: 'Viewer', writable: false }],
@@ -786,7 +786,7 @@ export function renderHubSurfaceFixture({
           punctuationEvidence: {
             progressSnapshot: { securedRewardUnits: 1, dueItems: 1, weakItems: 1 },
             weakestFacets: [{ id: 'speech::insert', label: 'Speech - Insert punctuation' }],
-            releaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+            releaseDiagnostics: { releaseId: 'punctuation-qg-p11-2026-05-01', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
           },
         },
         accessibleLearners: [{
@@ -801,7 +801,7 @@ export function renderHubSurfaceFixture({
           punctuationEvidence: { progressSnapshot: { dueItems: 1, weakItems: 1 } },
           currentFocus: { label: 'Due spellings' },
         }],
-        punctuationReleaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+        punctuationReleaseDiagnostics: { releaseId: 'punctuation-qg-p11-2026-05-01', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
         entryPoints: [{ action: 'open-subject', label: 'Open Spelling', subjectId: 'spelling' }, { action: 'open-subject', label: 'Open Punctuation analytics', subjectId: 'punctuation', tab: 'analytics' }],
       },
       postMegaSeedHarness: {

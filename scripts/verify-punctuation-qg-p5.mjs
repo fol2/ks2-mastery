@@ -16,12 +16,15 @@
 
 import { execSync } from 'node:child_process';
 
-import { PRODUCTION_DEPTH, CAPACITY_DEPTH } from '../shared/punctuation/generators.js';
+import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH, CAPACITY_DEPTH } from '../shared/punctuation/generators.js';
 import { PUNCTUATION_TELEMETRY_MANIFEST } from '../shared/punctuation/telemetry-manifest.js';
 
 const EMITTED_EVENT_COUNT = Object.values(PUNCTUATION_TELEMETRY_MANIFEST)
   .filter((entry) => entry.status === 'emitted').length;
 const TOTAL_EVENT_COUNT = Object.keys(PUNCTUATION_TELEMETRY_MANIFEST).length;
+const runtimeManifest = createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH });
+const fixedItems = runtimeManifest.items.filter((item) => item.source === 'fixed').length;
+const generatedItems = runtimeManifest.items.filter((item) => item.source === 'generated').length;
 
 const gates = [
   {
@@ -29,7 +32,7 @@ const gates = [
     command: 'node scripts/verify-punctuation-qg.mjs',
   },
   {
-    name: 'Golden marking validation (25/25 families)',
+    name: 'Golden marking validation (reviewed generated families)',
     command: 'node --test tests/punctuation-golden-marking.test.js',
   },
   {
@@ -98,7 +101,7 @@ if (reservedEvents.length > 0) {
 
 // ─── Summary output ──────────────────────────────────────────────────────────
 
-const runtimeItems = 92 + 25 * PRODUCTION_DEPTH;
+const runtimeItems = runtimeManifest.items.length;
 
 console.log('\n══════════════════════════════════════════════════════════════');
 console.log('PUNCTUATION QG P5 VERIFICATION');
@@ -113,7 +116,7 @@ for (const result of results) {
 }
 
 console.log('');
-console.log(`  P5 verification: ${passed}/${gates.length} gates passed | production depth: ${PRODUCTION_DEPTH} | runtime: ${runtimeItems} | emitted events: ${EMITTED_EVENT_COUNT}/${TOTAL_EVENT_COUNT}`);
+console.log(`  P5 verification: ${passed}/${gates.length} gates passed | production depth: ${PRODUCTION_DEPTH} | runtime: ${runtimeItems} (${fixedItems} fixed + ${generatedItems} generated) | emitted events: ${EMITTED_EVENT_COUNT}/${TOTAL_EVENT_COUNT}`);
 
 if (warnings.length > 0) {
   console.log('\n  Known residual risks:');

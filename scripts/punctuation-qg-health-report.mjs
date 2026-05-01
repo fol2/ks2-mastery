@@ -84,7 +84,7 @@ function computeSignatureExposure(manifest) {
   const indexes = createPunctuationContentIndexes(manifest);
   const generatedItems = createPunctuationGeneratedItems({
     manifest,
-    seed: manifest.releaseId || 'health-report',
+    seed: manifest.generatedSeed || manifest.releaseId || 'health-report',
     perFamily: 4,
   });
   const signatures = new Set(generatedItems.map((item) => item.variantSignature).filter(Boolean));
@@ -97,7 +97,7 @@ function computeSignatureExposure(manifest) {
 function computeSignatureRepeatRate(manifest) {
   const generatedItems = createPunctuationGeneratedItems({
     manifest,
-    seed: manifest.releaseId || 'health-report',
+    seed: manifest.generatedSeed || manifest.releaseId || 'health-report',
     perFamily: 4,
   });
   const signatureCounts = new Map();
@@ -174,7 +174,7 @@ function computeDuplicateSignatureCount(signatureRepeatRate) {
 function computeDuplicateStemModelClusters(manifest) {
   const generatedItems = createPunctuationGeneratedItems({
     manifest,
-    seed: manifest.releaseId || 'health-report',
+    seed: manifest.generatedSeed || manifest.releaseId || 'health-report',
     perFamily: 4,
   });
   const stemCounts = new Map();

@@ -82,7 +82,13 @@
     "verify:punctuation-qg:p8": "node scripts/verify-punctuation-qg-p8.mjs",
     "verify:punctuation-qg:p9": "node scripts/verify-punctuation-qg-p9.mjs",
     "verify:punctuation-qg:p10": "node scripts/verify-punctuation-qg-p10.mjs",
-    "review:punctuation-questions": "node scripts/review-punctuation-questions.mjs"
+    "review:punctuation-questions": "node scripts/review-punctuation-questions.mjs",
+    "audit:punctuation-qg:manual-expansion": "node scripts/audit-punctuation-manual-expansion.mjs",
+    "audit:punctuation-qg:p11-product": "node scripts/audit-punctuation-qg-p11-product.mjs",
+    "build:punctuation-qg:p11-surface-pack": "node scripts/build-punctuation-qg-p11-surface-pack.mjs",
+    "test:punctuation-qg:manual-expansion": "node --test tests/punctuation-manual-expansion.test.js",
+    "verify:punctuation-qg:p11-expansion": "npm run audit:punctuation-qg:manual-expansion && npm run test:punctuation-qg:manual-expansion && npm run audit:punctuation-qg:p11-product",
+    "verify:punctuation-qg:p11": "node scripts/verify-punctuation-qg-p11.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

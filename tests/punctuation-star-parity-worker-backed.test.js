@@ -33,7 +33,7 @@ import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
 import { updatePunctuationStarHighWater } from '../src/platform/game/monster-system.js';
 import { createPunctuationRewardSubscriber } from '../src/subjects/punctuation/event-hooks.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------

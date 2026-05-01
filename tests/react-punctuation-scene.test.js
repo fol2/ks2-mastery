@@ -70,7 +70,7 @@ test('punctuation React surface renders setup, active item, feedback and summary
 
   startOneItemPunctuationSession(harness);
   const activeHtml = harness.render();
-  assert.match(activeHtml, /Choose the best punctuated sentence/);
+  assert.match(activeHtml, /Choose (?:the best|the correctly punctuated)/);
   assert.match(activeHtml, /role="radiogroup"/);
   assert.match(activeHtml, /data-punctuation-submit/);
   assert.doesNotMatch(activeHtml, /correctIndex|accepted|rubric|validator|generator|hiddenQueue/);
@@ -3379,8 +3379,8 @@ test('punctuation module handler (adv-234-001 MEDIUM): punctuation-set-round-len
 });
 
 test('punctuation module handler (adv-234-001 MEDIUM): punctuation-set-round-length rejects off-enum values (all / 1)', () => {
-  // The narrower UI-level enum is ['4', '8', '12']. The storage-level
-  // `normalisePunctuationRoundLength` accepts 1 / 2 / 3 / 6 / 'all' too —
+  // The narrower UI-level enum is ['4', '6', '8', '12']. The storage-level
+  // `normalisePunctuationRoundLength` accepts 1 / 2 / 3 / 'all' too —
   // those are kept valid for the /start-session Worker command so legacy
   // per-skill drills still work, but the Setup dashboard toggle must never
   // accept them. Rogue 'all' / '1' payloads are rejected here.
@@ -3390,7 +3390,7 @@ test('punctuation module handler (adv-234-001 MEDIUM): punctuation-set-round-len
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
 
   // Setup phase, but value is out of the narrow enum.
-  for (const badValue of ['all', '1', '2', '3', '6', 'seven', '', null, undefined, 4]) {
+  for (const badValue of ['all', '1', '2', '3', 'seven', '', null, undefined, 4]) {
     const handled = harness.handleSubjectAction('punctuation-set-round-length', { value: badValue });
     assert.equal(handled, false, `set-round-length should reject value ${JSON.stringify(badValue)}`);
     // Stored prefs (via the service) must still read roundLength '4'.
@@ -3407,9 +3407,9 @@ test('punctuation module handler (adv-234-001 MEDIUM): punctuation-set-round-len
 });
 
 test('punctuation module handler (adv-234-001 MEDIUM): punctuation-set-round-length accepts each narrow-enum stop', () => {
-  // Positive-case pair for the rejection test above: the three narrow-enum
+  // Positive-case pair for the rejection test above: the four narrow-enum
   // stops DO save through to stored prefs when dispatched from Setup.
-  for (const value of ['4', '8', '12']) {
+  for (const value of ['4', '6', '8', '12']) {
     const harness = createPunctuationHarness();
     const learnerId = harness.store.getState().learners.selectedId;
     harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
@@ -3926,11 +3926,11 @@ test('U1 primary card data-action is "punctuation-start" and does NOT carry aria
 // serialised markup — these assertions fail.
 //
 // Coverage:
-//   - prefs.roundLength = '4' (default) → each primary card's
+//   - prefs.roundLength = '4' (quick rescue) → each secondary action's
 //     data-round-length is "4".
 //   - prefs.roundLength = '8' → each primary card's data-round-length is
 //     "8".
-//   - No roundLength pref at all → falls back to '4' per
+//   - No roundLength pref at all → falls back to '6' per
 //     selectedRoundLength().
 // ---------------------------------------------------------------------------
 
@@ -3974,6 +3974,24 @@ test('U7 follow-on: round-length toggle threads value to secondary drawer button
   }
   // Round length radiogroup present inside the secondary drawer.
   assert.match(html, /role="radiogroup"/, 'round length toggle present');
+});
+
+test('P11 default Smart Practice uses six-question setup payloads with no saved preference', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  const html = harness.render();
+
+  assert.match(
+    html,
+    /<button[^>]*data-punctuation-cta[^>]*data-round-length="6"|<button[^>]*data-round-length="6"[^>]*data-punctuation-cta/,
+    'fresh setup primary CTA must carry the P11 six-question default',
+  );
+
+  const secondaryButtons = extractSecondaryButtonRoundLengths(html).filter((button) => button.mode !== null);
+  assert.ok(secondaryButtons.length >= 2, 'expected Wobbly and GPS secondary actions');
+  for (const button of secondaryButtons) {
+    assert.equal(button.roundLength, '6', `secondary action ${button.mode} must inherit the P11 default length`);
+  }
 });
 
 // ---------------------------------------------------------------------------

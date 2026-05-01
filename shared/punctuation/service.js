@@ -29,6 +29,7 @@ import {
   normalisePunctuationSummary,
   normaliseStringArray,
   normaliseTimestamp,
+  DEFAULT_PUNCTUATION_PREFS,
   PUNCTUATION_PHASES,
   PUNCTUATION_SERVICE_STATE_VERSION,
 } from '../../src/subjects/punctuation/service-contract.js';
@@ -39,6 +40,7 @@ const SERVER_AUTHORITY = 'worker';
 const MAX_GPS_QUEUE_LENGTH = 12;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DAILY_TARGET_ATTEMPTS = 4;
+const SMART_MODE_CYCLE_LENGTH = 6;
 const OPAQUE_VARIANT_SIGNATURE_PATTERN = /^puncsig_[a-z0-9]+$/;
 const ITEM_MODE_LABELS = Object.freeze({
   choose: 'Choice',
@@ -130,7 +132,7 @@ function createNoopRepository() {
 
 export function createInitialPunctuationData() {
   return {
-    prefs: { mode: 'smart', roundLength: '4' },
+    prefs: cloneSerialisable(DEFAULT_PUNCTUATION_PREFS),
     progress: {
       items: {},
       facets: {},
@@ -347,6 +349,7 @@ function normaliseSession(value) {
     releaseId: typeof value.releaseId === 'string' ? value.releaseId : PUNCTUATION_RELEASE_ID,
     mode,
     length: Math.max(1, normaliseNonNegativeInteger(value.length, 4)),
+    modeStartOffset: normaliseNonNegativeInteger(value.modeStartOffset, 0),
     phase: value.phase === 'feedback' ? 'feedback' : 'active-item',
     startedAt: normaliseTimestamp(value.startedAt, 0),
     updatedAt: normaliseTimestamp(value.updatedAt, 0),
@@ -355,6 +358,7 @@ function normaliseSession(value) {
     currentItemId: typeof value.currentItemId === 'string' ? value.currentItemId : '',
     currentItem: normaliseItemForState(value.currentItem),
     recentItemIds: normaliseStringArray(value.recentItemIds).slice(-10),
+    retriedMisconceptions: normaliseStringArray(value.retriedMisconceptions).slice(-20),
     securedUnits: normaliseStringArray(value.securedUnits),
     misconceptionTags: normaliseStringArray(value.misconceptionTags),
     guidedSkillId,
@@ -783,6 +787,16 @@ function roundLengthForSession(prefs = {}, options = {}) {
   return Math.min(MAX_GPS_QUEUE_LENGTH, Math.max(1, Number.parseInt(value, 10) || 4));
 }
 
+function modeStartOffsetForSession(progress = {}, mode = 'smart') {
+  const rotatingModes = new Set(['smart', 'endmarks', 'apostrophe', 'speech', 'comma_flow', 'boundary', 'structure']);
+  if (!rotatingModes.has(mode)) return 0;
+  const sessionsCompleted = normaliseNonNegativeInteger(progress?.sessionsCompleted, 0);
+  if (sessionsCompleted > 0) return sessionsCompleted % SMART_MODE_CYCLE_LENGTH;
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
+  const meaningfulAttempts = attempts.filter((attempt) => typeof attempt?.mode === 'string' || typeof attempt?.itemMode === 'string');
+  return meaningfulAttempts.length % SMART_MODE_CYCLE_LENGTH;
+}
+
 function prefsForSession(session = {}, fallback = {}) {
   return normalisePunctuationPrefs({
     ...fallback,
@@ -1133,6 +1147,7 @@ function buildGpsQueue({ session, data, indexes, prefs, now, random }) {
   let draftSession = {
     ...session,
     recentItemIds: [],
+    retriedMisconceptions: [],
     currentItemId: '',
     answeredCount: 0,
   };
@@ -1195,6 +1210,14 @@ function nextActiveState({ learnerId, session, data, indexes, prefs, now, random
   // U11: track scheduler reason and per-session signature exposure for telemetry.
   const itemSignature = selection.item.variantSignature || '';
   const prevSignatures = Array.isArray(session.selectedSignatures) ? session.selectedSignatures : [];
+  const isMisconceptionRetry = (selection.reason || 'fallback') === 'misconception-retry';
+  const retryTag = isMisconceptionRetry && typeof selection.misconceptionTag === 'string'
+    ? selection.misconceptionTag
+    : '';
+  const previousRetriedMisconceptions = normaliseStringArray(session.retriedMisconceptions).slice(-20);
+  const nextRetriedMisconceptions = retryTag
+    ? [...new Set([...previousRetriedMisconceptions, retryTag])].slice(-20)
+    : previousRetriedMisconceptions;
   const nextSession = {
     ...session,
     phase: 'active-item',
@@ -1202,13 +1225,13 @@ function nextActiveState({ learnerId, session, data, indexes, prefs, now, random
     currentItemId: selection.item.id,
     currentItem: normaliseItemForState(selection.item),
     recentItemIds: [...(session.recentItemIds || []), selection.item.id].slice(-10),
+    retriedMisconceptions: nextRetriedMisconceptions,
     weakFocus: session.mode === 'weak' ? normaliseWeakFocus(selection.weakFocus) : null,
     selectionReason: selection.reason || 'fallback',
     selectedSignatures: itemSignature
       ? [...prevSignatures, itemSignature].slice(-20)
       : prevSignatures,
   };
-  const isMisconceptionRetry = (selection.reason || 'fallback') === 'misconception-retry';
   return {
     version: PUNCTUATION_SERVICE_STATE_VERSION,
     phase: 'active-item',
@@ -1460,6 +1483,7 @@ export function createPunctuationService({
         releaseId: activeReleaseId,
         mode: prefs.mode,
         length: roundLengthForSession(prefs, options),
+        modeStartOffset: modeStartOffsetForSession(current.progress, prefs.mode),
         phase: 'active-item',
         startedAt: clock(),
         updatedAt: clock(),
@@ -1468,6 +1492,7 @@ export function createPunctuationService({
         currentItemId: '',
         currentItem: null,
         recentItemIds: [],
+        retriedMisconceptions: [],
         securedUnits: [],
         misconceptionTags: [],
         guidedSkillId,

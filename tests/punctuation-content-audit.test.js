@@ -22,12 +22,12 @@ const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 const workflowPath = fileURLToPath(new URL('../.github/workflows/punctuation-content-audit.yml', import.meta.url));
 
 const P2_U3_FIXED_THRESHOLDS = Object.freeze({
-  sentence_endings: 8,
-  apostrophe_contractions: 8,
-  comma_clarity: 8,
-  semicolon_list: 8,
-  hyphen: 8,
-  dash_clause: 8,
+  sentence_endings: 12,
+  apostrophe_contractions: 12,
+  comma_clarity: 12,
+  semicolon_list: 12,
+  hyphen: 12,
+  dash_clause: 12,
 });
 
 const P2_U6_PRIORITY_CAPACITY_FAMILIES = Object.freeze([
@@ -47,35 +47,39 @@ const P2_U6_PRIORITY_CAPACITY_FAMILIES = Object.freeze([
 ]);
 
 const P2_U6_PRIORITY_CAPACITY_FAMILY_IDS = new Set(P2_U6_PRIORITY_CAPACITY_FAMILIES);
+const GENERATOR_FAMILY_COUNT = PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length;
+const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.length;
+const expectedGeneratedItems = (depth) => GENERATOR_FAMILY_COUNT * depth;
+const expectedRuntimeItems = (depth) => FIXED_ITEM_COUNT + expectedGeneratedItems(depth);
 
 const P2_U6_EXPECTED_CAPACITY_DUPLICATE_RESIDUALS = Object.freeze({
   stems: {
-    groupCount: 7,
+    groupCount: 3,
     priorityGroupCount: 0,
     priorityFamilies: [],
     familyGroupCounts: {
-      gen_fronted_adverbial_combine: 7,
-      gen_fronted_adverbial_fix: 7,
+      gen_fronted_adverbial_combine: 3,
+      gen_fronted_adverbial_fix: 3,
     },
   },
   models: {
-    groupCount: 38,
-    priorityGroupCount: 8,
+    groupCount: 18,
+    priorityGroupCount: 4,
     priorityFamilies: [
       'gen_dash_clause_combine',
       'gen_dash_clause_fix',
     ],
     familyGroupCounts: {
-      gen_bullet_points_fix: 7,
-      gen_bullet_points_paragraph: 7,
-      gen_colon_list_combine: 8,
-      gen_colon_list_insert: 8,
-      gen_fronted_adverbial_combine: 7,
-      gen_fronted_adverbial_fix: 7,
-      gen_parenthesis_combine: 8,
-      gen_parenthesis_fix: 8,
-      gen_semicolon_combine: 8,
-      gen_semicolon_fix: 8,
+      gen_bullet_points_fix: 3,
+      gen_bullet_points_paragraph: 3,
+      gen_colon_list_combine: 4,
+      gen_colon_list_insert: 4,
+      gen_fronted_adverbial_combine: 3,
+      gen_fronted_adverbial_fix: 3,
+      gen_parenthesis_combine: 4,
+      gen_parenthesis_fix: 4,
+      gen_semicolon_combine: 4,
+      gen_semicolon_fix: 4,
     },
   },
   signatures: {
@@ -146,10 +150,10 @@ test('punctuation content audit reports the current fixed and generated baseline
 
   assert.equal(audit.ok, true, audit.failures.join('\n'));
   assert.deepEqual(audit.summary, {
-    fixedItemCount: 92,
-    generatorFamilyCount: 25,
-    generatedItemCount: 25,
-    runtimeItemCount: 117,
+    fixedItemCount: 148,
+    generatorFamilyCount: 28,
+    generatedItemCount: 28,
+    runtimeItemCount: 176,
     publishedRewardUnitCount: 14,
     publishedSkillCount: 14,
   });
@@ -165,12 +169,12 @@ test('punctuation content audit reports per-skill coverage and generated signatu
   const sentenceEndings = audit.bySkill.find((row) => row.skillId === 'sentence_endings');
   const speech = audit.bySkill.find((row) => row.skillId === 'speech');
 
-  assert.equal(sentenceEndings.fixedItemCount, 8);
-  assert.equal(sentenceEndings.generatedItemCount, 1);
-  assert.equal(sentenceEndings.generatedSignatureCount, 1);
+  assert.equal(sentenceEndings.fixedItemCount, 12);
+  assert.equal(sentenceEndings.generatedItemCount, 2);
+  assert.equal(sentenceEndings.generatedSignatureCount, 2);
   assert.ok(sentenceEndings.readinessCoverage.includes('insertion'));
-  assert.equal(sentenceEndings.choiceItemCount, 2);
-  assert.equal(sentenceEndings.answerContractCoverageCount, 4);
+  assert.equal(sentenceEndings.choiceItemCount, 7);
+  assert.equal(sentenceEndings.answerContractCoverageCount, 9);
   assert.equal(sentenceEndings.validatorCoverageCount, 2);
   assert.ok(speech.generatedItemCount >= 2);
   assert.ok(speech.validatorCoverageCount > 0);
@@ -194,9 +198,9 @@ test('punctuation content audit proves P2 U3 runtime growth comes from fixed anc
     audit.failureDetails.filter((failure) => failure.code === 'generated_model_marking'),
     [],
   );
-  assert.equal(audit.summary.fixedItemCount, 92);
-  assert.equal(audit.summary.generatedItemCount, 100);
-  assert.equal(audit.summary.runtimeItemCount, 192);
+  assert.equal(audit.summary.fixedItemCount, 148);
+  assert.equal(audit.summary.generatedItemCount, expectedGeneratedItems(4));
+  assert.equal(audit.summary.runtimeItemCount, expectedRuntimeItems(4));
   assert.equal(audit.summary.publishedRewardUnitCount, 14);
 
   for (const [skillId, expected] of Object.entries(P2_U3_FIXED_THRESHOLDS)) {
@@ -243,15 +247,15 @@ test('punctuation content audit proves spare priority capacity without raising p
   });
 
   assert.equal(productionAudit.ok, true, productionAudit.failures.join('\n'));
-  assert.equal(productionAudit.summary.generatedItemCount, 100);
-  assert.equal(productionAudit.summary.runtimeItemCount, 192);
+  assert.equal(productionAudit.summary.generatedItemCount, expectedGeneratedItems(4));
+  assert.equal(productionAudit.summary.runtimeItemCount, expectedRuntimeItems(4));
   assert.equal(capacityAudit.ok, true, capacityAudit.failures.join('\n'));
   assert.deepEqual(
     capacityAudit.failureDetails.filter((failure) => failure.code === 'generated_model_marking'),
     [],
   );
-  assert.equal(capacityAudit.summary.generatedItemCount, 200);
-  assert.equal(capacityAudit.summary.runtimeItemCount, 292);
+  assert.equal(capacityAudit.summary.generatedItemCount, expectedGeneratedItems(8));
+  assert.equal(capacityAudit.summary.runtimeItemCount, expectedRuntimeItems(8));
   for (const familyId of P2_U6_PRIORITY_CAPACITY_FAMILIES) {
     const row = capacityAudit.generatorFamilies.find((entry) => entry.id === familyId);
     assert.equal(row.generatedItemCount, 8, familyId);
@@ -434,7 +438,7 @@ test('punctuation content audit threshold failures are machine-readable', () => 
   });
 
   assert.equal(audit.ok, false);
-  assert.match(audit.failures.join('\n'), /sentence_endings has 1 generated signatures/);
+  assert.match(audit.failures.join('\n'), /sentence_endings has 2 generated signatures/);
   assert.equal(Array.isArray(audit.bySkill), true);
   assert.equal(Array.isArray(audit.generatorFamilies), true);
   assert.ok(audit.failureDetails.some((failure) => (
@@ -455,7 +459,7 @@ test('punctuation content audit leaves duplicate generated stems and models revi
   assert.equal(audit.ok, true, audit.failures.join('\n'));
   assert.ok(audit.duplicates.generated.stems.length > 0);
   assert.ok(audit.duplicates.generated.models.length > 0);
-  assert.ok(audit.duplicates.generated.signatures.length > 0);
+  assert.equal(audit.duplicates.generated.signatures.length, 0);
 });
 
 test('punctuation content audit detects a P2 fixed-anchor regression', () => {
@@ -478,12 +482,12 @@ test('punctuation content audit detects a P2 fixed-anchor regression', () => {
   });
 
   assert.equal(audit.ok, false);
-  assert.match(audit.failures.join('\n'), /Published skill sentence_endings has 4 fixed items; expected at least 8/);
+  assert.match(audit.failures.join('\n'), /Published skill sentence_endings has 8 fixed items; expected at least 12/);
   assert.ok(audit.failureDetails.some((failure) => (
     failure.code === 'fixed_anchor_minimum'
       && failure.skillId === 'sentence_endings'
-      && failure.actual === 4
-      && failure.expected === 8
+      && failure.actual === 8
+      && failure.expected === 12
   )));
 });
 
@@ -629,7 +633,7 @@ test('punctuation content audit reviewer report shows capacity at depth 8 for co
   }
 });
 
-test('punctuation content audit reviewer report shows 0 legacy families (25/25 DSL coverage)', () => {
+test('punctuation content audit reviewer report shows 0 legacy families with generated choice families reviewed', () => {
   const audit = runPunctuationContentAudit({
     seed: 'reviewer-legacy-detect',
     generatedPerFamily: 1,
@@ -644,11 +648,11 @@ test('punctuation content audit reviewer report shows 0 legacy families (25/25 D
     capacityDepth: 8,
   });
 
-  // All 25 families are now DSL-backed — 0 legacy families remain
-  assert.equal(report.legacyFamilies.length, 0, 'All families are DSL-backed');
-  // Every family has isDsl = true
+  assert.equal(report.legacyFamilies.length, 0, 'All families must be reviewed-template backed');
+  assert.equal(report.summary.dslCoverage, 25 / 28);
+  assert.equal(report.summary.reviewedTemplateCoverage, 1);
   for (const row of report.perFamilyCapacity) {
-    assert.equal(row.isDsl, true, `${row.familyId} must be flagged as DSL`);
+    assert.equal(row.isReviewedTemplate, true, `${row.familyId} must be reviewed-template backed`);
   }
 });
 
@@ -838,7 +842,7 @@ test('punctuation content audit reviewer report classifies duplicate stem as War
   }
 });
 
-test('punctuation content audit reviewer report produces 0 legacy Warning findings (25/25 DSL coverage)', () => {
+test('punctuation content audit reviewer report produces 0 legacy Warning findings for reviewed-template families', () => {
   const audit = runPunctuationContentAudit({
     seed: 'reviewer-legacy-warning',
     generatedPerFamily: 1,
@@ -855,10 +859,10 @@ test('punctuation content audit reviewer report produces 0 legacy Warning findin
   });
 
   const legacyFindings = report.findings.filter((f) => f.code === 'legacy_non_dsl_family');
-  assert.equal(legacyFindings.length, 0, 'All 25 families are DSL-backed — no legacy families remain');
+  assert.equal(legacyFindings.length, 0, 'All families are reviewed-template backed — no legacy families remain');
 });
 
-test('punctuation content audit reviewer report --require-all-dsl produces 0 legacy Fail findings (25/25 DSL coverage)', () => {
+test('punctuation content audit reviewer report --require-all-dsl produces 0 legacy Fail findings for reviewed-template families', () => {
   const audit = runPunctuationContentAudit({
     seed: 'reviewer-legacy-fail',
     generatedPerFamily: 1,
@@ -875,7 +879,7 @@ test('punctuation content audit reviewer report --require-all-dsl produces 0 leg
   });
 
   const legacyFindings = report.findings.filter((f) => f.code === 'legacy_non_dsl_family');
-  assert.equal(legacyFindings.length, 0, 'All 25 families are DSL-backed — no legacy families remain');
+  assert.equal(legacyFindings.length, 0, 'All families are reviewed-template backed — no legacy families remain');
 });
 
 test('punctuation content audit reviewer report all-green content produces 0 Fail findings', () => {

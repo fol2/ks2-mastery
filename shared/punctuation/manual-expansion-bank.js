@@ -1,0 +1,2923 @@
+// Manual Punctuation QG expansion bank.
+// This file deliberately contains hand-authored case tables rather than re-seeding
+// the existing eight-template families. The target is a real 40-template surface
+// per generator family: the existing 8 templates plus 32 new manual templates.
+
+export const PUNCTUATION_MANUAL_EXPANSION_TARGET_DEPTH = 40;
+export const PUNCTUATION_MANUAL_EXPANSION_PER_FAMILY = 32;
+
+const CASES = Object.freeze({
+  "sentenceCases": [
+    [
+      "where did the music come from",
+      "Where did the music come from?"
+    ],
+    [
+      "please pass the green folder",
+      "Please pass the green folder."
+    ],
+    [
+      "what a wonderful painting",
+      "What a wonderful painting!"
+    ],
+    [
+      "how did the robot move",
+      "How did the robot move?"
+    ],
+    [
+      "close the library door quietly",
+      "Close the library door quietly."
+    ],
+    [
+      "what a brave rescue that was",
+      "What a brave rescue that was!"
+    ],
+    [
+      "why was the playground empty",
+      "Why was the playground empty?"
+    ],
+    [
+      "put the science tray on the table",
+      "Put the science tray on the table."
+    ],
+    [
+      "what an exciting final race",
+      "What an exciting final race!"
+    ],
+    [
+      "when will the coach arrive",
+      "When will the coach arrive?"
+    ],
+    [
+      "read the next paragraph aloud",
+      "Read the next paragraph aloud."
+    ],
+    [
+      "what a clever solution",
+      "What a clever solution!"
+    ],
+    [
+      "which path leads to the river",
+      "Which path leads to the river?"
+    ],
+    [
+      "tidy the art cupboard before lunch",
+      "Tidy the art cupboard before lunch."
+    ],
+    [
+      "what a noisy thunderstorm",
+      "What a noisy thunderstorm!"
+    ],
+    [
+      "who left the window open",
+      "Who left the window open?"
+    ],
+    [
+      "bring your notebook to the hall",
+      "Bring your notebook to the hall."
+    ],
+    [
+      "what a beautiful sunrise",
+      "What a beautiful sunrise!"
+    ],
+    [
+      "where should we put the maps",
+      "Where should we put the maps?"
+    ],
+    [
+      "check the answer carefully",
+      "Check the answer carefully."
+    ],
+    [
+      "what an amazing discovery",
+      "What an amazing discovery!"
+    ],
+    [
+      "why did the lights flicker",
+      "Why did the lights flicker?"
+    ],
+    [
+      "write the date at the top",
+      "Write the date at the top."
+    ],
+    [
+      "what a brilliant performance",
+      "What a brilliant performance!"
+    ],
+    [
+      "how many tickets are left",
+      "How many tickets are left?"
+    ],
+    [
+      "keep the path clear for everyone",
+      "Keep the path clear for everyone."
+    ],
+    [
+      "what a peaceful garden",
+      "What a peaceful garden!"
+    ],
+    [
+      "when did the train leave",
+      "When did the train leave?"
+    ],
+    [
+      "copy the title neatly",
+      "Copy the title neatly."
+    ],
+    [
+      "what a dramatic ending",
+      "What a dramatic ending!"
+    ],
+    [
+      "which team won the quiz",
+      "Which team won the quiz?"
+    ],
+    [
+      "return the tablets to the trolley",
+      "Return the tablets to the trolley."
+    ]
+  ],
+  "contractionCases": [
+    [
+      "We didnt know theyd arrive early.",
+      "We didn't know they'd arrive early."
+    ],
+    [
+      "I cant believe youre already finished.",
+      "I can't believe you're already finished."
+    ],
+    [
+      "Theyre sure well find the missing key.",
+      "They're sure we'll find the missing key."
+    ],
+    [
+      "She wouldnt say why shed hidden the note.",
+      "She wouldn't say why she'd hidden the note."
+    ],
+    [
+      "Youll see that Ive repaired the kite.",
+      "You'll see that I've repaired the kite."
+    ],
+    [
+      "Dont worry because were nearly there.",
+      "Don't worry because we're nearly there."
+    ],
+    [
+      "Hes certain that theyll bring the tickets.",
+      "He's certain that they'll bring the tickets."
+    ],
+    [
+      "Ive checked but I dont see the mistake.",
+      "I've checked but I don't see the mistake."
+    ],
+    [
+      "They werent ready when wed planned to leave.",
+      "They weren't ready when we'd planned to leave."
+    ],
+    [
+      "Its clear that youre listening carefully.",
+      "It's clear that you're listening carefully."
+    ],
+    [
+      "Weve decided that well walk home.",
+      "We've decided that we'll walk home."
+    ],
+    [
+      "She cant find what shes looking for.",
+      "She can't find what she's looking for."
+    ],
+    [
+      "The team didnt know itd started raining.",
+      "The team didn't know it'd started raining."
+    ],
+    [
+      "You arent late because we havent begun.",
+      "You aren't late because we haven't begun."
+    ],
+    [
+      "Ill help when youve packed your bag.",
+      "I'll help when you've packed your bag."
+    ],
+    [
+      "He doesnt think theyre ready yet.",
+      "He doesn't think they're ready yet."
+    ],
+    [
+      "We couldnt hear what youd said.",
+      "We couldn't hear what you'd said."
+    ],
+    [
+      "They shouldnt forget that its tomorrow.",
+      "They shouldn't forget that it's tomorrow."
+    ],
+    [
+      "Shes sure that well enjoy the visit.",
+      "She's sure that we'll enjoy the visit."
+    ],
+    [
+      "I wouldnt open it until youve checked.",
+      "I wouldn't open it until you've checked."
+    ],
+    [
+      "Were going because theyve saved our seats.",
+      "We're going because they've saved our seats."
+    ],
+    [
+      "You wont finish if you dont start now.",
+      "You won't finish if you don't start now."
+    ],
+    [
+      "Hed rather wait because its still early.",
+      "He'd rather wait because it's still early."
+    ],
+    [
+      "They couldnt decide whether theyd stay.",
+      "They couldn't decide whether they'd stay."
+    ],
+    [
+      "I dont think shell miss the bus.",
+      "I don't think she'll miss the bus."
+    ],
+    [
+      "We arent sure why theyre whispering.",
+      "We aren't sure why they're whispering."
+    ],
+    [
+      "Youd better check that its locked.",
+      "You'd better check that it's locked."
+    ],
+    [
+      "Theyll help when weve finished tidying.",
+      "They'll help when we've finished tidying."
+    ],
+    [
+      "She hasnt seen where Ive put it.",
+      "She hasn't seen where I've put it."
+    ],
+    [
+      "We shouldnt move until theyre ready.",
+      "We shouldn't move until they're ready."
+    ],
+    [
+      "Its lucky that youve brought a torch.",
+      "It's lucky that you've brought a torch."
+    ],
+    [
+      "I cant tell if hes joking.",
+      "I can't tell if he's joking."
+    ]
+  ],
+  "possessionCases": [
+    [
+      "The boys coats were hanging by the door.",
+      "The boys' coats were hanging by the door."
+    ],
+    [
+      "The girls sketchbook was left on the bench.",
+      "The girl's sketchbook was left on the bench."
+    ],
+    [
+      "The teachers notes covered the whiteboard.",
+      "The teacher's notes covered the whiteboard."
+    ],
+    [
+      "The teachers room was next to the library.",
+      "The teachers' room was next to the library."
+    ],
+    [
+      "The childrens lunchboxes were on the shelf.",
+      "The children's lunchboxes were on the shelf."
+    ],
+    [
+      "The dogs lead was under the table.",
+      "The dog's lead was under the table."
+    ],
+    [
+      "The dogs leads were tangled together.",
+      "The dogs' leads were tangled together."
+    ],
+    [
+      "The foxs den was hidden by brambles.",
+      "The fox's den was hidden by brambles."
+    ],
+    [
+      "The classs display filled the corridor.",
+      "The class's display filled the corridor."
+    ],
+    [
+      "The pupils projects were ready for judging.",
+      "The pupils' projects were ready for judging."
+    ],
+    [
+      "The captains badge shone in the sunlight.",
+      "The captain's badge shone in the sunlight."
+    ],
+    [
+      "The captains badges were placed on the desk.",
+      "The captains' badges were placed on the desk."
+    ],
+    [
+      "The mouses tail twitched behind the box.",
+      "The mouse's tail twitched behind the box."
+    ],
+    [
+      "The childrens voices echoed in the hall.",
+      "The children's voices echoed in the hall."
+    ],
+    [
+      "The artists brush rolled onto the floor.",
+      "The artist's brush rolled onto the floor."
+    ],
+    [
+      "The artists brushes were stored in jars.",
+      "The artists' brushes were stored in jars."
+    ],
+    [
+      "The teams banner blew across the field.",
+      "The team's banner blew across the field."
+    ],
+    [
+      "The teams banners lined the fence.",
+      "The teams' banners lined the fence."
+    ],
+    [
+      "The babys blanket was folded neatly.",
+      "The baby's blanket was folded neatly."
+    ],
+    [
+      "The babies blankets were drying outside.",
+      "The babies' blankets were drying outside."
+    ],
+    [
+      "The kings crown was kept in a case.",
+      "The king's crown was kept in a case."
+    ],
+    [
+      "The kings crowns were shown in the museum.",
+      "The kings' crowns were shown in the museum."
+    ],
+    [
+      "The womens coats were placed near the entrance.",
+      "The women's coats were placed near the entrance."
+    ],
+    [
+      "The mans hat blew into the road.",
+      "The man's hat blew into the road."
+    ],
+    [
+      "The mens jackets were hung on hooks.",
+      "The men's jackets were hung on hooks."
+    ],
+    [
+      "The brothers bike had a flat tyre.",
+      "The brother's bike had a flat tyre."
+    ],
+    [
+      "The brothers bikes were locked together.",
+      "The brothers' bikes were locked together."
+    ],
+    [
+      "The dancers shoes tapped on the stage.",
+      "The dancers' shoes tapped on the stage."
+    ],
+    [
+      "The dancers shoe slipped during rehearsal.",
+      "The dancer's shoe slipped during rehearsal."
+    ],
+    [
+      "The schools gates opened at eight.",
+      "The school's gates opened at eight."
+    ],
+    [
+      "The schools teams met after lunch.",
+      "The schools' teams met after lunch."
+    ],
+    [
+      "The childs drawing won the prize.",
+      "The child's drawing won the prize."
+    ]
+  ],
+  "speechCases": [
+    [
+      "Mia said",
+      "the gate is open",
+      ".",
+      "Mia said, \"The gate is open.\""
+    ],
+    [
+      "Noah asked",
+      "where is the compass",
+      "?",
+      "Noah asked, \"Where is the compass?\""
+    ],
+    [
+      "Ava shouted",
+      "watch the waves",
+      "!",
+      "Ava shouted, \"Watch the waves!\""
+    ],
+    [
+      "Lena whispered",
+      "keep the lantern low",
+      ".",
+      "Lena whispered, \"Keep the lantern low.\""
+    ],
+    [
+      "Tom asked",
+      "can we start now",
+      "?",
+      "Tom asked, \"Can we start now?\""
+    ],
+    [
+      "Ruby called",
+      "the bus is here",
+      "!",
+      "Ruby called, \"The bus is here!\""
+    ],
+    [
+      "Dad said",
+      "put your boots by the door",
+      ".",
+      "Dad said, \"Put your boots by the door.\""
+    ],
+    [
+      "Ella asked",
+      "why is the hall closed",
+      "?",
+      "Ella asked, \"Why is the hall closed?\""
+    ],
+    [
+      "Sam shouted",
+      "run to the shelter",
+      "!",
+      "Sam shouted, \"Run to the shelter!\""
+    ],
+    [
+      "Zara replied",
+      "the answer is on the board",
+      ".",
+      "Zara replied, \"The answer is on the board.\""
+    ],
+    [
+      "Omar asked",
+      "who moved the chairs",
+      "?",
+      "Omar asked, \"Who moved the chairs?\""
+    ],
+    [
+      "Grace cried",
+      "the kite is flying",
+      "!",
+      "Grace cried, \"The kite is flying!\""
+    ],
+    [
+      "Mum said",
+      "check the timetable first",
+      ".",
+      "Mum said, \"Check the timetable first.\""
+    ],
+    [
+      "Ben asked",
+      "when does the film begin",
+      "?",
+      "Ben asked, \"When does the film begin?\""
+    ],
+    [
+      "Lily shouted",
+      "the goal was brilliant",
+      "!",
+      "Lily shouted, \"The goal was brilliant!\""
+    ],
+    [
+      "Hassan said",
+      "the library opens at ten",
+      ".",
+      "Hassan said, \"The library opens at ten.\""
+    ],
+    [
+      "Sofia asked",
+      "which path should we take",
+      "?",
+      "Sofia asked, \"Which path should we take?\""
+    ],
+    [
+      "Jack called",
+      "the cake is ready",
+      "!",
+      "Jack called, \"The cake is ready!\""
+    ],
+    [
+      "Nia said",
+      "the rain has stopped",
+      ".",
+      "Nia said, \"The rain has stopped.\""
+    ],
+    [
+      "Leo asked",
+      "how did the robot turn",
+      "?",
+      "Leo asked, \"How did the robot turn?\""
+    ],
+    [
+      "Freya shouted",
+      "look at the rainbow",
+      "!",
+      "Freya shouted, \"Look at the rainbow!\""
+    ],
+    [
+      "Grandad said",
+      "the train leaves soon",
+      ".",
+      "Grandad said, \"The train leaves soon.\""
+    ],
+    [
+      "Ivy asked",
+      "where did the pencil go",
+      "?",
+      "Ivy asked, \"Where did the pencil go?\""
+    ],
+    [
+      "Arun called",
+      "the team has won",
+      "!",
+      "Arun called, \"The team has won!\""
+    ],
+    [
+      "Priya said",
+      "the display looks neat",
+      ".",
+      "Priya said, \"The display looks neat.\""
+    ],
+    [
+      "Max asked",
+      "why are the lights off",
+      "?",
+      "Max asked, \"Why are the lights off?\""
+    ],
+    [
+      "Isla shouted",
+      "mind the puddle",
+      "!",
+      "Isla shouted, \"Mind the puddle!\""
+    ],
+    [
+      "Ethan said",
+      "the maps are in the drawer",
+      ".",
+      "Ethan said, \"The maps are in the drawer.\""
+    ],
+    [
+      "Amelia asked",
+      "who left the door open",
+      "?",
+      "Amelia asked, \"Who left the door open?\""
+    ],
+    [
+      "Kai cried",
+      "we found the treasure",
+      "!",
+      "Kai cried, \"We found the treasure!\""
+    ],
+    [
+      "Rosa said",
+      "the class is ready",
+      ".",
+      "Rosa said, \"The class is ready.\""
+    ],
+    [
+      "Oscar asked",
+      "when is the rehearsal",
+      "?",
+      "Oscar asked, \"When is the rehearsal?\""
+    ]
+  ],
+  "listCases": [
+    [
+      "The kit included",
+      [
+        "whistles",
+        "cones",
+        "clipboards"
+      ]
+    ],
+    [
+      "Our group collected",
+      [
+        "leaves",
+        "twigs",
+        "stones"
+      ]
+    ],
+    [
+      "The drawer contained",
+      [
+        "markers",
+        "sticky notes",
+        "scissors"
+      ]
+    ],
+    [
+      "At the pond we saw",
+      [
+        "frogs",
+        "dragonflies",
+        "reeds"
+      ]
+    ],
+    [
+      "Mum packed",
+      [
+        "sandwiches",
+        "apples",
+        "juice cartons"
+      ]
+    ],
+    [
+      "The cupboard stored",
+      [
+        "aprons",
+        "brushes",
+        "sponges"
+      ]
+    ],
+    [
+      "The quiz needed",
+      [
+        "timers",
+        "scorecards",
+        "pencils"
+      ]
+    ],
+    [
+      "The picnic basket held",
+      [
+        "napkins",
+        "cups",
+        "plates"
+      ]
+    ],
+    [
+      "Our group needed",
+      [
+        "glue",
+        "scissors",
+        "card"
+      ]
+    ],
+    [
+      "The cupboard stored",
+      [
+        "balls",
+        "cones",
+        "bats"
+      ]
+    ],
+    [
+      "The picnic included",
+      [
+        "sandwiches",
+        "apples",
+        "juice"
+      ]
+    ],
+    [
+      "The band played",
+      [
+        "drums",
+        "flutes",
+        "trumpets"
+      ]
+    ],
+    [
+      "We collected",
+      [
+        "leaves",
+        "twigs",
+        "stones"
+      ]
+    ],
+    [
+      "The shop sold",
+      [
+        "scarves",
+        "gloves",
+        "hats"
+      ]
+    ],
+    [
+      "The kit contained",
+      [
+        "plasters",
+        "tape",
+        "bandages"
+      ]
+    ],
+    [
+      "The pond had",
+      [
+        "frogs",
+        "newts",
+        "dragonflies"
+      ]
+    ],
+    [
+      "The display showed",
+      [
+        "shells",
+        "pebbles",
+        "fossils"
+      ]
+    ],
+    [
+      "The team brought",
+      [
+        "helmets",
+        "pads",
+        "whistles"
+      ]
+    ],
+    [
+      "The drawer contained",
+      [
+        "pins",
+        "clips",
+        "labels"
+      ]
+    ],
+    [
+      "The bakery made",
+      [
+        "cakes",
+        "tarts",
+        "biscuits"
+      ]
+    ],
+    [
+      "The museum showed",
+      [
+        "coins",
+        "maps",
+        "portraits"
+      ]
+    ],
+    [
+      "The class studied",
+      [
+        "rivers",
+        "mountains",
+        "coasts"
+      ]
+    ],
+    [
+      "We planted",
+      [
+        "beans",
+        "peas",
+        "carrots"
+      ]
+    ],
+    [
+      "The bag held",
+      [
+        "trainers",
+        "shorts",
+        "socks"
+      ]
+    ],
+    [
+      "The model plane used",
+      [
+        "wings",
+        "wheels",
+        "propellers"
+      ]
+    ],
+    [
+      "The table needed",
+      [
+        "cloths",
+        "candles",
+        "flowers"
+      ]
+    ],
+    [
+      "The beach had",
+      [
+        "sand",
+        "seaweed",
+        "driftwood"
+      ]
+    ],
+    [
+      "The menu listed",
+      [
+        "soup",
+        "pasta",
+        "salad"
+      ]
+    ],
+    [
+      "The rescue team carried",
+      [
+        "ropes",
+        "radios",
+        "blankets"
+      ]
+    ],
+    [
+      "The art box held",
+      [
+        "crayons",
+        "charcoal",
+        "pastels"
+      ]
+    ],
+    [
+      "The game used",
+      [
+        "cards",
+        "dice",
+        "counters"
+      ]
+    ],
+    [
+      "The science tray held",
+      [
+        "magnets",
+        "wires",
+        "batteries"
+      ]
+    ]
+  ],
+  "frontedCases": [
+    [
+      "After the rehearsal",
+      "the choir queued quietly"
+    ],
+    [
+      "Before the match",
+      "the players checked their boots"
+    ],
+    [
+      "During the experiment",
+      "the thermometer changed colour"
+    ],
+    [
+      "At the corner of the playground",
+      "the caretaker waved"
+    ],
+    [
+      "Without a sound",
+      "the owl crossed the moon"
+    ],
+    [
+      "Behind the curtain",
+      "the puppets waited"
+    ],
+    [
+      "Throughout the morning",
+      "the class edited their stories"
+    ],
+    [
+      "Beside the river",
+      "the hikers unfolded the map"
+    ],
+    [
+      "After lunch",
+      "the class practised handwriting"
+    ],
+    [
+      "Before the bell",
+      "the pupils packed their bags"
+    ],
+    [
+      "In the morning",
+      "the baker opened the shop"
+    ],
+    [
+      "Under the bridge",
+      "the water rushed loudly"
+    ],
+    [
+      "At last",
+      "the door swung open"
+    ],
+    [
+      "During the match",
+      "the goalkeeper stayed alert"
+    ],
+    [
+      "On the top shelf",
+      "the old atlas gathered dust"
+    ],
+    [
+      "Beside the canal",
+      "the cyclists slowed down"
+    ],
+    [
+      "After the rehearsal",
+      "the choir rested quietly"
+    ],
+    [
+      "Before the journey",
+      "the family checked the tickets"
+    ],
+    [
+      "In the playground",
+      "the whistle echoed sharply"
+    ],
+    [
+      "Across the valley",
+      "the mist drifted slowly"
+    ],
+    [
+      "At the museum",
+      "the guide answered questions"
+    ],
+    [
+      "By the window",
+      "the plants leaned towards the sun"
+    ],
+    [
+      "During the experiment",
+      "the beaker grew warm"
+    ],
+    [
+      "After the parade",
+      "the streets looked colourful"
+    ],
+    [
+      "Before the test",
+      "the teacher explained the rules"
+    ],
+    [
+      "At the harbour",
+      "the fishing boats rocked gently"
+    ],
+    [
+      "Near the lighthouse",
+      "the waves crashed loudly"
+    ],
+    [
+      "After the performance",
+      "the audience clapped politely"
+    ],
+    [
+      "During the thunderstorm",
+      "the dog hid under the table"
+    ],
+    [
+      "At the end of the lane",
+      "the postbox stood crookedly"
+    ],
+    [
+      "Before bedtime",
+      "the children chose a story"
+    ],
+    [
+      "In the distance",
+      "the mountain looked purple"
+    ]
+  ],
+  "clarityCases": [
+    [
+      "Most mornings",
+      "the gate opens early"
+    ],
+    [
+      "Before cooking",
+      "children wash their hands"
+    ],
+    [
+      "After practice",
+      "the team packed the cones"
+    ],
+    [
+      "If you get lost",
+      "ask an adult for help"
+    ],
+    [
+      "While the soup cooled",
+      "Mum sliced the bread"
+    ],
+    [
+      "When the rain stopped",
+      "the match continued"
+    ],
+    [
+      "Although the path was steep",
+      "we kept climbing"
+    ],
+    [
+      "Because the hall was full",
+      "we waited outside"
+    ],
+    [
+      "While the dog slept",
+      "the cat stole its blanket"
+    ],
+    [
+      "If the alarm rings",
+      "leave by the nearest door"
+    ],
+    [
+      "When the curtain rose",
+      "the room fell silent"
+    ],
+    [
+      "Although the box looked empty",
+      "it held a tiny key"
+    ],
+    [
+      "Because the map was torn",
+      "we followed the signposts"
+    ],
+    [
+      "While the teacher counted",
+      "the class lined up"
+    ],
+    [
+      "When the tide went out",
+      "the rocks appeared"
+    ],
+    [
+      "Although the bus was late",
+      "we reached school on time"
+    ],
+    [
+      "Because the laptop froze",
+      "the group used paper"
+    ],
+    [
+      "If the gate is locked",
+      "use the side entrance"
+    ],
+    [
+      "While the kettle boiled",
+      "Grandad found the mugs"
+    ],
+    [
+      "When the film ended",
+      "everyone clapped"
+    ],
+    [
+      "Although the sky was dark",
+      "the rain stayed away"
+    ],
+    [
+      "Because the bridge was closed",
+      "we crossed by the ford"
+    ],
+    [
+      "If the lights fail",
+      "use the torch"
+    ],
+    [
+      "While the baby slept",
+      "the house stayed quiet"
+    ],
+    [
+      "When the whistle blew",
+      "the runners started"
+    ],
+    [
+      "Although the puzzle was hard",
+      "we solved it together"
+    ],
+    [
+      "Because the glue was wet",
+      "the model stayed still"
+    ],
+    [
+      "If the path floods",
+      "take the higher route"
+    ],
+    [
+      "While the band tuned up",
+      "the crowd waited"
+    ],
+    [
+      "When the clock struck twelve",
+      "the doors opened"
+    ],
+    [
+      "Although the room was small",
+      "everyone found a seat"
+    ],
+    [
+      "Because the sign was hidden",
+      "we missed the turning"
+    ]
+  ],
+  "boundaryCases": [
+    [
+      "The rain had stopped",
+      "the pitch was still slippery"
+    ],
+    [
+      "The lights dimmed",
+      "the audience fell silent"
+    ],
+    [
+      "The path was narrow",
+      "the walkers moved carefully"
+    ],
+    [
+      "The door creaked open",
+      "everyone froze"
+    ],
+    [
+      "The signal failed",
+      "the team used hand gestures"
+    ],
+    [
+      "The curtain rose",
+      "the orchestra began"
+    ],
+    [
+      "The bridge was closed",
+      "we took the longer route"
+    ],
+    [
+      "The clouds gathered",
+      "the playground emptied quickly"
+    ],
+    [
+      "The battery died",
+      "the robot stopped moving"
+    ],
+    [
+      "The tide turned",
+      "the boats headed home"
+    ],
+    [
+      "The map was torn",
+      "the guide drew a new route"
+    ],
+    [
+      "The bell rang",
+      "the class returned inside"
+    ],
+    [
+      "The engine coughed",
+      "the bus rolled slowly forward"
+    ],
+    [
+      "The river rose",
+      "the path disappeared"
+    ],
+    [
+      "The lantern flickered",
+      "the cave looked darker"
+    ],
+    [
+      "The whistle blew",
+      "the match began"
+    ],
+    [
+      "The gate jammed",
+      "the gardener fetched a tool"
+    ],
+    [
+      "The stage lights flashed",
+      "the dancers ran on"
+    ],
+    [
+      "The ice cracked",
+      "the skaters stepped back"
+    ],
+    [
+      "The computer froze",
+      "the group restarted it"
+    ],
+    [
+      "The wind dropped",
+      "the sails hung loosely"
+    ],
+    [
+      "The alarm sounded",
+      "the building emptied calmly"
+    ],
+    [
+      "The book fell open",
+      "a pressed flower slipped out"
+    ],
+    [
+      "The rope snapped",
+      "the flag slid down"
+    ],
+    [
+      "The window rattled",
+      "the storm moved closer"
+    ],
+    [
+      "The camera clicked",
+      "the bird flew away"
+    ],
+    [
+      "The key turned",
+      "the chest opened slowly"
+    ],
+    [
+      "The compass spun",
+      "the hikers stopped walking"
+    ],
+    [
+      "The microphone failed",
+      "the singer stepped forward"
+    ],
+    [
+      "The fire crackled",
+      "the room grew warmer"
+    ],
+    [
+      "The ladder wobbled",
+      "the painter climbed down"
+    ],
+    [
+      "The drumbeat started",
+      "the parade moved off"
+    ]
+  ],
+  "hyphenCases": [
+    [
+      "rain soaked field",
+      "rain-soaked field",
+      "The rain soaked field was slippery.",
+      "The rain-soaked field was slippery."
+    ],
+    [
+      "ice cold drink",
+      "ice-cold drink",
+      "The ice cold drink refreshed us.",
+      "The ice-cold drink refreshed us."
+    ],
+    [
+      "record breaking runner",
+      "record-breaking runner",
+      "The record breaking runner waved.",
+      "The record-breaking runner waved."
+    ],
+    [
+      "well lit corridor",
+      "well-lit corridor",
+      "The well lit corridor felt safe.",
+      "The well-lit corridor felt safe."
+    ],
+    [
+      "crowd pleasing song",
+      "crowd-pleasing song",
+      "The crowd pleasing song ended loudly.",
+      "The crowd-pleasing song ended loudly."
+    ],
+    [
+      "time saving method",
+      "time-saving method",
+      "The time saving method helped us.",
+      "The time-saving method helped us."
+    ],
+    [
+      "sun dried tomatoes",
+      "sun-dried tomatoes",
+      "The sun dried tomatoes tasted sweet.",
+      "The sun-dried tomatoes tasted sweet."
+    ],
+    [
+      "child friendly guide",
+      "child-friendly guide",
+      "The child friendly guide explained fossils.",
+      "The child-friendly guide explained fossils."
+    ],
+    [
+      "full length mirror",
+      "full-length mirror",
+      "The full length mirror stood in the hall.",
+      "The full-length mirror stood in the hall."
+    ],
+    [
+      "part time job",
+      "part-time job",
+      "My sister found a part time job.",
+      "My sister found a part-time job."
+    ],
+    [
+      "high speed train",
+      "high-speed train",
+      "The high speed train arrived early.",
+      "The high-speed train arrived early."
+    ],
+    [
+      "long awaited letter",
+      "long-awaited letter",
+      "The long awaited letter finally arrived.",
+      "The long-awaited letter finally arrived."
+    ],
+    [
+      "deep sea diver",
+      "deep-sea diver",
+      "The deep sea diver checked the rope.",
+      "The deep-sea diver checked the rope."
+    ],
+    [
+      "record breaking jump",
+      "record-breaking jump",
+      "The record breaking jump amazed the crowd.",
+      "The record-breaking jump amazed the crowd."
+    ],
+    [
+      "brightly lit room",
+      "brightly-lit room",
+      "The brightly lit room looked cheerful.",
+      "The brightly-lit room looked cheerful."
+    ],
+    [
+      "life saving medicine",
+      "life-saving medicine",
+      "The life saving medicine arrived by air.",
+      "The life-saving medicine arrived by air."
+    ],
+    [
+      "well behaved puppy",
+      "well-behaved puppy",
+      "The well behaved puppy waited patiently.",
+      "The well-behaved puppy waited patiently."
+    ],
+    [
+      "wind blown tree",
+      "wind-blown tree",
+      "The wind blown tree leaned over the fence.",
+      "The wind-blown tree leaned over the fence."
+    ],
+    [
+      "self service till",
+      "self-service till",
+      "The self service till stopped working.",
+      "The self-service till stopped working."
+    ],
+    [
+      "old fashioned lamp",
+      "old-fashioned lamp",
+      "The old fashioned lamp glowed softly.",
+      "The old-fashioned lamp glowed softly."
+    ],
+    [
+      "quick thinking captain",
+      "quick-thinking captain",
+      "The quick thinking captain changed the plan.",
+      "The quick-thinking captain changed the plan."
+    ],
+    [
+      "water proof jacket",
+      "water-proof jacket",
+      "The water proof jacket kept me dry.",
+      "The water-proof jacket kept me dry."
+    ],
+    [
+      "dust covered shelf",
+      "dust-covered shelf",
+      "The dust covered shelf needed cleaning.",
+      "The dust-covered shelf needed cleaning."
+    ],
+    [
+      "open air theatre",
+      "open-air theatre",
+      "The open air theatre filled quickly.",
+      "The open-air theatre filled quickly."
+    ],
+    [
+      "well prepared speech",
+      "well-prepared speech",
+      "The well prepared speech impressed everyone.",
+      "The well-prepared speech impressed everyone."
+    ],
+    [
+      "three legged stool",
+      "three-legged stool",
+      "The three legged stool wobbled badly.",
+      "The three-legged stool wobbled badly."
+    ],
+    [
+      "new born lamb",
+      "new-born lamb",
+      "The new born lamb slept beside its mother.",
+      "The new-born lamb slept beside its mother."
+    ],
+    [
+      "two metre wall",
+      "two-metre wall",
+      "The two metre wall blocked the path.",
+      "The two-metre wall blocked the path."
+    ],
+    [
+      "much loved story",
+      "much-loved story",
+      "The much loved story made us laugh.",
+      "The much-loved story made us laugh."
+    ],
+    [
+      "low flying plane",
+      "low-flying plane",
+      "The low flying plane crossed the valley.",
+      "The low-flying plane crossed the valley."
+    ],
+    [
+      "well earned rest",
+      "well-earned rest",
+      "The well earned rest felt wonderful.",
+      "The well-earned rest felt wonderful."
+    ],
+    [
+      "slow moving queue",
+      "slow-moving queue",
+      "The slow moving queue reached the door.",
+      "The slow-moving queue reached the door."
+    ]
+  ],
+  "parenthesisCases": [
+    [
+      "The planetarium",
+      "a domed theatre",
+      "opened on Friday"
+    ],
+    [
+      "The meadow",
+      "a wildflower field",
+      "buzzed with bees"
+    ],
+    [
+      "Captain Green",
+      "our visitor",
+      "answered questions"
+    ],
+    [
+      "The minibus",
+      "a blue rental van",
+      "waited outside"
+    ],
+    [
+      "The fossil",
+      "a rare ammonite",
+      "lay in the tray"
+    ],
+    [
+      "The station",
+      "a red-brick building",
+      "closed at six"
+    ],
+    [
+      "The mural",
+      "a school project",
+      "covered the wall"
+    ],
+    [
+      "The oak tree",
+      "the oldest in the park",
+      "lost a branch"
+    ],
+    [
+      "The lighthouse",
+      "a white tower",
+      "guided the boats"
+    ],
+    [
+      "The coach",
+      "a former player",
+      "gave clear advice"
+    ],
+    [
+      "The bakery",
+      "which opened yesterday",
+      "smelled of bread"
+    ],
+    [
+      "The violin",
+      "a borrowed instrument",
+      "needed tuning"
+    ],
+    [
+      "The castle",
+      "built on a hill",
+      "looked enormous"
+    ],
+    [
+      "The puppy",
+      "still very sleepy",
+      "curled up quietly"
+    ],
+    [
+      "The painting",
+      "a gift from Nana",
+      "hung in the hall"
+    ],
+    [
+      "The river",
+      "wide and muddy",
+      "flowed past the town"
+    ],
+    [
+      "The captain",
+      "wearing a blue jacket",
+      "checked the map"
+    ],
+    [
+      "The garden",
+      "full of lavender",
+      "buzzed with bees"
+    ],
+    [
+      "The runner",
+      "breathing hard",
+      "crossed the line"
+    ],
+    [
+      "The notebook",
+      "covered in stickers",
+      "fell from the desk"
+    ],
+    [
+      "The sculpture",
+      "made from metal",
+      "caught the light"
+    ],
+    [
+      "The boat",
+      "painted bright red",
+      "rocked by the pier"
+    ],
+    [
+      "The classroom",
+      "usually noisy",
+      "felt calm today"
+    ],
+    [
+      "The suitcase",
+      "packed in a hurry",
+      "burst open"
+    ],
+    [
+      "The medal",
+      "shiny and heavy",
+      "hung round his neck"
+    ],
+    [
+      "The cave",
+      "cold and damp",
+      "echoed loudly"
+    ],
+    [
+      "The choir",
+      "waiting in rows",
+      "stood very still"
+    ],
+    [
+      "The poster",
+      "designed by Year 6",
+      "won a prize"
+    ],
+    [
+      "The fountain",
+      "dry in summer",
+      "worked again"
+    ],
+    [
+      "The owl",
+      "silent in the tree",
+      "watched the field"
+    ],
+    [
+      "The tent",
+      "borrowed from Scouts",
+      "leaked slightly"
+    ],
+    [
+      "The robot",
+      "built from boxes",
+      "rolled forward"
+    ]
+  ],
+  "colonListCases": [
+    [
+      "We needed three things",
+      [
+        "a torch",
+        "a map",
+        "a whistle"
+      ]
+    ],
+    [
+      "The team won three awards",
+      [
+        "a cup",
+        "a medal",
+        "a certificate"
+      ]
+    ],
+    [
+      "The camp list included",
+      [
+        "tents",
+        "sleeping bags",
+        "lanterns"
+      ]
+    ],
+    [
+      "The recipe needed",
+      [
+        "flour",
+        "eggs",
+        "milk"
+      ]
+    ],
+    [
+      "The science tray held",
+      [
+        "wires",
+        "magnets",
+        "batteries"
+      ]
+    ],
+    [
+      "The art box contained",
+      [
+        "paint",
+        "charcoal",
+        "pastels"
+      ]
+    ],
+    [
+      "The display showed",
+      [
+        "rivers",
+        "mountains",
+        "coasts"
+      ]
+    ],
+    [
+      "The toolkit contained",
+      [
+        "a hammer",
+        "a screwdriver",
+        "pliers"
+      ]
+    ],
+    [
+      "The picnic basket held",
+      [
+        "rolls",
+        "fruit",
+        "water"
+      ]
+    ],
+    [
+      "The emergency kit included",
+      [
+        "plasters",
+        "bandages",
+        "tape"
+      ]
+    ],
+    [
+      "The garden needed",
+      [
+        "seeds",
+        "compost",
+        "water"
+      ]
+    ],
+    [
+      "The control panel showed",
+      [
+        "buttons",
+        "lights",
+        "switches"
+      ]
+    ],
+    [
+      "The school council chose",
+      [
+        "chair",
+        "secretary",
+        "treasurer"
+      ]
+    ],
+    [
+      "The shelf stored",
+      [
+        "atlases",
+        "dictionaries",
+        "thesauruses"
+      ]
+    ],
+    [
+      "The sports bag held",
+      [
+        "trainers",
+        "shorts",
+        "socks"
+      ]
+    ],
+    [
+      "The beach survey listed",
+      [
+        "shells",
+        "seaweed",
+        "pebbles"
+      ]
+    ],
+    [
+      "The drama club needed",
+      [
+        "costumes",
+        "props",
+        "scripts"
+      ]
+    ],
+    [
+      "The fair offered",
+      [
+        "games",
+        "cakes",
+        "raffles"
+      ]
+    ],
+    [
+      "The nurse packed",
+      [
+        "gloves",
+        "wipes",
+        "medicine"
+      ]
+    ],
+    [
+      "The weather station recorded",
+      [
+        "rainfall",
+        "wind speed",
+        "temperature"
+      ]
+    ],
+    [
+      "The map showed",
+      [
+        "roads",
+        "rivers",
+        "footpaths"
+      ]
+    ],
+    [
+      "The committee planned",
+      [
+        "posters",
+        "tickets",
+        "refreshments"
+      ]
+    ],
+    [
+      "The library bought",
+      [
+        "novels",
+        "poems",
+        "comics"
+      ]
+    ],
+    [
+      "The keeper fed",
+      [
+        "penguins",
+        "otters",
+        "seals"
+      ]
+    ],
+    [
+      "The orchestra included",
+      [
+        "violins",
+        "flutes",
+        "drums"
+      ]
+    ],
+    [
+      "The worksheet asked for",
+      [
+        "date",
+        "title",
+        "answer"
+      ]
+    ],
+    [
+      "The workshop supplied",
+      [
+        "card",
+        "string",
+        "glue"
+      ]
+    ],
+    [
+      "The castle tour visited",
+      [
+        "tower",
+        "chapel",
+        "dungeon"
+      ]
+    ],
+    [
+      "The suitcase contained",
+      [
+        "shirts",
+        "socks",
+        "jumpers"
+      ]
+    ],
+    [
+      "The stall sold",
+      [
+        "muffins",
+        "cookies",
+        "lemonade"
+      ]
+    ],
+    [
+      "The timetable listed",
+      [
+        "assembly",
+        "maths",
+        "music"
+      ]
+    ],
+    [
+      "The explorer packed",
+      [
+        "compass",
+        "rope",
+        "matches"
+      ]
+    ]
+  ],
+  "semicolonListCases": [
+    [
+      "We compared",
+      [
+        "Paris, France",
+        "Rome, Italy",
+        "Madrid, Spain"
+      ]
+    ],
+    [
+      "The presenters were",
+      [
+        "Ivy, history",
+        "Oscar, science",
+        "Mina, art"
+      ]
+    ],
+    [
+      "The baskets held",
+      [
+        "lemons, yellow",
+        "limes, green",
+        "plums, purple"
+      ]
+    ],
+    [
+      "The trains called at",
+      [
+        "Exeter, 8 am",
+        "Bristol, 9 am",
+        "Cardiff, noon"
+      ]
+    ],
+    [
+      "The map labelled",
+      [
+        "Bangor, Wales",
+        "Dundee, Scotland",
+        "Derry, Northern Ireland"
+      ]
+    ],
+    [
+      "The houses were",
+      [
+        "Red, Year 4",
+        "Blue, Year 5",
+        "Green, Year 6"
+      ]
+    ],
+    [
+      "The shelves stored",
+      [
+        "clay, grey",
+        "paint, blue",
+        "card, white"
+      ]
+    ],
+    [
+      "The volunteers were",
+      [
+        "Nina, first aid",
+        "Ravi, tickets",
+        "Sofia, refreshments"
+      ]
+    ],
+    [
+      "The posters showed",
+      [
+        "beaches, Dorset",
+        "forests, Scotland",
+        "castles, Wales"
+      ]
+    ],
+    [
+      "The buses stopped at",
+      [
+        "Oxford, 9 am",
+        "Reading, 10 am",
+        "Bath, noon"
+      ]
+    ],
+    [
+      "The displays featured",
+      [
+        "Romans, Britain",
+        "Vikings, York",
+        "Tudors, London"
+      ]
+    ],
+    [
+      "The prizes went to",
+      [
+        "Ruby, art",
+        "Omar, science",
+        "Ella, sport"
+      ]
+    ],
+    [
+      "The letters came from",
+      [
+        "Paris, France",
+        "Rome, Italy",
+        "Madrid, Spain"
+      ]
+    ],
+    [
+      "The animals lived in",
+      [
+        "penguins, cold coast",
+        "otters, riverbank",
+        "seals, rocky bay"
+      ]
+    ],
+    [
+      "The files were labelled",
+      [
+        "Maths, red",
+        "English, blue",
+        "Science, green"
+      ]
+    ],
+    [
+      "The menu included",
+      [
+        "soup, tomato",
+        "pasta, basil",
+        "cake, lemon"
+      ]
+    ],
+    [
+      "The coaches chose",
+      [
+        "Amir, captain",
+        "Sofia, goalkeeper",
+        "Ben, striker"
+      ]
+    ],
+    [
+      "The cabins held",
+      [
+        "Group A, girls",
+        "Group B, boys",
+        "Group C, staff"
+      ]
+    ],
+    [
+      "The timetable listed",
+      [
+        "Monday, swimming",
+        "Tuesday, drama",
+        "Friday, football"
+      ]
+    ],
+    [
+      "The shelves stored",
+      [
+        "fiction, top",
+        "poetry, middle",
+        "comics, bottom"
+      ]
+    ],
+    [
+      "The badges read",
+      [
+        "Mia, guide",
+        "Tom, helper",
+        "Zara, leader"
+      ]
+    ],
+    [
+      "The routes led to",
+      [
+        "harbour, west",
+        "forest, north",
+        "station, east"
+      ]
+    ],
+    [
+      "The jars held",
+      [
+        "buttons, silver",
+        "beads, blue",
+        "shells, white"
+      ]
+    ],
+    [
+      "The votes supported",
+      [
+        "garden, 12",
+        "library, 9",
+        "playground, 8"
+      ]
+    ],
+    [
+      "The museum rooms showed",
+      [
+        "dinosaurs, hall one",
+        "space, hall two",
+        "art, hall three"
+      ]
+    ],
+    [
+      "The envelopes contained",
+      [
+        "forms, signed",
+        "tickets, folded",
+        "maps, marked"
+      ]
+    ],
+    [
+      "The boards showed",
+      [
+        "scores, final",
+        "teams, confirmed",
+        "rules, updated"
+      ]
+    ],
+    [
+      "The gardens grew",
+      [
+        "lavender, purple",
+        "roses, red",
+        "daisies, white"
+      ]
+    ],
+    [
+      "The lessons covered",
+      [
+        "fractions, Monday",
+        "angles, Wednesday",
+        "data, Friday"
+      ]
+    ],
+    [
+      "The cases held",
+      [
+        "violin, small",
+        "cello, large",
+        "flute, silver"
+      ]
+    ],
+    [
+      "The signs pointed to",
+      [
+        "café, left",
+        "toilets, right",
+        "exit, ahead"
+      ]
+    ],
+    [
+      "The baskets contained",
+      [
+        "apples, green",
+        "plums, purple",
+        "peaches, yellow"
+      ]
+    ]
+  ],
+  "bulletCases": [
+    [
+      "Organise",
+      [
+        "labels",
+        "folders",
+        "clips"
+      ]
+    ],
+    [
+      "Charge",
+      [
+        "tablet",
+        "torch",
+        "camera"
+      ]
+    ],
+    [
+      "Wash",
+      [
+        "brushes",
+        "aprons",
+        "trays"
+      ]
+    ],
+    [
+      "Print",
+      [
+        "tickets",
+        "programmes",
+        "signs"
+      ]
+    ],
+    [
+      "Stack",
+      [
+        "crates",
+        "boxes",
+        "baskets"
+      ]
+    ],
+    [
+      "Scan",
+      [
+        "barcode",
+        "ticket",
+        "pass"
+      ]
+    ],
+    [
+      "Glue",
+      [
+        "tab",
+        "flap",
+        "label"
+      ]
+    ],
+    [
+      "Count",
+      [
+        "beads",
+        "cubes",
+        "tokens"
+      ]
+    ],
+    [
+      "Carry",
+      [
+        "ropes",
+        "helmets",
+        "gloves"
+      ]
+    ],
+    [
+      "Choose",
+      [
+        "a book",
+        "a pencil",
+        "a partner"
+      ]
+    ],
+    [
+      "Clean",
+      [
+        "tables",
+        "chairs",
+        "shelves"
+      ]
+    ],
+    [
+      "Label",
+      [
+        "jars",
+        "boxes",
+        "folders"
+      ]
+    ],
+    [
+      "Draw",
+      [
+        "a map",
+        "a key",
+        "a compass"
+      ]
+    ],
+    [
+      "Save",
+      [
+        "draft",
+        "notes",
+        "diagram"
+      ]
+    ],
+    [
+      "Sort",
+      [
+        "cards",
+        "counters",
+        "dice"
+      ]
+    ],
+    [
+      "Display",
+      [
+        "title",
+        "caption",
+        "picture"
+      ]
+    ],
+    [
+      "Fold",
+      [
+        "paper",
+        "card",
+        "fabric"
+      ]
+    ],
+    [
+      "Share",
+      [
+        "roles",
+        "rules",
+        "resources"
+      ]
+    ],
+    [
+      "Test",
+      [
+        "switch",
+        "wire",
+        "bulb"
+      ]
+    ],
+    [
+      "Visit",
+      [
+        "gallery",
+        "garden",
+        "shop"
+      ]
+    ],
+    [
+      "Make",
+      [
+        "poster",
+        "leaflet",
+        "badge"
+      ]
+    ],
+    [
+      "Find",
+      [
+        "clue",
+        "code",
+        "key"
+      ]
+    ],
+    [
+      "Wear",
+      [
+        "boots",
+        "coat",
+        "hat"
+      ]
+    ],
+    [
+      "Return",
+      [
+        "books",
+        "tablets",
+        "headphones"
+      ]
+    ],
+    [
+      "Review",
+      [
+        "spelling",
+        "grammar",
+        "punctuation"
+      ]
+    ],
+    [
+      "Plant",
+      [
+        "beans",
+        "peas",
+        "carrots"
+      ]
+    ],
+    [
+      "Record",
+      [
+        "date",
+        "weather",
+        "result"
+      ]
+    ],
+    [
+      "Practise",
+      [
+        "lines",
+        "song",
+        "movement"
+      ]
+    ],
+    [
+      "Repair",
+      [
+        "wheel",
+        "handle",
+        "brake"
+      ]
+    ],
+    [
+      "Measure",
+      [
+        "height",
+        "width",
+        "length"
+      ]
+    ],
+    [
+      "Invite",
+      [
+        "parents",
+        "teachers",
+        "friends"
+      ]
+    ],
+    [
+      "Store",
+      [
+        "paints",
+        "brushes",
+        "paper"
+      ]
+    ]
+  ]
+});
+
+function capFirst(value) {
+  const text = String(value || '');
+  return text ? text[0].toUpperCase() + text.slice(1) : text;
+}
+
+function listText(items, separator = ', ') {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  return `${items.slice(0, -1).join(separator)} and ${items[items.length - 1]}`;
+}
+
+function stemListText(items) {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  return `${items.slice(0, -1).join(' ')} and ${items[items.length - 1]}`;
+}
+
+function stripColonStem(model) {
+  return String(model || '').replace(':', ',');
+}
+
+function bulletStem(stem, items) {
+  return `${stem}\n${items.map((item, index) => `- ${item}${index % 2 === 0 ? '.' : ''}`).join('\n')}`;
+}
+
+function bulletModel(stem, items) {
+  return `${stem}:\n${items.map((item) => `- ${item}`).join('\n')}`;
+}
+
+function firstApostropheWord(text) {
+  return String(text || '').split(/\s+/).find((word) => word.includes("'")) || '';
+}
+
+function baseTemplate({
+  familyId,
+  index,
+  prompt,
+  stem,
+  model,
+  validator,
+  rubric,
+  accepted = [],
+  skillIds,
+  clusterId,
+  misconceptionTags,
+  readiness,
+  explanation,
+  explanationRuleId,
+  reject = [],
+}) {
+  const accept = [model, ...accepted].filter(Boolean);
+  const rejects = [...new Set([
+    stem,
+    ...reject,
+  ].filter((entry) => typeof entry === 'string' && entry.trim() && !accept.includes(entry)))];
+  return Object.freeze({
+    templateId: `manual_${familyId}_${String(index + 8).padStart(2, '0')}`,
+    prompt,
+    stem,
+    model,
+    ...(validator ? { validator } : {}),
+    ...(rubric ? { rubric } : {}),
+    ...(accepted.length ? { accepted } : {}),
+    skillIds,
+    clusterId,
+    misconceptionTags,
+    readiness,
+    explanation,
+    explanationRuleId,
+    tests: Object.freeze({
+      accept,
+      reject: rejects.slice(0, 4),
+    }),
+  });
+}
+
+function makeTemplates(familyId, rows, builder) {
+  if (!Array.isArray(rows) || rows.length !== PUNCTUATION_MANUAL_EXPANSION_PER_FAMILY) {
+    throw new Error(`Manual expansion family ${familyId} must have ${PUNCTUATION_MANUAL_EXPANSION_PER_FAMILY} rows.`);
+  }
+  return Object.freeze(rows.map((row, index) => baseTemplate({ familyId, index, ...builder(row, index) })));
+}
+
+const sentenceEndings = makeTemplates('gen_sentence_endings_insert', CASES.sentenceCases, ([stem, model]) => ({
+  prompt: 'Add the capital letter and sentence-ending punctuation.',
+  stem,
+  model,
+  skillIds: ['sentence_endings'],
+  clusterId: 'endmarks',
+  misconceptionTags: ['endmarks.capitalisation_missing', 'endmarks.terminal_missing'],
+  readiness: ['insertion', 'misconception', 'negative_test'],
+  explanation: 'A sentence starts with a capital letter and ends with the correct full stop, question mark or exclamation mark.',
+  explanationRuleId: 'sentence-ending.terminal-mark',
+  reject: [capFirst(stem), `${capFirst(stem)}.`],
+}));
+
+const contractions = makeTemplates('gen_apostrophe_contractions_fix', CASES.contractionCases, ([stem, model]) => ({
+  prompt: 'Correct the missing apostrophes in the contractions.',
+  stem,
+  model,
+  skillIds: ['apostrophe_contractions'],
+  clusterId: 'apostrophe',
+  misconceptionTags: ['apostrophe.contraction_missing'],
+  readiness: ['proofreading', 'misconception', 'negative_test'],
+  explanation: "The apostrophe shows missing letters in each contraction.",
+  explanationRuleId: 'apostrophe.contraction',
+}));
+
+const possession = makeTemplates('gen_apostrophe_possession_insert', CASES.possessionCases, ([stem, model]) => ({
+  prompt: 'Add the apostrophe for possession.',
+  stem,
+  model,
+  skillIds: ['apostrophe_possession'],
+  clusterId: 'apostrophe',
+  misconceptionTags: ['apostrophe.possession_missing', 'apostrophe.possession_number'],
+  readiness: ['insertion', 'misconception', 'negative_test'],
+  explanation: 'The apostrophe shows who or what the noun belongs to.',
+  explanationRuleId: model.includes("s'") ? 'apostrophe.possession-plural' : 'apostrophe.possession-singular',
+}));
+
+const speech = makeTemplates('gen_speech_insert', CASES.speechCases, ([reportingClause, spokenWords, terminal, model]) => ({
+  prompt: 'Add the direct-speech punctuation.',
+  stem: `${reportingClause}, ${spokenWords}${terminal}`,
+  model,
+  accepted: [model.replaceAll('"', "'")],
+  skillIds: ['speech'],
+  clusterId: 'speech',
+  rubric: {
+    type: 'speech',
+    reportingPosition: 'before',
+    reportingClause,
+    spokenWords,
+    requiredTerminal: terminal,
+  },
+  misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
+  readiness: ['insertion', 'misconception', 'negative_test'],
+  explanation: 'The spoken words sit inside inverted commas, with their punctuation inside the closing speech mark.',
+  explanationRuleId: 'speech.inverted_commas',
+  reject: [`${reportingClause} "${capFirst(spokenWords)}${terminal}"`, `${reportingClause}, ${capFirst(spokenWords)}${terminal}`],
+}));
+
+const listCommaInsert = makeTemplates('gen_list_commas_insert', CASES.listCases, ([opening, items]) => {
+  const stem = `${opening} ${stemListText(items)}.`;
+  const model = `${opening} ${listText(items)}.`;
+  return {
+    prompt: 'Add commas to separate the list items.',
+    stem,
+    model,
+    skillIds: ['list_commas'],
+    clusterId: 'comma_flow',
+    validator: { type: 'requiresListCommas', opening, items },
+    misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
+    readiness: ['insertion', 'misconception', 'negative_test'],
+    explanation: 'Commas separate items in a list so the reader can see each item clearly.',
+    explanationRuleId: 'list.comma-separation',
+    reject: [stem, `${opening}, ${listText(items)}.`],
+  };
+});
+
+const listCommaCombine = makeTemplates('gen_list_commas_combine', CASES.listCases, ([opening, items]) => {
+  const model = `${opening} ${listText(items)}.`;
+  return {
+    prompt: 'Combine the notes into one correctly punctuated list sentence.',
+    stem: `${opening}\n${items.map((item) => `- ${item}`).join('\n')}`,
+    model,
+    skillIds: ['list_commas'],
+    clusterId: 'comma_flow',
+    validator: { type: 'combineListSentence', opening, items },
+    misconceptionTags: ['comma.list_separator_missing', 'comma.list_words_changed'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanation: 'The notes become one sentence with commas between the list items.',
+    explanationRuleId: 'list.comma-separation',
+    reject: [`${opening} ${stemListText(items)}.`, `${opening}, ${listText(items)}.`],
+  };
+});
+
+const frontedFix = makeTemplates('gen_fronted_adverbial_fix', CASES.frontedCases, ([phrase, mainClause]) => ({
+  prompt: 'Correct the comma after the fronted adverbial.',
+  stem: `${phrase} ${mainClause}.`,
+  model: `${phrase}, ${mainClause}.`,
+  skillIds: ['fronted_adverbial'],
+  clusterId: 'comma_flow',
+  validator: { type: 'startsWithPhraseComma', phrase },
+  misconceptionTags: ['comma.fronted_adverbial_missing'],
+  readiness: ['proofreading', 'misconception', 'negative_test'],
+  explanation: 'A comma separates the fronted adverbial from the main clause.',
+  explanationRuleId: 'fronted-adverbial.comma-after-opener',
+}));
+
+const frontedCombine = makeTemplates('gen_fronted_adverbial_combine', CASES.frontedCases, ([phrase, mainClause]) => ({
+  prompt: 'Combine the adverbial and main clause into one sentence.',
+  stem: `${phrase}\n${capFirst(mainClause)}.`,
+  model: `${phrase}, ${mainClause}.`,
+  skillIds: ['fronted_adverbial'],
+  clusterId: 'comma_flow',
+  validator: { type: 'combineFrontedAdverbial', phrase, mainClause },
+  misconceptionTags: ['comma.fronted_adverbial_missing'],
+  readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+  explanation: 'The fronted adverbial comes first and is followed by a comma.',
+  explanationRuleId: 'fronted-adverbial.comma-after-opener',
+  reject: [`${phrase} ${mainClause}.`],
+}));
+
+const clarityInsert = makeTemplates('gen_comma_clarity_insert', CASES.clarityCases, ([phrase, mainClause]) => ({
+  prompt: 'Add the comma that makes the sentence clear.',
+  stem: `${phrase} ${mainClause}.`,
+  model: `${phrase}, ${mainClause}.`,
+  skillIds: ['comma_clarity'],
+  clusterId: 'comma_flow',
+  validator: { type: 'startsWithPhraseComma', phrase },
+  misconceptionTags: ['comma.clarity_missing', 'comma.fronted_adverbial_missing'],
+  readiness: ['insertion', 'misconception', 'negative_test'],
+  explanation: 'The comma shows where the opening idea ends, making the sentence easier to read.',
+  explanationRuleId: 'comma.clarity',
+}));
+
+function boundaryTemplateFamily(familyId, rows, { mode, mark, prompt, explanation, explanationRuleId, rewardSkill, readiness }) {
+  return makeTemplates(familyId, rows, ([left, right]) => {
+    const model = `${left}${mark === ';' ? ';' : ' –'} ${right}.`;
+    const validatorType = mode === 'combine' ? 'combineBoundaryBetweenClauses' : 'requiresBoundaryBetweenClauses';
+    const stem = mode === 'combine'
+      ? `${left}.\n${capFirst(right)}.`
+      : `${left}, ${right}.`;
+    return {
+      prompt,
+      stem,
+      model,
+      skillIds: [rewardSkill],
+      clusterId: 'boundary',
+      validator: { type: validatorType, mark, left, right },
+      misconceptionTags: [mark === ';' ? 'boundary.semicolon_missing' : 'boundary.dash_missing', 'boundary.comma_splice'],
+      readiness,
+      explanation,
+      explanationRuleId,
+      reject: [`${left}, ${right}.`, `${left} ${right}.`],
+    };
+  });
+}
+
+const semicolonFix = boundaryTemplateFamily('gen_semicolon_fix', CASES.boundaryCases, {
+  mode: 'fix',
+  mark: ';',
+  prompt: 'Correct the comma splice by using a semi-colon.',
+  rewardSkill: 'semicolon',
+  readiness: ['proofreading', 'misconception', 'negative_test'],
+  explanation: 'A semi-colon joins two closely related complete clauses.',
+  explanationRuleId: 'semicolon.related-clauses',
+});
+
+const semicolonCombine = boundaryTemplateFamily('gen_semicolon_combine', CASES.boundaryCases, {
+  mode: 'combine',
+  mark: ';',
+  prompt: 'Combine the two related clauses with a semi-colon.',
+  rewardSkill: 'semicolon',
+  readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+  explanation: 'The two complete clauses are closely related, so a semi-colon can link them.',
+  explanationRuleId: 'semicolon.related-clauses',
+});
+
+const dashFix = boundaryTemplateFamily('gen_dash_clause_fix', CASES.boundaryCases, {
+  mode: 'fix',
+  mark: '–',
+  prompt: 'Replace the comma splice with a dash.',
+  rewardSkill: 'dash_clause',
+  readiness: ['proofreading', 'misconception', 'negative_test'],
+  explanation: 'The dash marks a clear boundary between two related clauses.',
+  explanationRuleId: 'dash.related-clauses',
+});
+
+const dashCombine = boundaryTemplateFamily('gen_dash_clause_combine', CASES.boundaryCases, {
+  mode: 'combine',
+  mark: '–',
+  prompt: 'Combine the two related clauses with a dash.',
+  rewardSkill: 'dash_clause',
+  readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+  explanation: 'The dash joins the two related clauses with a stronger pause.',
+  explanationRuleId: 'dash.related-clauses',
+});
+
+const hyphenInsert = makeTemplates('gen_hyphen_insert', CASES.hyphenCases, ([plainPhrase, hyphenatedPhrase, stem, model]) => ({
+  prompt: 'Add the hyphen that avoids ambiguity.',
+  stem,
+  model,
+  skillIds: ['hyphen'],
+  clusterId: 'boundary',
+  validator: { type: 'requiresHyphenatedPhrase', phrase: hyphenatedPhrase },
+  misconceptionTags: ['boundary.hyphen_missing'],
+  readiness: ['insertion', 'misconception', 'negative_test'],
+  explanation: 'The hyphen joins words into one describing phrase before the noun.',
+  explanationRuleId: 'hyphen.compound-modifier',
+  reject: [stem, model.replace(hyphenatedPhrase, plainPhrase)],
+}));
+
+const parenthesisFix = makeTemplates('gen_parenthesis_fix', CASES.parenthesisCases, ([before, phrase, after]) => ({
+  prompt: 'Correct the parenthesis punctuation.',
+  stem: `${before} ${phrase} ${after}.`,
+  model: `${before}, ${phrase}, ${after}.`,
+  skillIds: ['parenthesis'],
+  clusterId: 'structure',
+  validator: { type: 'requiresParentheticalPhrase', before, phrase, after },
+  misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
+  readiness: ['proofreading', 'misconception', 'negative_test'],
+  explanation: 'The extra information is marked off because the sentence still works without it.',
+  explanationRuleId: 'parenthesis.additional-information',
+}));
+
+const parenthesisCombine = makeTemplates('gen_parenthesis_combine', CASES.parenthesisCases, ([before, phrase, after]) => ({
+  prompt: 'Combine the sentence and extra detail using parenthesis.',
+  stem: `${before} ${after}.\nExtra detail: ${phrase}`,
+  model: `${before}, ${phrase}, ${after}.`,
+  skillIds: ['parenthesis'],
+  clusterId: 'structure',
+  validator: { type: 'combineParentheticalPhrase', before, phrase, after },
+  misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
+  readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+  explanation: 'The extra detail is inserted as parenthesis with punctuation on both sides.',
+  explanationRuleId: 'parenthesis.additional-information',
+  reject: [`${before} ${phrase} ${after}.`, `${before}, ${phrase} ${after}.`],
+}));
+
+const colonInsert = makeTemplates('gen_colon_list_insert', CASES.colonListCases, ([opening, items]) => {
+  const model = `${opening}: ${listText(items)}.`;
+  return {
+    prompt: 'Add the colon that introduces the list.',
+    stem: stripColonStem(model),
+    model,
+    skillIds: ['colon_list'],
+    clusterId: 'structure',
+    validator: { type: 'requiresColonBeforeList', opening, items },
+    misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
+    readiness: ['insertion', 'misconception', 'negative_test'],
+    explanation: 'The colon comes after a complete opening clause and introduces the list.',
+    explanationRuleId: 'colon.before-list',
+    reject: [stripColonStem(model), `${opening}: ${stemListText(items)}.`],
+  };
+});
+
+const colonCombine = makeTemplates('gen_colon_list_combine', CASES.colonListCases, ([opening, items]) => {
+  const model = `${opening}: ${listText(items)}.`;
+  return {
+    prompt: 'Combine the opening clause and list using a colon.',
+    stem: `${opening}\n${items.map((item) => `- ${item}`).join('\n')}`,
+    model,
+    skillIds: ['colon_list'],
+    clusterId: 'structure',
+    validator: { type: 'combineColonList', opening, items },
+    misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanation: 'The colon introduces the list after the complete opening clause.',
+    explanationRuleId: 'colon.before-list',
+    reject: [stripColonStem(model), `${opening}: ${stemListText(items)}.`],
+  };
+});
+
+const semicolonListFix = makeTemplates('gen_semicolon_list_fix', CASES.semicolonListCases, ([opening, items]) => {
+  const stem = `${opening} ${items[0]}, ${items[1]} and ${items[2]}.`;
+  const model = `${opening} ${items[0]}; ${items[1]}; and ${items[2]}.`;
+  return {
+    prompt: 'Use semi-colons to separate the complex list items.',
+    stem,
+    model,
+    skillIds: ['semicolon_list'],
+    clusterId: 'structure',
+    validator: { type: 'requiresSemicolonList', items },
+    misconceptionTags: ['structure.semicolon_list_missing'],
+    readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanation: 'Semi-colons separate complex list items that already contain commas.',
+    explanationRuleId: 'semicolon.complex-list',
+    reject: [stem, `${opening} ${items.join(', ')}.`],
+  };
+});
+
+const bulletFix = makeTemplates('gen_bullet_points_fix', CASES.bulletCases, ([stemWord, items]) => ({
+  prompt: 'Repair the bullet-list punctuation.',
+  stem: bulletStem(stemWord, items),
+  model: bulletModel(stemWord, items),
+  accepted: [`${stemWord}:\n${items.map((item) => `- ${item}.`).join('\n')}`],
+  skillIds: ['bullet_points'],
+  clusterId: 'structure',
+  validator: { type: 'requiresBulletStemAndItems', stem: stemWord, items },
+  misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
+  readiness: ['proofreading', 'misconception', 'negative_test'],
+  explanation: 'The stem has a colon and each bullet follows the same punctuation style.',
+  explanationRuleId: 'bullet.colon-and-consistency',
+  reject: [`${stemWord}\n${items.map((item) => `- ${item}`).join('\n')}`, `${stemWord}:\n${items.join('\n')}`],
+}));
+
+const bulletParagraph = makeTemplates('gen_bullet_points_paragraph', CASES.bulletCases, ([stemWord, items]) => ({
+  prompt: 'Repair the bullet-list punctuation.',
+  stem: bulletStem(stemWord, items),
+  model: bulletModel(stemWord, items),
+  accepted: [`${stemWord}:\n${items.map((item) => `- ${item}.`).join('\n')}`],
+  skillIds: ['bullet_points'],
+  clusterId: 'structure',
+  validator: {
+    type: 'paragraphRepair',
+    checks: [{ type: 'requiresBulletStemAndItems', stem: stemWord, items }],
+  },
+  misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
+  readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+  explanation: 'The bullet list uses a clear stem, colon and consistent bullet punctuation.',
+  explanationRuleId: 'bullet.colon-and-consistency',
+  reject: [`${stemWord}\n${items.map((item) => `- ${item}`).join('\n')}`, `${stemWord}:\n${items.join('\n')}`],
+}));
+
+const apostropheMixParagraph = makeTemplates('gen_apostrophe_mix_paragraph', CASES.contractionCases, ([contractionStem, contractionModel], index) => {
+  const possessionStem = CASES.possessionCases[index][0];
+  const possessionModel = CASES.possessionCases[index][1];
+  const stem = `${contractionStem} ${possessionStem}`;
+  const model = `${contractionModel} ${possessionModel}`;
+  return {
+    prompt: 'Repair the apostrophes in the short passage.',
+    stem,
+    model,
+    skillIds: ['apostrophe_contractions', 'apostrophe_possession'],
+    clusterId: 'apostrophe',
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        {
+          type: 'requiresApostropheForms',
+          tokens: [firstApostropheWord(contractionModel), firstApostropheWord(possessionModel)].filter(Boolean),
+          forbidden: [],
+        },
+      ],
+    },
+    misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanation: 'The passage needs apostrophes for both contractions and possession.',
+    explanationRuleId: 'apostrophe.mixed',
+    reject: [stem, contractionModel],
+  };
+});
+
+const frontedSpeechParagraph = makeTemplates('gen_fronted_speech_paragraph', CASES.speechCases, ([reportingClause, spokenWords, terminal, speechModel], index) => {
+  const phrase = CASES.frontedCases[index][0];
+  const model = `${phrase}, ${speechModel}`;
+  const stem = `${phrase} ${reportingClause}, ${spokenWords}${terminal}`;
+  return {
+    prompt: 'Repair the sentence with a fronted adverbial and direct speech.',
+    stem,
+    model,
+    skillIds: ['fronted_adverbial', 'speech'],
+    clusterId: 'speech',
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        { type: 'startsWithPhraseComma', phrase },
+        {
+          type: 'speechWithWords',
+          words: spokenWords,
+          reportingClause,
+          requiredTerminal: terminal,
+        },
+      ],
+    },
+    misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.punctuation_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanation: 'The opener needs a comma, and the spoken words need inverted commas with punctuation inside.',
+    explanationRuleId: 'speech.fronted-adverbial',
+    reject: [stem, `${phrase}, ${reportingClause}, ${spokenWords}${terminal}`],
+  };
+});
+
+const colonSemicolonParagraph = makeTemplates('gen_colon_semicolon_paragraph', CASES.colonListCases, ([opening, items], index) => {
+  const [left, right] = CASES.boundaryCases[index];
+  const stem = `${opening}, ${listText(items)}. ${left}, ${right}.`;
+  const model = `${opening}: ${listText(items)}. ${left}; ${right}.`;
+  return {
+    prompt: 'Repair the punctuation in the short passage.',
+    stem,
+    model,
+    skillIds: ['colon_list', 'semicolon'],
+    clusterId: 'boundary',
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        { type: 'requiresColonBeforeList', opening, items, allowTrailingText: true },
+        { type: 'requiresBoundaryBetweenClauses', mark: ';', left, right },
+      ],
+    },
+    misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanation: 'The colon introduces the list, and the semi-colon joins the related clauses.',
+    explanationRuleId: 'colon-semicolon.paragraph',
+    reject: [stem, `${opening}: ${stemListText(items)}. ${left}, ${right}.`],
+  };
+});
+
+const parenthesisSpeechParagraph = makeTemplates('gen_parenthesis_speech_paragraph', CASES.parenthesisCases, ([before, phrase, after], index) => {
+  const [reportingClause, spokenWords, terminal, speechModel] = CASES.speechCases[index];
+  const stem = `${before} ${phrase} ${after}. ${reportingClause}, ${spokenWords}${terminal}`;
+  const model = `${before}, ${phrase}, ${after}. ${speechModel}`;
+  return {
+    prompt: 'Repair the short passage with parenthesis and direct speech.',
+    stem,
+    model,
+    skillIds: ['parenthesis', 'speech'],
+    clusterId: 'structure',
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        { type: 'requiresParentheticalPhrase', before, phrase, after },
+        {
+          type: 'speechWithWords',
+          words: spokenWords,
+          reportingClause,
+          requiredTerminal: terminal,
+        },
+      ],
+    },
+    misconceptionTags: ['structure.parenthesis_missing', 'speech.quote_missing', 'speech.punctuation_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanation: 'The parenthesis is marked off, and the speech is placed inside inverted commas.',
+    explanationRuleId: 'parenthesis-speech.paragraph',
+    reject: [stem, `${before}, ${phrase} ${after}. ${speechModel}`],
+  };
+});
+
+export const PUNCTUATION_MANUAL_TEMPLATE_EXPANSION_BANK = Object.freeze({
+  gen_sentence_endings_insert: sentenceEndings,
+  gen_apostrophe_contractions_fix: contractions,
+  gen_apostrophe_possession_insert: possession,
+  gen_apostrophe_mix_paragraph: apostropheMixParagraph,
+  gen_speech_insert: speech,
+  gen_list_commas_insert: listCommaInsert,
+  gen_list_commas_combine: listCommaCombine,
+  gen_fronted_adverbial_fix: frontedFix,
+  gen_fronted_adverbial_combine: frontedCombine,
+  gen_fronted_speech_paragraph: frontedSpeechParagraph,
+  gen_comma_clarity_insert: clarityInsert,
+  gen_semicolon_fix: semicolonFix,
+  gen_semicolon_combine: semicolonCombine,
+  gen_colon_semicolon_paragraph: colonSemicolonParagraph,
+  gen_dash_clause_fix: dashFix,
+  gen_dash_clause_combine: dashCombine,
+  gen_hyphen_insert: hyphenInsert,
+  gen_parenthesis_fix: parenthesisFix,
+  gen_parenthesis_combine: parenthesisCombine,
+  gen_parenthesis_speech_paragraph: parenthesisSpeechParagraph,
+  gen_colon_list_insert: colonInsert,
+  gen_colon_list_combine: colonCombine,
+  gen_semicolon_list_fix: semicolonListFix,
+  gen_bullet_points_fix: bulletFix,
+  gen_bullet_points_paragraph: bulletParagraph,
+});
+
+export function manualExpansionTemplatesForFamily(familyId) {
+  return PUNCTUATION_MANUAL_TEMPLATE_EXPANSION_BANK[familyId] || Object.freeze([]);
+}

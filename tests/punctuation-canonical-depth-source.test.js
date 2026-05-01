@@ -27,9 +27,9 @@ import { createPunctuationService } from '../shared/punctuation/service.js';
 //        FIXED_COUNT + FAMILY_COUNT * PRODUCTION_DEPTH
 //   3. No hardcoded production-depth duplicates are introduced in source.
 //
-// Depth-6 activation path: raise PRODUCTION_DEPTH from 4 to 6 in
-// generators.js once all P5 capacity gates pass at depth 6. The single
-// constant update propagates to both generators and service automatically.
+// P11 manual expansion raises PRODUCTION_DEPTH to the audited 40-template
+// surface. The single constant update propagates to both generators and
+// service automatically.
 //
 // P7-U2  |  canonical depth source
 // ---------------------------------------------------------------------------
@@ -39,8 +39,8 @@ const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.filter(
 ).length;
 const FAMILY_COUNT = PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length;
 
-test('PRODUCTION_DEPTH is 4 (current production setting)', () => {
-  assert.equal(PRODUCTION_DEPTH, 4);
+test('PRODUCTION_DEPTH is 40 after P11 manual expansion', () => {
+  assert.equal(PRODUCTION_DEPTH, 40);
 });
 
 test('runtime manifest item count matches FIXED + FAMILIES * PRODUCTION_DEPTH', () => {

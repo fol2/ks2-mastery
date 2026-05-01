@@ -38,9 +38,9 @@ function failureDetail(item, answer, result) {
   ].join('\n');
 }
 
-// Sanity: we expect exactly 92 fixed items
-test('fixed bank contains 92 items', () => {
-  assert.equal(fixedItems.length, 92, `Expected 92 fixed items, got ${fixedItems.length}`);
+// Sanity: P11 expands the fixed authored bank to 148 items.
+test('fixed bank contains 148 items', () => {
+  assert.equal(fixedItems.length, 148, `Expected 148 fixed items, got ${fixedItems.length}`);
 });
 
 for (const [skill, items] of bySkill) {

@@ -57,6 +57,8 @@ function buildItemFromTemplate(template, mode) {
     skillIds: template.skillIds || [],
     prompt: template.prompt || '',
     stem: template.stem || '',
+    ...(Array.isArray(template.options) ? { options: template.options, inputKind: 'choice' } : {}),
+    ...(Number.isInteger(Number(template.correctIndex)) ? { correctIndex: Number(template.correctIndex) } : {}),
   };
 }
 
@@ -90,12 +92,21 @@ const FAMILIES = [
   { name: 'bullet-points-paragraph', dsl: bulletPointsParagraphDsl, mode: 'paragraph' },
 ];
 
+const CHOICE_FAMILIES = [
+  { name: 'sentence-endings-choose', familyId: 'gen_sentence_endings_choose' },
+  { name: 'apostrophe-possession-choose', familyId: 'gen_apostrophe_possession_choose' },
+  { name: 'list-commas-choose', familyId: 'gen_list_commas_choose' },
+];
+
 // ─── Self-check: every generator bank family is covered ──────────────────────
 
 test('self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK', () => {
   const bankFamilyIds = Object.keys(GENERATED_TEMPLATE_BANK);
   const coveredIds = new Set(
-    FAMILIES.map(({ name }) => `gen_${name.replace(/-/g, '_')}`),
+    [
+      ...FAMILIES.map(({ name }) => `gen_${name.replace(/-/g, '_')}`),
+      ...CHOICE_FAMILIES.map(({ familyId }) => familyId),
+    ],
   );
 
   const missing = bankFamilyIds.filter((id) => !coveredIds.has(id));
@@ -104,6 +115,32 @@ test('self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK'
     [],
     `Golden marking test is missing coverage for bank families: ${missing.join(', ')}`,
   );
+});
+
+test('golden marking tests: generated choice families accept only their correct option', () => {
+  const failures = [];
+  let templatesChecked = 0;
+  for (const { name, familyId } of CHOICE_FAMILIES) {
+    const templates = GENERATED_TEMPLATE_BANK[familyId] || [];
+    assert.ok(templates.length >= 40, `Choice family "${name}" should expose at least 40 templates`);
+    for (const template of templates) {
+      const item = buildItemFromTemplate(template, 'choose');
+      templatesChecked += 1;
+      for (let index = 0; index < item.options.length; index += 1) {
+        const result = markPunctuationAnswer({ item, answer: { choiceIndex: index } });
+        if (index === item.correctIndex && !result.correct) {
+          failures.push(`[${name}] correct option ${index} rejected for "${item.stem}"`);
+        }
+        if (index !== item.correctIndex && result.correct) {
+          failures.push(`[${name}] wrong option ${index} accepted for "${item.stem}"`);
+        }
+      }
+    }
+  }
+  if (failures.length > 0) {
+    assert.fail(`Generated choice marking failures:\n${failures.join('\n')}`);
+  }
+  assert.equal(templatesChecked, 120);
 });
 
 // ─── Main test ────────────────────────────────────────────────────────────────

@@ -38,7 +38,7 @@ function makePassingOptions(overrides = {}) {
     speechOraclePass: true,
     semanticLintPass: true,
     productionGatePass: true,
-    currentReleaseId: 'punctuation-r4-full-14-skill-structure',
+    currentReleaseId: 'punctuation-qg-p11-2026-05-01',
     expectedRuntimeCount: FIXED_ITEM_COUNT + FAMILY_COUNT * 6,
     fixedItemCount: FIXED_ITEM_COUNT,
     familyCount: FAMILY_COUNT,

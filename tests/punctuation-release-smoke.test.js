@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import { createPunctuationContentIndexes } from '../shared/punctuation/content.js';
-import { createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
+import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
 import {
@@ -67,7 +67,7 @@ async function readWranglerVars() {
 
 function productionPunctuationIndexes() {
   return createPunctuationContentIndexes(createPunctuationRuntimeManifest({
-    generatedPerFamily: 4,
+    generatedPerFamily: PRODUCTION_DEPTH,
   }));
 }
 

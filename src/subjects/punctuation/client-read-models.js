@@ -116,7 +116,7 @@ export function createPunctuationReadModelService({ getState } = {}) {
     },
     getAnalyticsSnapshot(learnerId) {
       return clone(currentUi(getState, learnerId).ui.analytics) || {
-        releaseId: 'punctuation-r4-full-14-skill-structure',
+        releaseId: 'punctuation-qg-p11-2026-05-01',
         attempts: 0,
         correct: 0,
         accuracy: 0,
