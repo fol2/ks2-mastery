@@ -1,7 +1,7 @@
 # Grammar QG P10 — Quality Register
 
 **Content Release:** grammar-qg-p14-2026-05-01
-**Generated:** 2026-05-01T13:33:28.540Z
+**Generated:** 2026-05-01T16:23:10.816Z
 **Templates:** 110
 **Approved:** 106 | **Blocked:** 0
 **High-risk (1..15 seeds):** 36
@@ -166,11 +166,11 @@
 **Concrete examples:**
 
 - Seed 1: "Tick all the sentences that must end with a question mark." → correct
-  - Feedback: The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on...
+  - Feedback: The sentences needing question marks are: Did the train arrive before noon; Is the platform open ...
 - Seed 2: "Tick all the sentences that must end with a question mark." → correct
-  - Feedback: The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on...
+  - Feedback: The sentences needing question marks are: Do you know the way to the hall; Can the guide meet us ...
 - Seed 3: "Tick all the sentences that must end with a question mark." → correct
-  - Feedback: The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on...
+  - Feedback: The sentences needing question marks are: Is Maya bringing the tickets; Did Omar pack the map.
 
 ### `word_class_underlined_choice`
 
@@ -246,11 +246,11 @@
 **Concrete examples:**
 
 - Seed 1: "Which option is an expanded noun phrase?" → correct
+  - Feedback: The correct answer is: the tall boy with muddy boots.
+- Seed 2: "Which option is an expanded noun phrase?" → correct
   - Feedback: The correct answer is: the silver key under the mat.
-- Seed 2: "Which sentence contains an expanded noun phrase?" → correct
-  - Feedback: The correct answer is: The tired explorers climbed the hill..
-- Seed 3: "Which sentence contains an expanded noun phrase?" → correct
-  - Feedback: The correct answer is: The tired explorers climbed the hill..
+- Seed 3: "Which option is an expanded noun phrase?" → correct
+  - Feedback: The correct answer is: the cracked blue mug beside the sink.
 
 ### `build_noun_phrase`
 
@@ -298,7 +298,7 @@
 **Concrete examples:**
 
 - Seed 1: "Which sentence starts with a fronted adverbial?" → correct
-  - Feedback: The correct answer is: In the morning, the market opens early.
+  - Feedback: The correct answer is: During the storm, the old gate rattled loudly.
 - Seed 2: "Which sentence starts with a fronted adverbial?" → correct
   - Feedback: The correct answer is: After dinner, Kal is going to her room.
 - Seed 3: "Which sentence starts with a fronted adverbial?" → correct
@@ -321,16 +321,16 @@
 
 **Concrete examples:**
 
-- Seed 1: "Copy the sentence and add the comma after the fronted adverbial. After the co..." → correct
-  - Feedback: The correct sentence is: After the concert, the audience cheered loudly.
-- Seed 2: "Copy the sentence and add the comma after the fronted adverbial. Later that a..." → correct
+- Seed 1: "Copy the sentence and add the comma after the fronted adverbial. Later that a..." → correct
   - Feedback: The correct sentence is: Later that afternoon, our team finally scored.
-- Seed 3: "Copy the sentence and add the comma after the fronted adverbial. Before sunri..." → correct
-  - Feedback: The correct sentence is: Before sunrise, the campers packed their bags.
-- Seed 4: "Copy the sentence and add the comma after the fronted adverbial. After the co..." → correct
-  - Feedback: The correct sentence is: After the concert, the audience cheered loudly.
-- Seed 5: "Copy the sentence and add the comma after the fronted adverbial. Later that a..." → correct
-  - Feedback: The correct sentence is: Later that afternoon, our team finally scored.
+- Seed 2: "Copy the sentence and add the comma after the fronted adverbial. With great c..." → correct
+  - Feedback: The correct sentence is: With great care, Imani folded the fragile map.
+- Seed 3: "Copy the sentence and add the comma after the fronted adverbial. At the edge ..." → correct
+  - Feedback: The correct sentence is: At the edge of the field, the fox paused.
+- Seed 4: "Copy the sentence and add the comma after the fronted adverbial. Without warn..." → correct
+  - Feedback: The correct sentence is: Without warning, the lights flickered.
+- Seed 5: "Copy the sentence and add the comma after the fronted adverbial. Before the l..." → correct
+  - Feedback: The correct sentence is: Before the lesson, Ravi sharpened the pencils.
 
 ### `subordinate_clause_choice`
 
@@ -348,22 +348,22 @@
 - **Adult review decision:** approved_with_review
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
-  - Accepted example: When the bell rang
-  - Rejected alternative: the pupils lined up quietly
+  - Accepted example: Although the wind was strong
+  - Rejected alternative: the boat reached
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Which option is the subordinate clause in the sentence below? When the bell r..." → correct
-  - Feedback: The subordinate clause is: When the bell rang.
-- Seed 2: "Which option is the subordinate clause in the sentence below? If the path is ..." → correct
-  - Feedback: The subordinate clause is: If the path is icy.
-- Seed 3: "Which option is the subordinate clause in the sentence below? Although the wi..." → correct
+- Seed 1: "Which option is the subordinate clause in the sentence below? Although the wi..." → correct
   - Feedback: The subordinate clause is: Although the wind was strong.
-- Seed 4: "Which option is the subordinate clause in the sentence below? When the bell r..." → correct
+- Seed 2: "Which option is the subordinate clause in the sentence below? When the bell r..." → correct
   - Feedback: The subordinate clause is: When the bell rang.
-- Seed 5: "Which option is the subordinate clause in the sentence below? If the path is ..." → correct
-  - Feedback: The subordinate clause is: If the path is icy.
+- Seed 3: "Which option is the subordinate clause in the sentence below? Because the riv..." → correct
+  - Feedback: The subordinate clause is: Because the river was high.
+- Seed 4: "Which option is the subordinate clause in the sentence below? Before the coac..." → correct
+  - Feedback: The subordinate clause is: Before the coach arrived.
+- Seed 5: "Which option is the subordinate clause in the sentence below? While the kettl..." → correct
+  - Feedback: The subordinate clause is: While the kettle boiled.
 
 ### `combine_clauses_rewrite`
 
@@ -382,16 +382,16 @@
 
 **Concrete examples:**
 
-- Seed 1: "Combine the ideas into one sentence using because. Sam wore gloves. It was cold." → correct
+- Seed 1: "Combine the ideas into one sentence using when. The gate opened. The children..." → correct
+  - Feedback: A correct answer is: When the gate opened, the children ran outside.
+- Seed 2: "Combine the ideas into one sentence using if. The weather improves. We will h..." → correct
+  - Feedback: A correct answer is: If the weather improves, we will hold sports day outside.
+- Seed 3: "Combine the ideas into one sentence using because. Sam wore gloves. It was cold." → correct
   - Feedback: A correct answer is: Sam wore gloves because it was cold.
-- Seed 2: "Combine the ideas into one sentence using when. The bell rang. The pupils lin..." → correct
-  - Feedback: A correct answer is: When the bell rang, the pupils lined up.
-- Seed 3: "Combine the ideas into one sentence using although. Mia was tired. She finish..." → correct
-  - Feedback: A correct answer is: Although Mia was tired, she finished the race.
-- Seed 4: "Combine the ideas into one sentence using because. Sam wore gloves. It was cold." → correct
-  - Feedback: A correct answer is: Sam wore gloves because it was cold.
-- Seed 5: "Combine the ideas into one sentence using when. The bell rang. The pupils lin..." → correct
-  - Feedback: A correct answer is: When the bell rang, the pupils lined up.
+- Seed 4: "Combine the ideas into one sentence using although. The puzzle was hard. Nina..." → correct
+  - Feedback: A correct answer is: Although the puzzle was hard, Nina solved it.
+- Seed 5: "Combine the ideas into one sentence using before. The visitors left. They tha..." → correct
+  - Feedback: A correct answer is: Before the visitors left, they thanked the guide.
 
 ### `relative_clause_identify`
 
@@ -409,18 +409,18 @@
 - **Adult review decision:** approved_with_review
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
-  - Accepted example: The book that I borrowed was brilliant.
-  - Rejected alternative: After I borrowed the book, it was brilliant.
+  - Accepted example: The teacher who organised the trip checked the register.
+  - Rejected alternative: When the teacher organised the trip, she checked the register.
 - **Final action:** ship
 
 **Concrete examples:**
 
 - Seed 1: "Which sentence contains a relative clause?" → correct
-  - Feedback: The correct sentence is: The book that I borrowed was brilliant.
+  - Feedback: The correct sentence is: The teacher who organised the trip checked the register.
 - Seed 2: "Which sentence contains a relative clause?" → correct
-  - Feedback: The correct sentence is: The village, which sits by the sea, is very quiet.
+  - Feedback: The correct sentence is: The trophy, which gleamed in the cabinet, belonged to our team.
 - Seed 3: "Which sentence contains a relative clause?" → correct
-  - Feedback: The correct sentence is: The boy who dropped his hat waved to us.
+  - Feedback: The correct sentence is: The runner whose shoe had split stopped near the bench.
 
 ### `relative_clause_complete`
 
@@ -438,18 +438,18 @@
 - **Adult review decision:** approved_with_review
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
-  - Accepted example: who had visited Egypt
-  - Rejected alternative: because she visited Egypt
+  - Accepted example: that was locked outside
+  - Rejected alternative: because it was outside
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Complete the sentence with the best relative clause. The teacher ___ helped u..." → correct
-  - Feedback: The best completion is: who had visited Egypt.
-- Seed 2: "Complete the sentence with the best relative clause. The bicycle ___ belonged..." → correct
+- Seed 1: "Complete the sentence with the best relative clause. The bicycle ___ belonged..." → correct
   - Feedback: The best completion is: that was locked outside.
-- Seed 3: "Complete the sentence with the best relative clause. The teacher ___ helped u..." → correct
-  - Feedback: The best completion is: who had visited Egypt.
+- Seed 2: "Complete the sentence with the best relative clause. The puppy ___ fell aslee..." → correct
+  - Feedback: The best completion is: that had chased the ball.
+- Seed 3: "Complete the sentence with the best relative clause. The museum ___ opened ea..." → correct
+  - Feedback: The best completion is: which displays Roman coins.
 
 ### `tense_form_choice`
 
@@ -468,10 +468,10 @@
 
 **Concrete examples:**
 
-- Seed 1: "Choose the best verb form to complete the sentence. While we ___ to our frien..." → correct
-  - Feedback: The correct form is: were talking.
-- Seed 2: "Choose the best verb form to complete the sentence. She cannot play today bec..." → correct
-  - Feedback: The correct form is: has twisted.
+- Seed 1: "Choose the best verb form to complete the sentence. Last night, the guide ___..." → correct
+  - Feedback: The correct form is: marked.
+- Seed 2: "Choose the best verb form to complete the sentence. By the time the coach arr..." → correct
+  - Feedback: The correct form is: had collected.
 - Seed 3: "Choose the best verb form to complete the sentence. By the time we arrived, t..." → correct
   - Feedback: The correct form is: had / started.
 
@@ -492,16 +492,16 @@
 
 **Concrete examples:**
 
-- Seed 1: "Rewrite the sentence in the present perfect. I finish my homework." → correct
-  - Feedback: A correct answer is: I have finished my homework.
-- Seed 2: "Rewrite the sentence in the past perfect. She packs her bag before the trip." → correct
-  - Feedback: A correct answer is: She had packed her bag before the trip.
-- Seed 3: "Rewrite the sentence in the past progressive. The dog chases the cat." → correct
+- Seed 1: "Rewrite the sentence in the past perfect. They finish the model before lunch." → correct
+  - Feedback: A correct answer is: They had finished the model before lunch.
+- Seed 2: "Rewrite the sentence in the past progressive. The dog chases the cat." → correct
   - Feedback: A correct answer is: The dog was chasing the cat.
-- Seed 4: "Rewrite the sentence in the present perfect. I finish my homework." → correct
-  - Feedback: A correct answer is: I have finished my homework.
-- Seed 5: "Rewrite the sentence in the past perfect. She packs her bag before the trip." → correct
-  - Feedback: A correct answer is: She had packed her bag before the trip.
+- Seed 3: "Rewrite the sentence in the present perfect. We tidy the classroom." → correct
+  - Feedback: A correct answer is: We have tidied the classroom.
+- Seed 4: "Rewrite the sentence in the future perfect. The class completes the display b..." → correct
+  - Feedback: A correct answer is: The class will have completed the display by Friday.
+- Seed 5: "Rewrite the sentence in the past progressive. Maya paints the scenery." → correct
+  - Feedback: A correct answer is: Maya was painting the scenery.
 
 ### `standard_english_pairs`
 
@@ -523,7 +523,7 @@
 - Seed 1: "Choose the correct verb form in each pair to complete the sentences using Sta..." → correct
   - Feedback: Correct choices: saw; did.
 - Seed 2: "Choose the correct verb form in each pair to complete the sentences using Sta..." → correct
-  - Feedback: Correct choices: were; did.
+  - Feedback: Correct choices: were; doesn't.
 - Seed 3: "Choose the correct verb form in each pair to complete the sentences using Sta..." → correct
   - Feedback: Correct choices: saw; did.
 
@@ -545,11 +545,11 @@
 **Concrete examples:**
 
 - Seed 1: "Which version is clearest and avoids awkward repetition without becoming conf..." → correct
-  - Feedback: The clearest version is: Arjun gave his book to his sister because he had finished it.
+  - Feedback: The clearest version is: Ben gave Luca the map because he was carrying too many bags.
 - Seed 2: "Which version is clearest and avoids awkward repetition without becoming conf..." → correct
-  - Feedback: The clearest version is: Mila put her coat on the chair before she zipped her bag.
+  - Feedback: The clearest version is: Nina told Sofia that Nina would meet her by the gate.
 - Seed 3: "Which version is clearest and avoids awkward repetition without becoming conf..." → correct
-  - Feedback: The clearest version is: Arjun gave his book to his sister because he had finished it.
+  - Feedback: The clearest version is: Omar put his ticket in his pocket before he boarded the bus.
 
 ### `formality_pairs`
 
@@ -569,7 +569,7 @@
 **Concrete examples:**
 
 - Seed 1: "Circle the most formal option in each underlined pair below to complete the p..." → correct
-  - Feedback: Correct formal choices: discover; enter; request.
+  - Feedback: Correct formal choices: assisted; verify; take place.
 - Seed 2: "Circle the most formal option in each underlined pair below to complete the p..." → correct
   - Feedback: Correct formal choices: established; requested; compete.
 - Seed 3: "Circle the most formal option in each underlined pair below to complete the p..." → correct
@@ -592,16 +592,16 @@
 
 **Concrete examples:**
 
-- Seed 1: "Rewrite the sentence in the passive. Keep the same tense. The chef baked the ..." → correct
+- Seed 1: "Rewrite the sentence in the active. The lantern was carried by Sofia." → correct
+  - Feedback: A correct answer is: Sofia carried the lantern.
+- Seed 2: "Rewrite the sentence in the passive. Keep the same tense. The chef baked the ..." → correct
   - Feedback: A correct answer is: The bread was baked by the chef.
-- Seed 2: "Rewrite the sentence in the passive. Keep the same tense. The team will colle..." → correct
-  - Feedback: A correct answer is: The trophy will be collected by the team.
-- Seed 3: "Rewrite the sentence in the active. The local park is maintained by the council." → correct
-  - Feedback: A correct answer is: The council maintains the local park.
-- Seed 4: "Rewrite the sentence in the passive. Keep the same tense. The chef baked the ..." → correct
-  - Feedback: A correct answer is: The bread was baked by the chef.
-- Seed 5: "Rewrite the sentence in the passive. Keep the same tense. The team will colle..." → correct
-  - Feedback: A correct answer is: The trophy will be collected by the team.
+- Seed 3: "Rewrite the sentence in the passive. Keep the same tense. Grace opened the wi..." → correct
+  - Feedback: A correct answer is: The window was opened by Grace.
+- Seed 4: "Rewrite the sentence in the active. The rucksack is packed by Hassan." → correct
+  - Feedback: A correct answer is: Hassan packs the rucksack.
+- Seed 5: "Rewrite the sentence in the passive. Keep the same tense. The caretaker locks..." → correct
+  - Feedback: A correct answer is: The gate is locked by the caretaker.
 
 ### `subject_object_choice`
 
@@ -619,22 +619,22 @@
 - **Adult review decision:** approved_with_review
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
-  - Accepted example: the sandwich
-  - Rejected alternative: The noisy gull
+  - Accepted example: the heavy gate
+  - Rejected alternative: Maya
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "In the sentence below, what is the object? The noisy gull stole the sandwich ..." → correct
-  - Feedback: The object is: the sandwich.
-- Seed 2: "In the sentence below, what is the subject? On Friday morning, our science cl..." → correct
-  - Feedback: The subject is: our science club.
-- Seed 3: "In the sentence below, what is the subject? After lunch, the tired goalkeeper..." → correct
+- Seed 1: "In the sentence below, what is the object? Maya opened the heavy gate after l..." → correct
+  - Feedback: The object is: the heavy gate.
+- Seed 2: "In the sentence below, what is the subject? During the storm, the old roof le..." → correct
+  - Feedback: The subject is: the old roof.
+- Seed 3: "In the sentence below, what is the object? The guide lifted the lantern caref..." → correct
+  - Feedback: The object is: the lantern.
+- Seed 4: "In the sentence below, what is the subject? After lunch, the tired goalkeeper..." → correct
   - Feedback: The subject is: the tired goalkeeper.
-- Seed 4: "In the sentence below, what is the object? The noisy gull stole the sandwich ..." → correct
-  - Feedback: The object is: the sandwich.
-- Seed 5: "In the sentence below, what is the subject? On Friday morning, our science cl..." → correct
-  - Feedback: The subject is: our science club.
+- Seed 5: "In the sentence below, what is the subject? At the museum, the curator unlock..." → correct
+  - Feedback: The subject is: the curator.
 
 ### `modal_verb_choice`
 
@@ -652,16 +652,16 @@
 - **Adult review decision:** approved_with_review
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
-  - Accepted example: should
-  - Rejected alternative: might
+  - Accepted example: The bus might arrive at nine.
+  - Rejected alternative: The bus will arrive at nine.
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Which modal verb best completes the sentence to show strong advice? You ___ w..." → correct
-  - Feedback: The correct answer is: should.
-- Seed 2: "Which sentence sounds most certain?" → correct
-  - Feedback: The correct answer is: It will snow tonight..
+- Seed 1: "Which sentence shows a possibility, not certainty?" → correct
+  - Feedback: The correct answer is: The bus might arrive at nine..
+- Seed 2: "Which modal verb best completes the sentence to show permission? You ___ use ..." → correct
+  - Feedback: The correct answer is: may.
 - Seed 3: "Which sentence shows the least certainty that the team will win?" → correct
   - Feedback: The correct answer is: The team might win..
 
@@ -684,12 +684,12 @@
 
 - Seed 1: "What punctuation could be used instead of brackets in the sentence below? The..." → correct
   - Feedback: The correct answer is: dashes.
-- Seed 2: "What punctuation could be used instead of brackets in the sentence below? Tok..." → correct
-  - Feedback: The correct answer is: dashes.
+- Seed 2: "What punctuation could be used instead of brackets in the sentence below? My ..." → correct
+  - Feedback: The correct answer is: commas.
 - Seed 3: "What punctuation could be used instead of brackets in the sentence below? The..." → correct
   - Feedback: The correct answer is: dashes.
-- Seed 4: "What punctuation could be used instead of brackets in the sentence below? Tok..." → correct
-  - Feedback: The correct answer is: dashes.
+- Seed 4: "What punctuation could be used instead of brackets in the sentence below? Has..." → correct
+  - Feedback: The correct answer is: commas.
 - Seed 5: "What punctuation could be used instead of brackets in the sentence below? The..." → correct
   - Feedback: The correct answer is: dashes.
 
@@ -710,16 +710,16 @@
 
 **Concrete examples:**
 
-- Seed 1: "Insert a pair of brackets in the correct place. My cousin the youngest in the..." → correct
-  - Feedback: A correct answer is: My cousin (the youngest in the family) won the chess trophy.
-- Seed 2: "Insert a pair of brackets in the correct place. Our class visited a castle th..." → correct
-  - Feedback: A correct answer is: Our class visited a castle (the oldest in the county) to help with our histo...
-- Seed 3: "Insert a pair of brackets in the correct place. My cousin the youngest in the..." → correct
-  - Feedback: A correct answer is: My cousin (the youngest in the family) won the chess trophy.
-- Seed 4: "Insert a pair of brackets in the correct place. Our class visited a castle th..." → correct
-  - Feedback: A correct answer is: Our class visited a castle (the oldest in the county) to help with our histo...
-- Seed 5: "Insert a pair of brackets in the correct place. My cousin the youngest in the..." → correct
-  - Feedback: A correct answer is: My cousin (the youngest in the family) won the chess trophy.
+- Seed 1: "Insert a pair of brackets in the correct place. The trophy made of silver sto..." → correct
+  - Feedback: A correct answer is: The trophy (made of silver) stood in the cabinet.
+- Seed 2: "Insert a pair of brackets in the correct place. My uncle a keen cyclist repai..." → correct
+  - Feedback: A correct answer is: My uncle (a keen cyclist) repaired the puncture.
+- Seed 3: "Insert a pair of brackets in the correct place. The library which opened last..." → correct
+  - Feedback: A correct answer is: The library (which opened last year) has a new reading room.
+- Seed 4: "Insert a pair of brackets in the correct place. Hassan our team captain organ..." → correct
+  - Feedback: A correct answer is: Hassan (our team captain) organised the warm-up.
+- Seed 5: "Insert a pair of brackets in the correct place. The old oak tree over two hun..." → correct
+  - Feedback: A correct answer is: The old oak tree (over two hundred years old) shaded the path.
 
 ### `speech_punctuation_fix`
 
@@ -738,16 +738,16 @@
 
 **Concrete examples:**
 
-- Seed 1: "Punctuate the direct speech correctly. Dad shouted "Run inside!"" → correct
-  - Feedback: A correct answer is: Dad shouted, “Run inside!”
-- Seed 2: "Punctuate the direct speech correctly. "Sit down" said the coach." → correct
-  - Feedback: A correct answer is: “Sit down!” said the coach.
-- Seed 3: "Punctuate the direct speech correctly. "Where are you going" asked Mum." → correct
+- Seed 1: "Punctuate the direct speech correctly. The guide said "Follow the red arrows."" → correct
+  - Feedback: A correct answer is: The guide said, “Follow the red arrows.”
+- Seed 2: "Punctuate the direct speech correctly. "What a huge wave that was" shouted Ben." → correct
+  - Feedback: A correct answer is: “What a huge wave that was!” shouted Ben.
+- Seed 3: "Punctuate the direct speech correctly. Maya whispered "Please wait outside."" → correct
+  - Feedback: A correct answer is: Maya whispered, “Please wait outside.”
+- Seed 4: "Punctuate the direct speech correctly. "Where are you going" asked Mum." → correct
   - Feedback: A correct answer is: “Where are you going?” asked Mum.
-- Seed 4: "Punctuate the direct speech correctly. Dad shouted "Run inside!"" → correct
+- Seed 5: "Punctuate the direct speech correctly. Dad shouted "Run inside!"" → correct
   - Feedback: A correct answer is: Dad shouted, “Run inside!”
-- Seed 5: "Punctuate the direct speech correctly. "Sit down" said the coach." → correct
-  - Feedback: A correct answer is: “Sit down!” said the coach.
 
 ### `apostrophe_possession_choice`
 
@@ -766,12 +766,12 @@
 
 **Concrete examples:**
 
-- Seed 1: "Choose the correct phrase to complete the sentence: We found the ___ bowl beh..." → correct
-  - Feedback: The correct answer is: dog's.
-- Seed 2: "Choose the correct phrase to complete the sentence: The ___ coats were hangin..." → correct
+- Seed 1: "Choose the correct phrase to complete the sentence: The ___ coats were hangin..." → correct
   - Feedback: The correct answer is: children's.
-- Seed 3: "Choose the correct phrase to complete the sentence: The ___ playground was cl..." → correct
+- Seed 2: "Choose the correct phrase to complete the sentence: The ___ playground was cl..." → correct
   - Feedback: The correct answer is: girls'.
+- Seed 3: "Choose the correct phrase to complete the sentence: We admired the ___ painti..." → correct
+  - Feedback: The correct answer is: artist's.
 
 ### `explain_reason_choice`
 
@@ -795,12 +795,12 @@
 
 **Concrete examples:**
 
-- Seed 1: "Why is 'I done my homework' wrong in Standard English?" → correct
-  - Feedback: The best explanation is: Because Standard English uses ‘did’, not ‘done’, in that sentence..
-- Seed 2: "Why is there a comma after the opening words in this sentence? Before sunrise..." → correct
+- Seed 1: "Why is 'We was ready' wrong in Standard English?" → correct
+  - Feedback: The best explanation is: Because Standard English uses ‘were’ with ‘we’..
+- Seed 2: "Why is there a comma after the opening words in this sentence? Without warnin..." → correct
   - Feedback: The best explanation is: Because the opening words are a fronted adverbial..
-- Seed 3: "Why is 'I done my homework' wrong in Standard English?" → correct
-  - Feedback: The best explanation is: Because Standard English uses ‘did’, not ‘done’, in that sentence..
+- Seed 3: "Why is 'She don't know' wrong in Standard English?" → correct
+  - Feedback: The best explanation is: Because Standard English uses ‘doesn't’ with ‘she’..
 
 ### `standard_fix_sentence`
 
@@ -819,13 +819,13 @@
 
 **Concrete examples:**
 
-- Seed 1: "Rewrite the sentence in Standard English. I done my homework before tea." → non-scored
+- Seed 1: "Rewrite the sentence in Standard English. They was waiting by the gate." → non-scored
   - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
-- Seed 2: "Rewrite the sentence in Standard English. We was walking to school." → non-scored
+- Seed 2: "Rewrite the sentence in Standard English. She seen the poster yesterday." → non-scored
   - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
-- Seed 3: "Rewrite the sentence in Standard English. I done my homework before tea." → non-scored
+- Seed 3: "Rewrite the sentence in Standard English. The players was ready for the start." → non-scored
   - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
-- Seed 4: "Rewrite the sentence in Standard English. We was walking to school." → non-scored
+- Seed 4: "Rewrite the sentence in Standard English. Maya done her reading record." → non-scored
   - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
 - Seed 5: "Rewrite the sentence in Standard English. I done my homework before tea." → non-scored
   - Feedback: Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.
@@ -3072,4 +3072,3 @@
   - Feedback: The paired commas surround the removable extra information.
 - Seed 3: "Which sentence keeps its meaning if the parenthesis 'which had been missing a..." → correct
   - Feedback: The paired commas surround the removable extra information.
-

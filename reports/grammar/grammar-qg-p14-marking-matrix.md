@@ -1,6 +1,6 @@
 # Grammar QG P10 — Marking Matrix (Full Variant Expansion)
 
-Generated: 2026-05-01T13:33:50.107Z
+Generated: 2026-05-01T16:23:10.924Z
 Content release: grammar-qg-p14-2026-05-01
 Seed range: 1..5
 Total entries: 120
@@ -27,7 +27,7 @@ Variant categories: 9
 | fix_fronted_adverbial | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
 | combine_clauses_rewrite | 5 | 10/10 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
 | tense_rewrite | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
-| active_passive_rewrite | 5 | 6/6 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
+| active_passive_rewrite | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
 | parenthesis_fix_sentence | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
 | speech_punctuation_fix | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
 | proc_fronted_adverbial_fix | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
@@ -48,4 +48,3 @@ Variant categories: 9
 | qg_p14_speech_punctuation_constructed_rewrite | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
 | qg_p14_expanded_noun_phrases_constructed_rewrite | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
 | qg_p14_parenthesis_commas_constructed_rewrite | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
-

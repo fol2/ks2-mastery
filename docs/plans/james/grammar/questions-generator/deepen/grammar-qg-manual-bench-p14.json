@@ -9,7 +9,7 @@
     "baselineSource": "reports/grammar/grammar-qg-p14-render-inventory.json",
     "currentTemplateCount": 110,
     "currentThirtySeedInstances": 3300,
-    "knownLowDiversityTemplateFamilies": 23
+    "knownLowDiversityTemplateFamilies": 0
   },
   "targetAfterIntegration": {
     "newManualTemplateFamilies": 78,

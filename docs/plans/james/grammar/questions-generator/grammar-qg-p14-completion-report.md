@@ -15,7 +15,7 @@ limitations:
 
 P14 is complete for pre-deploy release review under `grammar-qg-p14-2026-05-01`.
 
-The active Grammar QG pool now has 110 templates, 3,300 render-inventory items, 2,322 unique learner-visible surfaces and 1,503 unique prompt texts across seeds 1..30. Quality evidence records 106 approved + 4 approved_with_limitation templates, 0 blocked templates, 33 adult-review decisions, 2,190 distractor audit items with 0 S0/S1 failures, 0 P14 selected-response surface-cue flags, and 120 marking matrix entries.
+The active Grammar QG pool now has 110 templates, 3,300 render-inventory items, 2,496 unique learner-visible surfaces and 1,622 unique prompt texts across seeds 1..30. Quality evidence records 106 approved + 4 approved_with_limitation templates, 0 blocked templates, 33 adult-review decisions, 2,190 distractor audit items with 0 S0/S1 failures, 0 P14 selected-response surface-cue flags, and 120 marking matrix entries.
 
 ## Unit Closure
 
@@ -23,7 +23,7 @@ The active Grammar QG pool now has 110 templates, 3,300 render-inventory items, 
 | --- | --- | --- |
 | U0 diversity baseline | Done | `reports/grammar/grammar-qg-p14-diversity-baseline.json`, `.md` are explicitly marked as pre-P14 comparator evidence from the P11 inventory |
 | U1 no same-template normal-session repeat | Done | `tests/grammar-selection.test.js`, `tests/grammar-qg-p14-depth-variety.test.js` |
-| U2 low-diversity fixed-bank handling | Done | 23 fixed diagnostics marked low schedule; every non-fixed template has at least 10 visible surfaces |
+| U2 low-diversity fixed-bank handling | Done | Former 23 low-diversity fixed-bank families expanded; active low-diversity count is 0 and every active template has at least 10 learner-visible surfaces |
 | U3 deeper priority concept families | Done | 32 P14 templates; four depth families across eight priority concepts |
 | U4 quick/deep/mini-test session meaning | Done | Setup copy, length labels, start labels, summary depth label |
 | U5 Star pacing review | Done | `reports/grammar/grammar-qg-p14-star-pacing-simulation.json`, `.md` |

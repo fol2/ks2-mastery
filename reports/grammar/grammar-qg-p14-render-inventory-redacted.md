@@ -4,7 +4,7 @@ Content Release: grammar-qg-p14-2026-05-01
 Total Items: 3300
 Templates: 110
 Seed Range: 1..30
-Generated: 2026-05-01T13:33:07.494Z
+Generated: 2026-05-01T16:23:10.239Z
 
 _Answer internals stripped from this report._
 
@@ -131,65 +131,65 @@ _Answer internals stripped from this report._
 | identify_words_in_sentence | 29 | checkbox_list | target-sentence: Those small birds built a nest in the tree. | Select all the determiners in the sentence below. Those smal |
 | identify_words_in_sentence | 30 | checkbox_list | target-sentence: Nina carefully and quietly packed the glass vase. | Select all the adverbs in the sentence below. Nina carefully |
 | expanded_noun_phrase_choice | 1 | single_choice | - | Which option is an expanded noun phrase? |
-| expanded_noun_phrase_choice | 2 | single_choice | - | Which sentence contains an expanded noun phrase? |
-| expanded_noun_phrase_choice | 3 | single_choice | - | Which sentence contains an expanded noun phrase? |
+| expanded_noun_phrase_choice | 2 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 3 | single_choice | - | Which option is an expanded noun phrase? |
 | expanded_noun_phrase_choice | 4 | single_choice | - | Which sentence contains an expanded noun phrase? |
-| expanded_noun_phrase_choice | 5 | single_choice | - | Which sentence contains an expanded noun phrase? |
-| expanded_noun_phrase_choice | 6 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 5 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 6 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | expanded_noun_phrase_choice | 7 | single_choice | - | Which option is an expanded noun phrase? |
-| expanded_noun_phrase_choice | 8 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 8 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | expanded_noun_phrase_choice | 9 | single_choice | - | Which option is an expanded noun phrase? |
-| expanded_noun_phrase_choice | 10 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 10 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | expanded_noun_phrase_choice | 11 | single_choice | - | Which option is an expanded noun phrase? |
 | expanded_noun_phrase_choice | 12 | single_choice | - | Which option is an expanded noun phrase? |
 | expanded_noun_phrase_choice | 13 | single_choice | - | Which option is an expanded noun phrase? |
-| expanded_noun_phrase_choice | 14 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 14 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | expanded_noun_phrase_choice | 15 | single_choice | - | Which option is an expanded noun phrase? |
-| expanded_noun_phrase_choice | 16 | single_choice | - | Which option is an expanded noun phrase? |
-| expanded_noun_phrase_choice | 17 | single_choice | - | Which sentence contains an expanded noun phrase? |
-| expanded_noun_phrase_choice | 18 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 16 | single_choice | - | Which sentence contains an expanded noun phrase? |
+| expanded_noun_phrase_choice | 17 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 18 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | expanded_noun_phrase_choice | 19 | single_choice | - | Which option is an expanded noun phrase? |
 | expanded_noun_phrase_choice | 20 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | expanded_noun_phrase_choice | 21 | single_choice | - | Which option is an expanded noun phrase? |
 | expanded_noun_phrase_choice | 22 | single_choice | - | Which option is an expanded noun phrase? |
 | expanded_noun_phrase_choice | 23 | single_choice | - | Which option is an expanded noun phrase? |
-| expanded_noun_phrase_choice | 24 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 24 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | expanded_noun_phrase_choice | 25 | single_choice | - | Which option is an expanded noun phrase? |
-| expanded_noun_phrase_choice | 26 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 26 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | expanded_noun_phrase_choice | 27 | single_choice | - | Which option is an expanded noun phrase? |
-| expanded_noun_phrase_choice | 28 | single_choice | - | Which option is an expanded noun phrase? |
+| expanded_noun_phrase_choice | 28 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | expanded_noun_phrase_choice | 29 | single_choice | - | Which option is an expanded noun phrase? |
 | expanded_noun_phrase_choice | 30 | single_choice | - | Which sentence contains an expanded noun phrase? |
 | build_noun_phrase | 1 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 2 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 3 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 4 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 2 | multi | target-sentence: ___ waited outside the theatre. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 3 | multi | target-sentence: ___ stood beside the canal. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 4 | multi | target-sentence: ___ caught the sunlight. | Build a noun phrase of at least three words to complete the  |
 | build_noun_phrase | 5 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 6 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 7 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 8 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 9 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 10 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 11 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 12 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 13 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 14 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 6 | multi | target-sentence: ___ blocked the narrow lane. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 7 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 8 | multi | target-sentence: ___ sat on the windowsill. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 9 | multi | target-sentence: ___ won the design prize. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 10 | multi | target-sentence: ___ solved the puzzle. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 11 | multi | target-sentence: ___ rolled across the floor. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 12 | multi | target-sentence: ___ waited outside the theatre. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 13 | multi | target-sentence: ___ stood beside the canal. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 14 | multi | target-sentence: ___ caught the sunlight. | Build a noun phrase of at least three words to complete the  |
 | build_noun_phrase | 15 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 16 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 17 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 18 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 19 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 20 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 21 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 22 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 23 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 24 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 16 | multi | target-sentence: ___ blocked the narrow lane. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 17 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 18 | multi | target-sentence: ___ sat on the windowsill. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 19 | multi | target-sentence: ___ won the design prize. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 20 | multi | target-sentence: ___ solved the puzzle. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 21 | multi | target-sentence: ___ rolled across the floor. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 22 | multi | target-sentence: ___ waited outside the theatre. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 23 | multi | target-sentence: ___ stood beside the canal. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 24 | multi | target-sentence: ___ caught the sunlight. | Build a noun phrase of at least three words to complete the  |
 | build_noun_phrase | 25 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 26 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 27 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 28 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 29 | multi | target-sentence: ___ found the silver key. | Build a noun phrase of at least three words to complete the  |
-| build_noun_phrase | 30 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 26 | multi | target-sentence: ___ blocked the narrow lane. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 27 | multi | target-sentence: ___ opened the door. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 28 | multi | target-sentence: ___ sat on the windowsill. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 29 | multi | target-sentence: ___ won the design prize. | Build a noun phrase of at least three words to complete the  |
+| build_noun_phrase | 30 | multi | target-sentence: ___ solved the puzzle. | Build a noun phrase of at least three words to complete the  |
 | fronted_adverbial_choose | 1 | single_choice | - | Which sentence starts with a fronted adverbial? |
 | fronted_adverbial_choose | 2 | single_choice | - | Which sentence starts with a fronted adverbial? |
 | fronted_adverbial_choose | 3 | single_choice | - | Which sentence starts with a fronted adverbial? |
@@ -250,65 +250,65 @@ _Answer internals stripped from this report._
 | fix_fronted_adverbial | 28 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
 | fix_fronted_adverbial | 29 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
 | fix_fronted_adverbial | 30 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| subordinate_clause_choice | 1 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 2 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 3 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 4 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 5 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 6 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 7 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 8 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 9 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 10 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 11 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 12 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 13 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 14 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 15 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 16 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 17 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 18 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 19 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 20 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 1 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 2 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 3 | single_choice | target-sentence: Because the river was high, the path was closed. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 4 | single_choice | target-sentence: Before the coach arrived, the team warmed up. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 5 | single_choice | target-sentence: While the kettle boiled, Dad set out the mugs. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 6 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 7 | single_choice | target-sentence: Although the match was difficult, the team kept trying. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 8 | single_choice | target-sentence: When the rain stopped, the playground filled quickly. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 9 | single_choice | target-sentence: Unless you hurry, the bus will leave without you. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 10 | single_choice | target-sentence: After the lights dimmed, the play began. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 11 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 12 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 13 | single_choice | target-sentence: Because the river was high, the path was closed. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 14 | single_choice | target-sentence: Before the coach arrived, the team warmed up. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 15 | single_choice | target-sentence: While the kettle boiled, Dad set out the mugs. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 16 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 17 | single_choice | target-sentence: Although the match was difficult, the team kept trying. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 18 | single_choice | target-sentence: When the rain stopped, the playground filled quickly. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 19 | single_choice | target-sentence: Unless you hurry, the bus will leave without you. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 20 | single_choice | target-sentence: After the lights dimmed, the play began. | Which option is the subordinate clause in the sentence below |
 | subordinate_clause_choice | 21 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
 | subordinate_clause_choice | 22 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 23 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 24 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 25 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 23 | single_choice | target-sentence: Because the river was high, the path was closed. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 24 | single_choice | target-sentence: Before the coach arrived, the team warmed up. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 25 | single_choice | target-sentence: While the kettle boiled, Dad set out the mugs. | Which option is the subordinate clause in the sentence below |
 | subordinate_clause_choice | 26 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 27 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 28 | single_choice | target-sentence: When the bell rang, the pupils lined up quietly. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 29 | single_choice | target-sentence: If the path is icy, wear your boots. | Which option is the subordinate clause in the sentence below |
-| subordinate_clause_choice | 30 | single_choice | target-sentence: Although the wind was strong, the boat reached the shore. | Which option is the subordinate clause in the sentence below |
-| combine_clauses_rewrite | 1 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
-| combine_clauses_rewrite | 2 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
-| combine_clauses_rewrite | 3 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
-| combine_clauses_rewrite | 4 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
-| combine_clauses_rewrite | 5 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
-| combine_clauses_rewrite | 6 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
-| combine_clauses_rewrite | 7 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
-| combine_clauses_rewrite | 8 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
-| combine_clauses_rewrite | 9 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
-| combine_clauses_rewrite | 10 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
-| combine_clauses_rewrite | 11 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
-| combine_clauses_rewrite | 12 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
+| subordinate_clause_choice | 27 | single_choice | target-sentence: Although the match was difficult, the team kept trying. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 28 | single_choice | target-sentence: When the rain stopped, the playground filled quickly. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 29 | single_choice | target-sentence: Unless you hurry, the bus will leave without you. | Which option is the subordinate clause in the sentence below |
+| subordinate_clause_choice | 30 | single_choice | target-sentence: After the lights dimmed, the play began. | Which option is the subordinate clause in the sentence below |
+| combine_clauses_rewrite | 1 | textarea | - | Combine the ideas into one sentence using when. The gate ope |
+| combine_clauses_rewrite | 2 | textarea | - | Combine the ideas into one sentence using if. The weather im |
+| combine_clauses_rewrite | 3 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
+| combine_clauses_rewrite | 4 | textarea | - | Combine the ideas into one sentence using although. The puzz |
+| combine_clauses_rewrite | 5 | textarea | - | Combine the ideas into one sentence using before. The visito |
+| combine_clauses_rewrite | 6 | textarea | - | Combine the ideas into one sentence using while. The choir w |
+| combine_clauses_rewrite | 7 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
+| combine_clauses_rewrite | 8 | textarea | - | Combine the ideas into one sentence using because. The path  |
+| combine_clauses_rewrite | 9 | textarea | - | Combine the ideas into one sentence using after. The museum  |
+| combine_clauses_rewrite | 10 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
+| combine_clauses_rewrite | 11 | textarea | - | Combine the ideas into one sentence using when. The gate ope |
+| combine_clauses_rewrite | 12 | textarea | - | Combine the ideas into one sentence using if. The weather im |
 | combine_clauses_rewrite | 13 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
-| combine_clauses_rewrite | 14 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
-| combine_clauses_rewrite | 15 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
-| combine_clauses_rewrite | 16 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
+| combine_clauses_rewrite | 14 | textarea | - | Combine the ideas into one sentence using although. The puzz |
+| combine_clauses_rewrite | 15 | textarea | - | Combine the ideas into one sentence using before. The visito |
+| combine_clauses_rewrite | 16 | textarea | - | Combine the ideas into one sentence using while. The choir w |
 | combine_clauses_rewrite | 17 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
-| combine_clauses_rewrite | 18 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
-| combine_clauses_rewrite | 19 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
-| combine_clauses_rewrite | 20 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
-| combine_clauses_rewrite | 21 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
-| combine_clauses_rewrite | 22 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
-| combine_clauses_rewrite | 23 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
-| combine_clauses_rewrite | 24 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
-| combine_clauses_rewrite | 25 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
-| combine_clauses_rewrite | 26 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
-| combine_clauses_rewrite | 27 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
-| combine_clauses_rewrite | 28 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
-| combine_clauses_rewrite | 29 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
+| combine_clauses_rewrite | 18 | textarea | - | Combine the ideas into one sentence using because. The path  |
+| combine_clauses_rewrite | 19 | textarea | - | Combine the ideas into one sentence using after. The museum  |
+| combine_clauses_rewrite | 20 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
+| combine_clauses_rewrite | 21 | textarea | - | Combine the ideas into one sentence using when. The gate ope |
+| combine_clauses_rewrite | 22 | textarea | - | Combine the ideas into one sentence using if. The weather im |
+| combine_clauses_rewrite | 23 | textarea | - | Combine the ideas into one sentence using because. Sam wore  |
+| combine_clauses_rewrite | 24 | textarea | - | Combine the ideas into one sentence using although. The puzz |
+| combine_clauses_rewrite | 25 | textarea | - | Combine the ideas into one sentence using before. The visito |
+| combine_clauses_rewrite | 26 | textarea | - | Combine the ideas into one sentence using while. The choir w |
+| combine_clauses_rewrite | 27 | textarea | - | Combine the ideas into one sentence using when. The bell ran |
+| combine_clauses_rewrite | 28 | textarea | - | Combine the ideas into one sentence using because. The path  |
+| combine_clauses_rewrite | 29 | textarea | - | Combine the ideas into one sentence using after. The museum  |
 | combine_clauses_rewrite | 30 | textarea | - | Combine the ideas into one sentence using although. Mia was  |
 | relative_clause_identify | 1 | single_choice | - | Which sentence contains a relative clause? |
 | relative_clause_identify | 2 | single_choice | - | Which sentence contains a relative clause? |
@@ -340,96 +340,96 @@ _Answer internals stripped from this report._
 | relative_clause_identify | 28 | single_choice | - | Which sentence contains a relative clause? |
 | relative_clause_identify | 29 | single_choice | - | Which sentence contains a relative clause? |
 | relative_clause_identify | 30 | single_choice | - | Which sentence contains a relative clause? |
-| relative_clause_complete | 1 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 2 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 3 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 4 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 5 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 6 | single_choice | - | Complete the sentence with the best relative clause. The bic |
+| relative_clause_complete | 1 | single_choice | - | Complete the sentence with the best relative clause. The bic |
+| relative_clause_complete | 2 | single_choice | - | Complete the sentence with the best relative clause. The pup |
+| relative_clause_complete | 3 | single_choice | - | Complete the sentence with the best relative clause. The mus |
+| relative_clause_complete | 4 | single_choice | - | Complete the sentence with the best relative clause. The run |
+| relative_clause_complete | 5 | single_choice | - | Complete the sentence with the best relative clause. The ten |
+| relative_clause_complete | 6 | single_choice | - | Complete the sentence with the best relative clause. The sin |
 | relative_clause_complete | 7 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 8 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 9 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 10 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 11 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 12 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 13 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 14 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 15 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 16 | single_choice | - | Complete the sentence with the best relative clause. The bic |
+| relative_clause_complete | 8 | single_choice | - | Complete the sentence with the best relative clause. The lib |
+| relative_clause_complete | 9 | single_choice | - | Complete the sentence with the best relative clause. The pai |
+| relative_clause_complete | 10 | single_choice | - | Complete the sentence with the best relative clause. The bad |
+| relative_clause_complete | 11 | single_choice | - | Complete the sentence with the best relative clause. The bic |
+| relative_clause_complete | 12 | single_choice | - | Complete the sentence with the best relative clause. The pup |
+| relative_clause_complete | 13 | single_choice | - | Complete the sentence with the best relative clause. The mus |
+| relative_clause_complete | 14 | single_choice | - | Complete the sentence with the best relative clause. The run |
+| relative_clause_complete | 15 | single_choice | - | Complete the sentence with the best relative clause. The ten |
+| relative_clause_complete | 16 | single_choice | - | Complete the sentence with the best relative clause. The sin |
 | relative_clause_complete | 17 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 18 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 19 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 20 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 21 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 22 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 23 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 24 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 25 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 26 | single_choice | - | Complete the sentence with the best relative clause. The bic |
+| relative_clause_complete | 18 | single_choice | - | Complete the sentence with the best relative clause. The lib |
+| relative_clause_complete | 19 | single_choice | - | Complete the sentence with the best relative clause. The pai |
+| relative_clause_complete | 20 | single_choice | - | Complete the sentence with the best relative clause. The bad |
+| relative_clause_complete | 21 | single_choice | - | Complete the sentence with the best relative clause. The bic |
+| relative_clause_complete | 22 | single_choice | - | Complete the sentence with the best relative clause. The pup |
+| relative_clause_complete | 23 | single_choice | - | Complete the sentence with the best relative clause. The mus |
+| relative_clause_complete | 24 | single_choice | - | Complete the sentence with the best relative clause. The run |
+| relative_clause_complete | 25 | single_choice | - | Complete the sentence with the best relative clause. The ten |
+| relative_clause_complete | 26 | single_choice | - | Complete the sentence with the best relative clause. The sin |
 | relative_clause_complete | 27 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 28 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| relative_clause_complete | 29 | single_choice | - | Complete the sentence with the best relative clause. The tea |
-| relative_clause_complete | 30 | single_choice | - | Complete the sentence with the best relative clause. The bic |
-| tense_form_choice | 1 | single_choice | - | Choose the best verb form to complete the sentence. While we |
-| tense_form_choice | 2 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
+| relative_clause_complete | 28 | single_choice | - | Complete the sentence with the best relative clause. The lib |
+| relative_clause_complete | 29 | single_choice | - | Complete the sentence with the best relative clause. The pai |
+| relative_clause_complete | 30 | single_choice | - | Complete the sentence with the best relative clause. The bad |
+| tense_form_choice | 1 | single_choice | - | Choose the best verb form to complete the sentence. Last nig |
+| tense_form_choice | 2 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
 | tense_form_choice | 3 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
-| tense_form_choice | 4 | single_choice | - | Choose the best verb form to complete the sentence. While we |
-| tense_form_choice | 5 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
-| tense_form_choice | 6 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
+| tense_form_choice | 4 | single_choice | - | Choose the best verb form to complete the sentence. By next  |
+| tense_form_choice | 5 | single_choice | - | Choose the best verb form to complete the sentence. At seven |
+| tense_form_choice | 6 | single_choice | - | Choose the best verb form to complete the sentence. The pupi |
 | tense_form_choice | 7 | single_choice | - | Choose the best verb form to complete the sentence. While we |
-| tense_form_choice | 8 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
-| tense_form_choice | 9 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
-| tense_form_choice | 10 | single_choice | - | Choose the best verb form to complete the sentence. While we |
+| tense_form_choice | 8 | single_choice | - | Choose the best verb form to complete the sentence. Before t |
+| tense_form_choice | 9 | single_choice | - | Choose the best verb form to complete the sentence. Every mo |
+| tense_form_choice | 10 | single_choice | - | Choose the best verb form to complete the sentence. When I a |
 | tense_form_choice | 11 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
-| tense_form_choice | 12 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
-| tense_form_choice | 13 | single_choice | - | Choose the best verb form to complete the sentence. While we |
-| tense_form_choice | 14 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
-| tense_form_choice | 15 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
-| tense_form_choice | 16 | single_choice | - | Choose the best verb form to complete the sentence. While we |
-| tense_form_choice | 17 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
-| tense_form_choice | 18 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
-| tense_form_choice | 19 | single_choice | - | Choose the best verb form to complete the sentence. While we |
-| tense_form_choice | 20 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
-| tense_form_choice | 21 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
-| tense_form_choice | 22 | single_choice | - | Choose the best verb form to complete the sentence. While we |
-| tense_form_choice | 23 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
+| tense_form_choice | 12 | single_choice | - | Choose the best verb form to complete the sentence. Last nig |
+| tense_form_choice | 13 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
+| tense_form_choice | 14 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
+| tense_form_choice | 15 | single_choice | - | Choose the best verb form to complete the sentence. By next  |
+| tense_form_choice | 16 | single_choice | - | Choose the best verb form to complete the sentence. At seven |
+| tense_form_choice | 17 | single_choice | - | Choose the best verb form to complete the sentence. The pupi |
+| tense_form_choice | 18 | single_choice | - | Choose the best verb form to complete the sentence. While we |
+| tense_form_choice | 19 | single_choice | - | Choose the best verb form to complete the sentence. Before t |
+| tense_form_choice | 20 | single_choice | - | Choose the best verb form to complete the sentence. Every mo |
+| tense_form_choice | 21 | single_choice | - | Choose the best verb form to complete the sentence. When I a |
+| tense_form_choice | 22 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
+| tense_form_choice | 23 | single_choice | - | Choose the best verb form to complete the sentence. Last nig |
 | tense_form_choice | 24 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
-| tense_form_choice | 25 | single_choice | - | Choose the best verb form to complete the sentence. While we |
-| tense_form_choice | 26 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
-| tense_form_choice | 27 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
-| tense_form_choice | 28 | single_choice | - | Choose the best verb form to complete the sentence. While we |
-| tense_form_choice | 29 | single_choice | - | Choose the best verb form to complete the sentence. She cann |
-| tense_form_choice | 30 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
-| tense_rewrite | 1 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 2 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
-| tense_rewrite | 3 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
-| tense_rewrite | 4 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 5 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
-| tense_rewrite | 6 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
-| tense_rewrite | 7 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 8 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
-| tense_rewrite | 9 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
-| tense_rewrite | 10 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 11 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
-| tense_rewrite | 12 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
-| tense_rewrite | 13 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 14 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
-| tense_rewrite | 15 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
-| tense_rewrite | 16 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 17 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
-| tense_rewrite | 18 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
-| tense_rewrite | 19 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 20 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
-| tense_rewrite | 21 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
-| tense_rewrite | 22 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 23 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
+| tense_form_choice | 25 | single_choice | - | Choose the best verb form to complete the sentence. By the t |
+| tense_form_choice | 26 | single_choice | - | Choose the best verb form to complete the sentence. By next  |
+| tense_form_choice | 27 | single_choice | - | Choose the best verb form to complete the sentence. At seven |
+| tense_form_choice | 28 | single_choice | - | Choose the best verb form to complete the sentence. The pupi |
+| tense_form_choice | 29 | single_choice | - | Choose the best verb form to complete the sentence. While we |
+| tense_form_choice | 30 | single_choice | - | Choose the best verb form to complete the sentence. Before t |
+| tense_rewrite | 1 | textarea | - | Rewrite the sentence in the past perfect. They finish the mo |
+| tense_rewrite | 2 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
+| tense_rewrite | 3 | textarea | - | Rewrite the sentence in the present perfect. We tidy the cla |
+| tense_rewrite | 4 | textarea | - | Rewrite the sentence in the future perfect. The class comple |
+| tense_rewrite | 5 | textarea | - | Rewrite the sentence in the past progressive. Maya paints th |
+| tense_rewrite | 6 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
+| tense_rewrite | 7 | textarea | - | Rewrite the sentence in the past perfect. The team collects  |
+| tense_rewrite | 8 | textarea | - | Rewrite the sentence in the past progressive. The pupils pra |
+| tense_rewrite | 9 | textarea | - | Rewrite the sentence in the present perfect. She opens the p |
+| tense_rewrite | 10 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
+| tense_rewrite | 11 | textarea | - | Rewrite the sentence in the future perfect. Ravi reads the f |
+| tense_rewrite | 12 | textarea | - | Rewrite the sentence in the past perfect. They finish the mo |
+| tense_rewrite | 13 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
+| tense_rewrite | 14 | textarea | - | Rewrite the sentence in the present perfect. We tidy the cla |
+| tense_rewrite | 15 | textarea | - | Rewrite the sentence in the future perfect. The class comple |
+| tense_rewrite | 16 | textarea | - | Rewrite the sentence in the past progressive. Maya paints th |
+| tense_rewrite | 17 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
+| tense_rewrite | 18 | textarea | - | Rewrite the sentence in the past perfect. The team collects  |
+| tense_rewrite | 19 | textarea | - | Rewrite the sentence in the past progressive. The pupils pra |
+| tense_rewrite | 20 | textarea | - | Rewrite the sentence in the present perfect. She opens the p |
+| tense_rewrite | 21 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
+| tense_rewrite | 22 | textarea | - | Rewrite the sentence in the future perfect. Ravi reads the f |
+| tense_rewrite | 23 | textarea | - | Rewrite the sentence in the past perfect. They finish the mo |
 | tense_rewrite | 24 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
-| tense_rewrite | 25 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 26 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
-| tense_rewrite | 27 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
+| tense_rewrite | 25 | textarea | - | Rewrite the sentence in the present perfect. We tidy the cla |
+| tense_rewrite | 26 | textarea | - | Rewrite the sentence in the future perfect. The class comple |
+| tense_rewrite | 27 | textarea | - | Rewrite the sentence in the past progressive. Maya paints th |
 | tense_rewrite | 28 | textarea | - | Rewrite the sentence in the present perfect. I finish my hom |
-| tense_rewrite | 29 | textarea | - | Rewrite the sentence in the past perfect. She packs her bag  |
-| tense_rewrite | 30 | textarea | - | Rewrite the sentence in the past progressive. The dog chases |
+| tense_rewrite | 29 | textarea | - | Rewrite the sentence in the past perfect. The team collects  |
+| tense_rewrite | 30 | textarea | - | Rewrite the sentence in the past progressive. The pupils pra |
 | standard_english_pairs | 1 | multi | - | Choose the correct verb form in each pair to complete the se |
 | standard_english_pairs | 2 | multi | - | Choose the correct verb form in each pair to complete the se |
 | standard_english_pairs | 3 | multi | - | Choose the correct verb form in each pair to complete the se |
@@ -520,276 +520,276 @@ _Answer internals stripped from this report._
 | formality_pairs | 28 | multi | - | Circle the most formal option in each underlined pair below  |
 | formality_pairs | 29 | multi | - | Circle the most formal option in each underlined pair below  |
 | formality_pairs | 30 | multi | - | Circle the most formal option in each underlined pair below  |
-| active_passive_rewrite | 1 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
+| active_passive_rewrite | 1 | textarea | - | Rewrite the sentence in the active. The lantern was carried  |
 | active_passive_rewrite | 2 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 3 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
-| active_passive_rewrite | 4 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
+| active_passive_rewrite | 3 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Gr |
+| active_passive_rewrite | 4 | textarea | - | Rewrite the sentence in the active. The rucksack is packed b |
 | active_passive_rewrite | 5 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 6 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
+| active_passive_rewrite | 6 | textarea | - | Rewrite the sentence in the active. The display was painted  |
 | active_passive_rewrite | 7 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 8 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 9 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
-| active_passive_rewrite | 10 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 11 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 12 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
-| active_passive_rewrite | 13 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 14 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 15 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
-| active_passive_rewrite | 16 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
+| active_passive_rewrite | 8 | textarea | - | Rewrite the sentence in the active. The old map was found by |
+| active_passive_rewrite | 9 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
+| active_passive_rewrite | 10 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
+| active_passive_rewrite | 11 | textarea | - | Rewrite the sentence in the active. The lantern was carried  |
+| active_passive_rewrite | 12 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
+| active_passive_rewrite | 13 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Gr |
+| active_passive_rewrite | 14 | textarea | - | Rewrite the sentence in the active. The rucksack is packed b |
+| active_passive_rewrite | 15 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
+| active_passive_rewrite | 16 | textarea | - | Rewrite the sentence in the active. The display was painted  |
 | active_passive_rewrite | 17 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 18 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
+| active_passive_rewrite | 18 | textarea | - | Rewrite the sentence in the active. The old map was found by |
 | active_passive_rewrite | 19 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 20 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 21 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
+| active_passive_rewrite | 20 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
+| active_passive_rewrite | 21 | textarea | - | Rewrite the sentence in the active. The lantern was carried  |
 | active_passive_rewrite | 22 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 23 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 24 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
+| active_passive_rewrite | 23 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Gr |
+| active_passive_rewrite | 24 | textarea | - | Rewrite the sentence in the active. The rucksack is packed b |
 | active_passive_rewrite | 25 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 26 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
-| active_passive_rewrite | 27 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
-| active_passive_rewrite | 28 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
+| active_passive_rewrite | 26 | textarea | - | Rewrite the sentence in the active. The display was painted  |
+| active_passive_rewrite | 27 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
+| active_passive_rewrite | 28 | textarea | - | Rewrite the sentence in the active. The old map was found by |
 | active_passive_rewrite | 29 | textarea | - | Rewrite the sentence in the passive. Keep the same tense. Th |
 | active_passive_rewrite | 30 | textarea | - | Rewrite the sentence in the active. The local park is mainta |
-| subject_object_choice | 1 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
-| subject_object_choice | 2 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
-| subject_object_choice | 3 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
-| subject_object_choice | 4 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
-| subject_object_choice | 5 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
-| subject_object_choice | 6 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
-| subject_object_choice | 7 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
-| subject_object_choice | 8 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
-| subject_object_choice | 9 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
-| subject_object_choice | 10 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
-| subject_object_choice | 11 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
-| subject_object_choice | 12 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
-| subject_object_choice | 13 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
-| subject_object_choice | 14 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
-| subject_object_choice | 15 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
+| subject_object_choice | 1 | single_choice | target-sentence: Maya opened the heavy gate after lunch. | In the sentence below, what is the object? Maya opened the h |
+| subject_object_choice | 2 | single_choice | target-sentence: During the storm, the old roof leaked. | In the sentence below, what is the subject? During the storm |
+| subject_object_choice | 3 | single_choice | target-sentence: The guide lifted the lantern carefully. | In the sentence below, what is the object? The guide lifted  |
+| subject_object_choice | 4 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
+| subject_object_choice | 5 | single_choice | target-sentence: At the museum, the curator unlocked the cabinet. | In the sentence below, what is the subject? At the museum, t |
+| subject_object_choice | 6 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
+| subject_object_choice | 7 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
+| subject_object_choice | 8 | single_choice | target-sentence: After the match, Theo cleaned the muddy boots. | In the sentence below, what is the object? After the match,  |
+| subject_object_choice | 9 | single_choice | target-sentence: Without warning, the fire alarm rang loudly. | In the sentence below, what is the subject? Without warning, |
+| subject_object_choice | 10 | single_choice | target-sentence: Before assembly, the choir practised the song. | In the sentence below, what is the subject? Before assembly, |
+| subject_object_choice | 11 | single_choice | target-sentence: Maya opened the heavy gate after lunch. | In the sentence below, what is the object? Maya opened the h |
+| subject_object_choice | 12 | single_choice | target-sentence: During the storm, the old roof leaked. | In the sentence below, what is the subject? During the storm |
+| subject_object_choice | 13 | single_choice | target-sentence: The guide lifted the lantern carefully. | In the sentence below, what is the object? The guide lifted  |
+| subject_object_choice | 14 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
+| subject_object_choice | 15 | single_choice | target-sentence: At the museum, the curator unlocked the cabinet. | In the sentence below, what is the subject? At the museum, t |
 | subject_object_choice | 16 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
 | subject_object_choice | 17 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
-| subject_object_choice | 18 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
-| subject_object_choice | 19 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
-| subject_object_choice | 20 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
-| subject_object_choice | 21 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
-| subject_object_choice | 22 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
-| subject_object_choice | 23 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
+| subject_object_choice | 18 | single_choice | target-sentence: After the match, Theo cleaned the muddy boots. | In the sentence below, what is the object? After the match,  |
+| subject_object_choice | 19 | single_choice | target-sentence: Without warning, the fire alarm rang loudly. | In the sentence below, what is the subject? Without warning, |
+| subject_object_choice | 20 | single_choice | target-sentence: Before assembly, the choir practised the song. | In the sentence below, what is the subject? Before assembly, |
+| subject_object_choice | 21 | single_choice | target-sentence: Maya opened the heavy gate after lunch. | In the sentence below, what is the object? Maya opened the h |
+| subject_object_choice | 22 | single_choice | target-sentence: During the storm, the old roof leaked. | In the sentence below, what is the subject? During the storm |
+| subject_object_choice | 23 | single_choice | target-sentence: The guide lifted the lantern carefully. | In the sentence below, what is the object? The guide lifted  |
 | subject_object_choice | 24 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
-| subject_object_choice | 25 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
-| subject_object_choice | 26 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
-| subject_object_choice | 27 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
-| subject_object_choice | 28 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
-| subject_object_choice | 29 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
-| subject_object_choice | 30 | single_choice | target-sentence: After lunch, the tired goalkeeper caught the ball. | In the sentence below, what is the subject? After lunch, the |
-| modal_verb_choice | 1 | single_choice | - | Which modal verb best completes the sentence to show strong  |
-| modal_verb_choice | 2 | single_choice | - | Which sentence sounds most certain? |
+| subject_object_choice | 25 | single_choice | target-sentence: At the museum, the curator unlocked the cabinet. | In the sentence below, what is the subject? At the museum, t |
+| subject_object_choice | 26 | single_choice | target-sentence: The noisy gull stole the sandwich from Max. | In the sentence below, what is the object? The noisy gull st |
+| subject_object_choice | 27 | single_choice | target-sentence: On Friday morning, our science club visited the museum. | In the sentence below, what is the subject? On Friday mornin |
+| subject_object_choice | 28 | single_choice | target-sentence: After the match, Theo cleaned the muddy boots. | In the sentence below, what is the object? After the match,  |
+| subject_object_choice | 29 | single_choice | target-sentence: Without warning, the fire alarm rang loudly. | In the sentence below, what is the subject? Without warning, |
+| subject_object_choice | 30 | single_choice | target-sentence: Before assembly, the choir practised the song. | In the sentence below, what is the subject? Before assembly, |
+| modal_verb_choice | 1 | single_choice | - | Which sentence shows a possibility, not certainty? |
+| modal_verb_choice | 2 | single_choice | - | Which modal verb best completes the sentence to show permiss |
 | modal_verb_choice | 3 | single_choice | - | Which sentence shows the least certainty that the team will  |
 | modal_verb_choice | 4 | single_choice | - | Which modal verb best completes the sentence to show strong  |
 | modal_verb_choice | 5 | single_choice | - | Which sentence sounds most certain? |
-| modal_verb_choice | 6 | single_choice | - | Which sentence shows the least certainty that the team will  |
-| modal_verb_choice | 7 | single_choice | - | Which modal verb best completes the sentence to show strong  |
-| modal_verb_choice | 8 | single_choice | - | Which sentence sounds most certain? |
-| modal_verb_choice | 9 | single_choice | - | Which sentence shows the least certainty that the team will  |
-| modal_verb_choice | 10 | single_choice | - | Which modal verb best completes the sentence to show strong  |
-| modal_verb_choice | 11 | single_choice | - | Which sentence sounds most certain? |
-| modal_verb_choice | 12 | single_choice | - | Which sentence shows the least certainty that the team will  |
-| modal_verb_choice | 13 | single_choice | - | Which modal verb best completes the sentence to show strong  |
-| modal_verb_choice | 14 | single_choice | - | Which sentence sounds most certain? |
-| modal_verb_choice | 15 | single_choice | - | Which sentence shows the least certainty that the team will  |
-| modal_verb_choice | 16 | single_choice | - | Which modal verb best completes the sentence to show strong  |
-| modal_verb_choice | 17 | single_choice | - | Which sentence sounds most certain? |
-| modal_verb_choice | 18 | single_choice | - | Which sentence shows the least certainty that the team will  |
-| modal_verb_choice | 19 | single_choice | - | Which modal verb best completes the sentence to show strong  |
-| modal_verb_choice | 20 | single_choice | - | Which sentence sounds most certain? |
-| modal_verb_choice | 21 | single_choice | - | Which sentence shows the least certainty that the team will  |
-| modal_verb_choice | 22 | single_choice | - | Which modal verb best completes the sentence to show strong  |
-| modal_verb_choice | 23 | single_choice | - | Which sentence sounds most certain? |
-| modal_verb_choice | 24 | single_choice | - | Which sentence shows the least certainty that the team will  |
-| modal_verb_choice | 25 | single_choice | - | Which modal verb best completes the sentence to show strong  |
-| modal_verb_choice | 26 | single_choice | - | Which sentence sounds most certain? |
-| modal_verb_choice | 27 | single_choice | - | Which sentence shows the least certainty that the team will  |
-| modal_verb_choice | 28 | single_choice | - | Which modal verb best completes the sentence to show strong  |
-| modal_verb_choice | 29 | single_choice | - | Which sentence sounds most certain? |
-| modal_verb_choice | 30 | single_choice | - | Which sentence shows the least certainty that the team will  |
-| parenthesis_replace_choice | 1 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 2 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 3 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 4 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
+| modal_verb_choice | 6 | single_choice | - | Which sentence shows strong obligation? |
+| modal_verb_choice | 7 | single_choice | - | Which modal verb best completes the sentence to show advice? |
+| modal_verb_choice | 8 | single_choice | - | Which sentence sounds least certain? |
+| modal_verb_choice | 9 | single_choice | - | Which modal verb best completes the sentence to show ability |
+| modal_verb_choice | 10 | single_choice | - | Which modal verb best completes the sentence to show a rule? |
+| modal_verb_choice | 11 | single_choice | - | Which sentence shows a possibility, not certainty? |
+| modal_verb_choice | 12 | single_choice | - | Which modal verb best completes the sentence to show permiss |
+| modal_verb_choice | 13 | single_choice | - | Which sentence shows the least certainty that the team will  |
+| modal_verb_choice | 14 | single_choice | - | Which modal verb best completes the sentence to show strong  |
+| modal_verb_choice | 15 | single_choice | - | Which sentence sounds most certain? |
+| modal_verb_choice | 16 | single_choice | - | Which sentence shows strong obligation? |
+| modal_verb_choice | 17 | single_choice | - | Which modal verb best completes the sentence to show advice? |
+| modal_verb_choice | 18 | single_choice | - | Which sentence sounds least certain? |
+| modal_verb_choice | 19 | single_choice | - | Which modal verb best completes the sentence to show ability |
+| modal_verb_choice | 20 | single_choice | - | Which modal verb best completes the sentence to show a rule? |
+| modal_verb_choice | 21 | single_choice | - | Which sentence shows a possibility, not certainty? |
+| modal_verb_choice | 22 | single_choice | - | Which modal verb best completes the sentence to show permiss |
+| modal_verb_choice | 23 | single_choice | - | Which sentence shows the least certainty that the team will  |
+| modal_verb_choice | 24 | single_choice | - | Which modal verb best completes the sentence to show strong  |
+| modal_verb_choice | 25 | single_choice | - | Which sentence sounds most certain? |
+| modal_verb_choice | 26 | single_choice | - | Which sentence shows strong obligation? |
+| modal_verb_choice | 27 | single_choice | - | Which modal verb best completes the sentence to show advice? |
+| modal_verb_choice | 28 | single_choice | - | Which sentence sounds least certain? |
+| modal_verb_choice | 29 | single_choice | - | Which modal verb best completes the sentence to show ability |
+| modal_verb_choice | 30 | single_choice | - | Which modal verb best completes the sentence to show a rule? |
+| parenthesis_replace_choice | 1 | single_choice | target-sentence: The trophy (which was made of silver) stood in the cabinet. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 2 | single_choice | target-sentence: My uncle (a keen cyclist) repaired the puncture. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 3 | single_choice | target-sentence: The library (which opened last year) has a new reading room. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 4 | single_choice | target-sentence: Hassan (our team captain) organised the warm-up. | What punctuation could be used instead of brackets in the se |
 | parenthesis_replace_choice | 5 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 6 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 7 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 8 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 9 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 6 | single_choice | target-sentence: The old oak tree (over two hundred years old) shaded the path. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 7 | single_choice | target-sentence: Nina (who had rehearsed all week) sang the solo. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 8 | single_choice | target-sentence: The science folder (left on the desk) belonged to Ravi. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 9 | single_choice | target-sentence: The coach (usually very calm) shouted instructions from the sideline. | What punctuation could be used instead of brackets in the se |
 | parenthesis_replace_choice | 10 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 11 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 12 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 13 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 14 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 11 | single_choice | target-sentence: The trophy (which was made of silver) stood in the cabinet. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 12 | single_choice | target-sentence: My uncle (a keen cyclist) repaired the puncture. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 13 | single_choice | target-sentence: The library (which opened last year) has a new reading room. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 14 | single_choice | target-sentence: Hassan (our team captain) organised the warm-up. | What punctuation could be used instead of brackets in the se |
 | parenthesis_replace_choice | 15 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 16 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 17 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 18 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 19 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 16 | single_choice | target-sentence: The old oak tree (over two hundred years old) shaded the path. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 17 | single_choice | target-sentence: Nina (who had rehearsed all week) sang the solo. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 18 | single_choice | target-sentence: The science folder (left on the desk) belonged to Ravi. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 19 | single_choice | target-sentence: The coach (usually very calm) shouted instructions from the sideline. | What punctuation could be used instead of brackets in the se |
 | parenthesis_replace_choice | 20 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 21 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 22 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 23 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 24 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 21 | single_choice | target-sentence: The trophy (which was made of silver) stood in the cabinet. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 22 | single_choice | target-sentence: My uncle (a keen cyclist) repaired the puncture. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 23 | single_choice | target-sentence: The library (which opened last year) has a new reading room. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 24 | single_choice | target-sentence: Hassan (our team captain) organised the warm-up. | What punctuation could be used instead of brackets in the se |
 | parenthesis_replace_choice | 25 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 26 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 27 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 28 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_replace_choice | 29 | single_choice | target-sentence: The guide (who had visited before) led us through the cave. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 26 | single_choice | target-sentence: The old oak tree (over two hundred years old) shaded the path. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 27 | single_choice | target-sentence: Nina (who had rehearsed all week) sang the solo. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 28 | single_choice | target-sentence: The science folder (left on the desk) belonged to Ravi. | What punctuation could be used instead of brackets in the se |
+| parenthesis_replace_choice | 29 | single_choice | target-sentence: The coach (usually very calm) shouted instructions from the sideline. | What punctuation could be used instead of brackets in the se |
 | parenthesis_replace_choice | 30 | single_choice | target-sentence: Tokyo (the capital of Japan) is one of the largest cities in the world. | What punctuation could be used instead of brackets in the se |
-| parenthesis_fix_sentence | 1 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 2 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 3 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 4 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 5 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 6 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
+| parenthesis_fix_sentence | 1 | textarea | - | Insert a pair of brackets in the correct place. The trophy m |
+| parenthesis_fix_sentence | 2 | textarea | - | Insert a pair of brackets in the correct place. My uncle a k |
+| parenthesis_fix_sentence | 3 | textarea | - | Insert a pair of brackets in the correct place. The library  |
+| parenthesis_fix_sentence | 4 | textarea | - | Insert a pair of brackets in the correct place. Hassan our t |
+| parenthesis_fix_sentence | 5 | textarea | - | Insert a pair of brackets in the correct place. The old oak  |
+| parenthesis_fix_sentence | 6 | textarea | - | Insert a pair of brackets in the correct place. Nina who had |
 | parenthesis_fix_sentence | 7 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 8 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 9 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
+| parenthesis_fix_sentence | 8 | textarea | - | Insert a pair of brackets in the correct place. The science  |
+| parenthesis_fix_sentence | 9 | textarea | - | Insert a pair of brackets in the correct place. The coach us |
 | parenthesis_fix_sentence | 10 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 11 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 12 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 13 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 14 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 15 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 16 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
+| parenthesis_fix_sentence | 11 | textarea | - | Insert a pair of brackets in the correct place. The trophy m |
+| parenthesis_fix_sentence | 12 | textarea | - | Insert a pair of brackets in the correct place. My uncle a k |
+| parenthesis_fix_sentence | 13 | textarea | - | Insert a pair of brackets in the correct place. The library  |
+| parenthesis_fix_sentence | 14 | textarea | - | Insert a pair of brackets in the correct place. Hassan our t |
+| parenthesis_fix_sentence | 15 | textarea | - | Insert a pair of brackets in the correct place. The old oak  |
+| parenthesis_fix_sentence | 16 | textarea | - | Insert a pair of brackets in the correct place. Nina who had |
 | parenthesis_fix_sentence | 17 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 18 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 19 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
+| parenthesis_fix_sentence | 18 | textarea | - | Insert a pair of brackets in the correct place. The science  |
+| parenthesis_fix_sentence | 19 | textarea | - | Insert a pair of brackets in the correct place. The coach us |
 | parenthesis_fix_sentence | 20 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 21 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 22 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 23 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 24 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 25 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 26 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
+| parenthesis_fix_sentence | 21 | textarea | - | Insert a pair of brackets in the correct place. The trophy m |
+| parenthesis_fix_sentence | 22 | textarea | - | Insert a pair of brackets in the correct place. My uncle a k |
+| parenthesis_fix_sentence | 23 | textarea | - | Insert a pair of brackets in the correct place. The library  |
+| parenthesis_fix_sentence | 24 | textarea | - | Insert a pair of brackets in the correct place. Hassan our t |
+| parenthesis_fix_sentence | 25 | textarea | - | Insert a pair of brackets in the correct place. The old oak  |
+| parenthesis_fix_sentence | 26 | textarea | - | Insert a pair of brackets in the correct place. Nina who had |
 | parenthesis_fix_sentence | 27 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
-| parenthesis_fix_sentence | 28 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| parenthesis_fix_sentence | 29 | textarea | - | Insert a pair of brackets in the correct place. My cousin th |
+| parenthesis_fix_sentence | 28 | textarea | - | Insert a pair of brackets in the correct place. The science  |
+| parenthesis_fix_sentence | 29 | textarea | - | Insert a pair of brackets in the correct place. The coach us |
 | parenthesis_fix_sentence | 30 | textarea | - | Insert a pair of brackets in the correct place. Our class vi |
-| speech_punctuation_fix | 1 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
-| speech_punctuation_fix | 2 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
-| speech_punctuation_fix | 3 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
-| speech_punctuation_fix | 4 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
-| speech_punctuation_fix | 5 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
-| speech_punctuation_fix | 6 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
-| speech_punctuation_fix | 7 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
-| speech_punctuation_fix | 8 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
-| speech_punctuation_fix | 9 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
-| speech_punctuation_fix | 10 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
-| speech_punctuation_fix | 11 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
-| speech_punctuation_fix | 12 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
-| speech_punctuation_fix | 13 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
-| speech_punctuation_fix | 14 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
-| speech_punctuation_fix | 15 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
-| speech_punctuation_fix | 16 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
-| speech_punctuation_fix | 17 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
-| speech_punctuation_fix | 18 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
-| speech_punctuation_fix | 19 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
-| speech_punctuation_fix | 20 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
-| speech_punctuation_fix | 21 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
-| speech_punctuation_fix | 22 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
-| speech_punctuation_fix | 23 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
+| speech_punctuation_fix | 1 | textarea | - | Punctuate the direct speech correctly. The guide said "Follo |
+| speech_punctuation_fix | 2 | textarea | - | Punctuate the direct speech correctly. "What a huge wave tha |
+| speech_punctuation_fix | 3 | textarea | - | Punctuate the direct speech correctly. Maya whispered "Pleas |
+| speech_punctuation_fix | 4 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
+| speech_punctuation_fix | 5 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
+| speech_punctuation_fix | 6 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
+| speech_punctuation_fix | 7 | textarea | - | Punctuate the direct speech correctly. "Bring the map with y |
+| speech_punctuation_fix | 8 | textarea | - | Punctuate the direct speech correctly. Omar asked "When does |
+| speech_punctuation_fix | 9 | textarea | - | Punctuate the direct speech correctly. "The bus is here" sai |
+| speech_punctuation_fix | 10 | textarea | - | Punctuate the direct speech correctly. "Have you packed the  |
+| speech_punctuation_fix | 11 | textarea | - | Punctuate the direct speech correctly. The guide said "Follo |
+| speech_punctuation_fix | 12 | textarea | - | Punctuate the direct speech correctly. "What a huge wave tha |
+| speech_punctuation_fix | 13 | textarea | - | Punctuate the direct speech correctly. Maya whispered "Pleas |
+| speech_punctuation_fix | 14 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
+| speech_punctuation_fix | 15 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
+| speech_punctuation_fix | 16 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
+| speech_punctuation_fix | 17 | textarea | - | Punctuate the direct speech correctly. "Bring the map with y |
+| speech_punctuation_fix | 18 | textarea | - | Punctuate the direct speech correctly. Omar asked "When does |
+| speech_punctuation_fix | 19 | textarea | - | Punctuate the direct speech correctly. "The bus is here" sai |
+| speech_punctuation_fix | 20 | textarea | - | Punctuate the direct speech correctly. "Have you packed the  |
+| speech_punctuation_fix | 21 | textarea | - | Punctuate the direct speech correctly. The guide said "Follo |
+| speech_punctuation_fix | 22 | textarea | - | Punctuate the direct speech correctly. "What a huge wave tha |
+| speech_punctuation_fix | 23 | textarea | - | Punctuate the direct speech correctly. Maya whispered "Pleas |
 | speech_punctuation_fix | 24 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
 | speech_punctuation_fix | 25 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
 | speech_punctuation_fix | 26 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
-| speech_punctuation_fix | 27 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
-| speech_punctuation_fix | 28 | textarea | - | Punctuate the direct speech correctly. Dad shouted "Run insi |
-| speech_punctuation_fix | 29 | textarea | - | Punctuate the direct speech correctly. "Sit down" said the c |
-| speech_punctuation_fix | 30 | textarea | - | Punctuate the direct speech correctly. "Where are you going" |
-| apostrophe_possession_choice | 1 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
+| speech_punctuation_fix | 27 | textarea | - | Punctuate the direct speech correctly. "Bring the map with y |
+| speech_punctuation_fix | 28 | textarea | - | Punctuate the direct speech correctly. Omar asked "When does |
+| speech_punctuation_fix | 29 | textarea | - | Punctuate the direct speech correctly. "The bus is here" sai |
+| speech_punctuation_fix | 30 | textarea | - | Punctuate the direct speech correctly. "Have you packed the  |
+| apostrophe_possession_choice | 1 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 2 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 3 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 4 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
+| apostrophe_possession_choice | 3 | single_choice | - | Choose the correct phrase to complete the sentence: We admir |
+| apostrophe_possession_choice | 4 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 5 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 6 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 7 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
+| apostrophe_possession_choice | 6 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
+| apostrophe_possession_choice | 7 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 8 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 9 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 10 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
+| apostrophe_possession_choice | 10 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 11 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 12 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 13 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
+| apostrophe_possession_choice | 13 | single_choice | - | Choose the correct phrase to complete the sentence: We admir |
 | apostrophe_possession_choice | 14 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 15 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 16 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
 | apostrophe_possession_choice | 17 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 18 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 19 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
+| apostrophe_possession_choice | 19 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 20 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 21 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 22 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
-| apostrophe_possession_choice | 23 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
+| apostrophe_possession_choice | 22 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
+| apostrophe_possession_choice | 23 | single_choice | - | Choose the correct phrase to complete the sentence: We admir |
 | apostrophe_possession_choice | 24 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 25 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
-| apostrophe_possession_choice | 26 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
+| apostrophe_possession_choice | 25 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
+| apostrophe_possession_choice | 26 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
 | apostrophe_possession_choice | 27 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| apostrophe_possession_choice | 28 | single_choice | - | Choose the correct phrase to complete the sentence: We found |
+| apostrophe_possession_choice | 28 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 29 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
 | apostrophe_possession_choice | 30 | single_choice | - | Choose the correct phrase to complete the sentence: The ___  |
-| explain_reason_choice | 1 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 1 | single_choice | - | Why is 'We was ready' wrong in Standard English? |
 | explain_reason_choice | 2 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 3 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 3 | single_choice | - | Why is 'She don't know' wrong in Standard English? |
 | explain_reason_choice | 4 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 5 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 5 | single_choice | - | Why is 'I seen the comet' wrong in Standard English? |
 | explain_reason_choice | 6 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 7 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 7 | single_choice | - | Why is 'They has finished' wrong in Standard English? |
 | explain_reason_choice | 8 | single_choice | - | Why is there a comma after the opening words in this sentenc |
 | explain_reason_choice | 9 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
 | explain_reason_choice | 10 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 11 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 11 | single_choice | - | Why is 'We was ready' wrong in Standard English? |
 | explain_reason_choice | 12 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 13 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 13 | single_choice | - | Why is 'She don't know' wrong in Standard English? |
 | explain_reason_choice | 14 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 15 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 15 | single_choice | - | Why is 'I seen the comet' wrong in Standard English? |
 | explain_reason_choice | 16 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 17 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 17 | single_choice | - | Why is 'They has finished' wrong in Standard English? |
 | explain_reason_choice | 18 | single_choice | - | Why is there a comma after the opening words in this sentenc |
 | explain_reason_choice | 19 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
 | explain_reason_choice | 20 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 21 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 21 | single_choice | - | Why is 'We was ready' wrong in Standard English? |
 | explain_reason_choice | 22 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 23 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 23 | single_choice | - | Why is 'She don't know' wrong in Standard English? |
 | explain_reason_choice | 24 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 25 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 25 | single_choice | - | Why is 'I seen the comet' wrong in Standard English? |
 | explain_reason_choice | 26 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| explain_reason_choice | 27 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
+| explain_reason_choice | 27 | single_choice | - | Why is 'They has finished' wrong in Standard English? |
 | explain_reason_choice | 28 | single_choice | - | Why is there a comma after the opening words in this sentenc |
 | explain_reason_choice | 29 | single_choice | - | Why is 'I done my homework' wrong in Standard English? |
 | explain_reason_choice | 30 | single_choice | - | Why is there a comma after the opening words in this sentenc |
-| standard_fix_sentence | 1 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 2 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 3 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 4 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
+| standard_fix_sentence | 1 | textarea | - | Rewrite the sentence in Standard English. They was waiting b |
+| standard_fix_sentence | 2 | textarea | - | Rewrite the sentence in Standard English. She seen the poste |
+| standard_fix_sentence | 3 | textarea | - | Rewrite the sentence in Standard English. The players was re |
+| standard_fix_sentence | 4 | textarea | - | Rewrite the sentence in Standard English. Maya done her read |
 | standard_fix_sentence | 5 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
 | standard_fix_sentence | 6 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 7 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 8 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 9 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 10 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 11 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 12 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 13 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 14 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
+| standard_fix_sentence | 7 | textarea | - | Rewrite the sentence in Standard English. Cara don't know wh |
+| standard_fix_sentence | 8 | textarea | - | Rewrite the sentence in Standard English. Ravi seen the lost |
+| standard_fix_sentence | 9 | textarea | - | Rewrite the sentence in Standard English. They has already f |
+| standard_fix_sentence | 10 | textarea | - | Rewrite the sentence in Standard English. He don't know the  |
+| standard_fix_sentence | 11 | textarea | - | Rewrite the sentence in Standard English. They was waiting b |
+| standard_fix_sentence | 12 | textarea | - | Rewrite the sentence in Standard English. She seen the poste |
+| standard_fix_sentence | 13 | textarea | - | Rewrite the sentence in Standard English. The players was re |
+| standard_fix_sentence | 14 | textarea | - | Rewrite the sentence in Standard English. Maya done her read |
 | standard_fix_sentence | 15 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
 | standard_fix_sentence | 16 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 17 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 18 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 19 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 20 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 21 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 22 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 23 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 24 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
+| standard_fix_sentence | 17 | textarea | - | Rewrite the sentence in Standard English. Cara don't know wh |
+| standard_fix_sentence | 18 | textarea | - | Rewrite the sentence in Standard English. Ravi seen the lost |
+| standard_fix_sentence | 19 | textarea | - | Rewrite the sentence in Standard English. They has already f |
+| standard_fix_sentence | 20 | textarea | - | Rewrite the sentence in Standard English. He don't know the  |
+| standard_fix_sentence | 21 | textarea | - | Rewrite the sentence in Standard English. They was waiting b |
+| standard_fix_sentence | 22 | textarea | - | Rewrite the sentence in Standard English. She seen the poste |
+| standard_fix_sentence | 23 | textarea | - | Rewrite the sentence in Standard English. The players was re |
+| standard_fix_sentence | 24 | textarea | - | Rewrite the sentence in Standard English. Maya done her read |
 | standard_fix_sentence | 25 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
 | standard_fix_sentence | 26 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 27 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 28 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
-| standard_fix_sentence | 29 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| standard_fix_sentence | 30 | textarea | - | Rewrite the sentence in Standard English. We was walking to  |
+| standard_fix_sentence | 27 | textarea | - | Rewrite the sentence in Standard English. Cara don't know wh |
+| standard_fix_sentence | 28 | textarea | - | Rewrite the sentence in Standard English. Ravi seen the lost |
+| standard_fix_sentence | 29 | textarea | - | Rewrite the sentence in Standard English. They has already f |
+| standard_fix_sentence | 30 | textarea | - | Rewrite the sentence in Standard English. He don't know the  |
 | proc_fronted_adverbial_fix | 1 | textarea | - | Rewrite the sentence with the punctuation corrected. With gr |
 | proc_fronted_adverbial_fix | 2 | textarea | - | Rewrite the sentence with the punctuation corrected. With gr |
 | proc_fronted_adverbial_fix | 3 | textarea | - | Rewrite the sentence with the punctuation corrected. With gr |

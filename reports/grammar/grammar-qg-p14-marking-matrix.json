@@ -1,7 +1,7 @@
 {
   "metadata": {
     "contentReleaseId": "grammar-qg-p14-2026-05-01",
-    "generatedAt": "2026-05-01T13:33:50.107Z",
+    "generatedAt": "2026-05-01T16:23:10.924Z",
     "seedRange": "1..5",
     "totalEntries": 120,
     "variantCategories": 9,
@@ -24,23 +24,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "After the concert, the audience cheered loudly.",
+          "input": "Later that afternoon, our team finally scored.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " After the concert, the audience cheered loudly.",
+          "input": " Later that afternoon, our team finally scored.",
           "marksCorrect": true
         },
         {
-          "input": "After the concert, the audience cheered loudly. ",
+          "input": "Later that afternoon, our team finally scored. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "the concert, the audience cheered loudly.",
+          "input": "that afternoon, our team finally scored.",
           "marksCorrect": false
         }
       ],
@@ -60,27 +60,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "After the concert, the audience cheered loudly.",
+          "input": "Later that afternoon, our team finally scored.",
           "marksCorrect": true
         },
         {
-          "input": "After the concert, the audience cheered loudly.",
+          "input": "Later that afternoon, our team finally scored.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "after the concert, the audience cheered loudly.",
+          "input": "later that afternoon, our team finally scored.",
           "marksCorrect": false
         },
         {
-          "input": "AFTER THE CONCERT, THE AUDIENCE CHEERED LOUDLY.",
+          "input": "LATER THAT AFTERNOON, OUR TEAM FINALLY SCORED.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "After the concert, the audience cheered loudly. loudly.",
+          "input": "Later that afternoon, our team finally scored. scored.",
           "marksCorrect": false
         }
       ],
@@ -101,23 +101,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "Later that afternoon, our team finally scored.",
+          "input": "With great care, Imani folded the fragile map.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " Later that afternoon, our team finally scored.",
+          "input": " With great care, Imani folded the fragile map.",
           "marksCorrect": true
         },
         {
-          "input": "Later that afternoon, our team finally scored. ",
+          "input": "With great care, Imani folded the fragile map. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "that afternoon, our team finally scored.",
+          "input": "great care, Imani folded the fragile map.",
           "marksCorrect": false
         }
       ],
@@ -137,27 +137,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "Later that afternoon, our team finally scored.",
+          "input": "With great care, Imani folded the fragile map.",
           "marksCorrect": true
         },
         {
-          "input": "Later that afternoon, our team finally scored.",
+          "input": "With great care, Imani folded the fragile map.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "later that afternoon, our team finally scored.",
+          "input": "with great care, imani folded the fragile map.",
           "marksCorrect": false
         },
         {
-          "input": "LATER THAT AFTERNOON, OUR TEAM FINALLY SCORED.",
+          "input": "WITH GREAT CARE, IMANI FOLDED THE FRAGILE MAP.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "Later that afternoon, our team finally scored. scored.",
+          "input": "With great care, Imani folded the fragile map. map.",
           "marksCorrect": false
         }
       ],
@@ -178,23 +178,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "Before sunrise, the campers packed their bags.",
+          "input": "At the edge of the field, the fox paused.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " Before sunrise, the campers packed their bags.",
+          "input": " At the edge of the field, the fox paused.",
           "marksCorrect": true
         },
         {
-          "input": "Before sunrise, the campers packed their bags. ",
+          "input": "At the edge of the field, the fox paused. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "sunrise, the campers packed their bags.",
+          "input": "the edge of the field, the fox paused.",
           "marksCorrect": false
         }
       ],
@@ -214,27 +214,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "Before sunrise, the campers packed their bags.",
+          "input": "At the edge of the field, the fox paused.",
           "marksCorrect": true
         },
         {
-          "input": "Before sunrise, the campers packed their bags.",
+          "input": "At the edge of the field, the fox paused.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "before sunrise, the campers packed their bags.",
+          "input": "at the edge of the field, the fox paused.",
           "marksCorrect": false
         },
         {
-          "input": "BEFORE SUNRISE, THE CAMPERS PACKED THEIR BAGS.",
+          "input": "AT THE EDGE OF THE FIELD, THE FOX PAUSED.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "Before sunrise, the campers packed their bags. bags.",
+          "input": "At the edge of the field, the fox paused. paused.",
           "marksCorrect": false
         }
       ],
@@ -255,23 +255,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "After the concert, the audience cheered loudly.",
+          "input": "Without warning, the lights flickered.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " After the concert, the audience cheered loudly.",
+          "input": " Without warning, the lights flickered.",
           "marksCorrect": true
         },
         {
-          "input": "After the concert, the audience cheered loudly. ",
+          "input": "Without warning, the lights flickered. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "the concert, the audience cheered loudly.",
+          "input": "warning, the lights flickered.",
           "marksCorrect": false
         }
       ],
@@ -291,27 +291,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "After the concert, the audience cheered loudly.",
+          "input": "Without warning, the lights flickered.",
           "marksCorrect": true
         },
         {
-          "input": "After the concert, the audience cheered loudly.",
+          "input": "Without warning, the lights flickered.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "after the concert, the audience cheered loudly.",
+          "input": "without warning, the lights flickered.",
           "marksCorrect": false
         },
         {
-          "input": "AFTER THE CONCERT, THE AUDIENCE CHEERED LOUDLY.",
+          "input": "WITHOUT WARNING, THE LIGHTS FLICKERED.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "After the concert, the audience cheered loudly. loudly.",
+          "input": "Without warning, the lights flickered. flickered.",
           "marksCorrect": false
         }
       ],
@@ -332,23 +332,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "Later that afternoon, our team finally scored.",
+          "input": "Before the lesson, Ravi sharpened the pencils.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " Later that afternoon, our team finally scored.",
+          "input": " Before the lesson, Ravi sharpened the pencils.",
           "marksCorrect": true
         },
         {
-          "input": "Later that afternoon, our team finally scored. ",
+          "input": "Before the lesson, Ravi sharpened the pencils. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "that afternoon, our team finally scored.",
+          "input": "the lesson, Ravi sharpened the pencils.",
           "marksCorrect": false
         }
       ],
@@ -368,27 +368,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "Later that afternoon, our team finally scored.",
+          "input": "Before the lesson, Ravi sharpened the pencils.",
           "marksCorrect": true
         },
         {
-          "input": "Later that afternoon, our team finally scored.",
+          "input": "Before the lesson, Ravi sharpened the pencils.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "later that afternoon, our team finally scored.",
+          "input": "before the lesson, ravi sharpened the pencils.",
           "marksCorrect": false
         },
         {
-          "input": "LATER THAT AFTERNOON, OUR TEAM FINALLY SCORED.",
+          "input": "BEFORE THE LESSON, RAVI SHARPENED THE PENCILS.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "Later that afternoon, our team finally scored. scored.",
+          "input": "Before the lesson, Ravi sharpened the pencils. pencils.",
           "marksCorrect": false
         }
       ],
@@ -406,6 +406,168 @@
     {
       "templateId": "combine_clauses_rewrite",
       "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswers": [
+        {
+          "input": "When the gate opened, the children ran outside.",
+          "marksCorrect": true
+        },
+        {
+          "input": "The children ran outside when the gate opened.",
+          "marksCorrect": true
+        }
+      ],
+      "acceptedVariants": [
+        {
+          "input": " When the gate opened, the children ran outside.",
+          "marksCorrect": true
+        },
+        {
+          "input": "When the gate opened, the children ran outside. ",
+          "marksCorrect": true
+        }
+      ],
+      "nearMisses": [
+        {
+          "input": "the gate opened, the children ran outside.",
+          "marksCorrect": false
+        }
+      ],
+      "rawPromptProbes": [
+        {
+          "input": "",
+          "marksCorrect": false
+        },
+        {
+          "input": " ",
+          "marksCorrect": false
+        },
+        {
+          "input": "I don't know",
+          "marksCorrect": false
+        }
+      ],
+      "smartPunctuationVariants": [
+        {
+          "input": "When the gate opened, the children ran outside.",
+          "marksCorrect": true
+        },
+        {
+          "input": "When the gate opened, the children ran outside.",
+          "marksCorrect": true
+        }
+      ],
+      "caseVariants": [
+        {
+          "input": "when the gate opened, the children ran outside.",
+          "marksCorrect": false
+        },
+        {
+          "input": "WHEN THE GATE OPENED, THE CHILDREN RAN OUTSIDE.",
+          "marksCorrect": false
+        }
+      ],
+      "commonChildMistakes": [
+        {
+          "input": "When the gate opened, the children ran outside. outside.",
+          "marksCorrect": false
+        }
+      ],
+      "expectedScore": {
+        "goldenAnswers": "pass",
+        "acceptedVariants": "pass",
+        "nearMisses": "fail",
+        "rawPromptProbes": "fail",
+        "smartPunctuationVariants": "pass",
+        "caseVariants": "varies",
+        "commonChildMistakes": "fail"
+      },
+      "misconceptionTag": "subordinate_clause_confusion"
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswers": [
+        {
+          "input": "If the weather improves, we will hold sports day outside.",
+          "marksCorrect": true
+        },
+        {
+          "input": "We will hold sports day outside if the weather improves.",
+          "marksCorrect": true
+        }
+      ],
+      "acceptedVariants": [
+        {
+          "input": " If the weather improves, we will hold sports day outside.",
+          "marksCorrect": true
+        },
+        {
+          "input": "If the weather improves, we will hold sports day outside. ",
+          "marksCorrect": true
+        }
+      ],
+      "nearMisses": [
+        {
+          "input": "the weather improves, we will hold sports day outside.",
+          "marksCorrect": false
+        }
+      ],
+      "rawPromptProbes": [
+        {
+          "input": "",
+          "marksCorrect": false
+        },
+        {
+          "input": " ",
+          "marksCorrect": false
+        },
+        {
+          "input": "I don't know",
+          "marksCorrect": false
+        }
+      ],
+      "smartPunctuationVariants": [
+        {
+          "input": "If the weather improves, we will hold sports day outside.",
+          "marksCorrect": true
+        },
+        {
+          "input": "If the weather improves, we will hold sports day outside.",
+          "marksCorrect": true
+        }
+      ],
+      "caseVariants": [
+        {
+          "input": "if the weather improves, we will hold sports day outside.",
+          "marksCorrect": false
+        },
+        {
+          "input": "IF THE WEATHER IMPROVES, WE WILL HOLD SPORTS DAY OUTSIDE.",
+          "marksCorrect": false
+        }
+      ],
+      "commonChildMistakes": [
+        {
+          "input": "If the weather improves, we will hold sports day outside. outside.",
+          "marksCorrect": false
+        }
+      ],
+      "expectedScore": {
+        "goldenAnswers": "pass",
+        "acceptedVariants": "pass",
+        "nearMisses": "fail",
+        "rawPromptProbes": "fail",
+        "smartPunctuationVariants": "pass",
+        "caseVariants": "varies",
+        "commonChildMistakes": "fail"
+      },
+      "misconceptionTag": "subordinate_clause_confusion"
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 3,
       "inputType": "textarea",
       "goldenAnswers": [
         {
@@ -486,193 +648,31 @@
     },
     {
       "templateId": "combine_clauses_rewrite",
-      "seed": 2,
-      "inputType": "textarea",
-      "goldenAnswers": [
-        {
-          "input": "When the bell rang, the pupils lined up.",
-          "marksCorrect": true
-        },
-        {
-          "input": "The pupils lined up when the bell rang.",
-          "marksCorrect": true
-        }
-      ],
-      "acceptedVariants": [
-        {
-          "input": " When the bell rang, the pupils lined up.",
-          "marksCorrect": true
-        },
-        {
-          "input": "When the bell rang, the pupils lined up. ",
-          "marksCorrect": true
-        }
-      ],
-      "nearMisses": [
-        {
-          "input": "the bell rang, the pupils lined up.",
-          "marksCorrect": false
-        }
-      ],
-      "rawPromptProbes": [
-        {
-          "input": "",
-          "marksCorrect": false
-        },
-        {
-          "input": " ",
-          "marksCorrect": false
-        },
-        {
-          "input": "I don't know",
-          "marksCorrect": false
-        }
-      ],
-      "smartPunctuationVariants": [
-        {
-          "input": "When the bell rang, the pupils lined up.",
-          "marksCorrect": true
-        },
-        {
-          "input": "When the bell rang, the pupils lined up.",
-          "marksCorrect": true
-        }
-      ],
-      "caseVariants": [
-        {
-          "input": "when the bell rang, the pupils lined up.",
-          "marksCorrect": false
-        },
-        {
-          "input": "WHEN THE BELL RANG, THE PUPILS LINED UP.",
-          "marksCorrect": false
-        }
-      ],
-      "commonChildMistakes": [
-        {
-          "input": "When the bell rang, the pupils lined up. up.",
-          "marksCorrect": false
-        }
-      ],
-      "expectedScore": {
-        "goldenAnswers": "pass",
-        "acceptedVariants": "pass",
-        "nearMisses": "fail",
-        "rawPromptProbes": "fail",
-        "smartPunctuationVariants": "pass",
-        "caseVariants": "varies",
-        "commonChildMistakes": "fail"
-      },
-      "misconceptionTag": "subordinate_clause_confusion"
-    },
-    {
-      "templateId": "combine_clauses_rewrite",
-      "seed": 3,
-      "inputType": "textarea",
-      "goldenAnswers": [
-        {
-          "input": "Although Mia was tired, she finished the race.",
-          "marksCorrect": true
-        },
-        {
-          "input": "Mia finished the race although she was tired.",
-          "marksCorrect": true
-        }
-      ],
-      "acceptedVariants": [
-        {
-          "input": " Although Mia was tired, she finished the race.",
-          "marksCorrect": true
-        },
-        {
-          "input": "Although Mia was tired, she finished the race. ",
-          "marksCorrect": true
-        }
-      ],
-      "nearMisses": [
-        {
-          "input": "Mia was tired, she finished the race.",
-          "marksCorrect": false
-        }
-      ],
-      "rawPromptProbes": [
-        {
-          "input": "",
-          "marksCorrect": false
-        },
-        {
-          "input": " ",
-          "marksCorrect": false
-        },
-        {
-          "input": "I don't know",
-          "marksCorrect": false
-        }
-      ],
-      "smartPunctuationVariants": [
-        {
-          "input": "Although Mia was tired, she finished the race.",
-          "marksCorrect": true
-        },
-        {
-          "input": "Although Mia was tired, she finished the race.",
-          "marksCorrect": true
-        }
-      ],
-      "caseVariants": [
-        {
-          "input": "although mia was tired, she finished the race.",
-          "marksCorrect": false
-        },
-        {
-          "input": "ALTHOUGH MIA WAS TIRED, SHE FINISHED THE RACE.",
-          "marksCorrect": false
-        }
-      ],
-      "commonChildMistakes": [
-        {
-          "input": "Although Mia was tired, she finished the race. race.",
-          "marksCorrect": false
-        }
-      ],
-      "expectedScore": {
-        "goldenAnswers": "pass",
-        "acceptedVariants": "pass",
-        "nearMisses": "fail",
-        "rawPromptProbes": "fail",
-        "smartPunctuationVariants": "pass",
-        "caseVariants": "varies",
-        "commonChildMistakes": "fail"
-      },
-      "misconceptionTag": "subordinate_clause_confusion"
-    },
-    {
-      "templateId": "combine_clauses_rewrite",
       "seed": 4,
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "Sam wore gloves because it was cold.",
+          "input": "Although the puzzle was hard, Nina solved it.",
           "marksCorrect": true
         },
         {
-          "input": "Because it was cold, Sam wore gloves.",
+          "input": "Nina solved it although the puzzle was hard.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " Sam wore gloves because it was cold.",
+          "input": " Although the puzzle was hard, Nina solved it.",
           "marksCorrect": true
         },
         {
-          "input": "Sam wore gloves because it was cold. ",
+          "input": "Although the puzzle was hard, Nina solved it. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "wore gloves because it was cold.",
+          "input": "the puzzle was hard, Nina solved it.",
           "marksCorrect": false
         }
       ],
@@ -692,27 +692,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "Sam wore gloves because it was cold.",
+          "input": "Although the puzzle was hard, Nina solved it.",
           "marksCorrect": true
         },
         {
-          "input": "Sam wore gloves because it was cold.",
+          "input": "Although the puzzle was hard, Nina solved it.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "sam wore gloves because it was cold.",
+          "input": "although the puzzle was hard, nina solved it.",
           "marksCorrect": false
         },
         {
-          "input": "SAM WORE GLOVES BECAUSE IT WAS COLD.",
+          "input": "ALTHOUGH THE PUZZLE WAS HARD, NINA SOLVED IT.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "Sam wore gloves because it was cold. cold.",
+          "input": "Although the puzzle was hard, Nina solved it. it.",
           "marksCorrect": false
         }
       ],
@@ -733,27 +733,27 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "When the bell rang, the pupils lined up.",
+          "input": "Before the visitors left, they thanked the guide.",
           "marksCorrect": true
         },
         {
-          "input": "The pupils lined up when the bell rang.",
+          "input": "The visitors thanked the guide before they left.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " When the bell rang, the pupils lined up.",
+          "input": " Before the visitors left, they thanked the guide.",
           "marksCorrect": true
         },
         {
-          "input": "When the bell rang, the pupils lined up. ",
+          "input": "Before the visitors left, they thanked the guide. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "the bell rang, the pupils lined up.",
+          "input": "the visitors left, they thanked the guide.",
           "marksCorrect": false
         }
       ],
@@ -773,27 +773,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "When the bell rang, the pupils lined up.",
+          "input": "Before the visitors left, they thanked the guide.",
           "marksCorrect": true
         },
         {
-          "input": "When the bell rang, the pupils lined up.",
+          "input": "Before the visitors left, they thanked the guide.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "when the bell rang, the pupils lined up.",
+          "input": "before the visitors left, they thanked the guide.",
           "marksCorrect": false
         },
         {
-          "input": "WHEN THE BELL RANG, THE PUPILS LINED UP.",
+          "input": "BEFORE THE VISITORS LEFT, THEY THANKED THE GUIDE.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "When the bell rang, the pupils lined up. up.",
+          "input": "Before the visitors left, they thanked the guide. guide.",
           "marksCorrect": false
         }
       ],
@@ -814,23 +814,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "I have finished my homework.",
+          "input": "They had finished the model before lunch.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " I have finished my homework.",
+          "input": " They had finished the model before lunch.",
           "marksCorrect": true
         },
         {
-          "input": "I have finished my homework. ",
+          "input": "They had finished the model before lunch. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "have finished my homework.",
+          "input": "had finished the model before lunch.",
           "marksCorrect": false
         }
       ],
@@ -850,27 +850,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "I have finished my homework.",
+          "input": "They had finished the model before lunch.",
           "marksCorrect": true
         },
         {
-          "input": "I have finished my homework.",
+          "input": "They had finished the model before lunch.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "i have finished my homework.",
+          "input": "they had finished the model before lunch.",
           "marksCorrect": true
         },
         {
-          "input": "I HAVE FINISHED MY HOMEWORK.",
+          "input": "THEY HAD FINISHED THE MODEL BEFORE LUNCH.",
           "marksCorrect": true
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "I have finished my homework. homework.",
+          "input": "They had finished the model before lunch. lunch.",
           "marksCorrect": false
         }
       ],
@@ -888,83 +888,6 @@
     {
       "templateId": "tense_rewrite",
       "seed": 2,
-      "inputType": "textarea",
-      "goldenAnswers": [
-        {
-          "input": "She had packed her bag before the trip.",
-          "marksCorrect": true
-        }
-      ],
-      "acceptedVariants": [
-        {
-          "input": " She had packed her bag before the trip.",
-          "marksCorrect": true
-        },
-        {
-          "input": "She had packed her bag before the trip. ",
-          "marksCorrect": true
-        }
-      ],
-      "nearMisses": [
-        {
-          "input": "had packed her bag before the trip.",
-          "marksCorrect": false
-        }
-      ],
-      "rawPromptProbes": [
-        {
-          "input": "",
-          "marksCorrect": false
-        },
-        {
-          "input": " ",
-          "marksCorrect": false
-        },
-        {
-          "input": "I don't know",
-          "marksCorrect": false
-        }
-      ],
-      "smartPunctuationVariants": [
-        {
-          "input": "She had packed her bag before the trip.",
-          "marksCorrect": true
-        },
-        {
-          "input": "She had packed her bag before the trip.",
-          "marksCorrect": true
-        }
-      ],
-      "caseVariants": [
-        {
-          "input": "she had packed her bag before the trip.",
-          "marksCorrect": true
-        },
-        {
-          "input": "SHE HAD PACKED HER BAG BEFORE THE TRIP.",
-          "marksCorrect": true
-        }
-      ],
-      "commonChildMistakes": [
-        {
-          "input": "She had packed her bag before the trip. trip.",
-          "marksCorrect": false
-        }
-      ],
-      "expectedScore": {
-        "goldenAnswers": "pass",
-        "acceptedVariants": "pass",
-        "nearMisses": "fail",
-        "rawPromptProbes": "fail",
-        "smartPunctuationVariants": "pass",
-        "caseVariants": "varies",
-        "commonChildMistakes": "fail"
-      },
-      "misconceptionTag": "tense_confusion"
-    },
-    {
-      "templateId": "tense_rewrite",
-      "seed": 3,
       "inputType": "textarea",
       "goldenAnswers": [
         {
@@ -1041,27 +964,27 @@
     },
     {
       "templateId": "tense_rewrite",
-      "seed": 4,
+      "seed": 3,
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "I have finished my homework.",
+          "input": "We have tidied the classroom.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " I have finished my homework.",
+          "input": " We have tidied the classroom.",
           "marksCorrect": true
         },
         {
-          "input": "I have finished my homework. ",
+          "input": "We have tidied the classroom. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "have finished my homework.",
+          "input": "have tidied the classroom.",
           "marksCorrect": false
         }
       ],
@@ -1081,27 +1004,104 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "I have finished my homework.",
+          "input": "We have tidied the classroom.",
           "marksCorrect": true
         },
         {
-          "input": "I have finished my homework.",
+          "input": "We have tidied the classroom.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "i have finished my homework.",
+          "input": "we have tidied the classroom.",
           "marksCorrect": true
         },
         {
-          "input": "I HAVE FINISHED MY HOMEWORK.",
+          "input": "WE HAVE TIDIED THE CLASSROOM.",
           "marksCorrect": true
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "I have finished my homework. homework.",
+          "input": "We have tidied the classroom. classroom.",
+          "marksCorrect": false
+        }
+      ],
+      "expectedScore": {
+        "goldenAnswers": "pass",
+        "acceptedVariants": "pass",
+        "nearMisses": "fail",
+        "rawPromptProbes": "fail",
+        "smartPunctuationVariants": "pass",
+        "caseVariants": "varies",
+        "commonChildMistakes": "fail"
+      },
+      "misconceptionTag": "tense_confusion"
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswers": [
+        {
+          "input": "The class will have completed the display by Friday.",
+          "marksCorrect": true
+        }
+      ],
+      "acceptedVariants": [
+        {
+          "input": " The class will have completed the display by Friday.",
+          "marksCorrect": true
+        },
+        {
+          "input": "The class will have completed the display by Friday. ",
+          "marksCorrect": true
+        }
+      ],
+      "nearMisses": [
+        {
+          "input": "class will have completed the display by Friday.",
+          "marksCorrect": false
+        }
+      ],
+      "rawPromptProbes": [
+        {
+          "input": "",
+          "marksCorrect": false
+        },
+        {
+          "input": " ",
+          "marksCorrect": false
+        },
+        {
+          "input": "I don't know",
+          "marksCorrect": false
+        }
+      ],
+      "smartPunctuationVariants": [
+        {
+          "input": "The class will have completed the display by Friday.",
+          "marksCorrect": true
+        },
+        {
+          "input": "The class will have completed the display by Friday.",
+          "marksCorrect": true
+        }
+      ],
+      "caseVariants": [
+        {
+          "input": "the class will have completed the display by friday.",
+          "marksCorrect": true
+        },
+        {
+          "input": "THE CLASS WILL HAVE COMPLETED THE DISPLAY BY FRIDAY.",
+          "marksCorrect": true
+        }
+      ],
+      "commonChildMistakes": [
+        {
+          "input": "The class will have completed the display by Friday. Friday.",
           "marksCorrect": false
         }
       ],
@@ -1122,23 +1122,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "She had packed her bag before the trip.",
+          "input": "Maya was painting the scenery.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " She had packed her bag before the trip.",
+          "input": " Maya was painting the scenery.",
           "marksCorrect": true
         },
         {
-          "input": "She had packed her bag before the trip. ",
+          "input": "Maya was painting the scenery. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "had packed her bag before the trip.",
+          "input": "was painting the scenery.",
           "marksCorrect": false
         }
       ],
@@ -1158,27 +1158,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "She had packed her bag before the trip.",
+          "input": "Maya was painting the scenery.",
           "marksCorrect": true
         },
         {
-          "input": "She had packed her bag before the trip.",
+          "input": "Maya was painting the scenery.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "she had packed her bag before the trip.",
+          "input": "maya was painting the scenery.",
           "marksCorrect": true
         },
         {
-          "input": "SHE HAD PACKED HER BAG BEFORE THE TRIP.",
+          "input": "MAYA WAS PAINTING THE SCENERY.",
           "marksCorrect": true
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "She had packed her bag before the trip. trip.",
+          "input": "Maya was painting the scenery. scenery.",
           "marksCorrect": false
         }
       ],
@@ -1199,23 +1199,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "The bread was baked by the chef.",
+          "input": "Sofia carried the lantern.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " The bread was baked by the chef.",
+          "input": " Sofia carried the lantern.",
           "marksCorrect": true
         },
         {
-          "input": "The bread was baked by the chef. ",
+          "input": "Sofia carried the lantern. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "bread was baked by the chef.",
+          "input": "carried the lantern.",
           "marksCorrect": false
         }
       ],
@@ -1235,27 +1235,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "The bread was baked by the chef.",
+          "input": "Sofia carried the lantern.",
           "marksCorrect": true
         },
         {
-          "input": "The bread was baked by the chef.",
+          "input": "Sofia carried the lantern.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "the bread was baked by the chef.",
+          "input": "sofia carried the lantern.",
           "marksCorrect": true
         },
         {
-          "input": "THE BREAD WAS BAKED BY THE CHEF.",
+          "input": "SOFIA CARRIED THE LANTERN.",
           "marksCorrect": true
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "The bread was baked by the chef. chef.",
+          "input": "Sofia carried the lantern. lantern.",
           "marksCorrect": false
         }
       ],
@@ -1273,164 +1273,6 @@
     {
       "templateId": "active_passive_rewrite",
       "seed": 2,
-      "inputType": "textarea",
-      "goldenAnswers": [
-        {
-          "input": "The trophy will be collected by the team.",
-          "marksCorrect": true
-        }
-      ],
-      "acceptedVariants": [
-        {
-          "input": " The trophy will be collected by the team.",
-          "marksCorrect": true
-        },
-        {
-          "input": "The trophy will be collected by the team. ",
-          "marksCorrect": true
-        }
-      ],
-      "nearMisses": [
-        {
-          "input": "trophy will be collected by the team.",
-          "marksCorrect": false
-        }
-      ],
-      "rawPromptProbes": [
-        {
-          "input": "",
-          "marksCorrect": false
-        },
-        {
-          "input": " ",
-          "marksCorrect": false
-        },
-        {
-          "input": "I don't know",
-          "marksCorrect": false
-        }
-      ],
-      "smartPunctuationVariants": [
-        {
-          "input": "The trophy will be collected by the team.",
-          "marksCorrect": true
-        },
-        {
-          "input": "The trophy will be collected by the team.",
-          "marksCorrect": true
-        }
-      ],
-      "caseVariants": [
-        {
-          "input": "the trophy will be collected by the team.",
-          "marksCorrect": true
-        },
-        {
-          "input": "THE TROPHY WILL BE COLLECTED BY THE TEAM.",
-          "marksCorrect": true
-        }
-      ],
-      "commonChildMistakes": [
-        {
-          "input": "The trophy will be collected by the team. team.",
-          "marksCorrect": false
-        }
-      ],
-      "expectedScore": {
-        "goldenAnswers": "pass",
-        "acceptedVariants": "pass",
-        "nearMisses": "fail",
-        "rawPromptProbes": "fail",
-        "smartPunctuationVariants": "pass",
-        "caseVariants": "varies",
-        "commonChildMistakes": "fail"
-      },
-      "misconceptionTag": "active_passive_confusion"
-    },
-    {
-      "templateId": "active_passive_rewrite",
-      "seed": 3,
-      "inputType": "textarea",
-      "goldenAnswers": [
-        {
-          "input": "The council maintains the local park.",
-          "marksCorrect": true
-        },
-        {
-          "input": "The council maintains the park.",
-          "marksCorrect": true
-        }
-      ],
-      "acceptedVariants": [
-        {
-          "input": " The council maintains the local park.",
-          "marksCorrect": true
-        },
-        {
-          "input": "The council maintains the local park. ",
-          "marksCorrect": true
-        }
-      ],
-      "nearMisses": [
-        {
-          "input": "council maintains the local park.",
-          "marksCorrect": false
-        }
-      ],
-      "rawPromptProbes": [
-        {
-          "input": "",
-          "marksCorrect": false
-        },
-        {
-          "input": " ",
-          "marksCorrect": false
-        },
-        {
-          "input": "I don't know",
-          "marksCorrect": false
-        }
-      ],
-      "smartPunctuationVariants": [
-        {
-          "input": "The council maintains the local park.",
-          "marksCorrect": true
-        },
-        {
-          "input": "The council maintains the local park.",
-          "marksCorrect": true
-        }
-      ],
-      "caseVariants": [
-        {
-          "input": "the council maintains the local park.",
-          "marksCorrect": true
-        },
-        {
-          "input": "THE COUNCIL MAINTAINS THE LOCAL PARK.",
-          "marksCorrect": true
-        }
-      ],
-      "commonChildMistakes": [
-        {
-          "input": "The council maintains the local park. park.",
-          "marksCorrect": false
-        }
-      ],
-      "expectedScore": {
-        "goldenAnswers": "pass",
-        "acceptedVariants": "pass",
-        "nearMisses": "fail",
-        "rawPromptProbes": "fail",
-        "smartPunctuationVariants": "pass",
-        "caseVariants": "varies",
-        "commonChildMistakes": "fail"
-      },
-      "misconceptionTag": "active_passive_confusion"
-    },
-    {
-      "templateId": "active_passive_rewrite",
-      "seed": 4,
       "inputType": "textarea",
       "goldenAnswers": [
         {
@@ -1507,27 +1349,27 @@
     },
     {
       "templateId": "active_passive_rewrite",
-      "seed": 5,
+      "seed": 3,
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "The trophy will be collected by the team.",
+          "input": "The window was opened by Grace.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " The trophy will be collected by the team.",
+          "input": " The window was opened by Grace.",
           "marksCorrect": true
         },
         {
-          "input": "The trophy will be collected by the team. ",
+          "input": "The window was opened by Grace. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "trophy will be collected by the team.",
+          "input": "window was opened by Grace.",
           "marksCorrect": false
         }
       ],
@@ -1547,27 +1389,181 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "The trophy will be collected by the team.",
+          "input": "The window was opened by Grace.",
           "marksCorrect": true
         },
         {
-          "input": "The trophy will be collected by the team.",
+          "input": "The window was opened by Grace.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "the trophy will be collected by the team.",
+          "input": "the window was opened by grace.",
           "marksCorrect": true
         },
         {
-          "input": "THE TROPHY WILL BE COLLECTED BY THE TEAM.",
+          "input": "THE WINDOW WAS OPENED BY GRACE.",
           "marksCorrect": true
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "The trophy will be collected by the team. team.",
+          "input": "The window was opened by Grace. Grace.",
+          "marksCorrect": false
+        }
+      ],
+      "expectedScore": {
+        "goldenAnswers": "pass",
+        "acceptedVariants": "pass",
+        "nearMisses": "fail",
+        "rawPromptProbes": "fail",
+        "smartPunctuationVariants": "pass",
+        "caseVariants": "varies",
+        "commonChildMistakes": "fail"
+      },
+      "misconceptionTag": "active_passive_confusion"
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswers": [
+        {
+          "input": "Hassan packs the rucksack.",
+          "marksCorrect": true
+        }
+      ],
+      "acceptedVariants": [
+        {
+          "input": " Hassan packs the rucksack.",
+          "marksCorrect": true
+        },
+        {
+          "input": "Hassan packs the rucksack. ",
+          "marksCorrect": true
+        }
+      ],
+      "nearMisses": [
+        {
+          "input": "packs the rucksack.",
+          "marksCorrect": false
+        }
+      ],
+      "rawPromptProbes": [
+        {
+          "input": "",
+          "marksCorrect": false
+        },
+        {
+          "input": " ",
+          "marksCorrect": false
+        },
+        {
+          "input": "I don't know",
+          "marksCorrect": false
+        }
+      ],
+      "smartPunctuationVariants": [
+        {
+          "input": "Hassan packs the rucksack.",
+          "marksCorrect": true
+        },
+        {
+          "input": "Hassan packs the rucksack.",
+          "marksCorrect": true
+        }
+      ],
+      "caseVariants": [
+        {
+          "input": "hassan packs the rucksack.",
+          "marksCorrect": true
+        },
+        {
+          "input": "HASSAN PACKS THE RUCKSACK.",
+          "marksCorrect": true
+        }
+      ],
+      "commonChildMistakes": [
+        {
+          "input": "Hassan packs the rucksack. rucksack.",
+          "marksCorrect": false
+        }
+      ],
+      "expectedScore": {
+        "goldenAnswers": "pass",
+        "acceptedVariants": "pass",
+        "nearMisses": "fail",
+        "rawPromptProbes": "fail",
+        "smartPunctuationVariants": "pass",
+        "caseVariants": "varies",
+        "commonChildMistakes": "fail"
+      },
+      "misconceptionTag": "active_passive_confusion"
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswers": [
+        {
+          "input": "The gate is locked by the caretaker.",
+          "marksCorrect": true
+        }
+      ],
+      "acceptedVariants": [
+        {
+          "input": " The gate is locked by the caretaker.",
+          "marksCorrect": true
+        },
+        {
+          "input": "The gate is locked by the caretaker. ",
+          "marksCorrect": true
+        }
+      ],
+      "nearMisses": [
+        {
+          "input": "gate is locked by the caretaker.",
+          "marksCorrect": false
+        }
+      ],
+      "rawPromptProbes": [
+        {
+          "input": "",
+          "marksCorrect": false
+        },
+        {
+          "input": " ",
+          "marksCorrect": false
+        },
+        {
+          "input": "I don't know",
+          "marksCorrect": false
+        }
+      ],
+      "smartPunctuationVariants": [
+        {
+          "input": "The gate is locked by the caretaker.",
+          "marksCorrect": true
+        },
+        {
+          "input": "The gate is locked by the caretaker.",
+          "marksCorrect": true
+        }
+      ],
+      "caseVariants": [
+        {
+          "input": "the gate is locked by the caretaker.",
+          "marksCorrect": true
+        },
+        {
+          "input": "THE GATE IS LOCKED BY THE CARETAKER.",
+          "marksCorrect": true
+        }
+      ],
+      "commonChildMistakes": [
+        {
+          "input": "The gate is locked by the caretaker. caretaker.",
           "marksCorrect": false
         }
       ],
@@ -1588,23 +1584,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy.",
+          "input": "The trophy (made of silver) stood in the cabinet.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " My cousin (the youngest in the family) won the chess trophy.",
+          "input": " The trophy (made of silver) stood in the cabinet.",
           "marksCorrect": true
         },
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy. ",
+          "input": "The trophy (made of silver) stood in the cabinet. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "cousin (the youngest in the family) won the chess trophy.",
+          "input": "trophy (made of silver) stood in the cabinet.",
           "marksCorrect": false
         }
       ],
@@ -1624,27 +1620,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy.",
+          "input": "The trophy (made of silver) stood in the cabinet.",
           "marksCorrect": true
         },
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy.",
+          "input": "The trophy (made of silver) stood in the cabinet.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "my cousin (the youngest in the family) won the chess trophy.",
+          "input": "the trophy (made of silver) stood in the cabinet.",
           "marksCorrect": false
         },
         {
-          "input": "MY COUSIN (THE YOUNGEST IN THE FAMILY) WON THE CHESS TROPHY.",
+          "input": "THE TROPHY (MADE OF SILVER) STOOD IN THE CABINET.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy. trophy.",
+          "input": "The trophy (made of silver) stood in the cabinet. cabinet.",
           "marksCorrect": false
         }
       ],
@@ -1665,23 +1661,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "My uncle (a keen cyclist) repaired the puncture.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " Our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": " My uncle (a keen cyclist) repaired the puncture.",
           "marksCorrect": true
         },
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project. ",
+          "input": "My uncle (a keen cyclist) repaired the puncture. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "uncle (a keen cyclist) repaired the puncture.",
           "marksCorrect": false
         }
       ],
@@ -1701,27 +1697,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "My uncle (a keen cyclist) repaired the puncture.",
           "marksCorrect": true
         },
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "My uncle (a keen cyclist) repaired the puncture.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "my uncle (a keen cyclist) repaired the puncture.",
           "marksCorrect": false
         },
         {
-          "input": "OUR CLASS VISITED A CASTLE (THE OLDEST IN THE COUNTY) TO HELP WITH OUR HISTORY PROJECT.",
+          "input": "MY UNCLE (A KEEN CYCLIST) REPAIRED THE PUNCTURE.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project. project.",
+          "input": "My uncle (a keen cyclist) repaired the puncture. puncture.",
           "marksCorrect": false
         }
       ],
@@ -1742,23 +1738,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy.",
+          "input": "The library (which opened last year) has a new reading room.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " My cousin (the youngest in the family) won the chess trophy.",
+          "input": " The library (which opened last year) has a new reading room.",
           "marksCorrect": true
         },
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy. ",
+          "input": "The library (which opened last year) has a new reading room. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "cousin (the youngest in the family) won the chess trophy.",
+          "input": "library (which opened last year) has a new reading room.",
           "marksCorrect": false
         }
       ],
@@ -1778,27 +1774,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy.",
+          "input": "The library (which opened last year) has a new reading room.",
           "marksCorrect": true
         },
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy.",
+          "input": "The library (which opened last year) has a new reading room.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "my cousin (the youngest in the family) won the chess trophy.",
+          "input": "the library (which opened last year) has a new reading room.",
           "marksCorrect": false
         },
         {
-          "input": "MY COUSIN (THE YOUNGEST IN THE FAMILY) WON THE CHESS TROPHY.",
+          "input": "THE LIBRARY (WHICH OPENED LAST YEAR) HAS A NEW READING ROOM.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy. trophy.",
+          "input": "The library (which opened last year) has a new reading room. room.",
           "marksCorrect": false
         }
       ],
@@ -1819,23 +1815,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "Hassan (our team captain) organised the warm-up.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " Our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": " Hassan (our team captain) organised the warm-up.",
           "marksCorrect": true
         },
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project. ",
+          "input": "Hassan (our team captain) organised the warm-up. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "(our team captain) organised the warm-up.",
           "marksCorrect": false
         }
       ],
@@ -1855,27 +1851,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "Hassan (our team captain) organised the warm-up.",
           "marksCorrect": true
         },
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "Hassan (our team captain) organised the warm-up.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "our class visited a castle (the oldest in the county) to help with our history project.",
+          "input": "hassan (our team captain) organised the warm-up.",
           "marksCorrect": false
         },
         {
-          "input": "OUR CLASS VISITED A CASTLE (THE OLDEST IN THE COUNTY) TO HELP WITH OUR HISTORY PROJECT.",
+          "input": "HASSAN (OUR TEAM CAPTAIN) ORGANISED THE WARM-UP.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "Our class visited a castle (the oldest in the county) to help with our history project. project.",
+          "input": "Hassan (our team captain) organised the warm-up. warm-up.",
           "marksCorrect": false
         }
       ],
@@ -1896,23 +1892,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy.",
+          "input": "The old oak tree (over two hundred years old) shaded the path.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " My cousin (the youngest in the family) won the chess trophy.",
+          "input": " The old oak tree (over two hundred years old) shaded the path.",
           "marksCorrect": true
         },
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy. ",
+          "input": "The old oak tree (over two hundred years old) shaded the path. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "cousin (the youngest in the family) won the chess trophy.",
+          "input": "old oak tree (over two hundred years old) shaded the path.",
           "marksCorrect": false
         }
       ],
@@ -1932,27 +1928,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy.",
+          "input": "The old oak tree (over two hundred years old) shaded the path.",
           "marksCorrect": true
         },
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy.",
+          "input": "The old oak tree (over two hundred years old) shaded the path.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "my cousin (the youngest in the family) won the chess trophy.",
+          "input": "the old oak tree (over two hundred years old) shaded the path.",
           "marksCorrect": false
         },
         {
-          "input": "MY COUSIN (THE YOUNGEST IN THE FAMILY) WON THE CHESS TROPHY.",
+          "input": "THE OLD OAK TREE (OVER TWO HUNDRED YEARS OLD) SHADED THE PATH.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "My cousin (the youngest in the family) won the chess trophy. trophy.",
+          "input": "The old oak tree (over two hundred years old) shaded the path. path.",
           "marksCorrect": false
         }
       ],
@@ -1973,23 +1969,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "Dad shouted, \"Run inside!\"",
+          "input": "The guide said, \"Follow the red arrows.\"",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " Dad shouted, \"Run inside!\"",
+          "input": " The guide said, \"Follow the red arrows.\"",
           "marksCorrect": true
         },
         {
-          "input": "Dad shouted, \"Run inside!\" ",
+          "input": "The guide said, \"Follow the red arrows.\" ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "shouted, \"Run inside!\"",
+          "input": "guide said, \"Follow the red arrows.\"",
           "marksCorrect": false
         }
       ],
@@ -2009,27 +2005,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "Dad shouted, “Run inside!“",
+          "input": "The guide said, “Follow the red arrows.“",
           "marksCorrect": true
         },
         {
-          "input": "Dad shouted, \"Run inside!\"",
+          "input": "The guide said, \"Follow the red arrows.\"",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "dad shouted, \"run inside!\"",
+          "input": "the guide said, \"follow the red arrows.\"",
           "marksCorrect": false
         },
         {
-          "input": "DAD SHOUTED, \"RUN INSIDE!\"",
+          "input": "THE GUIDE SAID, \"FOLLOW THE RED ARROWS.\"",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "Dad shouted, \"Run inside!\" inside!\"",
+          "input": "The guide said, \"Follow the red arrows.\" arrows.\"",
           "marksCorrect": false
         }
       ],
@@ -2050,23 +2046,23 @@
       "inputType": "textarea",
       "goldenAnswers": [
         {
-          "input": "\"Sit down!\" said the coach.",
+          "input": "\"What a huge wave that was!\" shouted Ben.",
           "marksCorrect": true
         }
       ],
       "acceptedVariants": [
         {
-          "input": " \"Sit down!\" said the coach.",
+          "input": " \"What a huge wave that was!\" shouted Ben.",
           "marksCorrect": true
         },
         {
-          "input": "\"Sit down!\" said the coach. ",
+          "input": "\"What a huge wave that was!\" shouted Ben. ",
           "marksCorrect": true
         }
       ],
       "nearMisses": [
         {
-          "input": "down!\" said the coach.",
+          "input": "a huge wave that was!\" shouted Ben.",
           "marksCorrect": false
         }
       ],
@@ -2086,27 +2082,27 @@
       ],
       "smartPunctuationVariants": [
         {
-          "input": "“Sit down!“ said the coach.",
+          "input": "“What a huge wave that was!“ shouted Ben.",
           "marksCorrect": true
         },
         {
-          "input": "\"Sit down!\" said the coach.",
+          "input": "\"What a huge wave that was!\" shouted Ben.",
           "marksCorrect": true
         }
       ],
       "caseVariants": [
         {
-          "input": "\"sit down!\" said the coach.",
+          "input": "\"what a huge wave that was!\" shouted ben.",
           "marksCorrect": false
         },
         {
-          "input": "\"SIT DOWN!\" SAID THE COACH.",
+          "input": "\"WHAT A HUGE WAVE THAT WAS!\" SHOUTED BEN.",
           "marksCorrect": false
         }
       ],
       "commonChildMistakes": [
         {
-          "input": "\"Sit down!\" said the coach. coach.",
+          "input": "\"What a huge wave that was!\" shouted Ben. Ben.",
           "marksCorrect": false
         }
       ],
@@ -2124,6 +2120,83 @@
     {
       "templateId": "speech_punctuation_fix",
       "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswers": [
+        {
+          "input": "Maya whispered, \"Please wait outside.\"",
+          "marksCorrect": true
+        }
+      ],
+      "acceptedVariants": [
+        {
+          "input": " Maya whispered, \"Please wait outside.\"",
+          "marksCorrect": true
+        },
+        {
+          "input": "Maya whispered, \"Please wait outside.\" ",
+          "marksCorrect": true
+        }
+      ],
+      "nearMisses": [
+        {
+          "input": "whispered, \"Please wait outside.\"",
+          "marksCorrect": false
+        }
+      ],
+      "rawPromptProbes": [
+        {
+          "input": "",
+          "marksCorrect": false
+        },
+        {
+          "input": " ",
+          "marksCorrect": false
+        },
+        {
+          "input": "I don't know",
+          "marksCorrect": false
+        }
+      ],
+      "smartPunctuationVariants": [
+        {
+          "input": "Maya whispered, “Please wait outside.“",
+          "marksCorrect": true
+        },
+        {
+          "input": "Maya whispered, \"Please wait outside.\"",
+          "marksCorrect": true
+        }
+      ],
+      "caseVariants": [
+        {
+          "input": "maya whispered, \"please wait outside.\"",
+          "marksCorrect": false
+        },
+        {
+          "input": "MAYA WHISPERED, \"PLEASE WAIT OUTSIDE.\"",
+          "marksCorrect": false
+        }
+      ],
+      "commonChildMistakes": [
+        {
+          "input": "Maya whispered, \"Please wait outside.\" outside.\"",
+          "marksCorrect": false
+        }
+      ],
+      "expectedScore": {
+        "goldenAnswers": "pass",
+        "acceptedVariants": "pass",
+        "nearMisses": "fail",
+        "rawPromptProbes": "fail",
+        "smartPunctuationVariants": "pass",
+        "caseVariants": "varies",
+        "commonChildMistakes": "fail"
+      },
+      "misconceptionTag": "speech_punctuation_confusion"
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 4,
       "inputType": "textarea",
       "goldenAnswers": [
         {
@@ -2200,7 +2273,7 @@
     },
     {
       "templateId": "speech_punctuation_fix",
-      "seed": 4,
+      "seed": 5,
       "inputType": "textarea",
       "goldenAnswers": [
         {
@@ -2261,83 +2334,6 @@
       "commonChildMistakes": [
         {
           "input": "Dad shouted, \"Run inside!\" inside!\"",
-          "marksCorrect": false
-        }
-      ],
-      "expectedScore": {
-        "goldenAnswers": "pass",
-        "acceptedVariants": "pass",
-        "nearMisses": "fail",
-        "rawPromptProbes": "fail",
-        "smartPunctuationVariants": "pass",
-        "caseVariants": "varies",
-        "commonChildMistakes": "fail"
-      },
-      "misconceptionTag": "speech_punctuation_confusion"
-    },
-    {
-      "templateId": "speech_punctuation_fix",
-      "seed": 5,
-      "inputType": "textarea",
-      "goldenAnswers": [
-        {
-          "input": "\"Sit down!\" said the coach.",
-          "marksCorrect": true
-        }
-      ],
-      "acceptedVariants": [
-        {
-          "input": " \"Sit down!\" said the coach.",
-          "marksCorrect": true
-        },
-        {
-          "input": "\"Sit down!\" said the coach. ",
-          "marksCorrect": true
-        }
-      ],
-      "nearMisses": [
-        {
-          "input": "down!\" said the coach.",
-          "marksCorrect": false
-        }
-      ],
-      "rawPromptProbes": [
-        {
-          "input": "",
-          "marksCorrect": false
-        },
-        {
-          "input": " ",
-          "marksCorrect": false
-        },
-        {
-          "input": "I don't know",
-          "marksCorrect": false
-        }
-      ],
-      "smartPunctuationVariants": [
-        {
-          "input": "“Sit down!“ said the coach.",
-          "marksCorrect": true
-        },
-        {
-          "input": "\"Sit down!\" said the coach.",
-          "marksCorrect": true
-        }
-      ],
-      "caseVariants": [
-        {
-          "input": "\"sit down!\" said the coach.",
-          "marksCorrect": false
-        },
-        {
-          "input": "\"SIT DOWN!\" SAID THE COACH.",
-          "marksCorrect": false
-        }
-      ],
-      "commonChildMistakes": [
-        {
-          "input": "\"Sit down!\" said the coach. coach.",
           "marksCorrect": false
         }
       ],

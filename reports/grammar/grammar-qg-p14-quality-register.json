@@ -1,7 +1,7 @@
 {
   "metadata": {
     "contentReleaseId": "grammar-qg-p14-2026-05-01",
-    "generatedAt": "2026-05-01T13:33:28.540Z",
+    "generatedAt": "2026-05-01T16:23:10.816Z",
     "templateCount": 110,
     "approved": 106,
     "approvedWithLimitation": 4,
@@ -57,37 +57,37 @@
           "seed": 1,
           "promptText": "Tick all the sentences that must end with a question mark.",
           "options": [
-            "What a long journey this has been",
-            "Can you help me carry the boxes",
-            "Mum wondered whether the parcel had arrived",
-            "Did the coach leave on time"
+            "What a difficult puzzle this is",
+            "Did the train arrive before noon",
+            "Aisha asked whether the train had arrived",
+            "Is the platform open yet"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on time."
+          "feedbackSnippet": "The sentences needing question marks are: Did the train arrive before noon; Is the platform open yet."
         },
         {
           "seed": 2,
           "promptText": "Tick all the sentences that must end with a question mark.",
           "options": [
-            "What a long journey this has been",
-            "Can you help me carry the boxes",
-            "Mum wondered whether the parcel had arrived",
-            "Did the coach leave on time"
+            "How bright the lantern looked",
+            "Do you know the way to the hall",
+            "Ben wondered if the hall was open",
+            "Can the guide meet us outside"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on time."
+          "feedbackSnippet": "The sentences needing question marks are: Do you know the way to the hall; Can the guide meet us outside."
         },
         {
           "seed": 3,
           "promptText": "Tick all the sentences that must end with a question mark.",
           "options": [
-            "What a long journey this has been",
-            "Can you help me carry the boxes",
-            "Mum wondered whether the parcel had arrived",
-            "Did the coach leave on time"
+            "What a busy morning we have had",
+            "Is Maya bringing the tickets",
+            "Maya asked whether she should bring the tickets",
+            "Did Omar pack the map"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on time."
+          "feedbackSnippet": "The sentences needing question marks are: Is Maya bringing the tickets; Did Omar pack the map."
         }
       ],
       "answerabilityJudgement": "All 10 seeds produce a valid checkbox set with correct golden selection",
@@ -283,6 +283,18 @@
           "seed": 1,
           "promptText": "Which option is an expanded noun phrase?",
           "options": [
+            "the tall boy with muddy boots",
+            "ran across the yard",
+            "after the storm",
+            "very quickly"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The correct answer is: the tall boy with muddy boots."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which option is an expanded noun phrase?",
+          "options": [
             "the silver key under the mat",
             "jumped over the wall",
             "before sunrise",
@@ -292,28 +304,16 @@
           "feedbackSnippet": "The correct answer is: the silver key under the mat."
         },
         {
-          "seed": 2,
-          "promptText": "Which sentence contains an expanded noun phrase?",
-          "options": [
-            "The tired explorers climbed the hill.",
-            "Across the field, the dog barked.",
-            "Because it was late, we hurried.",
-            "Please close the shutters."
-          ],
-          "markingResult": "correct",
-          "feedbackSnippet": "The correct answer is: The tired explorers climbed the hill.."
-        },
-        {
           "seed": 3,
-          "promptText": "Which sentence contains an expanded noun phrase?",
+          "promptText": "Which option is an expanded noun phrase?",
           "options": [
-            "The tired explorers climbed the hill.",
-            "Across the field, the dog barked.",
-            "Because it was late, we hurried.",
-            "Please close the shutters."
+            "the cracked blue mug beside the sink",
+            "washed the plates",
+            "because the sink was full",
+            "very carefully"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct answer is: The tired explorers climbed the hill.."
+          "feedbackSnippet": "The correct answer is: the cracked blue mug beside the sink."
         }
       ],
       "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
@@ -340,19 +340,19 @@
         },
         {
           "seed": 2,
-          "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ opened the door.",
+          "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ waited outside the theatre.",
           "markingResult": "non-scored",
           "feedbackSnippet": "Your noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 3,
-          "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ found the silver key.",
+          "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ stood beside the canal.",
           "markingResult": "non-scored",
           "feedbackSnippet": "Your noun phrase has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 4,
-          "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ opened the door.",
+          "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ caught the sunlight.",
           "markingResult": "non-scored",
           "feedbackSnippet": "Your noun phrase has been saved for review. It is not auto-marked for mastery."
         },
@@ -383,13 +383,13 @@
           "seed": 1,
           "promptText": "Which sentence starts with a fronted adverbial?",
           "options": [
-            "In the morning, the market opens early.",
-            "The market opens early in the morning.",
-            "Could the market open early?",
-            "The market opens and traders hurry in."
+            "During the storm, the old gate rattled loudly.",
+            "The old gate rattled loudly during the storm.",
+            "The old gate rattled and creaked.",
+            "Why did the gate rattle?"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct answer is: In the morning, the market opens early."
+          "feedbackSnippet": "The correct answer is: During the storm, the old gate rattled loudly."
         },
         {
           "seed": 2,
@@ -434,38 +434,38 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. After the concert the audience cheered loudly.",
-          "goldenAnswer": "After the concert, the audience cheered loudly.",
+          "promptText": "Copy the sentence and add the comma after the fronted adverbial. Later that afternoon our team finally scored.",
+          "goldenAnswer": "Later that afternoon, our team finally scored.",
           "markingResult": "correct",
-          "feedbackSnippet": "The correct sentence is: After the concert, the audience cheered loudly."
+          "feedbackSnippet": "The correct sentence is: Later that afternoon, our team finally scored."
         },
         {
           "seed": 2,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. Later that afternoon our team finally scored.",
-          "goldenAnswer": "Later that afternoon, our team finally scored.",
+          "promptText": "Copy the sentence and add the comma after the fronted adverbial. With great care Imani folded the fragile map.",
+          "goldenAnswer": "With great care, Imani folded the fragile map.",
           "markingResult": "correct",
-          "feedbackSnippet": "The correct sentence is: Later that afternoon, our team finally scored."
+          "feedbackSnippet": "The correct sentence is: With great care, Imani folded the fragile map."
         },
         {
           "seed": 3,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. Before sunrise the campers packed their bags.",
-          "goldenAnswer": "Before sunrise, the campers packed their bags.",
+          "promptText": "Copy the sentence and add the comma after the fronted adverbial. At the edge of the field the fox paused.",
+          "goldenAnswer": "At the edge of the field, the fox paused.",
           "markingResult": "correct",
-          "feedbackSnippet": "The correct sentence is: Before sunrise, the campers packed their bags."
+          "feedbackSnippet": "The correct sentence is: At the edge of the field, the fox paused."
         },
         {
           "seed": 4,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. After the concert the audience cheered loudly.",
-          "goldenAnswer": "After the concert, the audience cheered loudly.",
+          "promptText": "Copy the sentence and add the comma after the fronted adverbial. Without warning the lights flickered.",
+          "goldenAnswer": "Without warning, the lights flickered.",
           "markingResult": "correct",
-          "feedbackSnippet": "The correct sentence is: After the concert, the audience cheered loudly."
+          "feedbackSnippet": "The correct sentence is: Without warning, the lights flickered."
         },
         {
           "seed": 5,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. Later that afternoon our team finally scored.",
-          "goldenAnswer": "Later that afternoon, our team finally scored.",
+          "promptText": "Copy the sentence and add the comma after the fronted adverbial. Before the lesson Ravi sharpened the pencils.",
+          "goldenAnswer": "Before the lesson, Ravi sharpened the pencils.",
           "markingResult": "correct",
-          "feedbackSnippet": "The correct sentence is: Later that afternoon, our team finally scored."
+          "feedbackSnippet": "The correct sentence is: Before the lesson, Ravi sharpened the pencils."
         }
       ],
       "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
@@ -486,30 +486,6 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Which option is the subordinate clause in the sentence below? When the bell rang, the pupils lined up quietly.",
-          "options": [
-            "the pupils lined up quietly",
-            "When the bell rang",
-            "lined up quietly",
-            "the bell"
-          ],
-          "markingResult": "correct",
-          "feedbackSnippet": "The subordinate clause is: When the bell rang."
-        },
-        {
-          "seed": 2,
-          "promptText": "Which option is the subordinate clause in the sentence below? If the path is icy, wear your boots.",
-          "options": [
-            "wear your boots",
-            "If the path is icy",
-            "the path is icy boots",
-            "icy wear"
-          ],
-          "markingResult": "correct",
-          "feedbackSnippet": "The subordinate clause is: If the path is icy."
-        },
-        {
-          "seed": 3,
           "promptText": "Which option is the subordinate clause in the sentence below? Although the wind was strong, the boat reached the shore.",
           "options": [
             "Although the wind was strong",
@@ -521,7 +497,7 @@
           "feedbackSnippet": "The subordinate clause is: Although the wind was strong."
         },
         {
-          "seed": 4,
+          "seed": 2,
           "promptText": "Which option is the subordinate clause in the sentence below? When the bell rang, the pupils lined up quietly.",
           "options": [
             "the pupils lined up quietly",
@@ -533,16 +509,40 @@
           "feedbackSnippet": "The subordinate clause is: When the bell rang."
         },
         {
-          "seed": 5,
-          "promptText": "Which option is the subordinate clause in the sentence below? If the path is icy, wear your boots.",
+          "seed": 3,
+          "promptText": "Which option is the subordinate clause in the sentence below? Because the river was high, the path was closed.",
           "options": [
-            "wear your boots",
-            "If the path is icy",
-            "the path is icy boots",
-            "icy wear"
+            "Because the river was high",
+            "the path was closed",
+            "the river",
+            "was high the path"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The subordinate clause is: If the path is icy."
+          "feedbackSnippet": "The subordinate clause is: Because the river was high."
+        },
+        {
+          "seed": 4,
+          "promptText": "Which option is the subordinate clause in the sentence below? Before the coach arrived, the team warmed up.",
+          "options": [
+            "Before the coach arrived",
+            "the team warmed up",
+            "the coach",
+            "arrived the team"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The subordinate clause is: Before the coach arrived."
+        },
+        {
+          "seed": 5,
+          "promptText": "Which option is the subordinate clause in the sentence below? While the kettle boiled, Dad set out the mugs.",
+          "options": [
+            "While the kettle boiled",
+            "Dad set out the mugs",
+            "the mugs",
+            "boiled Dad"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The subordinate clause is: While the kettle boiled."
         }
       ],
       "answerabilityJudgement": "All 15 seeds produce exactly one correct option with clear prompt",
@@ -555,8 +555,8 @@
       "adultReviewDecision": {
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.",
-        "acceptedExample": "When the bell rang",
-        "rejectedAlternative": "the pupils lined up quietly",
+        "acceptedExample": "Although the wind was strong",
+        "rejectedAlternative": "the boat reached",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-05-01",
         "finalStatus": "approved_with_review",
@@ -575,38 +575,38 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Combine the ideas into one sentence using because. Sam wore gloves. It was cold.",
-          "goldenAnswer": "Sam wore gloves because it was cold.",
+          "promptText": "Combine the ideas into one sentence using when. The gate opened. The children ran outside.",
+          "goldenAnswer": "When the gate opened, the children ran outside.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: Sam wore gloves because it was cold."
+          "feedbackSnippet": "A correct answer is: When the gate opened, the children ran outside."
         },
         {
           "seed": 2,
-          "promptText": "Combine the ideas into one sentence using when. The bell rang. The pupils lined up.",
-          "goldenAnswer": "When the bell rang, the pupils lined up.",
+          "promptText": "Combine the ideas into one sentence using if. The weather improves. We will hold sports day outside.",
+          "goldenAnswer": "If the weather improves, we will hold sports day outside.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: When the bell rang, the pupils lined up."
+          "feedbackSnippet": "A correct answer is: If the weather improves, we will hold sports day outside."
         },
         {
           "seed": 3,
-          "promptText": "Combine the ideas into one sentence using although. Mia was tired. She finished the race.",
-          "goldenAnswer": "Although Mia was tired, she finished the race.",
-          "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: Although Mia was tired, she finished the race."
-        },
-        {
-          "seed": 4,
           "promptText": "Combine the ideas into one sentence using because. Sam wore gloves. It was cold.",
           "goldenAnswer": "Sam wore gloves because it was cold.",
           "markingResult": "correct",
           "feedbackSnippet": "A correct answer is: Sam wore gloves because it was cold."
         },
         {
-          "seed": 5,
-          "promptText": "Combine the ideas into one sentence using when. The bell rang. The pupils lined up.",
-          "goldenAnswer": "When the bell rang, the pupils lined up.",
+          "seed": 4,
+          "promptText": "Combine the ideas into one sentence using although. The puzzle was hard. Nina solved it.",
+          "goldenAnswer": "Although the puzzle was hard, Nina solved it.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: When the bell rang, the pupils lined up."
+          "feedbackSnippet": "A correct answer is: Although the puzzle was hard, Nina solved it."
+        },
+        {
+          "seed": 5,
+          "promptText": "Combine the ideas into one sentence using before. The visitors left. They thanked the guide.",
+          "goldenAnswer": "Before the visitors left, they thanked the guide.",
+          "markingResult": "correct",
+          "feedbackSnippet": "A correct answer is: Before the visitors left, they thanked the guide."
         }
       ],
       "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
@@ -629,37 +629,37 @@
           "seed": 1,
           "promptText": "Which sentence contains a relative clause?",
           "options": [
-            "The book that I borrowed was brilliant.",
-            "After I borrowed the book, it was brilliant.",
-            "I borrowed the book and it was brilliant.",
-            "Borrowing the book, I found it brilliant."
+            "The teacher who organised the trip checked the register.",
+            "When the teacher organised the trip, she checked the register.",
+            "The teacher organised the trip and checked the register.",
+            "Organising the trip, the teacher checked the register."
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct sentence is: The book that I borrowed was brilliant."
+          "feedbackSnippet": "The correct sentence is: The teacher who organised the trip checked the register."
         },
         {
           "seed": 2,
           "promptText": "Which sentence contains a relative clause?",
           "options": [
-            "The village, which sits by the sea, is very quiet.",
-            "Because the village sits by the sea, it is quiet.",
-            "The village sits by the sea and is quiet.",
-            "Beside the sea, the village is quiet."
+            "The trophy, which gleamed in the cabinet, belonged to our team.",
+            "Because the trophy gleamed, it belonged to our team.",
+            "The trophy gleamed and belonged to our team.",
+            "In the cabinet, the trophy belonged to our team."
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct sentence is: The village, which sits by the sea, is very quiet."
+          "feedbackSnippet": "The correct sentence is: The trophy, which gleamed in the cabinet, belonged to our team."
         },
         {
           "seed": 3,
           "promptText": "Which sentence contains a relative clause?",
           "options": [
-            "The boy who dropped his hat waved to us.",
-            "When the boy dropped his hat, he waved to us.",
-            "The boy dropped his hat and waved to us.",
-            "Waving to us, the boy dropped his hat."
+            "The runner whose shoe had split stopped near the bench.",
+            "When the runner's shoe split, he stopped near the bench.",
+            "The runner stopped near the bench with a split shoe.",
+            "Stopping near the bench, the runner had a split shoe."
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct sentence is: The boy who dropped his hat waved to us."
+          "feedbackSnippet": "The correct sentence is: The runner whose shoe had split stopped near the bench."
         }
       ],
       "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
@@ -672,8 +672,8 @@
       "adultReviewDecision": {
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
-        "acceptedExample": "The book that I borrowed was brilliant.",
-        "rejectedAlternative": "After I borrowed the book, it was brilliant.",
+        "acceptedExample": "The teacher who organised the trip checked the register.",
+        "rejectedAlternative": "When the teacher organised the trip, she checked the register.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-05-01",
         "finalStatus": "approved_with_review",
@@ -692,18 +692,6 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Complete the sentence with the best relative clause. The teacher ___ helped us with the project.",
-          "options": [
-            "who had visited Egypt",
-            "because she visited Egypt",
-            "after visiting Egypt",
-            "and visited Egypt"
-          ],
-          "markingResult": "correct",
-          "feedbackSnippet": "The best completion is: who had visited Egypt."
-        },
-        {
-          "seed": 2,
           "promptText": "Complete the sentence with the best relative clause. The bicycle ___ belonged to Zara.",
           "options": [
             "that was locked outside",
@@ -715,16 +703,28 @@
           "feedbackSnippet": "The best completion is: that was locked outside."
         },
         {
-          "seed": 3,
-          "promptText": "Complete the sentence with the best relative clause. The teacher ___ helped us with the project.",
+          "seed": 2,
+          "promptText": "Complete the sentence with the best relative clause. The puppy ___ fell asleep under the table.",
           "options": [
-            "who had visited Egypt",
-            "because she visited Egypt",
-            "after visiting Egypt",
-            "and visited Egypt"
+            "that had chased the ball",
+            "because it chased the ball",
+            "and chased the ball",
+            "after the ball"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The best completion is: who had visited Egypt."
+          "feedbackSnippet": "The best completion is: that had chased the ball."
+        },
+        {
+          "seed": 3,
+          "promptText": "Complete the sentence with the best relative clause. The museum ___ opened early for our class.",
+          "options": [
+            "which displays Roman coins",
+            "because it displays Roman coins",
+            "and displays Roman coins",
+            "after Roman coins"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The best completion is: which displays Roman coins."
         }
       ],
       "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
@@ -737,8 +737,8 @@
       "adultReviewDecision": {
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
-        "acceptedExample": "who had visited Egypt",
-        "rejectedAlternative": "because she visited Egypt",
+        "acceptedExample": "that was locked outside",
+        "rejectedAlternative": "because it was outside",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-05-01",
         "finalStatus": "approved_with_review",
@@ -757,27 +757,27 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Choose the best verb form to complete the sentence. While we ___ to our friend, his phone started ringing.",
+          "promptText": "Choose the best verb form to complete the sentence. Last night, the guide ___ the route on the map.",
           "options": [
-            "talked",
-            "have talked",
-            "were talking",
-            "had talked"
+            "marked",
+            "has marked",
+            "was mark",
+            "had marking"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct form is: were talking."
+          "feedbackSnippet": "The correct form is: marked."
         },
         {
           "seed": 2,
-          "promptText": "Choose the best verb form to complete the sentence. She cannot play today because she ___ her ankle.",
+          "promptText": "Choose the best verb form to complete the sentence. By the time the coach arrived, Omar ___ the cones.",
           "options": [
-            "has twisted",
-            "twisted yesterday",
-            "was twisting",
-            "had twisted before"
+            "had collected",
+            "has collected",
+            "collects",
+            "was collect"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct form is: has twisted."
+          "feedbackSnippet": "The correct form is: had collected."
         },
         {
           "seed": 3,
@@ -810,38 +810,38 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Rewrite the sentence in the present perfect. I finish my homework.",
-          "goldenAnswer": "I have finished my homework.",
+          "promptText": "Rewrite the sentence in the past perfect. They finish the model before lunch.",
+          "goldenAnswer": "They had finished the model before lunch.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: I have finished my homework."
+          "feedbackSnippet": "A correct answer is: They had finished the model before lunch."
         },
         {
           "seed": 2,
-          "promptText": "Rewrite the sentence in the past perfect. She packs her bag before the trip.",
-          "goldenAnswer": "She had packed her bag before the trip.",
-          "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: She had packed her bag before the trip."
-        },
-        {
-          "seed": 3,
           "promptText": "Rewrite the sentence in the past progressive. The dog chases the cat.",
           "goldenAnswer": "The dog was chasing the cat.",
           "markingResult": "correct",
           "feedbackSnippet": "A correct answer is: The dog was chasing the cat."
         },
         {
-          "seed": 4,
-          "promptText": "Rewrite the sentence in the present perfect. I finish my homework.",
-          "goldenAnswer": "I have finished my homework.",
+          "seed": 3,
+          "promptText": "Rewrite the sentence in the present perfect. We tidy the classroom.",
+          "goldenAnswer": "We have tidied the classroom.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: I have finished my homework."
+          "feedbackSnippet": "A correct answer is: We have tidied the classroom."
+        },
+        {
+          "seed": 4,
+          "promptText": "Rewrite the sentence in the future perfect. The class completes the display by Friday.",
+          "goldenAnswer": "The class will have completed the display by Friday.",
+          "markingResult": "correct",
+          "feedbackSnippet": "A correct answer is: The class will have completed the display by Friday."
         },
         {
           "seed": 5,
-          "promptText": "Rewrite the sentence in the past perfect. She packs her bag before the trip.",
-          "goldenAnswer": "She had packed her bag before the trip.",
+          "promptText": "Rewrite the sentence in the past progressive. Maya paints the scenery.",
+          "goldenAnswer": "Maya was painting the scenery.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: She had packed her bag before the trip."
+          "feedbackSnippet": "A correct answer is: Maya was painting the scenery."
         }
       ],
       "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
@@ -870,7 +870,7 @@
           "seed": 2,
           "promptText": "Choose the correct verb form in each pair to complete the sentences using Standard English.",
           "markingResult": "correct",
-          "feedbackSnippet": "Correct choices: were; did."
+          "feedbackSnippet": "Correct choices: were; doesn't."
         },
         {
           "seed": 3,
@@ -899,37 +899,37 @@
           "seed": 1,
           "promptText": "Which version is clearest and avoids awkward repetition without becoming confusing?",
           "options": [
-            "Arjun gave Arjun's book to Arjun's sister because Arjun had finished Arjun's book.",
-            "Arjun gave his book to his sister because he had finished it.",
-            "Arjun gave his book to his sister because it had finished him.",
-            "He gave it to her because he had finished her."
+            "Ben gave Luca the map because Ben was carrying too many bags.",
+            "Ben gave Luca the map because he was carrying too many bags.",
+            "Ben gave Luca it because he was carrying too many bags.",
+            "He gave him it because he was carrying too many bags."
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The clearest version is: Arjun gave his book to his sister because he had finished it."
+          "feedbackSnippet": "The clearest version is: Ben gave Luca the map because he was carrying too many bags."
         },
         {
           "seed": 2,
           "promptText": "Which version is clearest and avoids awkward repetition without becoming confusing?",
           "options": [
-            "Mila put Mila's coat on the chair before Mila zipped Mila's bag.",
-            "Mila put her coat on the chair before she zipped her bag.",
-            "Mila put her coat on the chair before it zipped her bag.",
-            "She put it on the chair before she zipped it."
+            "Nina told Sofia that Nina would meet Sofia by the gate.",
+            "Nina told Sofia that she would meet her by the gate.",
+            "Nina told Sofia that Nina would meet her by the gate.",
+            "She told her that she would meet her by the gate."
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The clearest version is: Mila put her coat on the chair before she zipped her bag."
+          "feedbackSnippet": "The clearest version is: Nina told Sofia that Nina would meet her by the gate."
         },
         {
           "seed": 3,
           "promptText": "Which version is clearest and avoids awkward repetition without becoming confusing?",
           "options": [
-            "Arjun gave Arjun's book to Arjun's sister because Arjun had finished Arjun's book.",
-            "Arjun gave his book to his sister because he had finished it.",
-            "Arjun gave his book to his sister because it had finished him.",
-            "He gave it to her because he had finished her."
+            "Omar put Omar's ticket in Omar's pocket before Omar boarded the bus.",
+            "Omar put his ticket in his pocket before he boarded the bus.",
+            "Omar put it in his pocket before it boarded the bus.",
+            "He put his pocket in it before he boarded the bus."
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The clearest version is: Arjun gave his book to his sister because he had finished it."
+          "feedbackSnippet": "The clearest version is: Omar put his ticket in his pocket before he boarded the bus."
         }
       ],
       "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
@@ -952,7 +952,7 @@
           "seed": 1,
           "promptText": "Circle the most formal option in each underlined pair below to complete the passage.",
           "markingResult": "correct",
-          "feedbackSnippet": "Correct formal choices: discover; enter; request."
+          "feedbackSnippet": "Correct formal choices: assisted; verify; take place."
         },
         {
           "seed": 2,
@@ -985,38 +985,38 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Rewrite the sentence in the passive. Keep the same tense. The chef baked the bread.",
-          "goldenAnswer": "The bread was baked by the chef.",
+          "promptText": "Rewrite the sentence in the active. The lantern was carried by Sofia.",
+          "goldenAnswer": "Sofia carried the lantern.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: The bread was baked by the chef."
+          "feedbackSnippet": "A correct answer is: Sofia carried the lantern."
         },
         {
           "seed": 2,
-          "promptText": "Rewrite the sentence in the passive. Keep the same tense. The team will collect the trophy.",
-          "goldenAnswer": "The trophy will be collected by the team.",
-          "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: The trophy will be collected by the team."
-        },
-        {
-          "seed": 3,
-          "promptText": "Rewrite the sentence in the active. The local park is maintained by the council.",
-          "goldenAnswer": "The council maintains the local park.",
-          "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: The council maintains the local park."
-        },
-        {
-          "seed": 4,
           "promptText": "Rewrite the sentence in the passive. Keep the same tense. The chef baked the bread.",
           "goldenAnswer": "The bread was baked by the chef.",
           "markingResult": "correct",
           "feedbackSnippet": "A correct answer is: The bread was baked by the chef."
         },
         {
-          "seed": 5,
-          "promptText": "Rewrite the sentence in the passive. Keep the same tense. The team will collect the trophy.",
-          "goldenAnswer": "The trophy will be collected by the team.",
+          "seed": 3,
+          "promptText": "Rewrite the sentence in the passive. Keep the same tense. Grace opened the window.",
+          "goldenAnswer": "The window was opened by Grace.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: The trophy will be collected by the team."
+          "feedbackSnippet": "A correct answer is: The window was opened by Grace."
+        },
+        {
+          "seed": 4,
+          "promptText": "Rewrite the sentence in the active. The rucksack is packed by Hassan.",
+          "goldenAnswer": "Hassan packs the rucksack.",
+          "markingResult": "correct",
+          "feedbackSnippet": "A correct answer is: Hassan packs the rucksack."
+        },
+        {
+          "seed": 5,
+          "promptText": "Rewrite the sentence in the passive. Keep the same tense. The caretaker locks the gate.",
+          "goldenAnswer": "The gate is locked by the caretaker.",
+          "markingResult": "correct",
+          "feedbackSnippet": "A correct answer is: The gate is locked by the caretaker."
         }
       ],
       "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
@@ -1037,30 +1037,42 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "In the sentence below, what is the object? The noisy gull stole the sandwich from Max.",
+          "promptText": "In the sentence below, what is the object? Maya opened the heavy gate after lunch.",
           "options": [
-            "The noisy gull",
-            "stole",
-            "the sandwich",
-            "from Max"
+            "Maya",
+            "opened",
+            "the heavy gate",
+            "after lunch"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The object is: the sandwich."
+          "feedbackSnippet": "The object is: the heavy gate."
         },
         {
           "seed": 2,
-          "promptText": "In the sentence below, what is the subject? On Friday morning, our science club visited the museum.",
+          "promptText": "In the sentence below, what is the subject? During the storm, the old roof leaked.",
           "options": [
-            "On Friday morning",
-            "our science club",
-            "visited",
-            "the museum"
+            "During the storm",
+            "the old roof",
+            "leaked",
+            "the storm"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The subject is: our science club."
+          "feedbackSnippet": "The subject is: the old roof."
         },
         {
           "seed": 3,
+          "promptText": "In the sentence below, what is the object? The guide lifted the lantern carefully.",
+          "options": [
+            "The guide",
+            "lifted",
+            "the lantern",
+            "carefully"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The object is: the lantern."
+        },
+        {
+          "seed": 4,
           "promptText": "In the sentence below, what is the subject? After lunch, the tired goalkeeper caught the ball.",
           "options": [
             "After lunch",
@@ -1072,28 +1084,16 @@
           "feedbackSnippet": "The subject is: the tired goalkeeper."
         },
         {
-          "seed": 4,
-          "promptText": "In the sentence below, what is the object? The noisy gull stole the sandwich from Max.",
-          "options": [
-            "The noisy gull",
-            "stole",
-            "the sandwich",
-            "from Max"
-          ],
-          "markingResult": "correct",
-          "feedbackSnippet": "The object is: the sandwich."
-        },
-        {
           "seed": 5,
-          "promptText": "In the sentence below, what is the subject? On Friday morning, our science club visited the museum.",
+          "promptText": "In the sentence below, what is the subject? At the museum, the curator unlocked the cabinet.",
           "options": [
-            "On Friday morning",
-            "our science club",
-            "visited",
-            "the museum"
+            "At the museum",
+            "the curator",
+            "unlocked",
+            "the cabinet"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The subject is: our science club."
+          "feedbackSnippet": "The subject is: the curator."
         }
       ],
       "answerabilityJudgement": "All 15 seeds produce exactly one correct option with clear prompt",
@@ -1106,8 +1106,8 @@
       "adultReviewDecision": {
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.",
-        "acceptedExample": "the sandwich",
-        "rejectedAlternative": "The noisy gull",
+        "acceptedExample": "the heavy gate",
+        "rejectedAlternative": "Maya",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-05-01",
         "finalStatus": "approved_with_review",
@@ -1126,27 +1126,27 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Which modal verb best completes the sentence to show strong advice? You ___ wear a helmet on this trail.",
+          "promptText": "Which sentence shows a possibility, not certainty?",
           "options": [
-            "might",
-            "could",
-            "should",
-            "will"
+            "The bus will arrive at nine.",
+            "The bus must arrive at nine.",
+            "The bus might arrive at nine.",
+            "The bus arrives at nine."
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct answer is: should."
+          "feedbackSnippet": "The correct answer is: The bus might arrive at nine.."
         },
         {
           "seed": 2,
-          "promptText": "Which sentence sounds most certain?",
+          "promptText": "Which modal verb best completes the sentence to show permission? You ___ use a calculator for this task.",
           "options": [
-            "It might snow tonight.",
-            "It should snow tonight.",
-            "It will snow tonight.",
-            "It could snow tonight."
+            "may",
+            "must",
+            "will",
+            "should"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct answer is: It will snow tonight.."
+          "feedbackSnippet": "The correct answer is: may."
         },
         {
           "seed": 3,
@@ -1171,8 +1171,8 @@
       "adultReviewDecision": {
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
-        "acceptedExample": "should",
-        "rejectedAlternative": "might",
+        "acceptedExample": "The bus might arrive at nine.",
+        "rejectedAlternative": "The bus will arrive at nine.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-05-01",
         "finalStatus": "approved_with_review",
@@ -1191,51 +1191,51 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "What punctuation could be used instead of brackets in the sentence below? The guide (who had visited before) led us through the cave.",
+          "promptText": "What punctuation could be used instead of brackets in the sentence below? The trophy (which was made of silver) stood in the cabinet.",
           "options": [
-            "semi-colons",
             "dashes",
-            "colons",
-            "question marks"
+            "question marks",
+            "semi-colons",
+            "apostrophes"
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The correct answer is: dashes."
         },
         {
           "seed": 2,
-          "promptText": "What punctuation could be used instead of brackets in the sentence below? Tokyo (the capital of Japan) is one of the largest cities in the world.",
+          "promptText": "What punctuation could be used instead of brackets in the sentence below? My uncle (a keen cyclist) repaired the puncture.",
           "options": [
-            "hyphens",
+            "commas",
+            "full stops",
             "colons",
-            "semi-colons",
-            "dashes"
+            "question marks"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct answer is: dashes."
+          "feedbackSnippet": "The correct answer is: commas."
         },
         {
           "seed": 3,
-          "promptText": "What punctuation could be used instead of brackets in the sentence below? The guide (who had visited before) led us through the cave.",
+          "promptText": "What punctuation could be used instead of brackets in the sentence below? The library (which opened last year) has a new reading room.",
           "options": [
-            "semi-colons",
             "dashes",
-            "colons",
-            "question marks"
+            "exclamation marks",
+            "semi-colons",
+            "apostrophes"
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The correct answer is: dashes."
         },
         {
           "seed": 4,
-          "promptText": "What punctuation could be used instead of brackets in the sentence below? Tokyo (the capital of Japan) is one of the largest cities in the world.",
+          "promptText": "What punctuation could be used instead of brackets in the sentence below? Hassan (our team captain) organised the warm-up.",
           "options": [
-            "hyphens",
+            "commas",
+            "question marks",
             "colons",
-            "semi-colons",
-            "dashes"
+            "full stops"
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The correct answer is: dashes."
+          "feedbackSnippet": "The correct answer is: commas."
         },
         {
           "seed": 5,
@@ -1268,38 +1268,38 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Insert a pair of brackets in the correct place. My cousin the youngest in the family won the chess trophy.",
-          "goldenAnswer": "My cousin (the youngest in the family) won the chess trophy.",
+          "promptText": "Insert a pair of brackets in the correct place. The trophy made of silver stood in the cabinet.",
+          "goldenAnswer": "The trophy (made of silver) stood in the cabinet.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: My cousin (the youngest in the family) won the chess trophy."
+          "feedbackSnippet": "A correct answer is: The trophy (made of silver) stood in the cabinet."
         },
         {
           "seed": 2,
-          "promptText": "Insert a pair of brackets in the correct place. Our class visited a castle the oldest in the county to help with our history project.",
-          "goldenAnswer": "Our class visited a castle (the oldest in the county) to help with our history project.",
+          "promptText": "Insert a pair of brackets in the correct place. My uncle a keen cyclist repaired the puncture.",
+          "goldenAnswer": "My uncle (a keen cyclist) repaired the puncture.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: Our class visited a castle (the oldest in the county) to help with our history project."
+          "feedbackSnippet": "A correct answer is: My uncle (a keen cyclist) repaired the puncture."
         },
         {
           "seed": 3,
-          "promptText": "Insert a pair of brackets in the correct place. My cousin the youngest in the family won the chess trophy.",
-          "goldenAnswer": "My cousin (the youngest in the family) won the chess trophy.",
+          "promptText": "Insert a pair of brackets in the correct place. The library which opened last year has a new reading room.",
+          "goldenAnswer": "The library (which opened last year) has a new reading room.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: My cousin (the youngest in the family) won the chess trophy."
+          "feedbackSnippet": "A correct answer is: The library (which opened last year) has a new reading room."
         },
         {
           "seed": 4,
-          "promptText": "Insert a pair of brackets in the correct place. Our class visited a castle the oldest in the county to help with our history project.",
-          "goldenAnswer": "Our class visited a castle (the oldest in the county) to help with our history project.",
+          "promptText": "Insert a pair of brackets in the correct place. Hassan our team captain organised the warm-up.",
+          "goldenAnswer": "Hassan (our team captain) organised the warm-up.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: Our class visited a castle (the oldest in the county) to help with our history project."
+          "feedbackSnippet": "A correct answer is: Hassan (our team captain) organised the warm-up."
         },
         {
           "seed": 5,
-          "promptText": "Insert a pair of brackets in the correct place. My cousin the youngest in the family won the chess trophy.",
-          "goldenAnswer": "My cousin (the youngest in the family) won the chess trophy.",
+          "promptText": "Insert a pair of brackets in the correct place. The old oak tree over two hundred years old shaded the path.",
+          "goldenAnswer": "The old oak tree (over two hundred years old) shaded the path.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: My cousin (the youngest in the family) won the chess trophy."
+          "feedbackSnippet": "A correct answer is: The old oak tree (over two hundred years old) shaded the path."
         }
       ],
       "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
@@ -1320,38 +1320,38 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Punctuate the direct speech correctly. Dad shouted \"Run inside!\"",
-          "goldenAnswer": "Dad shouted, \"Run inside!\"",
+          "promptText": "Punctuate the direct speech correctly. The guide said \"Follow the red arrows.\"",
+          "goldenAnswer": "The guide said, \"Follow the red arrows.\"",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: Dad shouted, “Run inside!”"
+          "feedbackSnippet": "A correct answer is: The guide said, “Follow the red arrows.”"
         },
         {
           "seed": 2,
-          "promptText": "Punctuate the direct speech correctly. \"Sit down\" said the coach.",
-          "goldenAnswer": "\"Sit down!\" said the coach.",
+          "promptText": "Punctuate the direct speech correctly. \"What a huge wave that was\" shouted Ben.",
+          "goldenAnswer": "\"What a huge wave that was!\" shouted Ben.",
           "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: “Sit down!” said the coach."
+          "feedbackSnippet": "A correct answer is: “What a huge wave that was!” shouted Ben."
         },
         {
           "seed": 3,
+          "promptText": "Punctuate the direct speech correctly. Maya whispered \"Please wait outside.\"",
+          "goldenAnswer": "Maya whispered, \"Please wait outside.\"",
+          "markingResult": "correct",
+          "feedbackSnippet": "A correct answer is: Maya whispered, “Please wait outside.”"
+        },
+        {
+          "seed": 4,
           "promptText": "Punctuate the direct speech correctly. \"Where are you going\" asked Mum.",
           "goldenAnswer": "\"Where are you going?\" asked Mum.",
           "markingResult": "correct",
           "feedbackSnippet": "A correct answer is: “Where are you going?” asked Mum."
         },
         {
-          "seed": 4,
+          "seed": 5,
           "promptText": "Punctuate the direct speech correctly. Dad shouted \"Run inside!\"",
           "goldenAnswer": "Dad shouted, \"Run inside!\"",
           "markingResult": "correct",
           "feedbackSnippet": "A correct answer is: Dad shouted, “Run inside!”"
-        },
-        {
-          "seed": 5,
-          "promptText": "Punctuate the direct speech correctly. \"Sit down\" said the coach.",
-          "goldenAnswer": "\"Sit down!\" said the coach.",
-          "markingResult": "correct",
-          "feedbackSnippet": "A correct answer is: “Sit down!” said the coach."
         }
       ],
       "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
@@ -1372,18 +1372,6 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Choose the correct phrase to complete the sentence: We found the ___ bowl behind the sofa.",
-          "options": [
-            "dogs",
-            "dog's",
-            "dogs'",
-            "dogs's"
-          ],
-          "markingResult": "correct",
-          "feedbackSnippet": "The correct answer is: dog's."
-        },
-        {
-          "seed": 2,
           "promptText": "Choose the correct phrase to complete the sentence: The ___ coats were hanging by the door.",
           "options": [
             "children's",
@@ -1395,7 +1383,7 @@
           "feedbackSnippet": "The correct answer is: children's."
         },
         {
-          "seed": 3,
+          "seed": 2,
           "promptText": "Choose the correct phrase to complete the sentence: The ___ playground was closed after the storm.",
           "options": [
             "girls",
@@ -1405,6 +1393,18 @@
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The correct answer is: girls'."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the correct phrase to complete the sentence: We admired the ___ painting in the gallery.",
+          "options": [
+            "artist's",
+            "artists",
+            "artists'",
+            "artist"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The correct answer is: artist's."
         }
       ],
       "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
@@ -1425,39 +1425,39 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Why is 'I done my homework' wrong in Standard English?",
+          "promptText": "Why is 'We was ready' wrong in Standard English?",
           "options": [
-            "Because Standard English uses ‘did’, not ‘done’, in that sentence.",
-            "Because ‘homework’ cannot be the object.",
-            "Because the sentence should be passive.",
-            "Because all past tense verbs end in -ed."
+            "Because Standard English uses ‘were’ with ‘we’.",
+            "Because ‘ready’ should be a verb.",
+            "Because the sentence must be passive.",
+            "Because all statements need a comma."
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The best explanation is: Because Standard English uses ‘did’, not ‘done’, in that sentence.."
+          "feedbackSnippet": "The best explanation is: Because Standard English uses ‘were’ with ‘we’.."
         },
         {
           "seed": 2,
-          "promptText": "Why is there a comma after the opening words in this sentence? Before sunrise, the campers packed their bags.",
+          "promptText": "Why is there a comma after the opening words in this sentence? Without warning, the lights flickered.",
           "options": [
             "Because the opening words are a fronted adverbial.",
-            "Because every long sentence needs a comma near the start.",
-            "Because ‘sunrise’ is a noun.",
-            "Because the sentence is in the past tense."
+            "Because ‘lights’ is a plural noun.",
+            "Because the sentence uses direct speech.",
+            "Because every past-tense sentence starts with a comma."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The best explanation is: Because the opening words are a fronted adverbial.."
         },
         {
           "seed": 3,
-          "promptText": "Why is 'I done my homework' wrong in Standard English?",
+          "promptText": "Why is 'She don't know' wrong in Standard English?",
           "options": [
-            "Because Standard English uses ‘did’, not ‘done’, in that sentence.",
-            "Because ‘homework’ cannot be the object.",
-            "Because the sentence should be passive.",
-            "Because all past tense verbs end in -ed."
+            "Because Standard English uses ‘doesn't’ with ‘she’.",
+            "Because ‘know’ should always be past tense.",
+            "Because the sentence needs a question mark.",
+            "Because ‘she’ is an object."
           ],
           "markingResult": "correct",
-          "feedbackSnippet": "The best explanation is: Because Standard English uses ‘did’, not ‘done’, in that sentence.."
+          "feedbackSnippet": "The best explanation is: Because Standard English uses ‘doesn't’ with ‘she’.."
         }
       ],
       "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
@@ -1490,28 +1490,28 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Rewrite the sentence in Standard English. I done my homework before tea.",
+          "promptText": "Rewrite the sentence in Standard English. They was waiting by the gate.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
           "feedbackSnippet": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 2,
-          "promptText": "Rewrite the sentence in Standard English. We was walking to school.",
+          "promptText": "Rewrite the sentence in Standard English. She seen the poster yesterday.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
           "feedbackSnippet": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 3,
-          "promptText": "Rewrite the sentence in Standard English. I done my homework before tea.",
+          "promptText": "Rewrite the sentence in Standard English. The players was ready for the start.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
           "feedbackSnippet": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
         },
         {
           "seed": 4,
-          "promptText": "Rewrite the sentence in Standard English. We was walking to school.",
+          "promptText": "Rewrite the sentence in Standard English. Maya done her reading record.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
           "feedbackSnippet": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
