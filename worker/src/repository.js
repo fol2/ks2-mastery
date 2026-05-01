@@ -6850,6 +6850,10 @@ function measureBootstrapPhaseSync(capacity, name, fn) {
   }
 }
 
+function accountSnapshotForBootstrap(account, accountId) {
+  return account && String(account.id || '') === String(accountId || '') ? account : null;
+}
+
 async function bootstrapBundle(db, accountId, {
   publicReadModels = false,
   // U7: opt-in to the selected-learner-bounded shape. Defaults mirror the
@@ -6861,11 +6865,18 @@ async function bootstrapBundle(db, accountId, {
   // U7: include `revision` + `account.learnerList` only when the caller
   // is using the v2 envelope shape. Legacy callers get the legacy shape.
   revisionEnvelope = false,
+  // P7: the app route already refreshes and reads the account row through
+  // ensureAccount() before dispatching bootstrap. Reuse that trusted
+  // server-side snapshot to avoid a duplicate adult account point read.
+  accountSnapshot = null,
   capacity = null,
 } = {}) {
-  const account = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.account, () => (
-    first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId])
-  ));
+  const snapshot = accountSnapshotForBootstrap(accountSnapshot, accountId);
+  const account = snapshot
+    ? measureBootstrapPhaseSync(capacity, BOOTSTRAP_PHASE_TIMING.account, () => snapshot)
+    : await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.account, () => (
+      first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId])
+    ));
   // U7: on the bounded path we omit the ~450 KB `BUNDLED_MONSTER_VISUAL_CONFIG`
   // from the bootstrap response. Clients fetch the full config lazily via
   // the existing monster-visual-config read path; the bootstrap instead
@@ -7214,11 +7225,13 @@ async function bootstrapBundle(db, accountId, {
 async function bootstrapNotModifiedProbe(db, accountId, {
   lastKnownRevision,
   preferredLearnerId = null,
+  accountSnapshot = null,
   capacity = null,
 }) {
   return measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.notModifiedProbe, async () => {
     if (!lastKnownRevision || typeof lastKnownRevision !== 'string') return null;
-    const account = await first(db, 'SELECT id, selected_learner_id, repo_revision FROM adult_accounts WHERE id = ?', [accountId]);
+    const account = accountSnapshotForBootstrap(accountSnapshot, accountId)
+      || await first(db, 'SELECT id, selected_learner_id, repo_revision FROM adult_accounts WHERE id = ?', [accountId]);
     if (!account) return null;
     const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
     const writableSelectedId = resolveBootstrapSelectedLearnerId(
@@ -8539,11 +8552,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       lastKnownRevision = null,
       preferredLearnerId = null,
       publicReadModels = false,
+      accountSnapshot = null,
     } = {}) {
       if (lastKnownRevision) {
         const probe = await bootstrapNotModifiedProbe(db, accountId, {
           lastKnownRevision,
           preferredLearnerId,
+          accountSnapshot,
           capacity,
         });
         if (probe) {
@@ -8577,6 +8592,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         selectedLearnerBounded: true,
         preferredLearnerId,
         revisionEnvelope: true,
+        accountSnapshot,
         capacity,
       });
       if (capacity && bundle?.bootstrapCapacity != null && typeof capacity.setBootstrapCapacity === 'function') {
@@ -8593,12 +8609,14 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async bootstrapV2Get(accountId, {
       preferredLearnerId = null,
       publicReadModels = false,
+      accountSnapshot = null,
     } = {}) {
       const bundle = await bootstrapBundle(db, accountId, {
         publicReadModels,
         selectedLearnerBounded: true,
         preferredLearnerId,
         revisionEnvelope: true,
+        accountSnapshot,
         capacity,
       });
       if (capacity && bundle?.bootstrapCapacity != null && typeof capacity.setBootstrapCapacity === 'function') {

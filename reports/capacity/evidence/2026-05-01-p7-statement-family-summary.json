@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "kind": "capacity-statement-family-summary",
+  "runId": "2026-05-01-p6-60-diagnostic",
+  "route": "GET /api/bootstrap",
+  "generatedAt": "2026-05-01T22:34:24.689Z",
+  "modellingOnly": true,
+  "certifying": false,
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "rawRequestIdsPersisted": false,
+    "rawStatementNamesPersisted": false,
+    "rawSqlPersisted": false,
+    "emailsPersisted": false,
+    "learnerNamesPersisted": false,
+    "cookiesPersisted": false,
+    "bearerTokensPersisted": false
+  },
+  "source": {
+    "requestCount": 80,
+    "topTailSampleCount": 10,
+    "statementCount": 880,
+    "statementsTruncated": 0
+  },
+  "statementFamilies": [
+    {
+      "family": "account-row-selected-learner",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 2890,
+      "durationMsP95": 111,
+      "topTailDurationMsTotal": 1007,
+      "topTailDurationMsP95": 114,
+      "rowsReadP95": 1,
+      "rowsWrittenP95": null,
+      "candidate": true,
+      "notes": "Bootstrap account row used for selected learner, account revision and role fields."
+    },
+    {
+      "family": "account-upsert",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 2987,
+      "durationMsP95": 98,
+      "topTailDurationMsTotal": 960,
+      "topTailDurationMsP95": 178,
+      "rowsReadP95": 1,
+      "rowsWrittenP95": null,
+      "candidate": false,
+      "notes": "Authenticated account upsert/refresh before route handling; returns the account row."
+    },
+    {
+      "family": "demo-active-account-guard",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 2506,
+      "durationMsP95": 76,
+      "topTailDurationMsTotal": 828,
+      "topTailDurationMsP95": 149,
+      "rowsReadP95": 1,
+      "rowsWrittenP95": null,
+      "candidate": true,
+      "notes": "Demo-only active-account guard; can reuse a trusted account snapshot before falling back to D1."
+    },
+    {
+      "family": "auth-session-account-row",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 2320,
+      "durationMsP95": 74,
+      "topTailDurationMsTotal": 802,
+      "topTailDurationMsP95": 174,
+      "rowsReadP95": 1,
+      "rowsWrittenP95": null,
+      "candidate": false,
+      "notes": "Session/account authentication lookup; already required before route handling."
+    },
+    {
+      "family": "learner-list-revision",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 2756,
+      "durationMsP95": 97,
+      "topTailDurationMsTotal": 744,
+      "topTailDurationMsP95": 80,
+      "rowsReadP95": 0,
+      "rowsWrittenP95": null,
+      "candidate": false,
+      "notes": "Learner-list revision ingredient for bootstrap cache invalidation."
+    },
+    {
+      "family": "monster-visual-config-pointer",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 2543,
+      "durationMsP95": 77,
+      "topTailDurationMsTotal": 711,
+      "topTailDurationMsP95": 79,
+      "rowsReadP95": 1,
+      "rowsWrittenP95": null,
+      "candidate": false,
+      "notes": "Compact monster visual runtime pointer."
+    },
+    {
+      "family": "membership-learner-rows",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 27.755,
+      "durationMsP95": 0.504,
+      "topTailDurationMsTotal": 3.235,
+      "topTailDurationMsP95": 0.504,
+      "rowsReadP95": 4,
+      "rowsWrittenP95": 0,
+      "candidate": false,
+      "notes": "Writable learner membership rows and learner revisions."
+    },
+    {
+      "family": "child-game-state",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 17.316,
+      "durationMsP95": 0.339,
+      "topTailDurationMsTotal": 2.677,
+      "topTailDurationMsP95": 0.592,
+      "rowsReadP95": 0,
+      "rowsWrittenP95": 0,
+      "candidate": false,
+      "notes": "Child game-state rows for selected and sibling learner correctness."
+    },
+    {
+      "family": "public-event-rows",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 21.29,
+      "durationMsP95": 0.382,
+      "topTailDurationMsTotal": 2.531,
+      "topTailDurationMsP95": 0.506,
+      "rowsReadP95": 0,
+      "rowsWrittenP95": 0,
+      "candidate": false,
+      "notes": "Bounded public event rows for first paint."
+    },
+    {
+      "family": "public-session-rows",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 20.094,
+      "durationMsP95": 0.329,
+      "topTailDurationMsTotal": 2.168,
+      "topTailDurationMsP95": 0.314,
+      "rowsReadP95": 0,
+      "rowsWrittenP95": 0,
+      "candidate": false,
+      "notes": "Bounded public practice-session rows for first paint."
+    },
+    {
+      "family": "child-subject-state",
+      "count": 80,
+      "requestCount": 80,
+      "durationMsTotal": 18.816,
+      "durationMsP95": 0.292,
+      "topTailDurationMsTotal": 1.768,
+      "topTailDurationMsP95": 0.226,
+      "rowsReadP95": 0,
+      "rowsWrittenP95": 0,
+      "candidate": false,
+      "notes": "Child subject-state rows for selected and sibling learner correctness."
+    }
+  ],
+  "rankedCandidates": [
+    {
+      "rank": 1,
+      "family": "account-row-selected-learner",
+      "reason": "The authenticated route already has an account row from ensureAccount; pass it into bootstrap instead of re-reading."
+    },
+    {
+      "rank": 2,
+      "family": "demo-active-account-guard",
+      "reason": "The authenticated route already has a trusted demo account snapshot; use it before falling back to the existing guard."
+    }
+  ]
+}

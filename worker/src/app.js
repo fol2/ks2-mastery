@@ -23,6 +23,7 @@ import { createWorkerRepository } from './repository.js';
 import { handleTextToSpeechRequest } from './tts.js';
 import {
   createDemoSession,
+  hasActiveDemoAccountSnapshot,
   isProductionRuntime,
   protectDemoParentHubRead,
   protectDemoSubjectCommand,
@@ -1279,9 +1280,13 @@ export function createWorkerApp({
 
         if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
           if (session?.demo) {
-            // U3 round 1 (P1 #03): use the capacity-wrapped DB so the
-            // demo-active lookup is counted.
-            await requireActiveDemoAccount(requireDatabaseWithCapacity(env, capacity), session.accountId, now());
+            const nowTs = now();
+            if (!hasActiveDemoAccountSnapshot(account, nowTs)) {
+              // U3 round 1 (P1 #03): use the capacity-wrapped DB so the
+              // fallback demo-active lookup is counted when the preloaded
+              // account snapshot is absent or stale.
+              await requireActiveDemoAccount(requireDatabaseWithCapacity(env, capacity), session.accountId, nowTs);
+            }
           }
           const usePublic = shouldUsePublicReadModels(request, env);
           // U7: on the public path, upgrade GET to the v2 bounded envelope.
@@ -1292,9 +1297,11 @@ export function createWorkerApp({
             ? await repository.bootstrapV2Get(session.accountId, {
               publicReadModels: true,
               preferredLearnerId: url.searchParams.get('preferredLearnerId') || null,
+              accountSnapshot: account,
             })
             : await repository.bootstrap(session.accountId, {
               publicReadModels: usePublic,
+              accountSnapshot: account,
             });
           return json({
             ok: true,
@@ -1326,7 +1333,10 @@ export function createWorkerApp({
         // callers that cannot mint a POST body).
         if (url.pathname === '/api/bootstrap' && request.method === 'POST') {
           if (session?.demo) {
-            await requireActiveDemoAccount(requireDatabaseWithCapacity(env, capacity), session.accountId, now());
+            const nowTs = now();
+            if (!hasActiveDemoAccountSnapshot(account, nowTs)) {
+              await requireActiveDemoAccount(requireDatabaseWithCapacity(env, capacity), session.accountId, nowTs);
+            }
           }
           // U7 adv-u7-r1-003: cap the POST body so a 10 KB+ crafted
           // `lastKnownRevision` is rejected before allocation (matches
@@ -1355,6 +1365,7 @@ export function createWorkerApp({
             publicReadModels: usePublic,
             lastKnownRevision,
             preferredLearnerId,
+            accountSnapshot: account,
           });
           if (bundle?.notModified) {
             // U7: notModified body stays tight (< 2 KB). No session
