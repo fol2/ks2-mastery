@@ -1,0 +1,85 @@
+{
+  "ok": false,
+  "releaseId": "grammar-qg-p11-2026-04-30",
+  "evidenceOrigin": "production-ui-refactor-p4",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "production-ui-refactor-p4",
+  "contentReleaseId": "grammar-qg-p11-2026-04-30",
+  "testedTemplateIds": [],
+  "answerSpecFamiliesCovered": [],
+  "command": "npm run smoke:production:grammar -- --json --evidence-origin=production-ui-refactor-p4 --expected-release=grammar-qg-p11-2026-04-30 --out=reports/ui-refactor/ui-refactor-p4-grammar-production-smoke-2026-05-01.json",
+  "learnerFixtureType": "demo-session",
+  "itemCreationResult": {
+    "ok": false,
+    "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
+  },
+  "answerSubmissionResult": {
+    "ok": false,
+    "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
+  },
+  "readModelUpdateResult": {
+    "ok": false,
+    "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
+  },
+  "noAnswerLeakAssertion": {
+    "ok": true,
+    "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
+  },
+  "semanticCueAssertion": {
+    "ok": false,
+    "detail": ""
+  },
+  "promptCueAssertion": {
+    "ok": false,
+    "detail": ""
+  },
+  "readAloudAssertion": {
+    "ok": false,
+    "detail": ""
+  },
+  "releaseIdAssertion": {
+    "ok": false,
+    "detail": "contentReleaseId not observed; expected grammar-qg-p11-2026-04-30"
+  },
+  "normalRoundResult": {
+    "ok": false,
+    "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
+  },
+  "miniTestResult": {
+    "ok": false,
+    "detail": ""
+  },
+  "repairResult": {
+    "ok": false,
+    "detail": ""
+  },
+  "cueAssertionResult": {
+    "ok": false,
+    "detail": ""
+  },
+  "forbiddenKeyScanResult": {
+    "ok": true,
+    "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
+  },
+  "failureDetails": {
+    "normalRoundResult": {
+      "ok": false,
+      "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
+    },
+    "miniTestResult": {
+      "ok": false,
+      "detail": ""
+    },
+    "repairResult": {
+      "ok": false,
+      "detail": ""
+    },
+    "cueAssertionResult": {
+      "ok": false,
+      "detail": ""
+    }
+  },
+  "timestamp": "2026-05-01T20:58:41.913Z",
+  "commitSha": "13d85f14795c0295e127c4515cec1f2b8540e8c9"
+}
