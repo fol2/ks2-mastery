@@ -98,9 +98,9 @@ export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
     templateId: 'build_noun_phrase',
     seed: 0,
     response: Object.freeze({
-      part1: 'The tall',
-      part2: 'captain',
-      part3: 'with curly hair',
+      part1: 'The careful',
+      part2: 'detective',
+      part3: 'with a silver badge',
     }),
   }),
 ]);
