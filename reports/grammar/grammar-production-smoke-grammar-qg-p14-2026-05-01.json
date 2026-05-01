@@ -1,85 +1,86 @@
 {
-  "ok": false,
+  "ok": true,
   "releaseId": "grammar-qg-p14-2026-05-01",
   "evidenceOrigin": "post-deploy",
   "environment": "production",
   "deployedUrl": "https://ks2.eugnel.uk",
   "origin": "post-deploy",
   "contentReleaseId": "grammar-qg-p14-2026-05-01",
-  "testedTemplateIds": [],
-  "answerSpecFamiliesCovered": [],
+  "testedTemplateIds": [
+    "qg_modal_verb_explain",
+    "fronted_adverbial_choose",
+    "qg_modal_verb_explain",
+    "qg_subject_object_classify_table",
+    "tense_rewrite",
+    "fix_fronted_adverbial",
+    "combine_clauses_rewrite",
+    "build_noun_phrase",
+    "identify_words_in_sentence",
+    "qg_p4_voice_roles_transfer"
+  ],
+  "answerSpecFamiliesCovered": [
+    "exact",
+    "multiField",
+    "normalisedText",
+    "punctuationPattern",
+    "acceptedSet",
+    "manualReviewOnly"
+  ],
   "command": "npm run smoke:production:grammar -- --json --evidence-origin=post-deploy --expected-release=grammar-qg-p14-2026-05-01 --out=reports/grammar/grammar-production-smoke-grammar-qg-p14-2026-05-01.json",
   "learnerFixtureType": "demo-session",
   "itemCreationResult": {
-    "ok": false,
-    "detail": "grammar submit-answer failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":56}"
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
   },
   "answerSubmissionResult": {
-    "ok": false,
-    "detail": "grammar submit-answer failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":56}"
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
   },
   "readModelUpdateResult": {
-    "ok": false,
-    "detail": "grammar submit-answer failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":56}"
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
   },
   "noAnswerLeakAssertion": {
     "ok": true,
     "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
   },
   "semanticCueAssertion": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
   },
   "promptCueAssertion": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
   },
   "readAloudAssertion": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
   },
   "releaseIdAssertion": {
-    "ok": false,
-    "detail": "contentReleaseId not observed; expected grammar-qg-p14-2026-05-01"
+    "ok": true,
+    "detail": "contentReleaseId=grammar-qg-p14-2026-05-01"
   },
   "normalRoundResult": {
-    "ok": false,
-    "detail": "grammar submit-answer failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":56}"
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
   },
   "miniTestResult": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "answered=1, reviewSize=8"
   },
   "repairResult": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "supportKind=faded, aiKind=explanation"
   },
   "cueAssertionResult": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
   },
   "forbiddenKeyScanResult": {
     "ok": true,
     "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
   },
-  "failureDetails": {
-    "normalRoundResult": {
-      "ok": false,
-      "detail": "grammar submit-answer failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":56}"
-    },
-    "miniTestResult": {
-      "ok": false,
-      "detail": ""
-    },
-    "repairResult": {
-      "ok": false,
-      "detail": ""
-    },
-    "cueAssertionResult": {
-      "ok": false,
-      "detail": ""
-    }
-  },
-  "timestamp": "2026-05-01T22:19:04.583Z",
-  "commitSha": "121bad4831ab7c1017e02ca99c7839be85be21c0"
+  "failureDetails": null,
+  "timestamp": "2026-05-01T22:20:30.241Z",
+  "commitSha": "69df710ea87d96b32c9ab55a7b2697ba184ce14f"
 }
