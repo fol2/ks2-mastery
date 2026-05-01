@@ -1,9 +1,11 @@
 # Grammar QG P14 — Depth, Variety, Session Effectiveness and Star-Pacing Contract
 
-**Status:** proposed next phase  
+**Status:** complete for pre-deploy review; post-deploy smoke remains after merge/deployment
 **Language:** UK English  
 **Primary release boundary:** starts from `grammar-qg-p11-2026-04-30` as certified in P13  
 **Purpose:** move beyond certification into genuine learning depth, question variety and production effectiveness.
+
+**Completion evidence (2026-05-01):** `grammar-qg-p14-2026-05-01` has 110 templates, 3,300 render-inventory items, 2,496 unique learner-visible surfaces, 1,622 unique prompt texts, 0 active low-diversity families, and no active template below 10 learner-visible surfaces across seeds 1-30. The release remains `CERTIFIED_PRE_DEPLOY` until the post-deploy production smoke is run after merge/deployment.
 
 ## 1. Why P14 exists
 
@@ -344,16 +346,16 @@ Acceptance:
 
 P14 can close only when all are true:
 
-- [ ] The current pool has a committed diversity baseline.
-- [ ] Smart sessions do not repeat the same template within a normal 5-question round.
-- [ ] Low-diversity templates have been expanded or explicitly limited.
-- [ ] The active pool has at least 110 production templates or a documented equivalent generator-depth improvement.
-- [ ] Unique learner-visible surfaces across 30 seeds are at least 2,000.
-- [ ] The UI distinguishes quick practice from deep practice.
-- [ ] Star-pacing simulation is attached and reviewed.
-- [ ] Per-click learner surface audit exists.
-- [ ] Every added or changed question family has quality evidence.
-- [ ] Production release evidence is regenerated under the new content release ID.
+- [x] The current pool has a committed diversity baseline.
+- [x] Smart sessions do not repeat the same template within a normal 5-question round.
+- [x] Low-diversity templates have been expanded or explicitly limited.
+- [x] The active pool has at least 110 production templates or a documented equivalent generator-depth improvement.
+- [x] Unique learner-visible surfaces across 30 seeds are at least 2,000.
+- [x] The UI distinguishes quick practice from deep practice.
+- [x] Star-pacing simulation is attached and reviewed.
+- [x] Per-click learner surface audit exists.
+- [x] Every added or changed question family has quality evidence.
+- [x] Production release evidence is regenerated under the new content release ID.
 
 ## 9. Product answer for the parent/user
 

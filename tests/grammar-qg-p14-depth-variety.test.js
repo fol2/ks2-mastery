@@ -76,7 +76,7 @@ describe('Grammar QG P14 depth and variety contract', () => {
     assert.ok(uniquePrompts.size >= 1100, `unique prompts: ${uniquePrompts.size}`);
   });
 
-  it('keeps only deliberate fixed diagnostics below ten surfaces', () => {
+  it('expands the former low-diversity fixed banks below the P14 threshold', () => {
     const inventory = readReport('grammar-qg-p14-render-inventory.json');
     const fixedDiagnostics = new Set(GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS);
     const perTemplate = new Map();
@@ -85,18 +85,21 @@ describe('Grammar QG P14 depth and variety contract', () => {
       perTemplate.get(item.templateId).add(learnerVisibleSurface(item));
     }
 
-    const unexpectedLowDiversity = [...perTemplate.entries()]
-      .filter(([templateId, surfaces]) => surfaces.size < 10 && !fixedDiagnostics.has(templateId))
+    const lowDiversityFamilies = [...perTemplate.entries()]
+      .filter(([, surfaces]) => surfaces.size <= 3)
+      .map(([templateId, surfaces]) => ({ templateId, uniqueSurfaceCount: surfaces.size }));
+    const underExpandedFamilies = [...perTemplate.entries()]
+      .filter(([, surfaces]) => surfaces.size < 10)
       .map(([templateId, surfaces]) => ({ templateId, uniqueSurfaceCount: surfaces.size }));
 
-    assert.equal(fixedDiagnostics.size, 23);
-    assert.deepEqual(unexpectedLowDiversity, []);
+    assert.equal(fixedDiagnostics.size, 0);
+    assert.ok(lowDiversityFamilies.length < 5, `low-diversity families: ${JSON.stringify(lowDiversityFamilies)}`);
+    assert.deepEqual(underExpandedFamilies, []);
 
-    for (const templateId of fixedDiagnostics) {
-      const metadata = GRAMMAR_TEMPLATE_METADATA.find((template) => template.id === templateId);
-      assert.equal(metadata?.fixedDiagnostic, true, templateId);
-      assert.equal(metadata?.schedulePriority, 'low', templateId);
-    }
+    assert.deepEqual(
+      GRAMMAR_TEMPLATE_METADATA.filter((template) => template.fixedDiagnostic || template.schedulePriority === 'low').map((template) => template.id),
+      [],
+    );
   });
 
   it('keeps every P14 selected-response item to four distinct options', () => {

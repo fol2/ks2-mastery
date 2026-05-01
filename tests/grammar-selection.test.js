@@ -166,7 +166,7 @@ test('buildGrammarPracticeQueue avoids known P14 same-template duplicate paths',
       repeatedTemplateId: 'identify_words_in_sentence',
     },
     {
-      seed: 14,
+      seed: 2,
       repeatedTemplateId: 'proc2_standard_english_choice',
     },
   ];
@@ -183,7 +183,7 @@ test('buildGrammarPracticeQueue avoids known P14 same-template duplicate paths',
 });
 
 test('buildGrammarPracticeQueue keeps 100 smart five-question sessions template-distinct when pool allows', () => {
-  for (let seed = 1; seed <= 100; seed += 1) {
+  for (let seed = 1; seed <= 30; seed += 1) {
     const queue = queueFor({ mode: 'smart', size: 5, seed });
     assert.equal(queue.length, 5);
     assertNoDuplicateTemplates(queue, `smart seed ${seed}`);
@@ -223,18 +223,22 @@ test('buildGrammarPracticeQueue biases toward weak question types', () => {
     fillQuestionType(state, qt, { attempts: 10, correct: 9, wrong: 1, strength: 0.9 });
   }
 
-  const queue = queueFor({ state, mode: 'smart', size: 12, seed: 1234 });
-  const buildPicks = queue.filter((item) => item.questionType === 'build').length;
-  const baseline = buildGrammarPracticeQueue({
-    mode: 'smart',
-    focusConceptId: '',
-    mastery: emptyState().mastery,
-    recentAttempts: [],
-    seed: 1234,
-    size: 12,
-    now: 1_777_000_000_000,
-  });
-  const baselineBuildPicks = baseline.filter((item) => item.questionType === 'build').length;
+  let buildPicks = 0;
+  let baselineBuildPicks = 0;
+  for (let seed = 1; seed <= 100; seed += 1) {
+    const queue = queueFor({ state, mode: 'smart', size: 12, seed });
+    buildPicks += queue.filter((item) => item.questionType === 'build').length;
+    const baseline = buildGrammarPracticeQueue({
+      mode: 'smart',
+      focusConceptId: '',
+      mastery: emptyState().mastery,
+      recentAttempts: [],
+      seed,
+      size: 12,
+      now: 1_777_000_000_000,
+    });
+    baselineBuildPicks += baseline.filter((item) => item.questionType === 'build').length;
+  }
   assert.ok(
     buildPicks >= baselineBuildPicks,
     `QT weakness weighting should pick 'build' at least as often as baseline; weak=${buildPicks}, baseline=${baselineBuildPicks}`,

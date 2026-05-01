@@ -4,7 +4,7 @@ Content Release: grammar-qg-p14-2026-05-01
 Total Items: 3300
 Templates: 110
 Seed Range: 1..30
-Generated: 2026-05-01T13:33:07.494Z
+Generated: 2026-05-01T16:23:10.239Z
 
 _This report includes answer internals and is for adult review only._
 
@@ -40,36 +40,36 @@ _This report includes answer internals and is for adult review only._
 | sentence_type_table | 28 | table_choice | 4 rows/fields | Classify sentence functions. Tick one box in each  | Mia tucked the map into her coat pocket. → statement \| How q |
 | sentence_type_table | 29 | table_choice | 4 rows/fields | Classify sentence functions. Tick one box in each  | Where did you put the compass? → question \| Bring your readi |
 | sentence_type_table | 30 | table_choice | 4 rows/fields | Classify sentence functions. Tick one box in each  | Where did you put the compass? → question \| The lantern swun |
-| question_mark_select | 1 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 2 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 3 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 4 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 5 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 6 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 7 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 8 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 9 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 10 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 11 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 12 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 13 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 14 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 15 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 16 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
+| question_mark_select | 1 | checkbox_list | What a difficult puzzle this is, Did the | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Did the train arri |
+| question_mark_select | 2 | checkbox_list | How bright the lantern looked, Do you kn | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Do you know the wa |
+| question_mark_select | 3 | checkbox_list | What a busy morning we have had, Is Maya | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Maya bringing t |
+| question_mark_select | 4 | checkbox_list | Can the library open early today, The li | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can the library op |
+| question_mark_select | 5 | checkbox_list | Did the team remember their water bottle | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Did the team remem |
+| question_mark_select | 6 | checkbox_list | Do you think the museum is open, Priya w | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Do you think the m |
+| question_mark_select | 7 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
+| question_mark_select | 8 | checkbox_list | Is the science folder on the desk, Freya | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is the science fol |
+| question_mark_select | 9 | checkbox_list | Did the runners hear the whistle, The ju | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Did the runners he |
+| question_mark_select | 10 | checkbox_list | Where is the spare key, I wonder where t | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Where is the spare |
+| question_mark_select | 11 | checkbox_list | What a difficult puzzle this is, Did the | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Did the train arri |
+| question_mark_select | 12 | checkbox_list | How bright the lantern looked, Do you kn | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Do you know the wa |
+| question_mark_select | 13 | checkbox_list | What a busy morning we have had, Is Maya | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Maya bringing t |
+| question_mark_select | 14 | checkbox_list | Can the library open early today, The li | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can the library op |
+| question_mark_select | 15 | checkbox_list | Did the team remember their water bottle | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Did the team remem |
+| question_mark_select | 16 | checkbox_list | Do you think the museum is open, Priya w | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Do you think the m |
 | question_mark_select | 17 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 18 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 19 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 20 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 21 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 22 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 23 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 24 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 25 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 26 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
-| question_mark_select | 27 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 28 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 29 | checkbox_list | How good it would be if Jay could come,  | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Jay going to co |
-| question_mark_select | 30 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
+| question_mark_select | 18 | checkbox_list | Is the science folder on the desk, Freya | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is the science fol |
+| question_mark_select | 19 | checkbox_list | Did the runners hear the whistle, The ju | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Did the runners he |
+| question_mark_select | 20 | checkbox_list | Where is the spare key, I wonder where t | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Where is the spare |
+| question_mark_select | 21 | checkbox_list | What a difficult puzzle this is, Did the | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Did the train arri |
+| question_mark_select | 22 | checkbox_list | How bright the lantern looked, Do you kn | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Do you know the wa |
+| question_mark_select | 23 | checkbox_list | What a busy morning we have had, Is Maya | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is Maya bringing t |
+| question_mark_select | 24 | checkbox_list | Can the library open early today, The li | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can the library op |
+| question_mark_select | 25 | checkbox_list | Did the team remember their water bottle | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Did the team remem |
+| question_mark_select | 26 | checkbox_list | Do you think the museum is open, Priya w | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Do you think the m |
+| question_mark_select | 27 | checkbox_list | What a long journey this has been, Can y | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Can you help me ca |
+| question_mark_select | 28 | checkbox_list | Is the science folder on the desk, Freya | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Is the science fol |
+| question_mark_select | 29 | checkbox_list | Did the runners hear the whistle, The ju | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Did the runners he |
+| question_mark_select | 30 | checkbox_list | Where is the spare key, I wonder where t | Find the real questions. Tick all the sentences th | The sentences needing question marks are: Where is the spare |
 | word_class_underlined_choice | 1 | single_choice | verb, adjective, noun, preposition | Which word class is the underlined word in the sen | The underlined word is verb. |
 | word_class_underlined_choice | 2 | single_choice | preposition, conjunction, adverb, noun | Which word class is the underlined word in the sen | The underlined word is preposition. |
 | word_class_underlined_choice | 3 | single_choice | conjunction, preposition, adverb, determ | Which word class is the underlined word in the sen | The underlined word is conjunction. |
@@ -130,36 +130,36 @@ _This report includes answer internals and is for adult review only._
 | identify_words_in_sentence | 28 | checkbox_list | Luca, laughed, because, Maya | Select all the conjunctions in the sentence below. | The correct words are: because, and. |
 | identify_words_in_sentence | 29 | checkbox_list | Those, small, birds, built | Select all the determiners in the sentence below.  | The correct words are: Those, a, the. |
 | identify_words_in_sentence | 30 | checkbox_list | Nina, carefully, and, quietly | Select all the adverbs in the sentence below. Nina | The correct words are: carefully, quietly. |
-| expanded_noun_phrase_choice | 1 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 2 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
-| expanded_noun_phrase_choice | 3 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
-| expanded_noun_phrase_choice | 4 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
-| expanded_noun_phrase_choice | 5 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
-| expanded_noun_phrase_choice | 6 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 7 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
-| expanded_noun_phrase_choice | 8 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
-| expanded_noun_phrase_choice | 9 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
-| expanded_noun_phrase_choice | 10 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 11 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 12 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
-| expanded_noun_phrase_choice | 13 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 14 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 15 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
-| expanded_noun_phrase_choice | 16 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 17 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
-| expanded_noun_phrase_choice | 18 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 19 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
-| expanded_noun_phrase_choice | 20 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
-| expanded_noun_phrase_choice | 21 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
+| expanded_noun_phrase_choice | 1 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
+| expanded_noun_phrase_choice | 2 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
+| expanded_noun_phrase_choice | 3 | single_choice | the cracked blue mug beside the sink, wa | Spot the expanded noun phrase. Which option is an  | The correct answer is: the cracked blue mug beside the sink. |
+| expanded_noun_phrase_choice | 4 | single_choice | The small wooden boat drifted across the | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The small wooden boat drifted across  |
+| expanded_noun_phrase_choice | 5 | single_choice | a narrow path through the dark wood, wal | Spot the expanded noun phrase. Which option is an  | The correct answer is: a narrow path through the dark wood. |
+| expanded_noun_phrase_choice | 6 | single_choice | Omar carried the heavy rucksack with red | Spot the expanded noun phrase. Which sentence cont | The correct answer is: Omar carried the heavy rucksack with  |
+| expanded_noun_phrase_choice | 7 | single_choice | the faded map under the glass, looked un | Spot the expanded noun phrase. Which option is an  | The correct answer is: the faded map under the glass. |
+| expanded_noun_phrase_choice | 8 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
+| expanded_noun_phrase_choice | 9 | single_choice | three bright shells from the beach, ran  | Spot the expanded noun phrase. Which option is an  | The correct answer is: three bright shells from the beach. |
+| expanded_noun_phrase_choice | 10 | single_choice | The nervous puppy with white paws hid be | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The nervous puppy with white paws hid |
+| expanded_noun_phrase_choice | 11 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
+| expanded_noun_phrase_choice | 12 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
+| expanded_noun_phrase_choice | 13 | single_choice | the cracked blue mug beside the sink, wa | Spot the expanded noun phrase. Which option is an  | The correct answer is: the cracked blue mug beside the sink. |
+| expanded_noun_phrase_choice | 14 | single_choice | The small wooden boat drifted across the | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The small wooden boat drifted across  |
+| expanded_noun_phrase_choice | 15 | single_choice | a narrow path through the dark wood, wal | Spot the expanded noun phrase. Which option is an  | The correct answer is: a narrow path through the dark wood. |
+| expanded_noun_phrase_choice | 16 | single_choice | Omar carried the heavy rucksack with red | Spot the expanded noun phrase. Which sentence cont | The correct answer is: Omar carried the heavy rucksack with  |
+| expanded_noun_phrase_choice | 17 | single_choice | the faded map under the glass, looked un | Spot the expanded noun phrase. Which option is an  | The correct answer is: the faded map under the glass. |
+| expanded_noun_phrase_choice | 18 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
+| expanded_noun_phrase_choice | 19 | single_choice | three bright shells from the beach, ran  | Spot the expanded noun phrase. Which option is an  | The correct answer is: three bright shells from the beach. |
+| expanded_noun_phrase_choice | 20 | single_choice | The nervous puppy with white paws hid be | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The nervous puppy with white paws hid |
+| expanded_noun_phrase_choice | 21 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
 | expanded_noun_phrase_choice | 22 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 23 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
-| expanded_noun_phrase_choice | 24 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
-| expanded_noun_phrase_choice | 25 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 26 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 27 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 28 | single_choice | the silver key under the mat, jumped ove | Spot the expanded noun phrase. Which option is an  | The correct answer is: the silver key under the mat. |
-| expanded_noun_phrase_choice | 29 | single_choice | the tall boy with muddy boots, ran acros | Spot the expanded noun phrase. Which option is an  | The correct answer is: the tall boy with muddy boots. |
-| expanded_noun_phrase_choice | 30 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
+| expanded_noun_phrase_choice | 23 | single_choice | the cracked blue mug beside the sink, wa | Spot the expanded noun phrase. Which option is an  | The correct answer is: the cracked blue mug beside the sink. |
+| expanded_noun_phrase_choice | 24 | single_choice | The small wooden boat drifted across the | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The small wooden boat drifted across  |
+| expanded_noun_phrase_choice | 25 | single_choice | a narrow path through the dark wood, wal | Spot the expanded noun phrase. Which option is an  | The correct answer is: a narrow path through the dark wood. |
+| expanded_noun_phrase_choice | 26 | single_choice | Omar carried the heavy rucksack with red | Spot the expanded noun phrase. Which sentence cont | The correct answer is: Omar carried the heavy rucksack with  |
+| expanded_noun_phrase_choice | 27 | single_choice | the faded map under the glass, looked un | Spot the expanded noun phrase. Which option is an  | The correct answer is: the faded map under the glass. |
+| expanded_noun_phrase_choice | 28 | single_choice | The tired explorers climbed the hill., A | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The tired explorers climbed the hill. |
+| expanded_noun_phrase_choice | 29 | single_choice | three bright shells from the beach, ran  | Spot the expanded noun phrase. Which option is an  | The correct answer is: three bright shells from the beach. |
+| expanded_noun_phrase_choice | 30 | single_choice | The nervous puppy with white paws hid be | Spot the expanded noun phrase. Which sentence cont | The correct answer is: The nervous puppy with white paws hid |
 | build_noun_phrase | 1 | multi | 3 rows/fields | Build a noun phrase of at least three words to com | Your noun phrase has been saved for review. It is not auto-m |
 | build_noun_phrase | 2 | multi | 3 rows/fields | Build a noun phrase of at least three words to com | Your noun phrase has been saved for review. It is not auto-m |
 | build_noun_phrase | 3 | multi | 3 rows/fields | Build a noun phrase of at least three words to com | Your noun phrase has been saved for review. It is not auto-m |
@@ -190,573 +190,573 @@ _This report includes answer internals and is for adult review only._
 | build_noun_phrase | 28 | multi | 3 rows/fields | Build a noun phrase of at least three words to com | Your noun phrase has been saved for review. It is not auto-m |
 | build_noun_phrase | 29 | multi | 3 rows/fields | Build a noun phrase of at least three words to com | Your noun phrase has been saved for review. It is not auto-m |
 | build_noun_phrase | 30 | multi | 3 rows/fields | Build a noun phrase of at least three words to com | Your noun phrase has been saved for review. It is not auto-m |
-| fronted_adverbial_choose | 1 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
+| fronted_adverbial_choose | 1 | single_choice | During the storm, the old gate rattled l | Spot the fronted adverbial. Which sentence starts  | The correct answer is: During the storm, the old gate rattle |
 | fronted_adverbial_choose | 2 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
 | fronted_adverbial_choose | 3 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 4 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 5 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 6 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 7 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 8 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 9 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 10 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 11 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
+| fronted_adverbial_choose | 4 | single_choice | After the final whistle, the team shook  | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After the final whistle, the team sho |
+| fronted_adverbial_choose | 5 | single_choice | With great care, Imani folded the fragil | Spot the fronted adverbial. Which sentence starts  | The correct answer is: With great care, Imani folded the fra |
+| fronted_adverbial_choose | 6 | single_choice | At the edge of the field, the fox paused | Spot the fronted adverbial. Which sentence starts  | The correct answer is: At the edge of the field, the fox pau |
+| fronted_adverbial_choose | 7 | single_choice | Without warning, the lights flickered.,  | Spot the fronted adverbial. Which sentence starts  | The correct answer is: Without warning, the lights flickered |
+| fronted_adverbial_choose | 8 | single_choice | Before the lesson, Ravi sharpened the pe | Spot the fronted adverbial. Which sentence starts  | The correct answer is: Before the lesson, Ravi sharpened the |
+| fronted_adverbial_choose | 9 | single_choice | Beside the canal, the cyclists stopped f | Spot the fronted adverbial. Which sentence starts  | The correct answer is: Beside the canal, the cyclists stoppe |
+| fronted_adverbial_choose | 10 | single_choice | On Friday morning, the choir practised i | Spot the fronted adverbial. Which sentence starts  | The correct answer is: On Friday morning, the choir practise |
+| fronted_adverbial_choose | 11 | single_choice | During the storm, the old gate rattled l | Spot the fronted adverbial. Which sentence starts  | The correct answer is: During the storm, the old gate rattle |
 | fronted_adverbial_choose | 12 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
 | fronted_adverbial_choose | 13 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 14 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 15 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 16 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 17 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 18 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 19 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 20 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 21 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
+| fronted_adverbial_choose | 14 | single_choice | After the final whistle, the team shook  | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After the final whistle, the team sho |
+| fronted_adverbial_choose | 15 | single_choice | With great care, Imani folded the fragil | Spot the fronted adverbial. Which sentence starts  | The correct answer is: With great care, Imani folded the fra |
+| fronted_adverbial_choose | 16 | single_choice | At the edge of the field, the fox paused | Spot the fronted adverbial. Which sentence starts  | The correct answer is: At the edge of the field, the fox pau |
+| fronted_adverbial_choose | 17 | single_choice | Without warning, the lights flickered.,  | Spot the fronted adverbial. Which sentence starts  | The correct answer is: Without warning, the lights flickered |
+| fronted_adverbial_choose | 18 | single_choice | Before the lesson, Ravi sharpened the pe | Spot the fronted adverbial. Which sentence starts  | The correct answer is: Before the lesson, Ravi sharpened the |
+| fronted_adverbial_choose | 19 | single_choice | Beside the canal, the cyclists stopped f | Spot the fronted adverbial. Which sentence starts  | The correct answer is: Beside the canal, the cyclists stoppe |
+| fronted_adverbial_choose | 20 | single_choice | On Friday morning, the choir practised i | Spot the fronted adverbial. Which sentence starts  | The correct answer is: On Friday morning, the choir practise |
+| fronted_adverbial_choose | 21 | single_choice | During the storm, the old gate rattled l | Spot the fronted adverbial. Which sentence starts  | The correct answer is: During the storm, the old gate rattle |
 | fronted_adverbial_choose | 22 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
 | fronted_adverbial_choose | 23 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 24 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 25 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 26 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 27 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 28 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fronted_adverbial_choose | 29 | single_choice | In the morning, the market opens early., | Spot the fronted adverbial. Which sentence starts  | The correct answer is: In the morning, the market opens earl |
-| fronted_adverbial_choose | 30 | single_choice | She is feeling tired, so Kal is going to | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After dinner, Kal is going to her roo |
-| fix_fronted_adverbial | 1 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
-| fix_fronted_adverbial | 2 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
-| fix_fronted_adverbial | 3 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
-| fix_fronted_adverbial | 4 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
-| fix_fronted_adverbial | 5 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
-| fix_fronted_adverbial | 6 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
-| fix_fronted_adverbial | 7 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
-| fix_fronted_adverbial | 8 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
+| fronted_adverbial_choose | 24 | single_choice | After the final whistle, the team shook  | Spot the fronted adverbial. Which sentence starts  | The correct answer is: After the final whistle, the team sho |
+| fronted_adverbial_choose | 25 | single_choice | With great care, Imani folded the fragil | Spot the fronted adverbial. Which sentence starts  | The correct answer is: With great care, Imani folded the fra |
+| fronted_adverbial_choose | 26 | single_choice | At the edge of the field, the fox paused | Spot the fronted adverbial. Which sentence starts  | The correct answer is: At the edge of the field, the fox pau |
+| fronted_adverbial_choose | 27 | single_choice | Without warning, the lights flickered.,  | Spot the fronted adverbial. Which sentence starts  | The correct answer is: Without warning, the lights flickered |
+| fronted_adverbial_choose | 28 | single_choice | Before the lesson, Ravi sharpened the pe | Spot the fronted adverbial. Which sentence starts  | The correct answer is: Before the lesson, Ravi sharpened the |
+| fronted_adverbial_choose | 29 | single_choice | Beside the canal, the cyclists stopped f | Spot the fronted adverbial. Which sentence starts  | The correct answer is: Beside the canal, the cyclists stoppe |
+| fronted_adverbial_choose | 30 | single_choice | On Friday morning, the choir practised i | Spot the fronted adverbial. Which sentence starts  | The correct answer is: On Friday morning, the choir practise |
+| fix_fronted_adverbial | 1 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
+| fix_fronted_adverbial | 2 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: With great care, Imani folded the f |
+| fix_fronted_adverbial | 3 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: At the edge of the field, the fox p |
+| fix_fronted_adverbial | 4 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Without warning, the lights flicker |
+| fix_fronted_adverbial | 5 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before the lesson, Ravi sharpened t |
+| fix_fronted_adverbial | 6 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Beside the canal, the cyclists stop |
+| fix_fronted_adverbial | 7 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: On Friday morning, the choir practi |
+| fix_fronted_adverbial | 8 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: During the storm, the old gate ratt |
 | fix_fronted_adverbial | 9 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
 | fix_fronted_adverbial | 10 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
 | fix_fronted_adverbial | 11 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
-| fix_fronted_adverbial | 12 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
-| fix_fronted_adverbial | 13 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
-| fix_fronted_adverbial | 14 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
-| fix_fronted_adverbial | 15 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
-| fix_fronted_adverbial | 16 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
-| fix_fronted_adverbial | 17 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
-| fix_fronted_adverbial | 18 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
-| fix_fronted_adverbial | 19 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
-| fix_fronted_adverbial | 20 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
-| fix_fronted_adverbial | 21 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
-| fix_fronted_adverbial | 22 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
-| fix_fronted_adverbial | 23 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
-| fix_fronted_adverbial | 24 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
-| fix_fronted_adverbial | 25 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
-| fix_fronted_adverbial | 26 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
-| fix_fronted_adverbial | 27 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
-| fix_fronted_adverbial | 28 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
-| fix_fronted_adverbial | 29 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
-| fix_fronted_adverbial | 30 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
-| subordinate_clause_choice | 1 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
-| subordinate_clause_choice | 2 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
-| subordinate_clause_choice | 3 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
-| subordinate_clause_choice | 4 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
-| subordinate_clause_choice | 5 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
-| subordinate_clause_choice | 6 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
-| subordinate_clause_choice | 7 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
-| subordinate_clause_choice | 8 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
-| subordinate_clause_choice | 9 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
-| subordinate_clause_choice | 10 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
-| subordinate_clause_choice | 11 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
-| subordinate_clause_choice | 12 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
-| subordinate_clause_choice | 13 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
-| subordinate_clause_choice | 14 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
-| subordinate_clause_choice | 15 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
-| subordinate_clause_choice | 16 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
-| subordinate_clause_choice | 17 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
-| subordinate_clause_choice | 18 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
-| subordinate_clause_choice | 19 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
-| subordinate_clause_choice | 20 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
+| fix_fronted_adverbial | 12 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: With great care, Imani folded the f |
+| fix_fronted_adverbial | 13 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: At the edge of the field, the fox p |
+| fix_fronted_adverbial | 14 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Without warning, the lights flicker |
+| fix_fronted_adverbial | 15 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before the lesson, Ravi sharpened t |
+| fix_fronted_adverbial | 16 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Beside the canal, the cyclists stop |
+| fix_fronted_adverbial | 17 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: On Friday morning, the choir practi |
+| fix_fronted_adverbial | 18 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: During the storm, the old gate ratt |
+| fix_fronted_adverbial | 19 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
+| fix_fronted_adverbial | 20 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
+| fix_fronted_adverbial | 21 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Later that afternoon, our team fina |
+| fix_fronted_adverbial | 22 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: With great care, Imani folded the f |
+| fix_fronted_adverbial | 23 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: At the edge of the field, the fox p |
+| fix_fronted_adverbial | 24 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Without warning, the lights flicker |
+| fix_fronted_adverbial | 25 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before the lesson, Ravi sharpened t |
+| fix_fronted_adverbial | 26 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Beside the canal, the cyclists stop |
+| fix_fronted_adverbial | 27 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: On Friday morning, the choir practi |
+| fix_fronted_adverbial | 28 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: During the storm, the old gate ratt |
+| fix_fronted_adverbial | 29 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: Before sunrise, the campers packed  |
+| fix_fronted_adverbial | 30 | textarea | placeholder: Type the corrected sentence | Add the comma after a fronted adverbial. Copy the  | The correct sentence is: After the concert, the audience che |
+| subordinate_clause_choice | 1 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
+| subordinate_clause_choice | 2 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
+| subordinate_clause_choice | 3 | single_choice | Because the river was high, the path was | Which option is the subordinate clause in the sent | The subordinate clause is: Because the river was high. |
+| subordinate_clause_choice | 4 | single_choice | Before the coach arrived, the team warme | Which option is the subordinate clause in the sent | The subordinate clause is: Before the coach arrived. |
+| subordinate_clause_choice | 5 | single_choice | While the kettle boiled, Dad set out the | Which option is the subordinate clause in the sent | The subordinate clause is: While the kettle boiled. |
+| subordinate_clause_choice | 6 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
+| subordinate_clause_choice | 7 | single_choice | Although the match was difficult, the te | Which option is the subordinate clause in the sent | The subordinate clause is: Although the match was difficult. |
+| subordinate_clause_choice | 8 | single_choice | When the rain stopped, the playground fi | Which option is the subordinate clause in the sent | The subordinate clause is: When the rain stopped. |
+| subordinate_clause_choice | 9 | single_choice | Unless you hurry, the bus will leave wit | Which option is the subordinate clause in the sent | The subordinate clause is: Unless you hurry. |
+| subordinate_clause_choice | 10 | single_choice | After the lights dimmed, the play began, | Which option is the subordinate clause in the sent | The subordinate clause is: After the lights dimmed. |
+| subordinate_clause_choice | 11 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
+| subordinate_clause_choice | 12 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
+| subordinate_clause_choice | 13 | single_choice | Because the river was high, the path was | Which option is the subordinate clause in the sent | The subordinate clause is: Because the river was high. |
+| subordinate_clause_choice | 14 | single_choice | Before the coach arrived, the team warme | Which option is the subordinate clause in the sent | The subordinate clause is: Before the coach arrived. |
+| subordinate_clause_choice | 15 | single_choice | While the kettle boiled, Dad set out the | Which option is the subordinate clause in the sent | The subordinate clause is: While the kettle boiled. |
+| subordinate_clause_choice | 16 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
+| subordinate_clause_choice | 17 | single_choice | Although the match was difficult, the te | Which option is the subordinate clause in the sent | The subordinate clause is: Although the match was difficult. |
+| subordinate_clause_choice | 18 | single_choice | When the rain stopped, the playground fi | Which option is the subordinate clause in the sent | The subordinate clause is: When the rain stopped. |
+| subordinate_clause_choice | 19 | single_choice | Unless you hurry, the bus will leave wit | Which option is the subordinate clause in the sent | The subordinate clause is: Unless you hurry. |
+| subordinate_clause_choice | 20 | single_choice | After the lights dimmed, the play began, | Which option is the subordinate clause in the sent | The subordinate clause is: After the lights dimmed. |
 | subordinate_clause_choice | 21 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
 | subordinate_clause_choice | 22 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
-| subordinate_clause_choice | 23 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
-| subordinate_clause_choice | 24 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
-| subordinate_clause_choice | 25 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
+| subordinate_clause_choice | 23 | single_choice | Because the river was high, the path was | Which option is the subordinate clause in the sent | The subordinate clause is: Because the river was high. |
+| subordinate_clause_choice | 24 | single_choice | Before the coach arrived, the team warme | Which option is the subordinate clause in the sent | The subordinate clause is: Before the coach arrived. |
+| subordinate_clause_choice | 25 | single_choice | While the kettle boiled, Dad set out the | Which option is the subordinate clause in the sent | The subordinate clause is: While the kettle boiled. |
 | subordinate_clause_choice | 26 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
-| subordinate_clause_choice | 27 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
-| subordinate_clause_choice | 28 | single_choice | the pupils lined up quietly, When the be | Which option is the subordinate clause in the sent | The subordinate clause is: When the bell rang. |
-| subordinate_clause_choice | 29 | single_choice | wear your boots, If the path is icy, the | Which option is the subordinate clause in the sent | The subordinate clause is: If the path is icy. |
-| subordinate_clause_choice | 30 | single_choice | Although the wind was strong, the boat r | Which option is the subordinate clause in the sent | The subordinate clause is: Although the wind was strong. |
-| combine_clauses_rewrite | 1 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
-| combine_clauses_rewrite | 2 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
-| combine_clauses_rewrite | 3 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
-| combine_clauses_rewrite | 4 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
-| combine_clauses_rewrite | 5 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
-| combine_clauses_rewrite | 6 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
-| combine_clauses_rewrite | 7 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
-| combine_clauses_rewrite | 8 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
-| combine_clauses_rewrite | 9 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
-| combine_clauses_rewrite | 10 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
-| combine_clauses_rewrite | 11 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
-| combine_clauses_rewrite | 12 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
+| subordinate_clause_choice | 27 | single_choice | Although the match was difficult, the te | Which option is the subordinate clause in the sent | The subordinate clause is: Although the match was difficult. |
+| subordinate_clause_choice | 28 | single_choice | When the rain stopped, the playground fi | Which option is the subordinate clause in the sent | The subordinate clause is: When the rain stopped. |
+| subordinate_clause_choice | 29 | single_choice | Unless you hurry, the bus will leave wit | Which option is the subordinate clause in the sent | The subordinate clause is: Unless you hurry. |
+| subordinate_clause_choice | 30 | single_choice | After the lights dimmed, the play began, | Which option is the subordinate clause in the sent | The subordinate clause is: After the lights dimmed. |
+| combine_clauses_rewrite | 1 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the gate opened, the children ran  |
+| combine_clauses_rewrite | 2 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: If the weather improves, we will hold s |
+| combine_clauses_rewrite | 3 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
+| combine_clauses_rewrite | 4 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although the puzzle was hard, Nina solv |
+| combine_clauses_rewrite | 5 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Before the visitors left, they thanked  |
+| combine_clauses_rewrite | 6 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: While the choir waited, the pianist tun |
+| combine_clauses_rewrite | 7 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
+| combine_clauses_rewrite | 8 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: We walked slowly because the path was s |
+| combine_clauses_rewrite | 9 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: After the museum closed, the class walk |
+| combine_clauses_rewrite | 10 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
+| combine_clauses_rewrite | 11 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the gate opened, the children ran  |
+| combine_clauses_rewrite | 12 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: If the weather improves, we will hold s |
 | combine_clauses_rewrite | 13 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
-| combine_clauses_rewrite | 14 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
-| combine_clauses_rewrite | 15 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
-| combine_clauses_rewrite | 16 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
+| combine_clauses_rewrite | 14 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although the puzzle was hard, Nina solv |
+| combine_clauses_rewrite | 15 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Before the visitors left, they thanked  |
+| combine_clauses_rewrite | 16 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: While the choir waited, the pianist tun |
 | combine_clauses_rewrite | 17 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
-| combine_clauses_rewrite | 18 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
-| combine_clauses_rewrite | 19 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
-| combine_clauses_rewrite | 20 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
-| combine_clauses_rewrite | 21 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
-| combine_clauses_rewrite | 22 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
-| combine_clauses_rewrite | 23 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
-| combine_clauses_rewrite | 24 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
-| combine_clauses_rewrite | 25 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
-| combine_clauses_rewrite | 26 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
-| combine_clauses_rewrite | 27 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
-| combine_clauses_rewrite | 28 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
-| combine_clauses_rewrite | 29 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
+| combine_clauses_rewrite | 18 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: We walked slowly because the path was s |
+| combine_clauses_rewrite | 19 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: After the museum closed, the class walk |
+| combine_clauses_rewrite | 20 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
+| combine_clauses_rewrite | 21 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the gate opened, the children ran  |
+| combine_clauses_rewrite | 22 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: If the weather improves, we will hold s |
+| combine_clauses_rewrite | 23 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Sam wore gloves because it was cold. |
+| combine_clauses_rewrite | 24 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although the puzzle was hard, Nina solv |
+| combine_clauses_rewrite | 25 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Before the visitors left, they thanked  |
+| combine_clauses_rewrite | 26 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: While the choir waited, the pianist tun |
+| combine_clauses_rewrite | 27 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: When the bell rang, the pupils lined up |
+| combine_clauses_rewrite | 28 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: We walked slowly because the path was s |
+| combine_clauses_rewrite | 29 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: After the museum closed, the class walk |
 | combine_clauses_rewrite | 30 | textarea | placeholder: Write one complete sentence | Combine ideas into one sentence. Combine the ideas | A correct answer is: Although Mia was tired, she finished th |
-| relative_clause_identify | 1 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
-| relative_clause_identify | 2 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
-| relative_clause_identify | 3 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
-| relative_clause_identify | 4 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
-| relative_clause_identify | 5 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
-| relative_clause_identify | 6 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
-| relative_clause_identify | 7 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
-| relative_clause_identify | 8 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
-| relative_clause_identify | 9 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
-| relative_clause_identify | 10 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
-| relative_clause_identify | 11 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
-| relative_clause_identify | 12 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
-| relative_clause_identify | 13 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
-| relative_clause_identify | 14 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
-| relative_clause_identify | 15 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
-| relative_clause_identify | 16 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
+| relative_clause_identify | 1 | single_choice | The teacher who organised the trip check | Spot the relative clause. Which sentence contains  | The correct sentence is: The teacher who organised the trip  |
+| relative_clause_identify | 2 | single_choice | The trophy, which gleamed in the cabinet | Spot the relative clause. Which sentence contains  | The correct sentence is: The trophy, which gleamed in the ca |
+| relative_clause_identify | 3 | single_choice | The runner whose shoe had split stopped  | Spot the relative clause. Which sentence contains  | The correct sentence is: The runner whose shoe had split sto |
+| relative_clause_identify | 4 | single_choice | The hall where we practised was newly pa | Spot the relative clause. Which sentence contains  | The correct sentence is: The hall where we practised was new |
+| relative_clause_identify | 5 | single_choice | The kite that Ravi repaired flew above t | Spot the relative clause. Which sentence contains  | The correct sentence is: The kite that Ravi repaired flew ab |
+| relative_clause_identify | 6 | single_choice | The scientist who visited our class brou | Spot the relative clause. Which sentence contains  | The correct sentence is: The scientist who visited our class |
+| relative_clause_identify | 7 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
+| relative_clause_identify | 8 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
+| relative_clause_identify | 9 | single_choice | The coat which had a torn pocket was lef | Spot the relative clause. Which sentence contains  | The correct sentence is: The coat which had a torn pocket wa |
+| relative_clause_identify | 10 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
+| relative_clause_identify | 11 | single_choice | The teacher who organised the trip check | Spot the relative clause. Which sentence contains  | The correct sentence is: The teacher who organised the trip  |
+| relative_clause_identify | 12 | single_choice | The trophy, which gleamed in the cabinet | Spot the relative clause. Which sentence contains  | The correct sentence is: The trophy, which gleamed in the ca |
+| relative_clause_identify | 13 | single_choice | The runner whose shoe had split stopped  | Spot the relative clause. Which sentence contains  | The correct sentence is: The runner whose shoe had split sto |
+| relative_clause_identify | 14 | single_choice | The hall where we practised was newly pa | Spot the relative clause. Which sentence contains  | The correct sentence is: The hall where we practised was new |
+| relative_clause_identify | 15 | single_choice | The kite that Ravi repaired flew above t | Spot the relative clause. Which sentence contains  | The correct sentence is: The kite that Ravi repaired flew ab |
+| relative_clause_identify | 16 | single_choice | The scientist who visited our class brou | Spot the relative clause. Which sentence contains  | The correct sentence is: The scientist who visited our class |
 | relative_clause_identify | 17 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
-| relative_clause_identify | 18 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
-| relative_clause_identify | 19 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
-| relative_clause_identify | 20 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
-| relative_clause_identify | 21 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
-| relative_clause_identify | 22 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
-| relative_clause_identify | 23 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
-| relative_clause_identify | 24 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
-| relative_clause_identify | 25 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
-| relative_clause_identify | 26 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
-| relative_clause_identify | 27 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
+| relative_clause_identify | 18 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
+| relative_clause_identify | 19 | single_choice | The coat which had a torn pocket was lef | Spot the relative clause. Which sentence contains  | The correct sentence is: The coat which had a torn pocket wa |
+| relative_clause_identify | 20 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
+| relative_clause_identify | 21 | single_choice | The teacher who organised the trip check | Spot the relative clause. Which sentence contains  | The correct sentence is: The teacher who organised the trip  |
+| relative_clause_identify | 22 | single_choice | The trophy, which gleamed in the cabinet | Spot the relative clause. Which sentence contains  | The correct sentence is: The trophy, which gleamed in the ca |
+| relative_clause_identify | 23 | single_choice | The runner whose shoe had split stopped  | Spot the relative clause. Which sentence contains  | The correct sentence is: The runner whose shoe had split sto |
+| relative_clause_identify | 24 | single_choice | The hall where we practised was newly pa | Spot the relative clause. Which sentence contains  | The correct sentence is: The hall where we practised was new |
+| relative_clause_identify | 25 | single_choice | The kite that Ravi repaired flew above t | Spot the relative clause. Which sentence contains  | The correct sentence is: The kite that Ravi repaired flew ab |
+| relative_clause_identify | 26 | single_choice | The scientist who visited our class brou | Spot the relative clause. Which sentence contains  | The correct sentence is: The scientist who visited our class |
+| relative_clause_identify | 27 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
 | relative_clause_identify | 28 | single_choice | The book that I borrowed was brilliant., | Spot the relative clause. Which sentence contains  | The correct sentence is: The book that I borrowed was brilli |
-| relative_clause_identify | 29 | single_choice | The village, which sits by the sea, is v | Spot the relative clause. Which sentence contains  | The correct sentence is: The village, which sits by the sea, |
+| relative_clause_identify | 29 | single_choice | The coat which had a torn pocket was lef | Spot the relative clause. Which sentence contains  | The correct sentence is: The coat which had a torn pocket wa |
 | relative_clause_identify | 30 | single_choice | The boy who dropped his hat waved to us. | Spot the relative clause. Which sentence contains  | The correct sentence is: The boy who dropped his hat waved t |
-| relative_clause_complete | 1 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 2 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 3 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 4 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 5 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 6 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
+| relative_clause_complete | 1 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
+| relative_clause_complete | 2 | single_choice | that had chased the ball, because it cha | Complete with a relative clause. Complete the sent | The best completion is: that had chased the ball. |
+| relative_clause_complete | 3 | single_choice | which displays Roman coins, because it d | Complete with a relative clause. Complete the sent | The best completion is: which displays Roman coins. |
+| relative_clause_complete | 4 | single_choice | who trained every morning, because train | Complete with a relative clause. Complete the sent | The best completion is: who trained every morning. |
+| relative_clause_complete | 5 | single_choice | that we had borrowed, because we had bor | Complete with a relative clause. Complete the sent | The best completion is: that we had borrowed. |
+| relative_clause_complete | 6 | single_choice | whose song opened the show, because the  | Complete with a relative clause. Complete the sent | The best completion is: whose song opened the show. |
 | relative_clause_complete | 7 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 8 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 9 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 10 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 11 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 12 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 13 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 14 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 15 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 16 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
+| relative_clause_complete | 8 | single_choice | where we meet after school, because we m | Complete with a relative clause. Complete the sent | The best completion is: where we meet after school. |
+| relative_clause_complete | 9 | single_choice | which Maya restored, because Maya restor | Complete with a relative clause. Complete the sent | The best completion is: which Maya restored. |
+| relative_clause_complete | 10 | single_choice | that had a gold border, because it had a | Complete with a relative clause. Complete the sent | The best completion is: that had a gold border. |
+| relative_clause_complete | 11 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
+| relative_clause_complete | 12 | single_choice | that had chased the ball, because it cha | Complete with a relative clause. Complete the sent | The best completion is: that had chased the ball. |
+| relative_clause_complete | 13 | single_choice | which displays Roman coins, because it d | Complete with a relative clause. Complete the sent | The best completion is: which displays Roman coins. |
+| relative_clause_complete | 14 | single_choice | who trained every morning, because train | Complete with a relative clause. Complete the sent | The best completion is: who trained every morning. |
+| relative_clause_complete | 15 | single_choice | that we had borrowed, because we had bor | Complete with a relative clause. Complete the sent | The best completion is: that we had borrowed. |
+| relative_clause_complete | 16 | single_choice | whose song opened the show, because the  | Complete with a relative clause. Complete the sent | The best completion is: whose song opened the show. |
 | relative_clause_complete | 17 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 18 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 19 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 20 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 21 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 22 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 23 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 24 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 25 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 26 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
+| relative_clause_complete | 18 | single_choice | where we meet after school, because we m | Complete with a relative clause. Complete the sent | The best completion is: where we meet after school. |
+| relative_clause_complete | 19 | single_choice | which Maya restored, because Maya restor | Complete with a relative clause. Complete the sent | The best completion is: which Maya restored. |
+| relative_clause_complete | 20 | single_choice | that had a gold border, because it had a | Complete with a relative clause. Complete the sent | The best completion is: that had a gold border. |
+| relative_clause_complete | 21 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
+| relative_clause_complete | 22 | single_choice | that had chased the ball, because it cha | Complete with a relative clause. Complete the sent | The best completion is: that had chased the ball. |
+| relative_clause_complete | 23 | single_choice | which displays Roman coins, because it d | Complete with a relative clause. Complete the sent | The best completion is: which displays Roman coins. |
+| relative_clause_complete | 24 | single_choice | who trained every morning, because train | Complete with a relative clause. Complete the sent | The best completion is: who trained every morning. |
+| relative_clause_complete | 25 | single_choice | that we had borrowed, because we had bor | Complete with a relative clause. Complete the sent | The best completion is: that we had borrowed. |
+| relative_clause_complete | 26 | single_choice | whose song opened the show, because the  | Complete with a relative clause. Complete the sent | The best completion is: whose song opened the show. |
 | relative_clause_complete | 27 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 28 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| relative_clause_complete | 29 | single_choice | who had visited Egypt, because she visit | Complete with a relative clause. Complete the sent | The best completion is: who had visited Egypt. |
-| relative_clause_complete | 30 | single_choice | that was locked outside, because it was  | Complete with a relative clause. Complete the sent | The best completion is: that was locked outside. |
-| tense_form_choice | 1 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
-| tense_form_choice | 2 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
+| relative_clause_complete | 28 | single_choice | where we meet after school, because we m | Complete with a relative clause. Complete the sent | The best completion is: where we meet after school. |
+| relative_clause_complete | 29 | single_choice | which Maya restored, because Maya restor | Complete with a relative clause. Complete the sent | The best completion is: which Maya restored. |
+| relative_clause_complete | 30 | single_choice | that had a gold border, because it had a | Complete with a relative clause. Complete the sent | The best completion is: that had a gold border. |
+| tense_form_choice | 1 | single_choice | marked, has marked, was mark, had markin | Choose the correct verb form. Choose the best verb | The correct form is: marked. |
+| tense_form_choice | 2 | single_choice | had collected, has collected, collects,  | Choose the correct verb form. Choose the best verb | The correct form is: had collected. |
 | tense_form_choice | 3 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
-| tense_form_choice | 4 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
-| tense_form_choice | 5 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
-| tense_form_choice | 6 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
+| tense_form_choice | 4 | single_choice | will have finished, finished, were finis | Choose the correct verb form. Choose the best verb | The correct form is: will have finished. |
+| tense_form_choice | 5 | single_choice | was singing, has sung, will sing, had si | Choose the correct verb form. Choose the best verb | The correct form is: was singing. |
+| tense_form_choice | 6 | single_choice | have read, read yesterday, were read, ha | Choose the correct verb form. Choose the best verb | The correct form is: have read. |
 | tense_form_choice | 7 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
-| tense_form_choice | 8 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
-| tense_form_choice | 9 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
-| tense_form_choice | 10 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
+| tense_form_choice | 8 | single_choice | had completed, have completed, were comp | Choose the correct verb form. Choose the best verb | The correct form is: had completed. |
+| tense_form_choice | 9 | single_choice | waters, watered yesterday, has watering, | Choose the correct verb form. Choose the best verb | The correct form is: waters. |
+| tense_form_choice | 10 | single_choice | was folding, has folded, will folded, fo | Choose the correct verb form. Choose the best verb | The correct form is: was folding. |
 | tense_form_choice | 11 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
-| tense_form_choice | 12 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
-| tense_form_choice | 13 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
-| tense_form_choice | 14 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
-| tense_form_choice | 15 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
-| tense_form_choice | 16 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
-| tense_form_choice | 17 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
-| tense_form_choice | 18 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
-| tense_form_choice | 19 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
-| tense_form_choice | 20 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
-| tense_form_choice | 21 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
-| tense_form_choice | 22 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
-| tense_form_choice | 23 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
-| tense_form_choice | 24 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
-| tense_form_choice | 25 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
-| tense_form_choice | 26 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
-| tense_form_choice | 27 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
-| tense_form_choice | 28 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
-| tense_form_choice | 29 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
-| tense_form_choice | 30 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
-| tense_rewrite | 1 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 2 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
-| tense_rewrite | 3 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
-| tense_rewrite | 4 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 5 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
-| tense_rewrite | 6 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
-| tense_rewrite | 7 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 8 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
-| tense_rewrite | 9 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
-| tense_rewrite | 10 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 11 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
-| tense_rewrite | 12 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
-| tense_rewrite | 13 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 14 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
-| tense_rewrite | 15 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
-| tense_rewrite | 16 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 17 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
-| tense_rewrite | 18 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
-| tense_rewrite | 19 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 20 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
-| tense_rewrite | 21 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
-| tense_rewrite | 22 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 23 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
+| tense_form_choice | 12 | single_choice | marked, has marked, was mark, had markin | Choose the correct verb form. Choose the best verb | The correct form is: marked. |
+| tense_form_choice | 13 | single_choice | had collected, has collected, collects,  | Choose the correct verb form. Choose the best verb | The correct form is: had collected. |
+| tense_form_choice | 14 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
+| tense_form_choice | 15 | single_choice | will have finished, finished, were finis | Choose the correct verb form. Choose the best verb | The correct form is: will have finished. |
+| tense_form_choice | 16 | single_choice | was singing, has sung, will sing, had si | Choose the correct verb form. Choose the best verb | The correct form is: was singing. |
+| tense_form_choice | 17 | single_choice | have read, read yesterday, were read, ha | Choose the correct verb form. Choose the best verb | The correct form is: have read. |
+| tense_form_choice | 18 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
+| tense_form_choice | 19 | single_choice | had completed, have completed, were comp | Choose the correct verb form. Choose the best verb | The correct form is: had completed. |
+| tense_form_choice | 20 | single_choice | waters, watered yesterday, has watering, | Choose the correct verb form. Choose the best verb | The correct form is: waters. |
+| tense_form_choice | 21 | single_choice | was folding, has folded, will folded, fo | Choose the correct verb form. Choose the best verb | The correct form is: was folding. |
+| tense_form_choice | 22 | single_choice | has twisted, twisted yesterday, was twis | Choose the correct verb form. Choose the best verb | The correct form is: has twisted. |
+| tense_form_choice | 23 | single_choice | marked, has marked, was mark, had markin | Choose the correct verb form. Choose the best verb | The correct form is: marked. |
+| tense_form_choice | 24 | single_choice | had collected, has collected, collects,  | Choose the correct verb form. Choose the best verb | The correct form is: had collected. |
+| tense_form_choice | 25 | single_choice | had / started, has / started, was / star | Choose the correct verb form. Choose the best verb | The correct form is: had / started. |
+| tense_form_choice | 26 | single_choice | will have finished, finished, were finis | Choose the correct verb form. Choose the best verb | The correct form is: will have finished. |
+| tense_form_choice | 27 | single_choice | was singing, has sung, will sing, had si | Choose the correct verb form. Choose the best verb | The correct form is: was singing. |
+| tense_form_choice | 28 | single_choice | have read, read yesterday, were read, ha | Choose the correct verb form. Choose the best verb | The correct form is: have read. |
+| tense_form_choice | 29 | single_choice | talked, have talked, were talking, had t | Choose the correct verb form. Choose the best verb | The correct form is: were talking. |
+| tense_form_choice | 30 | single_choice | had completed, have completed, were comp | Choose the correct verb form. Choose the best verb | The correct form is: had completed. |
+| tense_rewrite | 1 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: They had finished the model before lunc |
+| tense_rewrite | 2 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
+| tense_rewrite | 3 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: We have tidied the classroom. |
+| tense_rewrite | 4 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The class will have completed the displ |
+| tense_rewrite | 5 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: Maya was painting the scenery. |
+| tense_rewrite | 6 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
+| tense_rewrite | 7 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The team had collected the trophy. |
+| tense_rewrite | 8 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The pupils were practising the song. |
+| tense_rewrite | 9 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She has opened the parcel. |
+| tense_rewrite | 10 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
+| tense_rewrite | 11 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: Ravi will have read the final chapter b |
+| tense_rewrite | 12 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: They had finished the model before lunc |
+| tense_rewrite | 13 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
+| tense_rewrite | 14 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: We have tidied the classroom. |
+| tense_rewrite | 15 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The class will have completed the displ |
+| tense_rewrite | 16 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: Maya was painting the scenery. |
+| tense_rewrite | 17 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
+| tense_rewrite | 18 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The team had collected the trophy. |
+| tense_rewrite | 19 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The pupils were practising the song. |
+| tense_rewrite | 20 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She has opened the parcel. |
+| tense_rewrite | 21 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
+| tense_rewrite | 22 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: Ravi will have read the final chapter b |
+| tense_rewrite | 23 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: They had finished the model before lunc |
 | tense_rewrite | 24 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
-| tense_rewrite | 25 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 26 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
-| tense_rewrite | 27 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
+| tense_rewrite | 25 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: We have tidied the classroom. |
+| tense_rewrite | 26 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The class will have completed the displ |
+| tense_rewrite | 27 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: Maya was painting the scenery. |
 | tense_rewrite | 28 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: I have finished my homework. |
-| tense_rewrite | 29 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: She had packed her bag before the trip. |
-| tense_rewrite | 30 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The dog was chasing the cat. |
+| tense_rewrite | 29 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The team had collected the trophy. |
+| tense_rewrite | 30 | textarea | placeholder: Write the full sentence. | Rewrite in a different tense. Rewrite the sentence | A correct answer is: The pupils were practising the song. |
 | standard_english_pairs | 1 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 2 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
+| standard_english_pairs | 2 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; doesn't. |
 | standard_english_pairs | 3 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 4 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 5 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 6 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 7 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
+| standard_english_pairs | 4 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: was; haven't. |
+| standard_english_pairs | 5 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
+| standard_english_pairs | 6 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: has; were. |
+| standard_english_pairs | 7 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: doesn't; did. |
 | standard_english_pairs | 8 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
 | standard_english_pairs | 9 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 10 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 11 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 12 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 13 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 14 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 15 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
+| standard_english_pairs | 10 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: have; saw. |
+| standard_english_pairs | 11 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: doesn't; were. |
+| standard_english_pairs | 12 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
+| standard_english_pairs | 13 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; doesn't. |
+| standard_english_pairs | 14 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
+| standard_english_pairs | 15 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: was; haven't. |
 | standard_english_pairs | 16 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 17 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 18 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 19 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 20 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 21 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 22 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
+| standard_english_pairs | 17 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: has; were. |
+| standard_english_pairs | 18 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: doesn't; did. |
+| standard_english_pairs | 19 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
+| standard_english_pairs | 20 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
+| standard_english_pairs | 21 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: have; saw. |
+| standard_english_pairs | 22 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: doesn't; were. |
 | standard_english_pairs | 23 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 24 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
+| standard_english_pairs | 24 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; doesn't. |
 | standard_english_pairs | 25 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 26 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 27 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
-| standard_english_pairs | 28 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| standard_english_pairs | 29 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: saw; did. |
+| standard_english_pairs | 26 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: was; haven't. |
+| standard_english_pairs | 27 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
+| standard_english_pairs | 28 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: has; were. |
+| standard_english_pairs | 29 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: doesn't; did. |
 | standard_english_pairs | 30 | multi | 2 rows/fields | Choose the Standard English forms. Choose the corr | Correct choices: were; did. |
-| pronoun_cohesion_choice | 1 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 2 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 3 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
+| pronoun_cohesion_choice | 1 | single_choice | Ben gave Luca the map because Ben was ca | Choose the clearest cohesive version. Which versio | The clearest version is: Ben gave Luca the map because he wa |
+| pronoun_cohesion_choice | 2 | single_choice | Nina told Sofia that Nina would meet Sof | Choose the clearest cohesive version. Which versio | The clearest version is: Nina told Sofia that Nina would mee |
+| pronoun_cohesion_choice | 3 | single_choice | Omar put Omar's ticket in Omar's pocket  | Choose the clearest cohesive version. Which versio | The clearest version is: Omar put his ticket in his pocket b |
 | pronoun_cohesion_choice | 4 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
 | pronoun_cohesion_choice | 5 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 6 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 7 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 8 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 9 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 10 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 11 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 12 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 13 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
+| pronoun_cohesion_choice | 6 | single_choice | Priya passed the torch to Maya because M | Choose the clearest cohesive version. Which versio | The clearest version is: Priya passed Maya the torch because |
+| pronoun_cohesion_choice | 7 | single_choice | Theo reminded Jasper that Theo had left  | Choose the clearest cohesive version. Which versio | The clearest version is: Theo reminded Jasper that Theo had  |
+| pronoun_cohesion_choice | 8 | single_choice | Keira asked Freya to bring the note beca | Choose the clearest cohesive version. Which versio | The clearest version is: Keira asked Freya to bring the note |
+| pronoun_cohesion_choice | 9 | single_choice | Ravi put Ravi's bag beside Ravi's chair  | Choose the clearest cohesive version. Which versio | The clearest version is: Ravi put his bag beside his chair b |
+| pronoun_cohesion_choice | 10 | single_choice | Aisha lent Aisha's pencil to Grace becau | Choose the clearest cohesive version. Which versio | The clearest version is: Aisha lent her pencil to Grace beca |
+| pronoun_cohesion_choice | 11 | single_choice | Ben gave Luca the map because Ben was ca | Choose the clearest cohesive version. Which versio | The clearest version is: Ben gave Luca the map because he wa |
+| pronoun_cohesion_choice | 12 | single_choice | Nina told Sofia that Nina would meet Sof | Choose the clearest cohesive version. Which versio | The clearest version is: Nina told Sofia that Nina would mee |
+| pronoun_cohesion_choice | 13 | single_choice | Omar put Omar's ticket in Omar's pocket  | Choose the clearest cohesive version. Which versio | The clearest version is: Omar put his ticket in his pocket b |
 | pronoun_cohesion_choice | 14 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
 | pronoun_cohesion_choice | 15 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 16 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 17 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 18 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 19 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 20 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 21 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 22 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 23 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
+| pronoun_cohesion_choice | 16 | single_choice | Priya passed the torch to Maya because M | Choose the clearest cohesive version. Which versio | The clearest version is: Priya passed Maya the torch because |
+| pronoun_cohesion_choice | 17 | single_choice | Theo reminded Jasper that Theo had left  | Choose the clearest cohesive version. Which versio | The clearest version is: Theo reminded Jasper that Theo had  |
+| pronoun_cohesion_choice | 18 | single_choice | Keira asked Freya to bring the note beca | Choose the clearest cohesive version. Which versio | The clearest version is: Keira asked Freya to bring the note |
+| pronoun_cohesion_choice | 19 | single_choice | Ravi put Ravi's bag beside Ravi's chair  | Choose the clearest cohesive version. Which versio | The clearest version is: Ravi put his bag beside his chair b |
+| pronoun_cohesion_choice | 20 | single_choice | Aisha lent Aisha's pencil to Grace becau | Choose the clearest cohesive version. Which versio | The clearest version is: Aisha lent her pencil to Grace beca |
+| pronoun_cohesion_choice | 21 | single_choice | Ben gave Luca the map because Ben was ca | Choose the clearest cohesive version. Which versio | The clearest version is: Ben gave Luca the map because he wa |
+| pronoun_cohesion_choice | 22 | single_choice | Nina told Sofia that Nina would meet Sof | Choose the clearest cohesive version. Which versio | The clearest version is: Nina told Sofia that Nina would mee |
+| pronoun_cohesion_choice | 23 | single_choice | Omar put Omar's ticket in Omar's pocket  | Choose the clearest cohesive version. Which versio | The clearest version is: Omar put his ticket in his pocket b |
 | pronoun_cohesion_choice | 24 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
 | pronoun_cohesion_choice | 25 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 26 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 27 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 28 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| pronoun_cohesion_choice | 29 | single_choice | Arjun gave Arjun's book to Arjun's siste | Choose the clearest cohesive version. Which versio | The clearest version is: Arjun gave his book to his sister b |
-| pronoun_cohesion_choice | 30 | single_choice | Mila put Mila's coat on the chair before | Choose the clearest cohesive version. Which versio | The clearest version is: Mila put her coat on the chair befo |
-| formality_pairs | 1 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
+| pronoun_cohesion_choice | 26 | single_choice | Priya passed the torch to Maya because M | Choose the clearest cohesive version. Which versio | The clearest version is: Priya passed Maya the torch because |
+| pronoun_cohesion_choice | 27 | single_choice | Theo reminded Jasper that Theo had left  | Choose the clearest cohesive version. Which versio | The clearest version is: Theo reminded Jasper that Theo had  |
+| pronoun_cohesion_choice | 28 | single_choice | Keira asked Freya to bring the note beca | Choose the clearest cohesive version. Which versio | The clearest version is: Keira asked Freya to bring the note |
+| pronoun_cohesion_choice | 29 | single_choice | Ravi put Ravi's bag beside Ravi's chair  | Choose the clearest cohesive version. Which versio | The clearest version is: Ravi put his bag beside his chair b |
+| pronoun_cohesion_choice | 30 | single_choice | Aisha lent Aisha's pencil to Grace becau | Choose the clearest cohesive version. Which versio | The clearest version is: Aisha lent her pencil to Grace beca |
+| formality_pairs | 1 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: assisted; verify; take place. |
 | formality_pairs | 2 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
 | formality_pairs | 3 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 4 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 5 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 6 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 7 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 8 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 9 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 10 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 11 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
+| formality_pairs | 4 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: provide; consider; pleased. |
+| formality_pairs | 5 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: apologised; indicate; commence. |
+| formality_pairs | 6 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: request; concluded; use. |
+| formality_pairs | 7 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: improve; discusses; purchase. |
+| formality_pairs | 8 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: determine; demonstrates; submit. |
+| formality_pairs | 9 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: obtain; support; present. |
+| formality_pairs | 10 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: postponed; inform; received. |
+| formality_pairs | 11 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: assisted; verify; take place. |
 | formality_pairs | 12 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
 | formality_pairs | 13 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 14 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 15 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 16 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 17 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 18 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 19 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 20 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 21 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
+| formality_pairs | 14 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: provide; consider; pleased. |
+| formality_pairs | 15 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: apologised; indicate; commence. |
+| formality_pairs | 16 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: request; concluded; use. |
+| formality_pairs | 17 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: improve; discusses; purchase. |
+| formality_pairs | 18 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: determine; demonstrates; submit. |
+| formality_pairs | 19 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: obtain; support; present. |
+| formality_pairs | 20 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: postponed; inform; received. |
+| formality_pairs | 21 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: assisted; verify; take place. |
 | formality_pairs | 22 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
 | formality_pairs | 23 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 24 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 25 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 26 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 27 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 28 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| formality_pairs | 29 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: discover; enter; request. |
-| formality_pairs | 30 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: established; requested; compete. |
-| active_passive_rewrite | 1 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
-| active_passive_rewrite | 2 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
-| active_passive_rewrite | 3 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
-| active_passive_rewrite | 4 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
-| active_passive_rewrite | 5 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
-| active_passive_rewrite | 6 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
-| active_passive_rewrite | 7 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
-| active_passive_rewrite | 8 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
-| active_passive_rewrite | 9 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
-| active_passive_rewrite | 10 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
-| active_passive_rewrite | 11 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
-| active_passive_rewrite | 12 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
-| active_passive_rewrite | 13 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
-| active_passive_rewrite | 14 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
-| active_passive_rewrite | 15 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
-| active_passive_rewrite | 16 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
-| active_passive_rewrite | 17 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
-| active_passive_rewrite | 18 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
-| active_passive_rewrite | 19 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
-| active_passive_rewrite | 20 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
-| active_passive_rewrite | 21 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
+| formality_pairs | 24 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: provide; consider; pleased. |
+| formality_pairs | 25 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: apologised; indicate; commence. |
+| formality_pairs | 26 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: request; concluded; use. |
+| formality_pairs | 27 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: improve; discusses; purchase. |
+| formality_pairs | 28 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: determine; demonstrates; submit. |
+| formality_pairs | 29 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: obtain; support; present. |
+| formality_pairs | 30 | multi | 3 rows/fields | Choose the more formal option. Circle the most for | Correct formal choices: postponed; inform; received. |
+| active_passive_rewrite | 1 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: Sofia carried the lantern. |
+| active_passive_rewrite | 2 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
+| active_passive_rewrite | 3 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The window was opened by Grace. |
+| active_passive_rewrite | 4 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: Hassan packs the rucksack. |
+| active_passive_rewrite | 5 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The gate is locked by the caretaker. |
+| active_passive_rewrite | 6 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The art club painted the display. |
+| active_passive_rewrite | 7 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The beach is cleaned by the volunteers. |
+| active_passive_rewrite | 8 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: Priya found the old map. |
+| active_passive_rewrite | 9 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
+| active_passive_rewrite | 10 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
+| active_passive_rewrite | 11 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: Sofia carried the lantern. |
+| active_passive_rewrite | 12 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
+| active_passive_rewrite | 13 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The window was opened by Grace. |
+| active_passive_rewrite | 14 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: Hassan packs the rucksack. |
+| active_passive_rewrite | 15 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The gate is locked by the caretaker. |
+| active_passive_rewrite | 16 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The art club painted the display. |
+| active_passive_rewrite | 17 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The beach is cleaned by the volunteers. |
+| active_passive_rewrite | 18 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: Priya found the old map. |
+| active_passive_rewrite | 19 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
+| active_passive_rewrite | 20 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
+| active_passive_rewrite | 21 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: Sofia carried the lantern. |
 | active_passive_rewrite | 22 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
-| active_passive_rewrite | 23 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
-| active_passive_rewrite | 24 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
-| active_passive_rewrite | 25 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
-| active_passive_rewrite | 26 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
-| active_passive_rewrite | 27 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
-| active_passive_rewrite | 28 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The bread was baked by the chef. |
+| active_passive_rewrite | 23 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The window was opened by Grace. |
+| active_passive_rewrite | 24 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: Hassan packs the rucksack. |
+| active_passive_rewrite | 25 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The gate is locked by the caretaker. |
+| active_passive_rewrite | 26 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The art club painted the display. |
+| active_passive_rewrite | 27 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The beach is cleaned by the volunteers. |
+| active_passive_rewrite | 28 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: Priya found the old map. |
 | active_passive_rewrite | 29 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The trophy will be collected by the tea |
 | active_passive_rewrite | 30 | textarea | placeholder: Write the full transformed  | Transform active and passive voice. Rewrite the se | A correct answer is: The council maintains the local park. |
-| subject_object_choice | 1 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
-| subject_object_choice | 2 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
-| subject_object_choice | 3 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
-| subject_object_choice | 4 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
-| subject_object_choice | 5 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
-| subject_object_choice | 6 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
-| subject_object_choice | 7 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
-| subject_object_choice | 8 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
-| subject_object_choice | 9 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
-| subject_object_choice | 10 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
-| subject_object_choice | 11 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
-| subject_object_choice | 12 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
-| subject_object_choice | 13 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
-| subject_object_choice | 14 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
-| subject_object_choice | 15 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
+| subject_object_choice | 1 | single_choice | Maya, opened, the heavy gate, after lunc | In the sentence below, what is the object? Maya op | The object is: the heavy gate. |
+| subject_object_choice | 2 | single_choice | During the storm, the old roof, leaked,  | In the sentence below, what is the subject? During | The subject is: the old roof. |
+| subject_object_choice | 3 | single_choice | The guide, lifted, the lantern, carefull | In the sentence below, what is the object? The gui | The object is: the lantern. |
+| subject_object_choice | 4 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
+| subject_object_choice | 5 | single_choice | At the museum, the curator, unlocked, th | In the sentence below, what is the subject? At the | The subject is: the curator. |
+| subject_object_choice | 6 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
+| subject_object_choice | 7 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
+| subject_object_choice | 8 | single_choice | After the match, Theo, cleaned, the mudd | In the sentence below, what is the object? After t | The object is: the muddy boots. |
+| subject_object_choice | 9 | single_choice | Without warning, the fire alarm, rang, l | In the sentence below, what is the subject? Withou | The subject is: the fire alarm. |
+| subject_object_choice | 10 | single_choice | Before assembly, the choir, practised, t | In the sentence below, what is the subject? Before | The subject is: the choir. |
+| subject_object_choice | 11 | single_choice | Maya, opened, the heavy gate, after lunc | In the sentence below, what is the object? Maya op | The object is: the heavy gate. |
+| subject_object_choice | 12 | single_choice | During the storm, the old roof, leaked,  | In the sentence below, what is the subject? During | The subject is: the old roof. |
+| subject_object_choice | 13 | single_choice | The guide, lifted, the lantern, carefull | In the sentence below, what is the object? The gui | The object is: the lantern. |
+| subject_object_choice | 14 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
+| subject_object_choice | 15 | single_choice | At the museum, the curator, unlocked, th | In the sentence below, what is the subject? At the | The subject is: the curator. |
 | subject_object_choice | 16 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
 | subject_object_choice | 17 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
-| subject_object_choice | 18 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
-| subject_object_choice | 19 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
-| subject_object_choice | 20 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
-| subject_object_choice | 21 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
-| subject_object_choice | 22 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
-| subject_object_choice | 23 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
+| subject_object_choice | 18 | single_choice | After the match, Theo, cleaned, the mudd | In the sentence below, what is the object? After t | The object is: the muddy boots. |
+| subject_object_choice | 19 | single_choice | Without warning, the fire alarm, rang, l | In the sentence below, what is the subject? Withou | The subject is: the fire alarm. |
+| subject_object_choice | 20 | single_choice | Before assembly, the choir, practised, t | In the sentence below, what is the subject? Before | The subject is: the choir. |
+| subject_object_choice | 21 | single_choice | Maya, opened, the heavy gate, after lunc | In the sentence below, what is the object? Maya op | The object is: the heavy gate. |
+| subject_object_choice | 22 | single_choice | During the storm, the old roof, leaked,  | In the sentence below, what is the subject? During | The subject is: the old roof. |
+| subject_object_choice | 23 | single_choice | The guide, lifted, the lantern, carefull | In the sentence below, what is the object? The gui | The object is: the lantern. |
 | subject_object_choice | 24 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
-| subject_object_choice | 25 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
-| subject_object_choice | 26 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
-| subject_object_choice | 27 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
-| subject_object_choice | 28 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
-| subject_object_choice | 29 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
-| subject_object_choice | 30 | single_choice | After lunch, the tired goalkeeper, caugh | In the sentence below, what is the subject? After  | The subject is: the tired goalkeeper. |
-| modal_verb_choice | 1 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
-| modal_verb_choice | 2 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
+| subject_object_choice | 25 | single_choice | At the museum, the curator, unlocked, th | In the sentence below, what is the subject? At the | The subject is: the curator. |
+| subject_object_choice | 26 | single_choice | The noisy gull, stole, the sandwich, fro | In the sentence below, what is the object? The noi | The object is: the sandwich. |
+| subject_object_choice | 27 | single_choice | On Friday morning, our science club, vis | In the sentence below, what is the subject? On Fri | The subject is: our science club. |
+| subject_object_choice | 28 | single_choice | After the match, Theo, cleaned, the mudd | In the sentence below, what is the object? After t | The object is: the muddy boots. |
+| subject_object_choice | 29 | single_choice | Without warning, the fire alarm, rang, l | In the sentence below, what is the subject? Withou | The subject is: the fire alarm. |
+| subject_object_choice | 30 | single_choice | Before assembly, the choir, practised, t | In the sentence below, what is the subject? Before | The subject is: the choir. |
+| modal_verb_choice | 1 | single_choice | The bus will arrive at nine., The bus mu | Choose the best modal meaning. Which sentence show | The correct answer is: The bus might arrive at nine.. |
+| modal_verb_choice | 2 | single_choice | may, must, will, should | Choose the best modal meaning. Which modal verb be | The correct answer is: may. |
 | modal_verb_choice | 3 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
 | modal_verb_choice | 4 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
 | modal_verb_choice | 5 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
-| modal_verb_choice | 6 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
-| modal_verb_choice | 7 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
-| modal_verb_choice | 8 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
-| modal_verb_choice | 9 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
-| modal_verb_choice | 10 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
-| modal_verb_choice | 11 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
-| modal_verb_choice | 12 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
-| modal_verb_choice | 13 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
-| modal_verb_choice | 14 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
-| modal_verb_choice | 15 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
-| modal_verb_choice | 16 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
-| modal_verb_choice | 17 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
-| modal_verb_choice | 18 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
-| modal_verb_choice | 19 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
-| modal_verb_choice | 20 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
-| modal_verb_choice | 21 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
-| modal_verb_choice | 22 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
-| modal_verb_choice | 23 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
-| modal_verb_choice | 24 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
-| modal_verb_choice | 25 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
-| modal_verb_choice | 26 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
-| modal_verb_choice | 27 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
-| modal_verb_choice | 28 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
-| modal_verb_choice | 29 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
-| modal_verb_choice | 30 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
-| parenthesis_replace_choice | 1 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 2 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 3 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 4 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| modal_verb_choice | 6 | single_choice | You might wear a helmet., You could wear | Choose the best modal meaning. Which sentence show | The correct answer is: You must wear a helmet.. |
+| modal_verb_choice | 7 | single_choice | should, might, must, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
+| modal_verb_choice | 8 | single_choice | The parcel will arrive today., The parce | Choose the best modal meaning. Which sentence soun | The correct answer is: The parcel might arrive today.. |
+| modal_verb_choice | 9 | single_choice | can, must, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: can. |
+| modal_verb_choice | 10 | single_choice | might, could, must, would | Choose the best modal meaning. Which modal verb be | The correct answer is: must. |
+| modal_verb_choice | 11 | single_choice | The bus will arrive at nine., The bus mu | Choose the best modal meaning. Which sentence show | The correct answer is: The bus might arrive at nine.. |
+| modal_verb_choice | 12 | single_choice | may, must, will, should | Choose the best modal meaning. Which modal verb be | The correct answer is: may. |
+| modal_verb_choice | 13 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
+| modal_verb_choice | 14 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
+| modal_verb_choice | 15 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
+| modal_verb_choice | 16 | single_choice | You might wear a helmet., You could wear | Choose the best modal meaning. Which sentence show | The correct answer is: You must wear a helmet.. |
+| modal_verb_choice | 17 | single_choice | should, might, must, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
+| modal_verb_choice | 18 | single_choice | The parcel will arrive today., The parce | Choose the best modal meaning. Which sentence soun | The correct answer is: The parcel might arrive today.. |
+| modal_verb_choice | 19 | single_choice | can, must, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: can. |
+| modal_verb_choice | 20 | single_choice | might, could, must, would | Choose the best modal meaning. Which modal verb be | The correct answer is: must. |
+| modal_verb_choice | 21 | single_choice | The bus will arrive at nine., The bus mu | Choose the best modal meaning. Which sentence show | The correct answer is: The bus might arrive at nine.. |
+| modal_verb_choice | 22 | single_choice | may, must, will, should | Choose the best modal meaning. Which modal verb be | The correct answer is: may. |
+| modal_verb_choice | 23 | single_choice | The team must win., The team will win.,  | Choose the best modal meaning. Which sentence show | The correct answer is: The team might win.. |
+| modal_verb_choice | 24 | single_choice | might, could, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
+| modal_verb_choice | 25 | single_choice | It might snow tonight., It should snow t | Choose the best modal meaning. Which sentence soun | The correct answer is: It will snow tonight.. |
+| modal_verb_choice | 26 | single_choice | You might wear a helmet., You could wear | Choose the best modal meaning. Which sentence show | The correct answer is: You must wear a helmet.. |
+| modal_verb_choice | 27 | single_choice | should, might, must, will | Choose the best modal meaning. Which modal verb be | The correct answer is: should. |
+| modal_verb_choice | 28 | single_choice | The parcel will arrive today., The parce | Choose the best modal meaning. Which sentence soun | The correct answer is: The parcel might arrive today.. |
+| modal_verb_choice | 29 | single_choice | can, must, should, will | Choose the best modal meaning. Which modal verb be | The correct answer is: can. |
+| modal_verb_choice | 30 | single_choice | might, could, must, would | Choose the best modal meaning. Which modal verb be | The correct answer is: must. |
+| parenthesis_replace_choice | 1 | single_choice | dashes, question marks, semi-colons, apo | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 2 | single_choice | commas, full stops, colons, question mar | What punctuation could be used instead of brackets | The correct answer is: commas. |
+| parenthesis_replace_choice | 3 | single_choice | dashes, exclamation marks, semi-colons,  | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 4 | single_choice | commas, question marks, colons, full sto | What punctuation could be used instead of brackets | The correct answer is: commas. |
 | parenthesis_replace_choice | 5 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 6 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 7 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 8 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 9 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 6 | single_choice | dashes, semi-colons, apostrophes, questi | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 7 | single_choice | commas, colons, full stops, question mar | What punctuation could be used instead of brackets | The correct answer is: commas. |
+| parenthesis_replace_choice | 8 | single_choice | dashes, semi-colons, apostrophes, questi | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 9 | single_choice | commas, full stops, colons, question mar | What punctuation could be used instead of brackets | The correct answer is: commas. |
 | parenthesis_replace_choice | 10 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 11 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 12 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 13 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 14 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 11 | single_choice | dashes, question marks, semi-colons, apo | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 12 | single_choice | commas, full stops, colons, question mar | What punctuation could be used instead of brackets | The correct answer is: commas. |
+| parenthesis_replace_choice | 13 | single_choice | dashes, exclamation marks, semi-colons,  | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 14 | single_choice | commas, question marks, colons, full sto | What punctuation could be used instead of brackets | The correct answer is: commas. |
 | parenthesis_replace_choice | 15 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 16 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 17 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 18 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 19 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 16 | single_choice | dashes, semi-colons, apostrophes, questi | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 17 | single_choice | commas, colons, full stops, question mar | What punctuation could be used instead of brackets | The correct answer is: commas. |
+| parenthesis_replace_choice | 18 | single_choice | dashes, semi-colons, apostrophes, questi | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 19 | single_choice | commas, full stops, colons, question mar | What punctuation could be used instead of brackets | The correct answer is: commas. |
 | parenthesis_replace_choice | 20 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 21 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 22 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 23 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 24 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 21 | single_choice | dashes, question marks, semi-colons, apo | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 22 | single_choice | commas, full stops, colons, question mar | What punctuation could be used instead of brackets | The correct answer is: commas. |
+| parenthesis_replace_choice | 23 | single_choice | dashes, exclamation marks, semi-colons,  | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 24 | single_choice | commas, question marks, colons, full sto | What punctuation could be used instead of brackets | The correct answer is: commas. |
 | parenthesis_replace_choice | 25 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 26 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 27 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 28 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_replace_choice | 29 | single_choice | semi-colons, dashes, colons, question ma | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 26 | single_choice | dashes, semi-colons, apostrophes, questi | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 27 | single_choice | commas, colons, full stops, question mar | What punctuation could be used instead of brackets | The correct answer is: commas. |
+| parenthesis_replace_choice | 28 | single_choice | dashes, semi-colons, apostrophes, questi | What punctuation could be used instead of brackets | The correct answer is: dashes. |
+| parenthesis_replace_choice | 29 | single_choice | commas, full stops, colons, question mar | What punctuation could be used instead of brackets | The correct answer is: commas. |
 | parenthesis_replace_choice | 30 | single_choice | hyphens, colons, semi-colons, dashes | What punctuation could be used instead of brackets | The correct answer is: dashes. |
-| parenthesis_fix_sentence | 1 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 2 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 3 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 4 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 5 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 6 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
+| parenthesis_fix_sentence | 1 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The trophy (made of silver) stood in th |
+| parenthesis_fix_sentence | 2 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My uncle (a keen cyclist) repaired the  |
+| parenthesis_fix_sentence | 3 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The library (which opened last year) ha |
+| parenthesis_fix_sentence | 4 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Hassan (our team captain) organised the |
+| parenthesis_fix_sentence | 5 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The old oak tree (over two hundred year |
+| parenthesis_fix_sentence | 6 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Nina (who had rehearsed all week) sang  |
 | parenthesis_fix_sentence | 7 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 8 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 9 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
+| parenthesis_fix_sentence | 8 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The science folder (left on the desk) b |
+| parenthesis_fix_sentence | 9 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The coach (usually very calm) shouted i |
 | parenthesis_fix_sentence | 10 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 11 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 12 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 13 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 14 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 15 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 16 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
+| parenthesis_fix_sentence | 11 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The trophy (made of silver) stood in th |
+| parenthesis_fix_sentence | 12 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My uncle (a keen cyclist) repaired the  |
+| parenthesis_fix_sentence | 13 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The library (which opened last year) ha |
+| parenthesis_fix_sentence | 14 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Hassan (our team captain) organised the |
+| parenthesis_fix_sentence | 15 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The old oak tree (over two hundred year |
+| parenthesis_fix_sentence | 16 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Nina (who had rehearsed all week) sang  |
 | parenthesis_fix_sentence | 17 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 18 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 19 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
+| parenthesis_fix_sentence | 18 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The science folder (left on the desk) b |
+| parenthesis_fix_sentence | 19 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The coach (usually very calm) shouted i |
 | parenthesis_fix_sentence | 20 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 21 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 22 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 23 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 24 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 25 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 26 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
+| parenthesis_fix_sentence | 21 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The trophy (made of silver) stood in th |
+| parenthesis_fix_sentence | 22 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My uncle (a keen cyclist) repaired the  |
+| parenthesis_fix_sentence | 23 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The library (which opened last year) ha |
+| parenthesis_fix_sentence | 24 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Hassan (our team captain) organised the |
+| parenthesis_fix_sentence | 25 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The old oak tree (over two hundred year |
+| parenthesis_fix_sentence | 26 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Nina (who had rehearsed all week) sang  |
 | parenthesis_fix_sentence | 27 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
-| parenthesis_fix_sentence | 28 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| parenthesis_fix_sentence | 29 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: My cousin (the youngest in the family)  |
+| parenthesis_fix_sentence | 28 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The science folder (left on the desk) b |
+| parenthesis_fix_sentence | 29 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: The coach (usually very calm) shouted i |
 | parenthesis_fix_sentence | 30 | textarea | placeholder: Type the corrected sentence | Insert brackets for parenthesis. Insert a pair of  | A correct answer is: Our class visited a castle (the oldest  |
-| speech_punctuation_fix | 1 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
-| speech_punctuation_fix | 2 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
-| speech_punctuation_fix | 3 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
-| speech_punctuation_fix | 4 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
-| speech_punctuation_fix | 5 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
-| speech_punctuation_fix | 6 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
-| speech_punctuation_fix | 7 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
-| speech_punctuation_fix | 8 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
-| speech_punctuation_fix | 9 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
-| speech_punctuation_fix | 10 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
-| speech_punctuation_fix | 11 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
-| speech_punctuation_fix | 12 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
-| speech_punctuation_fix | 13 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
-| speech_punctuation_fix | 14 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
-| speech_punctuation_fix | 15 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
-| speech_punctuation_fix | 16 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
-| speech_punctuation_fix | 17 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
-| speech_punctuation_fix | 18 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
-| speech_punctuation_fix | 19 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
-| speech_punctuation_fix | 20 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
-| speech_punctuation_fix | 21 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
-| speech_punctuation_fix | 22 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
-| speech_punctuation_fix | 23 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
+| speech_punctuation_fix | 1 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: The guide said, “Follow the red arrows. |
+| speech_punctuation_fix | 2 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “What a huge wave that was!” shouted Be |
+| speech_punctuation_fix | 3 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Maya whispered, “Please wait outside.” |
+| speech_punctuation_fix | 4 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
+| speech_punctuation_fix | 5 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
+| speech_punctuation_fix | 6 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
+| speech_punctuation_fix | 7 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Bring the map with you!” called Priya. |
+| speech_punctuation_fix | 8 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Omar asked, “When does the match begin? |
+| speech_punctuation_fix | 9 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “The bus is here,” said Luca. |
+| speech_punctuation_fix | 10 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Have you packed the torch?” asked Dad. |
+| speech_punctuation_fix | 11 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: The guide said, “Follow the red arrows. |
+| speech_punctuation_fix | 12 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “What a huge wave that was!” shouted Be |
+| speech_punctuation_fix | 13 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Maya whispered, “Please wait outside.” |
+| speech_punctuation_fix | 14 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
+| speech_punctuation_fix | 15 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
+| speech_punctuation_fix | 16 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
+| speech_punctuation_fix | 17 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Bring the map with you!” called Priya. |
+| speech_punctuation_fix | 18 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Omar asked, “When does the match begin? |
+| speech_punctuation_fix | 19 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “The bus is here,” said Luca. |
+| speech_punctuation_fix | 20 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Have you packed the torch?” asked Dad. |
+| speech_punctuation_fix | 21 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: The guide said, “Follow the red arrows. |
+| speech_punctuation_fix | 22 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “What a huge wave that was!” shouted Be |
+| speech_punctuation_fix | 23 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Maya whispered, “Please wait outside.” |
 | speech_punctuation_fix | 24 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
 | speech_punctuation_fix | 25 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
 | speech_punctuation_fix | 26 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
-| speech_punctuation_fix | 27 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
-| speech_punctuation_fix | 28 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Dad shouted, “Run inside!” |
-| speech_punctuation_fix | 29 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Sit down!” said the coach. |
-| speech_punctuation_fix | 30 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Where are you going?” asked Mum. |
-| apostrophe_possession_choice | 1 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
-| apostrophe_possession_choice | 2 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
-| apostrophe_possession_choice | 3 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
-| apostrophe_possession_choice | 4 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
-| apostrophe_possession_choice | 5 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
-| apostrophe_possession_choice | 6 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
-| apostrophe_possession_choice | 7 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
-| apostrophe_possession_choice | 8 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
-| apostrophe_possession_choice | 9 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
-| apostrophe_possession_choice | 10 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
+| speech_punctuation_fix | 27 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Bring the map with you!” called Priya. |
+| speech_punctuation_fix | 28 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: Omar asked, “When does the match begin? |
+| speech_punctuation_fix | 29 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “The bus is here,” said Luca. |
+| speech_punctuation_fix | 30 | textarea | placeholder: Type the corrected sentence | Punctuate direct speech. Punctuate the direct spee | A correct answer is: “Have you packed the torch?” asked Dad. |
+| apostrophe_possession_choice | 1 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
+| apostrophe_possession_choice | 2 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
+| apostrophe_possession_choice | 3 | single_choice | artist's, artists, artists', artist | Choose the correct possessive apostrophe. Choose t | The correct answer is: artist's. |
+| apostrophe_possession_choice | 4 | single_choice | gardeners, gardener's, gardeners', garde | Choose the correct possessive apostrophe. Choose t | The correct answer is: gardeners'. |
+| apostrophe_possession_choice | 5 | single_choice | bird's, birds, birds', birds's | Choose the correct possessive apostrophe. Choose t | The correct answer is: bird's. |
+| apostrophe_possession_choice | 6 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
+| apostrophe_possession_choice | 7 | single_choice | women's, womens', womens, woman's | Choose the correct possessive apostrophe. Choose t | The correct answer is: women's. |
+| apostrophe_possession_choice | 8 | single_choice | visitors, visitor's, visitors', visitors | Choose the correct possessive apostrophe. Choose t | The correct answer is: visitors'. |
+| apostrophe_possession_choice | 9 | single_choice | child's, childs, childs', children's | Choose the correct possessive apostrophe. Choose t | The correct answer is: child's. |
+| apostrophe_possession_choice | 10 | single_choice | boys, boy's, boys', boys's | Choose the correct possessive apostrophe. Choose t | The correct answer is: boys'. |
 | apostrophe_possession_choice | 11 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
 | apostrophe_possession_choice | 12 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
-| apostrophe_possession_choice | 13 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
-| apostrophe_possession_choice | 14 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
-| apostrophe_possession_choice | 15 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
+| apostrophe_possession_choice | 13 | single_choice | artist's, artists, artists', artist | Choose the correct possessive apostrophe. Choose t | The correct answer is: artist's. |
+| apostrophe_possession_choice | 14 | single_choice | gardeners, gardener's, gardeners', garde | Choose the correct possessive apostrophe. Choose t | The correct answer is: gardeners'. |
+| apostrophe_possession_choice | 15 | single_choice | bird's, birds, birds', birds's | Choose the correct possessive apostrophe. Choose t | The correct answer is: bird's. |
 | apostrophe_possession_choice | 16 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
-| apostrophe_possession_choice | 17 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
-| apostrophe_possession_choice | 18 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
-| apostrophe_possession_choice | 19 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
-| apostrophe_possession_choice | 20 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
-| apostrophe_possession_choice | 21 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
-| apostrophe_possession_choice | 22 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
-| apostrophe_possession_choice | 23 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
-| apostrophe_possession_choice | 24 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
-| apostrophe_possession_choice | 25 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
-| apostrophe_possession_choice | 26 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
-| apostrophe_possession_choice | 27 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
-| apostrophe_possession_choice | 28 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
-| apostrophe_possession_choice | 29 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
-| apostrophe_possession_choice | 30 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
-| explain_reason_choice | 1 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| apostrophe_possession_choice | 17 | single_choice | women's, womens', womens, woman's | Choose the correct possessive apostrophe. Choose t | The correct answer is: women's. |
+| apostrophe_possession_choice | 18 | single_choice | visitors, visitor's, visitors', visitors | Choose the correct possessive apostrophe. Choose t | The correct answer is: visitors'. |
+| apostrophe_possession_choice | 19 | single_choice | child's, childs, childs', children's | Choose the correct possessive apostrophe. Choose t | The correct answer is: child's. |
+| apostrophe_possession_choice | 20 | single_choice | boys, boy's, boys', boys's | Choose the correct possessive apostrophe. Choose t | The correct answer is: boys'. |
+| apostrophe_possession_choice | 21 | single_choice | children's, childrens', childrens, child | Choose the correct possessive apostrophe. Choose t | The correct answer is: children's. |
+| apostrophe_possession_choice | 22 | single_choice | girls, girl's, girls', girls's | Choose the correct possessive apostrophe. Choose t | The correct answer is: girls'. |
+| apostrophe_possession_choice | 23 | single_choice | artist's, artists, artists', artist | Choose the correct possessive apostrophe. Choose t | The correct answer is: artist's. |
+| apostrophe_possession_choice | 24 | single_choice | gardeners, gardener's, gardeners', garde | Choose the correct possessive apostrophe. Choose t | The correct answer is: gardeners'. |
+| apostrophe_possession_choice | 25 | single_choice | bird's, birds, birds', birds's | Choose the correct possessive apostrophe. Choose t | The correct answer is: bird's. |
+| apostrophe_possession_choice | 26 | single_choice | dogs, dog's, dogs', dogs's | Choose the correct possessive apostrophe. Choose t | The correct answer is: dog's. |
+| apostrophe_possession_choice | 27 | single_choice | women's, womens', womens, woman's | Choose the correct possessive apostrophe. Choose t | The correct answer is: women's. |
+| apostrophe_possession_choice | 28 | single_choice | visitors, visitor's, visitors', visitors | Choose the correct possessive apostrophe. Choose t | The correct answer is: visitors'. |
+| apostrophe_possession_choice | 29 | single_choice | child's, childs, childs', children's | Choose the correct possessive apostrophe. Choose t | The correct answer is: child's. |
+| apostrophe_possession_choice | 30 | single_choice | boys, boy's, boys', boys's | Choose the correct possessive apostrophe. Choose t | The correct answer is: boys'. |
+| explain_reason_choice | 1 | single_choice | Because Standard English uses ‘were’ wit | Explain why. Why is 'We was ready' wrong in Standa | The best explanation is: Because Standard English uses ‘were |
 | explain_reason_choice | 2 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 3 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 3 | single_choice | Because Standard English uses ‘doesn't’  | Explain why. Why is 'She don't know' wrong in Stan | The best explanation is: Because Standard English uses ‘does |
 | explain_reason_choice | 4 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 5 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 5 | single_choice | Because Standard English uses ‘saw’ for  | Explain why. Why is 'I seen the comet' wrong in St | The best explanation is: Because Standard English uses ‘saw’ |
 | explain_reason_choice | 6 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 7 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 7 | single_choice | Because Standard English uses ‘have’ wit | Explain why. Why is 'They has finished' wrong in S | The best explanation is: Because Standard English uses ‘have |
 | explain_reason_choice | 8 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
 | explain_reason_choice | 9 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
 | explain_reason_choice | 10 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 11 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 11 | single_choice | Because Standard English uses ‘were’ wit | Explain why. Why is 'We was ready' wrong in Standa | The best explanation is: Because Standard English uses ‘were |
 | explain_reason_choice | 12 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 13 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 13 | single_choice | Because Standard English uses ‘doesn't’  | Explain why. Why is 'She don't know' wrong in Stan | The best explanation is: Because Standard English uses ‘does |
 | explain_reason_choice | 14 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 15 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 15 | single_choice | Because Standard English uses ‘saw’ for  | Explain why. Why is 'I seen the comet' wrong in St | The best explanation is: Because Standard English uses ‘saw’ |
 | explain_reason_choice | 16 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 17 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 17 | single_choice | Because Standard English uses ‘have’ wit | Explain why. Why is 'They has finished' wrong in S | The best explanation is: Because Standard English uses ‘have |
 | explain_reason_choice | 18 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
 | explain_reason_choice | 19 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
 | explain_reason_choice | 20 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 21 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 21 | single_choice | Because Standard English uses ‘were’ wit | Explain why. Why is 'We was ready' wrong in Standa | The best explanation is: Because Standard English uses ‘were |
 | explain_reason_choice | 22 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 23 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 23 | single_choice | Because Standard English uses ‘doesn't’  | Explain why. Why is 'She don't know' wrong in Stan | The best explanation is: Because Standard English uses ‘does |
 | explain_reason_choice | 24 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 25 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 25 | single_choice | Because Standard English uses ‘saw’ for  | Explain why. Why is 'I seen the comet' wrong in St | The best explanation is: Because Standard English uses ‘saw’ |
 | explain_reason_choice | 26 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
-| explain_reason_choice | 27 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
+| explain_reason_choice | 27 | single_choice | Because Standard English uses ‘have’ wit | Explain why. Why is 'They has finished' wrong in S | The best explanation is: Because Standard English uses ‘have |
 | explain_reason_choice | 28 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |
 | explain_reason_choice | 29 | single_choice | Because Standard English uses ‘did’, not | Explain why. Why is 'I done my homework' wrong in  | The best explanation is: Because Standard English uses ‘did’ |
 | explain_reason_choice | 30 | single_choice | Because the opening words are a fronted  | Explain why. Why is there a comma after the openin | The best explanation is: Because the opening words are a fro |

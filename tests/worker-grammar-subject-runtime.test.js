@@ -287,9 +287,9 @@ test('Grammar command route saves manual-review-only responses without scored ev
     expectedLearnerRevision: 1,
     payload: {
       response: {
-        part1: 'The tall',
-        part2: 'captain',
-        part3: 'with curly hair',
+        part1: 'The careful',
+        part2: 'detective',
+        part3: 'with a silver badge',
       },
     },
   });

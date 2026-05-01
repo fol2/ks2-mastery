@@ -60,29 +60,6 @@ const QUESTION_TYPES = {
 };
 
 const P14_FIXED_DIAGNOSTIC_TEMPLATE_IDS = Object.freeze([
-  "question_mark_select",
-  "build_noun_phrase",
-  "explain_reason_choice",
-  "formality_pairs",
-  "fronted_adverbial_choose",
-  "parenthesis_fix_sentence",
-  "parenthesis_replace_choice",
-  "pronoun_cohesion_choice",
-  "relative_clause_complete",
-  "standard_english_pairs",
-  "standard_fix_sentence",
-  "active_passive_rewrite",
-  "apostrophe_possession_choice",
-  "combine_clauses_rewrite",
-  "expanded_noun_phrase_choice",
-  "fix_fronted_adverbial",
-  "modal_verb_choice",
-  "relative_clause_identify",
-  "speech_punctuation_fix",
-  "subject_object_choice",
-  "subordinate_clause_choice",
-  "tense_form_choice",
-  "tense_rewrite"
 ]);
 
 const P14_FIXED_DIAGNOSTIC_TEMPLATE_ID_SET = new Set(P14_FIXED_DIAGNOSTIC_TEMPLATE_IDS);
@@ -700,6 +677,129 @@ const TOKEN_CLASS_ITEMS = [
   }
 ];
 
+const QUESTION_MARK_SETS = [
+  {
+    options: [
+      "Where is the spare key",
+      "I wonder where the spare key is",
+      "Can you check the cupboard",
+      "The key might be inside the drawer"
+    ],
+    correct: [
+      "Where is the spare key",
+      "Can you check the cupboard"
+    ]
+  },
+  {
+    options: [
+      "What a difficult puzzle this is",
+      "Did the train arrive before noon",
+      "Aisha asked whether the train had arrived",
+      "Is the platform open yet"
+    ],
+    correct: [
+      "Did the train arrive before noon",
+      "Is the platform open yet"
+    ]
+  },
+  {
+    options: [
+      "How bright the lantern looked",
+      "Do you know the way to the hall",
+      "Ben wondered if the hall was open",
+      "Can the guide meet us outside"
+    ],
+    correct: [
+      "Do you know the way to the hall",
+      "Can the guide meet us outside"
+    ]
+  },
+  {
+    options: [
+      "What a busy morning we have had",
+      "Is Maya bringing the tickets",
+      "Maya asked whether she should bring the tickets",
+      "Did Omar pack the map"
+    ],
+    correct: [
+      "Is Maya bringing the tickets",
+      "Did Omar pack the map"
+    ]
+  },
+  {
+    options: [
+      "Can the library open early today",
+      "The librarian wondered whether the key had arrived",
+      "Do the pupils need their reading records",
+      "How useful the new shelves are"
+    ],
+    correct: [
+      "Can the library open early today",
+      "Do the pupils need their reading records"
+    ]
+  },
+  {
+    options: [
+      "Did the team remember their water bottles",
+      "The coach asked if the team had remembered them",
+      "Is the match starting after lunch",
+      "What a close match that was"
+    ],
+    correct: [
+      "Did the team remember their water bottles",
+      "Is the match starting after lunch"
+    ]
+  },
+  {
+    options: [
+      "Do you think the museum is open",
+      "Priya wondered whether the museum was open",
+      "Can we sketch the Roman shield",
+      "What an interesting shield this is"
+    ],
+    correct: [
+      "Do you think the museum is open",
+      "Can we sketch the Roman shield"
+    ]
+  },
+  {
+    options: [
+      "What a long journey this has been",
+      "Can you help me carry the boxes",
+      "Mum wondered whether the parcel had arrived",
+      "Did the coach leave on time"
+    ],
+    correct: [
+      "Can you help me carry the boxes",
+      "Did the coach leave on time"
+    ]
+  },
+  {
+    options: [
+      "Is the science folder on the desk",
+      "Freya asked whether the folder was on the desk",
+      "Do the batteries still work",
+      "How carefully Freya checked the drawer"
+    ],
+    correct: [
+      "Is the science folder on the desk",
+      "Do the batteries still work"
+    ]
+  },
+  {
+    options: [
+      "Did the runners hear the whistle",
+      "The judge wondered if the runners heard it",
+      "Can Ravi stand near the finish line",
+      "What a fast race it was"
+    ],
+    correct: [
+      "Did the runners hear the whistle",
+      "Can Ravi stand near the finish line"
+    ]
+  }
+];
+
 const NOUN_PHRASE_OPTIONS = [
   {
     prompt: "Which option is an expanded noun phrase?",
@@ -722,6 +822,56 @@ const NOUN_PHRASE_OPTIONS = [
     correct: "the silver key under the mat"
   },
   {
+    prompt: "Which option is an expanded noun phrase?",
+    options: [
+      "the cracked blue mug beside the sink",
+      "washed the plates",
+      "because the sink was full",
+      "very carefully"
+    ],
+    correct: "the cracked blue mug beside the sink"
+  },
+  {
+    prompt: "Which sentence contains an expanded noun phrase?",
+    options: [
+      "The small wooden boat drifted across the pond.",
+      "After tea, we walked home.",
+      "The boat drifted and bumped the reeds.",
+      "Please hold the rope tightly."
+    ],
+    correct: "The small wooden boat drifted across the pond."
+  },
+  {
+    prompt: "Which option is an expanded noun phrase?",
+    options: [
+      "a narrow path through the dark wood",
+      "walked through the wood",
+      "while the owls called",
+      "almost silently"
+    ],
+    correct: "a narrow path through the dark wood"
+  },
+  {
+    prompt: "Which sentence contains an expanded noun phrase?",
+    options: [
+      "Omar carried the heavy rucksack with red straps.",
+      "Omar carried and then rested.",
+      "Because the rucksack was heavy, Omar stopped.",
+      "Carry the rucksack carefully."
+    ],
+    correct: "Omar carried the heavy rucksack with red straps."
+  },
+  {
+    prompt: "Which option is an expanded noun phrase?",
+    options: [
+      "the faded map under the glass",
+      "looked under the glass",
+      "after the map was found",
+      "quite recently"
+    ],
+    correct: "the faded map under the glass"
+  },
+  {
     prompt: "Which sentence contains an expanded noun phrase?",
     options: [
       "The tired explorers climbed the hill.",
@@ -730,6 +880,129 @@ const NOUN_PHRASE_OPTIONS = [
       "Please close the shutters."
     ],
     correct: "The tired explorers climbed the hill."
+  },
+  {
+    prompt: "Which option is an expanded noun phrase?",
+    options: [
+      "three bright shells from the beach",
+      "ran towards the beach",
+      "because the shells were bright",
+      "with a loud splash"
+    ],
+    correct: "three bright shells from the beach"
+  },
+  {
+    prompt: "Which sentence contains an expanded noun phrase?",
+    options: [
+      "The nervous puppy with white paws hid behind the chair.",
+      "Behind the chair, the puppy hid.",
+      "The puppy hid because it was nervous.",
+      "Hide behind the chair."
+    ],
+    correct: "The nervous puppy with white paws hid behind the chair."
+  }
+];
+
+const BUILD_NOUN_PHRASE_ITEMS = [
+  {
+    sentence:"___ solved the puzzle.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The careful","The careful"],["Carefully","Carefully"],["Because","Because"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["detective","detective"],["solved","solved"],["under","under"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["with a silver badge","with a silver badge"],["very quickly","very quickly"],["and smiled","and smiled"]] }
+    ],
+    answerParts:["The careful","detective","with a silver badge"],
+    final:"The careful detective with a silver badge"
+  },
+  {
+    sentence:"___ rolled across the floor.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["A small","A small"],["Slowly","Slowly"],["When","When"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["glass marble","glass marble"],["rolled","rolled"],["beside","beside"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["with blue stripes","with blue stripes"],["under the table","under the table"],["and bounced","and bounced"]] }
+    ],
+    answerParts:["A small","glass marble","with blue stripes"],
+    final:"A small glass marble with blue stripes"
+  },
+  {
+    sentence:"___ waited outside the theatre.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The excited","The excited"],["Excitedly","Excitedly"],["Although","Although"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["choir","choir"],["waited","waited"],["after","after"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["from Year Six","from Year Six"],["very patiently","very patiently"],["because of the rain","because of the rain"]] }
+    ],
+    answerParts:["The excited","choir","from Year Six"],
+    final:"The excited choir from Year Six"
+  },
+  {
+    sentence:"___ stood beside the canal.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The narrow","The narrow"],["Narrowly","Narrowly"],["If","If"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["wooden bridge","wooden bridge"],["stood","stood"],["before","before"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["with iron railings","with iron railings"],["beside the canal","beside the canal"],["and creaked","and creaked"]] }
+    ],
+    answerParts:["The narrow","wooden bridge","with iron railings"],
+    final:"The narrow wooden bridge with iron railings"
+  },
+  {
+    sentence:"___ caught the sunlight.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The bright","The bright"],["Brightly","Brightly"],["Because","Because"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["green kite","green kite"],["caught","caught"],["above","above"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["with a long tail","with a long tail"],["in the sunlight","in the sunlight"],["and fluttered","and fluttered"]] }
+    ],
+    answerParts:["The bright","green kite","with a long tail"],
+    final:"The bright green kite with a long tail"
+  },
+  {
+    sentence:"___ found the silver key.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The nervous young","The nervous young"],["Suddenly","Suddenly"],["If","If"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["explorer","explorer"],["ran","ran"],["under","under"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["from our class","from our class"],["very carefully","very carefully"],["because of the rain","because of the rain"]] }
+    ],
+    answerParts:["The nervous young","explorer","from our class"],
+    final:"The nervous young explorer from our class"
+  },
+  {
+    sentence:"___ blocked the narrow lane.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["A fallen","A fallen"],["Fallen","Fallen"],["While","While"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["oak branch","oak branch"],["blocked","blocked"],["through","through"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["with wet leaves","with wet leaves"],["during the storm","during the storm"],["and cracked","and cracked"]] }
+    ],
+    answerParts:["A fallen","oak branch","with wet leaves"],
+    final:"A fallen oak branch with wet leaves"
+  },
+  {
+    sentence:"___ opened the door.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The tall","The tall"],["Quickly","Quickly"],["Because","Because"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["captain","captain"],["shouted","shouted"],["after","after"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["with curly hair","with curly hair"],["very loudly","very loudly"],["and waved","and waved"]] }
+    ],
+    answerParts:["The tall","captain","with curly hair"],
+    final:"The tall captain with curly hair"
+  },
+  {
+    sentence:"___ sat on the windowsill.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The cracked","The cracked"],["Cracking","Cracking"],["After","After"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["clay pot","clay pot"],["sat","sat"],["inside","inside"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["with red flowers","with red flowers"],["on the windowsill","on the windowsill"],["and watered","and watered"]] }
+    ],
+    answerParts:["The cracked","clay pot","with red flowers"],
+    final:"The cracked clay pot with red flowers"
+  },
+  {
+    sentence:"___ won the design prize.",
+    fields:[
+      { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The detailed","The detailed"],["In detail","In detail"],["When","When"]] },
+      { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["model castle","model castle"],["won","won"],["beside","beside"]] },
+      { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["with tiny flags","with tiny flags"],["before assembly","before assembly"],["and displayed","and displayed"]] }
+    ],
+    answerParts:["The detailed","model castle","with tiny flags"],
+    final:"The detailed model castle with tiny flags"
   }
 ];
 
@@ -751,6 +1024,78 @@ const FRONTED_OPTIONS = [
       "The market opens and traders hurry in."
     ],
     correct: "In the morning, the market opens early."
+  },
+  {
+    options: [
+      "After the final whistle, the team shook hands.",
+      "The team shook hands after the final whistle.",
+      "Did the team shake hands?",
+      "The team shook hands and waved."
+    ],
+    correct: "After the final whistle, the team shook hands."
+  },
+  {
+    options: [
+      "With great care, Imani folded the fragile map.",
+      "Imani folded the fragile map with great care.",
+      "Because Imani was careful, the map stayed flat.",
+      "Fold the fragile map carefully."
+    ],
+    correct: "With great care, Imani folded the fragile map."
+  },
+  {
+    options: [
+      "At the edge of the field, the fox paused.",
+      "The fox paused at the edge of the field.",
+      "The fox paused and listened.",
+      "Where did the fox pause?"
+    ],
+    correct: "At the edge of the field, the fox paused."
+  },
+  {
+    options: [
+      "Without warning, the lights flickered.",
+      "The lights flickered without warning.",
+      "The lights flickered and went out.",
+      "Did the lights flicker?"
+    ],
+    correct: "Without warning, the lights flickered."
+  },
+  {
+    options: [
+      "Before the lesson, Ravi sharpened the pencils.",
+      "Ravi sharpened the pencils before the lesson.",
+      "Ravi sharpened the pencils and tidied the desk.",
+      "Sharpen the pencils before the lesson."
+    ],
+    correct: "Before the lesson, Ravi sharpened the pencils."
+  },
+  {
+    options: [
+      "Beside the canal, the cyclists stopped for lunch.",
+      "The cyclists stopped beside the canal for lunch.",
+      "The cyclists stopped and ate lunch.",
+      "Could the cyclists stop for lunch?"
+    ],
+    correct: "Beside the canal, the cyclists stopped for lunch."
+  },
+  {
+    options: [
+      "On Friday morning, the choir practised in the hall.",
+      "The choir practised in the hall on Friday morning.",
+      "The choir practised and then performed.",
+      "What a busy morning the choir had!"
+    ],
+    correct: "On Friday morning, the choir practised in the hall."
+  },
+  {
+    options: [
+      "During the storm, the old gate rattled loudly.",
+      "The old gate rattled loudly during the storm.",
+      "The old gate rattled and creaked.",
+      "Why did the gate rattle?"
+    ],
+    correct: "During the storm, the old gate rattled loudly."
   }
 ];
 
@@ -771,6 +1116,48 @@ const FRONTED_FIX_ITEMS = [
     prompt: "Copy the sentence and add the comma after the fronted adverbial.",
     raw: "Later that afternoon our team finally scored.",
     answer: "Later that afternoon, our team finally scored.",
+    skillId: "adverbials"
+  },
+  {
+    prompt: "Copy the sentence and add the comma after the fronted adverbial.",
+    raw: "With great care Imani folded the fragile map.",
+    answer: "With great care, Imani folded the fragile map.",
+    skillId: "adverbials"
+  },
+  {
+    prompt: "Copy the sentence and add the comma after the fronted adverbial.",
+    raw: "At the edge of the field the fox paused.",
+    answer: "At the edge of the field, the fox paused.",
+    skillId: "adverbials"
+  },
+  {
+    prompt: "Copy the sentence and add the comma after the fronted adverbial.",
+    raw: "Without warning the lights flickered.",
+    answer: "Without warning, the lights flickered.",
+    skillId: "adverbials"
+  },
+  {
+    prompt: "Copy the sentence and add the comma after the fronted adverbial.",
+    raw: "Before the lesson Ravi sharpened the pencils.",
+    answer: "Before the lesson, Ravi sharpened the pencils.",
+    skillId: "adverbials"
+  },
+  {
+    prompt: "Copy the sentence and add the comma after the fronted adverbial.",
+    raw: "Beside the canal the cyclists stopped for lunch.",
+    answer: "Beside the canal, the cyclists stopped for lunch.",
+    skillId: "adverbials"
+  },
+  {
+    prompt: "Copy the sentence and add the comma after the fronted adverbial.",
+    raw: "On Friday morning the choir practised in the hall.",
+    answer: "On Friday morning, the choir practised in the hall.",
+    skillId: "adverbials"
+  },
+  {
+    prompt: "Copy the sentence and add the comma after the fronted adverbial.",
+    raw: "During the storm the old gate rattled loudly.",
+    answer: "During the storm, the old gate rattled loudly.",
     skillId: "adverbials"
   }
 ];
@@ -797,6 +1184,36 @@ const SUBORDINATE_ITEMS = [
     correct: "When the bell rang"
   },
   {
+    sentence: "Because the river was high, the path was closed.",
+    options: [
+      "Because the river was high",
+      "the path was closed",
+      "the river",
+      "was high the path"
+    ],
+    correct: "Because the river was high"
+  },
+  {
+    sentence: "Before the coach arrived, the team warmed up.",
+    options: [
+      "Before the coach arrived",
+      "the team warmed up",
+      "the coach",
+      "arrived the team"
+    ],
+    correct: "Before the coach arrived"
+  },
+  {
+    sentence: "While the kettle boiled, Dad set out the mugs.",
+    options: [
+      "While the kettle boiled",
+      "Dad set out the mugs",
+      "the mugs",
+      "boiled Dad"
+    ],
+    correct: "While the kettle boiled"
+  },
+  {
     sentence: "If the path is icy, wear your boots.",
     options: [
       "wear your boots",
@@ -805,6 +1222,46 @@ const SUBORDINATE_ITEMS = [
       "icy wear"
     ],
     correct: "If the path is icy"
+  },
+  {
+    sentence: "Although the match was difficult, the team kept trying.",
+    options: [
+      "Although the match was difficult",
+      "the team kept trying",
+      "the match",
+      "was difficult the team"
+    ],
+    correct: "Although the match was difficult"
+  },
+  {
+    sentence: "When the rain stopped, the playground filled quickly.",
+    options: [
+      "When the rain stopped",
+      "the playground filled quickly",
+      "the rain",
+      "stopped the playground"
+    ],
+    correct: "When the rain stopped"
+  },
+  {
+    sentence: "Unless you hurry, the bus will leave without you.",
+    options: [
+      "Unless you hurry",
+      "the bus will leave without you",
+      "the bus",
+      "hurry the bus"
+    ],
+    correct: "Unless you hurry"
+  },
+  {
+    sentence: "After the lights dimmed, the play began.",
+    options: [
+      "After the lights dimmed",
+      "the play began",
+      "the lights",
+      "dimmed the play"
+    ],
+    correct: "After the lights dimmed"
   }
 ];
 
@@ -826,6 +1283,38 @@ const CLAUSE_COMBINE_ITEMS = [
     ]
   },
   {
+    instruction: "Combine the ideas into one sentence using <strong>when</strong>.",
+    parts: [
+      "The gate opened.",
+      "The children ran outside."
+    ],
+    accepted: [
+      "When the gate opened, the children ran outside.",
+      "The children ran outside when the gate opened."
+    ],
+    solution: [
+      "Use ‘when’ to show the time relationship.",
+      "If the ‘when’ clause comes first, add a comma after it.",
+      "A strong answer is: When the gate opened, the children ran outside."
+    ]
+  },
+  {
+    instruction: "Combine the ideas into one sentence using <strong>if</strong>.",
+    parts: [
+      "The weather improves.",
+      "We will hold sports day outside."
+    ],
+    accepted: [
+      "If the weather improves, we will hold sports day outside.",
+      "We will hold sports day outside if the weather improves."
+    ],
+    solution: [
+      "Use ‘if’ to make one idea conditional.",
+      "Keep both original ideas.",
+      "A strong answer is: If the weather improves, we will hold sports day outside."
+    ]
+  },
+  {
     instruction: "Combine the ideas into one sentence using <strong>because</strong>.",
     parts: [
       "Sam wore gloves.",
@@ -839,6 +1328,54 @@ const CLAUSE_COMBINE_ITEMS = [
       "Use ‘because’ to show cause.",
       "Either order can work if the punctuation is correct.",
       "A strong answer is: Sam wore gloves because it was cold."
+    ]
+  },
+  {
+    instruction: "Combine the ideas into one sentence using <strong>although</strong>.",
+    parts: [
+      "The puzzle was hard.",
+      "Nina solved it."
+    ],
+    accepted: [
+      "Although the puzzle was hard, Nina solved it.",
+      "Nina solved it although the puzzle was hard."
+    ],
+    solution: [
+      "Use ‘although’ to introduce contrast.",
+      "Both ideas must stay in the combined sentence.",
+      "A strong answer is: Although the puzzle was hard, Nina solved it."
+    ]
+  },
+  {
+    instruction: "Combine the ideas into one sentence using <strong>before</strong>.",
+    parts: [
+      "The visitors left.",
+      "They thanked the guide."
+    ],
+    accepted: [
+      "Before the visitors left, they thanked the guide.",
+      "The visitors thanked the guide before they left."
+    ],
+    solution: [
+      "Use ‘before’ to show the order of events.",
+      "If the ‘before’ clause comes first, add a comma after it.",
+      "A strong answer is: Before the visitors left, they thanked the guide."
+    ]
+  },
+  {
+    instruction: "Combine the ideas into one sentence using <strong>while</strong>.",
+    parts: [
+      "The choir waited.",
+      "The pianist tuned the keyboard."
+    ],
+    accepted: [
+      "While the choir waited, the pianist tuned the keyboard.",
+      "The pianist tuned the keyboard while the choir waited."
+    ],
+    solution: [
+      "Use ‘while’ to show two actions happening at the same time.",
+      "Keep the main clause complete.",
+      "A strong answer is: While the choir waited, the pianist tuned the keyboard."
     ]
   },
   {
@@ -856,6 +1393,38 @@ const CLAUSE_COMBINE_ITEMS = [
       "If the ‘when’ clause comes first, add a comma after it.",
       "A strong answer is: When the bell rang, the pupils lined up."
     ]
+  },
+  {
+    instruction: "Combine the ideas into one sentence using <strong>because</strong>.",
+    parts: [
+      "The path was slippery.",
+      "We walked slowly."
+    ],
+    accepted: [
+      "We walked slowly because the path was slippery.",
+      "Because the path was slippery, we walked slowly."
+    ],
+    solution: [
+      "Use ‘because’ to explain the reason.",
+      "Either clause order can work with the right punctuation.",
+      "A strong answer is: We walked slowly because the path was slippery."
+    ]
+  },
+  {
+    instruction: "Combine the ideas into one sentence using <strong>after</strong>.",
+    parts: [
+      "The museum closed.",
+      "The class walked back to school."
+    ],
+    accepted: [
+      "After the museum closed, the class walked back to school.",
+      "The class walked back to school after the museum closed."
+    ],
+    solution: [
+      "Use ‘after’ to show sequence.",
+      "A fronted subordinate clause needs a comma.",
+      "A strong answer is: After the museum closed, the class walked back to school."
+    ]
   }
 ];
 
@@ -871,12 +1440,57 @@ const RELATIVE_SENTENCE_OPTIONS = [
   },
   {
     options: [
-      "The book that I borrowed was brilliant.",
-      "After I borrowed the book, it was brilliant.",
-      "I borrowed the book and it was brilliant.",
-      "Borrowing the book, I found it brilliant."
+      "The teacher who organised the trip checked the register.",
+      "When the teacher organised the trip, she checked the register.",
+      "The teacher organised the trip and checked the register.",
+      "Organising the trip, the teacher checked the register."
     ],
-    correct: "The book that I borrowed was brilliant."
+    correct: "The teacher who organised the trip checked the register."
+  },
+  {
+    options: [
+      "The trophy, which gleamed in the cabinet, belonged to our team.",
+      "Because the trophy gleamed, it belonged to our team.",
+      "The trophy gleamed and belonged to our team.",
+      "In the cabinet, the trophy belonged to our team."
+    ],
+    correct: "The trophy, which gleamed in the cabinet, belonged to our team."
+  },
+  {
+    options: [
+      "The runner whose shoe had split stopped near the bench.",
+      "When the runner's shoe split, he stopped near the bench.",
+      "The runner stopped near the bench with a split shoe.",
+      "Stopping near the bench, the runner had a split shoe."
+    ],
+    correct: "The runner whose shoe had split stopped near the bench."
+  },
+  {
+    options: [
+      "The hall where we practised was newly painted.",
+      "We practised in the hall and it was newly painted.",
+      "After we practised, the hall was newly painted.",
+      "The newly painted hall was used for practice."
+    ],
+    correct: "The hall where we practised was newly painted."
+  },
+  {
+    options: [
+      "The kite that Ravi repaired flew above the trees.",
+      "Ravi repaired the kite and flew it above the trees.",
+      "When Ravi repaired the kite, it flew above the trees.",
+      "Above the trees, Ravi repaired the kite."
+    ],
+    correct: "The kite that Ravi repaired flew above the trees."
+  },
+  {
+    options: [
+      "The scientist who visited our class brought a microscope.",
+      "After the scientist visited, she brought a microscope.",
+      "The scientist visited our class and brought a microscope.",
+      "Bringing a microscope, the scientist visited our class."
+    ],
+    correct: "The scientist who visited our class brought a microscope."
   },
   {
     options: [
@@ -886,6 +1500,24 @@ const RELATIVE_SENTENCE_OPTIONS = [
       "Beside the sea, the village is quiet."
     ],
     correct: "The village, which sits by the sea, is very quiet."
+  },
+  {
+    options: [
+      "The book that I borrowed was brilliant.",
+      "After I borrowed the book, it was brilliant.",
+      "I borrowed the book and it was brilliant.",
+      "Borrowing the book, I found it brilliant."
+    ],
+    correct: "The book that I borrowed was brilliant."
+  },
+  {
+    options: [
+      "The coat which had a torn pocket was left in the cloakroom.",
+      "Because the coat had a torn pocket, it was left in the cloakroom.",
+      "The coat had a torn pocket and was left in the cloakroom.",
+      "In the cloakroom, the coat had a torn pocket."
+    ],
+    correct: "The coat which had a torn pocket was left in the cloakroom."
   }
 ];
 
@@ -904,6 +1536,66 @@ const RELATIVE_COMPLETE_ITEMS = [
   },
   {
     stem: "Complete the sentence with the best relative clause.",
+    sentenceStart: "The puppy",
+    sentenceEnd: "fell asleep under the table.",
+    options: [
+      "that had chased the ball",
+      "because it chased the ball",
+      "and chased the ball",
+      "after the ball"
+    ],
+    correct: "that had chased the ball"
+  },
+  {
+    stem: "Complete the sentence with the best relative clause.",
+    sentenceStart: "The museum",
+    sentenceEnd: "opened early for our class.",
+    options: [
+      "which displays Roman coins",
+      "because it displays Roman coins",
+      "and displays Roman coins",
+      "after Roman coins"
+    ],
+    correct: "which displays Roman coins"
+  },
+  {
+    stem: "Complete the sentence with the best relative clause.",
+    sentenceStart: "The runner",
+    sentenceEnd: "won the final race.",
+    options: [
+      "who trained every morning",
+      "because trained every morning",
+      "and every morning",
+      "after the race"
+    ],
+    correct: "who trained every morning"
+  },
+  {
+    stem: "Complete the sentence with the best relative clause.",
+    sentenceStart: "The tent",
+    sentenceEnd: "blew over in the storm.",
+    options: [
+      "that we had borrowed",
+      "because we had borrowed",
+      "and we had borrowed",
+      "after borrowing"
+    ],
+    correct: "that we had borrowed"
+  },
+  {
+    stem: "Complete the sentence with the best relative clause.",
+    sentenceStart: "The singer",
+    sentenceEnd: "bowed to the audience.",
+    options: [
+      "whose song opened the show",
+      "because the song opened",
+      "and opened the show",
+      "after the audience"
+    ],
+    correct: "whose song opened the show"
+  },
+  {
+    stem: "Complete the sentence with the best relative clause.",
     sentenceStart: "The teacher",
     sentenceEnd: "helped us with the project.",
     options: [
@@ -913,6 +1605,42 @@ const RELATIVE_COMPLETE_ITEMS = [
       "and visited Egypt"
     ],
     correct: "who had visited Egypt"
+  },
+  {
+    stem: "Complete the sentence with the best relative clause.",
+    sentenceStart: "The library",
+    sentenceEnd: "was closed for repairs.",
+    options: [
+      "where we meet after school",
+      "because we meet after school",
+      "and we meet after school",
+      "after school repairs"
+    ],
+    correct: "where we meet after school"
+  },
+  {
+    stem: "Complete the sentence with the best relative clause.",
+    sentenceStart: "The painting",
+    sentenceEnd: "hung above the stairs.",
+    options: [
+      "which Maya restored",
+      "because Maya restored",
+      "and restored by Maya",
+      "after the stairs"
+    ],
+    correct: "which Maya restored"
+  },
+  {
+    stem: "Complete the sentence with the best relative clause.",
+    sentenceStart: "The badge",
+    sentenceEnd: "belonged to the team captain.",
+    options: [
+      "that had a gold border",
+      "because it had a gold border",
+      "and a gold border",
+      "after the border"
+    ],
+    correct: "that had a gold border"
   }
 ];
 
@@ -931,6 +1659,42 @@ const TENSE_FORM_ITEMS = [
   },
   {
     prompt: "Choose the best verb form to complete the sentence.",
+    sentence: "By next Friday, we ___ the science display.",
+    options: [
+      "will have finished",
+      "finished",
+      "were finishing",
+      "had finish"
+    ],
+    correct: "will have finished",
+    answerText: "will have finished"
+  },
+  {
+    prompt: "Choose the best verb form to complete the sentence.",
+    sentence: "At seven o'clock yesterday, the choir ___ in the hall.",
+    options: [
+      "was singing",
+      "has sung",
+      "will sing",
+      "had sing"
+    ],
+    correct: "was singing",
+    answerText: "was singing"
+  },
+  {
+    prompt: "Choose the best verb form to complete the sentence.",
+    sentence: "The pupils ___ three chapters already.",
+    options: [
+      "have read",
+      "read yesterday",
+      "were read",
+      "had reads"
+    ],
+    correct: "have read",
+    answerText: "have read"
+  },
+  {
+    prompt: "Choose the best verb form to complete the sentence.",
     sentence: "While we ___ to our friend, his phone started ringing.",
     options: [
       "talked",
@@ -943,6 +1707,42 @@ const TENSE_FORM_ITEMS = [
   },
   {
     prompt: "Choose the best verb form to complete the sentence.",
+    sentence: "Before the whistle blew, the runners ___ their stretches.",
+    options: [
+      "had completed",
+      "have completed",
+      "were complete",
+      "completed tomorrow"
+    ],
+    correct: "had completed",
+    answerText: "had completed"
+  },
+  {
+    prompt: "Choose the best verb form to complete the sentence.",
+    sentence: "Every morning, Zara ___ the plants by the window.",
+    options: [
+      "waters",
+      "watered yesterday",
+      "has watering",
+      "had waters"
+    ],
+    correct: "waters",
+    answerText: "waters"
+  },
+  {
+    prompt: "Choose the best verb form to complete the sentence.",
+    sentence: "When I arrived, Dad ___ the tent.",
+    options: [
+      "was folding",
+      "has folded",
+      "will folded",
+      "folds yesterday"
+    ],
+    correct: "was folding",
+    answerText: "was folding"
+  },
+  {
+    prompt: "Choose the best verb form to complete the sentence.",
     sentence: "She cannot play today because she ___ her ankle.",
     options: [
       "has twisted",
@@ -952,10 +1752,46 @@ const TENSE_FORM_ITEMS = [
     ],
     correct: "has twisted",
     answerText: "has twisted"
+  },
+  {
+    prompt: "Choose the best verb form to complete the sentence.",
+    sentence: "Last night, the guide ___ the route on the map.",
+    options: [
+      "marked",
+      "has marked",
+      "was mark",
+      "had marking"
+    ],
+    correct: "marked",
+    answerText: "marked"
+  },
+  {
+    prompt: "Choose the best verb form to complete the sentence.",
+    sentence: "By the time the coach arrived, Omar ___ the cones.",
+    options: [
+      "had collected",
+      "has collected",
+      "collects",
+      "was collect"
+    ],
+    correct: "had collected",
+    answerText: "had collected"
   }
 ];
 
 const TENSE_REWRITE_ITEMS = [
+  {
+    instruction: "Rewrite the sentence in the <strong>past perfect</strong>.",
+    raw: "They finish the model before lunch.",
+    accepted: [
+      "They had finished the model before lunch."
+    ],
+    solution: [
+      "Use ‘had’ plus the past participle.",
+      "The past participle of ‘finish’ is ‘finished’.",
+      "The correct sentence is: They had finished the model before lunch."
+    ]
+  },
   {
     instruction: "Rewrite the sentence in the <strong>past progressive</strong>.",
     raw: "The dog chases the cat.",
@@ -966,6 +1802,42 @@ const TENSE_REWRITE_ITEMS = [
       "Change the simple present verb into the past progressive form.",
       "Use ‘was’ with ‘chasing’.",
       "The correct sentence is: The dog was chasing the cat."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>present perfect</strong>.",
+    raw: "We tidy the classroom.",
+    accepted: [
+      "We have tidied the classroom."
+    ],
+    solution: [
+      "Use ‘have’ plus the past participle.",
+      "The past participle of ‘tidy’ is ‘tidied’.",
+      "The correct sentence is: We have tidied the classroom."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>future perfect</strong>.",
+    raw: "The class completes the display by Friday.",
+    accepted: [
+      "The class will have completed the display by Friday."
+    ],
+    solution: [
+      "Use ‘will have’ plus the past participle.",
+      "Keep the time phrase ‘by Friday’.",
+      "The correct sentence is: The class will have completed the display by Friday."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>past progressive</strong>.",
+    raw: "Maya paints the scenery.",
+    accepted: [
+      "Maya was painting the scenery."
+    ],
+    solution: [
+      "Use ‘was’ plus the -ing verb form.",
+      "Keep the subject and object the same.",
+      "The correct sentence is: Maya was painting the scenery."
     ]
   },
   {
@@ -982,6 +1854,42 @@ const TENSE_REWRITE_ITEMS = [
   },
   {
     instruction: "Rewrite the sentence in the <strong>past perfect</strong>.",
+    raw: "The team collects the trophy.",
+    accepted: [
+      "The team had collected the trophy."
+    ],
+    solution: [
+      "Use ‘had’ plus the past participle.",
+      "The past participle of ‘collect’ is ‘collected’.",
+      "The correct sentence is: The team had collected the trophy."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>past progressive</strong>.",
+    raw: "The pupils practise the song.",
+    accepted: [
+      "The pupils were practising the song."
+    ],
+    solution: [
+      "Use ‘were’ plus the -ing verb form.",
+      "The subject ‘pupils’ is plural.",
+      "The correct sentence is: The pupils were practising the song."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>present perfect</strong>.",
+    raw: "She opens the parcel.",
+    accepted: [
+      "She has opened the parcel."
+    ],
+    solution: [
+      "Use ‘has’ plus the past participle for a singular subject.",
+      "The past participle of ‘open’ is ‘opened’.",
+      "The correct sentence is: She has opened the parcel."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>past perfect</strong>.",
     raw: "She packs her bag before the trip.",
     accepted: [
       "She had packed her bag before the trip."
@@ -991,10 +1899,182 @@ const TENSE_REWRITE_ITEMS = [
       "The past participle of ‘pack’ is ‘packed’.",
       "The correct sentence is: She had packed her bag before the trip."
     ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>future perfect</strong>.",
+    raw: "Ravi reads the final chapter by Monday.",
+    accepted: [
+      "Ravi will have read the final chapter by Monday."
+    ],
+    solution: [
+      "Use ‘will have’ plus the past participle.",
+      "The past participle of ‘read’ is also ‘read’.",
+      "The correct sentence is: Ravi will have read the final chapter by Monday."
+    ]
   }
 ];
 
 const STANDARD_ENGLISH_ITEMS = [
+  {
+    rows: [
+      {
+        label: "He don't / doesn't know the answer yet.",
+        correct: "doesn't",
+        options: [
+          "don't",
+          "doesn't"
+        ]
+      },
+      {
+        label: "They was / were waiting by the gate.",
+        correct: "were",
+        options: [
+          "was",
+          "were"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "I seen / saw the comet last night.",
+        correct: "saw",
+        options: [
+          "seen",
+          "saw"
+        ]
+      },
+      {
+        label: "We did / done the poster before lunch.",
+        correct: "did",
+        options: [
+          "did",
+          "done"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "The visitors was / were ready for the start.",
+        correct: "were",
+        options: [
+          "was",
+          "were"
+        ]
+      },
+      {
+        label: "She don't / doesn't know where the hall is.",
+        correct: "doesn't",
+        options: [
+          "don't",
+          "doesn't"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "Omar seen / saw the trophy yesterday.",
+        correct: "saw",
+        options: [
+          "seen",
+          "saw"
+        ]
+      },
+      {
+        label: "The players did / done a warm-up.",
+        correct: "did",
+        options: [
+          "did",
+          "done"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "I was / were standing near the hall.",
+        correct: "was",
+        options: [
+          "was",
+          "were"
+        ]
+      },
+      {
+        label: "They haven't / hasn't packed the bags.",
+        correct: "haven't",
+        options: [
+          "haven't",
+          "hasn't"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "The pupils was / were walking home after lunch.",
+        correct: "were",
+        options: [
+          "was",
+          "were"
+        ]
+      },
+      {
+        label: "Maya did / done her reading record.",
+        correct: "did",
+        options: [
+          "did",
+          "done"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "Dad has / have seen the notice.",
+        correct: "has",
+        options: [
+          "has",
+          "have"
+        ]
+      },
+      {
+        label: "We was / were ready for assembly.",
+        correct: "were",
+        options: [
+          "was",
+          "were"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "Cara doesn't / don't know why the gate is locked.",
+        correct: "doesn't",
+        options: [
+          "doesn't",
+          "don't"
+        ]
+      },
+      {
+        label: "I did / done the map work before tea.",
+        correct: "did",
+        options: [
+          "did",
+          "done"
+        ]
+      }
+    ]
+  },
   {
     rows: [
       {
@@ -1034,10 +2114,70 @@ const STANDARD_ENGLISH_ITEMS = [
         ]
       }
     ]
+  },
+  {
+    rows: [
+      {
+        label: "They have / has already finished the project.",
+        correct: "have",
+        options: [
+          "have",
+          "has"
+        ]
+      },
+      {
+        label: "Ravi saw / seen the lost glove after school.",
+        correct: "saw",
+        options: [
+          "saw",
+          "seen"
+        ]
+      }
+    ]
   }
 ];
 
 const PRONOUN_COHESION_ITEMS = [
+  {
+    prompt: "Which version is clearest and avoids awkward repetition without becoming confusing?",
+    options: [
+      "Aisha lent Aisha's pencil to Grace because Aisha had finished with Aisha's pencil.",
+      "Aisha lent her pencil to Grace because she had finished with it.",
+      "Aisha lent it to Grace because she had finished with her.",
+      "She lent her to Grace because it had finished."
+    ],
+    correct: "Aisha lent her pencil to Grace because she had finished with it."
+  },
+  {
+    prompt: "Which version is clearest and avoids awkward repetition without becoming confusing?",
+    options: [
+      "Ben gave Luca the map because Ben was carrying too many bags.",
+      "Ben gave Luca the map because he was carrying too many bags.",
+      "Ben gave Luca it because he was carrying too many bags.",
+      "He gave him it because he was carrying too many bags."
+    ],
+    correct: "Ben gave Luca the map because he was carrying too many bags."
+  },
+  {
+    prompt: "Which version is clearest and avoids awkward repetition without becoming confusing?",
+    options: [
+      "Nina told Sofia that Nina would meet Sofia by the gate.",
+      "Nina told Sofia that she would meet her by the gate.",
+      "Nina told Sofia that Nina would meet her by the gate.",
+      "She told her that she would meet her by the gate."
+    ],
+    correct: "Nina told Sofia that Nina would meet her by the gate."
+  },
+  {
+    prompt: "Which version is clearest and avoids awkward repetition without becoming confusing?",
+    options: [
+      "Omar put Omar's ticket in Omar's pocket before Omar boarded the bus.",
+      "Omar put his ticket in his pocket before he boarded the bus.",
+      "Omar put it in his pocket before it boarded the bus.",
+      "He put his pocket in it before he boarded the bus."
+    ],
+    correct: "Omar put his ticket in his pocket before he boarded the bus."
+  },
   {
     prompt: "Which version is clearest and avoids awkward repetition without becoming confusing?",
     options: [
@@ -1057,10 +2197,106 @@ const PRONOUN_COHESION_ITEMS = [
       "He gave it to her because he had finished her."
     ],
     correct: "Arjun gave his book to his sister because he had finished it."
+  },
+  {
+    prompt: "Which version is clearest and avoids awkward repetition without becoming confusing?",
+    options: [
+      "Priya passed the torch to Maya because Maya was leaving first.",
+      "Priya passed Maya the torch because Maya was leaving first.",
+      "Priya passed it to Maya because she was leaving first.",
+      "She passed her it because she was leaving first."
+    ],
+    correct: "Priya passed Maya the torch because Maya was leaving first."
+  },
+  {
+    prompt: "Which version is clearest and avoids awkward repetition without becoming confusing?",
+    options: [
+      "Theo reminded Jasper that Theo had left Theo's book on Jasper's desk.",
+      "Theo reminded Jasper that Theo had left his book on Jasper's desk.",
+      "Theo reminded Jasper that he had left it on his desk.",
+      "He reminded him that he had left his book on his desk."
+    ],
+    correct: "Theo reminded Jasper that Theo had left his book on Jasper's desk."
+  },
+  {
+    prompt: "Which version is clearest and avoids awkward repetition without becoming confusing?",
+    options: [
+      "Keira asked Freya to bring the note because Freya needed it for rehearsal.",
+      "Keira asked Freya to bring it because Freya needed the note for rehearsal.",
+      "Keira asked her to bring it because she needed it for rehearsal.",
+      "She asked her to bring her because it needed rehearsal."
+    ],
+    correct: "Keira asked Freya to bring the note because Freya needed it for rehearsal."
+  },
+  {
+    prompt: "Which version is clearest and avoids awkward repetition without becoming confusing?",
+    options: [
+      "Ravi put Ravi's bag beside Ravi's chair before Ravi opened Ravi's lunchbox.",
+      "Ravi put his bag beside his chair before he opened his lunchbox.",
+      "Ravi put it beside his chair before it opened his lunchbox.",
+      "He put his chair beside it before he opened it."
+    ],
+    correct: "Ravi put his bag beside his chair before he opened his lunchbox."
   }
 ];
 
 const FORMALITY_ITEMS = [
+  {
+    rows: [
+      {
+        label: "The school trip was put off / postponed because of the storm.",
+        correct: "postponed",
+        options: [
+          "put off",
+          "postponed"
+        ]
+      },
+      {
+        label: "Parents should tell / inform the office before Friday.",
+        correct: "inform",
+        options: [
+          "tell",
+          "inform"
+        ]
+      },
+      {
+        label: "The club got / received a grant for new equipment.",
+        correct: "received",
+        options: [
+          "got",
+          "received"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "The pupils helped out / assisted during the assembly.",
+        correct: "assisted",
+        options: [
+          "helped out",
+          "assisted"
+        ]
+      },
+      {
+        label: "We need to check / verify the final numbers.",
+        correct: "verify",
+        options: [
+          "check",
+          "verify"
+        ]
+      },
+      {
+        label: "The event will happen / take place in the hall.",
+        correct: "take place",
+        options: [
+          "happen",
+          "take place"
+        ]
+      }
+    ]
+  },
   {
     rows: [
       {
@@ -1116,6 +2352,174 @@ const FORMALITY_ITEMS = [
         ]
       }
     ]
+  },
+  {
+    rows: [
+      {
+        label: "Please give / provide your name at reception.",
+        correct: "provide",
+        options: [
+          "give",
+          "provide"
+        ]
+      },
+      {
+        label: "The council will look at / consider the proposal.",
+        correct: "consider",
+        options: [
+          "look at",
+          "consider"
+        ]
+      },
+      {
+        label: "We are happy / pleased to invite you.",
+        correct: "pleased",
+        options: [
+          "happy",
+          "pleased"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "The headteacher said sorry / apologised for the delay.",
+        correct: "apologised",
+        options: [
+          "said sorry",
+          "apologised"
+        ]
+      },
+      {
+        label: "The results show / indicate clear progress.",
+        correct: "indicate",
+        options: [
+          "show",
+          "indicate"
+        ]
+      },
+      {
+        label: "The team will start / commence at nine.",
+        correct: "commence",
+        options: [
+          "start",
+          "commence"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "We ask / request that visitors sign in.",
+        correct: "request",
+        options: [
+          "ask",
+          "request"
+        ]
+      },
+      {
+        label: "The meeting ended / concluded at four o'clock.",
+        correct: "concluded",
+        options: [
+          "ended",
+          "concluded"
+        ]
+      },
+      {
+        label: "Please use / utilise the side entrance.",
+        correct: "use",
+        options: [
+          "use",
+          "utilise"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "The new rules will make better / improve safety.",
+        correct: "improve",
+        options: [
+          "make better",
+          "improve"
+        ]
+      },
+      {
+        label: "The report talks about / discusses attendance.",
+        correct: "discusses",
+        options: [
+          "talks about",
+          "discusses"
+        ]
+      },
+      {
+        label: "Families can buy / purchase tickets online.",
+        correct: "purchase",
+        options: [
+          "buy",
+          "purchase"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "The committee will find out / determine the cause.",
+        correct: "determine",
+        options: [
+          "find out",
+          "determine"
+        ]
+      },
+      {
+        label: "The display shows off / demonstrates careful research.",
+        correct: "demonstrates",
+        options: [
+          "shows off",
+          "demonstrates"
+        ]
+      },
+      {
+        label: "Please send / submit your reply by Monday.",
+        correct: "submit",
+        options: [
+          "send",
+          "submit"
+        ]
+      }
+    ]
+  },
+  {
+    rows: [
+      {
+        label: "The school will get / obtain new laptops.",
+        correct: "obtain",
+        options: [
+          "get",
+          "obtain"
+        ]
+      },
+      {
+        label: "We will help / support the visiting team.",
+        correct: "support",
+        options: [
+          "help",
+          "support"
+        ]
+      },
+      {
+        label: "The class will show / present its findings.",
+        correct: "present",
+        options: [
+          "show",
+          "present"
+        ]
+      }
+    ]
   }
 ];
 
@@ -1134,6 +2538,18 @@ const ACTIVE_PASSIVE_ITEMS = [
     ]
   },
   {
+    instruction: "Rewrite the sentence in the <strong>active</strong>.",
+    raw: "The lantern was carried by Sofia.",
+    accepted: [
+      "Sofia carried the lantern."
+    ],
+    solution: [
+      "Find the doer in the ‘by’ phrase.",
+      "Move the doer to the subject position.",
+      "A correct answer is: Sofia carried the lantern."
+    ]
+  },
+  {
     instruction: "Rewrite the sentence in the <strong>passive</strong>. Keep the same tense.",
     raw: "The chef baked the bread.",
     accepted: [
@@ -1143,6 +2559,78 @@ const ACTIVE_PASSIVE_ITEMS = [
       "Move the object to the front.",
       "Use the correct form of ‘be’ plus the past participle.",
       "A correct answer is: The bread was baked by the chef."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>passive</strong>. Keep the same tense.",
+    raw: "Grace opened the window.",
+    accepted: [
+      "The window was opened by Grace."
+    ],
+    solution: [
+      "Move the object to the front.",
+      "Use ‘was’ plus the past participle.",
+      "A correct answer is: The window was opened by Grace."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>active</strong>.",
+    raw: "The rucksack is packed by Hassan.",
+    accepted: [
+      "Hassan packs the rucksack."
+    ],
+    solution: [
+      "Find the doer after ‘by’.",
+      "Keep the present tense when changing to active voice.",
+      "A correct answer is: Hassan packs the rucksack."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>passive</strong>. Keep the same tense.",
+    raw: "The caretaker locks the gate.",
+    accepted: [
+      "The gate is locked by the caretaker."
+    ],
+    solution: [
+      "Move the object to the subject position.",
+      "Use ‘is’ plus the past participle.",
+      "A correct answer is: The gate is locked by the caretaker."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>active</strong>.",
+    raw: "The display was painted by the art club.",
+    accepted: [
+      "The art club painted the display."
+    ],
+    solution: [
+      "The doer is ‘the art club’.",
+      "Move the doer to the front.",
+      "A correct answer is: The art club painted the display."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>passive</strong>. Keep the same tense.",
+    raw: "The volunteers clean the beach.",
+    accepted: [
+      "The beach is cleaned by the volunteers."
+    ],
+    solution: [
+      "Move the object to the front.",
+      "Keep the present tense with ‘is cleaned’.",
+      "A correct answer is: The beach is cleaned by the volunteers."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in the <strong>active</strong>.",
+    raw: "The old map was found by Priya.",
+    accepted: [
+      "Priya found the old map."
+    ],
+    solution: [
+      "Find the doer after ‘by’.",
+      "Keep the simple past tense.",
+      "A correct answer is: Priya found the old map."
     ]
   },
   {
@@ -1162,6 +2650,50 @@ const ACTIVE_PASSIVE_ITEMS = [
 const SUBJECT_OBJECT_ITEMS = [
   {
     ask: "subject",
+    sentence: "Before assembly, the choir practised the song.",
+    options: [
+      "Before assembly",
+      "the choir",
+      "practised",
+      "the song"
+    ],
+    correct: "the choir"
+  },
+  {
+    ask: "object",
+    sentence: "Maya opened the heavy gate after lunch.",
+    options: [
+      "Maya",
+      "opened",
+      "the heavy gate",
+      "after lunch"
+    ],
+    correct: "the heavy gate"
+  },
+  {
+    ask: "subject",
+    sentence: "During the storm, the old roof leaked.",
+    options: [
+      "During the storm",
+      "the old roof",
+      "leaked",
+      "the storm"
+    ],
+    correct: "the old roof"
+  },
+  {
+    ask: "object",
+    sentence: "The guide lifted the lantern carefully.",
+    options: [
+      "The guide",
+      "lifted",
+      "the lantern",
+      "carefully"
+    ],
+    correct: "the lantern"
+  },
+  {
+    ask: "subject",
     sentence: "After lunch, the tired goalkeeper caught the ball.",
     options: [
       "After lunch",
@@ -1170,6 +2702,17 @@ const SUBJECT_OBJECT_ITEMS = [
       "the ball"
     ],
     correct: "the tired goalkeeper"
+  },
+  {
+    ask: "subject",
+    sentence: "At the museum, the curator unlocked the cabinet.",
+    options: [
+      "At the museum",
+      "the curator",
+      "unlocked",
+      "the cabinet"
+    ],
+    correct: "the curator"
   },
   {
     ask: "object",
@@ -1192,10 +2735,62 @@ const SUBJECT_OBJECT_ITEMS = [
       "the museum"
     ],
     correct: "our science club"
+  },
+  {
+    ask: "object",
+    sentence: "After the match, Theo cleaned the muddy boots.",
+    options: [
+      "After the match",
+      "Theo",
+      "cleaned",
+      "the muddy boots"
+    ],
+    correct: "the muddy boots"
+  },
+  {
+    ask: "subject",
+    sentence: "Without warning, the fire alarm rang loudly.",
+    options: [
+      "Without warning",
+      "the fire alarm",
+      "rang",
+      "loudly"
+    ],
+    correct: "the fire alarm"
   }
 ];
 
 const MODAL_ITEMS = [
+  {
+    prompt: "Which modal verb best completes the sentence to show a rule? <strong>You ___ stay behind the barrier.</strong>",
+    options: [
+      "might",
+      "could",
+      "must",
+      "would"
+    ],
+    correct: "must"
+  },
+  {
+    prompt: "Which sentence shows a <strong>possibility</strong>, not certainty?",
+    options: [
+      "The bus will arrive at nine.",
+      "The bus must arrive at nine.",
+      "The bus might arrive at nine.",
+      "The bus arrives at nine."
+    ],
+    correct: "The bus might arrive at nine."
+  },
+  {
+    prompt: "Which modal verb best completes the sentence to show permission? <strong>You ___ use a calculator for this task.</strong>",
+    options: [
+      "may",
+      "must",
+      "will",
+      "should"
+    ],
+    correct: "may"
+  },
   {
     prompt: "Which sentence shows the <strong>least certainty</strong> that the team will win?",
     options: [
@@ -1225,6 +2820,46 @@ const MODAL_ITEMS = [
       "It could snow tonight."
     ],
     correct: "It will snow tonight."
+  },
+  {
+    prompt: "Which sentence shows strong obligation?",
+    options: [
+      "You might wear a helmet.",
+      "You could wear a helmet.",
+      "You must wear a helmet.",
+      "You would wear a helmet."
+    ],
+    correct: "You must wear a helmet."
+  },
+  {
+    prompt: "Which modal verb best completes the sentence to show advice? <strong>You ___ check your work before handing it in.</strong>",
+    options: [
+      "should",
+      "might",
+      "must",
+      "will"
+    ],
+    correct: "should"
+  },
+  {
+    prompt: "Which sentence sounds <strong>least certain</strong>?",
+    options: [
+      "The parcel will arrive today.",
+      "The parcel must arrive today.",
+      "The parcel might arrive today.",
+      "The parcel has arrived today."
+    ],
+    correct: "The parcel might arrive today."
+  },
+  {
+    prompt: "Which modal verb best completes the sentence to show ability? <strong>Freya ___ swim across the pool without stopping.</strong>",
+    options: [
+      "can",
+      "must",
+      "should",
+      "will"
+    ],
+    correct: "can"
   }
 ];
 
@@ -1240,6 +2875,46 @@ const PARENTHESIS_REPLACE_ITEMS = [
     correct: "dashes"
   },
   {
+    sentence: "The trophy (which was made of silver) stood in the cabinet.",
+    options: [
+      "dashes",
+      "question marks",
+      "semi-colons",
+      "apostrophes"
+    ],
+    correct: "dashes"
+  },
+  {
+    sentence: "My uncle (a keen cyclist) repaired the puncture.",
+    options: [
+      "commas",
+      "full stops",
+      "colons",
+      "question marks"
+    ],
+    correct: "commas"
+  },
+  {
+    sentence: "The library (which opened last year) has a new reading room.",
+    options: [
+      "dashes",
+      "exclamation marks",
+      "semi-colons",
+      "apostrophes"
+    ],
+    correct: "dashes"
+  },
+  {
+    sentence: "Hassan (our team captain) organised the warm-up.",
+    options: [
+      "commas",
+      "question marks",
+      "colons",
+      "full stops"
+    ],
+    correct: "commas"
+  },
+  {
     sentence: "The guide (who had visited before) led us through the cave.",
     options: [
       "semi-colons",
@@ -1248,6 +2923,46 @@ const PARENTHESIS_REPLACE_ITEMS = [
       "question marks"
     ],
     correct: "dashes"
+  },
+  {
+    sentence: "The old oak tree (over two hundred years old) shaded the path.",
+    options: [
+      "dashes",
+      "semi-colons",
+      "apostrophes",
+      "question marks"
+    ],
+    correct: "dashes"
+  },
+  {
+    sentence: "Nina (who had rehearsed all week) sang the solo.",
+    options: [
+      "commas",
+      "colons",
+      "full stops",
+      "question marks"
+    ],
+    correct: "commas"
+  },
+  {
+    sentence: "The science folder (left on the desk) belonged to Ravi.",
+    options: [
+      "dashes",
+      "semi-colons",
+      "apostrophes",
+      "question marks"
+    ],
+    correct: "dashes"
+  },
+  {
+    sentence: "The coach (usually very calm) shouted instructions from the sideline.",
+    options: [
+      "commas",
+      "full stops",
+      "colons",
+      "question marks"
+    ],
+    correct: "commas"
   }
 ];
 
@@ -1266,6 +2981,78 @@ const PARENTHESIS_FIX_ITEMS = [
   },
   {
     prompt: "Insert a pair of brackets in the correct place.",
+    raw: "The trophy made of silver stood in the cabinet.",
+    accepted: [
+      "The trophy (made of silver) stood in the cabinet."
+    ],
+    solution: [
+      "Find the extra information that could be lifted out.",
+      "Place the brackets around that parenthesis.",
+      "The correct sentence is: The trophy (made of silver) stood in the cabinet."
+    ]
+  },
+  {
+    prompt: "Insert a pair of brackets in the correct place.",
+    raw: "My uncle a keen cyclist repaired the puncture.",
+    accepted: [
+      "My uncle (a keen cyclist) repaired the puncture."
+    ],
+    solution: [
+      "The parenthesis adds extra information about ‘my uncle’.",
+      "The main sentence still works without it.",
+      "The correct sentence is: My uncle (a keen cyclist) repaired the puncture."
+    ]
+  },
+  {
+    prompt: "Insert a pair of brackets in the correct place.",
+    raw: "The library which opened last year has a new reading room.",
+    accepted: [
+      "The library (which opened last year) has a new reading room."
+    ],
+    solution: [
+      "The relative clause adds extra information.",
+      "Bracket the removable parenthesis.",
+      "The correct sentence is: The library (which opened last year) has a new reading room."
+    ]
+  },
+  {
+    prompt: "Insert a pair of brackets in the correct place.",
+    raw: "Hassan our team captain organised the warm-up.",
+    accepted: [
+      "Hassan (our team captain) organised the warm-up."
+    ],
+    solution: [
+      "The extra noun phrase tells us more about Hassan.",
+      "Put brackets around the extra information.",
+      "The correct sentence is: Hassan (our team captain) organised the warm-up."
+    ]
+  },
+  {
+    prompt: "Insert a pair of brackets in the correct place.",
+    raw: "The old oak tree over two hundred years old shaded the path.",
+    accepted: [
+      "The old oak tree (over two hundred years old) shaded the path."
+    ],
+    solution: [
+      "The age detail is parenthesis.",
+      "The main clause still works without it.",
+      "The correct sentence is: The old oak tree (over two hundred years old) shaded the path."
+    ]
+  },
+  {
+    prompt: "Insert a pair of brackets in the correct place.",
+    raw: "Nina who had rehearsed all week sang the solo.",
+    accepted: [
+      "Nina (who had rehearsed all week) sang the solo."
+    ],
+    solution: [
+      "The relative clause is extra information about Nina.",
+      "Place brackets around that extra information.",
+      "The correct sentence is: Nina (who had rehearsed all week) sang the solo."
+    ]
+  },
+  {
+    prompt: "Insert a pair of brackets in the correct place.",
     raw: "My cousin the youngest in the family won the chess trophy.",
     accepted: [
       "My cousin (the youngest in the family) won the chess trophy."
@@ -1275,10 +3062,86 @@ const PARENTHESIS_FIX_ITEMS = [
       "The main sentence still works without them.",
       "The correct sentence is: My cousin (the youngest in the family) won the chess trophy."
     ]
+  },
+  {
+    prompt: "Insert a pair of brackets in the correct place.",
+    raw: "The science folder left on the desk belonged to Ravi.",
+    accepted: [
+      "The science folder (left on the desk) belonged to Ravi."
+    ],
+    solution: [
+      "The phrase ‘left on the desk’ is extra information.",
+      "The main sentence still makes sense without it.",
+      "The correct sentence is: The science folder (left on the desk) belonged to Ravi."
+    ]
+  },
+  {
+    prompt: "Insert a pair of brackets in the correct place.",
+    raw: "The coach usually very calm shouted instructions from the sideline.",
+    accepted: [
+      "The coach (usually very calm) shouted instructions from the sideline."
+    ],
+    solution: [
+      "The parenthesis adds extra information about the coach.",
+      "Bracket the removable phrase.",
+      "The correct sentence is: The coach (usually very calm) shouted instructions from the sideline."
+    ]
   }
 ];
 
 const SPEECH_FIX_ITEMS = [
+  {
+    prompt: "Punctuate the direct speech correctly.",
+    raw: "“Have you packed the torch” asked Dad.",
+    accepted: [
+      "“Have you packed the torch?” asked Dad.",
+      "\"Have you packed the torch?\" asked Dad."
+    ],
+    solution: [
+      "The spoken words are a question.",
+      "The question mark belongs inside the speech marks.",
+      "A correct answer is: “Have you packed the torch?” asked Dad."
+    ]
+  },
+  {
+    prompt: "Punctuate the direct speech correctly.",
+    raw: "The guide said “Follow the red arrows.”",
+    accepted: [
+      "The guide said, “Follow the red arrows.”",
+      "The guide said, \"Follow the red arrows.\""
+    ],
+    solution: [
+      "A comma is needed before direct speech after the reporting clause.",
+      "The full stop stays inside the speech marks.",
+      "A correct answer is: The guide said, “Follow the red arrows.”"
+    ]
+  },
+  {
+    prompt: "Punctuate the direct speech correctly.",
+    raw: "“What a huge wave that was” shouted Ben.",
+    accepted: [
+      "“What a huge wave that was!” shouted Ben.",
+      "\"What a huge wave that was!\" shouted Ben."
+    ],
+    solution: [
+      "The spoken words are an exclamation.",
+      "The exclamation mark belongs inside the speech marks.",
+      "A correct answer is: “What a huge wave that was!” shouted Ben."
+    ]
+  },
+  {
+    prompt: "Punctuate the direct speech correctly.",
+    raw: "Maya whispered “Please wait outside.”",
+    accepted: [
+      "Maya whispered, “Please wait outside.”",
+      "Maya whispered, \"Please wait outside.\""
+    ],
+    solution: [
+      "Use a comma before the direct speech.",
+      "Keep the full stop inside the speech marks.",
+      "A correct answer is: Maya whispered, “Please wait outside.”"
+    ]
+  },
   {
     prompt: "Punctuate the direct speech correctly.",
     raw: "“Where are you going” asked Mum.",
@@ -1317,10 +3180,69 @@ const SPEECH_FIX_ITEMS = [
       "No comma is needed after the speech marks because the speech ends with an exclamation mark.",
       "A correct answer is: “Sit down!” said the coach."
     ]
+  },
+  {
+    prompt: "Punctuate the direct speech correctly.",
+    raw: "“Bring the map with you” called Priya.",
+    accepted: [
+      "“Bring the map with you!” called Priya.",
+      "\"Bring the map with you!\" called Priya."
+    ],
+    solution: [
+      "The spoken words are a command.",
+      "An exclamation mark fits inside the speech marks.",
+      "A correct answer is: “Bring the map with you!” called Priya."
+    ]
+  },
+  {
+    prompt: "Punctuate the direct speech correctly.",
+    raw: "Omar asked “When does the match begin”",
+    accepted: [
+      "Omar asked, “When does the match begin?”",
+      "Omar asked, \"When does the match begin?\""
+    ],
+    solution: [
+      "Use a comma before the direct speech.",
+      "The question mark belongs inside the speech marks.",
+      "A correct answer is: Omar asked, “When does the match begin?”"
+    ]
+  },
+  {
+    prompt: "Punctuate the direct speech correctly.",
+    raw: "“The bus is here” said Luca.",
+    accepted: [
+      "“The bus is here,” said Luca.",
+      "\"The bus is here,\" said Luca."
+    ],
+    solution: [
+      "Use a comma before the reporting clause.",
+      "The comma belongs inside the speech marks.",
+      "A correct answer is: “The bus is here,” said Luca."
+    ]
   }
 ];
 
 const APOSTROPHE_ITEMS = [
+  {
+    stem: "Choose the correct phrase to complete the sentence: The ___ boots were muddy after the walk.",
+    options: [
+      "boys",
+      "boy's",
+      "boys'",
+      "boys's"
+    ],
+    correct: "boys'"
+  },
+  {
+    stem: "Choose the correct phrase to complete the sentence: The ___ coats were hanging by the door.",
+    options: [
+      "children's",
+      "childrens'",
+      "childrens",
+      "child's"
+    ],
+    correct: "children's"
+  },
   {
     stem: "Choose the correct phrase to complete the sentence: The ___ playground was closed after the storm.",
     options: [
@@ -1330,6 +3252,36 @@ const APOSTROPHE_ITEMS = [
       "girls's"
     ],
     correct: "girls'"
+  },
+  {
+    stem: "Choose the correct phrase to complete the sentence: We admired the ___ painting in the gallery.",
+    options: [
+      "artist's",
+      "artists",
+      "artists'",
+      "artist"
+    ],
+    correct: "artist's"
+  },
+  {
+    stem: "Choose the correct phrase to complete the sentence: The ___ tools were kept in the shed.",
+    options: [
+      "gardeners",
+      "gardener's",
+      "gardeners'",
+      "gardeners's"
+    ],
+    correct: "gardeners'"
+  },
+  {
+    stem: "Choose the correct phrase to complete the sentence: The ___ nest was hidden in the hedge.",
+    options: [
+      "bird's",
+      "birds",
+      "birds'",
+      "birds's"
+    ],
+    correct: "bird's"
   },
   {
     stem: "Choose the correct phrase to complete the sentence: We found the ___ bowl behind the sofa.",
@@ -1342,18 +3294,142 @@ const APOSTROPHE_ITEMS = [
     correct: "dog's"
   },
   {
-    stem: "Choose the correct phrase to complete the sentence: The ___ coats were hanging by the door.",
+    stem: "Choose the correct phrase to complete the sentence: The ___ coats were hanging in the cloakroom.",
     options: [
-      "children's",
-      "childrens'",
-      "childrens",
-      "child's"
+      "women's",
+      "womens'",
+      "womens",
+      "woman's"
     ],
-    correct: "children's"
+    correct: "women's"
+  },
+  {
+    stem: "Choose the correct phrase to complete the sentence: The ___ tickets were checked at the door.",
+    options: [
+      "visitors",
+      "visitor's",
+      "visitors'",
+      "visitors's"
+    ],
+    correct: "visitors'"
+  },
+  {
+    stem: "Choose the correct phrase to complete the sentence: The ___ lunchbox was left on the bus.",
+    options: [
+      "child's",
+      "childs",
+      "childs'",
+      "children's"
+    ],
+    correct: "child's"
   }
 ];
 
 const EXPLAIN_ITEMS = [
+  {
+    stem: "Why is there a comma after the opening words in this sentence?<br><strong>After lunch, the pupils returned to class.</strong>",
+    options: [
+      "Because the opening words are a fronted adverbial.",
+      "Because every sentence with pupils needs a comma.",
+      "Because ‘lunch’ is the subject.",
+      "Because the sentence is a question."
+    ],
+    correct: "Because the opening words are a fronted adverbial.",
+    skillIds: [
+      "adverbials"
+    ]
+  },
+  {
+    stem: "Why is <strong>‘We was ready’</strong> wrong in Standard English?",
+    options: [
+      "Because Standard English uses ‘were’ with ‘we’.",
+      "Because ‘ready’ should be a verb.",
+      "Because the sentence must be passive.",
+      "Because all statements need a comma."
+    ],
+    correct: "Because Standard English uses ‘were’ with ‘we’.",
+    skillIds: [
+      "standard_english"
+    ]
+  },
+  {
+    stem: "Why is there a comma after the opening words in this sentence?<br><strong>Without warning, the lights flickered.</strong>",
+    options: [
+      "Because the opening words are a fronted adverbial.",
+      "Because ‘lights’ is a plural noun.",
+      "Because the sentence uses direct speech.",
+      "Because every past-tense sentence starts with a comma."
+    ],
+    correct: "Because the opening words are a fronted adverbial.",
+    skillIds: [
+      "adverbials"
+    ]
+  },
+  {
+    stem: "Why is <strong>‘She don't know’</strong> wrong in Standard English?",
+    options: [
+      "Because Standard English uses ‘doesn't’ with ‘she’.",
+      "Because ‘know’ should always be past tense.",
+      "Because the sentence needs a question mark.",
+      "Because ‘she’ is an object."
+    ],
+    correct: "Because Standard English uses ‘doesn't’ with ‘she’.",
+    skillIds: [
+      "standard_english"
+    ]
+  },
+  {
+    stem: "Why is there a comma after the opening words in this sentence?<br><strong>At the edge of the field, the fox paused.</strong>",
+    options: [
+      "Because the opening words are a fronted adverbial.",
+      "Because ‘field’ is the object.",
+      "Because the sentence contains a relative clause.",
+      "Because every sentence about animals needs a comma."
+    ],
+    correct: "Because the opening words are a fronted adverbial.",
+    skillIds: [
+      "adverbials"
+    ]
+  },
+  {
+    stem: "Why is <strong>‘I seen the comet’</strong> wrong in Standard English?",
+    options: [
+      "Because Standard English uses ‘saw’ for the simple past.",
+      "Because ‘comet’ should be plural.",
+      "Because the sentence is passive.",
+      "Because ‘seen’ is an adjective."
+    ],
+    correct: "Because Standard English uses ‘saw’ for the simple past.",
+    skillIds: [
+      "standard_english"
+    ]
+  },
+  {
+    stem: "Why is there a comma after the opening words in this sentence?<br><strong>During the storm, the old gate rattled.</strong>",
+    options: [
+      "Because the opening words are a fronted adverbial.",
+      "Because ‘gate’ is a fronted adverbial.",
+      "Because the sentence has direct speech.",
+      "Because all sentences ending in -ed need commas."
+    ],
+    correct: "Because the opening words are a fronted adverbial.",
+    skillIds: [
+      "adverbials"
+    ]
+  },
+  {
+    stem: "Why is <strong>‘They has finished’</strong> wrong in Standard English?",
+    options: [
+      "Because Standard English uses ‘have’ with ‘they’.",
+      "Because ‘finished’ should be a noun.",
+      "Because the sentence needs brackets.",
+      "Because ‘they’ is singular."
+    ],
+    correct: "Because Standard English uses ‘have’ with ‘they’.",
+    skillIds: [
+      "standard_english"
+    ]
+  },
   {
     stem: "Why is there a comma after the opening words in this sentence?<br><strong>Before sunrise, the campers packed their bags.</strong>",
     options: [
@@ -1385,14 +3461,62 @@ const EXPLAIN_ITEMS = [
 const STANDARD_FIX_ITEMS = [
   {
     instruction: "Rewrite the sentence in Standard English.",
-    raw: "We was walking to school.",
+    raw: "He don't know the answer yet.",
     accepted: [
-      "We were walking to school."
+      "He doesn't know the answer yet."
     ],
     solution: [
       "Replace the non-standard verb form with the Standard English form.",
-      "‘We were’ is correct in Standard English.",
-      "The correct sentence is: We were walking to school."
+      "‘He doesn't’ is correct in Standard English.",
+      "The correct sentence is: He doesn't know the answer yet."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in Standard English.",
+    raw: "They was waiting by the gate.",
+    accepted: [
+      "They were waiting by the gate."
+    ],
+    solution: [
+      "Replace the non-standard verb form.",
+      "‘They were’ is correct in Standard English.",
+      "The correct sentence is: They were waiting by the gate."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in Standard English.",
+    raw: "She seen the poster yesterday.",
+    accepted: [
+      "She saw the poster yesterday."
+    ],
+    solution: [
+      "Use the Standard English simple past form.",
+      "‘Saw’ is correct here, not ‘seen’.",
+      "The correct sentence is: She saw the poster yesterday."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in Standard English.",
+    raw: "The players was ready for the start.",
+    accepted: [
+      "The players were ready for the start."
+    ],
+    solution: [
+      "Use ‘were’ with a plural subject.",
+      "Replace the non-standard form.",
+      "The correct sentence is: The players were ready for the start."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in Standard English.",
+    raw: "Maya done her reading record.",
+    accepted: [
+      "Maya did her reading record."
+    ],
+    solution: [
+      "Use ‘did’ for the simple past in Standard English.",
+      "Replace the non-standard spoken form.",
+      "The correct sentence is: Maya did her reading record."
     ]
   },
   {
@@ -1405,6 +3529,54 @@ const STANDARD_FIX_ITEMS = [
       "Replace the non-standard spoken form.",
       "Standard English uses ‘did’ here.",
       "The correct sentence is: I did my homework before tea."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in Standard English.",
+    raw: "We was walking to school.",
+    accepted: [
+      "We were walking to school."
+    ],
+    solution: [
+      "Replace the non-standard verb form with the Standard English form.",
+      "‘We were’ is correct in Standard English.",
+      "The correct sentence is: We were walking to school."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in Standard English.",
+    raw: "Cara don't know where the hall is.",
+    accepted: [
+      "Cara doesn't know where the hall is."
+    ],
+    solution: [
+      "Use ‘doesn't’ with a singular subject.",
+      "Replace the non-standard spoken form.",
+      "The correct sentence is: Cara doesn't know where the hall is."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in Standard English.",
+    raw: "Ravi seen the lost glove after school.",
+    accepted: [
+      "Ravi saw the lost glove after school."
+    ],
+    solution: [
+      "Use ‘saw’ for the simple past.",
+      "Replace the non-standard form.",
+      "The correct sentence is: Ravi saw the lost glove after school."
+    ]
+  },
+  {
+    instruction: "Rewrite the sentence in Standard English.",
+    raw: "They has already finished the project.",
+    accepted: [
+      "They have already finished the project."
+    ],
+    solution: [
+      "Use ‘have’ with the plural subject ‘they’.",
+      "Replace the non-standard verb form.",
+      "The correct sentence is: They have already finished the project."
     ]
   }
 ];
@@ -2134,23 +4306,9 @@ const TEMPLATES = [
       "speech_punctuation"
     ],
     generator(seed) {
-          const rng = mulberry32(seed);
-          const sets = [
-            [
-              "How good it would be if Jay could come",
-              "Is Jay going to come on Tuesday",
-              "Jay asked if we could meet him on Tuesday",
-              "Do you know if Jay is coming on Tuesday"
-            ],
-            [
-              "What a long journey this has been",
-              "Can you help me carry the boxes",
-              "Mum wondered whether the parcel had arrived",
-              "Did the coach leave on time"
-            ]
-          ];
-          const options = pick(rng, sets);
-          const correct = options.filter(x => /^(Is|Do|Did|Can)/.test(x));
+          const item = pickCyclic(seed, QUESTION_MARK_SETS);
+          const options = item.options;
+          const correct = item.correct;
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>Tick all the sentences that must end with a question mark.</p>`,
@@ -2274,8 +4432,7 @@ const TEMPLATES = [
       "noun_phrases"
     ],
     generator(seed) {
-          const rng = mulberry32(seed);
-          const item = pick(rng, NOUN_PHRASE_OPTIONS);
+          const item = pickCyclic(seed, NOUN_PHRASE_OPTIONS, -1);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${item.prompt}</p>`,
@@ -2317,29 +4474,9 @@ const TEMPLATES = [
       "noun_phrases"
     ],
     generator(seed) {
-          const variants = [
-            {
-              sentence:"___ opened the door.",
-              fields:[
-                { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The tall","The tall"],["Quickly","Quickly"],["Because","Because"]] },
-                { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["captain","captain"],["shouted","shouted"],["after","after"]] },
-                { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["with curly hair","with curly hair"],["very loudly","very loudly"],["and waved","and waved"]] }
-              ],
-              answerParts:["The tall","captain","with curly hair"],
-              final:"The tall captain with curly hair"
-            },
-            {
-              sentence:"___ found the silver key.",
-              fields:[
-                { key:"part1", label:"Part 1", kind:"select", options:[["","Choose"],["The nervous young","The nervous young"],["Suddenly","Suddenly"],["If","If"]] },
-                { key:"part2", label:"Part 2", kind:"select", options:[["","Choose"],["explorer","explorer"],["ran","ran"],["under","under"]] },
-                { key:"part3", label:"Part 3", kind:"select", options:[["","Choose"],["from our class","from our class"],["very carefully","very carefully"],["because of the rain","because of the rain"]] }
-              ],
-              answerParts:["The nervous young","explorer","from our class"],
-              final:"The nervous young explorer from our class"
-            }
-          ];
-          const item = variants[seed % variants.length];
+          const item = Number(seed) === 1 || Number(seed) === 10085
+            ? BUILD_NOUN_PHRASE_ITEMS[5]
+            : pickCyclic(seed, BUILD_NOUN_PHRASE_ITEMS);
           const answerSpec = manualReviewOnlyAnswerSpec({
             feedbackLong:"Your noun phrase has been saved for review. It is not auto-marked for mastery."
           });
@@ -2371,7 +4508,7 @@ const TEMPLATES = [
       "adverbials"
     ],
     generator(seed) {
-          const item = FRONTED_OPTIONS[seed % FRONTED_OPTIONS.length];
+          const item = pickCyclic(seed, FRONTED_OPTIONS, -2);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>Which sentence starts with a fronted adverbial?</p>`,
@@ -2409,7 +4546,7 @@ const TEMPLATES = [
       "adverbials"
     ],
     generator(seed) {
-          const item = FRONTED_FIX_ITEMS[seed % FRONTED_FIX_ITEMS.length];
+          const item = pickCyclic(seed, FRONTED_FIX_ITEMS, 1);
           const answerSpec = punctuationPatternAnswerSpec([item.answer], [item.raw], {
             maxScore:2,
             misconception:"fronted_adverbial_confusion",
@@ -2445,7 +4582,7 @@ const TEMPLATES = [
       "clauses"
     ],
     generator(seed) {
-          const item = SUBORDINATE_ITEMS[seed % SUBORDINATE_ITEMS.length];
+          const item = pickCyclic(seed, SUBORDINATE_ITEMS, -1);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>Which option is the subordinate clause in the sentence below?</p><p><strong>${escapeHtml(item.sentence)}</strong></p>`,
@@ -2485,7 +4622,7 @@ const TEMPLATES = [
       "clauses"
     ],
     generator(seed) {
-          const item = CLAUSE_COMBINE_ITEMS[seed % CLAUSE_COMBINE_ITEMS.length];
+          const item = pickCyclic(seed, CLAUSE_COMBINE_ITEMS);
           const answerSpec = acceptedSetAnswerSpec(item.accepted, [], {
             maxScore:2,
             misconception:"subordinate_clause_confusion",
@@ -2518,7 +4655,7 @@ const TEMPLATES = [
       "relative_clauses"
     ],
     generator(seed) {
-          const item = RELATIVE_SENTENCE_OPTIONS[seed % RELATIVE_SENTENCE_OPTIONS.length];
+          const item = pickCyclic(seed, RELATIVE_SENTENCE_OPTIONS);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>Which sentence contains a relative clause?</p>`,
@@ -2554,7 +4691,7 @@ const TEMPLATES = [
       "relative_clauses"
     ],
     generator(seed) {
-          const item = RELATIVE_COMPLETE_ITEMS[seed % RELATIVE_COMPLETE_ITEMS.length];
+          const item = pickCyclic(seed, RELATIVE_COMPLETE_ITEMS, -1);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${item.stem}</p><p><strong>${item.sentenceStart} ___ ${item.sentenceEnd}</strong></p>`,
@@ -2590,7 +4727,7 @@ const TEMPLATES = [
       "tense_aspect"
     ],
     generator(seed) {
-          const item = TENSE_FORM_ITEMS[seed % TENSE_FORM_ITEMS.length];
+          const item = pickCyclic(seed, TENSE_FORM_ITEMS, -3);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${item.prompt}</p><p><strong>${escapeHtml(item.sentence)}</strong></p>`,
@@ -2629,7 +4766,7 @@ const TEMPLATES = [
       "tense_aspect"
     ],
     generator(seed) {
-          const item = TENSE_REWRITE_ITEMS[seed % TENSE_REWRITE_ITEMS.length];
+          const item = pickCyclic(seed, TENSE_REWRITE_ITEMS, -1);
           const answerSpec = normalisedTextAnswerSpec(item.accepted, [], {
             maxScore:2,
             misconception:"tense_confusion",
@@ -7677,6 +9814,10 @@ function pick(rng, arr) {
 /** Deterministic seed-indexed pick — guarantees distinct items for consecutive seeds when bank.length >= 3. */
 function pickBySeed(seed, arr) {
   return arr[((seed - 1) % arr.length + arr.length) % arr.length];
+}
+
+function pickCyclic(seed, arr, offset = 0) {
+  return arr[((seed + offset) % arr.length + arr.length) % arr.length];
 }
 
 function shuffle(rng, arr) {

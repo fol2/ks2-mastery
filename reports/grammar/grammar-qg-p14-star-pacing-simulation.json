@@ -1,7 +1,7 @@
 {
   "reportId": "grammar-qg-p14-star-pacing-simulation",
   "contentReleaseId": "grammar-qg-p14-2026-05-01",
-  "generatedAt": "2026-05-01T13:34:37.842Z",
+  "generatedAt": "2026-05-01T16:23:26.409Z",
   "templateCount": 110,
   "profiles": [
     {
@@ -14,34 +14,34 @@
           "distinctTemplates": 5,
           "distinctConcepts": 5,
           "retainedAfterSecureEvents": 0,
-          "stars": 3
+          "stars": 2
         },
         "Hatched": {
-          "session": 4,
-          "distinctTemplates": 20,
-          "distinctConcepts": 14,
+          "session": 5,
+          "distinctTemplates": 24,
+          "distinctConcepts": 12,
           "retainedAfterSecureEvents": 0,
-          "stars": 15
+          "stars": 16
         },
         "Growing": {
-          "session": 10,
-          "distinctTemplates": 39,
-          "distinctConcepts": 17,
-          "retainedAfterSecureEvents": 2,
-          "stars": 38
+          "session": 8,
+          "distinctTemplates": 36,
+          "distinctConcepts": 13,
+          "retainedAfterSecureEvents": 1,
+          "stars": 35
         },
         "Nearly Mega": {
-          "session": 14,
+          "session": 12,
           "distinctTemplates": 49,
-          "distinctConcepts": 17,
-          "retainedAfterSecureEvents": 8,
-          "stars": 72
+          "distinctConcepts": 16,
+          "retainedAfterSecureEvents": 9,
+          "stars": 66
         },
         "Mega": {
-          "session": 19,
-          "distinctTemplates": 61,
+          "session": 20,
+          "distinctTemplates": 71,
           "distinctConcepts": 18,
-          "retainedAfterSecureEvents": 32,
+          "retainedAfterSecureEvents": 37,
           "stars": 100
         }
       },
@@ -50,11 +50,11 @@
       "finalDirectStars": {
         "bracehart": 100,
         "chronalyx": 100,
-        "couronnail": 100
+        "couronnail": 98
       },
-      "distinctTemplates": 102,
+      "distinctTemplates": 109,
       "distinctConcepts": 18,
-      "retainedAfterSecureEvents": 389,
+      "retainedAfterSecureEvents": 386,
       "highStageViaRepeatedShallowItems": false
     },
     {
@@ -67,40 +67,40 @@
           "distinctTemplates": 5,
           "distinctConcepts": 5,
           "retainedAfterSecureEvents": 0,
-          "stars": 3
+          "stars": 2
         },
         "Hatched": {
           "session": 8,
-          "distinctTemplates": 31,
-          "distinctConcepts": 15,
-          "retainedAfterSecureEvents": 1,
-          "stars": 20
+          "distinctTemplates": 34,
+          "distinctConcepts": 14,
+          "retainedAfterSecureEvents": 0,
+          "stars": 16
         },
         "Growing": {
-          "session": 14,
-          "distinctTemplates": 50,
+          "session": 16,
+          "distinctTemplates": 59,
           "distinctConcepts": 17,
-          "retainedAfterSecureEvents": 2,
-          "stars": 38
+          "retainedAfterSecureEvents": 3,
+          "stars": 37
         },
         "Nearly Mega": {
-          "session": 39,
-          "distinctTemplates": 81,
+          "session": 28,
+          "distinctTemplates": 79,
           "distinctConcepts": 18,
-          "retainedAfterSecureEvents": 22,
-          "stars": 70
+          "retainedAfterSecureEvents": 15,
+          "stars": 66
         }
       },
-      "finalMaxDirectStars": 57,
+      "finalMaxDirectStars": 56,
       "finalStageName": "Growing",
       "finalDirectStars": {
-        "bracehart": 36,
-        "chronalyx": 57,
-        "couronnail": 40
+        "bracehart": 56,
+        "chronalyx": 20,
+        "couronnail": 53
       },
-      "distinctTemplates": 98,
+      "distinctTemplates": 108,
       "distinctConcepts": 18,
-      "retainedAfterSecureEvents": 66,
+      "retainedAfterSecureEvents": 86,
       "highStageViaRepeatedShallowItems": false
     },
     {
@@ -173,30 +173,30 @@
       "sessionsSimulated": 80,
       "milestones": {
         "Egg found": {
-          "session": 3,
-          "distinctTemplates": 14,
-          "distinctConcepts": 12,
+          "session": 2,
+          "distinctTemplates": 10,
+          "distinctConcepts": 7,
           "retainedAfterSecureEvents": 0,
           "stars": 2
         },
         "Hatched": {
-          "session": 14,
-          "distinctTemplates": 47,
-          "distinctConcepts": 18,
-          "retainedAfterSecureEvents": 5,
-          "stars": 15
+          "session": 15,
+          "distinctTemplates": 51,
+          "distinctConcepts": 17,
+          "retainedAfterSecureEvents": 8,
+          "stars": 16
         }
       },
       "finalMaxDirectStars": 25,
       "finalStageName": "Hatched",
       "finalDirectStars": {
         "bracehart": 25,
-        "chronalyx": 25,
-        "couronnail": 19
+        "chronalyx": 21,
+        "couronnail": 25
       },
-      "distinctTemplates": 97,
+      "distinctTemplates": 102,
       "distinctConcepts": 18,
-      "retainedAfterSecureEvents": 214,
+      "retainedAfterSecureEvents": 228,
       "highStageViaRepeatedShallowItems": false
     },
     {
@@ -207,36 +207,36 @@
         "Egg found": {
           "session": 1,
           "distinctTemplates": 15,
-          "distinctConcepts": 13,
+          "distinctConcepts": 12,
           "retainedAfterSecureEvents": 0,
-          "stars": 7
+          "stars": 11
         },
         "Hatched": {
           "session": 2,
-          "distinctTemplates": 27,
-          "distinctConcepts": 14,
+          "distinctTemplates": 29,
+          "distinctConcepts": 15,
           "retainedAfterSecureEvents": 0,
           "stars": 20
         },
         "Growing": {
-          "session": 3,
-          "distinctTemplates": 40,
-          "distinctConcepts": 16,
-          "retainedAfterSecureEvents": 2,
-          "stars": 37
+          "session": 4,
+          "distinctTemplates": 54,
+          "distinctConcepts": 18,
+          "retainedAfterSecureEvents": 8,
+          "stars": 50
         },
         "Nearly Mega": {
           "session": 5,
-          "distinctTemplates": 59,
+          "distinctTemplates": 62,
           "distinctConcepts": 18,
           "retainedAfterSecureEvents": 20,
-          "stars": 83
+          "stars": 75
         },
         "Mega": {
-          "session": 6,
-          "distinctTemplates": 66,
+          "session": 7,
+          "distinctTemplates": 73,
           "distinctConcepts": 18,
-          "retainedAfterSecureEvents": 32,
+          "retainedAfterSecureEvents": 47,
           "stars": 100
         }
       },
@@ -244,12 +244,12 @@
       "finalStageName": "Mega",
       "finalDirectStars": {
         "bracehart": 97,
-        "chronalyx": 100,
+        "chronalyx": 95,
         "couronnail": 100
       },
-      "distinctTemplates": 109,
+      "distinctTemplates": 110,
       "distinctConcepts": 18,
-      "retainedAfterSecureEvents": 1302,
+      "retainedAfterSecureEvents": 1264,
       "highStageViaRepeatedShallowItems": false
     },
     {
@@ -262,34 +262,34 @@
           "distinctTemplates": 5,
           "distinctConcepts": 5,
           "retainedAfterSecureEvents": 0,
-          "stars": 3
+          "stars": 2
         },
         "Hatched": {
-          "session": 6,
-          "distinctTemplates": 27,
-          "distinctConcepts": 17,
+          "session": 4,
+          "distinctTemplates": 20,
+          "distinctConcepts": 14,
           "retainedAfterSecureEvents": 0,
-          "stars": 17
+          "stars": 16
         },
         "Growing": {
           "session": 9,
-          "distinctTemplates": 40,
-          "distinctConcepts": 17,
-          "retainedAfterSecureEvents": 1,
-          "stars": 43
+          "distinctTemplates": 39,
+          "distinctConcepts": 16,
+          "retainedAfterSecureEvents": 4,
+          "stars": 38
         },
         "Nearly Mega": {
-          "session": 15,
-          "distinctTemplates": 56,
+          "session": 16,
+          "distinctTemplates": 63,
           "distinctConcepts": 18,
-          "retainedAfterSecureEvents": 16,
-          "stars": 81
+          "retainedAfterSecureEvents": 22,
+          "stars": 70
         },
         "Mega": {
-          "session": 34,
-          "distinctTemplates": 82,
+          "session": 40,
+          "distinctTemplates": 95,
           "distinctConcepts": 18,
-          "retainedAfterSecureEvents": 121,
+          "retainedAfterSecureEvents": 146,
           "stars": 100
         }
       },
@@ -297,12 +297,12 @@
       "finalStageName": "Mega",
       "finalDirectStars": {
         "bracehart": 100,
-        "chronalyx": 100,
-        "couronnail": 100
+        "chronalyx": 95,
+        "couronnail": 96
       },
-      "distinctTemplates": 105,
+      "distinctTemplates": 108,
       "distinctConcepts": 18,
-      "retainedAfterSecureEvents": 386,
+      "retainedAfterSecureEvents": 365,
       "highStageViaRepeatedShallowItems": false
     }
   ],

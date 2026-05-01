@@ -15,7 +15,7 @@ This is a separate content-bench line. It is not another certification-only phas
 
 ## Why this exists
 
-P14 materially deepened Grammar QG by adding 32 production-candidate template families and certifying a 110-family / 3300-instance render inventory. This separate pack goes beyond P14: it adds a draft manual bench layer for broader conceptual coverage and for retiring repetition in the remaining shallow fixed-bank diagnostics.
+P14 materially deepened Grammar QG by adding 32 production-candidate template families, expanding the former 23 low-diversity fixed-bank families to at least 10 learner-visible surfaces each, and certifying a 110-family / 3300-instance render inventory. This separate pack goes beyond P14: it adds a draft manual bench layer for broader conceptual coverage after the P14 U2 repetition blocker has been cleared.
 
 ## Concept distribution
 
