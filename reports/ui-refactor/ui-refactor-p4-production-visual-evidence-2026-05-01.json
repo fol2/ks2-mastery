@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "capturedAt": "2026-05-01T22:48:25Z",
+  "deployment": {
+    "versionId": "0bc250a8-1224-476c-a534-c383814527f8",
+    "productionBundleAudit": "passed",
+    "appBundleGzipBytes": 230865,
+    "appBundleBudgetBytes": 232000
+  },
+  "sessions": {
+    "subjectScreenshots": "isolated production demo sessions created through /api/demo/session; Spelling summary used a deterministic one-word single drill request on the production command path",
+    "adminScreenshot": "logged-in production admin browser session via bb-browser"
+  },
+  "screenshots": [
+    {
+      "name": "home",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/01-home.png"
+    },
+    {
+      "name": "spelling-setup",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/02-spelling-setup.png"
+    },
+    {
+      "name": "spelling-session",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/03-spelling-session.png"
+    },
+    {
+      "name": "spelling-feedback",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/04-spelling-feedback.png"
+    },
+    {
+      "name": "spelling-summary",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/04-spelling-summary.png",
+      "detail": "Captured after the remote command response fix preserved the live summary read model returned by the Worker."
+    },
+    {
+      "name": "grammar-setup",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/05-grammar-setup.png"
+    },
+    {
+      "name": "grammar-session",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/06-grammar-session.png"
+    },
+    {
+      "name": "grammar-summary",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/07-grammar-summary.png"
+    },
+    {
+      "name": "punctuation-setup",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/08-punctuation-setup.png"
+    },
+    {
+      "name": "punctuation-session",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/09-punctuation-session.png"
+    },
+    {
+      "name": "punctuation-summary",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/10-punctuation-summary.png"
+    },
+    {
+      "name": "admin-visual-engine",
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/11-admin-visual-engine.png"
+    }
+  ],
+  "discoveredFixes": [
+    "Admin Visual Engine and Business tabs were rendered but absent from VALID_ADMIN_SECTIONS.",
+    "AdminHubSurface was not initialised from appState.route.adminSection, so direct /admin#section=visual-engine links landed on Overview.",
+    "Spelling remote command responses reloaded repositories and then lost the live summary read model through rehydrate sanitisation; applyCommandResponse now reapplies the Worker subjectReadModel after reload."
+  ],
+  "residualFindings": [
+    "No P5/P6 UI-refactor contract file was present in this repository, so P4 evidence cannot be re-labelled as P5/P6 delivery."
+  ]
+}

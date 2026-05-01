@@ -38,6 +38,8 @@ function useAdminDirtyRegistry() {
 
 export function AdminHubSurface({ appState, model, hubState = {}, accountDirectory = {}, accessContext = {}, actions, initialSection }) {
   const [activeSection, setActiveSection] = React.useState(initialSection || DEFAULT_SECTION);
+  const activeSectionRef = React.useRef(activeSection);
+  const routeSectionRef = React.useRef(initialSection || DEFAULT_SECTION);
   const dirtyRegistry = useAdminDirtyRegistry();
   // Keep every AdminHubSurface hook above the remote-loading / access guards.
   // The admin route can render the loading guard first, then re-render with the
@@ -49,6 +51,38 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
       dirtyRegistry.setDirty(accountId, isDirty);
     },
   }), [actions, dirtyRegistry]);
+  React.useEffect(() => {
+    activeSectionRef.current = activeSection;
+  }, [activeSection]);
+
+  const requestSectionChange = React.useCallback((nextSection, { updateRoute = false, revertRouteOnCancel = false } = {}) => {
+    const currentSection = activeSectionRef.current;
+    const guard = shouldBlockSectionChange(dirtyRegistry, nextSection, currentSection);
+    if (guard.blocked && guard.reason === 'same-section') return false;
+    if (guard.blocked && guard.reason === 'dirty-rows') {
+      // eslint-disable-next-line no-restricted-globals, no-alert
+      const confirmed = confirm('You have unsaved changes in Account Ops Metadata. Discard and switch section?');
+      if (!confirmed) {
+        if (revertRouteOnCancel && currentSection) {
+          actions.dispatch('admin-section-change', { section: currentSection });
+        }
+        return false;
+      }
+      dirtyRegistry.clear();
+    }
+    activeSectionRef.current = nextSection;
+    setActiveSection(nextSection);
+    if (updateRoute) {
+      actions.dispatch('admin-section-change', { section: nextSection });
+    }
+    return true;
+  }, [actions, dirtyRegistry]);
+
+  React.useEffect(() => {
+    if (!initialSection || routeSectionRef.current === initialSection) return;
+    routeSectionRef.current = initialSection;
+    requestSectionChange(initialSection, { revertRouteOnCancel: true });
+  }, [initialSection, requestSectionChange]);
 
   const loadingRemote = accessContext?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
   if (loadingRemote) {
@@ -94,16 +128,7 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
   // The decision logic is extracted into shouldBlockSectionChange() so it
   // can be unit-tested without a DOM / confirm() dependency.
   const handleTabChange = (nextSection) => {
-    const guard = shouldBlockSectionChange(dirtyRegistry, nextSection, activeSection);
-    if (guard.blocked && guard.reason === 'same-section') return;
-    if (guard.blocked && guard.reason === 'dirty-rows') {
-      // eslint-disable-next-line no-restricted-globals, no-alert
-      const confirmed = confirm('You have unsaved changes in Account Ops Metadata. Discard and switch section?');
-      if (!confirmed) return;
-      dirtyRegistry.clear();
-    }
-    setActiveSection(nextSection);
-    actions.dispatch('admin-section-change', { section: nextSection });
+    requestSectionChange(nextSection, { updateRoute: true });
   };
 
   const sectionProps = {

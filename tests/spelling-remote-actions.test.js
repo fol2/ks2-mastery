@@ -555,6 +555,7 @@ test('remote spelling command response preserves reward side effects and TTS sto
   assert.equal(tts.stopCalls, 1);
   assert.deepEqual(calls.map(([name]) => name), [
     'reloadFromRepositories',
+    'patch',
     'pushToasts',
     'deferMonsterCelebrations',
   ]);
@@ -567,6 +568,57 @@ test('remote spelling command response preserves reward side effects and TTS sto
 
   assert.equal(tts.stopCalls, 1);
   assert.deepEqual(tts.spoken, [{ promptToken: 'prompt-a', word: 'early' }]);
+});
+
+test('remote spelling command response applies the live summary read model after repository reload', () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        session: null,
+        summary: null,
+        analytics: null,
+        audio: null,
+        error: '',
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: { send: async () => ({}) },
+  });
+
+  handler.applyCommandResponse({
+    learnerId: 'learner-a',
+    subjectReadModel: {
+      learnerId: 'learner-a',
+      phase: 'summary',
+      session: null,
+      summary: {
+        totalWords: 1,
+        correctWords: 1,
+        mistakes: [],
+      },
+      feedback: null,
+    },
+    mutation: { appliedRevision: 5 },
+    projections: {
+      rewards: {
+        events: [],
+        toastEvents: [],
+      },
+    },
+  }, {
+    command: 'continue-session',
+    learnerId: 'learner-a',
+  });
+
+  const spellingState = getState().subjectUi.spelling;
+  assert.equal(spellingState.phase, 'summary');
+  assert.equal(spellingState.summary.totalWords, 1);
 });
 
 test('remote spelling command compensates a logged monster celebration after the next session finishes', () => {
@@ -653,6 +705,7 @@ test('remote spelling command compensates a logged monster celebration after the
 
   assert.deepEqual(calls.map(([name]) => name), [
     'reloadFromRepositories',
+    'patch',
     'deferMonsterCelebrations',
     'releaseMonsterCelebrations',
   ]);
@@ -795,6 +848,7 @@ test('remote spelling compensation can replay a deterministic reward id after re
 
   assert.deepEqual(calls.map(([name]) => name), [
     'reloadFromRepositories',
+    'patch',
     'deferMonsterCelebrations',
     'releaseMonsterCelebrations',
   ]);
@@ -968,6 +1022,7 @@ test('remote spelling compensation excludes pre-command rewards even with an exi
   assert.equal(getState().monsterCelebrations.queue[0].id, phaetonEvolution.id);
   assert.deepEqual(calls.map(([name]) => name), [
     'reloadFromRepositories',
+    'patch',
     'deferMonsterCelebrations',
     'releaseMonsterCelebrations',
   ]);

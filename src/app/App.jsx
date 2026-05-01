@@ -300,6 +300,7 @@ export function App({ controller, runtime }) {
                 accountDirectory={context.adminAccountDirectory}
                 accessContext={context}
                 actions={actions}
+                initialSection={appState.route?.adminSection || null}
               />
             </Suspense>
           </ErrorBoundary>

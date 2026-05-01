@@ -1,85 +1,86 @@
 {
-  "ok": false,
-  "releaseId": "grammar-qg-p11-2026-04-30",
+  "ok": true,
+  "releaseId": "grammar-qg-p14-2026-05-01",
   "evidenceOrigin": "production-ui-refactor-p4",
   "environment": "production",
   "deployedUrl": "https://ks2.eugnel.uk",
   "origin": "production-ui-refactor-p4",
-  "contentReleaseId": "grammar-qg-p11-2026-04-30",
-  "testedTemplateIds": [],
-  "answerSpecFamiliesCovered": [],
-  "command": "npm run smoke:production:grammar -- --json --evidence-origin=production-ui-refactor-p4 --expected-release=grammar-qg-p11-2026-04-30 --out=reports/ui-refactor/ui-refactor-p4-grammar-production-smoke-2026-05-01.json",
+  "contentReleaseId": "grammar-qg-p14-2026-05-01",
+  "testedTemplateIds": [
+    "qg_modal_verb_explain",
+    "fronted_adverbial_choose",
+    "qg_modal_verb_explain",
+    "qg_subject_object_classify_table",
+    "tense_rewrite",
+    "fix_fronted_adverbial",
+    "combine_clauses_rewrite",
+    "build_noun_phrase",
+    "identify_words_in_sentence",
+    "qg_p4_voice_roles_transfer"
+  ],
+  "answerSpecFamiliesCovered": [
+    "exact",
+    "multiField",
+    "normalisedText",
+    "punctuationPattern",
+    "acceptedSet",
+    "manualReviewOnly"
+  ],
+  "command": "npm run smoke:production:grammar -- --json --evidence-origin=production-ui-refactor-p4 --expected-release=grammar-qg-p14-2026-05-01 --out=reports/ui-refactor/ui-refactor-p4-grammar-production-smoke-2026-05-01.json",
   "learnerFixtureType": "demo-session",
   "itemCreationResult": {
-    "ok": false,
-    "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
   },
   "answerSubmissionResult": {
-    "ok": false,
-    "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
   },
   "readModelUpdateResult": {
-    "ok": false,
-    "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
   },
   "noAnswerLeakAssertion": {
     "ok": true,
     "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
   },
   "semanticCueAssertion": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
   },
   "promptCueAssertion": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
   },
   "readAloudAssertion": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
   },
   "releaseIdAssertion": {
-    "ok": false,
-    "detail": "contentReleaseId not observed; expected grammar-qg-p11-2026-04-30"
+    "ok": true,
+    "detail": "contentReleaseId=grammar-qg-p14-2026-05-01"
   },
   "normalRoundResult": {
-    "ok": false,
-    "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
   },
   "miniTestResult": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "answered=1, reviewSize=8"
   },
   "repairResult": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "supportKind=faded, aiKind=explanation"
   },
   "cueAssertionResult": {
-    "ok": false,
-    "detail": ""
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
   },
   "forbiddenKeyScanResult": {
     "ok": true,
     "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
   },
-  "failureDetails": {
-    "normalRoundResult": {
-      "ok": false,
-      "detail": "grammar start-session failed with 400: {\"ok\":false,\"message\":\"Too many demo practice requests. Please wait a few minutes and try again.\",\"code\":\"demo_rate_limited\",\"retryAfterSeconds\":79}"
-    },
-    "miniTestResult": {
-      "ok": false,
-      "detail": ""
-    },
-    "repairResult": {
-      "ok": false,
-      "detail": ""
-    },
-    "cueAssertionResult": {
-      "ok": false,
-      "detail": ""
-    }
-  },
-  "timestamp": "2026-05-01T20:58:41.913Z",
-  "commitSha": "13d85f14795c0295e127c4515cec1f2b8540e8c9"
+  "failureDetails": null,
+  "timestamp": "2026-05-01T22:45:26.783Z",
+  "commitSha": "91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa"
 }

@@ -23,7 +23,9 @@ test('VALID_ADMIN_SECTIONS is exported and contains expected sections', () => {
   assert.ok(VALID_ADMIN_SECTIONS.has('debug'));
   assert.ok(VALID_ADMIN_SECTIONS.has('content'));
   assert.ok(VALID_ADMIN_SECTIONS.has('marketing'));
-  assert.equal(VALID_ADMIN_SECTIONS.size, 5);
+  assert.ok(VALID_ADMIN_SECTIONS.has('business'));
+  assert.ok(VALID_ADMIN_SECTIONS.has('visual-engine'));
+  assert.equal(VALID_ADMIN_SECTIONS.size, 7);
 });
 
 // ---------------------------------------------------------------------------
@@ -177,6 +179,14 @@ test('parseAdminSectionFromHash: case-insensitive — #section=DEBUG returns "de
 
 test('parseAdminSectionFromHash: section with other params — #theme=dark&section=content', () => {
   assert.equal(parseAdminSectionFromHash('#theme=dark&section=content'), 'content');
+});
+
+test('parseAdminSectionFromHash: visual-engine returns "visual-engine"', () => {
+  assert.equal(parseAdminSectionFromHash('#section=visual-engine'), 'visual-engine');
+});
+
+test('parseAdminSectionFromHash: business returns "business"', () => {
+  assert.equal(parseAdminSectionFromHash('#section=business'), 'business');
 });
 
 test('parseAdminSectionFromHash: encoded section value', () => {

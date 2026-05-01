@@ -2,14 +2,14 @@
 
 Date: 2026-05-01
 
-Status: source and local build verification complete. Production visual correctness is not production-proven in this report because no deployed smoke or screenshot record was captured for `https://ks2.eugnel.uk`.
+Status: source, local build, deployed smoke, and live production screenshot evidence captured for `https://ks2.eugnel.uk`. P4 has no remaining production-evidence blocker. P5/P6 is not claimed because no `ui-refactor-p5.md` or `ui-refactor-p6.md` contract exists in this repository.
 
 ## Scope Boundary
 
-- Source boundary: implemented and verified in local worktree `.worktrees/ui-refactor-p4` on branch `ui-refactor-p4`, based on `origin/main`.
-- GitHub boundary: no PR was opened, merged, or deployed from this report.
+- Source boundary: implemented and verified in local worktree `.worktrees/ui-refactor-p4` on branch `ui-refactor-p4`, then production evidence/fix work continued in `.worktrees/ui-refactor-p4-production-evidence-clean`.
+- GitHub boundary: P4 source was merged through PR `#815`; this report now also records the follow-up production-evidence closure and Admin Visual Engine routing fix.
 - ZIP boundary: no ZIP snapshot was used as the source of truth after these edits; verification is from the local source checkout.
-- Production boundary: no production deploy and no logged-in production UI smoke were performed during this P4 pass.
+- Production boundary: deployed smoke 2026-05-01 against `https://ks2.eugnel.uk` passed; screenshot evidence was captured from an isolated production demo session plus a logged-in admin browser session.
 
 ## Implemented Changes
 
@@ -22,6 +22,9 @@ Status: source and local build verification complete. Production visual correctn
 - Added explicit `visible` adoption to subject companion panels in setup scenes.
 - Added `PracticeStage` motion states for setup, active session, and feedback/celebration phases.
 - Kept Admin Visual Engine diagnostic-only/read-only while moving simple inline style sites into CSS classes.
+- Fixed the Admin Visual Engine route after live validation found that `visual-engine` and `business` tabs were rendered but not accepted by the admin route allowlist; `AdminHubSurface` now receives and syncs the route section from `appState.route.adminSection`.
+- Fixed the Spelling remote command response path after production validation found that the Worker returned a live `summary` read model but the client reload path discarded it through persisted-state rehydrate sanitisation. `applyCommandResponse` now reapplies the live Worker read model after repository reload.
+- Hardened the Grammar production smoke manual-review probe so it derives a valid response from the current production-visible input options instead of relying on stale fixture values.
 - Regenerated the CSP inline-style inventory after the admin diagnostics migration.
 
 ## Intentional Visual Changes
@@ -53,8 +56,11 @@ Command evidence:
 - `node --test tests/spelling-boss.test.js` - passed, 45/45. This caught and then verified the Boss summary no-drill invariant after the shared summary-frame migration.
 - `node --test tests/ui-production-evidence-contract.test.js tests/ui-component-adoption.test.js tests/spelling-boss.test.js` - passed, 56/56.
 - `node scripts/inventory-inline-styles.mjs --check` - passed, inventory in sync with 246 inline-style sites.
-- `npm test` - passed, 16,294 pass / 0 fail / 6 skipped after adding the P4 production-evidence report guard.
+- `npm test` - passed, 21,512 pass / 0 fail / 6 skipped after adding the production-evidence follow-up fixes.
 - `npm run check` - passed. Wrangler dry-run ran `npm run build`, `npm run assert:build-public`, and `npm run audit:client`.
+- `node --test tests/react-admin-metadata-row-dirty.test.js tests/admin-section-guard.test.js tests/store-admin-route.test.js tests/react-admin-section-tabs.test.js tests/spelling-remote-actions.test.js tests/grammar-production-smoke.test.js tests/admin-visual-engine-diagnostics.test.js tests/ui-production-evidence-contract.test.js` - passed, 111/111 after the Spelling summary, Grammar smoke, Admin route, and Admin dirty-row route-guard fixes.
+- `npm run deploy` - passed on 2026-05-01; final production deploy version `0bc250a8-1224-476c-a534-c383814527f8`.
+- `npm run audit:production -- --skip-local --retries 30 --retry-delay-ms 5000` - passed for `https://ks2.eugnel.uk/` after deployment.
 
 Known non-failing output:
 
@@ -64,7 +70,7 @@ Known non-failing output:
 
 ## Bundle And CSP
 
-- Main bundle gzip: `230,216 / 232,000` bytes, measured by the final `npm run check` client audit.
+- Main bundle gzip: `230,865 / 232,000` bytes, measured by the final deploy client audit after the route and Spelling response fixes.
 - Budget status: within the existing P3 ceiling; no re-baseline requested.
 - CSP inline-style total: 246.
 - CSP inventory status: `docs/hardening/csp-inline-style-inventory.md` and `scripts/inventory-inline-styles.mjs` agree; `POST_MIGRATION_TOTAL` is 246.
@@ -72,11 +78,22 @@ Known non-failing output:
 
 ## Production Evidence
 
-Production evidence: not production-proven.
+Production evidence: production-proven for the P4 surfaces in scope.
 
-No deployed smoke or screenshot record was captured for Home, Spelling setup/session/summary, Grammar setup/session/summary, Punctuation setup/session/summary, or Admin Visual Engine on `https://ks2.eugnel.uk`.
+Deployed smoke and screenshot evidence was captured on 2026-05-01 for `https://ks2.eugnel.uk`:
 
-This report therefore does not claim production visual correctness, deployed bundle behaviour, or logged-in production interaction health. The verified claim is local source, test, build, dry-run deploy, bundle-audit, and static contract correctness.
+- Production deploy version: `0bc250a8-1224-476c-a534-c383814527f8`.
+- Production bundle audit: passed for 1 HTML-referenced bundle, 6 transitive chunks, 19 direct paths, 5/5 security-header checks, and 15/15 cache-split checks.
+- Bootstrap production smoke: `reports/ui-refactor/ui-refactor-p4-bootstrap-production-smoke-2026-05-01.json` (`ok: true`, deployed source commit `91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa`, `dirtyTreeFlag: false`, finished `2026-05-01T22:45:04.100Z`).
+- Grammar production smoke: `reports/ui-refactor/ui-refactor-p4-grammar-production-smoke-2026-05-01.json` (`ok: true`, release `grammar-qg-p14-2026-05-01`, deployed source commit `91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa`, finished `2026-05-01T22:45:26.783Z`).
+- Punctuation production smoke: `reports/ui-refactor/ui-refactor-p4-punctuation-production-smoke-2026-05-01.json` (`ok: true`, release `punctuation-qg-p11-2026-05-01`, deployed source commit `91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa`, finished `2026-05-01T22:45:38.946Z`; `adminHubCoverage: false` because admin credentials are not part of that script).
+- Visual production evidence manifest: `reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json`.
+- Screenshot artifacts: Home, Spelling setup/session/feedback/summary, Grammar setup/session/summary, Punctuation setup/session/summary, and Admin Visual Engine under `output/playwright/ui-refactor-p4-production-2026-05-01/`.
+
+Residual blockers:
+
+- None for P4 production evidence after the follow-up fixes.
+- No `ui-refactor-p5.md` or `ui-refactor-p6.md` contract exists in this repository, so this report cannot truthfully claim P5/P6 delivery. It closes P4 plus the production-evidence follow-up only.
 
 ## Non-Goals
 
@@ -84,8 +101,8 @@ This report therefore does not claim production visual correctness, deployed bun
 - No new learning algorithms, marking logic, or content generation.
 - No future-subject content work beyond preserving shared UI contracts.
 - No admin write/publish workflow for visual assets; Admin Visual Engine remains diagnostic-only/read-only.
-- No production deployment, no PR merge, and no live production smoke in this pass.
+- No P5/P6 delivery claim without a named P5/P6 contract.
 
 ## Closure
 
-P4 closes the Visual Engine v1 source implementation locally, with the explicit caveat that production visual verification remains outstanding until a deployed smoke or screenshot pass is captured.
+P4 closes the Visual Engine v1 source implementation and production evidence pass. The production-evidence follow-up also closed the Admin Visual Engine direct-route issue, the Grammar smoke fixture drift, and the Spelling summary live-read-model issue found during validation.

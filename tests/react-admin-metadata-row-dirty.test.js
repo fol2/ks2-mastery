@@ -57,18 +57,41 @@ async function runFixture(entrySource) {
       jsx: 'automatic',
       jsxImportSource: 'react',
       loader: { '.js': 'jsx' },
+      external: ['jsdom'],
       nodePaths: nodePaths(),
       logLevel: 'silent',
     });
     const output = execFileSync(process.execPath, [bundlePath], {
       cwd: rootDir,
+      env: {
+        ...process.env,
+        NODE_PATH: nodePaths().join(path.delimiter),
+      },
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 10_000,
     });
     return normaliseLineEndings(output).replace(/\n+$/, '');
   } finally {
     await rm(tmpDir, { recursive: true, force: true });
   }
+}
+
+function metadataSurfaceModel() {
+  return {
+    account: { id: 'adult-admin', repoRevision: 1, selectedLearnerId: '' },
+    permissions: { canViewAdminHub: true, platformRole: 'admin', platformRoleLabel: 'Admin', canManageMonsterVisualConfig: true },
+    monsterVisualConfig: { permissions: {}, status: { validation: { ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] } }, draft: null, published: null, versions: [], mutation: {} },
+    contentReleaseStatus: { publishedVersion: 1, publishedReleaseId: 'r', runtimeWordCount: 0, runtimeSentenceCount: 0, currentDraftId: 'd', currentDraftVersion: 1, draftUpdatedAt: 0 },
+    importValidationStatus: { ok: true, errorCount: 0, warningCount: 0, source: '', importedAt: 0, errors: [] },
+    auditLogLookup: { available: false, note: '', entries: [] },
+    dashboardKpis: { generatedAt: 1, accounts: { total: 0 }, learners: { total: 0 }, demos: { active: 0 }, practiceSessions: { last7d: 0, last30d: 0 }, eventLog: { last7d: 0 }, mutationReceipts: { last7d: 0 }, errorEvents: { byStatus: { open: 0, investigating: 0, resolved: 0, ignored: 0 } }, accountOpsUpdates: { total: 0 } },
+    opsActivityStream: { generatedAt: 1, entries: [] },
+    accountOpsMetadata: { generatedAt: 1, accounts: [{ accountId: 'adult-admin', email: 'admin@example.com', displayName: 'Admin', platformRole: 'admin', opsStatus: 'active', planLabel: 'internal', tags: ['staff'], internalNotes: 'DIRTY-TEST-VALUE', updatedAt: 1, updatedByAccountId: '' }] },
+    errorLogSummary: { generatedAt: 1, totals: { open: 0, investigating: 0, resolved: 0, ignored: 0, all: 0 }, entries: [] },
+    demoOperations: { sessionsCreated: 0, activeSessions: 0, conversions: 0, cleanupCount: 0, rateLimitBlocks: 0, ttsFallbacks: 0, updatedAt: 0 },
+    learnerSupport: { selectedLearnerId: '', accessibleLearners: [], selectedDiagnostics: null, punctuationReleaseDiagnostics: null, entryPoints: [] },
+  };
 }
 
 // -----------------------------------------------------------------
@@ -259,4 +282,97 @@ test('AdminHubSurface renders the internal-notes textarea with the server value 
   assert.match(html, /<textarea[^>]*name="internalNotes"[^>]*>DIRTY-TEST-VALUE<\/textarea>/);
   // The row-level opsStatus select exists too, as part of the editable admin row.
   assert.match(html, /<select[^>]*name="opsStatus"/);
+});
+
+test('AdminHubSurface blocks route-driven section changes while account metadata rows are dirty', async () => {
+  const output = await runFixture(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin#section=accounts',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.HTMLTextAreaElement = dom.window.HTMLTextAreaElement;
+    globalThis.HTMLSelectElement = dom.window.HTMLSelectElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminHubSurface } = require(${JSON.stringify(path.join(rootDir, 'src/surfaces/hubs/AdminHubSurface.jsx'))});
+    const { act } = React;
+
+    const model = ${JSON.stringify(metadataSurfaceModel())};
+    const dispatched = [];
+    let confirmCalls = 0;
+    globalThis.confirm = () => {
+      confirmCalls += 1;
+      return false;
+    };
+    dom.window.confirm = globalThis.confirm;
+    const actions = {
+      dispatch(key, payload) { dispatched.push({ key, payload }); },
+      navigateHome() {},
+      openSubject() {},
+    };
+    const appState = { learners: { selectedId: 'learner-a', byId: { 'learner-a': { id: 'learner-a', name: 'Ava', yearGroup: 'Y5' } }, allIds: ['learner-a'] }, persistence: { mode: 'remote-sync' }, toasts: [], monsterCelebrations: { queue: [] } };
+    const accessContext = { shellAccess: { source: 'worker-session' }, activeAdultLearnerContext: null };
+    const accountDirectory = { status: 'loaded', accounts: [{ id: 'adult-admin', email: 'admin@example.com', displayName: 'Admin', providers: ['email'], learnerCount: 0, platformRole: 'admin', updatedAt: 0 }] };
+
+    function render(section) {
+      return React.createElement(AdminHubSurface, {
+        appState,
+        model,
+        hubState: { status: 'loaded' },
+        accountDirectory,
+        accessContext,
+        actions,
+        initialSection: section,
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(render('accounts'));
+      });
+
+      const textarea = document.querySelector('textarea[name="internalNotes"]');
+      const valueSetter = Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value').set;
+      valueSetter.call(textarea, 'locally edited notes');
+      await act(async () => {
+        textarea.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        textarea.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+
+      await act(async () => {
+        root.render(render('debug'));
+      });
+
+      const activeTab = document.querySelector('[role="tab"][aria-selected="true"]');
+      process.stdout.write(JSON.stringify({
+        activeTabText: activeTab?.textContent || '',
+        confirmCalls,
+        dispatched,
+      }));
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  assert.equal(result.confirmCalls, 1);
+  assert.match(result.activeTabText, /Accounts/);
+  assert.deepEqual(result.dispatched, [
+    { key: 'admin-section-change', payload: { section: 'accounts' } },
+  ]);
 });
