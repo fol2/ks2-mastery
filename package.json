@@ -83,6 +83,7 @@
     "verify:punctuation-qg:p8": "node scripts/verify-punctuation-qg-p8.mjs",
     "verify:punctuation-qg:p9": "node scripts/verify-punctuation-qg-p9.mjs",
     "verify:punctuation-qg:p10": "node scripts/verify-punctuation-qg-p10.mjs",
+    "verify:hero-pA7": "node --test tests/hero-pA7-wrangler-oauth.test.js",
     "review:punctuation-questions": "node scripts/review-punctuation-questions.mjs",
     "audit:punctuation-qg:manual-expansion": "node scripts/audit-punctuation-manual-expansion.mjs",
     "audit:punctuation-qg:p11-product": "node scripts/audit-punctuation-qg-p11-product.mjs",

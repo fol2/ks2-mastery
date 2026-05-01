@@ -1,0 +1,117 @@
+{
+  "phase": "hero-mode-pA7",
+  "status": "live-production-hold-recorded-contract-incomplete-no-widening",
+  "generatedAt": "2026-05-01T22:44:55Z",
+  "reportUpdatedAt": "2026-05-01T22:59:11Z",
+  "evidenceCodeBaseline": "2f8bb7d2542e5368202e2e8705af9a32588a4ef1",
+  "productionOrigin": "https://ks2.eugnel.uk",
+  "contract": "docs/plans/james/hero-mode/A/hero-mode-pA7.md",
+  "sourceCommands": [
+    "node scripts/wrangler-oauth.mjs secret list",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT COUNT(*) AS hero_state_rows FROM child_game_state WHERE system_id='hero-mode';\"",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT COUNT(*) AS hero_event_rows FROM event_log WHERE system_id='hero-mode';\"",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT COUNT(*) AS adult_accounts FROM adult_accounts;\"",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT SUM(CASE WHEN account_type = 'demo' THEN 0 ELSE 1 END) AS real_accounts, SUM(CASE WHEN account_type = 'demo' THEN 1 ELSE 0 END) AS demo_accounts FROM adult_accounts;\"",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT COUNT(*) AS learner_memberships FROM account_learner_memberships;\"",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT COUNT(DISTINCT learner_id) AS ready_subject_learners FROM child_game_state WHERE system_id IN ('spelling','grammar','punctuation');\"",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT system_id AS subject, COUNT(DISTINCT learner_id) AS learners FROM child_game_state WHERE system_id IN ('spelling','grammar','punctuation') GROUP BY system_id ORDER BY system_id;\"",
+    "node --input-type=module -e \"create demo session and request /api/hero/read-model\""
+  ],
+  "checkedInHeroFlags": {
+    "HERO_MODE_SHADOW_ENABLED": "false",
+    "HERO_MODE_LAUNCH_ENABLED": "false",
+    "HERO_MODE_CHILD_UI_ENABLED": "false",
+    "HERO_MODE_PROGRESS_ENABLED": "false",
+    "HERO_MODE_ECONOMY_ENABLED": "false",
+    "HERO_MODE_CAMP_ENABLED": "false"
+  },
+  "secretNameCheck": {
+    "observedAt": "2026-05-01T22:40:00Z",
+    "valuesReadable": false,
+    "present": {
+      "HERO_INTERNAL_ACCOUNTS": true,
+      "HERO_EXTERNAL_ACCOUNTS": false,
+      "HERO_ROLLOUT_PERCENT": false,
+      "HERO_ROLLOUT_SALT": false,
+      "HERO_EXCLUDED_ACCOUNTS": false,
+      "HERO_EMERGENCY_DISABLED": false
+    },
+    "notes": [
+      "Cloudflare secret list exposes names only, not values.",
+      "HERO_INTERNAL_ACCOUNTS count remains unknown because the value is write-only.",
+      "No rollout percent, rollout salt, excluded-account, external-account, or emergency-off secret name was present."
+    ]
+  },
+  "productionD1Counts": {
+    "adultAccounts": 162,
+    "realAccounts": 5,
+    "demoAccounts": 157,
+    "learnerMemberships": 161,
+    "readySubjectLearnersWithAnyReadySubjectState": 138,
+    "readySubjectLearnersBySubject": {
+      "grammar": 87,
+      "punctuation": 27,
+      "spelling": 54
+    },
+    "heroStateRows": 0,
+    "heroEventRows": 0,
+    "effectiveRolloutBucketPercent": 0,
+    "internalAllowlistAccountCount": null,
+    "exposedAccountCountKnown": false
+  },
+  "productionBoundarySmoke": {
+    "kind": "demo-non-cohort-hidden-check",
+    "origin": "https://ks2.eugnel.uk",
+    "sessionDemo": true,
+    "accountIdObserved": true,
+    "readModelStatus": 404,
+    "readModelCode": "hero_shadow_disabled",
+    "result": "pass-hidden",
+    "scope": "Proves a new demo/non-cohort production session does not receive Hero while global flags are off. It does not prove allowlisted cohort flow."
+  },
+  "supportPosture": {
+    "parentExplainerExists": true,
+    "supportPackExists": true,
+    "supportOwnerNamedForThisBranch": "James",
+    "dailyReviewOwnerNamedForThisBranch": "James",
+    "supportLogRowsSupplied": 0,
+    "approvedFamilySupportSignoffObserved": false,
+    "optOutSecretPresent": false,
+    "readyForWidening": false
+  },
+  "rollbackEvidence": {
+    "checkedInGlobalFlagsOff": true,
+    "demoNonCohortHidden": true,
+    "heroStateRowsPreserved": 0,
+    "heroEventRowsPreserved": 0,
+    "emergencyOffSecretPresent": false,
+    "productionEmergencyOffRehearsed": false,
+    "readyForWidening": false
+  },
+  "contractStatus": {
+    "a7CloseAllowed": false,
+    "validHoldBoundarySatisfied": false,
+    "knownExposureBoundary": false,
+    "ownerSetProductionReady": false,
+    "supportCadenceEstablished": false,
+    "reason": "The selected operational posture is HOLD, but pA7's valid-hold contract is not complete because the internal allowlist size is unknown, production release owners/support cadence are not fully evidenced, known-account smoke did not pass, and emergency-off rollback was not rehearsed."
+  },
+  "decision": {
+    "selectedOutcome": "HOLD AT CURRENT ROLLOUT PERCENTAGE",
+    "contractComplete": false,
+    "validHoldBoundarySatisfied": false,
+    "normalisationAllowed": false,
+    "wideningAllowed": false,
+    "releaseCloseAllowed": false,
+    "reviewBy": "2026-05-15",
+    "reason": "Live production was inspected without widening. The rollout-bucket path is 0 percent because rollout percent/salt are absent, but total exposure remains unknown while HERO_INTERNAL_ACCOUNTS is present and write-only. This blocks contract-complete A7 closure as well as any normalisation or widening."
+  },
+  "requiredBeforeNormaliseOrWiden": [
+    "Record or rotate HERO_INTERNAL_ACCOUNTS to a known reviewed value without losing any intended cohort account.",
+    "Add HERO_EXCLUDED_ACCOUNTS or an equivalent opt-out/exclusion control before family exposure.",
+    "Run the A7 known-account production smoke across read model, start-task, subject completion, claim, coins, Camp, excluded account, and non-cohort command denial.",
+    "Rehearse HERO_EMERGENCY_DISABLED=true or equivalent production rollback after the intended exposure state is reached.",
+    "Record support zeroes or issues with the named support owner and daily review owner.",
+    "Run the schema-accurate pA6 metrics extractor against live exported Hero rows once any Hero rows exist."
+  ]
+}
