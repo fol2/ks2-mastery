@@ -148,6 +148,22 @@ function seedNonHeroSession(server, learnerId, subjectId) {
   `).run(uiJson, learnerId, subjectId);
 }
 
+function seedSummaryPhaseStaleSession(server, learnerId, subjectId) {
+  const uiJson = JSON.stringify({
+    phase: 'summary',
+    session: {
+      id: `session-${subjectId}-stale-summary`,
+      startedAt: new Date().toISOString(),
+      mode: 'smart',
+    },
+  });
+  server.DB.db.prepare(`
+    UPDATE child_subject_state
+    SET ui_json = ?
+    WHERE learner_id = ? AND subject_id = ?
+  `).run(uiJson, learnerId, subjectId);
+}
+
 function makeSubjectReadModel(subjectId) {
   if (subjectId === 'spelling') {
     return {
@@ -736,6 +752,36 @@ test('POST with non-Hero active session → 409 subject_active_session_conflict'
   assert.equal(payload.code, 'subject_active_session_conflict');
   assert.ok(payload.activeSession, 'Conflict must include activeSession');
   assert.equal(payload.activeSession.subjectId, 'spelling');
+
+  server.close();
+});
+
+test('POST with summary-phase stale session → starts without subject_active_session_conflict', async () => {
+  const server = createServer();
+  await seedLearner(server, 'adult-a', 'learner-a');
+
+  seedSummaryPhaseStaleSession(server, 'learner-a', 'spelling');
+
+  const readModelPayload = await getReadModel(server);
+  const launchable = findFirstLaunchableTask(readModelPayload);
+  assert.ok(launchable, 'Fixture must produce at least one launchable task');
+
+  const revision = getLearnerRevision(server);
+  const response = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-a',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'hero-summary-stale-session-1',
+    expectedLearnerRevision: revision,
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200, `Expected 200, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.heroLaunch.status, 'started');
+  assert.notEqual(payload.code, 'subject_active_session_conflict');
 
   server.close();
 });
