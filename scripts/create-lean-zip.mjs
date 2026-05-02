@@ -5,7 +5,31 @@ import { spawnSync } from 'node:child_process';
 
 const repoRoot = process.cwd();
 const repoName = path.basename(repoRoot);
-const defaultOutput = path.resolve(repoRoot, '..', `${repoName}-lean.zip`);
+
+function pad2(value) {
+  return String(value).padStart(2, '0');
+}
+
+function getTimestampSuffix(date = new Date()) {
+  const month = pad2(date.getMonth() + 1);
+  const day = pad2(date.getDate());
+  const hour = pad2(date.getHours());
+  const minute = pad2(date.getMinutes());
+  return `${month}${day}${hour}${minute}`;
+}
+
+function appendTimestampSuffix(fileName, timestampSuffix) {
+  const ext = path.extname(fileName);
+  const base = ext ? fileName.slice(0, -ext.length) : fileName;
+  return `${base}-${timestampSuffix}${ext}`;
+}
+
+const timestampSuffix = getTimestampSuffix();
+const defaultOutput = path.resolve(
+  repoRoot,
+  '..',
+  appendTimestampSuffix(`${repoName}-lean.zip`, timestampSuffix),
+);
 
 const HELP_TEXT = `
 Create a lean development/share ZIP from tracked files.
@@ -14,14 +38,14 @@ Usage:
   node scripts/create-lean-zip.mjs [options]
 
 Options:
-  --output <path>        ZIP output path (default: ../${repoName}-lean.zip)
+  --output <path>        ZIP output path (exact path, no auto suffix)
   --exclude <glob>       Exclude glob (repeatable). Default: assets/**
   --mode <mode>          How to treat excluded files:
                          - omit        : do not include excluded files
                          - placeholder : include 0-byte files at same paths (default)
                          - symlink     : include symlinks to .lean-omitted (best-effort)
   --max-mb <number>      Target threshold in MB for reporting (default: 100)
-  --name <filename>      Override generated ZIP filename only (saved in parent folder)
+  --name <filename>      Override generated ZIP filename (auto adds -MMDDHHMM before extension)
   --help                 Show this message
 
 Examples:
@@ -69,7 +93,7 @@ function parseArgs(argv) {
     if (arg === '--name') {
       const name = argv[++i];
       if (!name) throw new Error('Missing value for --name');
-      config.output = path.resolve(repoRoot, '..', name);
+      config.output = path.resolve(repoRoot, '..', appendTimestampSuffix(name, timestampSuffix));
       continue;
     }
     throw new Error(`Unknown argument: ${arg}`);
