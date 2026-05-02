@@ -87,11 +87,15 @@ export async function handleHeroReadModel({
   //    caller without membership receives a 403 before any data read.
   await repository.requireLearnerReadAccess(session.accountId, learnerId);
 
+  const nowTs = typeof now === 'function' ? now() : Date.now();
+
   // 4. Load per-subject read models for the learner.
-  //    This is the P0 minimal path: we read raw child_subject_state and
-  //    pass each subject's data object directly to the provider. The
-  //    providers are designed to handle null/empty gracefully.
-  const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId);
+  //    This uses the same public read-model projection as bootstrap so Hero
+  //    sees provider-readable subject signals rather than raw storage slots.
+  const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId, {
+    accountId: session.accountId,
+    now: nowTs,
+  });
 
   // 4b. P3 U7: load progress bundle for the v4 read model when progress enabled.
   const progressFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_PROGRESS_ENABLED);
@@ -103,7 +107,6 @@ export async function handleHeroReadModel({
 
   // 5. Assemble the shadow read model (v3, v4, v5, or v6: pass accountId and env for
   //    quest fingerprint and the HERO_MODE_CHILD_UI_ENABLED gate).
-  const nowTs = typeof now === 'function' ? now() : Date.now();
   const result = buildHeroShadowReadModel({
     learnerId,
     accountId: session.accountId || '',
@@ -137,4 +140,3 @@ export async function handleHeroReadModel({
 
   return json({ ok: true, hero: responseHero });
 }
-

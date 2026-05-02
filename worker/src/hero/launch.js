@@ -120,7 +120,10 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     }
   }
 
-  const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId);
+  const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId, {
+    accountId: callerAccountId,
+    now,
+  });
   const heroReadModel = buildHeroShadowReadModel({
     learnerId,
     accountId: callerAccountId || '',
@@ -194,6 +197,17 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     }
 
     // Different Hero taskId → conflict
+    if (activeSession.launchRequestId && activeSession.launchRequestId === requestId) {
+      throw new ConflictError('The same mutation request id was reused for a different payload.', {
+        code: 'idempotency_reuse',
+        retryable: false,
+        kind: 'subject_command.hero.start-task',
+        scopeType: 'learner',
+        scopeId: learnerId,
+        requestId,
+        correlationId,
+      });
+    }
     throw new ConflictError('A different Hero task is already active.', {
       code: 'hero_active_session_conflict',
       activeSession: {

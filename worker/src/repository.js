@@ -9641,20 +9641,36 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       return requireLearnerReadAccess(db, accountId, learnerId);
     },
     // Hero Mode P0/P2: read per-subject read-model data for the hero
-    // providers. Reads `child_subject_state` rows and returns both
-    // parsed `data` (data_json) and `ui` (ui_json) objects keyed by
-    // subject_id. Providers consume the `data` field unchanged.
+    // providers. Reads `child_subject_state` rows and returns raw storage
+    // data plus the public subject read model keyed by subject_id. Production
+    // Hero providers need derived read-model signals (stats, analytics,
+    // availability), not the subject engine's storage shape.
     // P2 active session detection inspects `ui` for heroContext.
-    async readHeroSubjectReadModels(learnerId) {
+    async readHeroSubjectReadModels(learnerId, { accountId = '', now = Date.now() } = {}) {
       const rows = await all(db, `
         SELECT subject_id, data_json, ui_json
         FROM child_subject_state
         WHERE learner_id = ?
       `, [learnerId]);
       const result = {};
+      const spellingContent = accountId && rows.some((row) => row.subject_id === 'spelling')
+        ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling')
+        : null;
       for (const row of rows) {
-        const data = safeJsonParse(row.data_json, null);
-        const ui = safeJsonParse(row.ui_json, null);
+        const rawRecord = subjectStateRowToRecord(row);
+        const publicRecord = accountId
+          ? await publicSubjectStateRowToRecord(row, {
+            spellingContentSnapshot: spellingContent?.snapshot || null,
+            now,
+          })
+          : rawRecord;
+        const data = rawRecord.data || null;
+        const ui = publicRecord.ui
+          ? {
+            ...publicRecord.ui,
+            session: rawRecord.ui?.session || publicRecord.ui.session || null,
+          }
+          : rawRecord.ui || null;
         if (data || ui) {
           result[row.subject_id] = { data, ui };
         }

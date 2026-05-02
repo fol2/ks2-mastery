@@ -48,6 +48,36 @@ function makeSubjectReadModels() {
   };
 }
 
+function makeProductionSplitSubjectReadModels() {
+  return {
+    grammar: {
+      data: {
+        prefs: { mode: 'smart' },
+        mastery: {},
+        recentAttempts: [],
+      },
+      ui: {
+        stats: {
+          concepts: {
+            total: 18,
+            weak: 2,
+            due: 1,
+            secured: 4,
+            learning: 6,
+            new: 5,
+          },
+        },
+        analytics: {
+          concepts: [
+            { id: 'relative_clauses', status: 'weak', confidence: { label: 'needs-repair' } },
+            { id: 'pronouns_cohesion', status: 'secured', confidence: { label: 'secure' } },
+          ],
+        },
+      },
+    },
+  };
+}
+
 function buildV4(overrides = {}) {
   return buildHeroShadowReadModel({
     learnerId: 'learner-1',
@@ -128,6 +158,23 @@ function buildProgressState(model, overrides = {}) {
 }
 
 // ── V5 shape: economy enabled ─────────────────────────────────────────
+
+test('providers prefer production ui_json signals over storage data_json', () => {
+  const model = buildHeroShadowReadModel({
+    learnerId: 'learner-1',
+    accountId: 'account-1',
+    subjectReadModels: makeProductionSplitSubjectReadModels(),
+    now: Date.now(),
+    env: BASE_ENV,
+  });
+
+  assert.deepEqual(
+    model.eligibleSubjects.map((entry) => entry.subjectId),
+    ['grammar'],
+  );
+  assert.equal(model.ui.reason, 'enabled');
+  assert.ok(model.dailyQuest.tasks.some((task) => task.subjectId === 'grammar'));
+});
 
 test('economy enabled → version 5, economy block present with correct balance', () => {
   const model = buildV5();

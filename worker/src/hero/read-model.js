@@ -67,6 +67,51 @@ function buildCapabilityRegistry(tasks) {
   return registry;
 }
 
+function hasHeroProviderSignals(value) {
+  if (!value || typeof value !== 'object') return false;
+  return Boolean(
+    value.stats
+    || value.analytics
+    || value.availability
+    || value.postMega
+    || value.postMastery
+  );
+}
+
+function selectProviderReadModel(entry) {
+  if (!entry || typeof entry !== 'object') return entry;
+  if ('data' in entry || 'ui' in entry) {
+    if (hasHeroProviderSignals(entry.ui)) return entry.ui;
+    return entry.data || entry.ui || null;
+  }
+  return entry;
+}
+
+function detectActiveHeroSession(subjectReadModels) {
+  for (const subjectId of HERO_READY_SUBJECT_IDS) {
+    const entry = subjectReadModels[subjectId];
+    if (!entry || typeof entry !== 'object') continue;
+    const ui = 'ui' in entry ? entry.ui : null;
+    if (!ui || typeof ui !== 'object') continue;
+    const session = ui.session;
+    if (!session || typeof session !== 'object') continue;
+    const heroCtx = session.heroContext;
+    if (!heroCtx || typeof heroCtx !== 'object') continue;
+    if (heroCtx.source !== 'hero-mode') continue;
+    return {
+      subjectId,
+      questId: heroCtx.questId || null,
+      questFingerprint: heroCtx.questFingerprint || null,
+      taskId: heroCtx.taskId || null,
+      intent: heroCtx.intent || null,
+      launcher: heroCtx.launcher || null,
+      launchRequestId: heroCtx.launchRequestId || null,
+      status: 'in-progress',
+    };
+  }
+  return null;
+}
+
 /**
  * Derive the ui.reason code from the flag hierarchy and task state.
  */
@@ -155,16 +200,15 @@ export function buildHeroShadowReadModel({
 
   // 1. Run each provider via the provider registry.
   //    subjectReadModels is keyed by subjectId. Each value is either:
-  //    - { data, ui } (P2 expanded shape from repository), or
+  //    - { data, ui } (repository shape: storage data plus read-model UI), or
   //    - a raw data object (P0/P1 compat from unit tests).
-  //    Providers always receive the data portion only.
+  //    Production stores provider-readable signals in ui_json, while data_json
+  //    remains the subject engine's storage shape. Prefer ui_json when it has
+  //    Hero-readable signals, then fall back to data_json for older fixtures.
   const subjectSnapshots = {};
   for (const subjectId of HERO_READY_SUBJECT_IDS) {
     const entry = subjectReadModels[subjectId] || null;
-    // Support both { data, ui } (P2) and raw data object (P0 compat)
-    const readModel = entry && typeof entry === 'object' && 'data' in entry
-      ? entry.data
-      : entry;
+    const readModel = selectProviderReadModel(entry);
     const snapshot = runProvider(subjectId, readModel);
     if (snapshot) {
       subjectSnapshots[subjectId] = snapshot;
@@ -173,6 +217,7 @@ export function buildHeroShadowReadModel({
 
   // 2. Resolve eligibility
   const eligibility = resolveEligibility(subjectSnapshots);
+  const activeHeroSession = detectActiveHeroSession(subjectReadModels);
 
   // 3. Build eligible snapshots for the scheduler
   const eligibleSnapshots = eligibility.eligible.map((entry) => {
@@ -186,7 +231,9 @@ export function buildHeroShadowReadModel({
     dateKey,
     timezone: HERO_DEFAULT_TIMEZONE,
     schedulerVersion: HERO_P2_SCHEDULER_VERSION,
-    contentReleaseFingerprint: null,
+    contentReleaseFingerprint: activeHeroSession?.launchRequestId
+      ? `active:${activeHeroSession.subjectId}:${activeHeroSession.taskId}:${activeHeroSession.launchRequestId}`
+      : null,
   });
 
   // 5. Schedule shadow quest
@@ -285,30 +332,9 @@ export function buildHeroShadowReadModel({
     copyVersion: HERO_P2_COPY_VERSION,
   };
 
-  // 10. Detect active Hero session from ui_json.
-  //     Inspect each subject's ui field for session.heroContext.source === 'hero-mode'.
-  let activeHeroSession = null;
-  for (const subjectId of HERO_READY_SUBJECT_IDS) {
-    const entry = subjectReadModels[subjectId];
-    if (!entry || typeof entry !== 'object') continue;
-    const ui_data = 'ui' in entry ? entry.ui : null;
-    if (!ui_data || typeof ui_data !== 'object') continue;
-    const session = ui_data.session;
-    if (!session || typeof session !== 'object') continue;
-    const heroCtx = session.heroContext;
-    if (!heroCtx || typeof heroCtx !== 'object') continue;
-    if (heroCtx.source !== 'hero-mode') continue;
-    activeHeroSession = {
-      subjectId,
-      questId: heroCtx.questId || null,
-      questFingerprint: heroCtx.questFingerprint || null,
-      taskId: heroCtx.taskId || null,
-      intent: heroCtx.intent || null,
-      launcher: heroCtx.launcher || null,
-      status: 'in-progress',
-    };
-    break;
-  }
+  // 10. Active Hero session detection is resolved before scheduling so a
+  // launched task can move subsequent quest identity without hiding the
+  // existing session from conflict/idempotency handling.
 
   // 11. If progress is NOT enabled, return v3 shape unchanged.
   if (!progressEnabled) {
