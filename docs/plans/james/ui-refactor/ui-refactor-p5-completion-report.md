@@ -9,7 +9,7 @@ Status: completed for source, local verification, PR merge, and live production 
 - Source boundary: implemented on branch `ui-refactor` and merged through PR `#831`.
 - GitHub boundary: PR `#831` was squash-merged into `main` as `3e85fdb2ee819357559ac63f21e2e9cf9a6ea9e7`.
 - Production boundary: deployed from `main` commit `3e85fdb2ee819357559ac63f21e2e9cf9a6ea9e7` with Worker version `9cc7c30b-6c0b-4806-b782-c76f11ce7530`.
-- Screenshot-pack boundary: the P4 screenshot manifest is now explicit. It proves the committed Home screenshot only; the 11 absent PNG entries are marked `omitted` with a durable non-claim reason.
+- Screenshot-pack boundary: the P4 screenshot manifest is now explicit and the blocker follow-up commits all 12 named PNG entries as `captured`.
 
 ## Implemented Changes
 
@@ -79,7 +79,7 @@ Smoke artefacts:
 - Bootstrap: `reports/ui-refactor/ui-refactor-p5-bootstrap-production-smoke-2026-05-02.json` (`ok: true`, HTTP 200, `bootstrapCapacity` present).
 - Grammar: `reports/ui-refactor/ui-refactor-p5-grammar-production-smoke-2026-05-02.json` (`ok: true`, release `grammar-qg-p14-2026-05-01`, session, mini-test, repair, summary, answer-spec families, and forbidden-key scans covered).
 - Punctuation: `reports/ui-refactor/ui-refactor-p5-punctuation-production-smoke-2026-05-02.json` (`ok: true`, release `punctuation-qg-p11-2026-05-01`, smart summary, generated incorrect path, dash/Oxford-comma acceptance, GPS review, parent evidence covered).
-- Spelling summary path: covered inside the punctuation smoke artefact through the one-word Spelling command path (`progressTotal: 1`, prompt token present). The separate dense-history Spelling smoke was run but not used as P5 evidence because it failed its own stricter forbidden-key oracle on `spellingDense.startModel.audio.sessionId`.
+- Spelling summary path: covered inside the punctuation smoke artefact through the one-word Spelling command path (`progressTotal: 1`, prompt token present). The blocker follow-up removes `audio.sessionId` from the public Spelling audio cue and locks the redaction contract with Worker tests; the dense-history production smoke must be re-run after that follow-up deploy.
 - Admin Visual Engine route: `reports/ui-refactor/ui-refactor-p5-admin-visual-engine-real-browser-evidence-2026-05-02.json` (`ok: true`) captured from an existing logged-in Chrome/CDP session against real production APIs. `/api/auth/session`, `/api/bootstrap`, and `/api/hubs/admin` returned HTTP 200, and the Visual Engine route rendered adapter, evidence, deployment, smoke-file, and diagnostic-only sections.
 - Admin Visual Engine screenshot: `output/playwright/ui-refactor-p5-production-2026-05-02/admin-visual-engine-real-cdp.png`.
 
@@ -87,7 +87,7 @@ Smoke artefacts:
 
 Production evidence proves the deployed source commit and the smoke/browser routes listed above. It does not claim pixel-perfect visual correctness beyond the captured Admin Visual Engine screenshot and the explicitly present screenshot artefacts.
 
-The P4 screenshot pack now remains honest: one committed PNG is present, 11 entries are explicitly omitted, and the verifier fails future missing-file claims unless they are marked `external` or `omitted` with a durable reason.
+The P4 screenshot pack now remains strict: all 12 named PNGs are committed, all manifest entries are `captured`, and the verifier plus contract test fail future missing-file or omitted-entry regressions.
 
 ## Non-Goals Preserved
 

@@ -2,7 +2,7 @@
 
 Date: 2026-05-01
 
-Status: source, local build, and deployed smoke evidence captured for `https://ks2.eugnel.uk`. P4 has no remaining production-smoke blocker. The committed screenshot pack proves only the screenshot files present in this repository; missing screenshot paths in the production visual evidence manifest are explicitly downgraded and are not bundled-image claims. P5 is tracked separately by `ui-refactor-p5.md`; this P4 report does not claim P5 delivery.
+Status: source, local build, and deployed smoke evidence captured for `https://ks2.eugnel.uk`. P4 has no remaining production-smoke blocker. The blocker follow-up now commits every PNG named by the production visual evidence manifest, so the screenshot pack is no longer a manifest-only claim for non-Home scenes. P5 is tracked separately by `ui-refactor-p5.md`; this P4 report does not claim P5 delivery.
 
 ## Scope Boundary
 
@@ -80,7 +80,7 @@ Known non-failing output:
 
 Production smoke evidence: production-smoke-proven for the P4 surfaces covered by the recorded smoke files.
 
-Screenshot-pack evidence: screenshot-pack-proven only for committed screenshot files that are present in this repository. The current committed pack contains `01-home.png`; the other screenshot entries in `reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json` are marked `omitted` with durable non-claim reasons because their PNG files are not present in the lean source bundle.
+Screenshot-pack evidence: screenshot-pack-proven for all 12 named screenshots in `reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json`. The blocker follow-up supersedes the earlier lean-source limitation where only `01-home.png` was bundled.
 
 Deployed smoke and screenshot evidence was captured on 2026-05-01 for `https://ks2.eugnel.uk`:
 
@@ -90,7 +90,7 @@ Deployed smoke and screenshot evidence was captured on 2026-05-01 for `https://k
 - Grammar production smoke: `reports/ui-refactor/ui-refactor-p4-grammar-production-smoke-2026-05-01.json` (`ok: true`, release `grammar-qg-p14-2026-05-01`, deployed source commit `91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa`, finished `2026-05-01T22:45:26.783Z`).
 - Punctuation production smoke: `reports/ui-refactor/ui-refactor-p4-punctuation-production-smoke-2026-05-01.json` (`ok: true`, release `punctuation-qg-p11-2026-05-01`, deployed source commit `91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa`, finished `2026-05-01T22:45:38.946Z`; `adminHubCoverage: false` because admin credentials are not part of that script).
 - Visual production evidence manifest: `reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json`.
-- Screenshot artifacts: Home is present under `output/playwright/ui-refactor-p4-production-2026-05-01/01-home.png`. Spelling setup/session/feedback/summary, Grammar setup/session/summary, Punctuation setup/session/summary, and Admin Visual Engine were named in the original manifest but are not present in this committed evidence pack, so P5 treats them as not proven from supplied artefacts.
+- Screenshot artifacts: Home, Spelling setup/session/feedback/summary, Grammar setup/session/summary, Punctuation setup/session/summary, and Admin Visual Engine are present under `output/playwright/ui-refactor-p4-production-2026-05-01/`.
 
 Residual blockers:
 
