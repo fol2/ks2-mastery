@@ -523,7 +523,7 @@ textarea:focus-visible {
 .btn.secondary { background: var(--panel-soft); border-color: var(--line); color: var(--ink); }
 .btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
 .btn.good { background: var(--good-soft); border-color: #b8dfca; color: var(--good); }
-.btn.warn { background: var(--warn-soft); border-color: #edd9ae; color: #9e6a19; }
+.btn.warn { background: var(--warn-soft); border-color: #edd9ae; color: var(--warn-strong); }
 .btn.bad { background: var(--bad-soft); border-color: #f0c8c5; color: var(--bad); }
 .btn.sm { padding: 8px 12px; font-size: 0.92rem; }
 .btn.lg { padding: 12px 16px; }
@@ -549,7 +549,7 @@ textarea:focus-visible {
   color: var(--ink-2);
 }
 .chip.good { background: var(--good-soft); color: var(--good); border-color: #b8dfca; }
-.chip.warn { background: var(--warn-soft); color: #9e6a19; border-color: #edd9ae; }
+.chip.warn { background: var(--warn-soft); color: var(--warn-strong); border-color: #edd9ae; }
 .chip.bad { background: var(--bad-soft); color: var(--bad); border-color: #f0c8c5; }
 .chip.new { background: #f4f6f8; color: #546171; border-color: #d9e0e7; }
 .chip.learning { background: #e8f1fb; color: #2f6fae; border-color: #bdd5ef; }
