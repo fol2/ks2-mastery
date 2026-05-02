@@ -138,7 +138,7 @@ function PractiseBody({ skillId, skillName, disabled, actions }) {
   return (
     <div className="punctuation-skill-modal-body" data-punctuation-skill-modal-body="practise">
       <p className="punctuation-skill-modal-practise-copy">
-        A short focused round on <strong>{displayName}</strong>. We pick four questions for you — answer at your own pace.
+        A short focused round on <strong>{displayName}</strong>. We pick a short varied round for you — answer at your own pace.
       </p>
       {multiSkill ? (
         <p

@@ -15,8 +15,8 @@ export {
 };
 
 export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
-export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
-export const PUNCTUATION_GENERATED_ITEM_SEED = 'punctuation-r4-full-14-skill-structure';
+export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p12-3000-2026-05-02';
+export const PUNCTUATION_GENERATED_ITEM_SEED = 'punctuation-r5-depth100-3000-plus';
 
 export const PUNCTUATION_PHASES = Object.freeze([
   'setup',

@@ -14,8 +14,9 @@ import { performance } from 'node:perf_hooks';
 import { projectPunctuationStars } from '../src/subjects/punctuation/star-projection.js';
 import { buildPunctuationLearnerReadModel } from '../src/subjects/punctuation/read-model.js';
 import { buildPunctuationReadModel } from '../worker/src/subjects/punctuation/read-models.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
+const CURRENT_RELEASE_ID = PUNCTUATION_RELEASE_ID;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------

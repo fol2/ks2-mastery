@@ -8,13 +8,13 @@ import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
 const REQUIRED_FAMILIES = 28;
 const REQUIRED_GENERATED_CHOOSE_FAMILIES = 3;
-const REQUIRED_TEMPLATES_PER_FAMILY = 40;
+const REQUIRED_TEMPLATES_PER_FAMILY = 100;
 
 function normalise(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
-test('manual expansion creates a 1000+ punctuation runtime pool', () => {
+test('manual expansion creates a 3000+ punctuation runtime pool', () => {
   const generated = createPunctuationGeneratedItems({
     manifest: PUNCTUATION_CONTENT_MANIFEST,
     seed: PUNCTUATION_CONTENT_MANIFEST.generatedSeed || PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation',
@@ -22,15 +22,15 @@ test('manual expansion creates a 1000+ punctuation runtime pool', () => {
   });
 
   assert.equal(PUNCTUATION_MANIFEST_VALIDATION.ok, true);
-  assert.equal(PUNCTUATION_FIXED_EXPANSION_ITEM_COUNT, 56);
-  assert.equal(PUNCTUATION_ITEMS.length, 148);
+  assert.equal(PUNCTUATION_FIXED_EXPANSION_ITEM_COUNT, 420);
+  assert.equal(PUNCTUATION_ITEMS.length, 512);
   assert.equal(PRODUCTION_DEPTH, REQUIRED_TEMPLATES_PER_FAMILY);
   assert.equal(generated.length, REQUIRED_FAMILIES * REQUIRED_TEMPLATES_PER_FAMILY);
   assert.equal(generated.filter((item) => item.mode === 'choose').length, REQUIRED_GENERATED_CHOOSE_FAMILIES * REQUIRED_TEMPLATES_PER_FAMILY);
-  assert.equal(PUNCTUATION_ITEMS.length + generated.length, 1268);
+  assert.equal(PUNCTUATION_ITEMS.length + generated.length, 3312);
 });
 
-test('each generator family has forty unique template stems and models', () => {
+test('each generator family has one hundred unique template stems and models', () => {
   assert.equal(Object.keys(GENERATED_TEMPLATE_BANK).length, REQUIRED_FAMILIES);
 
   for (const [familyId, templates] of Object.entries(GENERATED_TEMPLATE_BANK)) {

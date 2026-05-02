@@ -67,16 +67,26 @@ function runGoldenTests(item) {
   if (!template || !template.tests) return null;
 
   const results = { accept: [], reject: [], allPassed: true };
+  const choiceAnswer = (expectedCorrect) => {
+    if (item.mode !== 'choose' && item.inputKind !== 'choice') return null;
+    if (expectedCorrect) return { choiceIndex: item.correctIndex };
+    const wrongIndex = Array.isArray(item.options)
+      ? item.options.findIndex((_, index) => index !== item.correctIndex)
+      : -1;
+    return { choiceIndex: wrongIndex >= 0 ? wrongIndex : -1 };
+  };
 
   for (const acceptCase of (template.tests.accept || [])) {
-    const result = markPunctuationAnswer({ item, answer: { typed: acceptCase } });
+    const answer = choiceAnswer(true) || { typed: acceptCase };
+    const result = markPunctuationAnswer({ item, answer });
     const passed = result.correct === true;
     results.accept.push({ input: acceptCase, passed, detail: result });
     if (!passed) results.allPassed = false;
   }
 
   for (const rejectCase of (template.tests.reject || [])) {
-    const result = markPunctuationAnswer({ item, answer: { typed: rejectCase } });
+    const answer = choiceAnswer(false) || { typed: rejectCase };
+    const result = markPunctuationAnswer({ item, answer });
     const passed = result.correct === false;
     results.reject.push({ input: rejectCase, passed, detail: result });
     if (!passed) results.allPassed = false;

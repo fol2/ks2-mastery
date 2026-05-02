@@ -11,8 +11,9 @@ import { PUNCTUATION_CLIENT_SKILLS } from '../src/subjects/punctuation/read-mode
 import {
   PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER as VM_CLUSTER_TO_MONSTER,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
+const CURRENT_RELEASE_ID = PUNCTUATION_RELEASE_ID;
 const OLD_RELEASE_ID = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
 const DAY_MS = 24 * 60 * 60 * 1000;
 

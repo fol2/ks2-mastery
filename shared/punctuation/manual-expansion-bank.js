@@ -1,9 +1,11 @@
+import { PUNCTUATION_MANUAL_DEEP_EXPANSION_TARGET_DEPTH, manualDeepExpansionTemplatesForFamily } from './manual-deep-expansion-bank.js';
+import { manualP12QualityTemplatesForFamily } from './manual-p12-quality-bank.js';
 // Manual Punctuation QG expansion bank.
 // This file deliberately contains hand-authored case tables rather than re-seeding
 // the existing eight-template families. The target is a real 40-template surface
 // per generator family: the existing 8 templates plus 32 new manual templates.
 
-export const PUNCTUATION_MANUAL_EXPANSION_TARGET_DEPTH = 40;
+export const PUNCTUATION_MANUAL_EXPANSION_TARGET_DEPTH = PUNCTUATION_MANUAL_DEEP_EXPANSION_TARGET_DEPTH;
 export const PUNCTUATION_MANUAL_EXPANSION_PER_FAMILY = 32;
 
 const CASES = Object.freeze({
@@ -2919,5 +2921,11 @@ export const PUNCTUATION_MANUAL_TEMPLATE_EXPANSION_BANK = Object.freeze({
 });
 
 export function manualExpansionTemplatesForFamily(familyId) {
-  return PUNCTUATION_MANUAL_TEMPLATE_EXPANSION_BANK[familyId] || Object.freeze([]);
+  const qualityTemplates = manualP12QualityTemplatesForFamily(familyId);
+  if (qualityTemplates.length >= PUNCTUATION_MANUAL_EXPANSION_TARGET_DEPTH) {
+    return Object.freeze(qualityTemplates.slice(0, PUNCTUATION_MANUAL_EXPANSION_TARGET_DEPTH));
+  }
+  const manualTemplates = PUNCTUATION_MANUAL_TEMPLATE_EXPANSION_BANK[familyId] || Object.freeze([]);
+  const deepTemplates = manualDeepExpansionTemplatesForFamily(familyId);
+  return Object.freeze([...manualTemplates, ...deepTemplates]);
 }

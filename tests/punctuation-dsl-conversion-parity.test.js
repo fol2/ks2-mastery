@@ -90,7 +90,7 @@ const P4_LEGACY_FAMILIES = [
 
 // ─── Parity: perFamily = 4 ───────────────────────────────────────────────────
 
-test('DSL conversion produces identical output at perFamily=4 for 7 priority families', () => {
+test('P12 reviewed bank supersedes the P3 parity fixture for 7 priority families', () => {
   const items = createPunctuationGeneratedItems({
     seed: BASELINE.seed,
     perFamily: 4,
@@ -114,9 +114,19 @@ test('DSL conversion produces identical output at perFamily=4 for 7 priority fam
   assert.equal(filtered.length, BASELINE.perFamily4.length,
     `Expected ${BASELINE.perFamily4.length} items, got ${filtered.length}`);
 
-  for (let idx = 0; idx < filtered.length; idx += 1) {
-    assert.deepEqual(filtered[idx], BASELINE.perFamily4[idx],
-      `Mismatch at index ${idx} (${filtered[idx]?.generatorFamilyId})`);
+  for (const familyId of PRIORITY_FAMILIES) {
+    const familyItems = filtered.filter((item) => item.generatorFamilyId === familyId);
+    assert.equal(familyItems.length, 4, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.templateId)).size, 4, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.variantSignature)).size, 4, familyId);
+    assert.equal(familyItems.every((item) => item.templateId.startsWith('p12q_')), true, familyId);
+    assert.notDeepEqual(
+      familyItems.map((item) => item.templateId),
+      BASELINE.perFamily4
+        .filter((item) => item.generatorFamilyId === familyId)
+        .map((item) => item.templateId),
+      `${familyId} must not silently fall back to the superseded P3 fixture`,
+    );
   }
 });
 
@@ -324,7 +334,7 @@ test('depth 4 output matches P4 baseline for legacy families (none remaining)', 
   }
 });
 
-test('depth 4 output matches P4 baseline for 18 DSL-converted families', () => {
+test('depth 4 output uses P12 reviewed surfaces for the former P4 DSL-converted families', () => {
   const items = createPunctuationGeneratedItems({
     seed: P4_BASELINE.meta.seed,
     perFamily: 4,
@@ -348,14 +358,15 @@ test('depth 4 output matches P4 baseline for 18 DSL-converted families', () => {
         readiness: i.readiness,
       }));
 
-    const expected = P4_BASELINE.depth4[familyId];
-    assert.equal(familyItems.length, expected.length,
-      `${familyId}: expected ${expected.length} items at depth 4, got ${familyItems.length}`);
-
-    for (let idx = 0; idx < familyItems.length; idx += 1) {
-      assert.deepEqual(familyItems[idx], expected[idx],
-        `${familyId} depth4 mismatch at index ${idx}`);
-    }
+    assert.equal(familyItems.length, 4, `${familyId}: expected 4 items at depth 4`);
+    assert.equal(new Set(familyItems.map((item) => item.templateId)).size, 4, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.variantSignature)).size, 4, familyId);
+    assert.equal(familyItems.every((item) => item.templateId.startsWith('p12q_')), true, familyId);
+    assert.notDeepEqual(
+      familyItems.map((item) => item.templateId),
+      (P4_BASELINE.depth4[familyId] || []).map((item) => item.templateId),
+      `${familyId} must not silently fall back to the superseded P4 fixture`,
+    );
   }
 });
 

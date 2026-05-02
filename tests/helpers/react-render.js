@@ -634,6 +634,7 @@ export function renderHubSurfaceFixture({
     import { ParentHubSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/ParentHubSurface.jsx'))};
     import { AdminHubSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/hubs/AdminHubSurface.jsx'))};
     import { BUNDLED_MONSTER_VISUAL_CONFIG } from ${JSON.stringify(absoluteSpecifier('src/platform/game/monster-visual-config.js'))};
+    import { PUNCTUATION_RELEASE_ID } from ${JSON.stringify(absoluteSpecifier('shared/punctuation/content.js'))};
 
     const appState = {
       learners: {
@@ -712,7 +713,7 @@ export function renderHubSurfaceFixture({
         recentSessions: [],
         dailyGoal: { targetAttempts: 4, attemptsToday: 1, correctToday: 0, completed: false, progressPercent: 25 },
         streak: { currentDays: 1, bestDays: 1, activeDays: 1 },
-        releaseDiagnostics: { releaseId: 'punctuation-qg-p11-2026-05-01', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+        releaseDiagnostics: { releaseId: PUNCTUATION_RELEASE_ID, trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
       },
       exportEntryPoints: [{ action: 'platform-export-learner', label: 'Export current learner' }],
       accessibleLearners: [{ learnerId: 'learner-a', learnerName: 'Ava', yearGroup: 'Y5', membershipRoleLabel: 'Viewer', writable: false }],
@@ -786,7 +787,7 @@ export function renderHubSurfaceFixture({
           punctuationEvidence: {
             progressSnapshot: { securedRewardUnits: 1, dueItems: 1, weakItems: 1 },
             weakestFacets: [{ id: 'speech::insert', label: 'Speech - Insert punctuation' }],
-            releaseDiagnostics: { releaseId: 'punctuation-qg-p11-2026-05-01', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+            releaseDiagnostics: { releaseId: PUNCTUATION_RELEASE_ID, trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
           },
         },
         accessibleLearners: [{
@@ -801,7 +802,7 @@ export function renderHubSurfaceFixture({
           punctuationEvidence: { progressSnapshot: { dueItems: 1, weakItems: 1 } },
           currentFocus: { label: 'Due spellings' },
         }],
-        punctuationReleaseDiagnostics: { releaseId: 'punctuation-qg-p11-2026-05-01', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
+        punctuationReleaseDiagnostics: { releaseId: PUNCTUATION_RELEASE_ID, trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
         entryPoints: [{ action: 'open-subject', label: 'Open Spelling', subjectId: 'spelling' }, { action: 'open-subject', label: 'Open Punctuation analytics', subjectId: 'punctuation', tab: 'analytics' }],
       },
       postMegaSeedHarness: {

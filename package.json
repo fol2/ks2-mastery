@@ -90,7 +90,17 @@
     "build:punctuation-qg:p11-surface-pack": "node scripts/build-punctuation-qg-p11-surface-pack.mjs",
     "test:punctuation-qg:manual-expansion": "node --test tests/punctuation-manual-expansion.test.js",
     "verify:punctuation-qg:p11-expansion": "npm run audit:punctuation-qg:manual-expansion && npm run test:punctuation-qg:manual-expansion && npm run audit:punctuation-qg:p11-product",
-    "verify:punctuation-qg:p11": "node scripts/verify-punctuation-qg-p11.mjs"
+    "verify:punctuation-qg:p11": "node scripts/verify-punctuation-qg-p11.mjs",
+    "audit:punctuation-qg:p12-expansion": "node scripts/audit-punctuation-qg-p12-expansion.mjs",
+    "test:punctuation-qg:p12-expansion": "node --test tests/punctuation-qg-p12-expansion.test.js",
+    "verify:punctuation-qg:p12-expansion": "node scripts/audit-punctuation-qg-p12-expansion.mjs --json --out reports/punctuation/punctuation-qg-p12-expansion-audit.json && node --test tests/punctuation-qg-p12-expansion.test.js",
+    "build:punctuation-qg:p12-surface-pack": "node scripts/build-punctuation-qg-p12-surface-pack.mjs",
+    "verify:punctuation-qg:p12-surface-pack": "node scripts/build-punctuation-qg-p12-surface-pack.mjs --check",
+    "verify:punctuation-qg:p12": "npm run verify:punctuation-qg:p12-expansion && npm run verify:punctuation-qg:p12-surface-pack",
+    "verify:punctuation-qg:p13-predeploy": "node scripts/verify-punctuation-qg-p13-predeploy.mjs",
+    "smoke:production:punctuation:p13": "node scripts/punctuation-qg-p13-live-smoke.mjs --env production --authenticated --out reports/punctuation/punctuation-qg-p13-production-smoke.json",
+    "verify:punctuation-qg:p13-live": "node scripts/validate-punctuation-qg-p13-live-evidence.mjs reports/punctuation/punctuation-qg-p13-production-smoke.json",
+    "deploy:punctuation-qg:p13": "node scripts/deploy-punctuation-qg-p13-live.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

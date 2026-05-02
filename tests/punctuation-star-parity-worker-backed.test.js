@@ -32,8 +32,9 @@ import { stageFor, PUNCTUATION_STAR_THRESHOLDS } from '../src/platform/game/mons
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
 import { updatePunctuationStarHighWater } from '../src/platform/game/monster-system.js';
 import { createPunctuationRewardSubscriber } from '../src/subjects/punctuation/event-hooks.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
+const CURRENT_RELEASE_ID = PUNCTUATION_RELEASE_ID;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------

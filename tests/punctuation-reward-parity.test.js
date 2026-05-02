@@ -31,10 +31,11 @@ import {
   buildPunctuationDashboardModel,
   mergeMonotonicDisplay,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
+const CURRENT_RELEASE_ID = PUNCTUATION_RELEASE_ID;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------

@@ -329,8 +329,8 @@ test('deployment-commit-sha fails when missing', () => {
 
 // ─── PRODUCTION_DEPTH import verification ───────────────────────────────────
 
-test('PRODUCTION_DEPTH is imported and used as P11 baseline', () => {
-  assert.equal(PRODUCTION_DEPTH, 40);
+test('PRODUCTION_DEPTH is imported and used as current baseline', () => {
+  assert.equal(PRODUCTION_DEPTH, 100);
 });
 
 // ─── Cross-mode clusters accept string or object format ─────────────────────

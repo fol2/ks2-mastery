@@ -1,4 +1,4 @@
-P11 update, 1 May 2026: the current release uses `generatedPerFamily: 40`, with **1268 Punctuation items** in the runtime pool: **148 fixed items + 1120 generated items**. The 28 April P1 figures below are kept as historical audit context, not as the current production contract.
+P12 update, 2 May 2026: the current release uses `generatedPerFamily: 100`, with **3312 Punctuation items** in the runtime pool: **512 fixed items + 2800 generated items**. The 28 April P1 and 1 May P11 figures below are kept as historical audit context, not as the current production contract.
 
 I reviewed the Punctuation subject as a static source audit from GitHub. I could not run the repo locally in the original audit, so the first baseline numbers came from the source/manifest rather than a live database crawl.
 
@@ -252,7 +252,7 @@ Sixth, change retry behaviour. After a mistake, do not just show the same item a
 
 ## 7. Expansion target
 
-P11 runtime pool: **1268 items**. P1 runtime pool: **171 items**. Original audit baseline: **96 items**.
+P12 runtime pool: **3312 items**. P11 runtime pool: **1268 items**. P1 runtime pool: **171 items**. Original audit baseline: **96 items**.
 
 Near-term safe target: **150–200 runtime items**. This is now met numerically; the remaining work is quality depth, learner journey evidence, and live smoke proof rather than raw count.
 

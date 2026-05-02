@@ -90,7 +90,7 @@ test('U7: duplicate stems at depth 6 are surfaced in reviewer report when artifi
   assert.match(text, /Duplicate Stem\/Model Clusters/);
 });
 
-test('U7: two templates sharing normalised stem but different modes are scoped separately', () => {
+test('U7: P12 reviewed bank has no mode-scoped duplicate stems or models', () => {
   const { allClusters } = buildStemModelClusters({
     seed: 'u7-mode-scope-test',
     depths: [4, 6, 8],
@@ -105,20 +105,15 @@ test('U7: two templates sharing normalised stem but different modes are scoped s
       `cluster key "${cluster.clusterKey}" must end with "::${cluster.mode}"`);
   }
 
-  // Verify that cross-mode duplicates (which exist in the existing audit) are NOT
-  // surfaced in mode-scoped clusters — e.g., fronted_adverbial_fix (fix) and
-  // fronted_adverbial_combine (combine) share stems but are different modes
+  // Verify the reviewed P12 bank stays clear for both non-mode-scoped and
+  // mode-scoped duplicate stems.
   const audit8 = runPunctuationContentAudit({
     seed: 'u7-mode-scope-test',
     generatedPerFamily: 8,
   });
-  // Existing non-mode-scoped duplicates exist
-  assert.ok(audit8.duplicates.generated.stems.length > 0,
-    'Non-mode-scoped stem duplicates exist at depth 8');
-  // P11 can surface candidate-depth same-mode clusters for later review, but
-  // depth-4 remains clear for the historical release gate.
+  assert.deepEqual(audit8.duplicates.generated.stems, []);
   assert.deepEqual(
-    allClusters.filter((cluster) => cluster.visibleAtDepths.includes(4)),
+    allClusters,
     [],
   );
 });
@@ -256,7 +251,7 @@ test('U7: invalid decision value counts as unreviewed', () => {
   assert.deepEqual(result.unreviewed, ['some test stem::insert']);
 });
 
-test('U7: CLI --require-stem-review at depth 4 passes when candidate clusters are outside requested depth', () => {
+test('U7: CLI --require-stem-review at depth 4 passes when no clusters exist', () => {
   const result = runAuditCli([
     '--strict',
     '--generated-per-family', '4',
@@ -266,7 +261,7 @@ test('U7: CLI --require-stem-review at depth 4 passes when candidate clusters ar
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /Duplicate Stem\/Model Clusters/);
-  assert.match(result.stdout, /depth-4: no/);
+  assert.match(result.stdout, /0 clusters — no mode-scoped duplicate stems or models detected/);
 });
 
 test('U7: buildStemModelClusters returns depth-annotated cluster objects', () => {

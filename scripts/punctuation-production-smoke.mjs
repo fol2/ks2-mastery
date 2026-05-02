@@ -37,14 +37,24 @@ const OPAQUE_VARIANT_SIGNATURE_PATTERN = /^puncsig_[a-z0-9]+$/;
 const PRODUCTION_GENERATED_PER_FAMILY = PRODUCTION_DEPTH;
 const LIST_COMMA_VALIDATOR_TYPES = new Set(['requiresListCommas', 'combineListSentence']);
 
-export const PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS = Object.freeze({
-  releaseId: PUNCTUATION_RELEASE_ID,
-  fixedItemCount: 148,
-  generatedItemCount: 1120,
-  runtimeItemCount: 1268,
-  publishedRewardUnits: 14,
-  generatedPerFamily: PRODUCTION_GENERATED_PER_FAMILY,
-});
+function buildPunctuationLocalReleaseManifestExpectations() {
+  const manifest = createPunctuationRuntimeManifest({
+    generatedPerFamily: PRODUCTION_GENERATED_PER_FAMILY,
+  });
+  const indexes = createPunctuationContentIndexes(manifest);
+  return {
+    releaseId: manifest.releaseId || PUNCTUATION_RELEASE_ID,
+    fixedItemCount: indexes.items.filter((item) => item.source !== 'generated').length,
+    generatedItemCount: indexes.items.filter((item) => item.source === 'generated').length,
+    runtimeItemCount: indexes.items.length,
+    publishedRewardUnits: indexes.publishedRewardUnits.length,
+    generatedPerFamily: PRODUCTION_GENERATED_PER_FAMILY,
+  };
+}
+
+export const PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS = Object.freeze(
+  buildPunctuationLocalReleaseManifestExpectations(),
+);
 
 export const PUNCTUATION_DASH_POLICY_VARIANTS = Object.freeze([
   Object.freeze({ id: 'spaced-hyphen', label: 'spaced hyphen', mark: '-' }),
@@ -747,7 +757,7 @@ async function smokePunctuation({ origin, cookie, learnerId, revision }) {
   };
 }
 
-async function smokeSpelling({ origin, cookie, learnerId, revision }) {
+export async function smokeSpelling({ origin, cookie, learnerId, revision }) {
   const step = await subjectCommand({
     origin,
     cookie,
