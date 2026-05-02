@@ -1,9 +1,18 @@
 import { MONSTER_ASSET_MANIFEST } from './monster-asset-manifest.js';
 import { MONSTER_ASSET_VERSION } from './monsters.js';
 import { validateEffectConfigForPublish } from './render/effect-config-schema.js';
-import { BUNDLED_EFFECT_CATALOG } from './render/effect-config-defaults.js';
 
 export const MONSTER_VISUAL_SCHEMA_VERSION = 1;
+const BUNDLED_EFFECT_KINDS = Object.freeze([
+  'egg-breathe',
+  'monster-motion-float',
+  'shiny',
+  'mega-aura',
+  'rare-glow',
+  'caught',
+  'evolve',
+  'mega',
+]);
 export const MONSTER_VISUAL_CONTEXTS = Object.freeze([
   'meadow',
   'codexCard',
@@ -633,7 +642,7 @@ export function validatePublishedConfigForPublish(envelope, options = {}) {
     errors.push(issue('published_config_effect_required', 'Effect sub-document is required at publish.', { field: 'effect' }));
   } else {
     const catalogKinds = isPlainObject(envelope.effect.catalog) ? Object.keys(envelope.effect.catalog) : [];
-    const knownKinds = new Set([...catalogKinds, ...Object.keys(BUNDLED_EFFECT_CATALOG)]);
+    const knownKinds = new Set([...catalogKinds, ...BUNDLED_EFFECT_KINDS]);
     const effectResult = validateEffectConfigForPublish(envelope.effect, {
       knownKinds,
       manifest: options.manifest || MONSTER_ASSET_MANIFEST,
@@ -652,4 +661,3 @@ export function validatePublishedConfigForPublish(envelope, options = {}) {
     warnings,
   };
 }
-

@@ -167,6 +167,8 @@ test('admin-ops production smoke sends CAS row versions for ops-metadata round-t
   const originalFetch = globalThis.fetch;
   const smokeAccountId = 'smoke-acct-id';
   const opsMetadataBodies = [];
+  const statusBodies = [];
+  const archiveBodies = [];
   globalThis.fetch = async (input, init = {}) => {
     const url = String(typeof input === 'string'
       ? input
@@ -217,6 +219,13 @@ test('admin-ops production smoke sends CAS row versions for ops-metadata round-t
     }
     if (url.endsWith('/api/ops/error-event')) {
       return new Response(JSON.stringify({ ok: true, eventId: 'evt-smoke' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url.endsWith('/api/admin/ops/error-events/evt-smoke/status')) {
+      statusBodies.push(JSON.parse(String(init.body || '{}')));
+      return new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
       });
@@ -277,6 +286,7 @@ test('admin-ops production smoke sends CAS row versions for ops-metadata round-t
       });
     }
     if (url.endsWith('/api/admin/marketing/messages/msg-smoke')) {
+      if (init.method === 'PUT') archiveBodies.push(JSON.parse(String(init.body || '{}')));
       return new Response(JSON.stringify({ ok: true, message: { id: 'msg-smoke', row_version: 2 } }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
@@ -303,6 +313,13 @@ test('admin-ops production smoke sends CAS row versions for ops-metadata round-t
     assert.equal(opsMetadataBodies[0].mutation.requestId.startsWith('smoke-'), true);
     assert.equal(opsMetadataBodies[1].expectedRowVersion, 8);
     assert.equal(opsMetadataBodies[1].mutation.requestId.startsWith('smoke-'), true);
+    assert.equal(statusBodies.length, 2);
+    assert.equal(statusBodies[0].mutation.requestId.startsWith('smoke-'), true);
+    assert.equal(statusBodies[1].expectedPreviousStatus, 'investigating');
+    assert.equal(statusBodies[1].mutation.requestId.startsWith('smoke-'), true);
+    assert.equal(archiveBodies.length, 1);
+    assert.equal(archiveBodies[0].expectedRowVersion, 1);
+    assert.equal(archiveBodies[0].mutation.requestId.startsWith('smoke-'), true);
   } finally {
     globalThis.fetch = originalFetch;
   }

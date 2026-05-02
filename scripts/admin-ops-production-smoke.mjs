@@ -542,8 +542,10 @@ export async function runSmoke({
         timeoutMs,
         body: {
           status: 'investigating',
-          requestId: investigateRequestId,
-          correlationId: investigateRequestId,
+          mutation: {
+            requestId: investigateRequestId,
+            correlationId: investigateRequestId,
+          },
         },
       });
       assertStepOk('ops-error-event status investigating', investigate);
@@ -558,9 +560,11 @@ export async function runSmoke({
         timeoutMs,
         body: {
           status: 'open',
-          requestId: openRequestId,
-          correlationId: openRequestId,
           expectedPreviousStatus: 'investigating',
+          mutation: {
+            requestId: openRequestId,
+            correlationId: openRequestId,
+          },
         },
       });
       assertStepOk('ops-error-event status reopen', reopen);
@@ -798,8 +802,10 @@ export async function runSmoke({
           body: {
             action: 'archived',
             expectedRowVersion: createdRowVersion,
-            requestId: archiveRequestId,
-            correlationId: archiveRequestId,
+            mutation: {
+              requestId: archiveRequestId,
+              correlationId: archiveRequestId,
+            },
           },
         });
         assertStepOk('marketing-archive', archive);
@@ -831,8 +837,10 @@ export async function runSmoke({
               body: {
                 action: 'archived',
                 expectedRowVersion: currentRowVersion,
-                requestId: retryArchiveRequestId,
-                correlationId: retryArchiveRequestId,
+                mutation: {
+                  requestId: retryArchiveRequestId,
+                  correlationId: retryArchiveRequestId,
+                },
               },
             });
             if (retryArchive.response.ok && retryArchive.payload?.ok !== false) {
