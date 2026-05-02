@@ -91,6 +91,25 @@ test('styles/app.css remaps --punctuation-accent onto --accent / --btn-accent / 
   );
 });
 
+test('styles/app.css declares and applies the KS2 tap-target floor', async () => {
+  const css = await readFile(APP_CSS_PATH, 'utf8');
+  assert.match(css, /--tap-min\s*:\s*44px\b/, '--tap-min must lock the WCAG 2.5.5 44px floor');
+  assert.match(
+    css,
+    /\.btn\s*\{[^}]*min-height\s*:\s*var\(\s*--tap-min\s*\)[^}]*display\s*:\s*inline-flex[^}]*align-items\s*:\s*center[^}]*justify-content\s*:\s*center/s,
+    '.btn must apply --tap-min with flex centring',
+  );
+  assert.doesNotMatch(css, /\.btn\.sm\s*\{/, '.btn.sm must stay eliminated after PR-A');
+  assert.match(css, /\.btn\.icon\s*\{[^}]*width\s*:\s*var\(\s*--tap-min\s*\)[^}]*height\s*:\s*var\(\s*--tap-min\s*\)/s,
+    '.btn.icon must use --tap-min for both square dimensions');
+  assert.match(css, /button\.chip,\s*\.chip\[role="button"\]\s*\{[^}]*min-height\s*:\s*var\(\s*--tap-min\s*\)/s,
+    'interactive generic chips must apply --tap-min');
+  assert.match(css, /\.wb-chip\s*\{[^}]*min-height\s*:\s*var\(\s*--tap-min\s*\)/s,
+    'Spelling Word Bank chips must apply --tap-min');
+  assert.match(css, /\.grammar-bank-chip\s*\{[^}]*min-height\s*:\s*var\(\s*--tap-min\s*\)/s,
+    'Grammar Concept Bank chips must apply --tap-min');
+});
+
 test('canonical .card.border-top reads var(--card-accent) — closes the colour-resolution loop', async () => {
   // This is the consumer side of the --card-accent contract: any
   // subject-scoped remap that exposes --card-accent (Punctuation today,

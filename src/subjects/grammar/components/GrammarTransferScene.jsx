@@ -116,7 +116,7 @@ function PromptCard({ prompt, savedCount, onStart }) {
       <div className="grammar-transfer-prompt-actions">
         <button
           type="button"
-          className="btn primary sm"
+          className="btn primary"
           data-action="grammar-select-transfer-prompt"
           data-prompt-id={prompt.id}
           onClick={() => onStart(prompt.id)}
@@ -383,7 +383,7 @@ function HiddenOrphans({ entries, onShow }) {
               <div className="grammar-transfer-orphaned-actions">
                 <button
                   type="button"
-                  className="btn ghost sm"
+                  className="btn ghost"
                   data-action="grammar-toggle-transfer-hidden"
                   data-prompt-id={entry.promptId}
                   data-hidden-next="false"
@@ -427,7 +427,7 @@ function OrphanedEvidence({ entries, onHide }) {
             <div className="grammar-transfer-orphaned-actions">
               <button
                 type="button"
-                className="btn ghost sm"
+                className="btn ghost"
                 data-action="grammar-toggle-transfer-hidden"
                 data-prompt-id={entry.promptId}
                 onClick={() => onHide(entry.promptId)}
@@ -554,7 +554,7 @@ export function GrammarTransferScene({ grammar, actions }) {
       <header className="grammar-transfer-topbar">
         <button
           type="button"
-          className="btn ghost sm"
+          className="btn ghost"
           data-action="grammar-close-transfer"
           aria-label="Back to Grammar Garden dashboard"
           onClick={handleBack}

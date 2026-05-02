@@ -298,7 +298,7 @@ export function PatternQuestScene({
           </div>
           <div className="session-footer-right">
             <button
-              className="btn sm bad"
+              className="btn bad"
               type="button"
               data-action="spelling-end-early"
               disabled={runtimeReadOnly || pending}

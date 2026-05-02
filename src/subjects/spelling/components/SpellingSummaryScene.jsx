@@ -183,7 +183,6 @@ function SpellingSummaryFrameAdapter({
   const primaryDrill = {
     label: isGuardianSummary ? guardianPracticeActionLabel() : `Drill all ${mistakeCount}`,
     dataAction: 'spelling-drill-all',
-    size: 'sm',
     endIcon: <ArrowRightIcon />,
     disabled,
     onClick: (event) => submitLock.run(async () => renderAction(actions, event, 'spelling-drill-all')),

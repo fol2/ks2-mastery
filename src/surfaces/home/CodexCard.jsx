@@ -49,7 +49,7 @@ export function CodexCard({ entry, onPractice, onPreview }) {
           <span className={'chip ' + (entry.caught ? 'good' : 'warn')}>{entry.stageLabel}</span>
           <span className="chip">{entry.secureLabel}</span>
         </div>
-        <button type="button" className="btn secondary sm" onClick={() => onPractice(entry.subjectId || 'spelling')}>
+        <button type="button" className="btn secondary" onClick={() => onPractice(entry.subjectId || 'spelling')}>
           Practise
         </button>
       </div>
