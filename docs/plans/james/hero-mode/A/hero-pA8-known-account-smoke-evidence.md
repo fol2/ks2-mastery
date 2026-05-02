@@ -2,7 +2,7 @@
 
 **Phase:** A8 release boundary closure and A-series termination
 **Date:** 2026-05-02
-**Status:** NOT RUN - no safe enabled-account exposure after known dormant boundary
+**Status:** PASS - James known-account production smoke completed
 
 ---
 
@@ -30,27 +30,30 @@ The pA8 contract asked for one known enabled account to prove the production pat
 
 | Requirement | A8 result | Evidence |
 |-------------|-----------|----------|
-| Known enabled account | Not supplied | After Day 0, production exposure boundary is zero accounts |
-| Controlled demo/test allowlist probe | Not qualifying | Temporarily allowlisted one production demo/test account; read model returned status 200 but `ui.enabled=false` and task count 0 |
-| Controlled demo/test with Grammar subject state | Not qualifying | Created a fresh production demo/test account, completed one Grammar session through the normal subject command path, temporarily allowlisted it, and read Hero. Result: status 200, `ui.enabled=false`, `ui.reason=no-eligible-subjects`, task count 0 |
-| Enabled Hero read model | Not run | Running it would require widening an account |
-| Non-cohort hidden | PASS | Post-rehearsal demo/non-cohort read model returned 404 `hero_shadow_disabled` |
-| Excluded account hidden | Control present, no account in list | `HERO_EXCLUDED_ACCOUNTS` exists as a known empty JSON array |
-| Hero command controlled while disabled | PASS | Post-rehearsal demo command returned 404 `hero_launch_disabled`; emergency-off command returned controlled 403 `hero-unavailable` |
-| Subject completion, claim, coins, Camp | Not run | Requires a known enabled account and owned release window |
-| Metrics rows | Zero usage statement | Production `child_game_state` and `event_log` have 0 Hero rows |
-| Support log | Explicit zero supplied rows | No live family exposure after A8 rotation |
+| Known enabled account | PASS | James approved use of the logged-in real admin account and James learner |
+| Enabled Hero read model | PASS | James learner returned Hero v6, `childVisible=true`, `ui.enabled=true`, and a launchable punctuation task |
+| Non-cohort hidden | PASS | Isolated production demo session returned 404 `hero_shadow_disabled` |
+| Excluded account hidden | PASS | With James temporarily in `HERO_EXCLUDED_ACCOUNTS`, read model returned hidden Hero shape and command returned controlled 403 `hero-unavailable` |
+| Start task through `/api/hero/command` | PASS | `start-task` returned `heroLaunch.status=started` for punctuation |
+| Subject command path | PASS | Hero launched the normal Worker punctuation `start-session` path |
+| Subject session completion | PASS | Completed the four-item punctuation round under Worker authority; final subject phase `summary`, session `null` |
+| Worker-verified claim | PASS | `claim-task` returned `heroClaim.status=claimed`, `effortCompleted=2`, `dailyStatus=completed` |
+| Single daily +100 Hero Coin award | PASS | First claim awarded 100 coins and balance became 100 |
+| Duplicate claim blocked/no double-award | PASS | Duplicate claim returned `already-completed`, `coinsAwarded=0`, `dailyCoinsAlreadyAwarded=true` |
+| Camp invite/grow succeeds or calmly blocks | PASS | `unlock-monster` for `glossbloom` returned 409 `hero_insufficient_coins`, "Need 150 coins, have 100" |
+| Hero metrics rows | PASS | Production D1 has 1 `child_game_state` Hero row and 3 Hero event rows (`task.completed`, `daily.completed`, `coins.awarded`) |
+| Support log | Explicit zero beyond James | No real family cohort beyond James's approved validation account |
 
 ---
 
 ## Decision Impact
 
-This is not a smoke pass. It is the reason A8 cannot normalise or widen. The extra demo-with-Grammar-state probe shows that self-minting a production demo/test account during A8 still does not produce the known enabled account required by Stage 1.
+This is now a Stage 1 known-account smoke pass for James's account. It allows the contract to move from dormant to a known-boundary hold or Stage 2 named-account exposure. It does not allow global default-on.
 
-The full pA8 contract is not complete. The dormant-boundary decision is:
+The current decision is:
 
 ```txt
-KEEP DORMANT UNTIL OWNED
+HOLD WITH KNOWN BOUNDARY - JAMES-ONLY NAMED INTERNAL ROLLOUT
 ```
 
-Do not create A9 to chase this smoke. The next attempt needs a named product release window and a supplied known account.
+Do not create A9. The next expansion requires Stage 2 evidence: 3-5 named accounts or a justified deterministic percentage rollout, support review, and no stop conditions.

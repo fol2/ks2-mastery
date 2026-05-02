@@ -1,7 +1,7 @@
 {
   "phase": "hero-mode-pA8",
-  "status": "live-production-dormant-boundary-recorded-full-pa8-contract-incomplete",
-  "generatedAt": "2026-05-02T20:54:26Z",
+  "status": "live-production-james-only-named-internal-rollout",
+  "generatedAt": "2026-05-02T22:27:00Z",
   "evidenceCodeBaseline": "9a91db991d0dfacff834cbf4c4a7bf20683e0883",
   "productionOrigin": "https://ks2.eugnel.uk",
   "contract": "docs/plans/james/hero-mode/A/hero-mode-pA8.md",
@@ -38,24 +38,25 @@
       "HERO_EMERGENCY_DISABLED": true
     },
     "knownCounts": {
-      "internalAllowlistAccountCount": 0,
+      "internalAllowlistAccountCount": 1,
       "externalAllowlistAccountCount": 0,
       "excludedAccountCount": 0,
       "rolloutPercent": 0
     },
     "currentIntendedValues": {
-      "HERO_INTERNAL_ACCOUNTS": "known empty JSON array",
+      "HERO_INTERNAL_ACCOUNTS": "known reviewed JSON array containing James account only",
       "HERO_EXTERNAL_ACCOUNTS": "known empty JSON array",
       "HERO_EXCLUDED_ACCOUNTS": "known empty JSON array",
       "HERO_EMERGENCY_DISABLED": "false",
       "HERO_ROLLOUT_PERCENT": "0"
     },
     "temporaryDemoProbeAllowlisting": true,
-    "realFamilyWideningByThisBranch": false,
-    "permanentWideningByThisBranch": false,
-    "remainingWidenedAccounts": 0,
+    "realFamilyWideningByThisBranch": true,
+    "permanentWideningByThisBranch": true,
+    "remainingWidenedAccounts": 1,
     "knownExposureBoundary": true,
-    "exposedAccountCount": 0
+    "exposedAccountCount": 1,
+    "exposureDescription": "James-only named internal rollout; global flags remain false and percentage rollout remains 0"
   },
   "checkedInHeroFlags": {
     "HERO_MODE_SHADOW_ENABLED": "false",
@@ -69,8 +70,13 @@
     "adultAccounts": 176,
     "realAccounts": 5,
     "demoAccounts": 171,
-    "heroStateRows": 0,
-    "heroEventRows": 0
+    "heroStateRows": 1,
+    "heroEventRows": 3,
+    "heroEventTypes": {
+      "hero.task.completed": 1,
+      "hero.daily.completed": 1,
+      "hero.coins.awarded": 1
+    }
   },
   "emergencyOffRehearsal": {
     "ranAt": "2026-05-02T20:36:31Z",
@@ -112,9 +118,76 @@
     "commandControlledNon500": true
   },
   "knownAccountSmoke": {
-    "result": "not-run",
-    "reason": "After pA8 Day 0 rotation the known production exposure boundary is zero accounts. No named real/internal account was supplied for a safe enabled-account smoke. A controlled production demo/test account was temporarily allowlisted, but its Hero read model had ui.enabled=false and zero tasks. A second production-safe demo/test account completed a Grammar session through the normal subject command path before temporary allowlisting; its Hero read model still had ui.enabled=false, ui.reason=no-eligible-subjects, and zero tasks. Neither probe is a valid Stage 1 smoke target.",
-    "wideningAllowed": false
+    "result": "pass",
+    "account": "James real logged-in admin account",
+    "learner": "James learner",
+    "readModel": {
+      "status": 200,
+      "version": 6,
+      "childVisible": true,
+      "uiEnabled": true,
+      "eligibleSubjects": ["spelling", "grammar", "punctuation"],
+      "launchableTask": {
+        "taskId": "hero-task-10d1778e",
+        "questId": "hero-quest-04c1e0a4",
+        "questFingerprint": "hero-qf-00000987e232",
+        "subjectId": "punctuation"
+      }
+    },
+    "startTask": {
+      "status": 200,
+      "heroLaunchStatus": "started",
+      "subjectId": "punctuation"
+    },
+    "subjectCompletion": {
+      "subjectId": "punctuation",
+      "sessionCompleted": true,
+      "finalPhase": "summary",
+      "activeSessionAfterCompletion": false
+    },
+    "claim": {
+      "status": 200,
+      "heroClaimStatus": "claimed",
+      "effortCompleted": 2,
+      "dailyStatus": "completed",
+      "coinsAwarded": 100,
+      "coinBalance": 100
+    },
+    "duplicateClaim": {
+      "status": 200,
+      "heroClaimStatus": "already-completed",
+      "coinsAwarded": 0,
+      "dailyCoinsAlreadyAwarded": true
+    },
+    "camp": {
+      "status": 409,
+      "code": "hero_insufficient_coins",
+      "message": "Need 150 coins, have 100"
+    },
+    "nonCohortHidden": {
+      "status": 404,
+      "code": "hero_shadow_disabled"
+    },
+    "excludedAccountHidden": {
+      "readModelStatus": 200,
+      "heroEnabled": false,
+      "commandStatus": 403,
+      "commandCode": "hero-unavailable"
+    },
+    "emergencyOff": {
+      "readModelStatus": 200,
+      "heroEnabled": false,
+      "commandStatus": 403,
+      "commandCode": "hero-unavailable"
+    },
+    "reEnablePreservedState": {
+      "progressStatus": "completed",
+      "coinBalance": 100,
+      "pendingCompletedHeroSession": null,
+      "activeHeroSession": null
+    },
+    "wideningAllowed": true,
+    "globalNormalisationAllowed": false
   },
   "controlledDemoAllowlistProbe": {
     "ranAt": "2026-05-02T20:44:11Z",
@@ -145,17 +218,18 @@
     "explicitZeroRecorded": true,
     "optOutControlPresent": true,
     "optOutCount": 0,
-    "readyForWidening": false
+    "readyForWidening": true,
+    "readyForNormalisation": false
   },
   "decision": {
-    "selectedOutcome": "KEEP DORMANT UNTIL OWNED",
-    "contractComplete": false,
-    "dormantBoundaryRecorded": true,
+    "selectedOutcome": "HOLD WITH KNOWN BOUNDARY - JAMES-ONLY NAMED INTERNAL ROLLOUT",
+    "contractComplete": true,
+    "dormantBoundaryRecorded": false,
     "normalisationAllowed": false,
-    "wideningAllowed": false,
+    "wideningAllowed": true,
     "aSeriesTerminated": true,
     "reviewBy": "2026-05-16",
     "owner": "James",
-    "reason": "The release boundary is now known and dormant, emergency-off and exclusion controls exist, rollback hiding was rehearsed without state loss, and live Hero rows remain zero. Full pA8 release execution is incomplete because no valid known enabled account smoke passed; the honest production decision is to keep Hero Mode dormant until a named owner supplies the account and release window."
+    "reason": "James approved rollout bounded by the pA8 contract. Stage 1 known-account production smoke passed on James's learner. The intended production boundary is one known internal account, with external accounts empty, excluded accounts empty, rollout percentage 0, emergency-off false, and global Hero flags false. Stage 2 small exposure and Stage 3 normalisation evidence have not run, so global default-on remains blocked."
   }
 }
