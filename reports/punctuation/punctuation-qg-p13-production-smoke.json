@@ -1,8 +1,8 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "accountId": "demo-VyVlzLhGErUa0Q",
-  "learnerId": "learner-demo-lFHiyHHuZNU8-w",
+  "accountId": "demo-HXWCvqbUBNEEYA",
+  "learnerId": "learner-demo-nkHuKEvW77m1Kw",
   "attestation": {
     "environment": "production",
     "releasePhase": "punctuation-qg-p13-live-serving",
@@ -12,9 +12,9 @@
     "workerCommitSha": "b7a6125966975bae14aaeea7050cf107ccdb40e6",
     "workerVersionId": null,
     "deploymentId": null,
-    "timestamp": "2026-05-02T21:53:40.211Z",
+    "timestamp": "2026-05-02T22:45:39.843Z",
     "authenticatedCoverage": true,
-    "adminHubCoverage": false
+    "adminHubCoverage": true
   },
   "punctuation": {
     "productionObserved": {
@@ -52,45 +52,46 @@
       "skillIds": [
         "apostrophe_contractions",
         "apostrophe_possession",
-        "fronted_adverbial",
+        "colon_list",
+        "comma_clarity",
         "list_commas",
         "sentence_endings"
       ],
       "items": [
         {
-          "itemId": "fx_se_choose_statement_forest",
+          "itemId": "cc_choose_before_cooking",
           "source": "fixed",
           "mode": "choose",
+          "skillIds": [
+            "comma_clarity"
+          ]
+        },
+        {
+          "itemId": "gen_sentence_endings_insert_3xypj9_6",
+          "source": "generated",
+          "mode": "insert",
           "skillIds": [
             "sentence_endings"
           ]
         },
         {
-          "itemId": "ac_insert_well_youre",
+          "itemId": "cc_fix_when_rain_stopped",
           "source": "fixed",
-          "mode": "insert",
-          "skillIds": [
-            "apostrophe_contractions"
-          ]
-        },
-        {
-          "itemId": "gen_apostrophe_contractions_fix_tdz6ot_7",
-          "source": "generated",
           "mode": "fix",
           "skillIds": [
-            "apostrophe_contractions"
+            "comma_clarity"
           ]
         },
         {
-          "itemId": "fa_transfer_after_lunch",
+          "itemId": "cl_transfer_trip",
           "source": "fixed",
           "mode": "transfer",
           "skillIds": [
-            "fronted_adverbial"
+            "colon_list"
           ]
         },
         {
-          "itemId": "gen_list_commas_combine_18t19w8_10",
+          "itemId": "gen_list_commas_combine_15sthm0_19",
           "source": "generated",
           "mode": "combine",
           "skillIds": [
@@ -98,7 +99,7 @@
           ]
         },
         {
-          "itemId": "gen_apostrophe_mix_paragraph_c6l9gp_12",
+          "itemId": "gen_apostrophe_mix_paragraph_d6g6dr_3",
           "source": "generated",
           "mode": "paragraph",
           "skillIds": [
@@ -130,6 +131,25 @@
       "rawWordHidden": true,
       "rawSentenceHidden": true,
       "promptTokenReturned": true
+    }
+  },
+  "adminHubEvidence": {
+    "hasEvidence": true,
+    "source": "reports/admin-smoke/latest.json",
+    "smokeType": "admin",
+    "finishedAt": "2026-05-02T22:43:04.526Z",
+    "commit": "unknown",
+    "stepCount": 19,
+    "requiredSteps": [
+      "admin-hub",
+      "debug-bundle",
+      "account-detail",
+      "content-overview"
+    ],
+    "redactionChecks": {
+      "learnerSupport": true,
+      "punctuationEvidence": true,
+      "releaseDiagnostics": true
     }
   }
 }
