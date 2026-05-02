@@ -1,37 +1,59 @@
 ---
-title: "System Hardening Optimisation P7 — Post-Change Run Report"
+title: "System Hardening Optimisation P7 - Post-Change Run Report"
 type: diagnostic-report
-status: operator-gated
-date: 2026-05-01
+status: post-change-diagnostic-captured
+date: 2026-05-02
 phase: P7
-run_id: p7-local-query-shape-reduction
+run_id: 2026-05-02-p7-60-diagnostic
 certifying: false
 language: en-GB
 source_context:
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7.md
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-baseline.md
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-statement-family-summary.md
+  - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p7-60-diagnostic-decision.md
   - reports/capacity/evidence/2026-05-01-p7-statement-family-summary.json
   - reports/capacity/evidence/2026-05-02-p7-production-bootstrap-probe.json
-  - tests/worker-bootstrap-capacity.test.js
-  - tests/worker-query-budget.test.js
+  - reports/capacity/evidence/2026-05-02-p7-60-diagnostic.json
+  - reports/capacity/evidence/2026-05-02-p7-60-tail-correlation.json
+  - reports/capacity/evidence/2026-05-02-p7-60-statement-map.json
+  - reports/capacity/evidence/2026-05-02-p7-60-tail-classification.md
+  - reports/capacity/evidence/2026-05-02-p7-route-costs-after-60-diagnostic.json
+  - reports/capacity/latest-1000-learner-budget.json
+  - docs/operations/capacity-1000-learner-free-tier-budget.md
 ---
 
-# System Hardening Optimisation P7 — Post-Change Run Report
+# System Hardening Optimisation P7 - Post-Change Run Report
 
 ## Run Boundary
 
-No post-change production 60-learner diagnostic has been captured for the merged PR #824 code.
+The approved P7 post-change 60-learner production diagnostic has been captured.
 
-Reason: PR #824 has merged after James's required independent reviews, and a deployed single-demo bootstrap probe confirmed the P7 query shape. The approved 60-learner production diagnostic and route-cost refresh have not been run or captured.
+Run shape:
+
+- origin: `https://ks2.eugnel.uk`
+- learners: 60
+- bootstrap burst: 20
+- rounds: 1
+- threshold config: `reports/capacity/configs/60-learner-stretch.json`
+- session source: manifest
+- started: `2026-05-02T06:38:52.944Z`
+- finished: `2026-05-02T06:39:48.243Z`
+
+Evidence paths:
+
+- `reports/capacity/evidence/2026-05-02-p7-60-diagnostic.json`
+- `reports/capacity/evidence/2026-05-02-p7-60-tail-correlation.json`
+- `reports/capacity/evidence/2026-05-02-p7-60-statement-map.json`
+- `reports/capacity/evidence/2026-05-02-p7-60-tail-classification.md`
+
+Raw Worker tail JSONL stayed outside the repository at `/tmp/ks2-p7-60-worker-tail.jsonl`.
 
 ## Deployed Merge Confirmation
 
-Evidence path:
+Before the 60-learner diagnostic, a same-origin deployed demo bootstrap probe confirmed the merged Worker query shape:
 
 - `reports/capacity/evidence/2026-05-02-p7-production-bootstrap-probe.json`
-
-The deployed production probe used a same-origin demo session and did not persist raw cookies, session material or raw request ids. It is diagnostic-only and not a 60-learner run.
 
 Observed production result:
 
@@ -49,61 +71,95 @@ Observed production mode:
 - capacity mode: `public-bounded`
 - capacity version: 4
 
-## Local Post-Change Evidence
+## 60-Learner Diagnostic Outcome
 
-The local focused regression test `P7 public demo bootstrap reuses authenticated account snapshot and ratchets query count` validates the intended D1 query-shape reduction on the production/demo public bootstrap path:
+The run completed all expected requests:
 
-```sh
-node --test tests/worker-bootstrap-capacity.test.js
-```
+| Metric | Observed |
+| --- | ---: |
+| Expected requests | 260 |
+| Observed requests | 260 |
+| HTTP 200 responses | 260 |
+| 5xx responses | 0 |
+| Network failures | 0 |
+| Capacity signals | 0 |
 
-Observed local result:
+Configured threshold result:
 
-| Metric | P6 approved production shape | P7 local focused result | Status |
+| Threshold | Limit | Observed | Result |
 | --- | ---: | ---: | --- |
-| Full-bootstrap query count | 11 | 9 | reduced |
-| D1 rows written | 0 | 0 | preserved |
-| Bootstrap capacity metadata | present | present | preserved |
-| Bootstrap mode | `selected-learner-bounded` | `selected-learner-bounded` | preserved |
-| Capacity mode | `public-bounded` | `public-bounded` | preserved |
+| Bootstrap P95 wall time | 750 ms | 489.2 ms | passed |
+| Command P95 wall time | 400 ms | 332.1 ms | passed |
+| Max response bytes | 600000 bytes | 30165 bytes | passed |
+| 5xx responses | 0 | 0 | passed |
+| Network failures | 0 | 0 | passed |
+| Capacity signals | 0 | 0 | passed |
 
-The reduction removes:
+## Bootstrap Shape
 
-- the duplicate bootstrap account row read, because the authenticated route already refreshed and returned the account row via `ensureAccount()`;
-- the valid-demo active-account guard read, because the authenticated account snapshot already proves the demo account is active, with fallback to the existing D1 guard when the snapshot is absent or stale.
+| Metric | P6 approved production shape | P7 post-change production shape | Status |
+| --- | ---: | ---: | --- |
+| Bootstrap P95 wall time | 1057.3 ms | 489.2 ms | improved |
+| Bootstrap max wall time | 1128.8 ms | 615.4 ms | improved |
+| Server wall P95 | 903 ms | 301 ms | improved |
+| Full-bootstrap query count P95 | 11 | 9 | reduced |
+| D1 rows read P95 | 9 | 7 | reduced |
+| D1 rows written P95 | 0 | 0 | preserved |
+| Response bytes P95 | 2449 bytes | 2448 bytes | preserved |
 
-The general bounded three-learner GET/POST bootstrap query-budget regression now records a local count of 10, reduced from the previous measured 11:
+Bootstrap mode remained `selected-learner-bounded`. Capacity mode remained `public-bounded`.
 
-```sh
-node --test tests/worker-query-budget.test.js
-```
+## Tail And Statement Evidence
 
-This second count is higher than the valid-demo public path because it covers the broader bounded account fixture rather than the single valid-demo route shape.
+The redacted Worker tail join completed with no warnings:
 
-## Not-Modified Route-Cost Status
+- retained top-tail samples: 10
+- invocation matches: 10/10
+- statement-log matches: 10/10
 
-P7-U3 remains operator-gated for route-cost closure.
+Top-tail classification counts:
 
-The local tests continue to cover the `POST /api/bootstrap` not-modified path and cache invalidation behaviour, but no post-change production route-cost refresh has been generated from the deployed PR #824 code. Therefore `not-modified-bootstrap` remains a missing/gated route family in the 1000-learner budget with the existing `requires-production-operator` reason until the deployed post-change diagnostic and route-cost refresh are run.
+- `client-network-or-platform-overhead`: 8
+- `d1-dominated`: 1
+- `worker-cpu-dominated`: 1
 
-## Production Diagnostic Status
+The statement map is complete:
 
-Required P7 run shape remains pending:
+- total requests: 260
+- requests with statement logs: 260
+- missing statement-log requests: 0
+- truncated requests: 0
+- observed statements: 4330
+- statement coverage ratio: 1.0
 
-- origin: `https://ks2.eugnel.uk`
-- learners: 60
-- bootstrap burst: 20
-- rounds: 1
-- threshold config: `reports/capacity/configs/60-learner-stretch.json`
-- raw Worker tail captured outside the repository
-- redacted tail correlation committed
-- redacted statement map committed
-- route-cost/budget regenerated from the post-change evidence
+The statement map has `recommendationStatus: no-query-plan-recommendations` for this passing run.
 
-This report confirms the deployed single-demo bootstrap query shape only. It does not claim that bootstrap P95 improved in production.
+## Route-Cost And Budget Refresh
+
+Route-cost evidence was regenerated from the P7 diagnostic and P7 tail correlation:
+
+- `reports/capacity/evidence/2026-05-02-p7-route-costs-after-60-diagnostic.json`
+
+The diagnostic bootstrap P95 threshold result remains 489.2 ms across all bootstrap requests. The route-cost full-bootstrap `wallMsP95` is 615.4 ms because the route-cost refresh conservatively merges the retained top-tail Worker correlation sample into the route-family model.
+
+Coverage:
+
+| Route family | Status | Note |
+| --- | --- | --- |
+| `full-bootstrap` | measured | P7 post-change metrics are complete. |
+| `grammar-command` | partial | Capacity-run metrics are present; Worker CPU/D1 duration metrics remain missing for the command route. |
+| `not-modified-bootstrap` | requires-production-operator | The approved 60-run shape did not exercise `POST /api/bootstrap` with `lastKnownRevision`. |
+| Remaining route families | gated or missing | Explicitly represented as non-certifying gaps. |
+
+The 1000-learner budget artefacts were regenerated:
+
+- `reports/capacity/latest-1000-learner-budget.json`
+- `docs/operations/capacity-1000-learner-free-tier-budget.md`
+
+They remain `modellingOnly: true` and `certifying: false`. The expected 1000-learner scenario still fails D1 rows read and D1 rows written as lower-bound modelling risks.
 
 ## Certification Boundary
 
 60 learners remain uncertified.
 
-The local query-count reduction is implementation evidence only. It is not a 60-learner certification candidate and does not change the public capacity status.
+This is a positive single diagnostic run. It creates a repeat-governance candidate and does not change the public capacity status.

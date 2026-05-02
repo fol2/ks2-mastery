@@ -1,0 +1,1088 @@
+{
+  "ok": true,
+  "kind": "capacity-worker-log-correlation",
+  "diagnosticOnly": true,
+  "generatedAt": "2026-05-02T06:40:24.254Z",
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "requestIds": "sha256:24",
+    "statementIds": "sha256:24",
+    "rawRequestIdsPersisted": false,
+    "rawStatementNamesPersisted": false
+  },
+  "sourceEvidence": {
+    "path": "reports/capacity/evidence/2026-05-02-p7-60-diagnostic.json",
+    "commit": "5e7701d2989d979a7abe3212c138fd0a59f34b07",
+    "startedAt": "2026-05-02T06:38:52.944Z",
+    "finishedAt": "2026-05-02T06:39:48.243Z",
+    "learners": 60,
+    "bootstrapBurst": 20,
+    "rounds": 1
+  },
+  "warnings": [],
+  "diagnostics": {
+    "workerLogJoin": {
+      "schemaVersion": 1,
+      "diagnosticOnly": true,
+      "generatedAt": "2026-05-02T06:40:24.254Z",
+      "sourceEvidencePath": "reports/capacity/evidence/2026-05-02-p7-60-diagnostic.json",
+      "logSourcePaths": [
+        "/tmp/ks2-p7-60-worker-tail.jsonl"
+      ],
+      "certification": {
+        "contributesToCertification": false,
+        "reason": "worker-log-diagnostics-do-not-certify"
+      },
+      "coverage": {
+        "topTailSamples": 10,
+        "invocation": {
+          "matched": 10,
+          "partial": 0,
+          "missing": 0,
+          "coverageRatio": 1
+        },
+        "statementLogs": {
+          "matched": 10,
+          "partial": 0,
+          "missing": 0,
+          "coverageRatio": 1
+        }
+      },
+      "classificationCounts": {
+        "worker-cpu-dominated": 1,
+        "d1-dominated": 1,
+        "client-network-or-platform-overhead": 8
+      },
+      "samples": [
+        {
+          "requestId": "req_4c025e7c0147e77ce4c6c298",
+          "clientRequestId": "req_4c025e7c0147e77ce4c6c298",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 615.4,
+            "responseBytes": 2447,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 67,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 28,
+            "wallTimeMs": 127,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 67,
+            "d1DurationMs": 32.718399999999995,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2447,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 8
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 11
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 6
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.211
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 7
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0991
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1183
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1204
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1696
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "worker-cpu-dominated",
+          "classificationReason": "Worker CPU is near the Free-plan budget or dominates Worker wall time."
+        },
+        {
+          "requestId": "req_4c8b04687142e491eb64ddca",
+          "clientRequestId": "req_4c8b04687142e491eb64ddca",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 500,
+            "responseBytes": 2448,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 295,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 10,
+            "wallTimeMs": 304,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 295,
+            "d1DurationMs": 170.5609,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2448,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 41
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 55
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 43
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1511
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0668
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0693
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0882
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1855
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "d1-dominated",
+          "classificationReason": "D1 duration accounts for at least half of joined Worker wall time."
+        },
+        {
+          "requestId": "req_4ccec443c394ea34db022366",
+          "clientRequestId": "req_4ccec443c394ea34db022366",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 495.1,
+            "responseBytes": 2448,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 265,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 7,
+            "wallTimeMs": 297,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 265,
+            "d1DurationMs": 129.40890000000002,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2448,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 29
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 40
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 25
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1157
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 35
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0772
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0593
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.081
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0757
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "client-network-or-platform-overhead",
+          "classificationReason": "Client-observed wall time materially exceeds joined Worker wall time."
+        },
+        {
+          "requestId": "req_80dadef165590bb20061432b",
+          "clientRequestId": "req_80dadef165590bb20061432b",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 489.6,
+            "responseBytes": 2448,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 309,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 5,
+            "wallTimeMs": 314,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 309,
+            "d1DurationMs": 154.4152,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2448,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 23
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 38
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 51
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.0912
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 42
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0862
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0749
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0878
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0751
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "client-network-or-platform-overhead",
+          "classificationReason": "Client-observed wall time materially exceeds joined Worker wall time."
+        },
+        {
+          "requestId": "req_c23577e2489b0cc77fd3e614",
+          "clientRequestId": "req_c23577e2489b0cc77fd3e614",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 489.2,
+            "responseBytes": 2448,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 305,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 4,
+            "wallTimeMs": 309,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 305,
+            "d1DurationMs": 154.4242,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2448,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 25
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 35
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 57
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1315
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 37
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0631
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0622
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0851
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0823
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "client-network-or-platform-overhead",
+          "classificationReason": "Client-observed wall time materially exceeds joined Worker wall time."
+        },
+        {
+          "requestId": "req_0fc3876c2e632c39ebdd97ce",
+          "clientRequestId": "req_0fc3876c2e632c39ebdd97ce",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 484.5,
+            "responseBytes": 2448,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 274,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 3,
+            "wallTimeMs": 291,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 274,
+            "d1DurationMs": 135.48190000000002,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2448,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 41
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 27
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1032
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 36
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0667
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0948
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1039
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1133
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "client-network-or-platform-overhead",
+          "classificationReason": "Client-observed wall time materially exceeds joined Worker wall time."
+        },
+        {
+          "requestId": "req_231d1a3eed32c2f4b26eb0a7",
+          "clientRequestId": "req_231d1a3eed32c2f4b26eb0a7",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 484.1,
+            "responseBytes": 2448,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 286,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 6,
+            "wallTimeMs": 317,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 286,
+            "d1DurationMs": 142.479,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2448,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 26
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 34
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 41
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.141
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 41
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0949
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0675
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0832
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0924
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "client-network-or-platform-overhead",
+          "classificationReason": "Client-observed wall time materially exceeds joined Worker wall time."
+        },
+        {
+          "requestId": "req_96ededa4de8fc621b546b4a2",
+          "clientRequestId": "req_96ededa4de8fc621b546b4a2",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 482.4,
+            "responseBytes": 2448,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 295,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 6,
+            "wallTimeMs": 300,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 295,
+            "d1DurationMs": 138.41289999999998,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2448,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 15
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 35
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 48
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1035
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 40
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0785
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0604
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0808
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0897
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "client-network-or-platform-overhead",
+          "classificationReason": "Client-observed wall time materially exceeds joined Worker wall time."
+        },
+        {
+          "requestId": "req_4d532c758c8270710d541e43",
+          "clientRequestId": "req_4d532c758c8270710d541e43",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 481.9,
+            "responseBytes": 2448,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 271,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 6,
+            "wallTimeMs": 305,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 271,
+            "d1DurationMs": 125.43350000000001,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2448,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 18
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 33
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 35
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1264
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 39
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0682
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0605
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.078
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1004
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "client-network-or-platform-overhead",
+          "classificationReason": "Client-observed wall time materially exceeds joined Worker wall time."
+        },
+        {
+          "requestId": "req_d6af7d6231f72c8527831d81",
+          "clientRequestId": "req_d6af7d6231f72c8527831d81",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 475.4,
+            "responseBytes": 2448,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 258,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "matched",
+              "reason": null
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": 4,
+            "wallTimeMs": 277,
+            "outcome": "ok"
+          },
+          "capacityRequest": {
+            "wallMs": 258,
+            "d1DurationMs": 122.6639,
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "responseBytes": 2448,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 27
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 36
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.142
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 28
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0928
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0759
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1421
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.2111
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 9
+          },
+          "classification": "client-network-or-platform-overhead",
+          "classificationReason": "Client-observed wall time materially exceeds joined Worker wall time."
+        }
+      ],
+      "warnings": [],
+      "redaction": {
+        "version": "capacity-diagnostics-redaction-v1",
+        "requestIds": "sha256:24",
+        "statementIds": "sha256:24",
+        "rawRequestIdsPersisted": false,
+        "rawStatementNamesPersisted": false
+      }
+    }
+  }
+}

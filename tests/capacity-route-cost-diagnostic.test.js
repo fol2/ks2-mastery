@@ -242,6 +242,12 @@ test('route-cost evidence maps Hero command samples only with explicit command a
 
 test('route-cost evidence round-trips generated budget placeholders as blocked', () => {
   const budget = JSON.parse(readFileSync('reports/capacity/latest-1000-learner-budget.json', 'utf8'));
+  const expectedMeasuredFamilies = budget.routeCosts
+    .filter((entry) => entry.routeCostStatus === 'measured')
+    .length;
+  const expectedPartialFamilies = budget.routeCosts
+    .filter((entry) => entry.routeCostStatus === 'partial')
+    .length;
   const evidence = buildRouteCostEvidence({
     budget,
     generatedAt: '2026-04-30T00:00:00.000Z',
@@ -253,9 +259,12 @@ test('route-cost evidence round-trips generated budget placeholders as blocked',
 
   assert.equal(validation.ok, true);
   assert.equal(evidence.coverage.complete, false);
-  assert.equal(evidence.coverage.measuredRouteFamilies, 1);
-  assert.equal(evidence.coverage.partialRouteFamilies, 2);
-  assert.equal(evidence.coverage.missingRouteFamilies, 9);
+  assert.equal(evidence.coverage.measuredRouteFamilies, expectedMeasuredFamilies);
+  assert.equal(evidence.coverage.partialRouteFamilies, expectedPartialFamilies);
+  assert.equal(
+    evidence.coverage.missingRouteFamilies,
+    REQUIRED_ROUTE_FAMILIES.length - expectedMeasuredFamilies - expectedPartialFamilies,
+  );
   assert.equal(heroStart.status, 'feature-gated');
   assert.equal(heroStart.metrics.count, null);
   assert.match(heroStart.justification, /Hero feature flags/);
