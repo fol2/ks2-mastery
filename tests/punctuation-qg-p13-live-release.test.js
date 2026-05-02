@@ -9,6 +9,7 @@ import {
 } from '../scripts/deploy-punctuation-qg-p13-live.mjs';
 import {
   assertSupportedP13LiveSmokeOptions,
+  buildAdminHubEvidenceFromSmoke,
 } from '../scripts/punctuation-qg-p13-live-smoke.mjs';
 import {
   expectedPunctuationQGP13LiveManifest,
@@ -187,11 +188,11 @@ test('P13 predeploy verifier can write deploy-wrapper evidence outside the workt
   );
 });
 
-test('P13 live smoke cannot claim Admin Hub coverage without fetching Admin Hub evidence', () => {
+test('P13 live smoke cannot claim Admin Hub coverage without Admin Hub evidence', () => {
   assert.doesNotThrow(() => assertSupportedP13LiveSmokeOptions({ adminHubCoverage: false }));
   assert.throws(
     () => assertSupportedP13LiveSmokeOptions({ adminHubCoverage: true }),
-    /cannot claim Admin Hub coverage/,
+    /without a passing Admin Hub production smoke artefact/,
   );
 
   const expected = expectedPunctuationQGP13LiveManifest();
@@ -257,6 +258,118 @@ test('P13 live smoke cannot claim Admin Hub coverage without fetching Admin Hub 
   });
   assert.equal(result.ok, false);
   assert.match(result.errors.join('\n'), /adminHubEvidence/);
+});
+
+test('P13 live smoke can compose a passing Admin Hub smoke artefact into live evidence', () => {
+  const expected = expectedPunctuationQGP13LiveManifest();
+  const adminHubEvidence = buildAdminHubEvidenceFromSmoke({
+    ok: true,
+    smokeType: 'admin',
+    finishedAt: '2026-05-02T00:00:00.000Z',
+    commit: '2f8bb7d2542e5368202e2e8705af9a32588a4ef1',
+    stepCount: 14,
+    steps: [
+      { step: 'login', sequence: 1 },
+      { step: 'admin-hub', sequence: 2 },
+      { step: 'debug-bundle', sequence: 8 },
+      { step: 'account-detail', sequence: 11 },
+      { step: 'content-overview', sequence: 12 },
+    ],
+  }, { source: 'reports/admin-smoke/latest.json' });
+
+  assert.doesNotThrow(() => assertSupportedP13LiveSmokeOptions({
+    adminHubCoverage: true,
+    adminHubEvidence,
+  }));
+
+  const result = validatePunctuationQGP13LiveEvidence({
+    ok: true,
+    origin: 'https://ks2.eugnel.uk',
+    accountId: 'demo-sample',
+    learnerId: 'learner-demo-sample',
+    attestation: {
+      environment: 'production',
+      releasePhase: PUNCTUATION_QG_P13_LIVE_PHASE,
+      releaseId: expected.contentReleaseId,
+      runtimeItemCount: expected.runtimeItems,
+      generatedDepth: expected.productionDepth,
+      workerCommitSha: '2f8bb7d2542e5368202e2e8705af9a32588a4ef1',
+      timestamp: '2026-05-02T00:00:00.000Z',
+      authenticatedCoverage: true,
+      adminHubCoverage: true,
+    },
+    punctuation: {
+      productionObserved: {
+        releaseId: expected.contentReleaseId,
+        runtimeItems: expected.runtimeItems,
+        publishedRewardUnits: expected.publishedRewardUnits,
+      },
+      localReleaseManifestExpectation: {
+        fixedItems: expected.fixedItems,
+        generatedItems: expected.generatedItems,
+        generatedPerFamily: expected.productionDepth,
+        runtimeItems: expected.runtimeItems,
+        publishedRewardUnits: expected.publishedRewardUnits,
+      },
+      smartSix: {
+        summaryTotal: 6,
+        uniqueItems: 6,
+        immediateRepeats: 0,
+        generatedSeen: 1,
+        items: Array.from({ length: 6 }, (_, index) => ({
+          itemId: `sample-${index + 1}`,
+          source: 'generated',
+          mode: 'insert',
+          skillIds: ['speech'],
+        })),
+      },
+      parentHubEvidence: {
+        hasEvidence: true,
+        attempts: 6,
+        progressSnapshotsHasPunctuation: true,
+        redactionChecks: {
+          punctuationEvidence: true,
+          progressSnapshots: true,
+          misconceptionPatterns: true,
+        },
+      },
+    },
+    spelling: {
+      progressTotal: 1,
+      hasPromptToken: true,
+      redactionChecks: {
+        rawWordHidden: true,
+        rawSentenceHidden: true,
+        promptTokenReturned: true,
+      },
+    },
+    adminHubEvidence,
+  });
+  assert.equal(result.ok, true, result.errors.join('; '));
+});
+
+test('P13 Admin Hub evidence composition fails closed on incomplete admin smoke artefacts', () => {
+  assert.throws(
+    () => buildAdminHubEvidenceFromSmoke({
+      ok: true,
+      smokeType: 'admin',
+      steps: [{ step: 'admin-hub', sequence: 2 }],
+    }),
+    /missing required admin smoke steps/,
+  );
+  assert.throws(
+    () => buildAdminHubEvidenceFromSmoke({
+      ok: false,
+      smokeType: 'admin',
+      steps: [
+        { step: 'admin-hub', sequence: 2 },
+        { step: 'debug-bundle', sequence: 8 },
+        { step: 'account-detail', sequence: 11 },
+        { step: 'content-overview', sequence: 12 },
+      ],
+    }),
+    /passing admin production smoke/,
+  );
 });
 
 test('P13 package scripts write and validate the same live smoke artefact', () => {

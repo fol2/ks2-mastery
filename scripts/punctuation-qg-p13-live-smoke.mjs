@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -44,12 +44,66 @@ export function parseArgs(argv) {
     out: argValue(argv, '--out') || '',
     json: argv.includes('--json') || Boolean(argValue(argv, '--out')),
     adminHubCoverage: argv.includes('--admin-hub'),
+    adminSmokeFile: argValue(argv, '--admin-smoke-file') || 'reports/admin-smoke/latest.json',
   };
 }
 
-export function assertSupportedP13LiveSmokeOptions({ adminHubCoverage = false } = {}) {
-  if (adminHubCoverage) {
-    throw new Error('P13 live smoke cannot claim Admin Hub coverage because this smoke uses a demo session and does not fetch Admin Hub evidence.');
+const REQUIRED_ADMIN_SMOKE_STEPS = [
+  'admin-hub',
+  'debug-bundle',
+  'account-detail',
+  'content-overview',
+];
+
+function stepNamesForAdminSmoke(adminSmoke) {
+  return Array.isArray(adminSmoke?.steps)
+    ? adminSmoke.steps.map((entry) => String(entry?.step || '')).filter(Boolean)
+    : [];
+}
+
+export function buildAdminHubEvidenceFromSmoke(adminSmoke, { source = 'reports/admin-smoke/latest.json' } = {}) {
+  const stepNames = stepNamesForAdminSmoke(adminSmoke);
+  const missingSteps = REQUIRED_ADMIN_SMOKE_STEPS.filter((step) => !stepNames.includes(step));
+  if (adminSmoke?.ok !== true) {
+    throw new Error(`P13 Admin Hub coverage requires a passing admin production smoke artefact at ${source}.`);
+  }
+  if (adminSmoke?.smokeType !== 'admin') {
+    throw new Error(`P13 Admin Hub coverage requires an admin smoke artefact at ${source}.`);
+  }
+  if (missingSteps.length > 0) {
+    throw new Error(`P13 Admin Hub coverage artefact is missing required admin smoke steps: ${missingSteps.join(', ')}.`);
+  }
+
+  return {
+    hasEvidence: true,
+    source,
+    smokeType: adminSmoke.smokeType,
+    finishedAt: adminSmoke.finishedAt || null,
+    commit: adminSmoke.commit || null,
+    stepCount: Number(adminSmoke.stepCount || stepNames.length),
+    requiredSteps: REQUIRED_ADMIN_SMOKE_STEPS,
+    redactionChecks: {
+      learnerSupport: stepNames.includes('account-detail'),
+      punctuationEvidence: stepNames.includes('content-overview'),
+      releaseDiagnostics: stepNames.includes('debug-bundle'),
+    },
+  };
+}
+
+export function readAdminHubEvidenceForP13({ adminHubCoverage = false, adminSmokeFile = 'reports/admin-smoke/latest.json' } = {}) {
+  if (!adminHubCoverage) return null;
+  let adminSmoke;
+  try {
+    adminSmoke = JSON.parse(readFileSync(adminSmokeFile, 'utf8'));
+  } catch (error) {
+    throw new Error(`P13 Admin Hub coverage requires a readable admin smoke artefact at ${adminSmokeFile}: ${error?.message || error}`);
+  }
+  return buildAdminHubEvidenceFromSmoke(adminSmoke, { source: adminSmokeFile });
+}
+
+export function assertSupportedP13LiveSmokeOptions({ adminHubCoverage = false, adminHubEvidence = null } = {}) {
+  if (adminHubCoverage && adminHubEvidence?.hasEvidence !== true) {
+    throw new Error('P13 live smoke cannot claim Admin Hub coverage without a passing Admin Hub production smoke artefact.');
   }
 }
 
@@ -195,7 +249,8 @@ async function readParentHubPunctuationEvidence({ origin, cookie, learnerId }) {
 
 export async function runPunctuationQGP13LiveSmoke(options = {}) {
   const args = { ...parseArgs(process.argv), ...options };
-  assertSupportedP13LiveSmokeOptions(args);
+  const adminHubEvidence = readAdminHubEvidenceForP13(args);
+  assertSupportedP13LiveSmokeOptions({ ...args, adminHubEvidence });
   const expected = expectedPunctuationQGP13LiveManifest();
   const demo = await createDemoSession(args.origin);
   const bootstrap = await loadBootstrap(args.origin, demo.cookie, { expectedSession: demo.session });
@@ -266,6 +321,7 @@ export async function runPunctuationQGP13LiveSmoke(options = {}) {
         promptTokenReturned: spelling.hasPromptToken === true,
       },
     },
+    ...(adminHubEvidence ? { adminHubEvidence } : {}),
   };
 }
 

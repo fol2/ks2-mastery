@@ -268,6 +268,13 @@ function persistSmokeResult({ ok, failures, steps, rootDir }) {
     finishedAt: new Date().toISOString(),
     smokeType: 'admin',
     failures: Array.isArray(failures) ? failures.map(String) : [],
+    stepCount: Array.isArray(steps) ? steps.length : 0,
+    steps: Array.isArray(steps)
+      ? steps.map((entry) => ({
+        step: String(entry?.step || ''),
+        sequence: Number(entry?.sequence) || null,
+      }))
+      : [],
     commit,
   };
   writeFileSync(outputPath, JSON.stringify(payload, null, 2) + '\n');
