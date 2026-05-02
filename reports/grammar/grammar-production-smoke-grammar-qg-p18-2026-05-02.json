@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "releaseId": "grammar-qg-p18-2026-05-02",
+  "evidenceOrigin": "post-deploy",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "post-deploy",
+  "contentReleaseId": "grammar-qg-p18-2026-05-02",
+  "testedTemplateIds": [
+    "qg_modal_verb_explain",
+    "fronted_adverbial_choose",
+    "qg_modal_verb_explain",
+    "qg_subject_object_classify_table",
+    "tense_rewrite",
+    "fix_fronted_adverbial",
+    "combine_clauses_rewrite",
+    "build_noun_phrase",
+    "identify_words_in_sentence",
+    "qg_p4_voice_roles_transfer"
+  ],
+  "answerSpecFamiliesCovered": [
+    "exact",
+    "multiField",
+    "normalisedText",
+    "punctuationPattern",
+    "acceptedSet",
+    "manualReviewOnly"
+  ],
+  "command": "npm run smoke:production:grammar -- --json --evidence-origin=post-deploy --expected-release=grammar-qg-p18-2026-05-02 --out=reports/grammar/grammar-production-smoke-grammar-qg-p18-2026-05-02.json",
+  "learnerFixtureType": "demo-session",
+  "itemCreationResult": {
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
+  },
+  "answerSubmissionResult": {
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
+  },
+  "readModelUpdateResult": {
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
+  },
+  "noAnswerLeakAssertion": {
+    "ok": true,
+    "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
+  },
+  "semanticCueAssertion": {
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
+  },
+  "promptCueAssertion": {
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
+  },
+  "readAloudAssertion": {
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
+  },
+  "releaseIdAssertion": {
+    "ok": true,
+    "detail": "contentReleaseId=grammar-qg-p18-2026-05-02"
+  },
+  "normalRoundResult": {
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
+  },
+  "miniTestResult": {
+    "ok": true,
+    "detail": "answered=1, reviewSize=8"
+  },
+  "repairResult": {
+    "ok": true,
+    "detail": "supportKind=faded, aiKind=explanation"
+  },
+  "cueAssertionResult": {
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
+  },
+  "forbiddenKeyScanResult": {
+    "ok": true,
+    "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
+  },
+  "failureDetails": null,
+  "timestamp": "2026-05-02T23:00:28.572Z",
+  "commitSha": "c504ee3a32064c5e4114de9246c673de1baa4582"
+}
