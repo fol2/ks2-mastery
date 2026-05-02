@@ -714,18 +714,14 @@ Fresh clones must download the Chromium binary once:
 npx playwright install chromium
 ```
 
-The repo root `.npmrc` enforces the skip by default:
-
-```
-playwright_skip_browser_download=true
-```
-
-Playwright honours that key as equivalent to the
-`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` environment variable, so every
-`npm install` — including the one Cloudflare Wrangler remote builds run —
-automatically skips the ~300 MB Chromium download. The deployed Worker never
-uses the Playwright browser, and developers who want it locally opt in with
-the `npx playwright install chromium` command above.
+The repo root `.npmrc` deliberately does not set Playwright skip keys because
+npm warns about unknown project config. Deploy and check commands go through
+`scripts/wrangler-oauth.mjs`, which injects
+`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` before invoking Wrangler. That keeps
+production build paths from downloading the ~300 MB Chromium binary without
+adding npm warning noise. The deployed Worker never uses the Playwright
+browser, and developers who want it locally opt in with the
+`npx playwright install chromium` command above.
 
 ### Updating screenshot baselines
 

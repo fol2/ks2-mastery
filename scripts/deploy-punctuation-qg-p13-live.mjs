@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 const ROOT = resolve(new URL('..', import.meta.url).pathname);
 const OUT = 'reports/punctuation/punctuation-qg-p13-production-smoke.json';
 const DEPLOY_PREDEPLOY_OUT = '/tmp/ks2-punctuation-qg-p13-predeploy-evidence.json';
+const ADMIN_SMOKE_OUT = 'reports/admin-smoke/latest.json';
 
 function argValue(argv, ...names) {
   for (const name of names) {
@@ -60,6 +61,7 @@ function main(argv = process.argv) {
   const origin = argValue(argv, '--origin') || process.env.KS2_SMOKE_ORIGIN || 'https://ks2.eugnel.uk';
   const commitSha = argValue(argv, '--commit-sha') || process.env.GITHUB_SHA || process.env.WORKER_COMMIT_SHA || gitSha();
   const out = argValue(argv, '--out') || OUT;
+  const includeAdminHub = argv.includes('--admin-hub');
   if (!commitSha) {
     throw new Error('P13 live deploy requires a commit SHA. Pass --commit-sha, set GITHUB_SHA/WORKER_COMMIT_SHA, or run from a git checkout.');
   }
@@ -69,7 +71,11 @@ function main(argv = process.argv) {
   run(predeployCommandForDeploy());
   assertCleanGitTree();
   run('npm run deploy');
-  run(`node scripts/punctuation-qg-p13-live-smoke.mjs --env production --authenticated --origin ${origin} --commit-sha ${commitSha} --out ${out}`);
+  if (includeAdminHub) {
+    run('npm run smoke:production:admin-ops');
+  }
+  const adminHubArgs = includeAdminHub ? ` --admin-hub --admin-smoke-file ${ADMIN_SMOKE_OUT}` : '';
+  run(`node scripts/punctuation-qg-p13-live-smoke.mjs --env production --authenticated --origin ${origin} --commit-sha ${commitSha} --out ${out}${adminHubArgs}`);
   if (!existsSync(resolve(ROOT, out))) throw new Error(`Expected smoke artefact was not written: ${out}`);
   run(`node scripts/validate-punctuation-qg-p13-live-evidence.mjs ${out} --origin ${origin}`);
   console.log('\nPunctuation QG P13 is live-serving certified for the deployed production origin.');

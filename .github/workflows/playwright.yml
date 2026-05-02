@@ -96,9 +96,8 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Install Chromium
-        # `.npmrc` defaults `playwright_skip_browser_download=true` so
-        # `npm ci` above skipped the ~300 MB Chromium download. Install
-        # explicitly here — PR jobs need the browser available.
+        # Normal deploy/check paths skip Playwright browser downloads.
+        # Install explicitly here — PR jobs need the browser available.
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright (mobile-390)

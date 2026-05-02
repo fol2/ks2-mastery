@@ -10,6 +10,12 @@ if (!wranglerArgs.length) {
 const env = { ...process.env };
 const isWorkersBuild = env.WORKERS_CI === '1';
 
+// Keep deploy/check installs and Wrangler custom builds from downloading
+// Playwright browser binaries. This replaces the old `.npmrc`
+// `playwright_skip_browser_download=true` project config, which newer npm
+// versions warn about as an unknown key.
+env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD || '1';
+
 if (!isWorkersBuild) {
   delete env.CLOUDFLARE_API_TOKEN;
 }
