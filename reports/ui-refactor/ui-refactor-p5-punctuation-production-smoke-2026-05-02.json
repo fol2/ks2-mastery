@@ -1,0 +1,108 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "accountId": "demo-DjlK78QwwXG3Wg",
+  "learnerId": "learner-demo-rRiiD8lGbzCaAg",
+  "attestation": {
+    "environment": "production",
+    "releaseId": "punctuation-qg-p11-2026-05-01",
+    "runtimeItemCount": 1268,
+    "generatedDepth": 40,
+    "workerCommitSha": "3e85fdb2ee819357559ac63f21e2e9cf9a6ea9e7",
+    "timestamp": "2026-05-02T21:17:13.594Z",
+    "authenticatedCoverage": false,
+    "adminHubCoverage": false
+  },
+  "punctuation": {
+    "productionObserved": {
+      "releaseId": "punctuation-qg-p11-2026-05-01",
+      "runtimeItems": 1268,
+      "publishedRewardUnits": 14,
+      "generatedItemCommandPathProbe": {
+        "itemId": "gen_speech_insert_1tlu74y_8",
+        "mode": "insert",
+        "skillIds": [
+          "speech"
+        ],
+        "feedbackKind": "error",
+        "misconceptionTags": [
+          "speech.quote_missing"
+        ]
+      }
+    },
+    "localReleaseManifestExpectation": {
+      "fixedItems": 148,
+      "generatedItems": 1120,
+      "generatedPerFamily": 40,
+      "runtimeItems": 1268,
+      "publishedRewardUnits": 14
+    },
+    "smartItemId": "ap_choose_possession",
+    "smartSummaryTotal": 1,
+    "generatedIncorrectItemId": "gen_speech_insert_1tlu74y_8",
+    "generatedIncorrectMisconceptionTags": [
+      "speech.quote_missing"
+    ],
+    "dashAcceptance": [
+      {
+        "variant": "spaced-hyphen",
+        "itemId": "dc_insert_alarm_rang",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      },
+      {
+        "variant": "en-dash",
+        "itemId": "dc_insert_alarm_rang",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      },
+      {
+        "variant": "em-dash",
+        "itemId": "dc_insert_door_froze",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      }
+    ],
+    "oxfordCommaItemId": "gen_list_commas_insert_1gqpcah_8",
+    "oxfordCommaAcceptance": {
+      "itemId": "gen_list_commas_insert_1gqpcah_8",
+      "mode": "insert",
+      "skillIds": [
+        "list_commas"
+      ],
+      "feedbackKind": "success"
+    },
+    "advancedMode": "gps",
+    "advancedItemId": "fx_ac_choose_ill_youll",
+    "advancedReviewItems": 1,
+    "parentHubAttempts": 10,
+    "parentHubEvidence": {
+      "hasEvidence": true,
+      "attempts": 10,
+      "accuracyPercent": 90,
+      "progressSnapshotsHasPunctuation": true,
+      "redactionChecks": {
+        "punctuationEvidence": true,
+        "progressSnapshots": true,
+        "misconceptionPatterns": true
+      },
+      "sessionModes": [
+        "guided",
+        "comma_flow",
+        "gps",
+        "smart",
+        "speech"
+      ]
+    }
+  },
+  "spelling": {
+    "progressTotal": 1,
+    "hasPromptToken": true
+  }
+}
