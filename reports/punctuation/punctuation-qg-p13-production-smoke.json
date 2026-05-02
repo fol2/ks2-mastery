@@ -1,18 +1,18 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "accountId": "demo-HXWCvqbUBNEEYA",
-  "learnerId": "learner-demo-nkHuKEvW77m1Kw",
+  "accountId": "demo-iZkje5FzZo0muQ",
+  "learnerId": "learner-demo-yyzQTAqBqXoNQw",
   "attestation": {
     "environment": "production",
     "releasePhase": "punctuation-qg-p13-live-serving",
     "releaseId": "punctuation-qg-p12-3000-2026-05-02",
     "runtimeItemCount": 3312,
     "generatedDepth": 100,
-    "workerCommitSha": "b7a6125966975bae14aaeea7050cf107ccdb40e6",
-    "workerVersionId": null,
+    "workerCommitSha": "1c8ac551d3991008deba455a3a9a74c1d6c9c2f2",
+    "workerVersionId": "fdba25ce-4865-4648-b162-3c75d84b9de3",
     "deploymentId": null,
-    "timestamp": "2026-05-02T22:45:39.843Z",
+    "timestamp": "2026-05-02T22:52:59.721Z",
     "authenticatedCoverage": true,
     "adminHubCoverage": true
   },
@@ -52,22 +52,21 @@
       "skillIds": [
         "apostrophe_contractions",
         "apostrophe_possession",
-        "colon_list",
         "comma_clarity",
         "list_commas",
         "sentence_endings"
       ],
       "items": [
         {
-          "itemId": "cc_choose_before_cooking",
+          "itemId": "fx_lc_choose_art_table",
           "source": "fixed",
           "mode": "choose",
           "skillIds": [
-            "comma_clarity"
+            "list_commas"
           ]
         },
         {
-          "itemId": "gen_sentence_endings_insert_3xypj9_6",
+          "itemId": "gen_sentence_endings_insert_2a13df_4",
           "source": "generated",
           "mode": "insert",
           "skillIds": [
@@ -83,15 +82,15 @@
           ]
         },
         {
-          "itemId": "cl_transfer_trip",
+          "itemId": "ac_transfer_dont_theyre",
           "source": "fixed",
           "mode": "transfer",
           "skillIds": [
-            "colon_list"
+            "apostrophe_contractions"
           ]
         },
         {
-          "itemId": "gen_list_commas_combine_15sthm0_19",
+          "itemId": "gen_list_commas_combine_18t19w8_10",
           "source": "generated",
           "mode": "combine",
           "skillIds": [
@@ -99,7 +98,7 @@
           ]
         },
         {
-          "itemId": "gen_apostrophe_mix_paragraph_d6g6dr_3",
+          "itemId": "gen_apostrophe_mix_paragraph_fyc7bh_9",
           "source": "generated",
           "mode": "paragraph",
           "skillIds": [
@@ -137,7 +136,7 @@
     "hasEvidence": true,
     "source": "reports/admin-smoke/latest.json",
     "smokeType": "admin",
-    "finishedAt": "2026-05-02T22:43:04.526Z",
+    "finishedAt": "2026-05-02T22:52:45.995Z",
     "commit": "unknown",
     "stepCount": 19,
     "requiredSteps": [
