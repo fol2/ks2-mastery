@@ -9,6 +9,7 @@ import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.j
 import { createServerSpellingEngine, SPELLING_SERVER_AUTHORITY } from '../worker/src/subjects/spelling/engine.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import { FORBIDDEN_SPELLING_READ_MODEL_KEYS } from './helpers/forbidden-keys.mjs';
 
 function makeSeededRandom(seed = 1) {
   let value = seed >>> 0;
@@ -51,6 +52,22 @@ function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a'
     INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
     VALUES (?, ?, 'owner', 0, ?, ?)
   `).run(accountId, learnerId, now, now);
+}
+
+function assertNoForbiddenObjectKeys(value, forbiddenKeys, label, path = label) {
+  if (!value || typeof value !== 'object') return;
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertNoForbiddenObjectKeys(item, forbiddenKeys, label, `${path}[${index}]`));
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    assert.equal(
+      forbiddenKeys.includes(key),
+      false,
+      `${path}.${key} exposed a server-only field.`,
+    );
+    assertNoForbiddenObjectKeys(child, forbiddenKeys, label, `${path}.${key}`);
+  }
 }
 
 async function postCommand(server, {
@@ -350,6 +367,44 @@ test('worker spelling command route starts, submits, continues, and completes se
       WHERE learner_id = 'learner-a' AND subject_id = 'spelling' AND status = 'completed'
     `).get().count;
     assert.equal(completedCount, 1);
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling command route redacts answer fields from public feedback', async () => {
+  const server = createWorkerRepositoryServer();
+  seedAccountLearner(server.DB);
+
+  try {
+    let step = await postCommand(server, {
+      command: 'start-session',
+      requestId: 'spell-feedback-redaction-start',
+      expectedLearnerRevision: 0,
+      payload: {
+        mode: 'single',
+        slug: 'possess',
+        length: 1,
+      },
+    });
+    assert.equal(step.response.status, 200);
+
+    step = await postCommand(server, {
+      command: 'submit-answer',
+      requestId: 'spell-feedback-redaction-submit',
+      expectedLearnerRevision: 1,
+      payload: { answer: 'ks2-dense-smoke-wrong-answer' },
+    });
+    assert.equal(step.response.status, 200);
+    assert.equal(step.body.subjectReadModel.phase, 'session');
+    assert.ok(step.body.subjectReadModel.feedback);
+    assert.equal(step.body.subjectReadModel.feedback.answer, undefined);
+    assert.equal(step.body.subjectReadModel.feedback.attemptedAnswer, undefined);
+    assertNoForbiddenObjectKeys(
+      step.body.subjectReadModel,
+      FORBIDDEN_SPELLING_READ_MODEL_KEYS,
+      'workerSpelling.feedback',
+    );
   } finally {
     server.close();
   }
