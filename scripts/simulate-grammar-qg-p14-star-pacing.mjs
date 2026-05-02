@@ -2,6 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 
 import {
   GRAMMAR_CONCEPTS,
@@ -240,12 +241,24 @@ function markdownFor(report) {
 }
 
 async function main() {
+  const { values } = parseArgs({
+    options: {
+      out: { type: 'string', default: JSON_OUT },
+      markdown: { type: 'string', default: MD_OUT },
+      'report-id': { type: 'string', default: 'grammar-qg-p14-star-pacing-simulation' },
+    },
+    strict: false,
+  });
   const report = buildStarPacingSimulation();
-  await fs.mkdir(REPORTS_DIR, { recursive: true });
-  await fs.writeFile(JSON_OUT, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  await fs.writeFile(MD_OUT, markdownFor(report), 'utf8');
-  console.log(`Wrote ${path.relative(ROOT_DIR, JSON_OUT)}`);
-  console.log(`Wrote ${path.relative(ROOT_DIR, MD_OUT)}`);
+  report.reportId = values['report-id'];
+  const jsonOut = path.resolve(values.out);
+  const mdOut = path.resolve(values.markdown);
+  await fs.mkdir(path.dirname(jsonOut), { recursive: true });
+  await fs.mkdir(path.dirname(mdOut), { recursive: true });
+  await fs.writeFile(jsonOut, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  await fs.writeFile(mdOut, markdownFor(report), 'utf8');
+  console.log(`Wrote ${path.relative(ROOT_DIR, jsonOut)}`);
+  console.log(`Wrote ${path.relative(ROOT_DIR, mdOut)}`);
   if (!report.conclusion.pass) process.exit(1);
 }
 

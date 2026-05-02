@@ -2,10 +2,11 @@
   "packId": "grammar-qg-p18-manual-expansion-400-families",
   "title": "Grammar QG P18 — Manual Expansion Pack, 400 Proposed Template Families",
   "language": "en-GB",
-  "status": "draft_for_review_not_scheduler_ready",
+  "status": "certified_scheduler_ready",
   "baseRelease": "grammar-qg-p14-2026-05-01",
-  "authorshipModel": "expert-authored structured bench content; not AI-integration; draft-only until review/certification",
+  "authorshipModel": "expert-authored structured bench content; not AI-integration; certified for scheduler promotion by P18 release evidence",
   "createdAt": "2026-05-02T18:10:40.560171+00:00",
+  "certifiedAt": "2026-05-02T21:14:29.097Z",
   "target": {
     "families": "400 proposed manual template families total",
     "cases": "4800 authored cases total",

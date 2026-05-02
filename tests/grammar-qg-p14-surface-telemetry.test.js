@@ -19,17 +19,23 @@ describe('Grammar QG P14 learner surface and telemetry contract', () => {
   it('keeps the click-path learner surface audit clean', () => {
     const fresh = buildLearnerSurfaceAudit();
     const committed = readReport('grammar-qg-p14-learner-surface-audit.json');
+    const committedP18 = readReport('grammar-qg-p18-learner-surface-audit.json');
 
     assert.equal(fresh.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
     assert.equal(fresh.pass, true);
     assert.equal(committed.pass, true);
     assert.equal(committed.pathCount, 8);
     assert.deepEqual(committed.failures, []);
+    assert.equal(committedP18.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+    assert.equal(committedP18.pass, true);
+    assert.equal(committedP18.pathCount, 8);
+    assert.deepEqual(committedP18.failures, []);
   });
 
   it('keeps the star-pacing simulation below mastery-inflation thresholds', () => {
     const fresh = buildStarPacingSimulation();
     const committed = readReport('grammar-qg-p14-star-pacing-simulation.json');
+    const committedP18 = readReport('grammar-qg-p18-star-pacing-simulation.json');
 
     assert.equal(fresh.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
     assert.equal(fresh.conclusion.pass, true);
@@ -40,6 +46,11 @@ describe('Grammar QG P14 learner surface and telemetry contract', () => {
       committed.profiles.some((profile) => profile.highStageViaRepeatedShallowItems),
       false,
     );
+    assert.equal(committedP18.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+    assert.equal(committedP18.templateCount, 510);
+    assert.equal(committedP18.conclusion.pass, true);
+    assert.equal(committedP18.conclusion.thresholdChange, 'none');
+    assert.equal(committedP18.conclusion.migrationRequired, false);
   });
 
   it('projects session depth and variety telemetry without answer internals', () => {

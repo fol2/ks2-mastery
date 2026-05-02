@@ -1,0 +1,920 @@
+{
+  "reportId": "grammar-qg-p18-learner-surface-audit",
+  "contentReleaseId": "grammar-qg-p18-2026-05-02",
+  "generatedAt": "2026-05-02T22:20:21.044Z",
+  "pathCount": 8,
+  "pass": true,
+  "failures": [],
+  "paths": [
+    {
+      "pathId": "first-time-smart",
+      "label": "First-time smart practice",
+      "mode": "smart",
+      "size": 5,
+      "seed": 87,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "first-time-smart",
+          "slot": 1,
+          "templateId": "proc_fronted_adverbial_fix",
+          "seed": 87,
+          "promptText": "Rewrite the sentence with the punctuation corrected. Before sunrise Elsie lifted the trophy.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "punctuationPattern",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 1"
+        },
+        {
+          "pathId": "first-time-smart",
+          "slot": 2,
+          "templateId": "qg_p18_p16_adverbials_choose_best_opening_adverbial",
+          "seed": 104816,
+          "promptText": "Which opening best completes this sentence naturally? ___, the choir rehearsed.",
+          "visibleOptionsOrFields": [
+            "On Tuesday morning",
+            "The sandwich",
+            "Because",
+            "Very"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 2"
+        },
+        {
+          "pathId": "first-time-smart",
+          "slot": 3,
+          "templateId": "qg_p18_p16_apostrophes_possession_explain_position",
+          "seed": 209545,
+          "promptText": "Explain the apostrophe position in: the dog's bowl",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 3"
+        },
+        {
+          "pathId": "first-time-smart",
+          "slot": 4,
+          "templateId": "qg_p18_p17_formality_transfer_apply",
+          "seed": 314274,
+          "promptText": "Transfer task: solve this formality item, then write a new sentence or phrase that shows the same rule. Item: get better",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 4"
+        },
+        {
+          "pathId": "first-time-smart",
+          "slot": 5,
+          "templateId": "speech_punctuation_fix",
+          "seed": 419003,
+          "promptText": "Punctuate the direct speech correctly. Maya whispered \"Please wait outside.\"",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "punctuationPattern",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "First-time smart practice; smart; slot 5"
+        }
+      ]
+    },
+    {
+      "pathId": "returning-smart",
+      "label": "Returning smart practice",
+      "mode": "smart",
+      "size": 5,
+      "seed": 143,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "returning-smart",
+          "slot": 1,
+          "templateId": "qg_p18_p18_subject_object_diagnostic_identify",
+          "seed": 143,
+          "promptText": "What is the object in this sentence? At the station, Dad bought the tickets.",
+          "visibleOptionsOrFields": [
+            "the tickets",
+            "Dad",
+            "bought",
+            "the opening phrase"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 1"
+        },
+        {
+          "pathId": "returning-smart",
+          "slot": 2,
+          "templateId": "qg_p18_p16_modal_verbs_change_force_rewrite",
+          "seed": 104872,
+          "promptText": "Rewrite to make the sentence show obligation: You could finish your homework before the trip.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 2"
+        },
+        {
+          "pathId": "returning-smart",
+          "slot": 3,
+          "templateId": "qg_p18_p16_adverbials_explain_fronted_comma",
+          "seed": 209601,
+          "promptText": "Explain why the comma is used here: Beside the harbour, the gulls circled.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 3"
+        },
+        {
+          "pathId": "returning-smart",
+          "slot": 4,
+          "templateId": "qg_p18_p16_subject_object_find_object",
+          "seed": 314330,
+          "promptText": "What is the object of this sentence? On Friday morning, our science club visited the museum.",
+          "visibleOptionsOrFields": [
+            "the museum",
+            "our science club",
+            "the verb",
+            "opening adverbial"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 4"
+        },
+        {
+          "pathId": "returning-smart",
+          "slot": 5,
+          "templateId": "qg_p18_p16_adverbials_choose_best_opening_adverbial",
+          "seed": 419059,
+          "promptText": "Which opening best completes this sentence naturally? ___, the lights flickered.",
+          "visibleOptionsOrFields": [
+            "Without warning",
+            "The sandwich",
+            "Because",
+            "Very"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Returning smart practice; smart; slot 5"
+        }
+      ]
+    },
+    {
+      "pathId": "focus-concept",
+      "label": "Focus concept practice",
+      "mode": "smart",
+      "size": 5,
+      "seed": 1234,
+      "focusConceptId": "hyphen_ambiguity",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "focus-concept",
+          "slot": 1,
+          "templateId": "proc3_hyphen_fix_meaning",
+          "seed": 1234,
+          "promptText": "Rewrite the sentence with a hyphen to make the meaning clear. The school held a fun filled sports day on Friday.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "punctuationPattern",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 1"
+        },
+        {
+          "pathId": "focus-concept",
+          "slot": 2,
+          "templateId": "qg_p18_p17_hyphen_ambiguity_transfer_apply",
+          "seed": 105963,
+          "promptText": "Transfer task: solve this hyphen ambiguity item, then write a new sentence or phrase that shows the same rule. Item: a boy who is five years old",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 2"
+        },
+        {
+          "pathId": "focus-concept",
+          "slot": 3,
+          "templateId": "qg_p18_p18_hyphen_ambiguity_explain_reasoning",
+          "seed": 210692,
+          "promptText": "Why does 'long-term plan' need a hyphen?",
+          "visibleOptionsOrFields": [
+            "Hyphenate the compound adjective before the noun.",
+            "Because every adjective needs a hyphen",
+            "Because it is a plural",
+            "Because it replaces an apostrophe"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 3"
+        },
+        {
+          "pathId": "focus-concept",
+          "slot": 4,
+          "templateId": "qg_p18_p18_hyphen_ambiguity_sat_table_classification",
+          "seed": 315421,
+          "promptText": "Classify the grammar feature shown in this row: man-eating shark",
+          "visibleOptionsOrFields": [
+            {
+              "rowLabel": "man-eating shark",
+              "options": [
+                "hyphen needed",
+                "no hyphen needed",
+                "apostrophe needed",
+                "comma needed"
+              ]
+            }
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "multiField",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 4"
+        },
+        {
+          "pathId": "focus-concept",
+          "slot": 5,
+          "templateId": "proc_hyphen_ambiguity_choice",
+          "seed": 420150,
+          "promptText": "Which sentence means the shop has second-hand items?",
+          "visibleOptionsOrFields": [
+            "Mum found a bargain at the second-hand shop.",
+            "Mum found a bargain at the second hand shop.",
+            "Mum found a second bargain handed to her at the shop.",
+            "Mum found a shop with a second hand at the counter."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "single_choice",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Focus concept practice; smart; slot 5"
+        }
+      ]
+    },
+    {
+      "pathId": "trouble-spots",
+      "label": "Trouble spots",
+      "mode": "trouble",
+      "size": 5,
+      "seed": 221,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "trouble-spots",
+          "slot": 1,
+          "templateId": "qg_p18_p16_tense_aspect_spot_tense_shift_error",
+          "seed": 221,
+          "promptText": "Which sentence keeps the requested form (past perfect) correctly?",
+          "visibleOptionsOrFields": [
+            "The train had left before we arrived.",
+            "The train has left before we arrived.",
+            "The train leaves before we arrive.",
+            "The verb is missing."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 1"
+        },
+        {
+          "pathId": "trouble-spots",
+          "slot": 2,
+          "templateId": "qg_p18_p16_active_passive_voice_error_spot",
+          "seed": 104950,
+          "promptText": "Which option wrongly changes the meaning of The hall was decorated by the class.?",
+          "visibleOptionsOrFields": [
+            "reversed roles",
+            "The class decorated the hall.",
+            "same doer and receiver",
+            "passive with by phrase"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 2"
+        },
+        {
+          "pathId": "trouble-spots",
+          "slot": 3,
+          "templateId": "qg_p18_p16_formality_least_formal_choice",
+          "seed": 209679,
+          "promptText": "Which option is least formal?",
+          "visibleOptionsOrFields": [
+            "find out",
+            "discover",
+            "sufficient",
+            "request"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 3"
+        },
+        {
+          "pathId": "trouble-spots",
+          "slot": 4,
+          "templateId": "qg_p3_noun_phrases_explain",
+          "seed": 314408,
+          "promptText": "Why is this an expanded noun phrase? the tiny silver key",
+          "visibleOptionsOrFields": [
+            "It is a conjunction because it joins ideas.",
+            "It is an adverbial because it tells when.",
+            "It is a full clause with a verb.",
+            "It is centred on the noun key and expanded with describing words."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 4"
+        },
+        {
+          "pathId": "trouble-spots",
+          "slot": 5,
+          "templateId": "qg_p18_p15_relative_clauses_relative_transfer",
+          "seed": 419137,
+          "promptText": "Which sentence uses a relative clause?",
+          "visibleOptionsOrFields": [
+            "The girl, who had lost her ticket, waited by the gate.",
+            "When the girl arrived, waited by the gate.",
+            "The girl arrived and waited by the gate.",
+            "Beside the girl, waited by the gate."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Trouble spots; trouble; slot 5"
+        }
+      ]
+    },
+    {
+      "pathId": "mini-test",
+      "label": "Mini-test",
+      "mode": "satsset",
+      "size": 8,
+      "seed": 17,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "mini-test",
+          "slot": 1,
+          "templateId": "qg_p18_p17_hyphen_ambiguity_table_classify",
+          "seed": 17,
+          "promptText": "Classify each row for the hyphen ambiguity focus.",
+          "visibleOptionsOrFields": [
+            {
+              "rowLabel": "a wall that is well known",
+              "options": [
+                "hyphen needed",
+                "hyphen not needed",
+                "wrong compound",
+                "ambiguous"
+              ]
+            },
+            {
+              "rowLabel": "a cake shaped like a star",
+              "options": [
+                "hyphen needed",
+                "hyphen not needed",
+                "wrong compound",
+                "ambiguous"
+              ]
+            },
+            {
+              "rowLabel": "a plan lasting ten minutes",
+              "options": [
+                "hyphen needed",
+                "hyphen not needed",
+                "wrong compound",
+                "ambiguous"
+              ]
+            }
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "multiField",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 1"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 2,
+          "templateId": "qg_p14_expanded_noun_phrases_constructed_rewrite",
+          "seed": 104746,
+          "promptText": "Type the expanded noun phrase from this sentence: The tiny wooden badge by the muddy pitch caught everyone's attention.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 2"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 3,
+          "templateId": "qg_p18_p16_sentence_functions_direct_indirect_question_contrast",
+          "seed": 209475,
+          "promptText": "What is the function of this sentence? Can you pass the glue?",
+          "visibleOptionsOrFields": [
+            "question",
+            "statement",
+            "command",
+            "exclamation"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 3"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 4,
+          "templateId": "qg_p14_subject_object_mixed_transfer",
+          "seed": 314204,
+          "promptText": "In the sentence 'Eli painted the sports bib beside the hall doors.', which answer matches both grammar roles?",
+          "visibleOptionsOrFields": [
+            "subject: the sports bib; object: Eli",
+            "subject: beside the hall doors; object: the sports bib",
+            "subject: Eli; object: painted",
+            "subject: Eli; object: the sports bib"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 4"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 5,
+          "templateId": "qg_active_passive_choice",
+          "seed": 418933,
+          "promptText": "Which sentence is written in the passive voice?",
+          "visibleOptionsOrFields": [
+            "The caretaker was locking the hall before assembly.",
+            "Before assembly, the caretaker locked the hall.",
+            "The caretaker locked the hall before assembly.",
+            "The hall was locked by the caretaker before assembly."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 5"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 6,
+          "templateId": "qg_p18_p17_standard_english_transfer_apply",
+          "seed": 523662,
+          "promptText": "Transfer task: solve this standard english item, then write a new sentence or phrase that shows the same rule. Item: The musicians ___ a sound check.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 6"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 7,
+          "templateId": "qg_p18_p15_noun_phrases_build_np_context",
+          "seed": 628391,
+          "promptText": "Write an expanded noun phrase like \"the tall oak tree beside the path\" to complete: ___ waited outside the classroom.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 7"
+        },
+        {
+          "pathId": "mini-test",
+          "slot": 8,
+          "templateId": "qg_p18_p16_speech_punctuation_punctuate_direct_speech",
+          "seed": 733120,
+          "promptText": "Punctuate the direct speech: Be careful called Dad.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Mini-test; satsset; slot 8"
+        }
+      ]
+    },
+    {
+      "pathId": "deep-practice",
+      "label": "Deep practice",
+      "mode": "smart",
+      "size": 15,
+      "seed": 501,
+      "focusConceptId": "",
+      "allowExplicitRepeats": false,
+      "duplicateTemplateIds": [],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "deep-practice",
+          "slot": 1,
+          "templateId": "qg_p18_p18_tense_aspect_diagnostic_identify",
+          "seed": 501,
+          "promptText": "Rewrite this sentence in the past perfect: The train arrives early.",
+          "visibleOptionsOrFields": [
+            "The train had arrived early.",
+            "The train arrived early.",
+            "The train has arrived early.",
+            "The train was arriving early."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 1"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 2,
+          "templateId": "qg_p14_subordinate_clauses_mixed_transfer",
+          "seed": 105230,
+          "promptText": "Which sentence uses a subordinate clause and correct comma placement for these clauses: Omar checked the blue lantern; because the wind was rising?",
+          "visibleOptionsOrFields": [
+            "Because the wind was rising, Omar checked the blue lantern.",
+            "Omar checked the blue lantern, because the wind was rising.",
+            "because the wind was rising.",
+            "Because the wind was rising Omar checked the blue lantern."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 2"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 3,
+          "templateId": "qg_p18_p17_subject_object_transfer_apply",
+          "seed": 209959,
+          "promptText": "Transfer task: solve this subject object item, then write a new sentence or phrase that shows the same rule. Item: In the sentence 'The river flooded the field.', what is the subject?",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 3"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 4,
+          "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+          "seed": 314688,
+          "promptText": "Copy and correct the speech punctuation. Mina replied \"I will bring it tomorrow\"",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 4"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 5,
+          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
+          "seed": 419417,
+          "promptText": "What is the head noun in this noun phrase? \"our careful class monitor\"",
+          "visibleOptionsOrFields": [
+            "monitor",
+            "careful",
+            "under",
+            "phrase"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 5"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 6,
+          "templateId": "qg_p18_p16_pronouns_cohesion_fix_pronoun_reference",
+          "seed": 524146,
+          "promptText": "Fix the unclear pronouns: Luca washed the cup and dried him.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 6"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 7,
+          "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+          "seed": 628875,
+          "promptText": "Write the relative clause from this sentence: The village where my uncle lives has one shop.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 7"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 8,
+          "templateId": "qg_p18_p18_active_passive_subject_object_voice_subject_object_roles",
+          "seed": 733604,
+          "promptText": "Mixed check: passive rewrite and object identification. The gardener watered the seedlings. / The scientist measured the temperature.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 8"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 9,
+          "templateId": "qg_p18_p15_boundary_punctuation_boundary_fix",
+          "seed": 838333,
+          "promptText": "Copy the sentence using the best boundary punctuation: The sky darkened ___ the gulls flew inland.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 9"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 10,
+          "templateId": "qg_p14_fronted_adverbials_mixed_transfer",
+          "seed": 943062,
+          "promptText": "Which sentence uses both a fronted adverbial and a correct main clause for this idea: In the morning sunlight + Freya carried the blue lantern carefully?",
+          "visibleOptionsOrFields": [
+            "In the morning sunlight Freya carried the blue lantern carefully.",
+            "Freya, carried the blue lantern carefully in the morning sunlight.",
+            "In the morning sunlight, Freya carried the blue lantern carefully.",
+            "In the morning sunlight, carried the blue lantern carefully."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 10"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 11,
+          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "seed": 1047791,
+          "promptText": "Choose the verb form that fits the time signal in this sentence: Nina ___ the class trophy yesterday.",
+          "visibleOptionsOrFields": [
+            "is hiding",
+            "hid",
+            "has hidden",
+            "had hidden"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 11"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 12,
+          "templateId": "qg_p18_p16_parenthesis_commas_parenthesis_or_not",
+          "seed": 1152520,
+          "promptText": "Does this sentence contain parenthesis? The cake, baked by Aisha, tasted wonderful.",
+          "visibleOptionsOrFields": [
+            "yes",
+            "no",
+            "only if brackets are used",
+            "only if it is a question"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 12"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 13,
+          "templateId": "qg_p18_p18_speech_punctuation_diagnostic_identify",
+          "seed": 1257249,
+          "promptText": "Correct the direct speech punctuation: \"The bus is here\" called Tom.",
+          "visibleOptionsOrFields": [
+            "\"The bus is here,\" called Tom.",
+            "\"The bus is here\" called Tom."
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 13"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 14,
+          "templateId": "qg_p18_p16_subject_object_find_subject",
+          "seed": 1361978,
+          "promptText": "What is the subject of this sentence? On Friday morning, our science club visited the museum.",
+          "visibleOptionsOrFields": [
+            "our science club",
+            "the museum",
+            "the verb",
+            "opening adverbial"
+          ],
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "exact",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 14"
+        },
+        {
+          "pathId": "deep-practice",
+          "slot": 15,
+          "templateId": "qg_p18_p18_sentence_functions_application_transfer",
+          "seed": 1466707,
+          "promptText": "A pupil says this is a statement: Where did you leave the measuring jug? Explain why the pupil is wrong.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": false,
+          "explicitRetryReason": "",
+          "whySelected": "Deep practice; smart; slot 15"
+        }
+      ]
+    },
+    {
+      "pathId": "post-feedback-similar-problem",
+      "label": "Post-feedback similar problem",
+      "mode": "smart",
+      "size": 2,
+      "seed": 41,
+      "allowExplicitRepeats": true,
+      "duplicateTemplateIds": [
+        "qg_p14_standard_english_constructed_rewrite"
+      ],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "post-feedback-similar-problem",
+          "slot": 1,
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
+          "seed": 41,
+          "promptText": "Rewrite this sentence in Standard English: Ben done the library pass before tea.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": true,
+          "explicitRetryReason": "",
+          "whySelected": "Original marked item before similar-problem action."
+        },
+        {
+          "pathId": "post-feedback-similar-problem",
+          "slot": 2,
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
+          "seed": 2654435802,
+          "promptText": "Rewrite this sentence in Standard English: Cara don't know where the meeting point is.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": true,
+          "explicitRetryReason": "similar-problem-after-feedback",
+          "whySelected": "Similar-problem action deliberately keeps the same template with a new generated variant."
+        }
+      ]
+    },
+    {
+      "pathId": "retry-queue-after-miss",
+      "label": "Retry queue after miss",
+      "mode": "smart",
+      "size": 2,
+      "seed": 73,
+      "allowExplicitRepeats": true,
+      "duplicateTemplateIds": [
+        "qg_p14_tense_aspect_constructed_rewrite"
+      ],
+      "pass": true,
+      "items": [
+        {
+          "pathId": "retry-queue-after-miss",
+          "slot": 1,
+          "templateId": "qg_p14_tense_aspect_constructed_rewrite",
+          "seed": 73,
+          "promptText": "Correct the verb form: Priya finished the history poster since Monday.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": true,
+          "explicitRetryReason": "",
+          "whySelected": "Missed item that creates a retry queue entry."
+        },
+        {
+          "pathId": "retry-queue-after-miss",
+          "slot": 2,
+          "templateId": "qg_p14_tense_aspect_constructed_rewrite",
+          "seed": 73,
+          "promptText": "Correct the verb form: Priya finished the history poster since Monday.",
+          "visibleOptionsOrFields": null,
+          "targetCue": null,
+          "readAloudText": "",
+          "expectedAnswerShape": "normalisedText",
+          "repeatedInSameSession": true,
+          "explicitRetryReason": "retry-queue-repair-after-miss",
+          "whySelected": "Retry queue returns the missed item deliberately."
+        }
+      ]
+    }
+  ]
+}

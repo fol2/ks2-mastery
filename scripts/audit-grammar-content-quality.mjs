@@ -11,6 +11,37 @@ import { markByAnswerSpec } from '../worker/src/subjects/grammar/answer-spec.js'
 
 const DEFAULT_SEEDS = Object.freeze([1, 2, 3]);
 
+export function parseSeedList(value) {
+  if (!value) return [...DEFAULT_SEEDS];
+  const seeds = [];
+
+  for (const part of String(value).split(',')) {
+    const token = part.trim();
+    if (!token) continue;
+
+    const range = token.match(/^(\d+)\.\.(\d+)$/);
+    if (range) {
+      const start = Number(range[1]);
+      const end = Number(range[2]);
+      if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start) {
+        throw new Error(`Invalid seed range: ${token}`);
+      }
+      for (let seed = start; seed <= end; seed += 1) seeds.push(seed);
+      continue;
+    }
+
+    const seed = Number(token);
+    if (!Number.isInteger(seed) || seed < 1) {
+      throw new Error(`Invalid seed value: ${token}`);
+    }
+    seeds.push(seed);
+  }
+
+  const unique = Array.from(new Set(seeds)).sort((a, b) => a - b);
+  if (unique.length === 0) throw new Error(`No valid seeds parsed from: ${value}`);
+  return unique;
+}
+
 /**
  * Normalise an option string for duplicate detection.
  */
@@ -273,11 +304,12 @@ function formatSummary(audit) {
 
 async function main(argv) {
   const seedArg = argv.find((arg) => arg.startsWith('--seeds='));
-  const seeds = seedArg
-    ? seedArg.slice('--seeds='.length).split(',').map(Number).filter(Number.isFinite)
-    : DEFAULT_SEEDS;
+  const seeds = seedArg ? parseSeedList(seedArg.slice('--seeds='.length)) : [...DEFAULT_SEEDS];
 
   const audit = buildGrammarContentQualityAudit(seeds);
+  if (audit.summary.totalTemplatesChecked === 0) {
+    throw new Error(`Grammar content-quality audit checked 0 templates; parsed seeds: ${seeds.join(',')}`);
+  }
 
   if (argv.includes('--json')) {
     console.log(JSON.stringify(audit, null, 2));

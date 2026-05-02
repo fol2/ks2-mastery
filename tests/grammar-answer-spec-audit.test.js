@@ -278,15 +278,19 @@ test('release-id bump is NO for every selected-response row', () => {
 });
 
 test('audit table proposes the expected current answer-spec distribution', () => {
-  // Sanity: selected-response rows use `exact`, while classify-table templates
-  // use `multiField`. The 28 constructed-response rows use one of the other
-  // declarative kinds.
+  // Sanity: the document tracks the live runtime denominator instead of a
+  // historical phase-specific count. Legacy selected-response templates without
+  // hidden answer specs still have an additive `exact` proposal.
   const doc = readAuditDoc();
   const rows = extractClassificationTableRows(doc);
-  const exactCount = rows.filter((row) => row.proposedKind === 'exact').length;
-  const multiFieldCount = rows.filter((row) => row.proposedKind === 'multiField').length;
-  const nonExactCount = rows.length - exactCount;
-  assert.equal(exactCount, 78, `Expected 78 rows proposing 'exact', got ${exactCount}.`);
-  assert.equal(multiFieldCount, 4, `Expected 4 rows proposing 'multiField', got ${multiFieldCount}.`);
-  assert.equal(nonExactCount, 32, `Expected 32 rows proposing a non-exact kind, got ${nonExactCount}.`);
+  const actualCounts = rows.reduce((counts, row) => {
+    counts[row.proposedKind] = (counts[row.proposedKind] || 0) + 1;
+    return counts;
+  }, {});
+  const expectedCounts = GRAMMAR_TEMPLATE_METADATA.reduce((counts, template) => {
+    const kind = template.answerSpecKind || 'exact';
+    counts[kind] = (counts[kind] || 0) + 1;
+    return counts;
+  }, {});
+  assert.deepEqual(actualCounts, expectedCounts);
 });

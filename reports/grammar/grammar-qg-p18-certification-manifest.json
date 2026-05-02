@@ -1,0 +1,42 @@
+{
+  "contentReleaseId": "grammar-qg-p18-2026-05-02",
+  "certificationPhase": "grammar-qg-p18",
+  "templateDenominator": 510,
+  "seedWindow": {
+    "certification": "1..30"
+  },
+  "seedWindowPerEvidenceType": {
+    "selected-response-oracle": "1..15",
+    "constructed-response-oracle": "1..10",
+    "manual-review-oracle": "1..5",
+    "redaction-oracle": "1..30",
+    "content-quality-audit": "1..30",
+    "semantic-prompt-cue-audit": "1..30"
+  },
+  "expectedItemCount": 15300,
+  "expectedMarkingMatrixEntryCount": 945,
+  "expectedOutputPaths": [
+    "reports/grammar/grammar-qg-p18-render-inventory.json",
+    "reports/grammar/grammar-qg-p18-render-inventory-redacted.md"
+  ],
+  "artefacts": {
+    "renderInventory": "reports/grammar/grammar-qg-p18-render-inventory.json",
+    "renderInventoryRedacted": "reports/grammar/grammar-qg-p18-render-inventory-redacted.md",
+    "qualityRegister": "reports/grammar/grammar-qg-p18-quality-register.json",
+    "distractorAudit": "reports/grammar/grammar-qg-p18-distractor-audit.json",
+    "markingMatrix": "reports/grammar/grammar-qg-p18-marking-matrix.json",
+    "certificationStatusMap": "reports/grammar/grammar-qg-p18-certification-status-map.json",
+    "semanticAuditScript": "scripts/audit-grammar-prompt-cues-semantic.mjs",
+    "semanticPromptCueAudit": "reports/grammar/grammar-qg-p18-semantic-prompt-cue-audit.json",
+    "learnerSurfaceAudit": "reports/grammar/grammar-qg-p18-learner-surface-audit.json",
+    "starPacingSimulation": "reports/grammar/grammar-qg-p18-star-pacing-simulation.json",
+    "productionSmoke": "reports/grammar/grammar-production-smoke-grammar-qg-p18-2026-05-02.json"
+  },
+  "generatorScript": "scripts/generate-grammar-qg-quality-inventory.mjs",
+  "generatorScriptHash": "3a1af25b8d10a5f4077aec408772cea62290ec068360d2a27aaa83480c1a6a87",
+  "generationCommand": "node scripts/generate-grammar-qg-quality-inventory.mjs --seeds=1..30 --release=p18",
+  "generatedAt": "2026-05-02T21:14:29.097Z",
+  "answerInternalsIncluded": true,
+  "answerInternalsRedacted": true,
+  "postDeployRequiredForPostDeployCertification": true
+}

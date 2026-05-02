@@ -2,7 +2,7 @@
  * Grammar QG P12 — Release gate validation
  *
  * Ensures package.json production-release scripts reference
- * the active P14 certification manifest and expected release tag.
+ * the active P18 certification manifest and expected release tag.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,17 +17,24 @@ const scripts = pkg.scripts;
 describe('verify:grammar-qg-production-release gate', () => {
   const releaseScript = scripts['verify:grammar-qg-production-release'];
 
-  it('references grammar-qg-p14-certification-manifest.json', () => {
+  it('references grammar-qg-p18-certification-manifest.json', () => {
     assert.ok(
-      releaseScript.includes('grammar-qg-p14-certification-manifest.json'),
-      `Expected production-release script to reference P14 manifest, got: ${releaseScript}`
+      releaseScript.includes('grammar-qg-p18-certification-manifest.json'),
+      `Expected production-release script to reference P18 manifest, got: ${releaseScript}`
     );
   });
 
-  it('references --expected-release=grammar-qg-p14-2026-05-01', () => {
+  it('references --expected-release=grammar-qg-p18-2026-05-02', () => {
     assert.ok(
-      releaseScript.includes('--expected-release=grammar-qg-p14-2026-05-01'),
-      `Expected production-release script to target P14 release tag, got: ${releaseScript}`
+      releaseScript.includes('--expected-release=grammar-qg-p18-2026-05-02'),
+      `Expected production-release script to target P18 release tag, got: ${releaseScript}`
+    );
+  });
+
+  it('checks generated manual expansion freshness before certification validation', () => {
+    assert.ok(
+      releaseScript.includes('node scripts/generate-grammar-manual-expansion.mjs --check'),
+      `Expected production-release script to check generated manual expansion freshness, got: ${releaseScript}`
     );
   });
 

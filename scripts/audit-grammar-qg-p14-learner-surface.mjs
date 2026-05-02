@@ -243,15 +243,17 @@ async function main() {
     options: {
       out: { type: 'string', default: DEFAULT_JSON_OUT },
       markdown: { type: 'string', default: DEFAULT_MD_OUT },
+      'report-id': { type: 'string', default: 'grammar-qg-p14-learner-surface-audit' },
     },
     strict: false,
   });
   const report = buildLearnerSurfaceAudit();
+  report.reportId = values['report-id'];
   const jsonOut = path.resolve(values.out);
   const mdOut = path.resolve(values.markdown);
   await fs.mkdir(path.dirname(jsonOut), { recursive: true });
   await fs.writeFile(jsonOut, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  await fs.writeFile(mdOut, markdownFor(report), 'utf8');
+  await fs.writeFile(mdOut, `${markdownFor(report).trimEnd()}\n`, 'utf8');
   console.log(`Wrote ${path.relative(ROOT_DIR, jsonOut)}`);
   console.log(`Wrote ${path.relative(ROOT_DIR, mdOut)}`);
   if (!report.pass) process.exit(1);
