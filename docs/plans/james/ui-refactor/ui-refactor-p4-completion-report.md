@@ -2,12 +2,12 @@
 
 Date: 2026-05-01
 
-Status: source, local build, deployed smoke, and live production screenshot evidence captured for `https://ks2.eugnel.uk`. P4 has no remaining production-evidence blocker. P5/P6 is not claimed because no `ui-refactor-p5.md` or `ui-refactor-p6.md` contract exists in this repository.
+Status: source, local build, and deployed smoke evidence captured for `https://ks2.eugnel.uk`. P4 has no remaining production-smoke blocker. The committed screenshot pack proves only the screenshot files present in this repository; missing screenshot paths in the production visual evidence manifest are explicitly downgraded and are not bundled-image claims. P5 is tracked separately by `ui-refactor-p5.md`; this P4 report does not claim P5 delivery.
 
 ## Scope Boundary
 
 - Source boundary: implemented and verified in local worktree `.worktrees/ui-refactor-p4` on branch `ui-refactor-p4`, then production evidence/fix work continued in `.worktrees/ui-refactor-p4-production-evidence-clean`.
-- GitHub boundary: P4 source was merged through PR `#815`; this report now also records the follow-up production-evidence closure and Admin Visual Engine routing fix.
+- GitHub boundary: P4 source was merged through PR `#815`; the follow-up production-evidence closure and Admin Visual Engine routing fix were merged through PR `#823`.
 - ZIP boundary: no ZIP snapshot was used as the source of truth after these edits; verification is from the local source checkout.
 - Production boundary: deployed smoke 2026-05-01 against `https://ks2.eugnel.uk` passed; screenshot evidence was captured from an isolated production demo session plus a logged-in admin browser session.
 
@@ -78,7 +78,9 @@ Known non-failing output:
 
 ## Production Evidence
 
-Production evidence: production-proven for the P4 surfaces in scope.
+Production smoke evidence: production-smoke-proven for the P4 surfaces covered by the recorded smoke files.
+
+Screenshot-pack evidence: screenshot-pack-proven only for committed screenshot files that are present in this repository. The current committed pack contains `01-home.png`; the other screenshot entries in `reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json` are marked `omitted` with durable non-claim reasons because their PNG files are not present in the lean source bundle.
 
 Deployed smoke and screenshot evidence was captured on 2026-05-01 for `https://ks2.eugnel.uk`:
 
@@ -88,12 +90,12 @@ Deployed smoke and screenshot evidence was captured on 2026-05-01 for `https://k
 - Grammar production smoke: `reports/ui-refactor/ui-refactor-p4-grammar-production-smoke-2026-05-01.json` (`ok: true`, release `grammar-qg-p14-2026-05-01`, deployed source commit `91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa`, finished `2026-05-01T22:45:26.783Z`).
 - Punctuation production smoke: `reports/ui-refactor/ui-refactor-p4-punctuation-production-smoke-2026-05-01.json` (`ok: true`, release `punctuation-qg-p11-2026-05-01`, deployed source commit `91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa`, finished `2026-05-01T22:45:38.946Z`; `adminHubCoverage: false` because admin credentials are not part of that script).
 - Visual production evidence manifest: `reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json`.
-- Screenshot artifacts: Home, Spelling setup/session/feedback/summary, Grammar setup/session/summary, Punctuation setup/session/summary, and Admin Visual Engine under `output/playwright/ui-refactor-p4-production-2026-05-01/`.
+- Screenshot artifacts: Home is present under `output/playwright/ui-refactor-p4-production-2026-05-01/01-home.png`. Spelling setup/session/feedback/summary, Grammar setup/session/summary, Punctuation setup/session/summary, and Admin Visual Engine were named in the original manifest but are not present in this committed evidence pack, so P5 treats them as not proven from supplied artefacts.
 
 Residual blockers:
 
 - None for P4 production evidence after the follow-up fixes.
-- No `ui-refactor-p5.md` or `ui-refactor-p6.md` contract exists in this repository, so this report cannot truthfully claim P5/P6 delivery. It closes P4 plus the production-evidence follow-up only.
+- This report cannot truthfully claim P5/P6 delivery. It closes P4 plus the production-evidence follow-up only.
 
 ## Non-Goals
 

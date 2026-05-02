@@ -11,6 +11,7 @@ import {
 } from './service-contract.js';
 import { PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS } from './components/punctuation-view-model.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../platform/core/subject-availability.js';
+import { createReadySubjectVisualAdapter } from '../../platform/ui/subject-visual-adapter.js';
 
 function applyTransition(context, transition) {
   if (!transition) return true;
@@ -70,6 +71,13 @@ export const punctuationModule = {
   available: true,
   exposureGate: SUBJECT_EXPOSURE_GATES.punctuation,
   reactPractice: true,
+  visualAdapter: createReadySubjectVisualAdapter('punctuation', {
+    setup: { component: 'PunctuationSetupScene', primaryAction: 'punctuation-start' },
+    sessionHud: { component: 'SessionHUD', adapter: 'PunctuationSessionScene' },
+    companionPanel: { component: 'SubjectCompanionPanel', dataSource: 'activeMonsters+stats' },
+    practiceStage: { component: 'PracticeStage', adopted: true },
+    summaryFrame: { component: 'SessionSummaryFrame', adapter: 'PunctuationSummaryFrameAdapter' },
+  }),
   initState() {
     return createInitialPunctuationState();
   },

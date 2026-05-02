@@ -4,10 +4,28 @@
   "capturedAt": "2026-05-01T22:48:25Z",
   "deployment": {
     "versionId": "0bc250a8-1224-476c-a534-c383814527f8",
+    "sourceCommit": "91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa",
     "productionBundleAudit": "passed",
     "appBundleGzipBytes": 230865,
     "appBundleBudgetBytes": 232000
   },
+  "smokeFiles": [
+    {
+      "name": "bootstrap",
+      "status": "present",
+      "path": "reports/ui-refactor/ui-refactor-p4-bootstrap-production-smoke-2026-05-01.json"
+    },
+    {
+      "name": "grammar",
+      "status": "present",
+      "path": "reports/ui-refactor/ui-refactor-p4-grammar-production-smoke-2026-05-01.json"
+    },
+    {
+      "name": "punctuation",
+      "status": "present",
+      "path": "reports/ui-refactor/ui-refactor-p4-punctuation-production-smoke-2026-05-01.json"
+    }
+  ],
   "sessions": {
     "subjectScreenshots": "isolated production demo sessions created through /api/demo/session; Spelling summary used a deterministic one-word single drill request on the production command path",
     "adminScreenshot": "logged-in production admin browser session via bb-browser"
@@ -20,59 +38,70 @@
     },
     {
       "name": "spelling-setup",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/02-spelling-setup.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/02-spelling-setup.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     },
     {
       "name": "spelling-session",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/03-spelling-session.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/03-spelling-session.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     },
     {
       "name": "spelling-feedback",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/04-spelling-feedback.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/04-spelling-feedback.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     },
     {
       "name": "spelling-summary",
-      "status": "captured",
+      "status": "omitted",
       "path": "output/playwright/ui-refactor-p4-production-2026-05-01/04-spelling-summary.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts.",
       "detail": "Captured after the remote command response fix preserved the live summary read model returned by the Worker."
     },
     {
       "name": "grammar-setup",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/05-grammar-setup.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/05-grammar-setup.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     },
     {
       "name": "grammar-session",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/06-grammar-session.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/06-grammar-session.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     },
     {
       "name": "grammar-summary",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/07-grammar-summary.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/07-grammar-summary.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     },
     {
       "name": "punctuation-setup",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/08-punctuation-setup.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/08-punctuation-setup.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     },
     {
       "name": "punctuation-session",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/09-punctuation-session.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/09-punctuation-session.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     },
     {
       "name": "punctuation-summary",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/10-punctuation-summary.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/10-punctuation-summary.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     },
     {
       "name": "admin-visual-engine",
-      "status": "captured",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/11-admin-visual-engine.png"
+      "status": "omitted",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/11-admin-visual-engine.png",
+      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
     }
   ],
   "discoveredFixes": [

@@ -411,7 +411,6 @@ function MiniTestStatus({ miniTest, pending, runtimeReadOnly, answerFormId }) {
     <div className="grammar-mini-test-panel" aria-label="Mini-test status">
       <div className="grammar-mini-test-meta">
         <span className="chip good">Timed test</span>
-        <span className="chip">Question {currentIndex + 1} of {Math.max(1, questions.length)}</span>
         <span className="chip">{answered} saved</span>
         <span className={`chip ${remainingMs <= 60_000 ? 'warn' : ''}`}>Time left {formatMiniTestTime(remainingMs)}</span>
       </div>
