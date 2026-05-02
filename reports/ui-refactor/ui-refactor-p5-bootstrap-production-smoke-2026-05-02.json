@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "reportMeta": {
+    "commit": "3e85fdb2ee819357559ac63f21e2e9cf9a6ea9e7",
+    "environment": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "authMode": "cookie",
+    "learners": null,
+    "bootstrapBurst": null,
+    "rounds": null,
+    "startedAt": "2026-05-02T21:15:22.739Z",
+    "finishedAt": "2026-05-02T21:15:23.207Z",
+    "evidenceSchemaVersion": 3,
+    "provenance": {
+      "workflowRunUrl": "unknown",
+      "workflowName": "unknown",
+      "gitSha": "3e85fdb2ee819357559ac63f21e2e9cf9a6ea9e7",
+      "dirtyTreeFlag": true,
+      "thresholdConfigHash": "none",
+      "loadDriverVersion": "0.1.0",
+      "operator": "jamesto",
+      "rawLogArtifactPath": "none"
+    }
+  },
+  "summary": {
+    "ok": true,
+    "failures": [],
+    "thresholdViolations": [],
+    "warnings": [],
+    "responseBytes": 2448,
+    "counts": {
+      "practiceSessions": 0,
+      "eventLog": 0
+    },
+    "capacity": {
+      "queryCount": 9,
+      "d1RowsRead": 7,
+      "d1RowsWritten": 0,
+      "serverWallMs": 156,
+      "responseBytes": 1818
+    },
+    "url": "https://ks2.eugnel.uk/api/bootstrap",
+    "status": 200,
+    "clientRequestId": "req_ed53bcaa09a2e3a23924994f",
+    "serverRequestId": "req_ed53bcaa09a2e3a23924994f",
+    "startedAt": "2026-05-02T21:15:22.739Z",
+    "finishedAt": "2026-05-02T21:15:23.207Z"
+  },
+  "failures": [],
+  "thresholds": {},
+  "safety": {
+    "mode": "production-probe",
+    "origin": "https://ks2.eugnel.uk/api/bootstrap",
+    "authMode": "cookie"
+  },
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "requestIds": "sha256:24",
+    "rawRequestIdsPersisted": false
+  }
+}

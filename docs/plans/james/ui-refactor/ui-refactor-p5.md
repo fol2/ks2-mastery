@@ -1,6 +1,6 @@
 # UI Refactor P5 — Visual Engine Operating Contract
 
-Status: proposed
+Status: completed 2026-05-02
 Owner: Product + Engineering
 Language: UK English
 Predecessor: `docs/plans/james/ui-refactor/ui-refactor-p4-completion-report.md`
@@ -298,4 +298,3 @@ P5 is complete when:
 8. Future subjects have a safe visual adapter contract but no fake production engine.
 9. Local and production evidence are captured with source boundaries intact.
 10. The completion report closes UI Refactor Visual Engine v1 without opening a generic P6.
-

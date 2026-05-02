@@ -1,0 +1,47 @@
+{
+  "ok": true,
+  "url": "https://ks2.eugnel.uk/admin#section=visual-engine",
+  "apiMode": "existing-cdp-browser-session-real-production-api",
+  "screenshotPath": "output/playwright/ui-refactor-p5-production-2026-05-02/admin-visual-engine-real-cdp.png",
+  "checks": {
+    "visualTabVisible": true,
+    "visualAdapters": true,
+    "evidencePack": true,
+    "deploymentMetadata": true,
+    "smokeFiles": true,
+    "diagnosticOnly": true
+  },
+  "textAssertions": {
+    "hasAccessDenied": false,
+    "hasP4SourceCommit": true
+  },
+  "responses": [
+    {
+      "url": "https://ks2.eugnel.uk/api/auth/session",
+      "status": 200
+    },
+    {
+      "url": "https://ks2.eugnel.uk/api/bootstrap",
+      "status": 200
+    },
+    {
+      "url": "https://ks2.eugnel.uk/api/admin/accounts",
+      "status": 200
+    },
+    {
+      "url": "https://ks2.eugnel.uk/api/ops/active-messages",
+      "status": 200
+    },
+    {
+      "url": "https://ks2.eugnel.uk/api/hubs/admin?learnerId=be3b6831-d7c3-4318-9560-02051dc67704&auditLimit=20",
+      "status": 200
+    },
+    {
+      "url": "https://ks2.eugnel.uk/api/hubs/admin?learnerId=be3b6831-d7c3-4318-9560-02051dc67704&auditLimit=20",
+      "status": 200
+    }
+  ],
+  "timestamp": "2026-05-02T21:21:03.435Z",
+  "deployedVersionId": "9cc7c30b-6c0b-4806-b782-c76f11ce7530",
+  "deployedSourceCommit": "3e85fdb2ee819357559ac63f21e2e9cf9a6ea9e7"
+}
