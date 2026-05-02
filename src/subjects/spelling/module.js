@@ -1,5 +1,6 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
 import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
+import { createReadySubjectVisualAdapter } from '../../platform/ui/subject-visual-adapter.js';
 import { monsterBranchOverrideForLearner } from '../../platform/game/learner-monster-branch-overrides.js';
 import { createInitialSpellingState, isMegaSafeMode, isPostMasteryMode } from './service-contract.js';
 import {
@@ -123,6 +124,13 @@ export const spellingModule = {
   icon: 'pen',
   available: true,
   reactPractice: true,
+  visualAdapter: createReadySubjectVisualAdapter('spelling', {
+    setup: { component: 'SpellingSetupScene', primaryAction: 'spelling-start' },
+    sessionHud: { component: 'SessionHUD', adapter: 'SpellingSessionScene' },
+    companionPanel: { component: 'SubjectCompanionPanel', dataSource: 'codex+stats' },
+    practiceStage: { component: 'PracticeStage', adopted: true },
+    summaryFrame: { component: 'SessionSummaryFrame', adapter: 'SpellingSummaryFrameAdapter' },
+  }),
   initState() {
     return createInitialSpellingState();
   },

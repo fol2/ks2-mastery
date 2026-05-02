@@ -8,6 +8,7 @@ import {
 } from './metadata.js';
 import { normaliseGrammarSpeechRate } from './speech.js';
 import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
+import { createReadySubjectVisualAdapter } from '../../platform/ui/subject-visual-adapter.js';
 import {
   shouldDelayMonsterCelebrations,
   subjectSessionEnded,
@@ -342,6 +343,13 @@ export const grammarModule = {
   icon: 'speech',
   available: true,
   reactPractice: true,
+  visualAdapter: createReadySubjectVisualAdapter(GRAMMAR_SUBJECT_ID, {
+    setup: { component: 'GrammarSetupScene', primaryAction: 'grammar-start' },
+    sessionHud: { component: 'SessionHUD', adapter: 'GrammarSessionScene' },
+    companionPanel: { component: 'SubjectCompanionPanel', dataSource: 'monsterStrip+todayCards' },
+    practiceStage: { component: 'PracticeStage', adopted: true },
+    summaryFrame: { component: 'SessionSummaryFrame', adapter: 'GrammarSummaryFrameAdapter' },
+  }),
   initState() {
     return normaliseGrammarReadModel();
   },

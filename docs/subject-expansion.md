@@ -39,6 +39,8 @@ Punctuation is now the first production non-Spelling subject using this path. It
 
 The browser shell has since moved to a single React root. Subject presentation flows through `SubjectRoute` and React practice components.
 
+Visual Engine v1 adds one more presentation contract for every registered subject: `SubjectVisualAdapter`, documented in `docs/subject-visual-adapter-contract.md`. A production-ready subject should expose ready adapter sections for setup, session HUD, companion panel, practice stage, and summary frame through its subject module. Placeholder subjects such as Reading, Reasoning, and Arithmetic may expose unavailable adapters, but they must not gain production practice controls or browser scoring engines from the visual adapter alone.
+
 The full-lockdown baseline adds one more production rule: a new public subject must not ship its production engine as a browser runtime. The React component may render controls, local form state, and returned read models, but session creation, marking, scheduling, progress mutation, and reward projection should be owned by Worker subject commands before the subject is treated as production-ready.
 
 ## Thin-slice reference contract

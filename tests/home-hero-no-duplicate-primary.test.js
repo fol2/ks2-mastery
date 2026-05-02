@@ -52,6 +52,10 @@ function countPrimaryLearnerCtas(html) {
   );
 }
 
+function countPrimaryButtons(html) {
+  return countMatches(html, /<button\b(?=[^>]*class="btn primary xl")[^>]*>/g);
+}
+
 test.after(() => {
   cleanupHomeSurfaceRenderer();
 });
@@ -94,4 +98,60 @@ test('HomeSurface renders subject cards exactly once for zero, one, three and si
       );
     }
   }
+});
+
+test('P5 U2: HomeSurface hero operating states keep one primary learner action', () => {
+  const states = [
+    ['no-ready-subject', []],
+    ['one-ready-subject', SUBJECTS.slice(0, 1)],
+    ['three-ready-subjects', SUBJECTS.slice(0, 3)],
+    ['six-registered-three-ready', SUBJECTS],
+    ['hero-disabled', SUBJECTS.slice(0, 3), { enabled: false, status: 'idle' }],
+    ['hero-shadow-hold', SUBJECTS.slice(0, 3), { enabled: true, status: 'loading' }],
+    ['persistence-degraded', SUBJECTS.slice(0, 3), { enabled: false, status: 'idle' }, { mode: 'degraded', label: 'Sync degraded' }],
+    ['read-only-learner-context', SUBJECTS.slice(0, 3), { enabled: false, status: 'idle' }, { mode: 'read-only', label: 'Read-only' }, { canOpenParentHub: false }],
+  ];
+
+  for (const [
+    name,
+    subjects,
+    hero = { enabled: false, status: 'idle' },
+    persistence = { mode: 'local-only', label: 'Local-only' },
+    permissions = { canOpenParentHub: true },
+  ] of states) {
+    const html = renderHomeSurfaceStandalone({
+      model: {
+        ...modelWithSubjects(subjects),
+        hero,
+        persistence,
+        permissions,
+      },
+    });
+    assert.equal(countPrimaryLearnerCtas(html), 1, `${name} must have exactly one open-subject primary CTA`);
+    assert.equal(countMatches(html, /data-scene="home-hero"/g), 1);
+    assert.equal(countMatches(html, /class="subject-grid"/g), 1);
+  }
+});
+
+test('P5 U2: active Hero Quest branch has one primary action and does not hide subject cards', () => {
+  const html = renderHomeSurfaceStandalone({
+    model: {
+      ...modelWithSubjects(SUBJECTS),
+      hero: {
+        enabled: true,
+        status: 'idle',
+        canStart: true,
+        canContinue: false,
+        nextTask: { taskId: 'hero-task-1', subjectId: 'spelling', childLabel: 'Spelling round' },
+        effortPlanned: 6,
+        completedTaskIds: [],
+        eligibleSubjects: ['spelling', 'grammar', 'punctuation'],
+        lockedSubjects: [],
+      },
+    },
+  });
+
+  assert.equal(countPrimaryButtons(html), 1);
+  assert.equal(countMatches(html, /class="subject-card/g), SUBJECTS.length);
+  assert.doesNotMatch(html, /Hero Coins|Hero Camp/);
 });

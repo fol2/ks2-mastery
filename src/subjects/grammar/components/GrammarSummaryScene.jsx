@@ -187,6 +187,13 @@ function GrammarSummaryFrameAdapter({
           disabled: Boolean(disabled),
           onClick: () => actions.dispatch('grammar-open-analytics'),
         },
+        {
+          label: 'Back to dashboard',
+          dataAction: 'grammar-back',
+          variant: 'ghost',
+          disabled: Boolean(disabled),
+          onClick: () => actions.dispatch('grammar-back'),
+        },
       ]
     : [
         ...(missedConceptId ? [{
@@ -210,6 +217,13 @@ function GrammarSummaryFrameAdapter({
           ariaLabel: 'Open adult report',
           disabled: Boolean(disabled),
           onClick: () => actions.dispatch('grammar-open-analytics'),
+        },
+        {
+          label: 'Back to dashboard',
+          dataAction: 'grammar-back',
+          variant: 'ghost',
+          disabled: Boolean(disabled),
+          onClick: () => actions.dispatch('grammar-back'),
         },
       ];
   return (

@@ -1,4 +1,5 @@
 import { createElement } from 'react';
+import { createPlaceholderSubjectVisualAdapter } from '../../platform/ui/subject-visual-adapter.js';
 
 function PlaceholderPracticeComponent({ subject }) {
   const meta = subject || {};
@@ -47,6 +48,7 @@ export function createPlaceholderSubject(meta) {
   return {
     ...meta,
     available: false,
+    visualAdapter: createPlaceholderSubjectVisualAdapter(meta.id, meta.name),
     initState() {
       return {
         placeholder: true,

@@ -177,6 +177,8 @@ test('AdminVisualEngineSection uses SectionHeader primitive for diagnostic categ
     'section-monster-assets',
     'section-placeholders',
     'section-stage-assignments',
+    'section-visual-adapters',
+    'section-visual-evidence-pack',
     'section-motion-profiles',
     'section-alt-text',
   ];
@@ -186,6 +188,31 @@ test('AdminVisualEngineSection uses SectionHeader primitive for diagnostic categ
       `Expected SectionHeader with data-testid="${testId}"`
     );
   }
+});
+
+test('P5 U5: AdminVisualEngineSection displays adapter and evidence-pack status rows', async () => {
+  const html = await renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { AdminVisualEngineSection } from ${absoluteSpecifier('src/surfaces/hubs/AdminVisualEngineSection.jsx')};
+    const markup = renderToStaticMarkup(React.createElement(AdminVisualEngineSection));
+    console.log(markup);
+  `);
+
+  assert.ok(html.includes('data-testid="visual-adapter-table"'));
+  assert.ok(html.includes('data-testid="visual-evidence-table"'));
+  assert.ok(html.includes('data-testid="visual-evidence-deployment-table"'));
+  assert.ok(html.includes('data-testid="visual-smoke-files-table"'));
+  assert.ok(html.includes('data-visual-adapter-status="ready"'));
+  assert.ok(html.includes('data-visual-adapter-status="unavailable"'));
+  assert.ok(html.includes('data-screenshot="home"'));
+  assert.ok(html.includes('data-screenshot-status="captured"'));
+  assert.ok(html.includes('data-screenshot-status="omitted"'));
+  assert.ok(html.includes('data-smoke="bootstrap"'));
+  assert.ok(html.includes('0bc250a8-1224-476c-a534-c383814527f8'));
+  assert.ok(html.includes('91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa'));
+  assert.ok(html.includes('2026-05-01T22:48:25Z'));
+  assert.ok(html.includes('0 external'));
 });
 
 // ---------- Test 5: Section renders within admin hub tab registry ---------- //

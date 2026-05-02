@@ -2,9 +2,11 @@ import React from 'react';
 import { AdminPanelFrame } from './AdminPanelFrame.jsx';
 import { SectionHeader } from '../../platform/ui/SectionHeader.jsx';
 import { SUBJECT_THEMES, SUBJECT_IDS } from '../../platform/ui/subject-themes.js';
+import { SUBJECTS } from '../../platform/core/subject-registry.js';
 import { MONSTER_ASSET_MANIFEST } from '../../platform/game/monster-asset-manifest.js';
 import { BUNDLED_MONSTER_VISUAL_CONFIG, MONSTER_VISUAL_CONTEXTS, MONSTER_VISUAL_MOTION_PROFILE_OPTIONS } from '../../platform/game/monster-visual-config.js';
 import { MONSTERS, MONSTERS_BY_SUBJECT } from '../../platform/game/monsters.js';
+import visualEvidenceManifest from '../../../reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json';
 
 // U8: Read-only diagnostic panel for admin inspection of subject theme tokens,
 // monster asset availability, and visual engine configuration.
@@ -47,11 +49,39 @@ function getMotionProfiles() {
   return profiles;
 }
 
+function evidenceRows(manifest) {
+  return (Array.isArray(manifest?.screenshots) ? manifest.screenshots : []).map((entry) => ({
+    name: entry.name || 'unknown',
+    status: entry.status || 'unknown',
+    path: entry.path || entry.externalUrl || entry.url || entry.evidenceUrl || 'not supplied',
+    reason: entry.reason || '',
+  }));
+}
+
+function smokeRows(manifest) {
+  return (Array.isArray(manifest?.smokeFiles) ? manifest.smokeFiles : []).map((entry) => ({
+    name: entry.name || 'unknown',
+    status: entry.status || 'unknown',
+    path: entry.path || 'not supplied',
+  }));
+}
+
+function evidenceStatusCounts(rows) {
+  return rows.reduce((counts, row) => {
+    counts[row.status] = (counts[row.status] || 0) + 1;
+    return counts;
+  }, {});
+}
+
 export function AdminVisualEngineSection() {
   const placeholders = detectPlaceholderAssets(MONSTER_ASSET_MANIFEST);
   const missingAlt = detectMissingAltText(MONSTER_ASSET_MANIFEST);
   const motionProfiles = getMotionProfiles();
   const totalAssets = MONSTER_ASSET_MANIFEST.assets.length;
+  const evidence = evidenceRows(visualEvidenceManifest);
+  const evidenceCounts = evidenceStatusCounts(evidence);
+  const smokes = smokeRows(visualEvidenceManifest);
+  const deployment = visualEvidenceManifest.deployment || {};
 
   return (
     <AdminPanelFrame
@@ -161,6 +191,109 @@ export function AdminVisualEngineSection() {
         <p><strong>Schema version:</strong> {BUNDLED_MONSTER_VISUAL_CONFIG.schemaVersion}</p>
         <p><strong>Manifest hash:</strong> <code>{BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash}</code></p>
       </div>
+
+      {/* Visual Adapter Contract */}
+      <SectionHeader
+        eyebrow="Operating Contract"
+        title="Subject Visual Adapters"
+        level={3}
+        data-testid="section-visual-adapters"
+      />
+      <table className="admin-table" data-testid="visual-adapter-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Setup</th>
+            <th>Companion input</th>
+            <th>Summary frame</th>
+          </tr>
+        </thead>
+        <tbody>
+          {SUBJECTS.map((subject) => {
+            const adapter = subject.visualAdapter || {};
+            const sections = adapter.sections || {};
+            return (
+              <tr key={subject.id} data-subject={subject.id} data-visual-adapter-status={adapter.status || 'missing'}>
+                <td><strong>{subject.name}</strong></td>
+                <td>{adapter.status || 'missing'}</td>
+                <td><code>{sections.setup?.component || sections.setup?.mode || 'not supplied'}</code></td>
+                <td><code>{sections.companionPanel?.dataSource || sections.companionPanel?.mode || 'not supplied'}</code></td>
+                <td><code>{sections.summaryFrame?.component || sections.summaryFrame?.mode || 'not supplied'}</code></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {/* Evidence Pack Status */}
+      <SectionHeader
+        eyebrow="Evidence"
+        title="Visual Evidence Pack"
+        level={3}
+        statusChip={<span className="chip" data-testid="visual-evidence-status-chip">{`${evidenceCounts.captured || 0} present / ${evidenceCounts.omitted || 0} omitted / ${evidenceCounts.external || 0} external`}</span>}
+        data-testid="section-visual-evidence-pack"
+      />
+      <table className="admin-table" data-testid="visual-evidence-table">
+        <thead>
+          <tr>
+            <th>Screenshot</th>
+            <th>Status</th>
+            <th>Path or evidence</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {evidence.map((row) => (
+            <tr key={row.name} data-screenshot={row.name} data-screenshot-status={row.status}>
+              <td>{row.name}</td>
+              <td>{row.status}</td>
+              <td><code>{row.path}</code></td>
+              <td>{row.reason || 'present in committed evidence pack'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <table className="admin-table" data-testid="visual-evidence-deployment-table">
+        <thead>
+          <tr>
+            <th>Origin</th>
+            <th>Captured</th>
+            <th>Deployment version</th>
+            <th>Source commit</th>
+            <th>Bundle audit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-testid="visual-evidence-deployment-row">
+            <td><code>{visualEvidenceManifest.origin || 'not supplied'}</code></td>
+            <td><code>{visualEvidenceManifest.capturedAt || 'not supplied'}</code></td>
+            <td><code>{deployment.versionId || 'not supplied'}</code></td>
+            <td><code>{deployment.sourceCommit || 'not supplied'}</code></td>
+            <td>{deployment.productionBundleAudit || 'not supplied'}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table className="admin-table" data-testid="visual-smoke-files-table">
+        <thead>
+          <tr>
+            <th>Smoke</th>
+            <th>Status</th>
+            <th>Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          {smokes.map((row) => (
+            <tr key={row.name} data-smoke={row.name} data-smoke-status={row.status}>
+              <td>{row.name}</td>
+              <td>{row.status}</td>
+              <td><code>{row.path}</code></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {/* Motion Profiles */}
       <SectionHeader

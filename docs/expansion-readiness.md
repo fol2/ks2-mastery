@@ -88,6 +88,7 @@ Arithmetic should only be considered complete when all of the following are true
 
 - it plugs into the new conformance suite
 - it plugs into the new golden-path smoke harness
+- it exposes a ready `SubjectVisualAdapter` as defined in `docs/subject-visual-adapter-contract.md`, while Reading and Reasoning remain unavailable adapters until their production engines exist
 - it persists through the generic repository collections
 - it publishes domain events through the existing event runtime
 - it exposes a subject-owned analytics snapshot
