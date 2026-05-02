@@ -10,9 +10,9 @@ import { PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 
 describe('Punctuation smoke attestation metadata', () => {
-  it('smoke at P11 depth asserts 1268 runtime items with correct release ID', () => {
+  it('smoke at P12 depth asserts 3312 runtime items with correct release ID', () => {
     const attestation = buildAttestationMetadata({ environment: 'local' });
-    assert.equal(attestation.runtimeItemCount, 1268);
+    assert.equal(attestation.runtimeItemCount, 3312);
     assert.equal(attestation.releaseId, PUNCTUATION_RELEASE_ID);
     assert.equal(attestation.generatedDepth, PRODUCTION_DEPTH);
   });
@@ -54,7 +54,7 @@ describe('Punctuation smoke attestation metadata', () => {
       () => assertAttestationRuntimeCount(tampered),
       (error) => {
         assert.match(error.message, /runtime count mismatch/i);
-        assert.match(error.message, /expected 1268/);
+        assert.match(error.message, /expected 3312/);
         assert.match(error.message, /got 999/);
         return true;
       },

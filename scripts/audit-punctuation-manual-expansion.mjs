@@ -8,9 +8,9 @@ import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 const jsonMode = process.argv.includes('--json');
 const REQUIRED_FAMILIES = 28;
 const REQUIRED_GENERATED_CHOOSE_FAMILIES = 3;
-const REQUIRED_TEMPLATES_PER_FAMILY = 40;
+const REQUIRED_TEMPLATES_PER_FAMILY = 100;
 const REQUIRED_GENERATED_ITEMS = REQUIRED_FAMILIES * REQUIRED_TEMPLATES_PER_FAMILY;
-const REQUIRED_TOTAL_POOL = 1000;
+const REQUIRED_TOTAL_POOL = 3000;
 
 function normalise(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim().toLowerCase();

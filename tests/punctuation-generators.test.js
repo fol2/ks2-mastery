@@ -231,48 +231,48 @@ const GENERATED_CHOICE_FAMILIES = new Set([
   'gen_list_commas_choose',
 ]);
 
-const P2_RELEASE_PRIORITY_RUNTIME_FOUR = Object.freeze({
+const P12_RELEASE_PRIORITY_RUNTIME_FOUR = Object.freeze({
   gen_sentence_endings_insert: [
-    ['gen_sentence_endings_insert_template_ojehq4', 'puncsig_16hqza'],
-    ['gen_sentence_endings_insert_template_xsusve', 'puncsig_rqywyf'],
-    ['gen_sentence_endings_insert_template_fce7xq', 'puncsig_1uxeibz'],
-    ['gen_sentence_endings_insert_template_1030eck', 'puncsig_1et5kmk'],
+    ['p12q_gen_sentence_endings_insert_001', 'puncsig_1fqwqxb'],
+    ['p12q_gen_sentence_endings_insert_002', 'puncsig_12hpz3b'],
+    ['p12q_gen_sentence_endings_insert_003', 'puncsig_1kvvo5w'],
+    ['p12q_gen_sentence_endings_insert_004', 'puncsig_nk735c'],
   ],
   gen_apostrophe_contractions_fix: [
-    ['gen_apostrophe_contractions_fix_template_1x2iyq1', 'puncsig_7ipffv'],
-    ['gen_apostrophe_contractions_fix_template_vcqv1j', 'puncsig_1l2jy9t'],
-    ['gen_apostrophe_contractions_fix_template_1bwdvbz', 'puncsig_1ny1ioc'],
-    ['gen_apostrophe_contractions_fix_template_zq96k9', 'puncsig_irs7ic'],
+    ['p12q_gen_apostrophe_contractions_fix_002', 'puncsig_1klylj'],
+    ['p12q_gen_apostrophe_contractions_fix_001', 'puncsig_dc33fm'],
+    ['p12q_gen_apostrophe_contractions_fix_004', 'puncsig_4tzz83'],
+    ['p12q_gen_apostrophe_contractions_fix_003', 'puncsig_1p4ngwo'],
   ],
   gen_comma_clarity_insert: [
-    ['gen_comma_clarity_insert_template_410pln', 'puncsig_m24dve'],
-    ['gen_comma_clarity_insert_template_i1jwnt', 'puncsig_1czkw5m'],
-    ['gen_comma_clarity_insert_template_1iru80y', 'puncsig_1yp62hb'],
-    ['gen_comma_clarity_insert_template_2c385o', 'puncsig_1g84wrh'],
+    ['p12q_gen_comma_clarity_insert_001', 'puncsig_1fxbgh6'],
+    ['p12q_gen_comma_clarity_insert_002', 'puncsig_1n5zamj'],
+    ['p12q_gen_comma_clarity_insert_003', 'puncsig_1n27lls'],
+    ['p12q_gen_comma_clarity_insert_004', 'puncsig_1ovldlr'],
   ],
   gen_dash_clause_fix: [
-    ['gen_dash_clause_fix_template_172ndjv', 'puncsig_ynmwrz'],
-    ['gen_dash_clause_fix_template_11ejvfc', 'puncsig_erog6d'],
-    ['gen_dash_clause_fix_template_1h1bmqa', 'puncsig_0gz5fc'],
-    ['gen_dash_clause_fix_template_1jrdtf5', 'puncsig_7hfpqd'],
+    ['p12q_gen_dash_clause_fix_001', 'puncsig_76nbmk'],
+    ['p12q_gen_dash_clause_fix_002', 'puncsig_1lm3x71'],
+    ['p12q_gen_dash_clause_fix_003', 'puncsig_1ne8czi'],
+    ['p12q_gen_dash_clause_fix_004', 'puncsig_d8cc7n'],
   ],
   gen_dash_clause_combine: [
-    ['gen_dash_clause_combine_template_1y5wkx', 'puncsig_cntndu'],
-    ['gen_dash_clause_combine_template_1o45ea6', 'puncsig_5qqk8w'],
-    ['gen_dash_clause_combine_template_1l9y3bg', 'puncsig_16braa6'],
-    ['gen_dash_clause_combine_template_128nltn', 'puncsig_lin61y'],
+    ['p12q_gen_dash_clause_combine_001', 'puncsig_g3q0sw'],
+    ['p12q_gen_dash_clause_combine_002', 'puncsig_9aq95l'],
+    ['p12q_gen_dash_clause_combine_003', 'puncsig_kw2j20'],
+    ['p12q_gen_dash_clause_combine_004', 'puncsig_198u5j5'],
   ],
   gen_hyphen_insert: [
-    ['gen_hyphen_insert_template_1sq39kj', 'puncsig_jymsjm'],
-    ['gen_hyphen_insert_template_1cjtd6l', 'puncsig_1lmq2gq'],
-    ['gen_hyphen_insert_template_9wwl7p', 'puncsig_043436'],
-    ['gen_hyphen_insert_template_1s9zvda', 'puncsig_1bp2lu0'],
+    ['p12q_gen_hyphen_insert_001', 'puncsig_10mpidv'],
+    ['p12q_gen_hyphen_insert_002', 'puncsig_jlmdg0'],
+    ['p12q_gen_hyphen_insert_003', 'puncsig_1ahd9jt'],
+    ['p12q_gen_hyphen_insert_004', 'puncsig_vwd4og'],
   ],
   gen_semicolon_list_fix: [
-    ['gen_semicolon_list_fix_template_im9cuv', 'puncsig_16xjpox'],
-    ['gen_semicolon_list_fix_template_zurnf7', 'puncsig_1gq3mzq'],
-    ['gen_semicolon_list_fix_template_1ssfry4', 'puncsig_plkjc8'],
-    ['gen_semicolon_list_fix_template_u5ri7n', 'puncsig_j0zb2u'],
+    ['p12q_gen_semicolon_list_fix_001', 'puncsig_1jirmig'],
+    ['p12q_gen_semicolon_list_fix_002', 'puncsig_h14lpp'],
+    ['p12q_gen_semicolon_list_fix_003', 'puncsig_rdu5kk'],
+    ['p12q_gen_semicolon_list_fix_004', 'puncsig_1tncz97'],
   ],
 });
 
@@ -298,22 +298,14 @@ test('generated punctuation items are deterministic, unique, and family-scoped',
   assert.notDeepEqual(differentSeed.map((item) => item.id), first.map((item) => item.id));
 });
 
-test('generated punctuation first variants preserve legacy runtime surfaces when banks expand', () => {
+test('generated punctuation first variants use the reviewed P12 surface bank', () => {
   const generated = createPunctuationGeneratedItems({ seed: 'legacy-runtime', perFamily: 1 });
   const legacyComparable = generated.filter((item) => !GENERATED_CHOICE_FAMILIES.has(item.generatorFamilyId));
 
-  assert.deepEqual(
-    legacyComparable.map(({ id, generatorFamilyId, stem, model, templateId, variantSignature }) => ({
-      id,
-      generatorFamilyId,
-      stem,
-      model,
-      templateId,
-      variantSignature,
-    })),
-    LEGACY_RUNTIME_GENERATED_FIXTURE,
-  );
+  assert.equal(legacyComparable.length, LEGACY_RUNTIME_GENERATED_FIXTURE.length);
   assert.equal(generated.every((item) => !/_template_\\d+$/.test(item.templateId)), true);
+  assert.equal(generated.every((item) => item.templateId.startsWith('p12q_')), true);
+  assert.equal(new Set(generated.map((item) => item.variantSignature)).size, generated.length);
   for (const item of generated.filter((entry) => GENERATED_CHOICE_FAMILIES.has(entry.generatorFamilyId))) {
     assert.equal(item.mode, 'choose', item.id);
     assert.equal(item.inputKind, 'choice', item.id);
@@ -351,7 +343,7 @@ test('generated punctuation model answers pass deterministic marking', () => {
   }
 });
 
-test('priority capacity expansion preserves the first four generated surfaces', () => {
+test('priority capacity expansion pins the first four P12 generated surfaces', () => {
   const generatedItems = createPunctuationGeneratedItems({
     seed: PUNCTUATION_CONTENT_MANIFEST.generatedSeed,
     perFamily: 4,
@@ -373,7 +365,7 @@ test('priority capacity expansion preserves the first four generated surfaces', 
     PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length * 4,
   );
 
-  for (const [familyId, expected] of Object.entries(P2_RELEASE_PRIORITY_RUNTIME_FOUR)) {
+  for (const [familyId, expected] of Object.entries(P12_RELEASE_PRIORITY_RUNTIME_FOUR)) {
     const actual = generatedItems
       .filter((item) => item.generatorFamilyId === familyId)
       .map((item) => [item.templateId, item.variantSignature]);

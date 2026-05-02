@@ -67,7 +67,7 @@ function correctAnswerFor(item) {
   return { typed: item.model };
 }
 
-test('punctuation service default runtime bank exposes P11 expansion depth', () => {
+test('punctuation service default runtime bank exposes the P12/P13 3000+ depth', () => {
   const service = createPunctuationService({
     repository: makeRepository(),
     now: () => 1_800_000_000_000,
@@ -80,25 +80,25 @@ test('punctuation service default runtime bank exposes P11 expansion depth', () 
   const fixedItems = runtimeManifest.items.filter((item) => item.source === 'fixed');
   const generatedItems = runtimeManifest.items.filter((item) => item.source === 'generated');
 
-  assert.equal(fixedItems.length, 148);
-  assert.equal(generatedItems.length, 1120);
-  assert.equal(stats.total, 1268);
-  assert.equal(stats.fresh, 1268);
+  assert.equal(fixedItems.length, 512);
+  assert.equal(generatedItems.length, 2800);
+  assert.equal(stats.total, 3312);
+  assert.equal(stats.fresh, 3312);
   assert.equal(stats.publishedRewardUnits, 14);
 });
 
-test('punctuation service keeps the default P11 runtime manifest and indexes cached', () => {
+test('punctuation service keeps the default P12/P13 runtime manifest and indexes cached', () => {
   const fixedItems = DEFAULT_PUNCTUATION_RUNTIME_MANIFEST.items.filter((item) => item.source === 'fixed');
   const generatedItems = DEFAULT_PUNCTUATION_RUNTIME_MANIFEST.items.filter((item) => item.source === 'generated');
 
   assert.equal(Object.isFrozen(DEFAULT_PUNCTUATION_RUNTIME_MANIFEST), true);
-  assert.equal(fixedItems.length, 148);
-  assert.equal(generatedItems.length, 1120);
-  assert.equal(DEFAULT_PUNCTUATION_CONTENT_INDEXES.items.length, 1268);
+  assert.equal(fixedItems.length, 512);
+  assert.equal(generatedItems.length, 2800);
+  assert.equal(DEFAULT_PUNCTUATION_CONTENT_INDEXES.items.length, 3312);
   assert.equal(DEFAULT_PUNCTUATION_CONTENT_INDEXES.publishedRewardUnits.length, 14);
 });
 
-test('punctuation service default path reuses cached P11 runtime indexes', () => {
+test('punctuation service default path reuses cached P12/P13 runtime indexes', () => {
   const source = readFileSync(new URL('../shared/punctuation/service.js', import.meta.url), 'utf8');
   const factoryStart = source.indexOf('export function createPunctuationService');
   const factoryDefaults = source.slice(factoryStart, source.indexOf('  const clock =', factoryStart));

@@ -112,7 +112,10 @@ test('P2 U3 priority fixed anchors meet target depth without new reward units', 
   for (const [skillId, expected] of Object.entries(P2_U3_PRIORITY_FIXED_TARGETS)) {
     const fixedItems = (indexes.itemsBySkill.get(skillId) || [])
       .filter((item) => item.source === 'fixed');
-    assert.equal(fixedItems.length, expected, `${skillId} fixed anchor count`);
+    assert.ok(
+      fixedItems.length >= expected,
+      `${skillId} fixed anchor count ${fixedItems.length} should be at least ${expected}`,
+    );
   }
 
   assert.deepEqual(

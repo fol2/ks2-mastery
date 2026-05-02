@@ -23,8 +23,9 @@ import assert from 'node:assert/strict';
 import {
   projectPunctuationStars,
 } from '../src/subjects/punctuation/star-projection.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
+const CURRENT_RELEASE_ID = PUNCTUATION_RELEASE_ID;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------

@@ -3,11 +3,12 @@ import { stageFor, PUNCTUATION_STAR_THRESHOLDS, PUNCTUATION_GRAND_STAR_THRESHOLD
 import {
   PUNCTUATION_CLIENT_SKILLS,
 } from './punctuation-manifest.js';
+import { PUNCTUATION_CURRENT_RELEASE_ID } from './service-contract.js';
 
 export { PUNCTUATION_CLIENT_SKILLS };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
+const CURRENT_RELEASE_ID = PUNCTUATION_CURRENT_RELEASE_ID;
 const TOTAL_REWARD_UNITS = 14;
 const DAILY_TARGET_ATTEMPTS = 4;
 

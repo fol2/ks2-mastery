@@ -1,0 +1,66 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "accountId": "demo-...",
+  "learnerId": "learner-demo-...",
+  "attestation": {
+    "environment": "production",
+    "releasePhase": "punctuation-qg-p13-live-serving",
+    "releaseId": "punctuation-qg-p12-3000-2026-05-02",
+    "runtimeItemCount": 3312,
+    "generatedDepth": 100,
+    "workerCommitSha": "<required deployed commit sha>",
+    "workerVersionId": "<optional worker version id>",
+    "deploymentId": "<optional deployment id>",
+    "timestamp": "<production smoke timestamp>",
+    "authenticatedCoverage": true,
+    "adminHubCoverage": false
+  },
+  "punctuation": {
+    "productionObserved": {
+      "releaseId": "punctuation-qg-p12-3000-2026-05-02",
+      "runtimeItems": 3312,
+      "publishedRewardUnits": 14
+    },
+    "localReleaseManifestExpectation": {
+      "fixedItems": 512,
+      "generatedItems": 2800,
+      "generatedPerFamily": 100,
+      "runtimeItems": 3312,
+      "publishedRewardUnits": 14
+    },
+    "smartSix": {
+      "summaryTotal": 6,
+      "uniqueItems": 6,
+      "immediateRepeats": 0,
+      "generatedSeen": "<at least 1>",
+      "fixedSeen": "<number>",
+      "modes": ["<mode ids>"],
+      "skillIds": ["<skill ids>"],
+      "items": [
+        { "itemId": "<live item id>", "source": "generated", "mode": "insert", "skillIds": ["speech"] }
+      ]
+    },
+    "parentHubEvidence": {
+      "hasEvidence": true,
+      "attempts": "<at least 6>",
+      "accuracyPercent": "<number>",
+      "progressSnapshotsHasPunctuation": true,
+      "redactionChecks": {
+        "punctuationEvidence": true,
+        "progressSnapshots": true,
+        "misconceptionPatterns": true
+      },
+      "sessionModes": ["smart"]
+    }
+  },
+  "spelling": {
+    "progressTotal": 1,
+    "hasPromptToken": true,
+    "redactionChecks": {
+      "rawWordHidden": true,
+      "rawSentenceHidden": true,
+      "promptTokenReturned": true
+    }
+  }
+}

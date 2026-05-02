@@ -9,6 +9,7 @@ import {
   manualExpansionTemplatesForFamily,
   PUNCTUATION_MANUAL_EXPANSION_TARGET_DEPTH,
 } from './manual-expansion-bank.js';
+import { manualP12QualityTemplatesForFamily } from './manual-p12-quality-bank.js';
 import { sentenceEndingsInsertDsl } from './dsl-families/sentence-endings-insert.js';
 import { apostropheContractionsDsl } from './dsl-families/apostrophe-contractions-fix.js';
 import { commaClarityInsertDsl } from './dsl-families/comma-clarity-insert.js';
@@ -160,6 +161,8 @@ function uniqueStrings(values = []) {
 }
 
 function withManualExpansion(familyId, templates) {
+  const p12QualityTemplates = manualP12QualityTemplatesForFamily(familyId);
+  if (p12QualityTemplates.length) return Object.freeze([...p12QualityTemplates]);
   return Object.freeze([
     ...templates,
     ...manualExpansionTemplatesForFamily(familyId),
@@ -355,14 +358,14 @@ function listCommasChooseTemplates() {
 }
 
 export const GENERATED_TEMPLATE_BANK = Object.freeze({
-  gen_sentence_endings_choose: sentenceEndingChooseTemplates(),
+  gen_sentence_endings_choose: withManualExpansion('gen_sentence_endings_choose', sentenceEndingChooseTemplates()),
   gen_sentence_endings_insert: withManualExpansion('gen_sentence_endings_insert', expandDslTemplates(sentenceEndingsInsertDsl, { embedTemplateId: false })),
-  gen_apostrophe_possession_choose: apostrophePossessionChooseTemplates(),
+  gen_apostrophe_possession_choose: withManualExpansion('gen_apostrophe_possession_choose', apostrophePossessionChooseTemplates()),
   gen_apostrophe_contractions_fix: withManualExpansion('gen_apostrophe_contractions_fix', expandDslTemplates(apostropheContractionsDsl, { embedTemplateId: false })),
   gen_apostrophe_possession_insert: withManualExpansion('gen_apostrophe_possession_insert', expandDslTemplates(apostrophePossessionInsertDsl, { embedTemplateId: false })),
   gen_apostrophe_mix_paragraph: withManualExpansion('gen_apostrophe_mix_paragraph', expandDslTemplates(apostropheMixParagraphDsl, { embedTemplateId: false })),
   gen_speech_insert: withManualExpansion('gen_speech_insert', expandDslTemplates(speechInsertDsl, { embedTemplateId: false })),
-  gen_list_commas_choose: listCommasChooseTemplates(),
+  gen_list_commas_choose: withManualExpansion('gen_list_commas_choose', listCommasChooseTemplates()),
   gen_list_commas_insert: withManualExpansion('gen_list_commas_insert', expandDslTemplates(listCommasInsertDsl, { embedTemplateId: false })),
   gen_list_commas_combine: withManualExpansion('gen_list_commas_combine', expandDslTemplates(listCommasCombineDsl, { embedTemplateId: false })),
   gen_fronted_adverbial_fix: withManualExpansion('gen_fronted_adverbial_fix', expandDslTemplates(frontedAdverbialFixDsl, { embedTemplateId: false })),

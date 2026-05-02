@@ -122,7 +122,7 @@ test('golden marking tests: generated choice families accept only their correct 
   let templatesChecked = 0;
   for (const { name, familyId } of CHOICE_FAMILIES) {
     const templates = GENERATED_TEMPLATE_BANK[familyId] || [];
-    assert.ok(templates.length >= 40, `Choice family "${name}" should expose at least 40 templates`);
+    assert.ok(templates.length >= 100, `Choice family "${name}" should expose at least 100 templates`);
     for (const template of templates) {
       const item = buildItemFromTemplate(template, 'choose');
       templatesChecked += 1;
@@ -140,7 +140,7 @@ test('golden marking tests: generated choice families accept only their correct 
   if (failures.length > 0) {
     assert.fail(`Generated choice marking failures:\n${failures.join('\n')}`);
   }
-  assert.equal(templatesChecked, 120);
+  assert.equal(templatesChecked, CHOICE_FAMILIES.length * 100);
 });
 
 // ─── Main test ────────────────────────────────────────────────────────────────

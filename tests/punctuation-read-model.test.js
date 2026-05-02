@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { buildPunctuationLearnerReadModel } from '../src/subjects/punctuation/read-model.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
+const CURRENT_RELEASE_ID = PUNCTUATION_RELEASE_ID;
 const OLD_RELEASE_ID = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
 
 function masteryKeyForRelease(releaseId, clusterId, rewardUnitId) {

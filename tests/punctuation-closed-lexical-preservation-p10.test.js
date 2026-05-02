@@ -66,41 +66,23 @@ function generatedItem(pool, familyId) {
   return item;
 }
 
-test('P10 lexical preservation covers the expanded P11 production pool', () => {
+test('P10 lexical preservation covers the expanded P12 production pool', () => {
   const pool = productionPool();
-  assert.equal(PRODUCTION_DEPTH, 40);
-  assert.equal(pool.length, 1268);
-  assert.equal(pool.filter((item) => item._source === 'fixed').length, 148);
-  assert.equal(pool.filter((item) => item._source === 'generated').length, 1120);
+  assert.equal(PRODUCTION_DEPTH, 100);
+  assert.equal(pool.length, 3312);
+  assert.equal(pool.filter((item) => item._source === 'fixed').length, 512);
+  assert.equal(pool.filter((item) => item._source === 'generated').length, 2800);
 });
 
 test('P10: generated closed insert/fix items reject known lexical substitutions', () => {
   const pool = productionPool();
   const probes = [
-    {
-      familyId: 'gen_list_commas_insert',
-      answerFor: (item) => item.model.replace('ropes', 'banana'),
-    },
-    {
-      familyId: 'gen_fronted_adverbial_fix',
-      answerFor: (item) => item.model.replace('path', 'banana'),
-    },
-    {
-      familyId: 'gen_apostrophe_possession_insert',
-      answerFor: (item) => item.model.replace('sketches', 'banana'),
-    },
-    {
-      familyId: 'gen_comma_clarity_insert',
-      answerFor: (item) => item.model.replace('mist', 'banana'),
-    },
-    {
-      familyId: 'gen_hyphen_insert',
-      answerFor: (item) => item.model.replace('tide', 'banana'),
-    },
-    {
-      familyId: 'gen_semicolon_list_fix',
-      answerFor: (item) => item.model.replace('winners', 'banana'),
-    },
+    { familyId: 'gen_list_commas_insert' },
+    { familyId: 'gen_fronted_adverbial_fix' },
+    { familyId: 'gen_apostrophe_possession_insert' },
+    { familyId: 'gen_comma_clarity_insert' },
+    { familyId: 'gen_hyphen_insert' },
+    { familyId: 'gen_semicolon_list_fix' },
   ];
 
   for (const probe of probes) {
@@ -108,7 +90,8 @@ test('P10: generated closed insert/fix items reject known lexical substitutions'
     const modelResult = markPunctuationAnswer({ item, answer: { typed: item.model } });
     assert.equal(modelResult.correct, true, `Model answer should pass for ${item.id}`);
 
-    const answer = probe.answerFor(item);
+    const answer = lexicalReplacementVariants(item.model)[0];
+    assert.ok(answer, `Probe needs a lexical replacement for ${item.id}`);
     assert.notEqual(answer, item.model, `Probe must change the model answer for ${item.id}`);
     const result = markPunctuationAnswer({ item, answer: { typed: answer } });
     assert.equal(result.correct, false, `${probe.familyId} accepted lexical substitution: ${answer}`);

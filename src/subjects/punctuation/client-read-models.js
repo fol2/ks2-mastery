@@ -1,4 +1,8 @@
-import { createInitialPunctuationState, normalisePunctuationPrefs } from './service-contract.js';
+import {
+  PUNCTUATION_CURRENT_RELEASE_ID,
+  createInitialPunctuationState,
+  normalisePunctuationPrefs,
+} from './service-contract.js';
 
 function clone(value) {
   if (value == null) return value;
@@ -116,7 +120,7 @@ export function createPunctuationReadModelService({ getState } = {}) {
     },
     getAnalyticsSnapshot(learnerId) {
       return clone(currentUi(getState, learnerId).ui.analytics) || {
-        releaseId: 'punctuation-qg-p11-2026-05-01',
+        releaseId: PUNCTUATION_CURRENT_RELEASE_ID,
         attempts: 0,
         correct: 0,
         accuracy: 0,

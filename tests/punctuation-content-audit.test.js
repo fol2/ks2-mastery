@@ -54,32 +54,19 @@ const expectedRuntimeItems = (depth) => FIXED_ITEM_COUNT + expectedGeneratedItem
 
 const P2_U6_EXPECTED_CAPACITY_DUPLICATE_RESIDUALS = Object.freeze({
   stems: {
-    groupCount: 3,
+    groupCount: 0,
     priorityGroupCount: 0,
     priorityFamilies: [],
-    familyGroupCounts: {
-      gen_fronted_adverbial_combine: 3,
-      gen_fronted_adverbial_fix: 3,
-    },
+    familyGroupCounts: {},
   },
   models: {
-    groupCount: 18,
-    priorityGroupCount: 4,
+    groupCount: 1,
+    priorityGroupCount: 1,
     priorityFamilies: [
-      'gen_dash_clause_combine',
-      'gen_dash_clause_fix',
+      'gen_sentence_endings_insert',
     ],
     familyGroupCounts: {
-      gen_bullet_points_fix: 3,
-      gen_bullet_points_paragraph: 3,
-      gen_colon_list_combine: 4,
-      gen_colon_list_insert: 4,
-      gen_fronted_adverbial_combine: 3,
-      gen_fronted_adverbial_fix: 3,
-      gen_parenthesis_combine: 4,
-      gen_parenthesis_fix: 4,
-      gen_semicolon_combine: 4,
-      gen_semicolon_fix: 4,
+      gen_sentence_endings_choose: 1,
     },
   },
   signatures: {
@@ -150,10 +137,10 @@ test('punctuation content audit reports the current fixed and generated baseline
 
   assert.equal(audit.ok, true, audit.failures.join('\n'));
   assert.deepEqual(audit.summary, {
-    fixedItemCount: 148,
+    fixedItemCount: FIXED_ITEM_COUNT,
     generatorFamilyCount: 28,
     generatedItemCount: 28,
-    runtimeItemCount: 176,
+    runtimeItemCount: expectedRuntimeItems(1),
     publishedRewardUnitCount: 14,
     publishedSkillCount: 14,
   });
@@ -169,18 +156,18 @@ test('punctuation content audit reports per-skill coverage and generated signatu
   const sentenceEndings = audit.bySkill.find((row) => row.skillId === 'sentence_endings');
   const speech = audit.bySkill.find((row) => row.skillId === 'speech');
 
-  assert.equal(sentenceEndings.fixedItemCount, 12);
+  assert.equal(sentenceEndings.fixedItemCount, 38);
   assert.equal(sentenceEndings.generatedItemCount, 2);
   assert.equal(sentenceEndings.generatedSignatureCount, 2);
   assert.ok(sentenceEndings.readinessCoverage.includes('insertion'));
-  assert.equal(sentenceEndings.choiceItemCount, 7);
-  assert.equal(sentenceEndings.answerContractCoverageCount, 9);
+  assert.equal(sentenceEndings.choiceItemCount, 33);
+  assert.equal(sentenceEndings.answerContractCoverageCount, 35);
   assert.equal(sentenceEndings.validatorCoverageCount, 2);
   assert.ok(speech.generatedItemCount >= 2);
   assert.ok(speech.validatorCoverageCount > 0);
 });
 
-test('punctuation content audit proves P2 U3 runtime growth comes from fixed anchors only', () => {
+test('punctuation content audit proves fixed-anchor minimums remain satisfied', () => {
   const audit = runPunctuationContentAudit({
     seed: 'audit-p2-u3-runtime-depth',
     generatedPerFamily: 4,
@@ -198,14 +185,14 @@ test('punctuation content audit proves P2 U3 runtime growth comes from fixed anc
     audit.failureDetails.filter((failure) => failure.code === 'generated_model_marking'),
     [],
   );
-  assert.equal(audit.summary.fixedItemCount, 148);
+  assert.equal(audit.summary.fixedItemCount, FIXED_ITEM_COUNT);
   assert.equal(audit.summary.generatedItemCount, expectedGeneratedItems(4));
   assert.equal(audit.summary.runtimeItemCount, expectedRuntimeItems(4));
   assert.equal(audit.summary.publishedRewardUnitCount, 14);
 
   for (const [skillId, expected] of Object.entries(P2_U3_FIXED_THRESHOLDS)) {
     const row = audit.bySkill.find((entry) => entry.skillId === skillId);
-    assert.equal(row.fixedItemCount, expected, `${skillId} fixed anchors`);
+    assert.ok(row.fixedItemCount >= expected, `${skillId} fixed anchors`);
   }
 });
 
@@ -447,47 +434,39 @@ test('punctuation content audit threshold failures are machine-readable', () => 
   )));
 });
 
-test('punctuation content audit leaves duplicate generated stems and models review-visible by default', () => {
+test('punctuation content audit leaves duplicate generated models review-visible by default', () => {
   const audit = runPunctuationContentAudit({
-    seed: 'audit-review-visible-duplicates',
-    generatedPerFamily: 9,
+    seed: 'audit-p2-u6-priority-capacity',
+    generatedPerFamily: 8,
     thresholds: {
       failOnDuplicateGeneratedSignatures: false,
     },
   });
 
   assert.equal(audit.ok, true, audit.failures.join('\n'));
-  assert.ok(audit.duplicates.generated.stems.length > 0);
   assert.ok(audit.duplicates.generated.models.length > 0);
+  assert.deepEqual(audit.duplicates.generated.stems, []);
   assert.equal(audit.duplicates.generated.signatures.length, 0);
 });
 
-test('punctuation content audit detects a P2 fixed-anchor regression', () => {
-  const regressionManifest = {
-    ...PUNCTUATION_CONTENT_MANIFEST,
-    items: PUNCTUATION_CONTENT_MANIFEST.items.filter((item) => ![
-      'se_choose_direct_question',
-      'se_insert_quiet_command',
-      'se_fix_excited_statement',
-      'se_transfer_where',
-    ].includes(item.id)),
-  };
+test('punctuation content audit detects a fixed-anchor threshold regression', () => {
   const audit = runPunctuationContentAudit({
-    manifest: regressionManifest,
     seed: 'audit-p2-fixed-anchor-depth',
     generatedPerFamily: 4,
     thresholds: {
-      minFixedItemsBySkill: P2_U3_FIXED_THRESHOLDS,
+      minFixedItemsBySkill: {
+        sentence_endings: 39,
+      },
     },
   });
 
   assert.equal(audit.ok, false);
-  assert.match(audit.failures.join('\n'), /Published skill sentence_endings has 8 fixed items; expected at least 12/);
+  assert.match(audit.failures.join('\n'), /Published skill sentence_endings has 38 fixed items; expected at least 39/);
   assert.ok(audit.failureDetails.some((failure) => (
     failure.code === 'fixed_anchor_minimum'
       && failure.skillId === 'sentence_endings'
-      && failure.actual === 8
-      && failure.expected === 12
+      && failure.actual === 38
+      && failure.expected === 39
   )));
 });
 
@@ -649,7 +628,7 @@ test('punctuation content audit reviewer report shows 0 legacy families with gen
   });
 
   assert.equal(report.legacyFamilies.length, 0, 'All families must be reviewed-template backed');
-  assert.equal(report.summary.dslCoverage, 25 / 28);
+  assert.equal(report.summary.dslCoverage, 1);
   assert.equal(report.summary.reviewedTemplateCoverage, 1);
   for (const row of report.perFamilyCapacity) {
     assert.equal(row.isReviewedTemplate, true, `${row.familyId} must be reviewed-template backed`);
@@ -820,14 +799,14 @@ test('punctuation content audit reviewer report classifies model answer failure 
   }
 });
 
-test('punctuation content audit reviewer report classifies duplicate stem as Warning', () => {
+test('punctuation content audit reviewer report classifies duplicate model as Warning', () => {
   const audit = runPunctuationContentAudit({
-    seed: 'reviewer-dup-stem-severity',
-    generatedPerFamily: 5,
+    seed: 'audit-p2-u6-priority-capacity',
+    generatedPerFamily: 8,
   });
   const generatedItems = createPunctuationGeneratedItems({
-    seed: 'reviewer-dup-stem-severity',
-    perFamily: 5,
+    seed: 'audit-p2-u6-priority-capacity',
+    perFamily: 8,
   });
   const report = buildReviewerReport({
     audit,
@@ -835,9 +814,9 @@ test('punctuation content audit reviewer report classifies duplicate stem as War
     capacityDepth: 8,
   });
 
-  const dupStemFindings = report.findings.filter((f) => f.code === 'duplicate_stem');
-  assert.ok(dupStemFindings.length > 0, 'Must detect duplicate stems at perFamily=5');
-  for (const f of dupStemFindings) {
+  const dupModelFindings = report.findings.filter((f) => f.code === 'duplicate_model');
+  assert.ok(dupModelFindings.length > 0, 'Must detect duplicate models at perFamily=8');
+  for (const f of dupModelFindings) {
     assert.equal(f.severity, 'Warning');
   }
 });

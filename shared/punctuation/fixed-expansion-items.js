@@ -1,3 +1,4 @@
+import { PUNCTUATION_FIXED_EXPANSION_P12_ITEMS } from './fixed-expansion-items-p12.js';
 // Manual fixed-question expansion for Punctuation QG.
 // These are hand-authored choice items to widen the first-click surface across all published skills.
 
@@ -1682,6 +1683,7 @@ export const PUNCTUATION_FIXED_EXPANSION_ITEMS = Object.freeze([
     "explanationRuleId": "bullet.parallel-list",
     "source": "fixed"
   }),
+  ...PUNCTUATION_FIXED_EXPANSION_P12_ITEMS,
 ]);
 
 export const PUNCTUATION_FIXED_EXPANSION_ITEM_COUNT = PUNCTUATION_FIXED_EXPANSION_ITEMS.length;

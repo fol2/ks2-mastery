@@ -18,15 +18,15 @@ const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.length;
 const expectedRuntimeItems = (depth) => FIXED_ITEM_COUNT + (GENERATOR_FAMILY_COUNT * depth);
 
 describe('Punctuation capacity raise mechanism', () => {
-  it('exports PRODUCTION_DEPTH = 40', () => {
-    assert.equal(PRODUCTION_DEPTH, 40);
+  it('exports PRODUCTION_DEPTH = 100', () => {
+    assert.equal(PRODUCTION_DEPTH, 100);
   });
 
-  it('exports CAPACITY_DEPTH = 40', () => {
-    assert.equal(CAPACITY_DEPTH, 40);
+  it('exports CAPACITY_DEPTH = 100', () => {
+    assert.equal(CAPACITY_DEPTH, 100);
   });
 
-  it('default production depth produces 1268 runtime items', () => {
+  it('default production depth produces the current runtime item count', () => {
     const manifest = createPunctuationRuntimeManifest({
       generatedPerFamily: PRODUCTION_DEPTH,
     });
@@ -34,7 +34,7 @@ describe('Punctuation capacity raise mechanism', () => {
     assert.equal(indexes.items.length, expectedRuntimeItems(PRODUCTION_DEPTH));
   });
 
-  it('depth-6 mode produces 316 runtime items', () => {
+  it('depth-6 mode produces the fixed bank plus 168 generated items', () => {
     const manifest = createPunctuationRuntimeManifest({
       generatedPerFamily: 6,
     });
@@ -78,7 +78,7 @@ describe('Punctuation capacity raise mechanism', () => {
     assert.equal(items.length, GENERATOR_FAMILY_COUNT * 4);
   });
 
-  it('capacity depth produces 1268 runtime items with no signature collisions', () => {
+  it('capacity depth produces the current runtime item count with no signature collisions', () => {
     const manifest = createPunctuationRuntimeManifest({
       generatedPerFamily: CAPACITY_DEPTH,
     });

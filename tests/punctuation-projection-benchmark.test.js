@@ -19,8 +19,9 @@ import {
   PUNCTUATION_CLIENT_SKILLS,
   PUNCTUATION_CLIENT_REWARD_UNITS,
 } from '../src/subjects/punctuation/punctuation-manifest.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 
-const CURRENT_RELEASE_ID = 'punctuation-qg-p11-2026-05-01';
+const CURRENT_RELEASE_ID = PUNCTUATION_RELEASE_ID;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ITEM_MODES = ['choose', 'insert', 'fix', 'transfer', 'combine', 'paragraph'];
 const RUN_TIMING_BENCHMARKS = process.env.KS2_RUN_TIMING_BENCHMARKS === '1';

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { renderHubSurfaceFixture } from './helpers/react-render.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 
 test('React Parent Hub surface renders readable learner payload and read-only notice', async () => {
   const html = await renderHubSurfaceFixture({ surface: 'parent' });
@@ -43,7 +44,7 @@ test('React Admin Operations surface renders content, audit, account roles, and 
   assert.match(html, /Readable learners/);
   assert.match(html, /Grammar diagnostics/);
   assert.match(html, /Punctuation diagnostics/);
-  assert.match(html, /punctuation-qg-p11-2026-05-01/);
+  assert.match(html, new RegExp(PUNCTUATION_RELEASE_ID));
   assert.match(html, /Open Punctuation analytics/);
   assert.match(html, /Choose the correct sentence/);
 
