@@ -1,0 +1,211 @@
+{
+  "packId": "grammar-qg-p18-manual-expansion-400-families-audit",
+  "createdAt": "2026-05-02T18:10:40.560171+00:00",
+  "status": "pass",
+  "combinedSummary": {
+    "caseCount": 4800,
+    "templateFamilyCount": 400,
+    "conceptCount": 18,
+    "uniquePromptTextCount": 4165,
+    "uniqueLearnerVisibleSurfaceCount": 4759,
+    "conceptCounts": {
+      "active_passive": 276,
+      "adverbials": 264,
+      "apostrophes_possession": 276,
+      "boundary_punctuation": 276,
+      "clauses": 288,
+      "formality": 276,
+      "hyphen_ambiguity": 276,
+      "modal_verbs": 264,
+      "noun_phrases": 276,
+      "parenthesis_commas": 264,
+      "pronouns_cohesion": 264,
+      "relative_clauses": 264,
+      "sentence_functions": 264,
+      "speech_punctuation": 288,
+      "standard_english": 264,
+      "subject_object": 276,
+      "tense_aspect": 276,
+      "word_classes": 288
+    },
+    "inputTypeCounts": {
+      "single_choice": 2196,
+      "table_choice": 624,
+      "text": 259,
+      "textarea": 1721
+    },
+    "questionTypeCounts": {
+      "build": 252,
+      "choose": 1272,
+      "classify": 708,
+      "explain": 1212,
+      "fill": 72,
+      "fix": 648,
+      "identify": 324,
+      "rewrite": 312
+    },
+    "depthTierCounts": {
+      "bridge": 216,
+      "build": 12,
+      "classify": 216,
+      "core": 1344,
+      "core-plus": 216,
+      "deep": 624,
+      "exam-trap": 120,
+      "explain": 432,
+      "mixed-transfer": 120,
+      "repair": 252,
+      "retrieval": 12,
+      "rewrite": 60,
+      "sat-style": 348,
+      "transfer": 828
+    },
+    "familiesWithAtLeast12Cases": 400,
+    "minCasesPerFamily": 12,
+    "maxCasesPerFamily": 12
+  },
+  "deltaSummary": {
+    "caseCount": 1200,
+    "templateFamilyCount": 100,
+    "conceptCount": 18,
+    "uniquePromptTextCount": 1189,
+    "uniqueLearnerVisibleSurfaceCount": 1200,
+    "conceptCounts": {
+      "active_passive": 72,
+      "adverbials": 72,
+      "apostrophes_possession": 72,
+      "boundary_punctuation": 72,
+      "clauses": 72,
+      "formality": 84,
+      "hyphen_ambiguity": 72,
+      "modal_verbs": 72,
+      "noun_phrases": 72,
+      "parenthesis_commas": 72,
+      "pronouns_cohesion": 72,
+      "relative_clauses": 72,
+      "sentence_functions": 72,
+      "speech_punctuation": 84,
+      "standard_english": 72,
+      "subject_object": 72,
+      "tense_aspect": 72,
+      "word_classes": 72
+    },
+    "inputTypeCounts": {
+      "single_choice": 432,
+      "table_choice": 216,
+      "text": 103,
+      "textarea": 449
+    },
+    "questionTypeCounts": {
+      "choose": 180,
+      "classify": 216,
+      "explain": 552,
+      "fix": 156,
+      "identify": 36,
+      "rewrite": 60
+    },
+    "depthTierCounts": {
+      "core": 432,
+      "deep": 216,
+      "mixed-transfer": 120,
+      "sat-style": 216,
+      "transfer": 216
+    },
+    "familiesWithAtLeast12Cases": 100,
+    "minCasesPerFamily": 12,
+    "maxCasesPerFamily": 12
+  },
+  "checks": {
+    "expectedDeltaFamilyCount": {
+      "expected": 100,
+      "actual": 100,
+      "ok": true
+    },
+    "expectedDeltaCaseCount": {
+      "expected": 1200,
+      "actual": 1200,
+      "ok": true
+    },
+    "expectedCombinedFamilyCount": {
+      "expected": 400,
+      "actual": 400,
+      "ok": true
+    },
+    "expectedCombinedCaseCount": {
+      "expected": 4800,
+      "actual": 4800,
+      "ok": true
+    },
+    "minCasesPerFamily": {
+      "expectedAtLeast": 12,
+      "actual": 12,
+      "ok": true
+    },
+    "duplicateCaseIds": {
+      "count": 0,
+      "sample": [],
+      "ok": true
+    },
+    "missingRequiredFields": {
+      "count": 0,
+      "sample": [],
+      "note": "Combined check; delta-specific gate below."
+    },
+    "deltaMissingRequiredFields": {
+      "count": 0,
+      "sample": [],
+      "ok": true
+    },
+    "missingCorrectOrAcceptedAnswer": {
+      "count": 192,
+      "sample": [
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:01",
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:02",
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:03",
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:04",
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:05",
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:06",
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:07",
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:08",
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:09",
+        "grammar-qg-p15-manual-expansion-1000:sentence_functions:sat_style_function:10"
+      ],
+      "note": "Combined includes historical/base pack shapes; delta-specific gate is below."
+    },
+    "deltaMissingCorrectOrAcceptedAnswer": {
+      "count": 0,
+      "sample": [],
+      "ok": true
+    },
+    "duplicateOptionValues": {
+      "count": 60,
+      "sample": [
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:01",
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:02",
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:03",
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:04",
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:05",
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:06",
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:07",
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:08",
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:09",
+        "grammar-qg-p15-manual-expansion-1000:tense_aspect:choose_tense_form:10"
+      ],
+      "note": "Combined includes historical/base pack shapes; delta-specific gate is below."
+    },
+    "deltaDuplicateOptionValues": {
+      "count": 0,
+      "sample": [],
+      "ok": true
+    },
+    "deltaDuplicateVisibleSurfaces": {
+      "count": 0,
+      "sample": [],
+      "ok": true
+    },
+    "combinedDuplicateVisibleSurfaces": {
+      "count": 27,
+      "note": "Includes historical/base pack duplicates; do not use as a P18-delta fail condition."
+    }
+  }
+}

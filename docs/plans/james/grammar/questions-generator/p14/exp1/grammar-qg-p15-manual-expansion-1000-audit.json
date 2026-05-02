@@ -1,0 +1,51 @@
+{
+  "packId": "grammar-qg-p15-manual-expansion-1000",
+  "sha256": "3f321ef1f1069a376a16ddf5414c2176d832eeb9c9d4cf5875cd7469527abaf5",
+  "caseCount": 1080,
+  "templateFamilyCount": 90,
+  "conceptCount": 18,
+  "conceptCounts": {
+    "active_passive": 60,
+    "adverbials": 60,
+    "apostrophes_possession": 60,
+    "boundary_punctuation": 60,
+    "clauses": 60,
+    "formality": 60,
+    "hyphen_ambiguity": 60,
+    "modal_verbs": 60,
+    "noun_phrases": 60,
+    "parenthesis_commas": 60,
+    "pronouns_cohesion": 60,
+    "relative_clauses": 60,
+    "sentence_functions": 60,
+    "speech_punctuation": 60,
+    "standard_english": 60,
+    "subject_object": 60,
+    "tense_aspect": 60,
+    "word_classes": 60
+  },
+  "inputTypeCounts": {
+    "single_choice": 732,
+    "table_choice": 108,
+    "text": 60,
+    "textarea": 180
+  },
+  "questionTypeCounts": {
+    "build": 12,
+    "choose": 324,
+    "classify": 108,
+    "explain": 216,
+    "fill": 36,
+    "fix": 120,
+    "identify": 156,
+    "rewrite": 108
+  },
+  "uniquePromptTextCount": 861,
+  "uniqueLearnerVisibleSurfaceCount": 1080,
+  "basicValidation": {
+    "passed": true,
+    "issueCount": 0,
+    "issues": []
+  },
+  "promotionStatus": "not_scheduler_ready_review_required"
+}

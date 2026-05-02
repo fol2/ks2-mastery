@@ -1,0 +1,2841 @@
+{
+  "packId": "grammar-qg-manual-bench-p14-2026-05-01",
+  "language": "en-GB",
+  "status": "human-authored-bench-expansion-draft",
+  "purpose": "Manual Grammar QG bench expansion: double the number of template families from 78 to 156 before any further generator-only certification work.",
+  "sourceBoundary": "Authored as a separate content-bench line. Not yet integrated into worker/src/subjects/grammar/content.js.",
+  "currentBaseline": {
+    "currentTemplateCount": 78,
+    "currentThirtySeedInstances": 2340,
+    "knownLowDiversityTemplateFamilies": 23
+  },
+  "targetAfterIntegration": {
+    "newManualTemplateFamilies": 78,
+    "totalTemplateFamilies": 156,
+    "handAuthoredSeedCasesInThisPack": 156,
+    "minimumIntegrationRequirement": "Each new template family must ship with at least 2 hand-authored fixed cases and an expansion path to 6+ learner-visible surfaces before production certification."
+  },
+  "templates": [
+    {
+      "templateId": "manual_p14_sentence_direct_vs_indirect_question",
+      "conceptIds": [
+        "sentence_functions"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Direct and indirect questions",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence is a direct question that needs a question mark?",
+          "correct": "Can the library open early today?",
+          "explanation": "A direct question asks the reader/listener something directly.",
+          "options": [
+            "Can the library open early today?",
+            "Aisha wondered whether the library could open early.",
+            "The library can open early today.",
+            "How useful it would be if the library opened early"
+          ]
+        },
+        {
+          "prompt": "Which sentence is an indirect question and should end with a full stop?",
+          "correct": "Dad asked whether the train had arrived.",
+          "explanation": "It reports a question, but the whole sentence is a statement.",
+          "options": [
+            "Has the train arrived yet?",
+            "Did the train arrive late?",
+            "Dad asked whether the train had arrived.",
+            "Where is the train now?"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_sentence_polite_command_vs_request",
+      "conceptIds": [
+        "sentence_functions"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Polite commands and requests",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence is a command, even though it sounds polite?",
+          "correct": "Please pass the glue stick.",
+          "explanation": "A command tells someone to do something; 'please' does not stop it being a command.",
+          "options": [
+            "Please pass the glue stick.",
+            "Could you pass the glue stick?",
+            "The glue stick is on the table.",
+            "What a useful glue stick this is!"
+          ]
+        },
+        {
+          "prompt": "Which sentence is a question, not a command?",
+          "correct": "Could you close the window?",
+          "explanation": "It asks something and needs a question mark.",
+          "options": [
+            "Close the window before the rain comes.",
+            "Could you close the window?",
+            "Please close the window.",
+            "Shut the window carefully."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_sentence_grammatical_exclamation",
+      "conceptIds": [
+        "sentence_functions"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Grammatical exclamation vs excited statement",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence is a grammatical exclamation?",
+          "correct": "What a fierce storm that was!",
+          "explanation": "In KS2 grammar, an exclamation often starts with 'What' or 'How' and contains a verb.",
+          "options": [
+            "The storm was fierce!",
+            "What a fierce storm that was!",
+            "The storm knocked over the bins!",
+            "Look at the storm!"
+          ]
+        },
+        {
+          "prompt": "Which sentence is an excited statement, not a grammatical exclamation?",
+          "correct": "The crowd cheered loudly!",
+          "explanation": "It tells us something; the exclamation mark alone does not make it a grammatical exclamation.",
+          "options": [
+            "How loudly the crowd cheered!",
+            "What a brilliant race that was!",
+            "The crowd cheered loudly!",
+            "How fast the runner went!"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_sentence_function_table_context",
+      "conceptIds": [
+        "sentence_functions"
+      ],
+      "questionType": "classify",
+      "inputType": "table_choice",
+      "depth": 2,
+      "title": "Sentence function classification in context",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Classify each sentence: statement, question, command or exclamation.",
+          "correct": {
+            "The baker opened the shop at six.": "statement",
+            "Did the baker open early?": "question",
+            "Open the shop before six.": "command",
+            "What a busy shop this is!": "exclamation"
+          },
+          "explanation": "Use the job of the whole sentence, not only its final punctuation.",
+          "rows": [
+            "The baker opened the shop at six.",
+            "Did the baker open early?",
+            "Open the shop before six.",
+            "What a busy shop this is!"
+          ]
+        },
+        {
+          "prompt": "Classify each sentence: statement, question, command or exclamation.",
+          "correct": {
+            "How carefully the artist painted!": "exclamation",
+            "The artist painted carefully.": "statement",
+            "Could the artist paint another picture?": "question",
+            "Paint the background first.": "command"
+          },
+          "explanation": "Look at whether the sentence tells, asks, instructs or exclaims.",
+          "rows": [
+            "How carefully the artist painted!",
+            "The artist painted carefully.",
+            "Could the artist paint another picture?",
+            "Paint the background first."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_word_class_same_word_different_job",
+      "conceptIds": [
+        "word_classes"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Same word, different word class",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "In 'The children will light the lantern', what word class is 'light'?",
+          "correct": "verb",
+          "explanation": "Here, 'light' is the action being done.",
+          "options": [
+            "noun",
+            "verb",
+            "adjective",
+            "adverb"
+          ]
+        },
+        {
+          "prompt": "In 'The light rain stopped after lunch', what word class is 'light'?",
+          "correct": "adjective",
+          "explanation": "Here, 'light' describes the noun 'rain'.",
+          "options": [
+            "noun",
+            "verb",
+            "adjective",
+            "determiner"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_word_class_determiner_or_pronoun",
+      "conceptIds": [
+        "word_classes"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Determiner or pronoun in context",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "In 'Those are my boots', what word class is 'Those'?",
+          "correct": "pronoun",
+          "explanation": "It stands in for a noun phrase.",
+          "options": [
+            "determiner",
+            "pronoun",
+            "adjective",
+            "conjunction"
+          ]
+        },
+        {
+          "prompt": "In 'Those boots are muddy', what word class is 'Those'?",
+          "correct": "determiner",
+          "explanation": "It comes before the noun 'boots' and helps identify it.",
+          "options": [
+            "determiner",
+            "pronoun",
+            "adverb",
+            "preposition"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_word_class_adverb_scope",
+      "conceptIds": [
+        "word_classes"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Adverbs modifying adjectives and clauses",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "In 'The soup was almost cold', what word class is 'almost'?",
+          "correct": "adverb",
+          "explanation": "It modifies the adjective 'cold'.",
+          "options": [
+            "adjective",
+            "adverb",
+            "verb",
+            "determiner"
+          ]
+        },
+        {
+          "prompt": "In 'Luckily, the gate was still open', what word class is 'Luckily'?",
+          "correct": "adverb",
+          "explanation": "It comments on the whole clause.",
+          "options": [
+            "noun",
+            "adjective",
+            "adverb",
+            "preposition"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_word_class_preposition_or_conjunction",
+      "conceptIds": [
+        "word_classes",
+        "clauses"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Preposition versus conjunction",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "In 'After the match, we ate sandwiches', what word class is 'After'?",
+          "correct": "preposition",
+          "explanation": "It introduces the phrase 'the match', not a clause.",
+          "options": [
+            "preposition",
+            "conjunction",
+            "adverb",
+            "verb"
+          ]
+        },
+        {
+          "prompt": "In 'After the match ended, we ate sandwiches', what word class is 'After'?",
+          "correct": "conjunction",
+          "explanation": "It introduces the clause 'the match ended'.",
+          "options": [
+            "preposition",
+            "conjunction",
+            "determiner",
+            "noun"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_word_class_multi_select_sentence",
+      "conceptIds": [
+        "word_classes"
+      ],
+      "questionType": "identify",
+      "inputType": "checkbox_list",
+      "depth": 3,
+      "title": "Multi-select word class identification",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Select all the determiners: 'The small boat crossed a wide river near those trees.'",
+          "correct": [
+            "The",
+            "a",
+            "those"
+          ],
+          "explanation": "Determiners help identify nouns.",
+          "options": [
+            "The",
+            "small",
+            "boat",
+            "crossed",
+            "a",
+            "wide",
+            "river",
+            "near",
+            "those",
+            "trees"
+          ]
+        },
+        {
+          "prompt": "Select all the prepositions: 'Before breakfast, Maya placed the bag under the bench.'",
+          "correct": [
+            "Before",
+            "under"
+          ],
+          "explanation": "Prepositions show time or place relationships here.",
+          "options": [
+            "Before",
+            "breakfast",
+            "Maya",
+            "placed",
+            "the",
+            "bag",
+            "under",
+            "the",
+            "bench"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_noun_phrase_head_noun",
+      "conceptIds": [
+        "noun_phrases"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Find the head noun",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "In 'the cracked blue bowl on the shelf', which word is the head noun?",
+          "correct": "bowl",
+          "explanation": "The noun phrase is centred on 'bowl'.",
+          "options": [
+            "cracked",
+            "blue",
+            "bowl",
+            "shelf"
+          ]
+        },
+        {
+          "prompt": "In 'a narrow path through the woods', which word is the head noun?",
+          "correct": "path",
+          "explanation": "The main noun being described is 'path'.",
+          "options": [
+            "narrow",
+            "path",
+            "through",
+            "woods"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_noun_phrase_not_a_clause",
+      "conceptIds": [
+        "noun_phrases",
+        "clauses"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Noun phrase versus clause",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which option is a noun phrase, not a clause?",
+          "correct": "the silver watch in the drawer",
+          "explanation": "A noun phrase centres on a noun and does not contain a finite verb as a clause does.",
+          "options": [
+            "the silver watch in the drawer",
+            "because the watch was silver",
+            "the watch ticked loudly",
+            "when the drawer opened"
+          ]
+        },
+        {
+          "prompt": "Which option is a clause, not a noun phrase?",
+          "correct": "the watch ticked loudly",
+          "explanation": "A clause contains a subject and verb.",
+          "options": [
+            "the watch ticked loudly",
+            "a watch with a cracked face",
+            "the old watch on the desk",
+            "that tiny silver watch"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_noun_phrase_expand_with_preposition",
+      "conceptIds": [
+        "noun_phrases"
+      ],
+      "questionType": "build",
+      "inputType": "text",
+      "depth": 2,
+      "title": "Expand a noun phrase with a preposition phrase",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Add words to make an expanded noun phrase: 'the fox ___'.",
+          "correct": "the fox beside the old wall",
+          "explanation": "The added words should stay attached to the noun, not turn it into a full clause.",
+          "accepted": [
+            "the fox beside the old wall",
+            "the fox under the hedge",
+            "the fox near the stream"
+          ],
+          "nearMiss": [
+            "the fox ran quickly"
+          ]
+        },
+        {
+          "prompt": "Add words to make an expanded noun phrase: 'a key ___'.",
+          "correct": "a key under the mat",
+          "explanation": "The phrase is still centred on the noun 'key'.",
+          "accepted": [
+            "a key under the mat",
+            "a key with a brass tag",
+            "a key in the drawer"
+          ],
+          "nearMiss": [
+            "a key opened the door"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_noun_phrase_repair_overgrown",
+      "conceptIds": [
+        "noun_phrases"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Repair an overgrown noun phrase",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which revision keeps only the noun phrase? 'the old dog that barked at the postman'",
+          "correct": "the old dog by the gate",
+          "explanation": "The correct choice is a phrase, not a clause.",
+          "options": [
+            "the old dog by the gate",
+            "the old dog barked at the postman",
+            "because the old dog barked",
+            "the dog was old and loud"
+          ]
+        },
+        {
+          "prompt": "Which option is a clear expanded noun phrase?",
+          "correct": "the cracked mirror in the hall",
+          "explanation": "It has a noun with extra detail attached.",
+          "options": [
+            "the cracked mirror in the hall",
+            "the mirror cracked loudly",
+            "when the mirror cracked",
+            "because the mirror was in the hall"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_noun_phrase_determiner_modifier_order",
+      "conceptIds": [
+        "noun_phrases",
+        "word_classes"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Determiner and modifier order",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which noun phrase has a sensible determiner-adjective-noun order?",
+          "correct": "the careful young artist",
+          "explanation": "Determiner first, then modifiers, then noun.",
+          "options": [
+            "careful the young artist",
+            "the careful young artist",
+            "artist young the careful",
+            "young the artist careful"
+          ]
+        },
+        {
+          "prompt": "Which option is a well-formed noun phrase?",
+          "correct": "those tiny glass beads",
+          "explanation": "'Those' works as a determiner before the noun phrase.",
+          "options": [
+            "tiny those glass beads",
+            "those tiny glass beads",
+            "beads those tiny glass",
+            "glass those beads tiny"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_adverbial_when_where_how",
+      "conceptIds": [
+        "adverbials"
+      ],
+      "questionType": "classify",
+      "inputType": "table_choice",
+      "depth": 2,
+      "title": "Classify adverbials by function",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Classify each adverbial as when, where or how.",
+          "correct": {
+            "after the match": "when",
+            "beside the river": "where",
+            "with great care": "how"
+          },
+          "explanation": "Adverbials can tell when, where or how something happens.",
+          "rows": [
+            "after the match",
+            "beside the river",
+            "with great care"
+          ]
+        },
+        {
+          "prompt": "Classify each adverbial as when, where or how.",
+          "correct": {
+            "during assembly": "when",
+            "inside the tent": "where",
+            "in silence": "how"
+          },
+          "explanation": "Ask what information the phrase adds to the verb or clause.",
+          "rows": [
+            "during assembly",
+            "inside the tent",
+            "in silence"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_adverbial_fronted_rewrite",
+      "conceptIds": [
+        "adverbials"
+      ],
+      "questionType": "rewrite",
+      "inputType": "textarea",
+      "depth": 3,
+      "title": "Move an adverbial to the front",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Rewrite with the adverbial at the front: 'The team practised before the final.'",
+          "correct": "Before the final, the team practised.",
+          "explanation": "A fronted adverbial normally takes a comma in these KS2 questions.",
+          "accepted": [
+            "Before the final, the team practised."
+          ],
+          "nearMiss": [
+            "Before the final the team practised."
+          ]
+        },
+        {
+          "prompt": "Rewrite with the adverbial at the front: 'Maya waited beside the oak tree.'",
+          "correct": "Beside the oak tree, Maya waited.",
+          "explanation": "Move the place adverbial to the beginning and add a comma.",
+          "accepted": [
+            "Beside the oak tree, Maya waited."
+          ],
+          "nearMiss": [
+            "Beside the oak tree Maya waited."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_adverbial_not_every_opener",
+      "conceptIds": [
+        "adverbials",
+        "clauses"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Not every opener is a fronted adverbial",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence starts with a fronted adverbial?",
+          "correct": "After lunch, the choir rehearsed.",
+          "explanation": "The opening phrase tells us when.",
+          "options": [
+            "After lunch, the choir rehearsed.",
+            "The choir after lunch rehearsed.",
+            "The choir rehearsed after lunch.",
+            "The choir was very loud."
+          ]
+        },
+        {
+          "prompt": "Which sentence does NOT begin with a fronted adverbial?",
+          "correct": "The market opened early in the morning.",
+          "explanation": "The adverbial is at the end, not fronted.",
+          "options": [
+            "In the morning, the market opened early.",
+            "Before sunrise, the traders arrived.",
+            "The market opened early in the morning.",
+            "With a smile, the seller waved."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_adverbial_comma_choice",
+      "conceptIds": [
+        "adverbials",
+        "punctuation_precision"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Fronted adverbial comma precision",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence is punctuated correctly?",
+          "correct": "At the edge of the field, the horses waited.",
+          "explanation": "The comma follows the whole fronted adverbial.",
+          "options": [
+            "At the edge of the field the horses waited.",
+            "At the edge, of the field the horses waited.",
+            "At the edge of the field, the horses waited.",
+            "At, the edge of the field the horses waited."
+          ]
+        },
+        {
+          "prompt": "Which sentence places the comma after the fronted adverbial?",
+          "correct": "During the storm, the lights flickered.",
+          "explanation": "The whole phrase 'During the storm' is fronted.",
+          "options": [
+            "During, the storm the lights flickered.",
+            "During the storm, the lights flickered.",
+            "During the storm the, lights flickered.",
+            "During the storm the lights, flickered."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_clauses_main_subordinate_table",
+      "conceptIds": [
+        "clauses"
+      ],
+      "questionType": "classify",
+      "inputType": "table_choice",
+      "depth": 2,
+      "title": "Main and subordinate clauses",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Classify each clause.",
+          "correct": {
+            "Although the path was muddy": "subordinate",
+            "we kept walking": "main",
+            "because the bus was late": "subordinate",
+            "the team waited outside": "main"
+          },
+          "explanation": "A main clause can stand alone; a subordinate clause depends on another clause.",
+          "rows": [
+            "Although the path was muddy",
+            "we kept walking",
+            "because the bus was late",
+            "the team waited outside"
+          ]
+        },
+        {
+          "prompt": "Classify each clause.",
+          "correct": {
+            "When the whistle blew": "subordinate",
+            "the race began": "main",
+            "if the lights go out": "subordinate",
+            "the candles are in the drawer": "main"
+          },
+          "explanation": "Look for subordinating conjunctions such as when, if and because.",
+          "rows": [
+            "When the whistle blew",
+            "the race began",
+            "if the lights go out",
+            "the candles are in the drawer"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_clauses_relation_conjunction",
+      "conceptIds": [
+        "clauses"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Choose a conjunction for meaning",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which conjunction best combines the ideas? 'The pitch was wet. The match continued.'",
+          "correct": "although",
+          "explanation": "The second idea contrasts with the first.",
+          "options": [
+            "because",
+            "although",
+            "when",
+            "if"
+          ]
+        },
+        {
+          "prompt": "Which conjunction best shows cause? 'We stayed inside. The rain was heavy.'",
+          "correct": "because",
+          "explanation": "The heavy rain explains why we stayed inside.",
+          "options": [
+            "although",
+            "because",
+            "when",
+            "unless"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_clauses_fragment_repair",
+      "conceptIds": [
+        "clauses"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Repair a subordinate-clause fragment",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which revision makes this fragment a complete sentence? 'Because the gate was locked.'",
+          "correct": "Because the gate was locked, we climbed over the stile.",
+          "explanation": "A subordinate clause needs a main clause.",
+          "options": [
+            "Because the gate was locked.",
+            "Because the gate was locked, we climbed over the stile.",
+            "Because locked gate.",
+            "The gate because was locked."
+          ]
+        },
+        {
+          "prompt": "Which sentence fixes the fragment? 'Although the team was tired.'",
+          "correct": "Although the team was tired, they finished the match.",
+          "explanation": "The main clause completes the meaning.",
+          "options": [
+            "Although the team was tired.",
+            "Although tired team.",
+            "Although the team was tired, they finished the match.",
+            "The team although was tired."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_clauses_combine_precision",
+      "conceptIds": [
+        "clauses"
+      ],
+      "questionType": "rewrite",
+      "inputType": "textarea",
+      "depth": 3,
+      "title": "Combine clauses with precise punctuation",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Combine using 'although': 'Lena was nervous. She read her poem clearly.'",
+          "correct": "Although Lena was nervous, she read her poem clearly.",
+          "explanation": "Use both ideas and punctuate the fronted subordinate clause.",
+          "accepted": [
+            "Although Lena was nervous, she read her poem clearly.",
+            "Lena read her poem clearly although she was nervous."
+          ],
+          "nearMiss": [
+            "Although Lena was nervous."
+          ]
+        },
+        {
+          "prompt": "Combine using 'because': 'The ground was frozen. We could not dig the hole.'",
+          "correct": "We could not dig the hole because the ground was frozen.",
+          "explanation": "Because shows the cause.",
+          "accepted": [
+            "We could not dig the hole because the ground was frozen.",
+            "Because the ground was frozen, we could not dig the hole."
+          ],
+          "nearMiss": [
+            "Because the ground was frozen."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_clauses_boundary_or_phrase",
+      "conceptIds": [
+        "clauses",
+        "noun_phrases"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Clause boundary or phrase",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which option is a subordinate clause?",
+          "correct": "when the lantern went out",
+          "explanation": "It has a subject and verb introduced by 'when'.",
+          "options": [
+            "when the lantern went out",
+            "the old brass lantern",
+            "beside the lantern",
+            "a lantern with a cracked handle"
+          ]
+        },
+        {
+          "prompt": "Which option is a phrase, not a clause?",
+          "correct": "beside the locked gate",
+          "explanation": "It has no finite verb.",
+          "options": [
+            "if the gate is locked",
+            "beside the locked gate",
+            "the gate was locked",
+            "when the gate opened"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_relative_pronoun_identify",
+      "conceptIds": [
+        "relative_clauses"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Identify relative pronouns",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which word introduces the relative clause? 'The climber who reached the top waved.'",
+          "correct": "who",
+          "explanation": "'Who' introduces extra information about the climber.",
+          "options": [
+            "climber",
+            "who",
+            "top",
+            "waved"
+          ]
+        },
+        {
+          "prompt": "Which word introduces the relative clause? 'The path that led to the beach was steep.'",
+          "correct": "that",
+          "explanation": "'That' links the clause to the noun 'path'.",
+          "options": [
+            "path",
+            "that",
+            "beach",
+            "steep"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_relative_vs_time_clause",
+      "conceptIds": [
+        "relative_clauses",
+        "clauses"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Relative clause versus time clause",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence contains a relative clause?",
+          "correct": "The hall where we practise is closed today.",
+          "explanation": "'Where we practise' gives information about the hall.",
+          "options": [
+            "When we practise, the hall is noisy.",
+            "The hall where we practise is closed today.",
+            "We practise in the hall after school.",
+            "Because the hall is closed, we practise outside."
+          ]
+        },
+        {
+          "prompt": "Which sentence contains a time clause, not a relative clause?",
+          "correct": "When the museum opened, the class went inside.",
+          "explanation": "'When the museum opened' tells us time.",
+          "options": [
+            "The museum that we visited was busy.",
+            "The guide who met us smiled.",
+            "When the museum opened, the class went inside.",
+            "The room where we waited was cold."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_relative_non_defining_commas",
+      "conceptIds": [
+        "relative_clauses",
+        "parenthesis_commas"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Commas for non-defining relative clauses",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence uses commas correctly?",
+          "correct": "Mr Patel, who teaches Year 6, runs chess club.",
+          "explanation": "The extra information is parenthetical and needs paired commas.",
+          "options": [
+            "Mr Patel who teaches Year 6, runs chess club.",
+            "Mr Patel, who teaches Year 6, runs chess club.",
+            "Mr Patel who teaches, Year 6 runs chess club.",
+            "Mr Patel, who teaches Year 6 runs, chess club."
+          ]
+        },
+        {
+          "prompt": "Which sentence correctly punctuates the extra information?",
+          "correct": "The River Dee, which flows through Chester, flooded last winter.",
+          "explanation": "The relative clause is extra information.",
+          "options": [
+            "The River Dee which flows through Chester, flooded last winter.",
+            "The River Dee, which flows through Chester, flooded last winter.",
+            "The River Dee, which flows, through Chester flooded last winter.",
+            "The River Dee which, flows through Chester, flooded last winter."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_relative_complete_sensible",
+      "conceptIds": [
+        "relative_clauses"
+      ],
+      "questionType": "fill",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Complete with a relative clause",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Complete the sentence: 'The scientist ___ explained the experiment.'",
+          "correct": "who had designed the robot",
+          "explanation": "The clause adds information about the scientist.",
+          "options": [
+            "who had designed the robot",
+            "because she designed the robot",
+            "after designing the robot",
+            "and designed the robot"
+          ]
+        },
+        {
+          "prompt": "Complete the sentence: 'The painting ___ was sold at auction.'",
+          "correct": "that hung in the school hall",
+          "explanation": "The relative clause links to 'painting'.",
+          "options": [
+            "that hung in the school hall",
+            "because it hung there",
+            "and it hung in the hall",
+            "after the hall"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_tense_present_perfect_context",
+      "conceptIds": [
+        "tense_aspect"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Present perfect in context",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence uses the present perfect?",
+          "correct": "Maya has finished her model.",
+          "explanation": "Present perfect uses has/have + past participle and links to now.",
+          "options": [
+            "Maya finished her model yesterday.",
+            "Maya has finished her model.",
+            "Maya was finishing her model.",
+            "Maya had finished her model before lunch."
+          ]
+        },
+        {
+          "prompt": "Which sentence should use the present perfect? 'The bus is here now because it ___.'",
+          "correct": "has arrived",
+          "explanation": "The result matters now.",
+          "options": [
+            "arrived yesterday",
+            "has arrived",
+            "was arriving",
+            "had arrived before dawn"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_tense_past_perfect_sequence",
+      "conceptIds": [
+        "tense_aspect"
+      ],
+      "questionType": "fill",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Past perfect sequence",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Choose the best verb form: 'By the time Dad called, I ___ the homework.'",
+          "correct": "had finished",
+          "explanation": "Past perfect shows one past action happened before another past action.",
+          "options": [
+            "finished",
+            "have finished",
+            "had finished",
+            "was finishing"
+          ]
+        },
+        {
+          "prompt": "Choose the best verb form: 'The birds flew away because the cat ___ too close.'",
+          "correct": "had crept",
+          "explanation": "The creeping happened before the birds flew away.",
+          "options": [
+            "has crept",
+            "crept tomorrow",
+            "had crept",
+            "is creeping"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_tense_progressive_interruption",
+      "conceptIds": [
+        "tense_aspect"
+      ],
+      "questionType": "fill",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Progressive forms with interruption",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Choose the best form: 'We ___ the fence when the rain started.'",
+          "correct": "were painting",
+          "explanation": "Past progressive shows an action in progress.",
+          "options": [
+            "painted",
+            "were painting",
+            "have painted",
+            "had painted"
+          ]
+        },
+        {
+          "prompt": "Choose the best form: 'The dog ___ under the table while we ate.'",
+          "correct": "was sleeping",
+          "explanation": "It was happening over a period of time in the past.",
+          "options": [
+            "was sleeping",
+            "has slept",
+            "had slept",
+            "sleeps yesterday"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_tense_rewrite_precision",
+      "conceptIds": [
+        "tense_aspect"
+      ],
+      "questionType": "rewrite",
+      "inputType": "textarea",
+      "depth": 3,
+      "title": "Rewrite while preserving meaning",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Rewrite in the past perfect: 'She leaves before the bell.'",
+          "correct": "She had left before the bell.",
+          "explanation": "Use had + past participle.",
+          "accepted": [
+            "She had left before the bell."
+          ],
+          "nearMiss": [
+            "She left before the bell."
+          ]
+        },
+        {
+          "prompt": "Rewrite in the present perfect: 'They clean the classroom.'",
+          "correct": "They have cleaned the classroom.",
+          "explanation": "Use have + past participle.",
+          "accepted": [
+            "They have cleaned the classroom."
+          ],
+          "nearMiss": [
+            "They cleaned the classroom."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_tense_aspect_table",
+      "conceptIds": [
+        "tense_aspect"
+      ],
+      "questionType": "classify",
+      "inputType": "table_choice",
+      "depth": 3,
+      "title": "Classify tense/aspect",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Classify each verb phrase.",
+          "correct": {
+            "has eaten": "present perfect",
+            "was eating": "past progressive",
+            "had eaten": "past perfect",
+            "eats": "simple present"
+          },
+          "explanation": "Look at the auxiliary verbs.",
+          "rows": [
+            "has eaten",
+            "was eating",
+            "had eaten",
+            "eats"
+          ]
+        },
+        {
+          "prompt": "Classify each verb phrase.",
+          "correct": {
+            "were running": "past progressive",
+            "have run": "present perfect",
+            "had run": "past perfect",
+            "runs": "simple present"
+          },
+          "explanation": "Progressive uses be + -ing; perfect uses have/had + past participle.",
+          "rows": [
+            "were running",
+            "have run",
+            "had run",
+            "runs"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_standard_was_were_agreement",
+      "conceptIds": [
+        "standard_english"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Standard was/were agreement",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Choose the Standard English form: 'We ___ waiting by the gate.'",
+          "correct": "were",
+          "explanation": "'We were' is the Standard English form.",
+          "options": [
+            "was",
+            "were",
+            "is",
+            "be"
+          ]
+        },
+        {
+          "prompt": "Choose the Standard English form: 'They ___ excited about the trip.'",
+          "correct": "were",
+          "explanation": "Use 'were' with they.",
+          "options": [
+            "was",
+            "were",
+            "is",
+            "be"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_standard_done_did",
+      "conceptIds": [
+        "standard_english"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Did/done in Standard English",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence uses Standard English?",
+          "correct": "I did my homework before tea.",
+          "explanation": "'Did' is the correct past-tense form here.",
+          "options": [
+            "I done my homework before tea.",
+            "I did my homework before tea.",
+            "I doing my homework before tea.",
+            "I do my homework yesterday."
+          ]
+        },
+        {
+          "prompt": "Which correction is best? 'She done the washing up.'",
+          "correct": "She did the washing up.",
+          "explanation": "Use 'did' in Standard English.",
+          "options": [
+            "She did the washing up.",
+            "She do the washing up.",
+            "She doing the washing up.",
+            "She done did the washing up."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_standard_double_negative",
+      "conceptIds": [
+        "standard_english"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Avoid double negatives",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence is Standard English?",
+          "correct": "I haven't got any pencils.",
+          "explanation": "Standard English does not use 'no' after 'haven't' in this way.",
+          "options": [
+            "I haven't got no pencils.",
+            "I haven't got any pencils.",
+            "I ain't got no pencils.",
+            "I has got no pencils."
+          ]
+        },
+        {
+          "prompt": "Choose the Standard English correction: 'There isn't no milk left.'",
+          "correct": "There isn't any milk left.",
+          "explanation": "Use 'any' with the negative verb.",
+          "options": [
+            "There isn't no milk left.",
+            "There isn't any milk left.",
+            "There ain't no milk left.",
+            "There aren't no milk left."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_standard_subject_verb_formal",
+      "conceptIds": [
+        "standard_english"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Formal subject-verb agreement",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Choose the Standard English form: 'The group of pupils ___ ready.'",
+          "correct": "is",
+          "explanation": "The subject is singular: 'group'.",
+          "options": [
+            "is",
+            "are",
+            "were being",
+            "be"
+          ]
+        },
+        {
+          "prompt": "Choose the Standard English form: 'Neither of the answers ___ correct.'",
+          "correct": "is",
+          "explanation": "'Neither' is treated as singular in this formal sentence.",
+          "options": [
+            "are",
+            "is",
+            "were",
+            "be"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_pronoun_referent_clear",
+      "conceptIds": [
+        "pronouns_cohesion"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Clear pronoun reference",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence keeps the meaning clearest?",
+          "correct": "Sara gave the book to Lily because Lily needed it.",
+          "explanation": "Repeating 'Lily' avoids ambiguity.",
+          "options": [
+            "Sara gave the book to Lily because she needed it.",
+            "Sara gave the book to Lily because Lily needed it.",
+            "She gave it to her because she needed it.",
+            "Sara gave Lily to the book because it needed her."
+          ]
+        },
+        {
+          "prompt": "Which version avoids an unclear pronoun?",
+          "correct": "Tom put the mug on the tray because the tray was clean.",
+          "explanation": "'It' could refer to mug or tray.",
+          "options": [
+            "Tom put the mug on the tray because it was clean.",
+            "Tom put the mug on the tray because the tray was clean.",
+            "He put it on it because it was clean.",
+            "The tray put Tom on the mug."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_pronoun_reduce_repetition",
+      "conceptIds": [
+        "pronouns_cohesion"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Reduce repetition without losing meaning",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which version improves cohesion?",
+          "correct": "Mila packed her bag and carried it to the bus.",
+          "explanation": "The pronouns are clear and avoid repetition.",
+          "options": [
+            "Mila packed Mila's bag and carried Mila's bag to the bus.",
+            "Mila packed her bag and carried it to the bus.",
+            "Mila packed it and carried her to the bus.",
+            "She packed her and carried it to it."
+          ]
+        },
+        {
+          "prompt": "Which sentence uses pronouns clearly?",
+          "correct": "Arun found his coat and hung it on the peg.",
+          "explanation": "'His' and 'it' have clear referents.",
+          "options": [
+            "Arun found Arun's coat and hung Arun's coat on the peg.",
+            "Arun found his coat and hung it on the peg.",
+            "Arun found it and hung him on the peg.",
+            "He found his and hung it on him."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_pronoun_ambiguous_repair",
+      "conceptIds": [
+        "pronouns_cohesion"
+      ],
+      "questionType": "rewrite",
+      "inputType": "textarea",
+      "depth": 3,
+      "title": "Repair ambiguous pronouns",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Rewrite to make the meaning clear: 'Aisha told Grace she had won the prize.' Make Aisha the winner.",
+          "correct": "Aisha told Grace that Aisha had won the prize.",
+          "explanation": "Repeat the noun or restructure the sentence.",
+          "accepted": [
+            "Aisha told Grace that Aisha had won the prize.",
+            "Aisha, who had won the prize, told Grace."
+          ],
+          "nearMiss": [
+            "Aisha told Grace she had won the prize."
+          ]
+        },
+        {
+          "prompt": "Rewrite to make the meaning clear: 'The cup hit the plate and it cracked.' Make the plate cracked.",
+          "correct": "The cup hit the plate, and the plate cracked.",
+          "explanation": "Avoid the unclear pronoun 'it'.",
+          "accepted": [
+            "The cup hit the plate, and the plate cracked.",
+            "When the cup hit the plate, the plate cracked."
+          ],
+          "nearMiss": [
+            "The cup hit the plate and it cracked."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_pronoun_choice_table",
+      "conceptIds": [
+        "pronouns_cohesion"
+      ],
+      "questionType": "classify",
+      "inputType": "table_choice",
+      "depth": 2,
+      "title": "Choose the clearest referent",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "For each sentence, choose what the pronoun refers to.",
+          "correct": {
+            "Leah fed the rabbit and put it back in the hutch.": "rabbit",
+            "Leah put the carrot beside the rabbit and it ate quickly.": "rabbit"
+          },
+          "explanation": "Check which noun makes sense with the action.",
+          "rows": [
+            "Leah fed the rabbit and put it back in the hutch.",
+            "Leah put the carrot beside the rabbit and it ate quickly."
+          ]
+        },
+        {
+          "prompt": "For each sentence, choose what the pronoun refers to.",
+          "correct": {
+            "The boat struck the rock and it cracked.": "boat or rock unclear",
+            "The rock cracked after the boat struck it.": "rock"
+          },
+          "explanation": "Some pronouns are unclear and need rewriting.",
+          "rows": [
+            "The boat struck the rock and it cracked.",
+            "The rock cracked after the boat struck it."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_formality_vocabulary_replacement",
+      "conceptIds": [
+        "formality"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Formal vocabulary choices",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Choose the most formal replacement for 'find out'.",
+          "correct": "discover",
+          "explanation": "'Discover' is more formal and precise.",
+          "options": [
+            "discover",
+            "suss out",
+            "have a look",
+            "poke around"
+          ]
+        },
+        {
+          "prompt": "Choose the most formal replacement for 'put off'.",
+          "correct": "postpone",
+          "explanation": "'Postpone' suits formal writing.",
+          "options": [
+            "delay a bit",
+            "postpone",
+            "leave it",
+            "hang on"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_formality_sentence_repair",
+      "conceptIds": [
+        "formality"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Repair informal sentences",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence is most suitable for a formal letter?",
+          "correct": "I am writing to request further information.",
+          "explanation": "Formal writing avoids slang and chatty phrasing.",
+          "options": [
+            "I wanna know more stuff.",
+            "Can you tell me some things?",
+            "I am writing to request further information.",
+            "Please send the info, yeah?"
+          ]
+        },
+        {
+          "prompt": "Choose the formal version.",
+          "correct": "The meeting will take place at 3 p.m.",
+          "explanation": "It uses precise vocabulary and avoids contractions.",
+          "options": [
+            "The meeting will take place at 3 p.m.",
+            "The meeting's gonna happen at 3.",
+            "We'll do the meeting at 3-ish.",
+            "The meeting thing is at 3."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_formality_contractions",
+      "conceptIds": [
+        "formality"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Contractions and formal tone",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence is most formal?",
+          "correct": "The committee cannot approve the request today.",
+          "explanation": "Formal writing usually avoids contractions.",
+          "options": [
+            "The committee can't approve the request today.",
+            "The committee cannot approve the request today.",
+            "The committee ain't approving it today.",
+            "They can't okay it today."
+          ]
+        },
+        {
+          "prompt": "Which version best suits a school report?",
+          "correct": "The experiment did not produce a clear result.",
+          "explanation": "It is precise and formal.",
+          "options": [
+            "The experiment didn't really work.",
+            "The experiment did not produce a clear result.",
+            "It didn't do much.",
+            "The test was kind of useless."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_formality_register_in_context",
+      "conceptIds": [
+        "formality"
+      ],
+      "questionType": "classify",
+      "inputType": "table_choice",
+      "depth": 2,
+      "title": "Match register to context",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Classify each phrase as formal or informal.",
+          "correct": {
+            "request assistance": "formal",
+            "ask for help": "informal",
+            "commence the event": "formal",
+            "get started": "informal"
+          },
+          "explanation": "Formal vocabulary is more precise and less conversational.",
+          "rows": [
+            "request assistance",
+            "ask for help",
+            "commence the event",
+            "get started"
+          ]
+        },
+        {
+          "prompt": "Classify each phrase as formal or informal.",
+          "correct": {
+            "supply the equipment": "formal",
+            "bring the stuff": "informal",
+            "depart immediately": "formal",
+            "leave right now": "informal"
+          },
+          "explanation": "Consider the setting and audience.",
+          "rows": [
+            "supply the equipment",
+            "bring the stuff",
+            "depart immediately",
+            "leave right now"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_voice_identify_passive",
+      "conceptIds": [
+        "active_passive"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Identify passive voice",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence is passive?",
+          "correct": "The window was broken by the football.",
+          "explanation": "Passive foregrounds the affected thing: the window.",
+          "options": [
+            "The football broke the window.",
+            "The window was broken by the football.",
+            "The football bounced away.",
+            "The window cracked loudly."
+          ]
+        },
+        {
+          "prompt": "Which sentence is active?",
+          "correct": "The council repaired the bridge.",
+          "explanation": "The doer, the council, is the subject.",
+          "options": [
+            "The bridge was repaired by the council.",
+            "The bridge had been repaired.",
+            "The council repaired the bridge.",
+            "The bridge was closed."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_voice_convert_active_to_passive",
+      "conceptIds": [
+        "active_passive"
+      ],
+      "questionType": "rewrite",
+      "inputType": "textarea",
+      "depth": 3,
+      "title": "Convert active to passive",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Rewrite in the passive: 'The gardener planted the roses.'",
+          "correct": "The roses were planted by the gardener.",
+          "explanation": "Move the object to the front and use was/were + past participle.",
+          "accepted": [
+            "The roses were planted by the gardener."
+          ],
+          "nearMiss": [
+            "The gardener was planted by the roses."
+          ]
+        },
+        {
+          "prompt": "Rewrite in the passive: 'The class will perform the play.'",
+          "correct": "The play will be performed by the class.",
+          "explanation": "Keep the future tense with 'will be'.",
+          "accepted": [
+            "The play will be performed by the class."
+          ],
+          "nearMiss": [
+            "The class will be performed by the play."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_voice_convert_passive_to_active",
+      "conceptIds": [
+        "active_passive"
+      ],
+      "questionType": "rewrite",
+      "inputType": "textarea",
+      "depth": 3,
+      "title": "Convert passive to active",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Rewrite in the active: 'The trophy was lifted by the captain.'",
+          "correct": "The captain lifted the trophy.",
+          "explanation": "The doer becomes the subject.",
+          "accepted": [
+            "The captain lifted the trophy."
+          ],
+          "nearMiss": [
+            "The trophy lifted the captain."
+          ]
+        },
+        {
+          "prompt": "Rewrite in the active: 'The song was written by the choir.'",
+          "correct": "The choir wrote the song.",
+          "explanation": "Keep the meaning the same.",
+          "accepted": [
+            "The choir wrote the song."
+          ],
+          "nearMiss": [
+            "The song wrote the choir."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_voice_agent_missing",
+      "conceptIds": [
+        "active_passive"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Passive voice with hidden agent",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence is passive even though the doer is not named?",
+          "correct": "The door was locked before lunch.",
+          "explanation": "Passive can hide the doer.",
+          "options": [
+            "The teacher locked the door.",
+            "The door was locked before lunch.",
+            "The door closed quietly.",
+            "The key turned in the lock."
+          ]
+        },
+        {
+          "prompt": "Which passive sentence leaves out the agent?",
+          "correct": "The letters were delivered this morning.",
+          "explanation": "The sentence does not say who delivered them.",
+          "options": [
+            "The postman delivered the letters.",
+            "The letters were delivered this morning.",
+            "The letters arrived this morning.",
+            "The postman was early."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_voice_same_meaning_not_reversed",
+      "conceptIds": [
+        "active_passive",
+        "subject_object"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Preserve meaning when changing voice",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which passive sentence keeps the same meaning as 'The dog chased the cat'?",
+          "correct": "The cat was chased by the dog.",
+          "explanation": "The cat receives the action.",
+          "options": [
+            "The dog was chased by the cat.",
+            "The cat was chased by the dog.",
+            "The cat chased the dog.",
+            "The dog was chasing the cat."
+          ]
+        },
+        {
+          "prompt": "Which active sentence keeps the same meaning as 'The cake was eaten by Sam'?",
+          "correct": "Sam ate the cake.",
+          "explanation": "The doer is Sam and the thing affected is the cake.",
+          "options": [
+            "The cake ate Sam.",
+            "Sam ate the cake.",
+            "Sam was eaten by the cake.",
+            "The cake was eating Sam."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_subject_object_fronted_adverbial",
+      "conceptIds": [
+        "subject_object"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Subject/object with fronted adverbials",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "In 'After dinner, the twins washed the plates', what is the subject?",
+          "correct": "the twins",
+          "explanation": "Ignore the fronted adverbial; the twins do the action.",
+          "options": [
+            "After dinner",
+            "the twins",
+            "washed",
+            "the plates"
+          ]
+        },
+        {
+          "prompt": "In 'Before sunrise, the hikers packed their tents', what is the object?",
+          "correct": "their tents",
+          "explanation": "The tents receive the action.",
+          "options": [
+            "Before sunrise",
+            "the hikers",
+            "packed",
+            "their tents"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_subject_object_or_complement",
+      "conceptIds": [
+        "subject_object"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Object or complement",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence has a direct object?",
+          "correct": "The chef tasted the soup.",
+          "explanation": "The soup receives the action of tasting.",
+          "options": [
+            "The soup tasted salty.",
+            "The chef tasted the soup.",
+            "The chef was tired.",
+            "The kitchen smelled warm."
+          ]
+        },
+        {
+          "prompt": "Which sentence has no object?",
+          "correct": "The runner became exhausted.",
+          "explanation": "'Exhausted' describes the subject; it is not an object.",
+          "options": [
+            "The runner kicked the ball.",
+            "The runner carried the bag.",
+            "The runner became exhausted.",
+            "The runner opened the gate."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_subject_object_passive_roles",
+      "conceptIds": [
+        "subject_object",
+        "active_passive"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Roles in passive sentences",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "In 'The parcel was delivered by Nina', what is the grammatical subject?",
+          "correct": "The parcel",
+          "explanation": "In a passive sentence, the affected thing can be the subject.",
+          "options": [
+            "The parcel",
+            "was delivered",
+            "by Nina",
+            "Nina"
+          ]
+        },
+        {
+          "prompt": "In 'The windows were cleaned by the caretaker', who is the doer?",
+          "correct": "the caretaker",
+          "explanation": "The doer appears in the 'by' phrase.",
+          "options": [
+            "The windows",
+            "were cleaned",
+            "the caretaker",
+            "by"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_subject_object_pronoun_object",
+      "conceptIds": [
+        "subject_object",
+        "word_classes"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Pronouns as objects",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "In 'Mum called him after school', what is the object?",
+          "correct": "him",
+          "explanation": "'Him' receives the action.",
+          "options": [
+            "Mum",
+            "called",
+            "him",
+            "after school"
+          ]
+        },
+        {
+          "prompt": "In 'The coach praised us', what is the object?",
+          "correct": "us",
+          "explanation": "'Us' is the pronoun object.",
+          "options": [
+            "The coach",
+            "praised",
+            "us",
+            "coach"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_modal_certainty_scale",
+      "conceptIds": [
+        "modal_verbs"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Modal certainty scale",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence sounds most certain?",
+          "correct": "The parcel will arrive today.",
+          "explanation": "'Will' is strongest here.",
+          "options": [
+            "The parcel might arrive today.",
+            "The parcel could arrive today.",
+            "The parcel should arrive today.",
+            "The parcel will arrive today."
+          ]
+        },
+        {
+          "prompt": "Which sentence shows the least certainty?",
+          "correct": "The team might win.",
+          "explanation": "'Might' suggests possibility, not certainty.",
+          "options": [
+            "The team must win.",
+            "The team will win.",
+            "The team should win.",
+            "The team might win."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_modal_obligation_advice",
+      "conceptIds": [
+        "modal_verbs"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Obligation and advice",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which modal verb best shows obligation? 'You ___ wear a seat belt.'",
+          "correct": "must",
+          "explanation": "'Must' shows strong obligation.",
+          "options": [
+            "might",
+            "could",
+            "must",
+            "may"
+          ]
+        },
+        {
+          "prompt": "Which modal verb best shows advice? 'You ___ check your work.'",
+          "correct": "should",
+          "explanation": "'Should' gives advice.",
+          "options": [
+            "might",
+            "should",
+            "would",
+            "may"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_modal_possibility_adverbs",
+      "conceptIds": [
+        "modal_verbs"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Modal verbs and possibility adverbs",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which word is the modal verb? 'Perhaps the concert might be cancelled.'",
+          "correct": "might",
+          "explanation": "'Might' is the modal verb; 'perhaps' is an adverb.",
+          "options": [
+            "Perhaps",
+            "concert",
+            "might",
+            "cancelled"
+          ]
+        },
+        {
+          "prompt": "Which sentence uses a modal verb to show possibility?",
+          "correct": "The bridge could reopen tomorrow.",
+          "explanation": "'Could' is a modal verb.",
+          "options": [
+            "Perhaps the bridge opens tomorrow.",
+            "The bridge could reopen tomorrow.",
+            "The bridge reopened yesterday.",
+            "The bridge is open."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_modal_context_best_fit",
+      "conceptIds": [
+        "modal_verbs"
+      ],
+      "questionType": "fill",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Choose the best modal for context",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Choose the best modal: 'The clouds are very dark, so it ___ rain soon.'",
+          "correct": "might",
+          "explanation": "There is a possibility, not certainty.",
+          "options": [
+            "must",
+            "might",
+            "shall",
+            "would have"
+          ]
+        },
+        {
+          "prompt": "Choose the best modal: 'The sign says visitors ___ not feed the animals.'",
+          "correct": "must",
+          "explanation": "The sign gives a rule.",
+          "options": [
+            "must",
+            "might",
+            "could",
+            "would"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_parenthesis_identify_extra_info",
+      "conceptIds": [
+        "parenthesis_commas"
+      ],
+      "questionType": "identify",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Identify parenthesis",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which words are parenthesis? 'The bakery, which opens at seven, sells fresh rolls.'",
+          "correct": "which opens at seven",
+          "explanation": "The words add extra information and can be removed.",
+          "options": [
+            "The bakery",
+            "which opens at seven",
+            "sells fresh rolls",
+            "fresh rolls"
+          ]
+        },
+        {
+          "prompt": "Which part is parenthesis? 'Sam - our team captain - scored twice.'",
+          "correct": "our team captain",
+          "explanation": "The dashes mark extra information.",
+          "options": [
+            "Sam",
+            "our team captain",
+            "scored twice",
+            "team captain scored"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_parenthesis_insert_paired_commas",
+      "conceptIds": [
+        "parenthesis_commas"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Insert paired commas",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence uses paired commas correctly?",
+          "correct": "The old mill, now a museum, stands by the river.",
+          "explanation": "Both sides of the parenthesis need marking.",
+          "options": [
+            "The old mill now, a museum, stands by the river.",
+            "The old mill, now a museum, stands by the river.",
+            "The old mill, now a museum stands, by the river.",
+            "The old, mill now a museum, stands by the river."
+          ]
+        },
+        {
+          "prompt": "Which sentence marks the parenthesis correctly?",
+          "correct": "Luca, who had lost his map, asked for help.",
+          "explanation": "The relative clause is extra information.",
+          "options": [
+            "Luca who had lost his map, asked for help.",
+            "Luca, who had lost his map, asked for help.",
+            "Luca, who had lost, his map asked for help.",
+            "Luca who, had lost his map, asked for help."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_parenthesis_or_list_comma",
+      "conceptIds": [
+        "parenthesis_commas"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Parenthesis comma or list comma",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence uses commas for a list, not parenthesis?",
+          "correct": "We packed torches, maps, ropes and water.",
+          "explanation": "The commas separate items in a list.",
+          "options": [
+            "We packed torches, maps, ropes and water.",
+            "The guide, who knew the cave, led us in.",
+            "Ella, our captain, gave the signal.",
+            "The cave, dark and cold, stretched ahead."
+          ]
+        },
+        {
+          "prompt": "Which sentence uses commas for parenthesis?",
+          "correct": "The violin, a family treasure, was kept in a case.",
+          "explanation": "'A family treasure' is extra information.",
+          "options": [
+            "The violin, a family treasure, was kept in a case.",
+            "We heard violins, flutes, drums and bells.",
+            "The violin sounded clear, bright and loud.",
+            "She packed a violin, bow and music stand."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_parenthesis_dash_brackets_choice",
+      "conceptIds": [
+        "parenthesis_commas"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Choose punctuation for parenthesis",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which punctuation could replace the brackets? 'The castle (built in 1200) overlooks the town.'",
+          "correct": "dashes or commas",
+          "explanation": "Dashes or paired commas can mark parenthesis.",
+          "options": [
+            "question marks",
+            "dashes or commas",
+            "apostrophes",
+            "semi-colons only"
+          ]
+        },
+        {
+          "prompt": "Which sentence uses dashes for parenthesis correctly?",
+          "correct": "The pond - frozen solid - glittered in the sun.",
+          "explanation": "The dashes surround the extra information.",
+          "options": [
+            "The pond - frozen solid - glittered in the sun.",
+            "The pond - frozen solid glittered - in the sun.",
+            "The pond frozen - solid - glittered in the sun.",
+            "The pond frozen solid - glittered - in the sun."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_speech_question_inside_quotes",
+      "conceptIds": [
+        "speech_punctuation"
+      ],
+      "questionType": "fix",
+      "inputType": "textarea",
+      "depth": 3,
+      "title": "Question mark inside speech marks",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Punctuate the direct speech: 'Where is my scarf asked Dad.'",
+          "correct": "“Where is my scarf?” asked Dad.",
+          "explanation": "The question mark belongs inside the speech marks.",
+          "accepted": [
+            "“Where is my scarf?” asked Dad.",
+            "\"Where is my scarf?\" asked Dad."
+          ],
+          "nearMiss": [
+            "“Where is my scarf”? asked Dad."
+          ]
+        },
+        {
+          "prompt": "Punctuate the direct speech: 'Are we nearly there asked Leila.'",
+          "correct": "“Are we nearly there?” asked Leila.",
+          "explanation": "The spoken question needs the question mark inside the closing speech mark.",
+          "accepted": [
+            "“Are we nearly there?” asked Leila.",
+            "\"Are we nearly there?\" asked Leila."
+          ],
+          "nearMiss": [
+            "“Are we nearly there”? asked Leila."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_speech_reporting_clause_before",
+      "conceptIds": [
+        "speech_punctuation"
+      ],
+      "questionType": "fix",
+      "inputType": "textarea",
+      "depth": 3,
+      "title": "Reporting clause before speech",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Punctuate: 'Mum whispered the baby is asleep.'",
+          "correct": "Mum whispered, “The baby is asleep.”",
+          "explanation": "Use a comma before the direct speech.",
+          "accepted": [
+            "Mum whispered, “The baby is asleep.”",
+            "Mum whispered, \"The baby is asleep.\""
+          ],
+          "nearMiss": [
+            "Mum whispered “The baby is asleep.”"
+          ]
+        },
+        {
+          "prompt": "Punctuate: 'The coach shouted run faster.'",
+          "correct": "The coach shouted, “Run faster!”",
+          "explanation": "The reporting clause comes before the speech.",
+          "accepted": [
+            "The coach shouted, “Run faster!”",
+            "The coach shouted, \"Run faster!\""
+          ],
+          "nearMiss": [
+            "The coach shouted “Run faster!”"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_speech_split_reporting_clause",
+      "conceptIds": [
+        "speech_punctuation"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Split direct speech",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence punctuates split speech correctly?",
+          "correct": "“We can try again,” said Tom, “after lunch.”",
+          "explanation": "Commas separate the reporting clause from the speech.",
+          "options": [
+            "“We can try again,” said Tom, “after lunch.”",
+            "“We can try again” said Tom “after lunch.”",
+            "“We can try again,” said Tom “after lunch.”",
+            "“We can try again”, said Tom, “after lunch”."
+          ]
+        },
+        {
+          "prompt": "Which sentence is correctly punctuated?",
+          "correct": "“I found the key,” whispered Zara, “under the mat.”",
+          "explanation": "The punctuation stays inside the speech marks.",
+          "options": [
+            "“I found the key,” whispered Zara, “under the mat.”",
+            "“I found the key” whispered Zara, “under the mat.”",
+            "“I found the key,” whispered Zara “under the mat.”",
+            "“I found the key”, whispered Zara, “under the mat”."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_speech_new_speaker",
+      "conceptIds": [
+        "speech_punctuation"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "New speaker, new line",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which layout is clearest when a new person speaks?",
+          "correct": "Start a new line for the new speaker.",
+          "explanation": "A new speaker usually starts a new line in dialogue.",
+          "options": [
+            "Keep every speaker in one long paragraph.",
+            "Start a new line for the new speaker.",
+            "Remove all speech marks.",
+            "Use brackets instead of speech marks."
+          ]
+        },
+        {
+          "prompt": "Why is a new line helpful in dialogue?",
+          "correct": "It shows that the speaker has changed.",
+          "explanation": "Line breaks support clarity.",
+          "options": [
+            "It shows that the speaker has changed.",
+            "It makes all speech indirect.",
+            "It removes the need for punctuation.",
+            "It turns a statement into a question."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_speech_exclamation_inside_quotes",
+      "conceptIds": [
+        "speech_punctuation"
+      ],
+      "questionType": "fix",
+      "inputType": "textarea",
+      "depth": 3,
+      "title": "Exclamation mark inside speech marks",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Punctuate: 'Stop shouted the lifeguard.'",
+          "correct": "“Stop!” shouted the lifeguard.",
+          "explanation": "The exclamation mark is part of the spoken words.",
+          "accepted": [
+            "“Stop!” shouted the lifeguard.",
+            "\"Stop!\" shouted the lifeguard."
+          ],
+          "nearMiss": [
+            "“Stop”! shouted the lifeguard."
+          ]
+        },
+        {
+          "prompt": "Punctuate: 'Watch out cried Sam.'",
+          "correct": "“Watch out!” cried Sam.",
+          "explanation": "End punctuation belongs inside speech marks.",
+          "accepted": [
+            "“Watch out!” cried Sam.",
+            "\"Watch out!\" cried Sam."
+          ],
+          "nearMiss": [
+            "“Watch out”! cried Sam."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_apostrophe_singular_plural_regular",
+      "conceptIds": [
+        "apostrophes_possession"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Singular and plural regular possession",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Choose the phrase for one teacher and her desk.",
+          "correct": "the teacher's desk",
+          "explanation": "One teacher owns the desk, so apostrophe before s.",
+          "options": [
+            "the teachers' desk",
+            "the teacher's desk",
+            "the teachers desk",
+            "the teacher desk's"
+          ]
+        },
+        {
+          "prompt": "Choose the phrase for several teachers and their desks.",
+          "correct": "the teachers' desks",
+          "explanation": "Regular plural ending in s takes the apostrophe after s.",
+          "options": [
+            "the teacher's desks",
+            "the teachers' desks",
+            "the teachers desks'",
+            "the teacher desks"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_apostrophe_irregular_plural",
+      "conceptIds": [
+        "apostrophes_possession"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Irregular plural possession",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Choose the correct phrase for children and their coats.",
+          "correct": "the children's coats",
+          "explanation": "Children is plural but does not end in s, so add 's.",
+          "options": [
+            "the childrens' coats",
+            "the children's coats",
+            "the childrens coats",
+            "the children coats'"
+          ]
+        },
+        {
+          "prompt": "Choose the correct phrase for women and their race.",
+          "correct": "the women's race",
+          "explanation": "Women is an irregular plural.",
+          "options": [
+            "the womens' race",
+            "the women's race",
+            "the women race's",
+            "the womens race"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_apostrophe_contraction_vs_possession",
+      "conceptIds": [
+        "apostrophes_possession"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Contraction or possession",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "In 'The dog's barking loudly', what does the apostrophe show?",
+          "correct": "omission",
+          "explanation": "It means 'dog is', so letters have been omitted.",
+          "options": [
+            "singular possession",
+            "plural possession",
+            "omission",
+            "a list"
+          ]
+        },
+        {
+          "prompt": "In 'The dog's bowl is empty', what does the apostrophe show?",
+          "correct": "singular possession",
+          "explanation": "The bowl belongs to one dog.",
+          "options": [
+            "singular possession",
+            "omission",
+            "plural possession",
+            "a question"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_apostrophe_meaning_contrast",
+      "conceptIds": [
+        "apostrophes_possession"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Apostrophe meaning contrast",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which phrase means boots belonging to one girl?",
+          "correct": "the girl's boots",
+          "explanation": "Apostrophe before s shows one owner.",
+          "options": [
+            "the girl's boots",
+            "the girls' boots",
+            "the girls boots",
+            "the girl boots'"
+          ]
+        },
+        {
+          "prompt": "Which phrase means kits belonging to more than one team?",
+          "correct": "the teams' kits",
+          "explanation": "Regular plural owner uses apostrophe after s.",
+          "options": [
+            "the team's kits",
+            "the teams' kits",
+            "the teams kits'",
+            "the team kits"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_boundary_semicolon_clauses",
+      "conceptIds": [
+        "boundary_punctuation"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Semicolon between related clauses",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence uses a semicolon correctly?",
+          "correct": "The sky darkened; the gulls flew inland.",
+          "explanation": "A semicolon can join two closely related main clauses.",
+          "options": [
+            "The sky darkened; the gulls flew inland.",
+            "The sky; darkened the gulls flew inland.",
+            "The sky darkened; and the gulls.",
+            "The sky; the gulls; flew inland."
+          ]
+        },
+        {
+          "prompt": "Which sentence is correctly punctuated?",
+          "correct": "The gate creaked; nobody moved.",
+          "explanation": "Both sides can stand as main clauses.",
+          "options": [
+            "The gate; creaked nobody moved.",
+            "The gate creaked; nobody moved.",
+            "The gate creaked nobody; moved.",
+            "The gate; creaked; nobody moved."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_boundary_colon_explanation",
+      "conceptIds": [
+        "boundary_punctuation"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Colon for explanation",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence uses a colon correctly?",
+          "correct": "I needed one thing: a torch.",
+          "explanation": "The first part is a complete clause; the second explains it.",
+          "options": [
+            "I needed: one thing a torch.",
+            "I needed one thing: a torch.",
+            "I needed one: thing a torch.",
+            "I needed one thing a: torch."
+          ]
+        },
+        {
+          "prompt": "Which sentence uses a colon to introduce a list?",
+          "correct": "The box contained three tools: a hammer, a saw and a chisel.",
+          "explanation": "A colon can introduce a list after a complete clause.",
+          "options": [
+            "The box contained three tools: a hammer, a saw and a chisel.",
+            "The box contained: three tools a hammer, a saw and a chisel.",
+            "The box: contained three tools, a hammer, a saw and a chisel.",
+            "The box contained three: tools a hammer."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_boundary_dash_break",
+      "conceptIds": [
+        "boundary_punctuation"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Dash for a strong break",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which sentence uses a dash effectively?",
+          "correct": "The answer was obvious - nobody had locked the door.",
+          "explanation": "The dash introduces an explanation.",
+          "options": [
+            "The answer was obvious - nobody had locked the door.",
+            "The answer - was obvious nobody had locked the door.",
+            "The answer was - obvious nobody had locked the door.",
+            "The answer was obvious nobody - had locked the door."
+          ]
+        },
+        {
+          "prompt": "Which punctuation best completes the sentence? 'I opened the box ___ it was empty.'",
+          "correct": "dash",
+          "explanation": "A dash can create a dramatic break before the explanation.",
+          "options": [
+            "apostrophe",
+            "dash",
+            "question mark",
+            "speech mark"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_boundary_comma_splice_repair",
+      "conceptIds": [
+        "boundary_punctuation"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Repair comma splices",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which revision fixes the comma splice? 'The rain stopped, we went outside.'",
+          "correct": "The rain stopped; we went outside.",
+          "explanation": "Two main clauses need stronger punctuation or a conjunction.",
+          "options": [
+            "The rain stopped, we went outside.",
+            "The rain stopped; we went outside.",
+            "The rain; stopped, we went outside.",
+            "The rain stopped we; went outside."
+          ]
+        },
+        {
+          "prompt": "Which sentence repairs the boundary? 'The bell rang, the class lined up.'",
+          "correct": "The bell rang, so the class lined up.",
+          "explanation": "Adding a conjunction makes the comma work.",
+          "options": [
+            "The bell rang, the class lined up.",
+            "The bell rang, so the class lined up.",
+            "The bell, rang the class lined up.",
+            "The bell rang the class, lined up."
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_hyphen_compound_modifier",
+      "conceptIds": [
+        "hyphen_ambiguity"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 2,
+      "title": "Hyphen for compound modifiers",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which phrase clearly means a shark that eats people?",
+          "correct": "man-eating shark",
+          "explanation": "The hyphen shows the words work together as a modifier.",
+          "options": [
+            "man eating shark",
+            "man-eating shark",
+            "man eating-shark",
+            "man-eat shark"
+          ]
+        },
+        {
+          "prompt": "Which phrase clearly describes a cake made by a child?",
+          "correct": "child-made cake",
+          "explanation": "The hyphen avoids confusion.",
+          "options": [
+            "child made cake",
+            "child-made cake",
+            "child made-cake",
+            "child-cake made"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_hyphen_meaning_contrast",
+      "conceptIds": [
+        "hyphen_ambiguity"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Meaning changes with hyphens",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which phrase means workers who work part time?",
+          "correct": "part-time workers",
+          "explanation": "The hyphen joins 'part' and 'time' as one idea.",
+          "options": [
+            "part-time workers",
+            "part time workers",
+            "part workers time",
+            "time-part workers"
+          ]
+        },
+        {
+          "prompt": "Which phrase means a snake that is eating an egg?",
+          "correct": "egg-eating snake",
+          "explanation": "The hyphen makes the intended modifier clear.",
+          "options": [
+            "egg eating snake",
+            "egg-eating snake",
+            "egg eating-snake",
+            "egg snake-eating"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_hyphen_no_ly",
+      "conceptIds": [
+        "hyphen_ambiguity"
+      ],
+      "questionType": "choose",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Do not usually hyphenate -ly adverbs",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which phrase is usually punctuated best?",
+          "correct": "a carefully painted sign",
+          "explanation": "-ly adverbs are usually not hyphenated before adjectives/participles.",
+          "options": [
+            "a carefully-painted sign",
+            "a carefully painted sign",
+            "a careful-ly painted sign",
+            "a carefully painted-sign"
+          ]
+        },
+        {
+          "prompt": "Which option avoids an unnecessary hyphen?",
+          "correct": "a brightly lit room",
+          "explanation": "'Brightly' is an -ly adverb.",
+          "options": [
+            "a brightly-lit room",
+            "a brightly lit room",
+            "a bright-ly lit room",
+            "a brightly room-lit"
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "manual_p14_hyphen_repair_ambiguity",
+      "conceptIds": [
+        "hyphen_ambiguity"
+      ],
+      "questionType": "fix",
+      "inputType": "single_choice",
+      "depth": 3,
+      "title": "Repair ambiguity with a hyphen",
+      "rationale": "Hand-authored bench-expansion template for KS2 Grammar practice.",
+      "cases": [
+        {
+          "prompt": "Which version avoids ambiguity?",
+          "correct": "twenty-four hour shifts",
+          "explanation": "The hyphen shows the number twenty-four.",
+          "options": [
+            "twenty four-hour shifts",
+            "twenty-four hour shifts",
+            "twenty four hour-shifts",
+            "twenty four hour shifts"
+          ]
+        },
+        {
+          "prompt": "Which phrase is clearest for a coach who trains athletes?",
+          "correct": "athlete-training coach",
+          "explanation": "The hyphen links the words working as a modifier.",
+          "options": [
+            "athlete training coach",
+            "athlete-training coach",
+            "athlete training-coach",
+            "athlete-coach training"
+          ]
+        }
+      ]
+    }
+  ]
+}

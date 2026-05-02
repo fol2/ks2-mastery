@@ -1,0 +1,60 @@
+*** Begin Patch
+*** Update File: worker/src/subjects/grammar/selection.js
+@@
+ export function buildGrammarPracticeQueue({
+@@
+ } = {}) {
+@@
+   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
+   const workingRecentVariants = recentVariantIndex(recentAttempts);
++  const plannedTemplateIds = new Set();
+   const queue = [];
++
++  function queueFreshPool(candidatePool) {
++    const fresh = candidatePool.filter((template) => !plannedTemplateIds.has(template.id));
++    return fresh.length > 0 ? fresh : candidatePool;
++  }
++
++  function pushPlannedTemplate(template, candidateSeed) {
++    queue.push(queueEntry(template));
++    plannedTemplateIds.add(template.id);
++    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
++    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
++  }
+@@
+-    const focusTemplates = pool.filter((template) => (template.skillIds || []).includes(normalisedFocus));
++    const focusTemplates = queueFreshPool(
++      pool.filter((template) => (template.skillIds || []).includes(normalisedFocus)),
++    );
+@@
+-        queue.push(queueEntry(template));
+-        workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
+-        addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
++        pushPlannedTemplate(template, candidateSeed);
+       }
+     }
+   }
+@@
+-    const priorityPool = urgentTemplatePool(pool, mastery, recentConcepts, nowTs);
++    const priorityPool = queueFreshPool(urgentTemplatePool(pool, mastery, recentConcepts, nowTs));
+@@
+-      queue.push(queueEntry(template));
+-      workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
+-      addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
++      pushPlannedTemplate(template, candidateSeed);
+     }
+   }
+ 
+   while (queue.length < safeSize) {
+@@
+-      pool,
++      pool: queueFreshPool(pool),
+@@
+-    queue.push(queueEntry(template));
+-    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
+-    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
++    pushPlannedTemplate(template, candidateSeed);
+   }
+   return queue;
+ }
+*** End Patch

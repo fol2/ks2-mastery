@@ -1,0 +1,122 @@
+{
+  "combined": {
+    "packId": "grammar-qg-p16-manual-expansion-200-families",
+    "status": "audit_pass",
+    "caseCount": 2400,
+    "templateFamilyCount": 200,
+    "summary": {
+      "caseCount": 2400,
+      "templateFamilyCount": 200,
+      "uniquePromptTextCount": 1978,
+      "uniqueLearnerVisibleSurfaceCount": 2359,
+      "conceptCounts": {
+        "active_passive": 132,
+        "adverbials": 132,
+        "apostrophes_possession": 132,
+        "boundary_punctuation": 132,
+        "clauses": 144,
+        "formality": 132,
+        "hyphen_ambiguity": 132,
+        "modal_verbs": 132,
+        "noun_phrases": 132,
+        "parenthesis_commas": 132,
+        "pronouns_cohesion": 132,
+        "relative_clauses": 132,
+        "sentence_functions": 132,
+        "speech_punctuation": 132,
+        "standard_english": 132,
+        "subject_object": 132,
+        "tense_aspect": 132,
+        "word_classes": 144
+      },
+      "inputTypeCounts": {
+        "single_choice": 1428,
+        "table_choice": 192,
+        "text": 156,
+        "textarea": 624
+      },
+      "questionTypeCounts": {
+        "build": 36,
+        "choose": 756,
+        "classify": 276,
+        "explain": 444,
+        "fill": 72,
+        "fix": 276,
+        "identify": 288,
+        "rewrite": 252
+      },
+      "depthTierCounts": {
+        "bridge": 216,
+        "build": 12,
+        "core": 912,
+        "deep": 408,
+        "explain": 216,
+        "repair": 36,
+        "retrieval": 12,
+        "rewrite": 60,
+        "sat-style": 132,
+        "transfer": 396
+      }
+    },
+    "caseIdsUnique": true,
+    "allFamiliesHaveAtLeast12Cases": true,
+    "findings": []
+  },
+  "delta": {
+    "packId": "grammar-qg-p16-manual-expansion-delta-110-families",
+    "status": "audit_pass",
+    "caseCount": 1320,
+    "templateFamilyCount": 110,
+    "summary": {
+      "caseCount": 1320,
+      "templateFamilyCount": 110,
+      "uniquePromptTextCount": 1128,
+      "uniqueLearnerVisibleSurfaceCount": 1290,
+      "conceptCounts": {
+        "active_passive": 72,
+        "adverbials": 72,
+        "apostrophes_possession": 72,
+        "boundary_punctuation": 72,
+        "clauses": 84,
+        "formality": 72,
+        "hyphen_ambiguity": 72,
+        "modal_verbs": 72,
+        "noun_phrases": 72,
+        "parenthesis_commas": 72,
+        "pronouns_cohesion": 72,
+        "relative_clauses": 72,
+        "sentence_functions": 72,
+        "speech_punctuation": 72,
+        "standard_english": 72,
+        "subject_object": 72,
+        "tense_aspect": 72,
+        "word_classes": 84
+      },
+      "inputTypeCounts": {
+        "single_choice": 696,
+        "table_choice": 84,
+        "text": 96,
+        "textarea": 444
+      },
+      "questionTypeCounts": {
+        "build": 24,
+        "choose": 432,
+        "classify": 168,
+        "explain": 228,
+        "fill": 36,
+        "fix": 156,
+        "identify": 132,
+        "rewrite": 144
+      },
+      "depthTierCounts": {
+        "bridge": 216,
+        "core": 504,
+        "deep": 408,
+        "transfer": 192
+      }
+    },
+    "caseIdsUnique": true,
+    "allFamiliesHaveAtLeast12Cases": true,
+    "findings": []
+  }
+}
