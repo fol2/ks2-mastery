@@ -1,9 +1,11 @@
 {
-  "ok": true,
-  "finishedAt": "2026-05-02T22:36:11.430Z",
+  "ok": false,
+  "finishedAt": "2026-05-02T22:36:21.555Z",
   "smokeType": "admin",
-  "failures": [],
-  "stepCount": 19,
+  "failures": [
+    "ops-error-event status investigating"
+  ],
+  "stepCount": 9,
   "steps": [
     {
       "step": "login",
@@ -40,46 +42,6 @@
     {
       "step": "ops-error-event ingest",
       "sequence": 9
-    },
-    {
-      "step": "ops-error-event status investigating",
-      "sequence": 10
-    },
-    {
-      "step": "ops-error-event status reopen",
-      "sequence": 11
-    },
-    {
-      "step": "debug-bundle",
-      "sequence": 12
-    },
-    {
-      "step": "denial-log",
-      "sequence": 13
-    },
-    {
-      "step": "account-search",
-      "sequence": 14
-    },
-    {
-      "step": "account-detail",
-      "sequence": 15
-    },
-    {
-      "step": "content-overview",
-      "sequence": 16
-    },
-    {
-      "step": "marketing-messages-list",
-      "sequence": 17
-    },
-    {
-      "step": "marketing-create",
-      "sequence": 18
-    },
-    {
-      "step": "marketing-archive",
-      "sequence": 19
     }
   ],
   "commit": "unknown"
