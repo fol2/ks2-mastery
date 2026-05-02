@@ -2,7 +2,7 @@
 phase: grammar-qg-p18
 certification_phase: grammar-qg-p18
 final_content_release_id: grammar-qg-p18-2026-05-02
-certification_decision: CERTIFIED_PRE_DEPLOY
+certification_decision: CERTIFIED_POST_DEPLOY
 ---
 
 # Grammar QG P18 Completion Report
@@ -36,7 +36,7 @@ P18 promotes the combined P15-P18 manual expansion pack into the live Grammar qu
 | P16/P17/P18 answer safety and distractor quality | Done | `reports/grammar/grammar-qg-p18-distractor-audit.json`, `reports/grammar/grammar-qg-p18-marking-matrix.json` |
 | P18 semantic prompt-cue/read-aloud safety | Done | `reports/grammar/grammar-qg-p18-semantic-prompt-cue-audit.json`, `tests/grammar-qg-p10-prompt-cue-contract.test.js` |
 | Runtime certification authority | Done | `reports/grammar/grammar-qg-p18-certification-status-map.json`, `worker/src/subjects/grammar/certification-status.generated.js` |
-| Production release gate | Pre-deploy done | `reports/grammar/grammar-qg-p18-certification-manifest.json`, `npm run verify:grammar-qg-production-release` |
+| Production release gate | Done | `reports/grammar/grammar-qg-p18-certification-manifest.json`, `npm run verify:grammar-qg-production-release`, `reports/grammar/grammar-production-smoke-grammar-qg-p18-2026-05-02.json` |
 
 Manual expansion promotion is authorised by the P18 release evidence, not by a blanket human review claim. The source pack is marked `certified_scheduler_ready`; runtime generation fails closed if that status regresses, and `npm run verify:grammar-qg-production-release` byte-checks `worker/src/subjects/grammar/manual-expansion.generated.js` against the certified source. Adult-review decisions in the quality register cover the templates flagged by the distractor audit; the remaining approved templates are promoted by automated oracle, render, semantic, marking, and runtime-certification evidence.
 
@@ -54,6 +54,7 @@ Manual expansion promotion is authorised by the P18 release evidence, not by a b
 | Semantic prompt-cue audit | `reports/grammar/grammar-qg-p18-semantic-prompt-cue-audit.json` |
 | Learner surface audit | `reports/grammar/grammar-qg-p18-learner-surface-audit.json` |
 | Star-pacing simulation | `reports/grammar/grammar-qg-p18-star-pacing-simulation.json` |
+| Production smoke | `reports/grammar/grammar-production-smoke-grammar-qg-p18-2026-05-02.json` |
 | Runtime certification source | `worker/src/subjects/grammar/certification-status.generated.js` |
 
 ## Oracle Windows
@@ -71,10 +72,16 @@ The release keeps per-family oracle windows explicit rather than claiming a unif
 
 ## Production State
 
-Current decision is `CERTIFIED_PRE_DEPLOY`. After merge and deployment, run:
+Current decision is `CERTIFIED_POST_DEPLOY`.
 
-```sh
-npm run smoke:production:grammar -- --json --evidence-origin=post-deploy --expected-release=grammar-qg-p18-2026-05-02 --out=reports/grammar/grammar-production-smoke-grammar-qg-p18-2026-05-02.json
-```
+| Check | Result |
+| --- | --- |
+| PR merge | `#842` merged into `main` at `e2013cf0861dee47e19cc79f38584bed9a6920b6` |
+| Latest deployed checkout | `c504ee3a32064c5e4114de9246c673de1baa4582` |
+| Deploy command | `npm run deploy` |
+| Cloudflare Worker version | `23313fbe-0d5f-467a-bbd2-9ac45c2c61f8` |
+| Production bundle audit | Passed for `https://ks2.eugnel.uk/` |
+| Production smoke | Passed at `2026-05-02T23:00:28.572Z` |
+| Production content release | `grammar-qg-p18-2026-05-02` |
 
-When that production smoke passes against `https://ks2.eugnel.uk`, update this report to `CERTIFIED_POST_DEPLOY` and commit the smoke evidence.
+The post-deploy smoke used a production demo-session fixture, verified normal round creation/submission/read-model update, mini-test behaviour, repair support, answer-leak guards, semantic prompt-cue/read-aloud assertions, and confirmed the live `contentReleaseId` is `grammar-qg-p18-2026-05-02`.
