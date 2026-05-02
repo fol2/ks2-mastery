@@ -45,6 +45,7 @@ function makeManifest(overrides = {}) {
       'content-quality-audit': '1..30',
     },
     expectedItemCount: 2340,
+    expectedMarkingMatrixEntryCount: 80,
     artefacts: {
       renderInventory: 'reports/grammar/render-inventory.json',
       qualityRegister: 'reports/grammar/quality-register.json',
@@ -271,6 +272,23 @@ describe('validateMarkingMatrixCounts with P11 manifest', () => {
     const result = validateMarkingMatrixCounts(manifest, tmpRoot);
     assert.equal(result.pass, false);
     assert.equal(result.actual, 50);
+    assert.equal(result.expected, 80);
+  });
+
+  it('fails if marking matrix metadata count does not match payload entries', () => {
+    const manifest = makeManifest({ expectedMarkingMatrixEntryCount: 2 });
+    writeFileSync(
+      path.join(tmpRoot, 'reports', 'grammar', 'marking-matrix.json'),
+      JSON.stringify({
+        metadata: { contentReleaseId: RELEASE_ID, totalEntries: 2 },
+        entries: [{ templateId: 'a' }],
+      }),
+    );
+    const result = validateMarkingMatrixCounts(manifest, tmpRoot);
+    assert.equal(result.pass, false);
+    assert.equal(result.expected, 2);
+    assert.equal(result.actual, 1);
+    assert.match(result.error, /entries\.length/);
   });
 
   it('fails if marking matrix contentReleaseId does not match manifest', () => {

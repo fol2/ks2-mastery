@@ -52,7 +52,7 @@ describe('P11 U7: marking matrix totalEntries is exactly 80', () => {
     try {
       const fakeMatrix = {
         metadata: { totalEntries: 190 },
-        entries: [],
+        entries: Array.from({ length: 190 }, (_, index) => ({ id: `fake-${index}` })),
       };
       fs.writeFileSync(
         path.join(tempRoot, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json'),

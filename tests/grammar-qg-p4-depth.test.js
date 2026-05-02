@@ -13,6 +13,12 @@ const EXPLANATION_FAMILIES = GRAMMAR_TEMPLATE_METADATA.filter(
 
 // Templates with declarative answerSpec (excludes older choiceResult-only templates)
 const ANSWERSPEC_FAMILIES = EXPLANATION_FAMILIES.filter((t) => t.requiresAnswerSpec);
+const SELECTED_ANSWERSPEC_FAMILIES = ANSWERSPEC_FAMILIES.filter(
+  (t) => t.isSelectedResponse && t.answerSpecKind === 'exact',
+);
+const CONSTRUCTED_ANSWERSPEC_FAMILIES = ANSWERSPEC_FAMILIES.filter(
+  (t) => !t.isSelectedResponse,
+);
 
 describe('Grammar QG P4 explanation case-bank depth', () => {
   for (const template of EXPLANATION_FAMILIES) {
@@ -50,21 +56,31 @@ describe('Grammar QG P4 explanation case-bank depth', () => {
     assert.strictEqual(sig1, sig2, 'Same case index should produce same signature regardless of option order');
   });
 
-  it('answer spec kind remains exact for all answerSpec explanation templates', () => {
-    for (const template of ANSWERSPEC_FAMILIES) {
+  it('answer spec kind remains exact for selected-response answerSpec explanation templates', () => {
+    for (const template of SELECTED_ANSWERSPEC_FAMILIES) {
       const q = createGrammarQuestion({ templateId: template.id, seed: 1 });
       assert.strictEqual(q.answerSpec.kind, 'exact', `${template.id} answerSpec.kind`);
     }
   });
 
-  it('each explanation item has exactly 4 options and 1 correct', () => {
-    for (const template of ANSWERSPEC_FAMILIES) {
+  it('each selected-response explanation item has exactly 4 options and 1 correct', () => {
+    for (const template of SELECTED_ANSWERSPEC_FAMILIES) {
       for (let seed = 1; seed <= 5; seed++) {
         const q = createGrammarQuestion({ templateId: template.id, seed });
         assert.strictEqual(q.inputSpec.options.length, 4, `${template.id}:${seed} options count`);
         const correctCount = q.inputSpec.options.filter((o) => o.value === q.answerSpec.golden[0]).length;
         assert.strictEqual(correctCount, 1, `${template.id}:${seed} correct count`);
       }
+    }
+  });
+
+  it('constructed-response explanation items emit normalised-text specs without choice options', () => {
+    assert.ok(CONSTRUCTED_ANSWERSPEC_FAMILIES.length > 0, 'P18 should include constructed explanation templates');
+    for (const template of CONSTRUCTED_ANSWERSPEC_FAMILIES) {
+      const q = createGrammarQuestion({ templateId: template.id, seed: 1 });
+      assert.strictEqual(q.answerSpec.kind, 'normalisedText', `${template.id} answerSpec.kind`);
+      assert.ok(['text', 'textarea'].includes(q.inputSpec.type), `${template.id} inputSpec.type`);
+      assert.equal(Array.isArray(q.inputSpec.options), false, `${template.id} must not expose choice options`);
     }
   });
 

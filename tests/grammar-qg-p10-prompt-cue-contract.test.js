@@ -8,11 +8,16 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import {
   createGrammarQuestion,
+  GRAMMAR_CONTENT_RELEASE_ID,
   GRAMMAR_TEMPLATE_METADATA,
 } from '../worker/src/subjects/grammar/content.js';
+
+const REPORTS_DIR = path.resolve(import.meta.dirname, '..', 'reports', 'grammar');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -237,6 +242,17 @@ describe('P10 U2 REGRESSION: target-sentence cue produces visible sentence part'
       `instruction text part must not be mangled/empty (got "${textPart.text}")`
     );
   });
+
+  it('P18 word-class target sentence keeps instruction and sentence separated', () => {
+    const q = generateQuestion('qg_p18_p15_word_classes_target_word_class', 1);
+    assert.ok(q, 'question must be generated');
+    assert.equal(q.focusCue?.type, 'target-sentence');
+    assert.equal(q.focusCue.targetText, 'On Tuesday, Aisha carefully folded the blue scarf.');
+    const sentencePart = q.promptParts.find(p => p.kind === 'sentence');
+    assert.equal(sentencePart?.text, q.focusCue.targetText);
+    const textPart = q.promptParts.find(p => p.kind === 'text');
+    assert.ok(textPart?.text.includes('what word class is "carefully"?'));
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -306,4 +322,19 @@ describe('P10 U2 REGRESSION: focusTarget never present on serialised output', ()
       );
     });
   }
+});
+
+describe('P18 semantic prompt-cue audit evidence', () => {
+  it('commits the P18 semantic audit artefact for the certified release', () => {
+    const audit = JSON.parse(fs.readFileSync(
+      path.join(REPORTS_DIR, 'grammar-qg-p18-semantic-prompt-cue-audit.json'),
+      'utf8',
+    ));
+    assert.equal(audit.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+    assert.equal(audit.templateCount, GRAMMAR_TEMPLATE_METADATA.length);
+    assert.equal(audit.seedRange, '1..30');
+    assert.equal(audit.totalChecked, GRAMMAR_TEMPLATE_METADATA.length * 30);
+    assert.equal(audit.passed, true);
+    assert.deepEqual(audit.findings, []);
+  });
 });

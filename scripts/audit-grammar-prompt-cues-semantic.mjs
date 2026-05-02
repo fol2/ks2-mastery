@@ -11,8 +11,14 @@
  * Usage:
  *   node scripts/audit-grammar-prompt-cues-semantic.mjs --seeds=1..30 --json
  */
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
+
 import {
   createGrammarQuestion,
+  GRAMMAR_CONTENT_RELEASE_ID,
   GRAMMAR_TEMPLATE_METADATA,
 } from '../worker/src/subjects/grammar/content.js';
 
@@ -20,19 +26,16 @@ import {
 // CLI argument parsing
 // ---------------------------------------------------------------------------
 
-const args = process.argv.slice(2);
-let seedStart = 1;
-let seedEnd = 30;
-let jsonOutput = false;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = path.resolve(__dirname, '..');
+const DEFAULT_JSON_OUT = path.join(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p18-semantic-prompt-cue-audit.json');
+const DEFAULT_MD_OUT = path.join(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p18-semantic-prompt-cue-audit.md');
 
-for (const arg of args) {
-  if (arg.startsWith('--seeds=')) {
-    const range = arg.slice('--seeds='.length);
-    const parts = range.split('..');
-    seedStart = parseInt(parts[0], 10) || 1;
-    seedEnd = parseInt(parts[1], 10) || seedStart;
-  }
-  if (arg === '--json') jsonOutput = true;
+function parseSeedRange(range) {
+  const parts = String(range || '1..30').split('..');
+  const start = Number.parseInt(parts[0], 10) || 1;
+  const end = Number.parseInt(parts[1], 10) || start;
+  return { seedStart: start, seedEnd: end };
 }
 
 // ---------------------------------------------------------------------------
@@ -233,7 +236,49 @@ export function runSemanticAudit({ seedStart: sStart = 1, seedEnd: sEnd = 30 } =
   }
 
   const passed = findings.length === 0;
-  return { totalChecked, passed, findings, checkCoverage };
+  return {
+    reportId: 'grammar-qg-p18-semantic-prompt-cue-audit',
+    contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
+    seedRange: `${sStart}..${sEnd}`,
+    templateCount: GRAMMAR_TEMPLATE_METADATA.length,
+    totalChecked,
+    passed,
+    findings,
+    checkCoverage,
+  };
+}
+
+function markdownFor(result) {
+  const lines = [
+    '# Grammar QG P18 Semantic Prompt-Cue Audit',
+    '',
+    `Content release: ${result.contentReleaseId}`,
+    `Seed range: ${result.seedRange}`,
+    `Template count: ${result.templateCount}`,
+    `Total checked: ${result.totalChecked}`,
+    `Pass: ${result.passed ? 'yes' : 'no'}`,
+    '',
+    '## Check Coverage',
+    '',
+    '| Check | Findings |',
+    '| --- | ---: |',
+  ];
+  for (const [name, count] of Object.entries(result.checkCoverage)) {
+    lines.push(`| ${name} | ${count} |`);
+  }
+  lines.push('');
+  lines.push('## Findings');
+  lines.push('');
+  if (result.findings.length === 0) {
+    lines.push('No findings.');
+  } else {
+    lines.push('| Severity | Template | Seed | Check | Message |');
+    lines.push('| --- | --- | ---: | --- | --- |');
+    for (const finding of result.findings) {
+      lines.push(`| ${finding.severity} | ${finding.templateId} | ${finding.seed} | ${finding.check} | ${String(finding.message).replace(/\|/g, '\\|')} |`);
+    }
+  }
+  return `${lines.join('\n')}\n`;
 }
 
 // ---------------------------------------------------------------------------
@@ -247,9 +292,32 @@ const isDirectRun = process.argv[1] && (
 );
 
 if (isDirectRun || process.argv[1]?.endsWith('audit-grammar-prompt-cues-semantic.mjs')) {
+  const { values } = parseArgs({
+    options: {
+      seeds: { type: 'string', default: '1..30' },
+      json: { type: 'boolean', default: false },
+      out: { type: 'string' },
+      markdown: { type: 'string' },
+    },
+    strict: false,
+  });
+  const { seedStart, seedEnd } = parseSeedRange(values.seeds);
   const result = runSemanticAudit({ seedStart, seedEnd });
 
-  if (jsonOutput) {
+  if (values.out || values.markdown) {
+    const jsonOut = path.resolve(values.out || DEFAULT_JSON_OUT);
+    const mdOut = path.resolve(values.markdown || DEFAULT_MD_OUT);
+    await fs.mkdir(path.dirname(jsonOut), { recursive: true });
+    await fs.mkdir(path.dirname(mdOut), { recursive: true });
+    await fs.writeFile(jsonOut, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+    await fs.writeFile(mdOut, markdownFor(result), 'utf8');
+    if (!values.json) {
+      console.log(`Wrote ${path.relative(ROOT_DIR, jsonOut)}`);
+      console.log(`Wrote ${path.relative(ROOT_DIR, mdOut)}`);
+    }
+  }
+
+  if (values.json) {
     console.log(JSON.stringify(result, null, 2));
   } else {
     console.log('Grammar Semantic Prompt-Cue Audit');

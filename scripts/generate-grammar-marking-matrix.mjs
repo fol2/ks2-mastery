@@ -260,7 +260,7 @@ async function main() {
   await fs.writeFile(jsonPath, JSON.stringify(matrix, null, 2) + '\n', 'utf8');
 
   const mdPath = jsonPath.replace(/\.json$/, '.md');
-  await fs.writeFile(mdPath, generateMarkdown(matrix), 'utf8');
+  await fs.writeFile(mdPath, `${generateMarkdown(matrix).trimEnd()}\n`, 'utf8');
 
   console.log('Grammar Marking Matrix (9-category) generated:');
   console.log(`  Total entries: ${matrix.metadata.totalEntries}`);

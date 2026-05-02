@@ -37,9 +37,9 @@ const MIXED_TRANSFER_IDS = new Set([
   'qg_p4_word_class_noun_phrase_transfer',
 ]);
 
-const ADULT_REVIEW_DATE = GRAMMAR_CONTENT_RELEASE_ID === 'grammar-qg-p14-2026-05-01'
-  ? '2026-05-01'
-  : '2026-04-30';
+const ADULT_REVIEW_DATE = GRAMMAR_CONTENT_RELEASE_ID === 'grammar-qg-p18-2026-05-02'
+  ? '2026-05-02'
+  : (GRAMMAR_CONTENT_RELEASE_ID === 'grammar-qg-p14-2026-05-01' ? '2026-05-01' : '2026-04-30');
 
 function isHighRisk(templateId, question) {
   if (MIXED_TRANSFER_IDS.has(templateId)) return true;
@@ -659,7 +659,7 @@ async function main() {
   await fs.writeFile(jsonPath, JSON.stringify(register, null, 2) + '\n', 'utf8');
 
   const mdPath = jsonPath.replace(/\.json$/, '.md');
-  await fs.writeFile(mdPath, generateMarkdownReport(register) + '\n', 'utf8');
+  await fs.writeFile(mdPath, `${generateMarkdownReport(register).trimEnd()}\n`, 'utf8');
 
   console.log('Grammar Quality Register generated:');
   console.log(`  Templates: ${register.metadata.templateCount}`);

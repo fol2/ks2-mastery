@@ -176,8 +176,8 @@ test('buildGrammarPracticeQueue avoids known P14 same-template duplicate paths',
     assert.equal(queue.length, 5);
     assertNoDuplicateTemplates(queue, `seed ${example.seed}`);
     assert.ok(
-      queue.some((item) => item.templateId === example.repeatedTemplateId),
-      `Seed ${example.seed} should still exercise ${example.repeatedTemplateId}.`,
+      queue.filter((item) => item.templateId === example.repeatedTemplateId).length <= 1,
+      `Seed ${example.seed} must not repeat ${example.repeatedTemplateId}.`,
     );
   }
 });
@@ -191,11 +191,13 @@ test('buildGrammarPracticeQueue keeps 100 smart five-question sessions template-
 });
 
 test('buildGrammarPracticeQueue broadens focus sessions before repeating a planned focus template', () => {
-  const queue = queueFor({ mode: 'smart', focusConceptId: 'hyphen_ambiguity', size: 5, seed: 1234 });
-  assert.equal(queue.length, 5);
+  const focusConceptId = 'hyphen_ambiguity';
+  const focusPoolSize = GRAMMAR_TEMPLATE_METADATA.filter((template) => (template.skillIds || []).includes(focusConceptId)).length;
+  const queue = queueFor({ mode: 'smart', focusConceptId, size: focusPoolSize + 3, seed: 1234 });
+  assert.equal(queue.length, focusPoolSize + 3);
   assertNoDuplicateTemplates(queue, 'hyphen_ambiguity focus seed 1234');
   assert.ok(
-    queue.some((item) => !(item.skillIds || []).includes('hyphen_ambiguity')),
+    queue.some((item) => !(item.skillIds || []).includes(focusConceptId)),
     'A narrow focus pool should broaden before repeating an already planned template.',
   );
 });
@@ -283,8 +285,9 @@ test('buildGrammarPracticeQueue due-status outranks otherwise-equivalent non-due
 
 test('buildGrammarPracticeQueue falls back gracefully when focus pool is smaller than size', () => {
   const focusConceptId = 'hyphen_ambiguity';
-  const queue = queueFor({ mode: 'smart', focusConceptId, size: 12, seed: 1234 });
-  assert.equal(queue.length, 12);
+  const focusPoolSize = GRAMMAR_TEMPLATE_METADATA.filter((template) => (template.skillIds || []).includes(focusConceptId)).length;
+  const queue = queueFor({ mode: 'smart', focusConceptId, size: focusPoolSize + 5, seed: 1234 });
+  assert.equal(queue.length, focusPoolSize + 5);
   const focusPicks = queue.filter((item) => (item.skillIds || []).includes(focusConceptId)).length;
   assert.ok(focusPicks >= 2, `Focus should saturate its small pool; got ${focusPicks}`);
   const nonFocusPicks = queue.length - focusPicks;

@@ -1,6 +1,11 @@
 // Generated from the reviewed KS2 Grammar legacy engine.
 // Regenerate with: node scripts/extract-grammar-legacy-oracle.mjs --source <legacy-html>
-import { markByAnswerSpec } from './answer-spec.js';
+import { markByAnswerSpec, normaliseSmartPunctuation } from './answer-spec.js';
+import {
+  GRAMMAR_MANUAL_EXPANSION_FAMILIES,
+  GRAMMAR_MANUAL_EXPANSION_RELEASE_ID,
+  GRAMMAR_MANUAL_EXPANSION_SUMMARY,
+} from './manual-expansion.generated.js';
 
 const MISCONCEPTIONS = {
   sentence_function_confusion: "Mixed up sentence functions or punctuation cues",
@@ -10069,6 +10074,29 @@ function isSentenceCueCandidate(text) {
   return true;
 }
 
+function resolveInlineSentenceBelowTarget(plainPrompt) {
+  const text = cleanSpaces(plainPrompt || '');
+  const cueMatch = /\bsentence\s+below\b/i.exec(text);
+  if (!cueMatch) return null;
+
+  const afterCue = text.slice(cueMatch.index);
+  const sentenceChunks = afterCue.match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g) || [];
+  const candidates = sentenceChunks
+    .map((chunk) => cleanSpaces(chunk))
+    .filter((chunk) => !/\bsentence\s+below\b/i.test(chunk))
+    .filter(isSentenceCueCandidate);
+  if (candidates.length > 0) return candidates[candidates.length - 1];
+
+  const separatorMatches = [...afterCue.matchAll(/[?:]\s+/g)];
+  if (separatorMatches.length > 0) {
+    const lastSeparator = separatorMatches[separatorMatches.length - 1];
+    const candidate = cleanSpaces(afterCue.slice(lastSeparator.index + lastSeparator[0].length));
+    if (isSentenceCueCandidate(candidate)) return candidate;
+  }
+
+  return null;
+}
+
 function resolveTargetSentence(question, plainPrompt) {
   // 1. Explicit field check
   if (question.targetSentence && isSentenceCueCandidate(question.targetSentence)) {
@@ -10077,6 +10105,10 @@ function resolveTargetSentence(question, plainPrompt) {
   if (question.focusTarget && isSentenceCueCandidate(question.focusTarget)) {
     return question.focusTarget;
   }
+
+  const inlineCandidate = resolveInlineSentenceBelowTarget(plainPrompt);
+  if (inlineCandidate) return inlineCandidate;
+
   // 2. Paragraph block scan — reverse for last qualifying candidate
   const blocks = extractParagraphTextBlocks(question.stemHtml || '');
   const candidate = [...blocks].reverse().find(isSentenceCueCandidate);
@@ -11311,7 +11343,343 @@ const P14_PRIORITY_TEMPLATES = P14_PRIORITY_CONCEPTS.flatMap((concept) => (
   }))
 ));
 
+const MANUAL_EXPANSION_CONCEPT_MISCONCEPTIONS = Object.freeze({
+  active_passive: "active_passive_confusion",
+  adverbials: "fronted_adverbial_confusion",
+  apostrophes_possession: "apostrophe_possession_confusion",
+  boundary_punctuation: "boundary_punctuation_confusion",
+  clauses: "subordinate_clause_confusion",
+  formality: "formality_confusion",
+  hyphen_ambiguity: "hyphen_ambiguity_confusion",
+  modal_verbs: "modal_verb_confusion",
+  noun_phrases: "noun_phrase_confusion",
+  parenthesis_commas: "parenthesis_confusion",
+  pronouns_cohesion: "pronoun_cohesion_confusion",
+  relative_clauses: "relative_clause_confusion",
+  sentence_functions: "sentence_function_confusion",
+  speech_punctuation: "speech_punctuation_confusion",
+  standard_english: "standard_english_confusion",
+  subject_object: "subject_object_confusion",
+  tense_aspect: "tense_confusion",
+  word_classes: "word_class_confusion"
+});
+
+const SENTENCE_FUNCTION_QUESTION_STARTERS = Object.freeze([
+  "who", "what", "where", "when", "why", "how", "did", "do", "does", "can",
+  "could", "should", "is", "are", "was", "were", "have", "has", "had",
+  "will", "would"
+]);
+
+const SENTENCE_FUNCTION_COMMAND_STARTERS = Object.freeze([
+  "add", "answer", "bring", "check", "choose", "circle", "close", "copy",
+  "fetch", "find", "finish", "fix", "fold", "give", "look", "make", "move",
+  "open", "pass", "please", "put", "rewrite", "sit", "stand", "tick",
+  "underline", "use", "wait", "write"
+]);
+
+function manualExpansionTemplateId(familyId) {
+  return `qg_p18_${String(familyId || '').replace(/[^a-zA-Z0-9_]+/g, '_')}`;
+}
+
+function manualExpansionSafeText(value) {
+  return cleanSpaces(String(value || ''));
+}
+
+function manualExpansionAnswerValue(value) {
+  return normaliseSmartPunctuation(manualExpansionSafeText(value));
+}
+
+function manualExpansionTitleFromId(familyId) {
+  const text = String(familyId || '')
+    .replace(/^p\d+_/, '')
+    .replace(/_/g, ' ')
+    .trim();
+  return text ? text.replace(/\b\w/g, (letter) => letter.toUpperCase()) : 'Manual expansion question';
+}
+
+function manualExpansionPrimaryConcept(family) {
+  return (family?.conceptIds || [])[0] || 'sentence_functions';
+}
+
+function manualExpansionMisconception(family) {
+  return MANUAL_EXPANSION_CONCEPT_MISCONCEPTIONS[manualExpansionPrimaryConcept(family)] || "misread_question";
+}
+
+function manualExpansionDomain(family) {
+  return SKILLS[manualExpansionPrimaryConcept(family)]?.domain || "Grammar";
+}
+
+function manualExpansionPickCase(family, seed) {
+  const cases = Array.isArray(family?.cases) ? family.cases : [];
+  if (cases.length === 0) return null;
+  const index = Math.abs((Number(seed) || 1) - 1) % cases.length;
+  return cases[index] || cases[0];
+}
+
+function manualExpansionCorrectText(caseItem) {
+  if (typeof caseItem?.correctAnswer === 'string') return manualExpansionSafeText(caseItem.correctAnswer);
+  const accepted = Array.isArray(caseItem?.acceptedAnswers) ? caseItem.acceptedAnswers : [];
+  if (accepted.length > 0) return manualExpansionSafeText(accepted[0]);
+  return manualExpansionSafeText(caseItem?.expectedAnswerSummary);
+}
+
+function manualExpansionOptionValues(caseItem, correctText) {
+  const options = Array.isArray(caseItem?.options) ? caseItem.options : [];
+  const out = [];
+  const seen = new Set();
+  const correctValue = manualExpansionAnswerValue(correctText);
+  const correctComparable = manualExpansionComparableAnswer(correctValue);
+
+  function add(value, label, rationale, { force = false } = {}) {
+    const cleanLabel = manualExpansionSafeText(label || value);
+    const cleanValue = manualExpansionAnswerValue(value || label);
+    if (!cleanValue) return;
+    if (!force && manualExpansionComparableAnswer(cleanValue) === correctComparable) return;
+    const key = cleanValue.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({
+      value: cleanValue,
+      label: cleanLabel || cleanValue,
+      rationale: manualExpansionSafeText(rationale),
+    });
+  }
+
+  add(correctValue, correctText, caseItem?.feedbackLong, { force: true });
+  for (const option of options) {
+    add(option?.value || option?.label, option?.label || option?.value, option?.rationale);
+  }
+
+  return out;
+}
+
+function manualExpansionComparableAnswer(value) {
+  return manualExpansionAnswerValue(value).toLowerCase();
+}
+
+function manualExpansionNearMisses(caseItem, acceptedAnswers) {
+  const accepted = new Set((acceptedAnswers || []).map(manualExpansionComparableAnswer));
+  return (Array.isArray(caseItem?.nearMisses) ? caseItem.nearMisses : [])
+    .map(manualExpansionAnswerValue)
+    .filter(Boolean)
+    .filter((nearMiss) => !accepted.has(manualExpansionComparableAnswer(nearMiss)));
+}
+
+function classifySentenceFunctionSurface(label) {
+  const text = manualExpansionSafeText(label)
+    .replace(/[?!.,;:]+$/g, '')
+    .toLowerCase();
+  if (!text) return '';
+  if (/^(what\s+(a|an)\b|how\s+\w+)/.test(text) && !/^how\s+(did|do|does|can|could|should|is|are|was|were|have|has|had|will|would)\b/.test(text)) {
+    return "exclamation";
+  }
+  const first = text.split(/\s+/)[0] || '';
+  if (SENTENCE_FUNCTION_QUESTION_STARTERS.includes(first)) return "question";
+  if (SENTENCE_FUNCTION_COMMAND_STARTERS.includes(first)) return "command";
+  return "statement";
+}
+
+function manualExpansionNormaliseRowAnswer(family, row) {
+  const conceptId = manualExpansionPrimaryConcept(family);
+  if (conceptId === "sentence_functions") {
+    return classifySentenceFunctionSurface(row?.label) || manualExpansionSafeText(row?.correctAnswer);
+  }
+  return manualExpansionSafeText(row?.correctAnswer);
+}
+
+function sentenceFunctionArticle(value) {
+  return String(value || '').toLowerCase() === 'exclamation' ? 'an' : 'a';
+}
+
+function manualExpansionRowFeedback(family, row, caseItem) {
+  const conceptId = manualExpansionPrimaryConcept(family);
+  if (conceptId === "sentence_functions") {
+    return `The sentence "${row.label}" is ${sentenceFunctionArticle(row.correctAnswer)} ${row.correctAnswer}.`;
+  }
+  return row.rationale || manualExpansionSafeText(caseItem.feedbackLong) || `Correct answer: ${row.correctAnswer}`;
+}
+
+function manualExpansionRows(caseItem, family) {
+  if (Array.isArray(caseItem?.rows) && caseItem.rows.length > 0) {
+    const answerMap = caseItem?.correctAnswer && typeof caseItem.correctAnswer === 'object' && !Array.isArray(caseItem.correctAnswer)
+      ? caseItem.correctAnswer
+      : {};
+    return caseItem.rows.map((row, index) => ({
+      key: manualExpansionSafeText(row.key) || `row${index}`,
+      label: manualExpansionSafeText(row.label),
+      options: Array.isArray(row.options) ? row.options.map(manualExpansionSafeText).filter(Boolean) : [],
+      correctAnswer: manualExpansionNormaliseRowAnswer(family, {
+        ...row,
+        correctAnswer: row.correctAnswer || answerMap[row.key],
+      }),
+      rationale: manualExpansionSafeText(row.rationale),
+    })).filter((row) => row.label && row.correctAnswer);
+  }
+
+  if (caseItem?.correctAnswer && typeof caseItem.correctAnswer === 'object' && !Array.isArray(caseItem.correctAnswer)) {
+    return Object.entries(caseItem.correctAnswer).map(([label, answer], index) => ({
+      key: `row${index}`,
+      label: manualExpansionSafeText(label),
+      options: [],
+      correctAnswer: manualExpansionSafeText(answer),
+      rationale: manualExpansionSafeText(caseItem.feedbackLong),
+    })).filter((row) => row.label && row.correctAnswer);
+  }
+
+  return [];
+}
+
+function buildManualExpansionSelectedQuestion(template, seed, caseItem, family) {
+  const correct = manualExpansionCorrectText(caseItem);
+  const correctValue = manualExpansionAnswerValue(correct);
+  const options = manualExpansionOptionValues(caseItem, correct);
+  const answerSpec = exactAnswerSpec(correctValue, options.map((option) => option.value).filter((value) => value !== correctValue), {
+    misconception: manualExpansionMisconception(family),
+    feedbackLong: manualExpansionSafeText(caseItem.feedbackLong) || `The correct option is: ${correct}`,
+    answerText: correct,
+  });
+
+  return makeBaseQuestion(template, seed, {
+    marks: 1,
+    sourceCaseId: caseItem.id,
+    sourcePack: caseItem.sourcePack,
+    depthTier: caseItem.depthTier,
+    answerSpec,
+    stemHtml: `<p>${escapeHtml(caseItem.promptText)}</p>`,
+    inputSpec: { type: "single_choice", label: "Choose one", options: options.map(({ value, label }) => ({ value, label })) },
+    solutionLines: [
+      manualExpansionSafeText(caseItem.feedbackLong) || `The correct option is: ${correct}`,
+      `Source case: ${caseItem.id}`
+    ],
+    evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+  });
+}
+
+function buildManualExpansionConstructedQuestion(template, seed, caseItem, family) {
+  const accepted = (Array.isArray(caseItem.acceptedAnswers) && caseItem.acceptedAnswers.length > 0)
+    ? caseItem.acceptedAnswers.map(manualExpansionSafeText).filter(Boolean)
+    : [manualExpansionCorrectText(caseItem)].filter(Boolean);
+  const acceptedValues = accepted.map(manualExpansionAnswerValue).filter(Boolean);
+  const answerText = accepted[0] || "";
+  const answerSpec = normalisedTextAnswerSpec(acceptedValues, manualExpansionNearMisses(caseItem, acceptedValues), {
+    misconception: manualExpansionMisconception(family),
+    feedbackLong: manualExpansionSafeText(caseItem.feedbackLong) || `One accepted answer is: ${answerText}`,
+    answerText,
+  });
+
+  return makeBaseQuestion(template, seed, {
+    marks: 1,
+    sourceCaseId: caseItem.id,
+    sourcePack: caseItem.sourcePack,
+    depthTier: caseItem.depthTier,
+    answerSpec,
+    stemHtml: `<p>${escapeHtml(caseItem.promptText)}</p>`,
+    inputSpec: {
+      type: caseItem.inputType === "textarea" ? "textarea" : "text",
+      label: "Your answer",
+      placeholder: caseItem.inputType === "textarea" ? "Write your full answer" : "Type the answer"
+    },
+    solutionLines: [
+      manualExpansionSafeText(caseItem.feedbackLong) || "Check the grammar target and rewrite accurately.",
+      `One accepted answer is: ${answerText}`,
+      `Source case: ${caseItem.id}`
+    ],
+    evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+  });
+}
+
+function buildManualExpansionTableQuestion(template, seed, caseItem, family) {
+  const rows = manualExpansionRows(caseItem, family);
+  const globalColumns = Array.isArray(caseItem.columns) && caseItem.columns.length > 0
+    ? caseItem.columns.map(manualExpansionSafeText).filter(Boolean)
+    : [];
+  const fields = {};
+  const inputRows = rows.map((row) => {
+    const rowOptions = row.options.length > 0
+      ? row.options
+      : (globalColumns.length > 0 ? globalColumns : manualExpansionOptionValues(caseItem, row.correctAnswer).map((option) => option.value));
+    const correctValue = manualExpansionAnswerValue(row.correctAnswer);
+    const correctComparable = manualExpansionComparableAnswer(correctValue);
+    const options = dedupePlain([correctValue].concat(rowOptions.map(manualExpansionAnswerValue)))
+      .filter(Boolean)
+      .filter((option, index) => index === 0 || manualExpansionComparableAnswer(option) !== correctComparable);
+    fields[row.key] = exactAnswerSpec(correctValue, options.filter((option) => option !== correctValue), {
+      misconception: manualExpansionMisconception(family),
+      feedbackLong: manualExpansionRowFeedback(family, row, caseItem),
+      answerText: row.correctAnswer,
+    });
+    return {
+      key: row.key,
+      label: row.label,
+      ariaLabel: row.label,
+      ...(globalColumns.length > 0 && row.options.length === 0 ? {} : { options })
+    };
+  });
+  const displayColumns = globalColumns.length > 0
+    ? globalColumns
+    : dedupePlain(inputRows.flatMap((row) => row.options || []));
+  const answerSummary = rows.map((row) => `${row.label} → ${row.correctAnswer}`).join(" | ");
+  const answerSpec = multiFieldAnswerSpec(fields, {
+    misconception: manualExpansionMisconception(family),
+    feedbackLong: manualExpansionSafeText(caseItem.feedbackLong) || answerSummary,
+    answerText: answerSummary,
+  });
+
+  return makeBaseQuestion(template, seed, {
+    marks: rows.length || 1,
+    sourceCaseId: caseItem.id,
+    sourcePack: caseItem.sourcePack,
+    depthTier: caseItem.depthTier,
+    answerSpec,
+    stemHtml: `<p>${escapeHtml(caseItem.promptText)}</p>`,
+    inputSpec: {
+      type: "table_choice",
+      columns: displayColumns,
+      rows: inputRows
+    },
+    solutionLines: [
+      manualExpansionSafeText(caseItem.feedbackLong) || "Classify each row using the grammar target.",
+      answerSummary,
+      `Source case: ${caseItem.id}`
+    ],
+    evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+  });
+}
+
+function buildManualExpansionQuestion(template, seed, family) {
+  const caseItem = manualExpansionPickCase(family, seed);
+  if (!caseItem) return null;
+  if (caseItem.inputType === "table_choice") return buildManualExpansionTableQuestion(template, seed, caseItem, family);
+  if (caseItem.inputType === "text" || caseItem.inputType === "textarea") {
+    return buildManualExpansionConstructedQuestion(template, seed, caseItem, family);
+  }
+  return buildManualExpansionSelectedQuestion(template, seed, caseItem, family);
+}
+
+const MANUAL_EXPANSION_TEMPLATES = GRAMMAR_MANUAL_EXPANSION_FAMILIES.map((family) => Object.freeze({
+  id: manualExpansionTemplateId(family.id),
+  label: `P18 manual expansion: ${manualExpansionTitleFromId(family.id)}`,
+  domain: manualExpansionDomain(family),
+  questionType: family.questionType || "choose",
+  difficulty: (family.depthTiers || []).some((tier) => ["deep", "mixed-transfer", "sat-style", "transfer"].includes(tier)) ? 3 : 2,
+  satsFriendly: true,
+  isSelectedResponse: family.inputType === "single_choice" || family.inputType === "table_choice",
+  generative: true,
+  generatorFamilyId: manualExpansionTemplateId(family.id),
+  requiresAnswerSpec: true,
+  answerSpecKind: family.inputType === "table_choice"
+    ? "multiField"
+    : ((family.inputType === "text" || family.inputType === "textarea") ? "normalisedText" : "exact"),
+  tags: ["qg-p18", "manual-expansion"].concat(family.sourcePacks || [], family.depthTiers || []),
+  skillIds: (family.conceptIds || []).slice(),
+  manualExpansionCaseCount: (family.cases || []).length,
+  generator(seed) {
+    return buildManualExpansionQuestion(this, seed, family);
+  }
+}));
+
 TEMPLATES.push(...P14_PRIORITY_TEMPLATES);
+TEMPLATES.push(...MANUAL_EXPANSION_TEMPLATES);
 
 const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map(template => [template.id, template]));
 
@@ -11395,7 +11763,8 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p14-2026-05-01';
+export const GRAMMAR_CONTENT_RELEASE_ID = GRAMMAR_MANUAL_EXPANSION_RELEASE_ID;
+export const GRAMMAR_MANUAL_EXPANSION_RELEASE_SUMMARY = Object.freeze(GRAMMAR_MANUAL_EXPANSION_SUMMARY);
 export const GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS = Object.freeze(P14_FIXED_DIAGNOSTIC_TEMPLATE_IDS.slice());
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
@@ -11487,6 +11856,9 @@ export function serialiseGrammarQuestion(question) {
   if (question.focusCue) serialised.focusCue = question.focusCue;
   if (question.screenReaderPromptText) serialised.screenReaderPromptText = question.screenReaderPromptText;
   if (question.readAloudText) serialised.readAloudText = question.readAloudText;
+  if (question.sourceCaseId) serialised.sourceCaseId = question.sourceCaseId;
+  if (question.sourcePack) serialised.sourcePack = question.sourcePack;
+  if (question.depthTier) serialised.depthTier = question.depthTier;
 
   return serialised;
 }

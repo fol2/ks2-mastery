@@ -203,3 +203,25 @@ describe('P10 Table Render — Heterogeneous vs Homogeneous shape distinction', 
     assert.ok(!homoHasRowOpts, 'Homogeneous table must NOT have row-specific options');
   });
 });
+
+// ---------------------------------------------------------------------------
+// 5. P18 manual sentence-function tables: corrected answers and feedback align
+// ---------------------------------------------------------------------------
+
+describe('P10 Table Render — P18 sentence-function feedback alignment', () => {
+  it('sentence-function row feedback uses the runtime-corrected row answer', () => {
+    const question = createGrammarQuestion({
+      templateId: 'qg_p18_p16_sentence_functions_punctuation_vs_function_table',
+      seed: 3,
+    });
+    assert.ok(question, 'question must be generated');
+
+    const fields = question.answerSpec?.params?.fields || {};
+    assert.equal(fields.row2?.golden?.[0], 'statement');
+    assert.equal(fields.row2?.feedbackLong, 'The sentence "Maya finished the poster" is a statement.');
+    assert.equal(fields.row3?.golden?.[0], 'command');
+    assert.equal(fields.row3?.feedbackLong, 'The sentence "Finish the poster before lunch" is a command.');
+    assert.equal(fields.row4?.golden?.[0], 'exclamation');
+    assert.equal(fields.row4?.feedbackLong, 'The sentence "What a colourful poster this is" is an exclamation.');
+  });
+});

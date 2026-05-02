@@ -96,10 +96,18 @@ describe('P11 U10 Verify Chain: verify:grammar-qg-production-release', () => {
     );
   });
 
+  it('verify:grammar-qg-production-release checks manual expansion generated source freshness', () => {
+    const cmd = scripts['verify:grammar-qg-production-release'] || '';
+    assert.ok(
+      cmd.includes('generate-grammar-manual-expansion.mjs --check'),
+      `verify:grammar-qg-production-release must byte-check manual expansion generated source freshness. Actual: "${cmd}"`,
+    );
+  });
+
   it('verify:grammar-qg-production-release references the certification manifest', () => {
     const cmd = scripts['verify:grammar-qg-production-release'] || '';
     assert.ok(
-      cmd.includes('grammar-qg-p14-certification-manifest.json'),
+      cmd.includes('grammar-qg-p18-certification-manifest.json'),
       `verify:grammar-qg-production-release must reference the manifest. Actual: "${cmd}"`,
     );
   });

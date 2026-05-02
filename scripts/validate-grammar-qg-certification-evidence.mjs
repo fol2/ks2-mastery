@@ -1215,14 +1215,19 @@ export function validateReportCounts(manifest, reportPath, opts = {}) {
 // ---------------------------------------------------------------------------
 
 /**
- * Validate that the marking matrix JSON metadata.totalEntries matches expectations.
+ * Validate that the marking matrix JSON metadata.totalEntries matches the
+ * release manifest and the matrix payload.
  *
  * @param {object} manifest - Parsed certification manifest JSON (unused but kept for API consistency).
  * @param {string} rootDir - Project root directory.
- * @returns {{ pass: boolean, expected: number, actual: number }}
+ * @returns {{ pass: boolean, expected: number, actual: number, error?: string }}
  */
 export function validateMarkingMatrixCounts(manifest, rootDir) {
   const effectiveRoot = rootDir || ROOT_DIR;
+  const legacyExpectedEntries = 80; // P10 legacy fallback: seeds 1..5, 16 entries per seed.
+  const expected = Number.isFinite(Number(manifest?.expectedMarkingMatrixEntryCount))
+    ? Number(manifest.expectedMarkingMatrixEntryCount)
+    : legacyExpectedEntries;
 
   let matrixPath;
   let matrix;
@@ -1230,7 +1235,7 @@ export function validateMarkingMatrixCounts(manifest, rootDir) {
   if (manifest?.artefacts) {
     const result = readJsonArtefact(manifest, 'markingMatrix', effectiveRoot);
     if (!result.ok) {
-      return { pass: false, expected: 80, actual: 0, error: result.error };
+      return { pass: false, expected, actual: 0, error: result.error };
     }
     matrix = result.data;
     matrixPath = result.path;
@@ -1238,7 +1243,7 @@ export function validateMarkingMatrixCounts(manifest, rootDir) {
     if (matrix?.metadata?.contentReleaseId && matrix.metadata.contentReleaseId !== manifest.contentReleaseId) {
       return {
         pass: false,
-        expected: 80,
+        expected,
         actual: 0,
         error: `Marking matrix metadata.contentReleaseId "${matrix.metadata.contentReleaseId}" does not match manifest contentReleaseId "${manifest.contentReleaseId}"`,
       };
@@ -1248,17 +1253,25 @@ export function validateMarkingMatrixCounts(manifest, rootDir) {
     console.warn('WARN: manifest.artefacts not found — falling back to legacy P10 paths for markingMatrix');
     matrixPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json');
     if (!existsSync(matrixPath)) {
-      return { pass: false, expected: 80, actual: 0, error: `Marking matrix file not found: ${matrixPath}` };
+      return { pass: false, expected, actual: 0, error: `Marking matrix file not found: ${matrixPath}` };
     }
     try {
       matrix = JSON.parse(readFileSync(matrixPath, 'utf8'));
     } catch (err) {
-      return { pass: false, expected: 80, actual: 0, error: `Failed to parse marking matrix JSON: ${err.message}` };
+      return { pass: false, expected, actual: 0, error: `Failed to parse marking matrix JSON: ${err.message}` };
     }
   }
 
   const actual = matrix?.metadata?.totalEntries ?? 0;
-  const expected = 80; // seeds 1..5, 16 entries per seed
+  const payloadEntries = Array.isArray(matrix?.entries) ? matrix.entries.length : actual;
+  if (payloadEntries !== actual) {
+    return {
+      pass: false,
+      expected: actual,
+      actual: payloadEntries,
+      error: `Marking matrix metadata.totalEntries "${actual}" does not match entries.length "${payloadEntries}"`,
+    };
+  }
   return { pass: actual === expected, expected, actual };
 }
 
@@ -1491,7 +1504,32 @@ async function main(argv) {
     console.log(`SKIP: Runtime certification authority gate not applied to historical release ${manifestResult.manifest.contentReleaseId}`);
   }
 
-  // Gate 1d: Every distractor/adult-review flag must have register evidence.
+  // Gate 1d: Marking matrix total and payload length must match the manifest.
+  const markingMatrixResult = validateMarkingMatrixCounts(manifestResult.manifest, ROOT_DIR);
+  if (!markingMatrixResult.pass) {
+    const markingMismatches = [{
+      field: 'marking-matrix-counts',
+      message: markingMatrixResult.error
+        || `Marking matrix has ${markingMatrixResult.actual} entries; expected ${markingMatrixResult.expected}`,
+      claimed: markingMatrixResult.expected,
+      actual: markingMatrixResult.error || markingMatrixResult.actual,
+    }];
+
+    if (jsonOutput) {
+      console.log(JSON.stringify({ pass: false, gate: 'marking-matrix-counts', mismatches: markingMismatches }, null, 2));
+    } else {
+      console.log(`FAIL: Marking matrix counts — ${markingMismatches.length} mismatch(es)\n`);
+      for (const m of markingMismatches) {
+        console.log(`  [${m.field}] ${m.message}`);
+        console.log(`    claimed: ${JSON.stringify(m.claimed)}`);
+        console.log(`    actual:  ${JSON.stringify(m.actual)}\n`);
+      }
+    }
+    process.exit(1);
+  }
+  console.log(`PASS: Marking matrix count and payload length match manifest (${markingMatrixResult.actual} entries)`);
+
+  // Gate 1e: Every distractor/adult-review flag must have register evidence.
   const reviewCoverageResult = validateDistractorReviewCoverage(manifestResult.manifest, ROOT_DIR);
   if (!reviewCoverageResult.pass) {
     const reviewMismatches = [{
