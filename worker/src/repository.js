@@ -9665,12 +9665,23 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           })
           : rawRecord;
         const data = rawRecord.data || null;
+        const summaryPhase = rawRecord.ui?.phase === 'summary';
+        const rawSession = summaryPhase ? null : rawRecord.ui?.session || null;
+        const session = summaryPhase
+          ? null
+          : rawSession || publicRecord.ui?.session || null;
+        const rawUi = summaryPhase && rawRecord.ui
+          ? {
+            ...rawRecord.ui,
+            session: null,
+          }
+          : rawRecord.ui || null;
         const ui = publicRecord.ui
           ? {
             ...publicRecord.ui,
-            session: rawRecord.ui?.session || publicRecord.ui.session || null,
+            session,
           }
-          : rawRecord.ui || null;
+          : rawUi;
         if (data || ui) {
           result[row.subject_id] = { data, ui };
         }
