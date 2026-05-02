@@ -33,6 +33,42 @@ function safeSession(session) {
   };
 }
 
+function safeStringArray(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item) => typeof item === 'string');
+}
+
+function safeFeedback(feedback) {
+  if (!feedback || typeof feedback !== 'object' || Array.isArray(feedback)) return null;
+  const safe = {
+    kind: typeof feedback.kind === 'string' ? feedback.kind : 'info',
+    headline: typeof feedback.headline === 'string' ? feedback.headline : '',
+    body: typeof feedback.body === 'string' ? feedback.body : '',
+    footer: typeof feedback.footer === 'string' ? feedback.footer : '',
+    familyWords: safeStringArray(feedback.familyWords),
+  };
+
+  if (
+    !safe.headline
+    && !safe.body
+    && !safe.footer
+    && !safe.familyWords.length
+    && !feedback.persistenceWarning
+  ) {
+    return null;
+  }
+
+  if (
+    feedback.persistenceWarning
+    && typeof feedback.persistenceWarning === 'object'
+    && !Array.isArray(feedback.persistenceWarning)
+  ) {
+    safe.persistenceWarning = cloneSerialisable(feedback.persistenceWarning) || null;
+  }
+
+  return safe;
+}
+
 export function buildSpellingReadModel({
   learnerId,
   state,
@@ -51,7 +87,7 @@ export function buildSpellingReadModel({
     phase: safeState.phase || 'dashboard',
     awaitingAdvance: Boolean(safeState.awaitingAdvance),
     session,
-    feedback: safeState.feedback || null,
+    feedback: safeFeedback(safeState.feedback),
     summary: safeState.summary || null,
     error: typeof safeState.error === 'string' ? safeState.error : '',
     prefs: cloneSerialisable(prefs) || {},
