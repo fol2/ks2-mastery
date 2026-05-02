@@ -90,7 +90,6 @@ export async function buildSpellingAudioCue({ learnerId, state, audio = null } =
   return {
     subjectId: 'spelling',
     learnerId,
-    sessionId: parts.sessionId,
     promptToken: await sessionPromptToken(parts),
     slow: Boolean(audio?.slow),
     wordOnly: false,

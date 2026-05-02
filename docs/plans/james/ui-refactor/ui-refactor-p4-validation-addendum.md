@@ -68,13 +68,13 @@ GitHub metadata confirms:
 
 The completion report currently names PR `#815` but does not explicitly name PR `#823`; it only describes the follow-up work. This is a traceability gap, not a source implementation blocker.
 
-## Important gap: screenshot artefact availability in this ZIP
+## Superseded gap: screenshot artefact availability in the lean ZIP
 
 The production visual evidence manifest exists:
 
 `reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json`
 
-It lists 12 screenshots with `status: captured`, but the uploaded lean ZIP contains only one of the referenced files:
+The original lean ZIP review found 12 screenshots listed with `status: captured`, but only one referenced file bundled:
 
 ```text
 Present: 1/12
@@ -99,18 +99,18 @@ Missing from the uploaded ZIP:
 - `10-punctuation-summary.png`
 - `11-admin-visual-engine.png`
 
-Therefore, the ZIP proves that the manifest records those screenshots as captured, but the ZIP does not prove the visual contents of the 11 missing screenshots. The production smoke JSON files are present and internally coherent; the screenshot-file evidence is incomplete in this review bundle.
+The blocker follow-up supersedes that packaging gap by committing all 12 named PNG files under `output/playwright/ui-refactor-p4-production-2026-05-01/` and keeping the manifest at `status: captured` for every screenshot. The production smoke JSON files remain present and internally coherent.
 
 ## Verdict
 
-P4 is acceptable as a completed Visual Engine v1 implementation plus production-smoke closure, with one evidence-packaging correction required.
+P4 is acceptable as a completed Visual Engine v1 implementation plus production-smoke closure. The earlier evidence-packaging correction is now complete.
 
-Do not state that the uploaded ZIP itself contains the full screenshot evidence pack. State instead:
+Historical lean-ZIP wording before the blocker follow-up was:
 
 > The P4 source, production-smoke reports, and visual evidence manifest are present. The supplied lean ZIP contains only the Home screenshot file; the other screenshot paths are listed in the manifest but are not included in the bundle.
 
 Recommended immediate fix for P5 U0:
 
-1. Update the P4 completion report to cite both PR `#815` and PR `#823` explicitly.
-2. Add a verifier that checks every `screenshots[].path` in `ui-refactor-p4-production-visual-evidence-2026-05-01.json` either exists in the evidence pack or is explicitly marked as `external/omitted` with a reason.
-3. Re-issue the visual evidence pack with all referenced PNGs, or downgrade the visual evidence claim to `manifest-only for 11 screenshots`.
+1. Update the P4 completion report to cite both PR `#815` and PR `#823` explicitly. Done.
+2. Add a verifier that checks every `screenshots[].path` in `ui-refactor-p4-production-visual-evidence-2026-05-01.json` either exists in the evidence pack or is explicitly marked as `external/omitted` with a reason. Done.
+3. Re-issue the visual evidence pack with all referenced PNGs, or downgrade the visual evidence claim to `manifest-only for 11 screenshots`. Done by re-issuing the committed 12/12 PNG evidence pack.

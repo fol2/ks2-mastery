@@ -1,7 +1,7 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "capturedAt": "2026-05-01T22:48:25Z",
+  "capturedAt": "2026-05-02T22:49:00Z",
   "deployment": {
     "versionId": "0bc250a8-1224-476c-a534-c383814527f8",
     "sourceCommit": "91dcbabd9b948a8b53c1231c692eb04ff2e8b4fa",
@@ -27,8 +27,8 @@
     }
   ],
   "sessions": {
-    "subjectScreenshots": "isolated production demo sessions created through /api/demo/session; Spelling summary used a deterministic one-word single drill request on the production command path",
-    "adminScreenshot": "logged-in production admin browser session via bb-browser"
+    "subjectScreenshots": "isolated production demo sessions created through /demo and production subject command/UI paths; Spelling summary used a deterministic one-word single drill on the production command path before completion through the production UI",
+    "adminScreenshot": "logged-in production admin browser session via Chrome CDP"
   },
   "screenshots": [
     {
@@ -38,70 +38,59 @@
     },
     {
       "name": "spelling-setup",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/02-spelling-setup.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/02-spelling-setup.png"
     },
     {
       "name": "spelling-session",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/03-spelling-session.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/03-spelling-session.png"
     },
     {
       "name": "spelling-feedback",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/04-spelling-feedback.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/04-spelling-feedback.png"
     },
     {
       "name": "spelling-summary",
-      "status": "omitted",
+      "status": "captured",
       "path": "output/playwright/ui-refactor-p4-production-2026-05-01/04-spelling-summary.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts.",
       "detail": "Captured after the remote command response fix preserved the live summary read model returned by the Worker."
     },
     {
       "name": "grammar-setup",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/05-grammar-setup.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/05-grammar-setup.png"
     },
     {
       "name": "grammar-session",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/06-grammar-session.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/06-grammar-session.png"
     },
     {
       "name": "grammar-summary",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/07-grammar-summary.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/07-grammar-summary.png"
     },
     {
       "name": "punctuation-setup",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/08-punctuation-setup.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/08-punctuation-setup.png"
     },
     {
       "name": "punctuation-session",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/09-punctuation-session.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/09-punctuation-session.png"
     },
     {
       "name": "punctuation-summary",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/10-punctuation-summary.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/10-punctuation-summary.png"
     },
     {
       "name": "admin-visual-engine",
-      "status": "omitted",
-      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/11-admin-visual-engine.png",
-      "reason": "The lean source bundle does not contain this PNG, so P5 treats it as not screenshot-pack-proven from committed artefacts."
+      "status": "captured",
+      "path": "output/playwright/ui-refactor-p4-production-2026-05-01/11-admin-visual-engine.png"
     }
   ],
   "discoveredFixes": [
@@ -110,6 +99,6 @@
     "Spelling remote command responses reloaded repositories and then lost the live summary read model through rehydrate sanitisation; applyCommandResponse now reapplies the Worker subjectReadModel after reload."
   ],
   "residualFindings": [
-    "No P5/P6 UI-refactor contract file was present in this repository, so P4 evidence cannot be re-labelled as P5/P6 delivery."
+    "P5 blocker follow-up re-captured and committed all 12 named screenshot PNGs; no manifest entry remains omitted."
   ]
 }

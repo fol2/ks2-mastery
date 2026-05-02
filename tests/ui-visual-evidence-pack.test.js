@@ -1,10 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { verifyUiRefactorVisualEvidence } from '../scripts/verify-ui-refactor-visual-evidence.mjs';
+
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const productionManifestPath = path.join(
+  rootDir,
+  'reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json',
+);
 
 function writeManifest(dir, screenshots) {
   const manifestPath = path.join(dir, 'visual-evidence.json');
@@ -97,4 +104,21 @@ test('visual evidence verifier accepts omitted screenshots only with durable rea
   assert.deepEqual(result.failures, [
     'punctuation-summary: omitted screenshot entries require a durable reason',
   ]);
+});
+
+test('committed UI refactor production visual pack contains captured screenshots only', () => {
+  const manifest = JSON.parse(readFileSync(productionManifestPath, 'utf8'));
+  const screenshots = Array.isArray(manifest.screenshots) ? manifest.screenshots : [];
+
+  assert.equal(screenshots.length, 12);
+
+  for (const entry of screenshots) {
+    assert.equal(entry.status, 'captured', `${entry.name} must be captured`);
+    assert.equal(entry.reason, undefined, `${entry.name} must not carry an omitted reason`);
+    assert.ok(entry.path, `${entry.name} must have a screenshot path`);
+    assert.ok(existsSync(path.join(rootDir, entry.path)), `${entry.name} file must exist`);
+  }
+
+  const result = verifyUiRefactorVisualEvidence(productionManifestPath);
+  assert.equal(result.ok, true);
 });
