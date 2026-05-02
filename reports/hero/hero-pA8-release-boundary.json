@@ -1,0 +1,161 @@
+{
+  "phase": "hero-mode-pA8",
+  "status": "live-production-dormant-boundary-recorded-full-pa8-contract-incomplete",
+  "generatedAt": "2026-05-02T20:54:26Z",
+  "evidenceCodeBaseline": "9a91db991d0dfacff834cbf4c4a7bf20683e0883",
+  "productionOrigin": "https://ks2.eugnel.uk",
+  "contract": "docs/plans/james/hero-mode/A/hero-mode-pA8.md",
+  "sourceCommandDetail": "Exact secret names, D1 read-only queries, and package-script commands are listed. Inline production probe scripts are summarised rather than replayable because they carried short-lived session cookies and demo account identifiers.",
+  "sourceCommands": [
+    "node scripts/wrangler-oauth.mjs secret list",
+    "printf '[]' | node scripts/wrangler-oauth.mjs secret put HERO_INTERNAL_ACCOUNTS",
+    "printf '[]' | node scripts/wrangler-oauth.mjs secret put HERO_EXTERNAL_ACCOUNTS",
+    "printf '[]' | node scripts/wrangler-oauth.mjs secret put HERO_EXCLUDED_ACCOUNTS",
+    "printf 'false' | node scripts/wrangler-oauth.mjs secret put HERO_EMERGENCY_DISABLED",
+    "printf '0' | node scripts/wrangler-oauth.mjs secret put HERO_ROLLOUT_PERCENT",
+    "printf 'true' | node scripts/wrangler-oauth.mjs secret put HERO_EMERGENCY_DISABLED",
+    "node --input-type=module <production demo emergency-off read-model and command rehearsal>",
+    "printf 'false' | node scripts/wrangler-oauth.mjs secret put HERO_EMERGENCY_DISABLED",
+    "node --input-type=module <production demo dormant-boundary read-model and command check>",
+    "node --input-type=module <create production demo session, temporarily set HERO_INTERNAL_ACCOUNTS to that demo account, read /api/hero/read-model, then restore HERO_INTERNAL_ACCOUNTS=[]>",
+    "node --input-type=module <production demo dormant-boundary read-model check after restoring HERO_INTERNAL_ACCOUNTS=[]>",
+    "npm run smoke:production:grammar -- --json --timeout-ms 30000",
+    "node --input-type=module <create production demo session, complete one Grammar session through subject command path, temporarily set HERO_INTERNAL_ACCOUNTS to that demo account, read /api/hero/read-model, then restore HERO_INTERNAL_ACCOUNTS=[]>",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT COUNT(*) AS hero_state_rows FROM child_game_state WHERE system_id='hero-mode';\"",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT COUNT(*) AS hero_event_rows FROM event_log WHERE system_id='hero-mode';\"",
+    "node scripts/wrangler-oauth.mjs d1 execute ks2-mastery-db --remote --json --command \"SELECT COUNT(*) AS adult_accounts, SUM(CASE WHEN account_type = 'demo' THEN 0 ELSE 1 END) AS real_accounts, SUM(CASE WHEN account_type = 'demo' THEN 1 ELSE 0 END) AS demo_accounts FROM adult_accounts;\""
+  ],
+  "productionBoundary": {
+    "observedAt": "2026-05-02T20:37:42Z",
+    "valuesReadable": false,
+    "knownByRotation": true,
+    "secretNamesPresent": {
+      "HERO_INTERNAL_ACCOUNTS": true,
+      "HERO_EXTERNAL_ACCOUNTS": true,
+      "HERO_ROLLOUT_PERCENT": true,
+      "HERO_ROLLOUT_SALT": false,
+      "HERO_EXCLUDED_ACCOUNTS": true,
+      "HERO_EMERGENCY_DISABLED": true
+    },
+    "knownCounts": {
+      "internalAllowlistAccountCount": 0,
+      "externalAllowlistAccountCount": 0,
+      "excludedAccountCount": 0,
+      "rolloutPercent": 0
+    },
+    "currentIntendedValues": {
+      "HERO_INTERNAL_ACCOUNTS": "known empty JSON array",
+      "HERO_EXTERNAL_ACCOUNTS": "known empty JSON array",
+      "HERO_EXCLUDED_ACCOUNTS": "known empty JSON array",
+      "HERO_EMERGENCY_DISABLED": "false",
+      "HERO_ROLLOUT_PERCENT": "0"
+    },
+    "temporaryDemoProbeAllowlisting": true,
+    "realFamilyWideningByThisBranch": false,
+    "permanentWideningByThisBranch": false,
+    "remainingWidenedAccounts": 0,
+    "knownExposureBoundary": true,
+    "exposedAccountCount": 0
+  },
+  "checkedInHeroFlags": {
+    "HERO_MODE_SHADOW_ENABLED": "false",
+    "HERO_MODE_LAUNCH_ENABLED": "false",
+    "HERO_MODE_CHILD_UI_ENABLED": "false",
+    "HERO_MODE_PROGRESS_ENABLED": "false",
+    "HERO_MODE_ECONOMY_ENABLED": "false",
+    "HERO_MODE_CAMP_ENABLED": "false"
+  },
+  "productionD1Counts": {
+    "adultAccounts": 176,
+    "realAccounts": 5,
+    "demoAccounts": 171,
+    "heroStateRows": 0,
+    "heroEventRows": 0
+  },
+  "emergencyOffRehearsal": {
+    "ranAt": "2026-05-02T20:36:31Z",
+    "temporarySecretValue": "true",
+    "restoredSecretValue": "false",
+    "demoSession": {
+      "status": 201,
+      "cookieIssued": true,
+      "demo": true
+    },
+    "session": {
+      "status": 200,
+      "learnerPresent": true
+    },
+    "readModelWhileEmergencyOff": {
+      "status": 200,
+      "heroEnabled": false,
+      "uiEnabled": false
+    },
+    "commandWhileEmergencyOff": {
+      "status": 403,
+      "controlledNon500": true,
+      "error": "hero-unavailable"
+    },
+    "statePreserved": {
+      "heroStateRowsBefore": 0,
+      "heroStateRowsAfter": 0,
+      "heroEventRowsBefore": 0,
+      "heroEventRowsAfter": 0
+    },
+    "result": "pass-for-dormant-boundary"
+  },
+  "postRehearsalDormantCheck": {
+    "ranAt": "2026-05-02T20:37:03Z",
+    "readModelStatus": 404,
+    "readModelCode": "hero_shadow_disabled",
+    "commandStatus": 404,
+    "commandCode": "hero_launch_disabled",
+    "commandControlledNon500": true
+  },
+  "knownAccountSmoke": {
+    "result": "not-run",
+    "reason": "After pA8 Day 0 rotation the known production exposure boundary is zero accounts. No named real/internal account was supplied for a safe enabled-account smoke. A controlled production demo/test account was temporarily allowlisted, but its Hero read model had ui.enabled=false and zero tasks. A second production-safe demo/test account completed a Grammar session through the normal subject command path before temporary allowlisting; its Hero read model still had ui.enabled=false, ui.reason=no-eligible-subjects, and zero tasks. Neither probe is a valid Stage 1 smoke target.",
+    "wideningAllowed": false
+  },
+  "controlledDemoAllowlistProbe": {
+    "ranAt": "2026-05-02T20:44:11Z",
+    "temporaryInternalAllowlistCount": 1,
+    "restoredInternalAllowlistCount": 0,
+    "readModelStatus": 200,
+    "uiEnabled": false,
+    "questPresent": true,
+    "taskCount": 0,
+    "result": "not-a-valid-known-account-smoke"
+  },
+  "controlledDemoWithGrammarStateProbe": {
+    "ranAt": "2026-05-02T20:53:21Z",
+    "temporaryInternalAllowlistCount": 1,
+    "restoredInternalAllowlistCount": 0,
+    "subjectPreparation": "completed one production Grammar session through the normal subject command path on a controlled demo/test account",
+    "readModelStatus": 200,
+    "uiEnabled": false,
+    "uiReason": "no-eligible-subjects",
+    "taskCount": 0,
+    "eligibleSubjects": [],
+    "result": "not-a-valid-known-account-smoke"
+  },
+  "supportPosture": {
+    "supportOwner": "James",
+    "dailyReviewOwner": "James",
+    "supportRowsSupplied": 0,
+    "explicitZeroRecorded": true,
+    "optOutControlPresent": true,
+    "optOutCount": 0,
+    "readyForWidening": false
+  },
+  "decision": {
+    "selectedOutcome": "KEEP DORMANT UNTIL OWNED",
+    "contractComplete": false,
+    "dormantBoundaryRecorded": true,
+    "normalisationAllowed": false,
+    "wideningAllowed": false,
+    "aSeriesTerminated": true,
+    "reviewBy": "2026-05-16",
+    "owner": "James",
+    "reason": "The release boundary is now known and dormant, emergency-off and exclusion controls exist, rollback hiding was rehearsed without state loss, and live Hero rows remain zero. Full pA8 release execution is incomplete because no valid known enabled account smoke passed; the honest production decision is to keep Hero Mode dormant until a named owner supplies the account and release window."
+  }
+}
