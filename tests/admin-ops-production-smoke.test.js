@@ -162,3 +162,148 @@ test('admin-ops production smoke — pre-run canary emits SMOKE_ACCOUNT_DIRTY wh
     globalThis.fetch = originalFetch;
   }
 });
+
+test('admin-ops production smoke sends CAS row versions for ops-metadata round-trip', async () => {
+  const originalFetch = globalThis.fetch;
+  const smokeAccountId = 'smoke-acct-id';
+  const opsMetadataBodies = [];
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(typeof input === 'string'
+      ? input
+      : (input instanceof URL ? input.href : input?.url || ''));
+    if (url.endsWith('/api/auth/login')) {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+          'set-cookie': 'ks2_session=stub-cookie-value; Path=/',
+        },
+      });
+    }
+    if (url.endsWith('/api/hubs/admin')) {
+      return new Response(JSON.stringify({
+        ok: true,
+        adminHub: {
+          dashboardKpis: {},
+          opsActivityStream: [],
+          errorLogSummary: {},
+          accountOpsMetadata: [],
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (url.endsWith('/api/admin/ops/accounts-metadata')) {
+      return new Response(JSON.stringify({
+        ok: true,
+        rows: [
+          {
+            accountId: smokeAccountId,
+            email: 'smoke@example.com',
+            planLabel: 'baseline',
+            rowVersion: 7,
+          },
+        ],
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (url.endsWith(`/api/admin/accounts/${smokeAccountId}/ops-metadata`)) {
+      const body = JSON.parse(String(init.body || '{}'));
+      opsMetadataBodies.push(body);
+      return new Response(JSON.stringify({
+        ok: true,
+        accountOpsMetadataEntry: {
+          accountId: smokeAccountId,
+          rowVersion: body.expectedRowVersion + 1,
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (url.endsWith('/api/ops/error-event')) {
+      return new Response(JSON.stringify({ ok: true, eventId: 'evt-smoke' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url.endsWith('/api/admin/debug-bundle?account_id=smoke-acct-id&time_from=0&time_to=0')) {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url.includes('/api/admin/debug-bundle')) {
+      return new Response(JSON.stringify({
+        ok: true,
+        bundle: {
+          accountSummary: {},
+          recentErrors: [],
+          errorOccurrences: [],
+          recentDenials: [],
+          recentMutations: [],
+          linkedLearners: [],
+          capacityState: {},
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (url.includes('/api/admin/ops/request-denials')) {
+      return new Response(JSON.stringify({ ok: true, entries: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url.includes('/api/admin/accounts/search')) {
+      return new Response(JSON.stringify({
+        ok: true,
+        results: [{ accountId: smokeAccountId, id: smokeAccountId, email: 'smoke@example.com' }],
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (url.endsWith(`/api/admin/accounts/${smokeAccountId}/detail`)) {
+      return new Response(JSON.stringify({
+        ok: true,
+        account: {},
+        learners: [],
+        recentErrors: [],
+        recentDenials: [],
+        recentMutations: [],
+        opsMetadata: {},
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (url.endsWith('/api/admin/marketing/messages') && init.method === 'GET') {
+      return new Response(JSON.stringify({ ok: true, messages: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url.endsWith('/api/admin/marketing/messages') && init.method === 'POST') {
+      return new Response(JSON.stringify({ ok: true, message: { id: 'msg-smoke', row_version: 1 } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url.endsWith('/api/admin/marketing/messages/msg-smoke')) {
+      return new Response(JSON.stringify({ ok: true, message: { id: 'msg-smoke', row_version: 2 } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  try {
+    const envelopes = [];
+    const code = await runSmoke({
+      env: {
+        KS2_SMOKE_ACCOUNT_EMAIL: 'smoke@example.com',
+        KS2_SMOKE_ACCOUNT_PASSWORD: 'placeholder',
+        KS2_SMOKE_BASE_URL: 'https://smoke.test',
+      },
+      emit: (envelope) => envelopes.push(envelope),
+    });
+    assert.equal(code, EXIT_OK, JSON.stringify(envelopes[0] || {}, null, 2));
+    assert.equal(opsMetadataBodies.length, 2);
+    assert.equal(opsMetadataBodies[0].expectedRowVersion, 7);
+    assert.equal(opsMetadataBodies[0].mutation.requestId.startsWith('smoke-'), true);
+    assert.equal(opsMetadataBodies[1].expectedRowVersion, 8);
+    assert.equal(opsMetadataBodies[1].mutation.requestId.startsWith('smoke-'), true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

@@ -366,6 +366,9 @@ export async function runSmoke({
       });
     }
     const originalPlanLabel = typeof smokeRow.planLabel === 'string' ? smokeRow.planLabel : '';
+    const originalRowVersion = Number.isInteger(Number(smokeRow.rowVersion))
+      ? Number(smokeRow.rowVersion)
+      : 0;
     // I3 (reviewer) pre-run canary: a stamped `smoke-<iso>` label on the
     // smoke account means the previous run's reverse mutation never
     // landed. Treating that value as the "original" would propagate the
@@ -404,6 +407,7 @@ export async function runSmoke({
     const forwardRequestId = makeRequestId(sequence + 1);
     let forwardApplied = false;
     let reverseApplied = false;
+    let forwardRowVersion = originalRowVersion + 1;
     try {
       const forward = await apiSend({
         baseUrl,
@@ -413,12 +417,16 @@ export async function runSmoke({
         timeoutMs,
         body: {
           patch: { planLabel: stampedPlanLabel },
-          requestId: forwardRequestId,
-          correlationId: forwardRequestId,
+          expectedRowVersion: originalRowVersion,
+          mutation: {
+            requestId: forwardRequestId,
+            correlationId: forwardRequestId,
+          },
         },
       });
       assertStepOk('account-ops-metadata forward update', forward);
       forwardApplied = true;
+      forwardRowVersion = Number(forward.payload?.accountOpsMetadataEntry?.rowVersion) || forwardRowVersion;
       recordStep('account-ops-metadata forward update', { requestId: forwardRequestId });
 
       const reverseRequestId = makeRequestId(sequence + 1);
@@ -430,8 +438,11 @@ export async function runSmoke({
         timeoutMs,
         body: {
           patch: { planLabel: originalPlanLabel },
-          requestId: reverseRequestId,
-          correlationId: reverseRequestId,
+          expectedRowVersion: forwardRowVersion,
+          mutation: {
+            requestId: reverseRequestId,
+            correlationId: reverseRequestId,
+          },
         },
       });
       assertStepOk('account-ops-metadata reverse update', reverse);
@@ -452,8 +463,11 @@ export async function runSmoke({
             timeoutMs,
             body: {
               patch: { planLabel: originalPlanLabel },
-              requestId: retryRequestId,
-              correlationId: retryRequestId,
+              expectedRowVersion: forwardRowVersion,
+              mutation: {
+                requestId: retryRequestId,
+                correlationId: retryRequestId,
+              },
             },
           });
           if (retry.response.ok && retry.payload?.ok !== false) {
