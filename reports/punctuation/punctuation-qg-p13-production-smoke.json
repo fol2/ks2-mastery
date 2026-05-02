@@ -1,0 +1,135 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "accountId": "demo-VyVlzLhGErUa0Q",
+  "learnerId": "learner-demo-lFHiyHHuZNU8-w",
+  "attestation": {
+    "environment": "production",
+    "releasePhase": "punctuation-qg-p13-live-serving",
+    "releaseId": "punctuation-qg-p12-3000-2026-05-02",
+    "runtimeItemCount": 3312,
+    "generatedDepth": 100,
+    "workerCommitSha": "b7a6125966975bae14aaeea7050cf107ccdb40e6",
+    "workerVersionId": null,
+    "deploymentId": null,
+    "timestamp": "2026-05-02T21:53:40.211Z",
+    "authenticatedCoverage": true,
+    "adminHubCoverage": false
+  },
+  "punctuation": {
+    "productionObserved": {
+      "releaseId": "punctuation-qg-p12-3000-2026-05-02",
+      "runtimeItems": 3312,
+      "publishedRewardUnits": 14
+    },
+    "localReleaseManifestExpectation": {
+      "fixedItems": 512,
+      "generatedItems": 2800,
+      "generatedPerFamily": 100,
+      "runtimeItems": 3312,
+      "publishedRewardUnits": 14
+    },
+    "smartSix": {
+      "revision": 13,
+      "observedRuntimeStats": {
+        "releaseId": "punctuation-qg-p12-3000-2026-05-02",
+        "runtimeItems": 3312,
+        "publishedRewardUnits": 14
+      },
+      "summaryTotal": 6,
+      "uniqueItems": 6,
+      "immediateRepeats": 0,
+      "generatedSeen": 3,
+      "fixedSeen": 3,
+      "modes": [
+        "choose",
+        "combine",
+        "fix",
+        "insert",
+        "paragraph",
+        "transfer"
+      ],
+      "skillIds": [
+        "apostrophe_contractions",
+        "apostrophe_possession",
+        "fronted_adverbial",
+        "list_commas",
+        "sentence_endings"
+      ],
+      "items": [
+        {
+          "itemId": "fx_se_choose_statement_forest",
+          "source": "fixed",
+          "mode": "choose",
+          "skillIds": [
+            "sentence_endings"
+          ]
+        },
+        {
+          "itemId": "ac_insert_well_youre",
+          "source": "fixed",
+          "mode": "insert",
+          "skillIds": [
+            "apostrophe_contractions"
+          ]
+        },
+        {
+          "itemId": "gen_apostrophe_contractions_fix_tdz6ot_7",
+          "source": "generated",
+          "mode": "fix",
+          "skillIds": [
+            "apostrophe_contractions"
+          ]
+        },
+        {
+          "itemId": "fa_transfer_after_lunch",
+          "source": "fixed",
+          "mode": "transfer",
+          "skillIds": [
+            "fronted_adverbial"
+          ]
+        },
+        {
+          "itemId": "gen_list_commas_combine_18t19w8_10",
+          "source": "generated",
+          "mode": "combine",
+          "skillIds": [
+            "list_commas"
+          ]
+        },
+        {
+          "itemId": "gen_apostrophe_mix_paragraph_c6l9gp_12",
+          "source": "generated",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ]
+        }
+      ]
+    },
+    "parentHubEvidence": {
+      "hasEvidence": true,
+      "attempts": 6,
+      "accuracyPercent": 100,
+      "progressSnapshotsHasPunctuation": true,
+      "redactionChecks": {
+        "punctuationEvidence": true,
+        "progressSnapshots": true,
+        "misconceptionPatterns": true
+      },
+      "sessionModes": [
+        "smart"
+      ]
+    }
+  },
+  "spelling": {
+    "progressTotal": 1,
+    "hasPromptToken": true,
+    "redactionChecks": {
+      "rawWordHidden": true,
+      "rawSentenceHidden": true,
+      "promptTokenReturned": true
+    }
+  }
+}
