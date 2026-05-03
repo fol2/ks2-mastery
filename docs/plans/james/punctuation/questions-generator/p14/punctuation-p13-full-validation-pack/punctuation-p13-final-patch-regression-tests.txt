@@ -1,0 +1,136 @@
+TAP version 13
+#   GOLDEN MARKING: 200 templates tested, 360 accept cases passed, 592 reject cases passed
+# Subtest: self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK
+ok 1 - self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK
+  ---
+  duration_ms: 4.352366
+  ...
+# Subtest: golden marking tests: generated choice families accept only their correct option
+ok 2 - golden marking tests: generated choice families accept only their correct option
+  ---
+  duration_ms: 5.958907
+  ...
+# Subtest: golden marking tests: all DSL families pass accept cases and fail reject cases
+ok 3 - golden marking tests: all DSL families pass accept cases and fail reject cases
+  ---
+  duration_ms: 615.184121
+  ...
+# Subtest: vacuous truth guard: every DSL family has templates with at least 4 test cases each
+ok 4 - vacuous truth guard: every DSL family has templates with at least 4 test cases each
+  ---
+  duration_ms: 6.21942
+  ...
+# Subtest: P13 runtime keeps the 3,312 item production pool and model answers self-mark
+ok 5 - P13 runtime keeps the 3,312 item production pool and model answers self-mark
+  ---
+  duration_ms: 1534.401424
+  ...
+# Subtest: P13 generated apostrophe items do not surface ungrammatical contraction stems/models
+ok 6 - P13 generated apostrophe items do not surface ungrammatical contraction stems/models
+  ---
+  duration_ms: 4.730358
+  ...
+# Subtest: P13 generated apostrophe typed-answer models start as complete sentences
+ok 7 - P13 generated apostrophe typed-answer models start as complete sentences
+  ---
+  duration_ms: 1.64444
+  ...
+# Subtest: P13 paragraph repair rejects missing sentence boundary punctuation
+ok 8 - P13 paragraph repair rejects missing sentence boundary punctuation
+  ---
+  duration_ms: 161.01501
+  ...
+# Subtest: P12 exposes a 3000+ Punctuation QG runtime pool
+ok 9 - P12 exposes a 3000+ Punctuation QG runtime pool
+  ---
+  duration_ms: 109.145684
+  ...
+# Subtest: P12 keeps one hundred unique templates in every generated family
+ok 10 - P12 keeps one hundred unique templates in every generated family
+  ---
+  duration_ms: 13.929325
+  ...
+# Subtest: P12 model answers and fixed-choice answers mark correctly
+ok 11 - P12 model answers and fixed-choice answers mark correctly
+  ---
+  duration_ms: 1610.766648
+  ...
+# Subtest: P12 adds at least 350 new fixed choice items across all published skills
+ok 12 - P12 adds at least 350 new fixed choice items across all published skills
+  ---
+  duration_ms: 0.714616
+  ...
+# Subtest: P12 Smart sessions surface varied items without immediate repeats
+ok 13 - P12 Smart sessions surface varied items without immediate repeats
+  ---
+  duration_ms: 416.081266
+  ...
+# Subtest: P12 runtime items have complete learner answer surfaces
+ok 14 - P12 runtime items have complete learner answer surfaces
+  ---
+  duration_ms: 100.425693
+  ...
+# Subtest: P13 predeploy source exposes the P12 3000+ pool that P13 will serve live
+ok 15 - P13 predeploy source exposes the P12 3000+ pool that P13 will serve live
+  ---
+  duration_ms: 121.242874
+  ...
+# Subtest: P13 live evidence validator accepts a six-question production smoke artefact with deployment identity
+ok 16 - P13 live evidence validator accepts a six-question production smoke artefact with deployment identity
+  ---
+  duration_ms: 214.961072
+  ...
+# Subtest: P13 live evidence validator rejects missing deployed identity and missing Spelling regression evidence
+ok 17 - P13 live evidence validator rejects missing deployed identity and missing Spelling regression evidence
+  ---
+  duration_ms: 200.011781
+  ...
+# Subtest: P13 deploy identity guard refuses dirty trees and mismatched commit SHAs
+ok 18 - P13 deploy identity guard refuses dirty trees and mismatched commit SHAs
+  ---
+  duration_ms: 1.012401
+  ...
+# Subtest: P13 predeploy verifier can write deploy-wrapper evidence outside the worktree
+ok 19 - P13 predeploy verifier can write deploy-wrapper evidence outside the worktree
+  ---
+  duration_ms: 1.366849
+  ...
+# Subtest: P13 live smoke cannot claim Admin Hub coverage without Admin Hub evidence
+ok 20 - P13 live smoke cannot claim Admin Hub coverage without Admin Hub evidence
+  ---
+  duration_ms: 197.893398
+  ...
+# Subtest: P13 live smoke can compose a passing Admin Hub smoke artefact into live evidence
+ok 21 - P13 live smoke can compose a passing Admin Hub smoke artefact into live evidence
+  ---
+  duration_ms: 195.968362
+  ...
+# Subtest: P13 Admin Hub evidence composition fails closed on incomplete admin smoke artefacts
+ok 22 - P13 Admin Hub evidence composition fails closed on incomplete admin smoke artefacts
+  ---
+  duration_ms: 0.60136
+  ...
+# Subtest: P13 package scripts write and validate the same live smoke artefact
+ok 23 - P13 package scripts write and validate the same live smoke artefact
+  ---
+  duration_ms: 3.364634
+  ...
+# Subtest: P13 live evidence validator CLI has no null-worker-identity bypass
+ok 24 - P13 live evidence validator CLI has no null-worker-identity bypass
+  ---
+  duration_ms: 0.868032
+  ...
+# Subtest: P13 live evidence validator rejects P11 one-item / 1268-item artefacts
+ok 25 - P13 live evidence validator rejects P11 one-item / 1268-item artefacts
+  ---
+  duration_ms: 98.246563
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3160.95139

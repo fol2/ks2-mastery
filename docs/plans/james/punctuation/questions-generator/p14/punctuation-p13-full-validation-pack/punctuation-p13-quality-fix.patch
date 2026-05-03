@@ -1,0 +1,219 @@
+--- a/shared/punctuation/generators.js
++++ b/shared/punctuation/generators.js
+@@ -169,6 +169,59 @@
+   ]);
+ }
+ 
++
++const GENERATED_TEMPLATE_QUALITY_FIX_FAMILIES = new Set([
++  'gen_apostrophe_contractions_fix',
++  'gen_apostrophe_mix_paragraph',
++]);
++
++function sentenceCaseFirst(value) {
++  const text = String(value ?? '');
++  return text.replace(/^([\s"'“‘]*)([a-z])/, (_match, prefix, first) => `${prefix}${first.toUpperCase()}`);
++}
++
++function repairApostropheContractionGrammar(value) {
++  return String(value ?? '')
++    .replace(/\byouve ready to move\b/gi, 'youve moved')
++    .replace(/\byou've ready to move\b/gi, "you've moved")
++    .replace(/\bweve ready to move\b/gi, 'weve moved')
++    .replace(/\bwe've ready to move\b/gi, "we've moved")
++    .replace(/\btheyll ready to move\b/gi, 'theyll move')
++    .replace(/\bthey'll ready to move\b/gi, "they'll move")
++    .replace(/\bwell ready to move\b/gi, 'well move')
++    .replace(/\bwe'll ready to move\b/gi, "we'll move")
++    .replace(/\bit isnt move\b/gi, 'it isnt safe to move')
++    .replace(/\bit isn't move\b/gi, "it isn't safe to move")
++    .replace(/\bwe arent move\b/gi, 'we arent ready to move')
++    .replace(/\bwe aren't move\b/gi, "we aren't ready to move")
++    .replace(/\bit isnt forget\b/gi, 'it isnt safe to forget')
++    .replace(/\bit isn't forget\b/gi, "it isn't safe to forget")
++    .replace(/\bwe arent forget\b/gi, 'we arent ready to forget')
++    .replace(/\bwe aren't forget\b/gi, "we aren't ready to forget");
++}
++
++function mapTemplateStrings(value, mapper) {
++  if (typeof value === 'string') return mapper(value);
++  if (Array.isArray(value)) return value.map((entry) => mapTemplateStrings(entry, mapper));
++  if (!isPlainObject(value)) return value;
++  return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, mapTemplateStrings(entry, mapper)]));
++}
++
++function qualityNormalisedGeneratedTemplate(familyId, template) {
++  if (!GENERATED_TEMPLATE_QUALITY_FIX_FAMILIES.has(familyId) || !isPlainObject(template)) return template;
++  const clone = { ...template };
++  const repair = (value) => repairApostropheContractionGrammar(value);
++  const repairSentence = (value) => sentenceCaseFirst(repair(value));
++
++  if (typeof clone.stem === 'string') clone.stem = repairSentence(clone.stem);
++  if (typeof clone.model === 'string') clone.model = repairSentence(clone.model);
++  if (Array.isArray(clone.accepted)) clone.accepted = clone.accepted.map(repairSentence);
++  if (Array.isArray(clone.options)) clone.options = clone.options.map(repairSentence);
++  if (isPlainObject(clone.tests)) clone.tests = mapTemplateStrings(clone.tests, repairSentence);
++  if (isPlainObject(clone.validator)) clone.validator = mapTemplateStrings(clone.validator, repair);
++  return clone;
++}
++
+ function optionChoiceTemplate({
+   templateId,
+   skillIds,
+@@ -390,33 +443,34 @@
+ 
+ function buildGeneratedItem({ family, skill, template, templateIndex, seed, variantIndex }) {
+   const idSeed = `${seed}:${family.id}:${variantIndex}`;
+-  const model = typeof template.model === 'string' ? template.model : '';
+-  const templateSkillIds = uniqueStrings(template.skillIds);
++  const qualityTemplate = qualityNormalisedGeneratedTemplate(family.id, template);
++  const model = typeof qualityTemplate.model === 'string' ? qualityTemplate.model : '';
++  const templateSkillIds = uniqueStrings(qualityTemplate.skillIds);
+   const skillIds = templateSkillIds.length ? templateSkillIds : [family.skillId];
+-  const templateId = templateIdFor(family.id, template, templateIndex);
++  const templateId = templateIdFor(family.id, qualityTemplate, templateIndex);
+   return {
+     id: `${family.id}_${shortHash(idSeed)}_${variantIndex + 1}`,
+     mode: family.mode,
+     templateId,
+-    variantSignature: variantSignatureFor({ family, template, templateId, model }),
++    variantSignature: variantSignatureFor({ family, template: qualityTemplate, templateId, model }),
+     skillIds,
+-    clusterId: template.clusterId || skill.clusterId,
++    clusterId: qualityTemplate.clusterId || skill.clusterId,
+     rewardUnitId: family.rewardUnitId,
+-    prompt: template.prompt || 'Practise this punctuation pattern.',
+-    stem: template.stem || '',
+-    ...(Array.isArray(template.options) ? { options: template.options } : {}),
+-    ...(Number.isInteger(Number(template.correctIndex)) ? {
+-      correctIndex: Number(template.correctIndex),
++    prompt: qualityTemplate.prompt || 'Practise this punctuation pattern.',
++    stem: qualityTemplate.stem || '',
++    ...(Array.isArray(qualityTemplate.options) ? { options: qualityTemplate.options } : {}),
++    ...(Number.isInteger(Number(qualityTemplate.correctIndex)) ? {
++      correctIndex: Number(qualityTemplate.correctIndex),
+       inputKind: 'choice',
+     } : {}),
+-    accepted: uniqueStrings([model, ...(Array.isArray(template.accepted) ? template.accepted : [])]),
+-    explanation: template.explanation || 'This generated item practises the same published punctuation skill.',
+-    ...(typeof template.explanationRuleId === 'string' ? { explanationRuleId: template.explanationRuleId } : {}),
++    accepted: uniqueStrings([model, ...(Array.isArray(qualityTemplate.accepted) ? qualityTemplate.accepted : [])]),
++    explanation: qualityTemplate.explanation || 'This generated item practises the same published punctuation skill.',
++    ...(typeof qualityTemplate.explanationRuleId === 'string' ? { explanationRuleId: qualityTemplate.explanationRuleId } : {}),
+     model,
+-    ...(isPlainObject(template.validator) ? { validator: template.validator } : {}),
+-    ...(isPlainObject(template.rubric) ? { rubric: template.rubric } : {}),
+-    misconceptionTags: uniqueStrings(template.misconceptionTags),
+-    readiness: uniqueStrings(template.readiness),
++    ...(isPlainObject(qualityTemplate.validator) ? { validator: qualityTemplate.validator } : {}),
++    ...(isPlainObject(qualityTemplate.rubric) ? { rubric: qualityTemplate.rubric } : {}),
++    misconceptionTags: uniqueStrings(qualityTemplate.misconceptionTags),
++    readiness: uniqueStrings(qualityTemplate.readiness),
+     source: 'generated',
+     generatorFamilyId: family.id,
+   };
+--- a/shared/punctuation/marking.js
++++ b/shared/punctuation/marking.js
+@@ -1419,17 +1419,32 @@
+   };
+ }
+ 
++function countProseSentenceBoundaries(value) {
++  // Count only prose sentence breaks such as ". The". Bullet-list item
++  // punctuation is deliberately excluded because bullet-point paragraph items
++  // allow optional terminal stops on individual bullet lines.
++  return (String(value ?? '').match(/[.!?](?=\s+[A-Z\"'“‘])/g) || []).length;
++}
++
+ function markParagraphPassageShape(item, rawText = '') {
+-  const expectedWords = stripPunctuation(item.model || acceptedAnswers(item)[0] || '');
++  const expectedText = item.model || acceptedAnswers(item)[0] || '';
++  const expectedWords = stripPunctuation(expectedText);
+   const typedWords = stripPunctuation(rawText);
+-  const correct = Boolean(expectedWords) && typedWords === expectedWords;
++  const wordsOk = Boolean(expectedWords) && typedWords === expectedWords;
++  const expectedSentenceBoundaries = countProseSentenceBoundaries(expectedText);
++  const typedSentenceBoundaries = countProseSentenceBoundaries(rawText);
++  const sentenceBoundaryOk = expectedSentenceBoundaries === 0 || typedSentenceBoundaries >= expectedSentenceBoundaries;
++  const correct = wordsOk && sentenceBoundaryOk;
+   return {
+     correct,
+     expected: item.model || '',
+-    note: correct ? 'The passage wording is preserved.' : 'Keep the whole passage wording and do not add extra sentences.',
+-    misconceptionTags: correct ? [] : ['paragraph.words_changed'],
++    note: correct
++      ? 'The passage wording is preserved.'
++      : (wordsOk ? 'Keep the sentence-ending punctuation between the passage sentences.' : 'Keep the whole passage wording and do not add extra sentences.'),
++    misconceptionTags: correct ? [] : [wordsOk ? 'paragraph.sentence_boundary_missing' : 'paragraph.words_changed'],
+     facets: [
+-      facet('preservation', correct),
++      facet('preservation', wordsOk),
++      facet('terminal_punctuation', sentenceBoundaryOk),
+     ],
+   };
+ }
+--- a/tests/punctuation-p13-full-subject-quality.test.js
++++ b/tests/punctuation-p13-full-subject-quality.test.js
+@@ -0,0 +1,62 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import { PUNCTUATION_CONTENT_MANIFEST } from '../shared/punctuation/content.js';
++import { PRODUCTION_DEPTH, createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
++import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
++
++const runtime = createPunctuationRuntimeManifest({
++  manifest: PUNCTUATION_CONTENT_MANIFEST,
++  generatedPerFamily: PRODUCTION_DEPTH,
++});
++
++function answerForItem(item) {
++  if (item.mode === 'choose' || item.inputKind === 'choice') return { choiceIndex: item.correctIndex };
++  return { typed: item.model };
++}
++
++function removeSentenceBoundary(text) {
++  return String(text || '').replace(/\.\s+(?=[A-Z"'“‘])/u, ' ');
++}
++
++const BAD_APOSTROPHE_GRAMMAR = /\b(?:you've|youve|we've|weve|they'll|theyll|we'll|well)\s+ready\s+to\b|\b(?:it\s+isn't|it\s+isnt|we\s+aren't|we\s+arent)\s+(?:move|forget)\b/i;
++
++test('P13 runtime keeps the 3,312 item production pool and model answers self-mark', () => {
++  assert.equal(runtime.items.length, 3312);
++  assert.equal(runtime.items.filter((item) => item.source !== 'generated').length, 512);
++  assert.equal(runtime.items.filter((item) => item.source === 'generated').length, 2800);
++  for (const item of runtime.items) {
++    const result = markPunctuationAnswer({ item, answer: answerForItem(item) });
++    assert.equal(result.correct, true, `${item.id} model/correct answer should mark correct: ${result.note || ''}`);
++  }
++});
++
++test('P13 generated apostrophe items do not surface ungrammatical contraction stems/models', () => {
++  const offenders = runtime.items
++    .filter((item) => item.source === 'generated')
++    .filter((item) => /^gen_apostrophe_(?:contractions_fix|mix_paragraph)/.test(item.generatorFamilyId || ''))
++    .filter((item) => BAD_APOSTROPHE_GRAMMAR.test(`${item.stem}\n${item.model}`));
++  assert.deepEqual(offenders.map((item) => ({ id: item.id, stem: item.stem, model: item.model })), []);
++});
++
++test('P13 generated apostrophe typed-answer models start as complete sentences', () => {
++  const offenders = runtime.items
++    .filter((item) => item.source === 'generated')
++    .filter((item) => /^gen_apostrophe_(?:contractions_fix|mix_paragraph)/.test(item.generatorFamilyId || ''))
++    .filter((item) => item.mode !== 'choose')
++    .filter((item) => !/^[A-Z"'“‘]/.test(String(item.model || '').trim()));
++  assert.deepEqual(offenders.map((item) => ({ id: item.id, model: item.model })), []);
++});
++
++test('P13 paragraph repair rejects missing sentence boundary punctuation', () => {
++  const paragraphItems = runtime.items.filter((item) => item.mode === 'paragraph' && item.model && /\.\s+[A-Z"'“‘]/.test(item.model));
++  assert.ok(paragraphItems.length >= 100, 'expected paragraph items with multiple sentences');
++  const falseAccepts = [];
++  for (const item of paragraphItems) {
++    const attack = removeSentenceBoundary(item.model);
++    if (attack === item.model) continue;
++    const result = markPunctuationAnswer({ item, answer: { typed: attack } });
++    if (result.correct) falseAccepts.push({ id: item.id, model: item.model, attack });
++  }
++  assert.deepEqual(falseAccepts.slice(0, 20), []);
++});

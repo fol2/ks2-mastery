@@ -1,0 +1,51 @@
+TAP version 13
+#   GOLDEN MARKING: 200 templates tested, 360 accept cases passed, 592 reject cases passed
+# Subtest: self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK
+ok 1 - self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK
+  ---
+  duration_ms: 4.058568
+  ...
+# Subtest: golden marking tests: generated choice families accept only their correct option
+ok 2 - golden marking tests: generated choice families accept only their correct option
+  ---
+  duration_ms: 4.140028
+  ...
+# Subtest: golden marking tests: all DSL families pass accept cases and fail reject cases
+ok 3 - golden marking tests: all DSL families pass accept cases and fail reject cases
+  ---
+  duration_ms: 680.929881
+  ...
+# Subtest: vacuous truth guard: every DSL family has templates with at least 4 test cases each
+ok 4 - vacuous truth guard: every DSL family has templates with at least 4 test cases each
+  ---
+  duration_ms: 7.674827
+  ...
+# Subtest: P13 runtime keeps the 3,312 item production pool and model answers self-mark
+ok 5 - P13 runtime keeps the 3,312 item production pool and model answers self-mark
+  ---
+  duration_ms: 1581.326405
+  ...
+# Subtest: P13 generated apostrophe items do not surface ungrammatical contraction stems/models
+ok 6 - P13 generated apostrophe items do not surface ungrammatical contraction stems/models
+  ---
+  duration_ms: 5.035462
+  ...
+# Subtest: P13 generated apostrophe typed-answer models start as complete sentences
+ok 7 - P13 generated apostrophe typed-answer models start as complete sentences
+  ---
+  duration_ms: 1.687936
+  ...
+# Subtest: P13 paragraph repair rejects missing sentence boundary punctuation
+ok 8 - P13 paragraph repair rejects missing sentence boundary punctuation
+  ---
+  duration_ms: 162.090665
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2620.974836

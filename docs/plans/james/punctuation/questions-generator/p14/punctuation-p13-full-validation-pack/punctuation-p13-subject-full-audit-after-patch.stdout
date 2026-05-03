@@ -1,0 +1,79 @@
+{
+  "status": "DONE",
+  "out": "/mnt/data/punctuation-p13-subject-full-audit-after-patch.json",
+  "counts": {
+    "fixed": 512,
+    "generated": 2800,
+    "total": 3312,
+    "generatedFamilies": 28
+  },
+  "failures": {
+    "modelFailures": [],
+    "modelFailureCount": 0,
+    "answerSurfaceFailures": [],
+    "answerSurfaceFailureCount": 0,
+    "feedbackFailures": [],
+    "feedbackFailureCount": 0,
+    "preservationFalseAccepts": [],
+    "preservationFalseAcceptCount": 0,
+    "extraTailFalseAccepts": [],
+    "extraTailFalseAcceptCount": 0,
+    "punctuationRemovalFalseAccepts": [],
+    "punctuationRemovalFalseAcceptCount": 0,
+    "explanationTooShort": [],
+    "explanationTooShortCount": 0,
+    "promptTooLong": [
+      {
+        "id": "lc_transfer_bake_sale",
+        "mode": "transfer",
+        "prompt": "Write one sentence using this exact stem and list: For the bake sale we needed eggs, flour, butter and sugar. For this question, do not put a comma before the final and."
+      }
+    ],
+    "promptTooLongCount": 1,
+    "stemTooLong": [],
+    "stemTooLongCount": 0
+  },
+  "sessions": {
+    "sessions": 80,
+    "totalSurfaced": 690,
+    "uniqueItems": 209,
+    "immediateRepeats": 0,
+    "sourceCounts": {
+      "fixed": 507,
+      "generated": 183
+    },
+    "modeCounts": {
+      "choose": 247,
+      "combine": 83,
+      "fix": 102,
+      "insert": 80,
+      "paragraph": 90,
+      "transfer": 88
+    },
+    "skillCounts": {
+      "apostrophe_contractions": 133,
+      "apostrophe_possession": 77,
+      "bullet_points": 21,
+      "colon_list": 22,
+      "comma_clarity": 19,
+      "dash_clause": 43,
+      "fronted_adverbial": 34,
+      "hyphen": 29,
+      "list_commas": 121,
+      "parenthesis": 13,
+      "semicolon": 21,
+      "semicolon_list": 20,
+      "sentence_endings": 150,
+      "speech": 88
+    },
+    "minUniqueModes": 3,
+    "maxUniqueModes": 6
+  },
+  "risks": [
+    {
+      "severity": "high",
+      "code": "transfer_underrepresented",
+      "message": "Only 24 transfer/open-production items in a 3312-item pool."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+TAP version 13
+# Subtest: P13 runtime keeps the 3,312 item production pool and model answers self-mark
+ok 1 - P13 runtime keeps the 3,312 item production pool and model answers self-mark
+  ---
+  duration_ms: 1434.29089
+  ...
+# Subtest: P13 generated apostrophe items do not surface ungrammatical contraction stems/models
+ok 2 - P13 generated apostrophe items do not surface ungrammatical contraction stems/models
+  ---
+  duration_ms: 4.715429
+  ...
+# Subtest: P13 generated apostrophe typed-answer models start as complete sentences
+ok 3 - P13 generated apostrophe typed-answer models start as complete sentences
+  ---
+  duration_ms: 1.587597
+  ...
+# Subtest: P13 paragraph repair rejects missing sentence boundary punctuation
+ok 4 - P13 paragraph repair rejects missing sentence boundary punctuation
+  ---
+  duration_ms: 164.483204
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2459.666416

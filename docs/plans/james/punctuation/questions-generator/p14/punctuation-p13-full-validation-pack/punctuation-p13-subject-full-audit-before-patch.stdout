@@ -1,0 +1,430 @@
+{
+  "status": "DONE",
+  "out": "/mnt/data/punctuation-p13-subject-full-audit.json",
+  "counts": {
+    "fixed": 512,
+    "generated": 2800,
+    "total": 3312,
+    "generatedFamilies": 28
+  },
+  "failures": {
+    "modelFailures": [],
+    "modelFailureCount": 0,
+    "answerSurfaceFailures": [],
+    "answerSurfaceFailureCount": 0,
+    "feedbackFailures": [],
+    "feedbackFailureCount": 0,
+    "preservationFalseAccepts": [],
+    "preservationFalseAcceptCount": 0,
+    "extraTailFalseAccepts": [],
+    "extraTailFalseAcceptCount": 0,
+    "punctuationRemovalFalseAccepts": [
+      {
+        "id": "pg_apostrophe_mix",
+        "mode": "paragraph",
+        "source": "fixed",
+        "model": "We can't find the children's coats. The girls' bags are in the hall.",
+        "attack": "We can't find the children's coats The girls' bags are in the hall"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_dqfdrp_1",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "you shouldn't forget the wildlife leaders' clipboards. The box was beside the wildlife centre.",
+        "attack": "you shouldn't forget the wildlife leaders' clipboards The box was beside the wildlife centre"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_dgfs2q_2",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "I can't forget the wildlife monitors' posters. The box was beside the art studio.",
+        "attack": "I can't forget the wildlife monitors' posters The box was beside the art studio"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_d6g6dr_3",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "you're ready to check the wildlife captains' weather charts. The box was beside the archive room.",
+        "attack": "you're ready to check the wildlife captains' weather charts The box was beside the archive room"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_cwgkos_4",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "it isn't forget the wildlife helpers' whistles. The box was beside the greenhouse.",
+        "attack": "it isn't forget the wildlife helpers' whistles The box was beside the greenhouse"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_cmgyzt_5",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "he wouldn't forget the maths captains' seed catalogues. The box was beside the kitchen.",
+        "attack": "he wouldn't forget the maths captains' seed catalogues The box was beside the kitchen"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_cchdau_6",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "they're ready to check the wellbeing monitors' robots. The box was beside the market stall.",
+        "attack": "they're ready to check the wellbeing monitors' robots The box was beside the market stall"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_c2hrlv_7",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "I've kept the wellbeing leaders' sketchbooks. The box was beside the robotics club.",
+        "attack": "I've kept the wellbeing leaders' sketchbooks The box was beside the robotics club"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_bsi5ww_8",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "they'll check the wellbeing helpers' seed trays. The box was beside the map room.",
+        "attack": "they'll check the wellbeing helpers' seed trays The box was beside the map room"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_fyc7bh_9",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "She's ready to check the wellbeing captains' paintbrushes. The box was beside the story corner.",
+        "attack": "She's ready to check the wellbeing captains' paintbrushes The box was beside the story corner"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_foclmi_10",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "I can't forget the farm monitors' ropes. The box was beside the planetarium.",
+        "attack": "I can't forget the farm monitors' ropes The box was beside the planetarium"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_bwlnrq_11",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "you shouldn't forget the farm leaders' keys. The box was beside the outdoor classroom.",
+        "attack": "you shouldn't forget the farm leaders' keys The box was beside the outdoor classroom"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_c6l9gp_12",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "it isn't forget the farm helpers' toolboxes. The box was beside the school gate.",
+        "attack": "it isn't forget the farm helpers' toolboxes The box was beside the school gate"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_bcmgds_13",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "you're ready to check the farm captains' shells. The box was beside the sailing club.",
+        "attack": "you're ready to check the farm captains' shells The box was beside the sailing club"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_d0k2jm_15",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we'll check the beach leaders' benches. The box was beside the weather garden.",
+        "attack": "we'll check the beach leaders' benches The box was beside the weather garden"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_dajo8l_16",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "he's ready to check the beach helpers' nets. The box was beside the seed library.",
+        "attack": "he's ready to check the beach helpers' nets The box was beside the seed library"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_cgkv5o_17",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we won't forget the beach captains' reading logs. The box was beside the harbour.",
+        "attack": "we won't forget the beach captains' reading logs The box was beside the harbour"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_cqkgun_18",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "she couldn't forget the story monitors' model boats. The box was beside the swimming pool.",
+        "attack": "she couldn't forget the story monitors' model boats The box was beside the swimming pool"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_e4ihbi_19",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we aren't forget the story leaders' lunch trays. The box was beside the railway platform.",
+        "attack": "we aren't forget the story leaders' lunch trays The box was beside the railway platform"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_eei30h_20",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we're ready to check the story helpers' clay tiles. The box was beside the recycling station.",
+        "attack": "we're ready to check the story helpers' clay tiles The box was beside the recycling station"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_j486b1_21",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we've kept the story captains' fossil brushes. The box was beside the history gallery.",
+        "attack": "we've kept the story captains' fossil brushes The box was beside the history gallery"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_iu8km2_22",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "I'll check the fossil monitors' paint trays. The box was beside the climbing wall.",
+        "attack": "I'll check the fossil monitors' paint trays The box was beside the climbing wall"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_ik8yx3_23",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "it's ready to check the fossil leaders' sewing needles. The box was beside the bridge.",
+        "attack": "it's ready to check the fossil leaders' sewing needles The box was beside the bridge"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_ia9d84_24",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "they didn't forget the fossil helpers' paddles. The box was beside the costume store.",
+        "attack": "they didn't forget the fossil helpers' paddles The box was beside the costume store"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_i09rj5_25",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "he wouldn't forget the fossil captains' cameras. The box was beside the new allotment.",
+        "attack": "he wouldn't forget the fossil captains' cameras The box was beside the new allotment"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_hqa5u6_26",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "they're ready to check the sports monitors' posters. The box was beside the rowing shed.",
+        "attack": "they're ready to check the sports monitors' posters The box was beside the rowing shed"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_hgak57_27",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "I've kept the sports leaders' clipboards. The box was beside the sports track.",
+        "attack": "I've kept the sports leaders' clipboards The box was beside the sports track"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_h6ayg8_28",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "they'll check the sports helpers' whistles. The box was beside the recording room.",
+        "attack": "they'll check the sports helpers' whistles The box was beside the recording room"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_gwbcr9_29",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "She's ready to check the sports captains' weather charts. The box was beside the media suite.",
+        "attack": "She's ready to check the sports captains' weather charts The box was beside the media suite"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_gmbr2a_30",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "you've kept the harbour monitors' music stands. The box was beside the reading tent.",
+        "attack": "you've kept the harbour monitors' music stands The box was beside the reading tent"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1gyqbtw_31",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we'll check the harbour leaders' bird feeders. The box was beside the craft table.",
+        "attack": "we'll check the harbour leaders' bird feeders The box was beside the craft table"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1h8pxiv_32",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "he's ready to check the harbour helpers' traffic signs. The box was beside the canoe store.",
+        "attack": "he's ready to check the harbour helpers' traffic signs The box was beside the canoe store"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1hipj7u_33",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we won't forget the harbour captains' floor plans. The box was beside the mountain lodge.",
+        "attack": "we won't forget the harbour captains' floor plans The box was beside the mountain lodge"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1hsp4wt_34",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "she couldn't forget the design monitors' storyboards. The box was beside the mini stage.",
+        "attack": "she couldn't forget the design monitors' storyboards The box was beside the mini stage"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1furx20_35",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we aren't forget the design leaders' sails. The box was beside the art gallery.",
+        "attack": "we aren't forget the design leaders' sails The box was beside the art gallery"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1g4riqz_36",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we're ready to check the design helpers' window latches. The box was beside the visitor centre.",
+        "attack": "we're ready to check the design helpers' window latches The box was beside the visitor centre"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1ger4fy_37",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we've kept the design captains' hand lenses. The box was beside the science garden.",
+        "attack": "we've kept the design captains' hand lenses The box was beside the science garden"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1goqq4x_38",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "I'll check the music monitors' test tubes. The box was beside the secret garden.",
+        "attack": "I'll check the music monitors' test tubes The box was beside the secret garden"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1eqtia4_39",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "it's ready to check the music leaders' story cubes. The box was beside the boat house.",
+        "attack": "it's ready to check the music leaders' story cubes The box was beside the boat house"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1f0t3z3_40",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "they didn't forget the music helpers' garden forks. The box was beside the museum.",
+        "attack": "they didn't forget the music helpers' garden forks The box was beside the museum"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1fapk63_41",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "he wouldn't forget the music captains' wire frames. The box was beside the observatory.",
+        "attack": "he wouldn't forget the music captains' wire frames The box was beside the observatory"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1f0pyh4_42",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "they're ready to check the market monitors' song sheets. The box was beside the beach hut.",
+        "attack": "they're ready to check the market monitors' song sheets The box was beside the beach hut"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1fuork1_43",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "I've kept the market leaders' maze clues. The box was beside the assembly hall.",
+        "attack": "I've kept the market leaders' maze clues The box was beside the assembly hall"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1fkp5v2_44",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "they'll check the market helpers' maps. The box was beside the lifeboat station.",
+        "attack": "they'll check the market helpers' maps The box was beside the lifeboat station"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1genyxz_45",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "She's ready to check the market captains' telescopes. The box was beside the orchestra pit.",
+        "attack": "She's ready to check the market captains' telescopes The box was beside the orchestra pit"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1g4od90_46",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "I can't forget the museum monitors' tablets. The box was beside the aquarium.",
+        "attack": "I can't forget the museum monitors' tablets The box was beside the aquarium"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1gyn6bx_47",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "you shouldn't forget the museum leaders' raincoats. The box was beside the sound booth.",
+        "attack": "you shouldn't forget the museum leaders' raincoats The box was beside the sound booth"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1gonkmy_48",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "it isn't forget the museum helpers' drums. The box was beside the staff garden.",
+        "attack": "it isn't forget the museum helpers' drums The box was beside the staff garden"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1d2sqmb_49",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "you're ready to check the museum captains' water bottles. The box was beside the adventure yard.",
+        "attack": "you're ready to check the museum captains' water bottles The box was beside the adventure yard"
+      },
+      {
+        "id": "gen_apostrophe_mix_paragraph_1dmosia_51",
+        "mode": "paragraph",
+        "source": "generated",
+        "model": "we'll check the football leaders' plant pots. The box was beside the clay studio.",
+        "attack": "we'll check the football leaders' plant pots The box was beside the clay studio"
+      }
+    ],
+    "punctuationRemovalFalseAcceptCount": 99,
+    "explanationTooShort": [],
+    "explanationTooShortCount": 0,
+    "promptTooLong": [
+      {
+        "id": "lc_transfer_bake_sale",
+        "mode": "transfer",
+        "prompt": "Write one sentence using this exact stem and list: For the bake sale we needed eggs, flour, butter and sugar. For this question, do not put a comma before the final and."
+      }
+    ],
+    "promptTooLongCount": 1,
+    "stemTooLong": [],
+    "stemTooLongCount": 0
+  },
+  "sessions": {
+    "sessions": 80,
+    "totalSurfaced": 690,
+    "uniqueItems": 209,
+    "immediateRepeats": 0,
+    "sourceCounts": {
+      "fixed": 507,
+      "generated": 183
+    },
+    "modeCounts": {
+      "choose": 247,
+      "combine": 83,
+      "fix": 102,
+      "insert": 80,
+      "paragraph": 90,
+      "transfer": 88
+    },
+    "skillCounts": {
+      "apostrophe_contractions": 133,
+      "apostrophe_possession": 77,
+      "bullet_points": 21,
+      "colon_list": 22,
+      "comma_clarity": 19,
+      "dash_clause": 43,
+      "fronted_adverbial": 34,
+      "hyphen": 29,
+      "list_commas": 121,
+      "parenthesis": 13,
+      "semicolon": 21,
+      "semicolon_list": 20,
+      "sentence_endings": 150,
+      "speech": 88
+    },
+    "minUniqueModes": 3,
+    "maxUniqueModes": 6
+  },
+  "risks": [
+    {
+      "severity": "high",
+      "code": "transfer_underrepresented",
+      "message": "Only 24 transfer/open-production items in a 3312-item pool."
+    }
+  ]
+}

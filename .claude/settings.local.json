@@ -4,7 +4,11 @@
       "Read(//Users/jamesto/.claude/**)",
       "Bash(rm -f /Users/jamesto/Coding/ks2-mastery/.git/worktrees/ui-p2-u3-progress-meter-stat-card/index.lock)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(mkdir -p /tmp/delete_batches)",
+      "Bash(rm -f /tmp/delete_batches/*)",
+      "Bash(split -l 50 /tmp/all_to_delete.txt /tmp/delete_batches/batch-)",
+      "Read(//tmp/**)"
     ]
   }
 }

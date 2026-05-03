@@ -1,0 +1,154 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "accountId": "demo-iZkje5FzZo0muQ",
+  "learnerId": "learner-demo-yyzQTAqBqXoNQw",
+  "attestation": {
+    "environment": "production",
+    "releasePhase": "punctuation-qg-p13-live-serving",
+    "releaseId": "punctuation-qg-p12-3000-2026-05-02",
+    "runtimeItemCount": 3312,
+    "generatedDepth": 100,
+    "workerCommitSha": "1c8ac551d3991008deba455a3a9a74c1d6c9c2f2",
+    "workerVersionId": "fdba25ce-4865-4648-b162-3c75d84b9de3",
+    "deploymentId": null,
+    "timestamp": "2026-05-02T22:52:59.721Z",
+    "authenticatedCoverage": true,
+    "adminHubCoverage": true
+  },
+  "punctuation": {
+    "productionObserved": {
+      "releaseId": "punctuation-qg-p12-3000-2026-05-02",
+      "runtimeItems": 3312,
+      "publishedRewardUnits": 14
+    },
+    "localReleaseManifestExpectation": {
+      "fixedItems": 512,
+      "generatedItems": 2800,
+      "generatedPerFamily": 100,
+      "runtimeItems": 3312,
+      "publishedRewardUnits": 14
+    },
+    "smartSix": {
+      "revision": 13,
+      "observedRuntimeStats": {
+        "releaseId": "punctuation-qg-p12-3000-2026-05-02",
+        "runtimeItems": 3312,
+        "publishedRewardUnits": 14
+      },
+      "summaryTotal": 6,
+      "uniqueItems": 6,
+      "immediateRepeats": 0,
+      "generatedSeen": 3,
+      "fixedSeen": 3,
+      "modes": [
+        "choose",
+        "combine",
+        "fix",
+        "insert",
+        "paragraph",
+        "transfer"
+      ],
+      "skillIds": [
+        "apostrophe_contractions",
+        "apostrophe_possession",
+        "comma_clarity",
+        "list_commas",
+        "sentence_endings"
+      ],
+      "items": [
+        {
+          "itemId": "fx_lc_choose_art_table",
+          "source": "fixed",
+          "mode": "choose",
+          "skillIds": [
+            "list_commas"
+          ]
+        },
+        {
+          "itemId": "gen_sentence_endings_insert_2a13df_4",
+          "source": "generated",
+          "mode": "insert",
+          "skillIds": [
+            "sentence_endings"
+          ]
+        },
+        {
+          "itemId": "cc_fix_when_rain_stopped",
+          "source": "fixed",
+          "mode": "fix",
+          "skillIds": [
+            "comma_clarity"
+          ]
+        },
+        {
+          "itemId": "ac_transfer_dont_theyre",
+          "source": "fixed",
+          "mode": "transfer",
+          "skillIds": [
+            "apostrophe_contractions"
+          ]
+        },
+        {
+          "itemId": "gen_list_commas_combine_18t19w8_10",
+          "source": "generated",
+          "mode": "combine",
+          "skillIds": [
+            "list_commas"
+          ]
+        },
+        {
+          "itemId": "gen_apostrophe_mix_paragraph_fyc7bh_9",
+          "source": "generated",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ]
+        }
+      ]
+    },
+    "parentHubEvidence": {
+      "hasEvidence": true,
+      "attempts": 6,
+      "accuracyPercent": 100,
+      "progressSnapshotsHasPunctuation": true,
+      "redactionChecks": {
+        "punctuationEvidence": true,
+        "progressSnapshots": true,
+        "misconceptionPatterns": true
+      },
+      "sessionModes": [
+        "smart"
+      ]
+    }
+  },
+  "spelling": {
+    "progressTotal": 1,
+    "hasPromptToken": true,
+    "redactionChecks": {
+      "rawWordHidden": true,
+      "rawSentenceHidden": true,
+      "promptTokenReturned": true
+    }
+  },
+  "adminHubEvidence": {
+    "hasEvidence": true,
+    "source": "reports/admin-smoke/latest.json",
+    "smokeType": "admin",
+    "finishedAt": "2026-05-02T22:52:45.995Z",
+    "commit": "unknown",
+    "stepCount": 19,
+    "requiredSteps": [
+      "admin-hub",
+      "debug-bundle",
+      "account-detail",
+      "content-overview"
+    ],
+    "redactionChecks": {
+      "learnerSupport": true,
+      "punctuationEvidence": true,
+      "releaseDiagnostics": true
+    }
+  }
+}
