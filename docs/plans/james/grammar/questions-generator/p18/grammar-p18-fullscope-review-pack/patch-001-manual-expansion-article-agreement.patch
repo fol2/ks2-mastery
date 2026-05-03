@@ -1,0 +1,15 @@
+diff --git a/scripts/generate-grammar-manual-expansion.mjs b/scripts/generate-grammar-manual-expansion.mjs
+--- a/scripts/generate-grammar-manual-expansion.mjs
++++ b/scripts/generate-grammar-manual-expansion.mjs
+@@
+-function cleanText(value) {
+-  return String(value ?? '').replace(/\s+/g, ' ').trim();
+-}
++function normaliseGrammarArticles(value) {
++  return String(value ?? '')
++    .replace(/\ba (adverb|adjective|exclamation)\b/gi, (_match, word) => `an ${word}`);
++}
++
++function cleanText(value) {
++  return normaliseGrammarArticles(value).replace(/\s+/g, ' ').trim();
++}

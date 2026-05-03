@@ -1,0 +1,608 @@
+{
+  "source": "ZIP local review of ks2-mastery-lean-05030023.zip",
+  "releaseId": "grammar-qg-p18-2026-05-02",
+  "denominator": {
+    "templates": 510,
+    "concepts": 18,
+    "renderItems": 15300,
+    "uniqueSurfaces": 7293,
+    "uniquePromptTexts": 5795,
+    "selectedResponse": 317,
+    "constructedResponse": 193,
+    "explainTemplates": 126,
+    "mixedTransferTemplates": 26
+  },
+  "auditSummary": {
+    "contentQualityHardFailures": 0,
+    "contentQualityAdvisories": 188,
+    "semanticPromptCuePassed": true,
+    "semanticPromptCueFindings": 0,
+    "distractorS0": 0,
+    "distractorS1": 0,
+    "distractorSurfaceCueCount": 761,
+    "markingMatrixEntries": 945,
+    "qualityApproved": 506,
+    "qualityApprovedWithLimitation": 4,
+    "qualityBlocked": 0
+  },
+  "findings": {
+    "articleAgreement": {
+      "article_a_adverb": {
+        "items_all_fields": 64,
+        "items_prompt_only": 27,
+        "template_count": 9,
+        "templates": [
+          "qg_p18_p15_word_classes_explain_word_class",
+          "qg_p18_p15_word_classes_target_word_class",
+          "qg_p18_p15_word_classes_underline_word_class",
+          "qg_p18_p16_word_classes_build_word_class_sentence",
+          "qg_p18_p16_word_classes_distractor_reason_choice",
+          "qg_p18_p16_word_classes_role_in_context_choice",
+          "qg_p18_p16_word_classes_same_word_different_job",
+          "qg_p18_p18_word_classes_application_transfer",
+          "qg_p18_p18_word_classes_explain_reasoning"
+        ],
+        "examples": [
+          {
+            "templateId": "qg_p18_p15_word_classes_explain_word_class",
+            "seed": 1,
+            "promptText": "Why is \"carefully\" a adverb in this sentence? On Tuesday, Aisha carefully folded the blue scarf."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_explain_word_class",
+            "seed": 10,
+            "promptText": "Why is \"Soon\" a adverb in this sentence? Soon, the bus will arrive at the station."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_explain_word_class",
+            "seed": 13,
+            "promptText": "Why is \"carefully\" a adverb in this sentence? On Tuesday, Aisha carefully folded the blue scarf."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_explain_word_class",
+            "seed": 22,
+            "promptText": "Why is \"Soon\" a adverb in this sentence? Soon, the bus will arrive at the station."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_explain_word_class",
+            "seed": 25,
+            "promptText": "Why is \"carefully\" a adverb in this sentence? On Tuesday, Aisha carefully folded the blue scarf."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_target_word_class",
+            "seed": 1,
+            "promptText": "In the sentence below, what word class is \"carefully\"? On Tuesday, Aisha carefully folded the blue scarf."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_target_word_class",
+            "seed": 10,
+            "promptText": "In the sentence below, what word class is \"Soon\"? Soon, the bus will arrive at the station."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_target_word_class",
+            "seed": 13,
+            "promptText": "In the sentence below, what word class is \"carefully\"? On Tuesday, Aisha carefully folded the blue scarf."
+          }
+        ]
+      },
+      "article_a_adjective": {
+        "items_all_fields": 54,
+        "items_prompt_only": 18,
+        "template_count": 10,
+        "templates": [
+          "qg_p18_p15_word_classes_explain_word_class",
+          "qg_p18_p15_word_classes_target_word_class",
+          "qg_p18_p15_word_classes_underline_word_class",
+          "qg_p18_p16_word_classes_build_word_class_sentence",
+          "qg_p18_p16_word_classes_distractor_reason_choice",
+          "qg_p18_p16_word_classes_role_in_context_choice",
+          "qg_p18_p16_word_classes_same_word_different_job",
+          "qg_p18_p18_word_classes_application_transfer",
+          "qg_p18_p18_word_classes_explain_reasoning",
+          "word_class_underlined_choice"
+        ],
+        "examples": [
+          {
+            "templateId": "word_class_underlined_choice",
+            "seed": 8,
+            "promptText": "Which word class is the underlined word in the sentence below? The silver trophy gleamed on the shelf."
+          },
+          {
+            "templateId": "word_class_underlined_choice",
+            "seed": 18,
+            "promptText": "Which word class is the underlined word in the sentence below? The silver trophy gleamed on the shelf."
+          },
+          {
+            "templateId": "word_class_underlined_choice",
+            "seed": 28,
+            "promptText": "Which word class is the underlined word in the sentence below? The silver trophy gleamed on the shelf."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_explain_word_class",
+            "seed": 7,
+            "promptText": "Why is \"exhausted\" a adjective in this sentence? The exhausted runner crossed the line."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_explain_word_class",
+            "seed": 19,
+            "promptText": "Why is \"exhausted\" a adjective in this sentence? The exhausted runner crossed the line."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_target_word_class",
+            "seed": 7,
+            "promptText": "In the sentence below, what word class is \"exhausted\"? The exhausted runner crossed the line."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_target_word_class",
+            "seed": 19,
+            "promptText": "In the sentence below, what word class is \"exhausted\"? The exhausted runner crossed the line."
+          },
+          {
+            "templateId": "qg_p18_p15_word_classes_underline_word_class",
+            "seed": 7,
+            "promptText": "Which word class is the underlined word? Target word: exhausted. Sentence: The exhausted runner crossed the line."
+          }
+        ]
+      },
+      "article_a_exclamation": {
+        "items_all_fields": 73,
+        "items_prompt_only": 23,
+        "template_count": 9,
+        "templates": [
+          "qg_p18_p15_sentence_functions_explain_function",
+          "qg_p18_p15_sentence_functions_identify_function",
+          "qg_p18_p15_sentence_functions_punctuate_by_function",
+          "qg_p18_p16_sentence_functions_choose_matching_function_for_context",
+          "qg_p18_p16_sentence_functions_direct_indirect_question_contrast",
+          "qg_p18_p16_sentence_functions_exclamation_not_excited_statement",
+          "qg_p18_p16_sentence_functions_repair_wrong_function_punctuation",
+          "qg_p18_p18_sentence_functions_application_transfer",
+          "qg_p18_p18_sentence_functions_explain_reasoning"
+        ],
+        "examples": [
+          {
+            "templateId": "qg_p18_p15_sentence_functions_explain_function",
+            "seed": 2,
+            "promptText": "Why is this sentence a exclamation? How bright the comet looked!"
+          },
+          {
+            "templateId": "qg_p18_p15_sentence_functions_explain_function",
+            "seed": 6,
+            "promptText": "Why is this sentence a exclamation? What a brave rescue that was!"
+          },
+          {
+            "templateId": "qg_p18_p15_sentence_functions_explain_function",
+            "seed": 10,
+            "promptText": "Why is this sentence a exclamation? How quickly the storm arrived!"
+          },
+          {
+            "templateId": "qg_p18_p15_sentence_functions_explain_function",
+            "seed": 14,
+            "promptText": "Why is this sentence a exclamation? How bright the comet looked!"
+          },
+          {
+            "templateId": "qg_p18_p15_sentence_functions_explain_function",
+            "seed": 18,
+            "promptText": "Why is this sentence a exclamation? What a brave rescue that was!"
+          },
+          {
+            "templateId": "qg_p18_p15_sentence_functions_explain_function",
+            "seed": 22,
+            "promptText": "Why is this sentence a exclamation? How quickly the storm arrived!"
+          },
+          {
+            "templateId": "qg_p18_p15_sentence_functions_explain_function",
+            "seed": 26,
+            "promptText": "Why is this sentence a exclamation? How bright the comet looked!"
+          },
+          {
+            "templateId": "qg_p18_p15_sentence_functions_explain_function",
+            "seed": 30,
+            "promptText": "Why is this sentence a exclamation? What a brave rescue that was!"
+          }
+        ]
+      }
+    },
+    "exactScoredOpenResponse": {
+      "itemCount": 2730,
+      "templateCount": 91,
+      "templates": [
+        "qg_p14_fronted_adverbials_constructed_rewrite",
+        "qg_p14_parenthesis_commas_constructed_rewrite",
+        "qg_p14_speech_punctuation_constructed_rewrite",
+        "qg_p18_p15_sentence_functions_punctuate_by_function",
+        "qg_p18_p16_active_passive_agent_object_explain",
+        "qg_p18_p16_adverbials_explain_fronted_comma",
+        "qg_p18_p16_adverbials_fronted_comma_fix",
+        "qg_p18_p16_apostrophes_possession_explain_position",
+        "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+        "qg_p18_p16_boundary_punctuation_explain_colon_semicolon_dash",
+        "qg_p18_p16_clauses_explain_subordination",
+        "qg_p18_p16_clauses_join_with_given_conjunction",
+        "qg_p18_p16_formality_explain_formality_effect",
+        "qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning",
+        "qg_p18_p16_modal_verbs_modal_context_explain",
+        "qg_p18_p16_noun_phrases_build_with_given_head",
+        "qg_p18_p16_noun_phrases_explain_expansion",
+        "qg_p18_p16_parenthesis_commas_explain_parenthesis",
+        "qg_p18_p16_pronouns_cohesion_explain_cohesion",
+        "qg_p18_p16_relative_clauses_explain_relative_clause",
+        "qg_p18_p16_sentence_functions_explain_function_reasoning",
+        "qg_p18_p16_speech_punctuation_explain_speech_rule",
+        "qg_p18_p16_standard_english_explain_standard_choice",
+        "qg_p18_p16_subject_object_explain_roles",
+        "qg_p18_p16_tense_aspect_form_explanation",
+        "qg_p18_p16_word_classes_build_word_class_sentence",
+        "qg_p18_p16_word_classes_same_word_different_job",
+        "qg_p18_p17_active_passive_transfer_apply",
+        "qg_p18_p17_active_passive_written_reason",
+        "qg_p18_p17_adverbials_transfer_apply",
+        "qg_p18_p17_adverbials_written_reason",
+        "qg_p18_p17_apostrophes_possession_transfer_apply",
+        "qg_p18_p17_apostrophes_possession_written_reason",
+        "qg_p18_p17_boundary_punctuation_transfer_apply",
+        "qg_p18_p17_boundary_punctuation_written_reason",
+        "qg_p18_p17_clauses_transfer_apply",
+        "qg_p18_p17_clauses_written_reason",
+        "qg_p18_p17_formality_transfer_apply",
+        "qg_p18_p17_formality_written_reason",
+        "qg_p18_p17_hyphen_ambiguity_transfer_apply",
+        "qg_p18_p17_hyphen_ambiguity_written_reason",
+        "qg_p18_p17_modal_verbs_transfer_apply",
+        "qg_p18_p17_modal_verbs_written_reason",
+        "qg_p18_p17_noun_phrases_transfer_apply",
+        "qg_p18_p17_noun_phrases_written_reason",
+        "qg_p18_p17_parenthesis_commas_transfer_apply",
+        "qg_p18_p17_parenthesis_commas_written_reason",
+        "qg_p18_p17_pronouns_cohesion_transfer_apply",
+        "qg_p18_p17_pronouns_cohesion_written_reason",
+        "qg_p18_p17_relative_clauses_transfer_apply",
+        "qg_p18_p17_relative_clauses_written_reason",
+        "qg_p18_p17_sentence_functions_transfer_apply",
+        "qg_p18_p17_sentence_functions_written_reason",
+        "qg_p18_p17_speech_punctuation_transfer_apply",
+        "qg_p18_p17_speech_punctuation_written_reason",
+        "qg_p18_p17_standard_english_transfer_apply",
+        "qg_p18_p17_standard_english_written_reason",
+        "qg_p18_p17_subject_object_transfer_apply",
+        "qg_p18_p17_subject_object_written_reason",
+        "qg_p18_p17_tense_aspect_transfer_apply",
+        "qg_p18_p17_tense_aspect_written_reason",
+        "qg_p18_p17_word_classes_transfer_apply",
+        "qg_p18_p17_word_classes_written_reason",
+        "qg_p18_p18_active_passive_application_transfer",
+        "qg_p18_p18_active_passive_subject_object_voice_subject_object_roles",
+        "qg_p18_p18_adverbials_application_transfer",
+        "qg_p18_p18_adverbials_clauses_adverbial_clause_join",
+        "qg_p18_p18_apostrophes_possession_application_transfer",
+        "qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision",
+        "qg_p18_p18_boundary_punctuation_application_transfer",
+        "qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation",
+        "qg_p18_p18_clauses_application_transfer",
+        "qg_p18_p18_formality_application_transfer",
+        "qg_p18_p18_hyphen_ambiguity_application_transfer",
+        "qg_p18_p18_modal_verbs_application_transfer",
+        "qg_p18_p18_modal_verbs_formality_modal_formality_strength",
+        "qg_p18_p18_noun_phrases_application_transfer",
+        "qg_p18_p18_parenthesis_commas_application_transfer",
+        "qg_p18_p18_pronouns_cohesion_application_transfer",
+        "qg_p18_p18_pronouns_cohesion_formality_cohesion_formality_choice",
+        "qg_p18_p18_relative_clauses_application_transfer",
+        "qg_p18_p18_relative_clauses_parenthesis_commas_relative_parenthesis_punctuation",
+        "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+        "qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary",
+        "qg_p18_p18_speech_punctuation_application_transfer",
+        "qg_p18_p18_standard_english_application_transfer",
+        "qg_p18_p18_subject_object_application_transfer",
+        "qg_p18_p18_tense_aspect_application_transfer",
+        "qg_p18_p18_tense_aspect_standard_english_tense_standard_register",
+        "qg_p18_p18_word_classes_application_transfer",
+        "qg_p18_p18_word_classes_noun_phrases_word_class_np_roles"
+      ],
+      "examples": [
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 1,
+          "promptText": "Add the missing comma after the fronted adverbial: Before the final bell Eli carried the history poster carefully.",
+          "golden": [
+            "Before the final bell, Eli carried the history poster carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 2,
+          "promptText": "Add the missing comma after the fronted adverbial: During the storm Freya carried the blue lantern carefully.",
+          "golden": [
+            "During the storm, Freya carried the blue lantern carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 3,
+          "promptText": "Add the missing comma after the fronted adverbial: At the edge of the field Grace carried the recipe card carefully.",
+          "golden": [
+            "At the edge of the field, Grace carried the recipe card carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 4,
+          "promptText": "Add the missing comma after the fronted adverbial: With careful steps Hassan carried the playground map carefully.",
+          "golden": [
+            "With careful steps, Hassan carried the playground map carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 5,
+          "promptText": "Add the missing comma after the fronted adverbial: Without any warning Imani carried the science folder carefully.",
+          "golden": [
+            "Without any warning, Imani carried the science folder carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 6,
+          "promptText": "Add the missing comma after the fronted adverbial: In the morning sunlight Jasper carried the red kite carefully.",
+          "golden": [
+            "In the morning sunlight, Jasper carried the red kite carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 7,
+          "promptText": "Add the missing comma after the fronted adverbial: Beside the display board Keira carried the clay model carefully.",
+          "golden": [
+            "Beside the display board, Keira carried the clay model carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 8,
+          "promptText": "Add the missing comma after the fronted adverbial: After checking the list Luca carried the library pass carefully.",
+          "golden": [
+            "After checking the list, Luca carried the library pass carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 9,
+          "promptText": "Add the missing comma after the fronted adverbial: During the museum visit Maya carried the class trophy carefully.",
+          "golden": [
+            "During the museum visit, Maya carried the class trophy carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 10,
+          "promptText": "Add the missing comma after the fronted adverbial: At the end of practice Nina carried the sports bib carefully.",
+          "golden": [
+            "At the end of practice, Nina carried the sports bib carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 11,
+          "promptText": "Add the missing comma after the fronted adverbial: With a steady hand Omar carried the history poster carefully.",
+          "golden": [
+            "With a steady hand, Omar carried the history poster carefully."
+          ]
+        },
+        {
+          "templateId": "qg_p14_fronted_adverbials_constructed_rewrite",
+          "seed": 12,
+          "promptText": "Add the missing comma after the fronted adverbial: After the whistle Priya carried the blue lantern carefully.",
+          "golden": [
+            "After the whistle, Priya carried the blue lantern carefully."
+          ]
+        }
+      ]
+    },
+    "genericTransferExactScored": {
+      "itemCount": 540,
+      "templateCount": 18,
+      "templates": [
+        "qg_p18_p17_active_passive_transfer_apply",
+        "qg_p18_p17_adverbials_transfer_apply",
+        "qg_p18_p17_apostrophes_possession_transfer_apply",
+        "qg_p18_p17_boundary_punctuation_transfer_apply",
+        "qg_p18_p17_clauses_transfer_apply",
+        "qg_p18_p17_formality_transfer_apply",
+        "qg_p18_p17_hyphen_ambiguity_transfer_apply",
+        "qg_p18_p17_modal_verbs_transfer_apply",
+        "qg_p18_p17_noun_phrases_transfer_apply",
+        "qg_p18_p17_parenthesis_commas_transfer_apply",
+        "qg_p18_p17_pronouns_cohesion_transfer_apply",
+        "qg_p18_p17_relative_clauses_transfer_apply",
+        "qg_p18_p17_sentence_functions_transfer_apply",
+        "qg_p18_p17_speech_punctuation_transfer_apply",
+        "qg_p18_p17_standard_english_transfer_apply",
+        "qg_p18_p17_subject_object_transfer_apply",
+        "qg_p18_p17_tense_aspect_transfer_apply",
+        "qg_p18_p17_word_classes_transfer_apply"
+      ],
+      "examples": [
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 1,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: The chef baked the bread.",
+          "golden": [
+            "Answer: The bread was baked by the chef.. New example should show the same rule."
+          ]
+        },
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 2,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: The council maintains the park.",
+          "golden": [
+            "Answer: The park is maintained by the council.. New example should show the same rule."
+          ]
+        },
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 3,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: The team will collect the trophy.",
+          "golden": [
+            "Answer: The trophy will be collected by the team.. New example should show the same rule."
+          ]
+        },
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 4,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: Sam opened the gate.",
+          "golden": [
+            "Answer: The gate was opened by Sam.. New example should show the same rule."
+          ]
+        },
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 5,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: The storm damaged the roof.",
+          "golden": [
+            "Answer: The roof was damaged by the storm.. New example should show the same rule."
+          ]
+        },
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 6,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: The artist painted the mural.",
+          "golden": [
+            "Answer: The mural was painted by the artist.. New example should show the same rule."
+          ]
+        },
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 7,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: The mechanic repaired the van.",
+          "golden": [
+            "Answer: The van was repaired by the mechanic.. New example should show the same rule."
+          ]
+        },
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 8,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: The class planted the tree.",
+          "golden": [
+            "Answer: The tree was planted by the class.. New example should show the same rule."
+          ]
+        },
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 9,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: The guard locked the door.",
+          "golden": [
+            "Answer: The door was locked by the guard.. New example should show the same rule."
+          ]
+        },
+        {
+          "templateId": "qg_p18_p17_active_passive_transfer_apply",
+          "seed": 10,
+          "promptText": "Transfer task: solve this active passive item, then write a new sentence or phrase that shows the same rule. Item: The wind blew the tent over.",
+          "golden": [
+            "Answer: The tent was blown over by the wind.. New example should show the same rule."
+          ]
+        }
+      ]
+    },
+    "pronounCohesionContradiction": {
+      "itemCount": 9,
+      "templateCount": 3,
+      "examples": [
+        {
+          "templateId": "qg_p18_p18_pronouns_cohesion_application_transfer",
+          "seed": 1,
+          "promptText": "Explain why this version is unclear: Amira picked up the map. It folded she carefully.",
+          "solutionLines": [
+            "The pronouns clearly refer back to Amira and the map.",
+            "One accepted answer is: The pronouns clearly refer back to Amira and the map.",
+            "Source case: grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:01"
+          ]
+        },
+        {
+          "templateId": "qg_p18_p18_pronouns_cohesion_application_transfer",
+          "seed": 13,
+          "promptText": "Explain why this version is unclear: Amira picked up the map. It folded she carefully.",
+          "solutionLines": [
+            "The pronouns clearly refer back to Amira and the map.",
+            "One accepted answer is: The pronouns clearly refer back to Amira and the map.",
+            "Source case: grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:01"
+          ]
+        },
+        {
+          "templateId": "qg_p18_p18_pronouns_cohesion_application_transfer",
+          "seed": 25,
+          "promptText": "Explain why this version is unclear: Amira picked up the map. It folded she carefully.",
+          "solutionLines": [
+            "The pronouns clearly refer back to Amira and the map.",
+            "One accepted answer is: The pronouns clearly refer back to Amira and the map.",
+            "Source case: grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:01"
+          ]
+        },
+        {
+          "templateId": "qg_p18_p18_pronouns_cohesion_formality_cohesion_formality_choice",
+          "seed": 1,
+          "promptText": "Mixed check: choose the clearer pronoun sentence and the more formal version. Pronoun pair: Amira picked up the map. She folded it carefully. / Amira picked up the map. It folded she carefully. Formality pair: The club got set up last year. / The club was established last year.",
+          "solutionLines": [
+            "The pronouns clearly refer back to Amira and the map. Established is more formal than got set up.",
+            "One accepted answer is: Amira picked up the map. She folded it carefully.; The club was established last year.",
+            "Source case: grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion+formality:cohesion_formality_choice:01"
+          ]
+        },
+        {
+          "templateId": "qg_p18_p18_pronouns_cohesion_formality_cohesion_formality_choice",
+          "seed": 13,
+          "promptText": "Mixed check: choose the clearer pronoun sentence and the more formal version. Pronoun pair: Amira picked up the map. She folded it carefully. / Amira picked up the map. It folded she carefully. Formality pair: The club got set up last year. / The club was established last year.",
+          "solutionLines": [
+            "The pronouns clearly refer back to Amira and the map. Established is more formal than got set up.",
+            "One accepted answer is: Amira picked up the map. She folded it carefully.; The club was established last year.",
+            "Source case: grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion+formality:cohesion_formality_choice:01"
+          ]
+        },
+        {
+          "templateId": "qg_p18_p18_pronouns_cohesion_formality_cohesion_formality_choice",
+          "seed": 25,
+          "promptText": "Mixed check: choose the clearer pronoun sentence and the more formal version. Pronoun pair: Amira picked up the map. She folded it carefully. / Amira picked up the map. It folded she carefully. Formality pair: The club got set up last year. / The club was established last year.",
+          "solutionLines": [
+            "The pronouns clearly refer back to Amira and the map. Established is more formal than got set up.",
+            "One accepted answer is: Amira picked up the map. She folded it carefully.; The club was established last year.",
+            "Source case: grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion+formality:cohesion_formality_choice:01"
+          ]
+        },
+        {
+          "templateId": "qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite",
+          "seed": 1,
+          "promptText": "Rewrite this so the pronouns are clear: Amira picked up the map. It folded she carefully.",
+          "solutionLines": [
+            "The pronouns clearly refer back to Amira and the map.",
+            "One accepted answer is: Amira picked up the map. She folded it carefully.",
+            "Source case: grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:precision_repair_or_rewrite:01"
+          ]
+        },
+        {
+          "templateId": "qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite",
+          "seed": 13,
+          "promptText": "Rewrite this so the pronouns are clear: Amira picked up the map. It folded she carefully.",
+          "solutionLines": [
+            "The pronouns clearly refer back to Amira and the map.",
+            "One accepted answer is: Amira picked up the map. She folded it carefully.",
+            "Source case: grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:precision_repair_or_rewrite:01"
+          ]
+        },
+        {
+          "templateId": "qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite",
+          "seed": 25,
+          "promptText": "Rewrite this so the pronouns are clear: Amira picked up the map. It folded she carefully.",
+          "solutionLines": [
+            "The pronouns clearly refer back to Amira and the map.",
+            "One accepted answer is: Amira picked up the map. She folded it carefully.",
+            "Source case: grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:precision_repair_or_rewrite:01"
+          ]
+        }
+      ]
+    },
+    "lowDiversityTemplates": {
+      "count": 0,
+      "templates": []
+    }
+  }
+}

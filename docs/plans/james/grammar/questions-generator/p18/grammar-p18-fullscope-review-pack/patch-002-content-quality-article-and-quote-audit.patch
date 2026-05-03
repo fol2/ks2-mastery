@@ -1,0 +1,27 @@
+diff --git a/scripts/audit-grammar-content-quality.mjs b/scripts/audit-grammar-content-quality.mjs
+--- a/scripts/audit-grammar-content-quality.mjs
++++ b/scripts/audit-grammar-content-quality.mjs
+@@
+-      // --- ADVISORY 6: Reversed curly quotes ---
++      // --- HARD FAIL 9: Child-visible article agreement ---
++      const articleAgreementText = `${question.stemHtml || ''} ${(question.solutionLines || []).join(' ')} ${JSON.stringify(question.inputSpec || {})} ${JSON.stringify(question.answerSpec || {})}`;
++      const badArticleMatch = articleAgreementText.match(/\ba\s+(adverb|adjective|exclamation)\b/i);
++      if (badArticleMatch) {
++        hardFailures.push({
++          rule: 'article-agreement',
++          templateId: template.id,
++          seed,
++          detail: `Use "an ${badArticleMatch[1].toLowerCase()}" rather than "a ${badArticleMatch[1].toLowerCase()}"`,
++        });
++      }
++
++      // --- ADVISORY 6: Reversed curly quotes ---
+       const allText = `${question.stemHtml || ''} ${(question.solutionLines || []).join(' ')}`;
+-      if (/’\w/.test(allText) && !/‘/.test(allText)) {
+-        // Closing single quote used at word start without any opening quote present
++      // Only flag a closing quote used at the START of a word. Do not flag
++      // normal possessive apostrophes such as dog’s or girls’.
++      if (/(^|[\s([{"“])’[A-Za-z]/.test(allText) && !/‘/.test(allText)) {
+         advisories.push({
+           rule: 'reversed-curly-quote',
+           templateId: template.id,

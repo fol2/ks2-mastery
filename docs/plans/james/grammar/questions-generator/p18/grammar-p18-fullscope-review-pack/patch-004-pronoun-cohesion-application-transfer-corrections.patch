@@ -1,0 +1,65 @@
+diff --git a/scripts/generate-grammar-manual-expansion.mjs b/scripts/generate-grammar-manual-expansion.mjs
+--- a/scripts/generate-grammar-manual-expansion.mjs
++++ b/scripts/generate-grammar-manual-expansion.mjs
+@@
+ const SOURCE_CASE_CORRECTIONS = Object.freeze({
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:01': {
++    correctAnswer: 'It is unclear because the pronouns do not point to sensible nouns: a map cannot fold a person.',
++    expectedAnswerSummary: 'It is unclear because the pronouns do not point to sensible nouns: a map cannot fold a person.',
++    feedbackLong: 'The pronouns are unclear because “it” appears to refer to the map, but a map cannot fold “she”. The sentence needs clearer nouns or correct pronouns.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:02': {
++    correctAnswer: 'It is unclear because he and him could refer to Ben or Lucas.',
++    expectedAnswerSummary: 'It is unclear because he and him could refer to Ben or Lucas.',
++    feedbackLong: 'The pronouns are ambiguous: “he” and “him” could refer to either Ben or Lucas, so the sentence should repeat a noun or use clearer wording.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:03': {
++    correctAnswer: 'It is unclear because it could refer to the dog or the ball, but only the dog can bark.',
++    expectedAnswerSummary: 'It is unclear because it could refer to the dog or the ball, but only the dog can bark.',
++    feedbackLong: 'The pronoun “it” is unclear because it could point to the dog or the ball. The action “barked” shows the dog is meant.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:04': {
++    correctAnswer: 'It is unclear because she and hers could refer to Maya or Priya.',
++    expectedAnswerSummary: 'It is unclear because she and hers could refer to Maya or Priya.',
++    feedbackLong: 'The pronouns are ambiguous because both Maya and Priya are possible referents. Repeating the intended name would make the meaning clear.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:05': {
++    correctAnswer: 'It is unclear because a museum cannot welcome the class; a person such as a guide probably did.',
++    expectedAnswerSummary: 'It is unclear because a museum cannot welcome the class; a person such as a guide probably did.',
++    feedbackLong: 'The pronoun “it” points to the museum, but the action “welcomed” probably belongs to a guide or member of staff. The noun should be clearer.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:06': {
++    correctAnswer: 'It is unclear because the plate or cake cannot carry Tom.',
++    expectedAnswerSummary: 'It is unclear because the plate or cake cannot carry Tom.',
++    feedbackLong: 'The pronoun “it” creates a nonsense role: the plate or cake appears to carry Tom. Clearer nouns or corrected pronouns are needed.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:07': {
++    correctAnswer: 'It is unclear because the key cannot give Sara to the teacher.',
++    expectedAnswerSummary: 'It is unclear because the key cannot give Sara to the teacher.',
++    feedbackLong: 'The pronouns swap the roles. Sara can give the key to the teacher, but the key cannot give Sara.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:08': {
++    correctAnswer: 'It is unclear because the object pronoun should be them, not they.',
++    expectedAnswerSummary: 'It is unclear because the object pronoun should be them, not they.',
++    feedbackLong: 'The sentence needs the object pronoun “them”: “They left them by the door.” Using “they” there is non-standard and unclear.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:09': {
++    correctAnswer: 'It is unclear because the bike appears to test Omar, but Omar is the person doing the testing.',
++    expectedAnswerSummary: 'It is unclear because the bike appears to test Omar, but Omar is the person doing the testing.',
++    feedbackLong: 'The pronoun “it” makes the bike seem to do the testing. The sentence should make Omar the doer and the bike the thing tested.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:10': {
++    correctAnswer: 'It is unclear because the feeder appears to perch, but birds perch.',
++    expectedAnswerSummary: 'It is unclear because the feeder appears to perch, but birds perch.',
++    feedbackLong: 'The pronoun “it” points to the feeder, but the action “perched” should refer to the birds. The noun reference is unclear.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:11': {
++    correctAnswer: 'It is unclear because the cabinet appears to lock Nina, not the trophy or cabinet.',
++    expectedAnswerSummary: 'It is unclear because the cabinet appears to lock Nina, not the trophy or cabinet.',
++    feedbackLong: 'The pronoun “it” makes the role unclear. The sentence should say who locked the cabinet or what was locked.',
++  },
++  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:12': {
++    correctAnswer: 'It is unclear because the cups appear to dry Dad, but Dad dried the cups.',
++    expectedAnswerSummary: 'It is unclear because the cups appear to dry Dad, but Dad dried the cups.',
++    feedbackLong: 'The pronoun “they” points to the cups, but the action makes the roles backwards. Dad should be the doer and the cups the object.',
++  },
