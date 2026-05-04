@@ -2,8 +2,8 @@
 /**
  * Grammar QG P19 — Contract D smart-practice simulator.
  *
- * Replays buildGrammarPracticeQueue across 8 learner profiles × 30 seeds
- * (>= 200 sessions) and asserts that a normal 5-question smart round does
+ * Replays buildGrammarPracticeQueue across 11 learner profiles × 30 seeds
+ * (330 sessions) and asserts that a normal 5-question smart round does
  * not contain duplicate template IDs or duplicate learner-visible surfaces
  * when the active template pool can avoid it. Reports concept / question-
  * type / constructed-selected / support-surface / repeated-surface metrics.
