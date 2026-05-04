@@ -35,6 +35,22 @@ import { semicolonCombineDsl } from './dsl-families/semicolon-combine.js';
 import { colonSemicolonParagraphDsl } from './dsl-families/colon-semicolon-paragraph.js';
 import { bulletPointsFixDsl } from './dsl-families/bullet-points-fix.js';
 import { bulletPointsParagraphDsl } from './dsl-families/bullet-points-paragraph.js';
+import {
+  sentenceEndingsTransferDsl,
+  listCommasTransferDsl,
+  apostropheContractionsTransferDsl,
+  apostrophePossessionTransferDsl,
+  speechTransferDsl,
+  frontedAdverbialTransferDsl,
+  parenthesisTransferDsl,
+  commaClarityTransferDsl,
+  colonListTransferDsl,
+  semicolonTransferDsl,
+  dashClauseTransferDsl,
+  semicolonListTransferDsl,
+  bulletPointsTransferDsl,
+  hyphenTransferDsl,
+} from './dsl-families/transfer-bank.js';
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -167,6 +183,59 @@ function withManualExpansion(familyId, templates) {
     ...templates,
     ...manualExpansionTemplatesForFamily(familyId),
   ]);
+}
+
+
+const GENERATED_TEMPLATE_QUALITY_FIX_FAMILIES = new Set([
+  'gen_apostrophe_contractions_fix',
+  'gen_apostrophe_mix_paragraph',
+]);
+
+function sentenceCaseFirst(value) {
+  const text = String(value ?? '');
+  return text.replace(/^([\s"'“‘]*)([a-z])/, (_match, prefix, first) => `${prefix}${first.toUpperCase()}`);
+}
+
+function repairApostropheContractionGrammar(value) {
+  return String(value ?? '')
+    .replace(/\byouve ready to move\b/gi, 'youve moved')
+    .replace(/\byou've ready to move\b/gi, "you've moved")
+    .replace(/\bweve ready to move\b/gi, 'weve moved')
+    .replace(/\bwe've ready to move\b/gi, "we've moved")
+    .replace(/\btheyll ready to move\b/gi, 'theyll move')
+    .replace(/\bthey'll ready to move\b/gi, "they'll move")
+    .replace(/\bwell ready to move\b/gi, 'well move')
+    .replace(/\bwe'll ready to move\b/gi, "we'll move")
+    .replace(/\bit isnt move\b/gi, 'it isnt safe to move')
+    .replace(/\bit isn't move\b/gi, "it isn't safe to move")
+    .replace(/\bwe arent move\b/gi, 'we arent ready to move')
+    .replace(/\bwe aren't move\b/gi, "we aren't ready to move")
+    .replace(/\bit isnt forget\b/gi, 'it isnt safe to forget')
+    .replace(/\bit isn't forget\b/gi, "it isn't safe to forget")
+    .replace(/\bwe arent forget\b/gi, 'we arent ready to forget')
+    .replace(/\bwe aren't forget\b/gi, "we aren't ready to forget");
+}
+
+function mapTemplateStrings(value, mapper) {
+  if (typeof value === 'string') return mapper(value);
+  if (Array.isArray(value)) return value.map((entry) => mapTemplateStrings(entry, mapper));
+  if (!isPlainObject(value)) return value;
+  return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, mapTemplateStrings(entry, mapper)]));
+}
+
+function qualityNormalisedGeneratedTemplate(familyId, template) {
+  if (!GENERATED_TEMPLATE_QUALITY_FIX_FAMILIES.has(familyId) || !isPlainObject(template)) return template;
+  const clone = { ...template };
+  const repair = (value) => repairApostropheContractionGrammar(value);
+  const repairSentence = (value) => sentenceCaseFirst(repair(value));
+
+  if (typeof clone.stem === 'string') clone.stem = repairSentence(clone.stem);
+  if (typeof clone.model === 'string') clone.model = repairSentence(clone.model);
+  if (Array.isArray(clone.accepted)) clone.accepted = clone.accepted.map(repairSentence);
+  if (Array.isArray(clone.options)) clone.options = clone.options.map(repairSentence);
+  if (isPlainObject(clone.tests)) clone.tests = mapTemplateStrings(clone.tests, repairSentence);
+  if (isPlainObject(clone.validator)) clone.validator = mapTemplateStrings(clone.validator, repair);
+  return clone;
 }
 
 function optionChoiceTemplate({
@@ -361,9 +430,19 @@ export const GENERATED_TEMPLATE_BANK = Object.freeze({
   gen_sentence_endings_choose: withManualExpansion('gen_sentence_endings_choose', sentenceEndingChooseTemplates()),
   gen_sentence_endings_insert: withManualExpansion('gen_sentence_endings_insert', expandDslTemplates(sentenceEndingsInsertDsl, { embedTemplateId: false })),
   gen_apostrophe_possession_choose: withManualExpansion('gen_apostrophe_possession_choose', apostrophePossessionChooseTemplates()),
-  gen_apostrophe_contractions_fix: withManualExpansion('gen_apostrophe_contractions_fix', expandDslTemplates(apostropheContractionsDsl, { embedTemplateId: false })),
+  gen_apostrophe_contractions_fix: Object.freeze(
+    withManualExpansion(
+      'gen_apostrophe_contractions_fix',
+      expandDslTemplates(apostropheContractionsDsl, { embedTemplateId: false }),
+    ).map((template) => qualityNormalisedGeneratedTemplate('gen_apostrophe_contractions_fix', template)),
+  ),
   gen_apostrophe_possession_insert: withManualExpansion('gen_apostrophe_possession_insert', expandDslTemplates(apostrophePossessionInsertDsl, { embedTemplateId: false })),
-  gen_apostrophe_mix_paragraph: withManualExpansion('gen_apostrophe_mix_paragraph', expandDslTemplates(apostropheMixParagraphDsl, { embedTemplateId: false })),
+  gen_apostrophe_mix_paragraph: Object.freeze(
+    withManualExpansion(
+      'gen_apostrophe_mix_paragraph',
+      expandDslTemplates(apostropheMixParagraphDsl, { embedTemplateId: false }),
+    ).map((template) => qualityNormalisedGeneratedTemplate('gen_apostrophe_mix_paragraph', template)),
+  ),
   gen_speech_insert: withManualExpansion('gen_speech_insert', expandDslTemplates(speechInsertDsl, { embedTemplateId: false })),
   gen_list_commas_choose: withManualExpansion('gen_list_commas_choose', listCommasChooseTemplates()),
   gen_list_commas_insert: withManualExpansion('gen_list_commas_insert', expandDslTemplates(listCommasInsertDsl, { embedTemplateId: false })),
@@ -386,37 +465,53 @@ export const GENERATED_TEMPLATE_BANK = Object.freeze({
   gen_semicolon_list_fix: withManualExpansion('gen_semicolon_list_fix', expandDslTemplates(semicolonListFixDsl, { embedTemplateId: false })),
   gen_bullet_points_fix: withManualExpansion('gen_bullet_points_fix', expandDslTemplates(bulletPointsFixDsl, { embedTemplateId: false })),
   gen_bullet_points_paragraph: withManualExpansion('gen_bullet_points_paragraph', expandDslTemplates(bulletPointsParagraphDsl, { embedTemplateId: false })),
+  // P14 Gate 4: 14 transfer-mode generator families (one per published skill).
+  gen_sentence_endings_transfer: expandDslTemplates(sentenceEndingsTransferDsl, { embedTemplateId: false }),
+  gen_list_commas_transfer: expandDslTemplates(listCommasTransferDsl, { embedTemplateId: false }),
+  gen_apostrophe_contractions_transfer: expandDslTemplates(apostropheContractionsTransferDsl, { embedTemplateId: false }),
+  gen_apostrophe_possession_transfer: expandDslTemplates(apostrophePossessionTransferDsl, { embedTemplateId: false }),
+  gen_speech_transfer: expandDslTemplates(speechTransferDsl, { embedTemplateId: false }),
+  gen_fronted_adverbial_transfer: expandDslTemplates(frontedAdverbialTransferDsl, { embedTemplateId: false }),
+  gen_parenthesis_transfer: expandDslTemplates(parenthesisTransferDsl, { embedTemplateId: false }),
+  gen_comma_clarity_transfer: expandDslTemplates(commaClarityTransferDsl, { embedTemplateId: false }),
+  gen_colon_list_transfer: expandDslTemplates(colonListTransferDsl, { embedTemplateId: false }),
+  gen_semicolon_transfer: expandDslTemplates(semicolonTransferDsl, { embedTemplateId: false }),
+  gen_dash_clause_transfer: expandDslTemplates(dashClauseTransferDsl, { embedTemplateId: false }),
+  gen_semicolon_list_transfer: expandDslTemplates(semicolonListTransferDsl, { embedTemplateId: false }),
+  gen_bullet_points_transfer: expandDslTemplates(bulletPointsTransferDsl, { embedTemplateId: false }),
+  gen_hyphen_transfer: expandDslTemplates(hyphenTransferDsl, { embedTemplateId: false }),
 });
 
 function buildGeneratedItem({ family, skill, template, templateIndex, seed, variantIndex }) {
   const idSeed = `${seed}:${family.id}:${variantIndex}`;
-  const model = typeof template.model === 'string' ? template.model : '';
-  const templateSkillIds = uniqueStrings(template.skillIds);
+  const qualityTemplate = qualityNormalisedGeneratedTemplate(family.id, template);
+  const model = typeof qualityTemplate.model === 'string' ? qualityTemplate.model : '';
+  const templateSkillIds = uniqueStrings(qualityTemplate.skillIds);
   const skillIds = templateSkillIds.length ? templateSkillIds : [family.skillId];
-  const templateId = templateIdFor(family.id, template, templateIndex);
+  const templateId = templateIdFor(family.id, qualityTemplate, templateIndex);
   return {
     id: `${family.id}_${shortHash(idSeed)}_${variantIndex + 1}`,
     mode: family.mode,
     templateId,
-    variantSignature: variantSignatureFor({ family, template, templateId, model }),
+    variantSignature: variantSignatureFor({ family, template: qualityTemplate, templateId, model }),
     skillIds,
-    clusterId: template.clusterId || skill.clusterId,
+    clusterId: qualityTemplate.clusterId || skill.clusterId,
     rewardUnitId: family.rewardUnitId,
-    prompt: template.prompt || 'Practise this punctuation pattern.',
-    stem: template.stem || '',
-    ...(Array.isArray(template.options) ? { options: template.options } : {}),
-    ...(Number.isInteger(Number(template.correctIndex)) ? {
-      correctIndex: Number(template.correctIndex),
+    prompt: qualityTemplate.prompt || 'Practise this punctuation pattern.',
+    stem: qualityTemplate.stem || '',
+    ...(Array.isArray(qualityTemplate.options) ? { options: qualityTemplate.options } : {}),
+    ...(Number.isInteger(Number(qualityTemplate.correctIndex)) ? {
+      correctIndex: Number(qualityTemplate.correctIndex),
       inputKind: 'choice',
     } : {}),
-    accepted: uniqueStrings([model, ...(Array.isArray(template.accepted) ? template.accepted : [])]),
-    explanation: template.explanation || 'This generated item practises the same published punctuation skill.',
-    ...(typeof template.explanationRuleId === 'string' ? { explanationRuleId: template.explanationRuleId } : {}),
+    accepted: uniqueStrings([model, ...(Array.isArray(qualityTemplate.accepted) ? qualityTemplate.accepted : [])]),
+    explanation: qualityTemplate.explanation || 'This generated item practises the same published punctuation skill.',
+    ...(typeof qualityTemplate.explanationRuleId === 'string' ? { explanationRuleId: qualityTemplate.explanationRuleId } : {}),
     model,
-    ...(isPlainObject(template.validator) ? { validator: template.validator } : {}),
-    ...(isPlainObject(template.rubric) ? { rubric: template.rubric } : {}),
-    misconceptionTags: uniqueStrings(template.misconceptionTags),
-    readiness: uniqueStrings(template.readiness),
+    ...(isPlainObject(qualityTemplate.validator) ? { validator: qualityTemplate.validator } : {}),
+    ...(isPlainObject(qualityTemplate.rubric) ? { rubric: qualityTemplate.rubric } : {}),
+    misconceptionTags: uniqueStrings(qualityTemplate.misconceptionTags),
+    readiness: uniqueStrings(qualityTemplate.readiness),
     source: 'generated',
     generatorFamilyId: family.id,
   };
@@ -448,7 +543,13 @@ export function createPunctuationGeneratedItems({
       : [];
     const templates = contextTemplates.length ? contextTemplates : (GENERATED_TEMPLATE_BANK[family.id] || []);
     if (!skill || !templates.length) continue;
-    for (let index = 0; index < limit; index += 1) {
+    // Per-family override for production depth — used by transfer-mode families
+    // that intentionally cap at fewer items than the global PRODUCTION_DEPTH.
+    const familyLimit = Number.isFinite(family.productionItemsLimit)
+      ? Math.max(0, Math.floor(family.productionItemsLimit))
+      : limit;
+    const effectiveFamilyLimit = Math.min(limit, familyLimit);
+    for (let index = 0; index < effectiveFamilyLimit; index += 1) {
       const picked = pickTemplate(templates, seed, family.id, index, {
         legacyTemplateCount: contextTemplates.length ? 1 : 2,
         runtimeStableTemplateCount: contextTemplates.length ? templates.length : 4,

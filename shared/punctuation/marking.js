@@ -989,6 +989,25 @@ function markTransfer(item, answer) {
   const text = normaliseAnswerText(rawText);
   const validator = item.validator || {};
 
+  // P14 Gate 4: reject token-only fragments before any validator-specific
+  // logic. A transfer answer must look like a complete sentence — capital +
+  // terminal mark — even when the validator branch is missing or permissive.
+  if (item.mode === 'transfer') {
+    const trimmed = text.trim();
+    const tokenCount = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+    const hasTerminal = /[.!?]$/.test(trimmed);
+    const hasCapital = /^["'“‘]?[A-Z]/.test(trimmed);
+    if (tokenCount <= 2 && !hasTerminal && !hasCapital) {
+      return {
+        correct: false,
+        expected: item.model || '',
+        note: 'Write a complete sentence — start with a capital letter and end with a full stop, question mark, or exclamation mark.',
+        misconceptionTags: ['transfer.fragment_only'],
+        facets: [facet('content_preservation', false)],
+      };
+    }
+  }
+
   // Content preservation gate: closed insert/fix transfer items must keep the
   // supplied words exactly. Learners should only add or repair punctuation.
   if ((item.mode === 'insert' || item.mode === 'fix') && validator.type) {
@@ -1419,17 +1438,32 @@ function markRequiredApostropheForms(check = {}, rawText = '') {
   };
 }
 
+function countProseSentenceBoundaries(value) {
+  // Count only prose sentence breaks such as ". The". Bullet-list item
+  // punctuation is deliberately excluded because bullet-point paragraph items
+  // allow optional terminal stops on individual bullet lines.
+  return (String(value ?? '').match(/[.!?](?=\s+[A-Z\"'“‘])/g) || []).length;
+}
+
 function markParagraphPassageShape(item, rawText = '') {
-  const expectedWords = stripPunctuation(item.model || acceptedAnswers(item)[0] || '');
+  const expectedText = item.model || acceptedAnswers(item)[0] || '';
+  const expectedWords = stripPunctuation(expectedText);
   const typedWords = stripPunctuation(rawText);
-  const correct = Boolean(expectedWords) && typedWords === expectedWords;
+  const wordsOk = Boolean(expectedWords) && typedWords === expectedWords;
+  const expectedSentenceBoundaries = countProseSentenceBoundaries(expectedText);
+  const typedSentenceBoundaries = countProseSentenceBoundaries(rawText);
+  const sentenceBoundaryOk = expectedSentenceBoundaries === 0 || typedSentenceBoundaries >= expectedSentenceBoundaries;
+  const correct = wordsOk && sentenceBoundaryOk;
   return {
     correct,
     expected: item.model || '',
-    note: correct ? 'The passage wording is preserved.' : 'Keep the whole passage wording and do not add extra sentences.',
-    misconceptionTags: correct ? [] : ['paragraph.words_changed'],
+    note: correct
+      ? 'The passage wording is preserved.'
+      : (wordsOk ? 'Keep the sentence-ending punctuation between the passage sentences.' : 'Keep the whole passage wording and do not add extra sentences.'),
+    misconceptionTags: correct ? [] : [wordsOk ? 'paragraph.sentence_boundary_missing' : 'paragraph.words_changed'],
     facets: [
-      facet('preservation', correct),
+      facet('preservation', wordsOk),
+      facet('terminal_punctuation', sentenceBoundaryOk),
     ],
   };
 }
