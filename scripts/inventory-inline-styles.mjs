@@ -177,7 +177,7 @@ export const CLASSIFICATION = Object.freeze({
 
   // Subjects — grammar / punctuation
   'src/subjects/grammar/components/GrammarSetupScene.jsx': 'dynamic-content-driven',
-  'src/subjects/punctuation/components/PunctuationSetupScene.jsx': 'shared-pattern-available',
+  'src/subjects/punctuation/components/PunctuationSetupScene.jsx': 'dynamic-content-driven',
   'src/subjects/punctuation/components/PunctuationMapScene.jsx': 'dynamic-content-driven',
   'src/subjects/punctuation/components/PunctuationSessionScene.jsx': 'dynamic-content-driven',
   'src/subjects/punctuation/components/PunctuationSummaryScene.jsx': 'dynamic-content-driven',

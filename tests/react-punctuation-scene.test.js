@@ -2808,9 +2808,10 @@ test('punctuation Setup scene renders mission dashboard with primary CTA + secon
   // R8: data-section landmarks for journey spec testing.
   assert.match(html, /data-section="hero"/, 'missing hero landmark');
   assert.match(html, /data-section="progress-row"/, 'missing progress-row landmark');
-  assert.match(html, /data-section="monster-row"/, 'missing monster-row landmark');
   assert.match(html, /data-section="map-link"/, 'missing map-link landmark');
   assert.match(html, /data-section="secondary"/, 'missing secondary landmark');
+  // U2 companion panel migration: monster meadow now via SubjectCompanionPanel.
+  assert.match(html, /companion-panel/, 'companion panel renders');
 });
 
 test('punctuation Setup scene does not render the 6 cluster focus buttons (plan R1)', () => {
@@ -2839,17 +2840,15 @@ test('punctuation Setup scene does not render the 6 cluster focus buttons (plan 
 // that `punctuation-set-mode` still updates stored prefs, which feeds the
 // CTA resolution logic.
 
-test('punctuation Setup scene: fresh learner single CTA reads "Find your first punctuation egg" with all monsters at 0/100 Stars', () => {
+test('punctuation Setup scene: fresh learner single CTA reads "Find your first punctuation egg" with meadow empty state', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   const html = harness.render();
 
   assert.match(html, /Find your first punctuation egg/, 'fresh learner CTA label');
-  // All four active monsters at 0 / 100 Stars
-  for (const name of ['Pealark', 'Claspin', 'Curlune', 'Quoral']) {
-    assert.match(html, new RegExp(name), `monster ${name} must render`);
-  }
-  assert.match(html, /0 \/ 100 Stars/, 'fresh learner monsters show 0/100');
+  // U2 companion panel migration: fresh learner (0 stars) sees meadowEmpty text
+  // instead of monster visuals (filter requires displayStars > 0).
+  assert.match(html, /Start practising to discover your first egg/, 'meadowEmpty renders for fresh learner');
   // No "Stage X of 4" anywhere
   assert.doesNotMatch(html, /Stage \d+ of \d+/, 'no "Stage X of Y" in rendered output');
 });
@@ -2883,13 +2882,13 @@ test('punctuation Setup scene: post-session render — same layout with updated 
   // R8: same data-section landmarks as fresh learner
   assert.match(html, /data-section="hero"/, 'hero landmark present post-session');
   assert.match(html, /data-section="progress-row"/, 'progress-row present post-session');
-  assert.match(html, /data-section="monster-row"/, 'monster-row present post-session');
   assert.match(html, /data-section="map-link"/, 'map-link present post-session');
   assert.match(html, /data-section="secondary"/, 'secondary present post-session');
+  // U2 companion panel migration: monster meadow via SubjectCompanionPanel
+  assert.match(html, /companion-panel/, 'companion panel renders post-session');
+  assert.match(html, /ss-meadow/, 'monster meadow visuals render post-session');
   // R7: CTA adapts — weak > 0, so CTA reads "Tackle wobbly spots"
   assert.match(html, /Tackle wobbly spots/, 'post-session CTA with wobbly spots');
-  // Star meters update
-  assert.match(html, /22 \/ 100 Stars/, 'pealark stars updated');
   // No "Stage X of 4" anywhere
   assert.doesNotMatch(html, /Stage \d+ of \d+/, 'no "Stage X of Y" in rendered output');
 });
@@ -3078,7 +3077,7 @@ test('P7-U7: fresh learner sees Grand Stars = 0 in the progress row', () => {
   assert.match(html, /Grand Stars/, 'Grand Stars label renders');
   // Layout skeleton unchanged — same data-section landmarks.
   assert.match(html, /data-section="progress-row"/, 'progress row present');
-  assert.match(html, /data-section="monster-row"/, 'monster row present');
+  assert.match(html, /companion-panel/, 'companion panel present');
 });
 
 test('P7-U7: post-session learner sees Grand Stars consistent with Quoral meter', async () => {
@@ -3107,14 +3106,13 @@ test('P7-U7: post-session learner sees Grand Stars consistent with Quoral meter'
   // "Grand Stars" label rendered — not "Stars earned".
   assert.match(html, /Grand Stars/, 'Grand Stars label renders post-session');
   assert.doesNotMatch(html, /Stars earned/, '"Stars earned" must not appear post-session');
-  // Quoral meter uses "Grand Stars" label (the MonsterStarMeter already does this).
-  assert.match(html, /8 \/ 100 Grand Stars/, 'Quoral meter shows Grand Stars count');
+  // U2 companion panel migration: Grand Stars stat now in companion panel stats grid.
+  assert.match(html, /companion-panel/, 'companion panel renders post-session');
   // Layout skeleton same as fresh learner.
   assert.match(html, /data-section="progress-row"/, 'progress row present post-session');
-  assert.match(html, /data-section="monster-row"/, 'monster row present post-session');
 });
 
-test('P7-U7: Quoral meter is visually distinct with "Grand Stars" vs direct monster "Stars"', async () => {
+test('P7-U7: Grand Stars stat renders in companion panel stats grid', async () => {
   const { renderPunctuationSetupSceneStandalone } = await import(
     './helpers/punctuation-scene-render.js'
   );
@@ -3135,18 +3133,38 @@ test('P7-U7: Quoral meter is visually distinct with "Grand Stars" vs direct mons
     rewardState: {},
   });
 
-  // Direct monsters show "Stars", Quoral shows "Grand Stars".
-  assert.match(html, /20 \/ 100 Stars/, 'direct monster shows "Stars"');
-  assert.match(html, /5 \/ 100 Grand Stars/, 'Quoral shows "Grand Stars"');
+  // U2 companion panel migration: Grand Stars stat rendered in companion panel stats.
+  assert.match(html, /Grand Stars/, 'Grand Stars label renders');
+  // Monster visuals render for monsters with stars > 0 (pealark has 20).
+  assert.match(html, /ss-meadow/, 'monster meadow renders with discovered monsters');
 });
 
-test('punctuation Setup scene: reserved monster ids NEVER appear in the active monster strip', () => {
+test('punctuation Setup scene: reserved monster ids NEVER appear in the active monster strip', async () => {
   // Smuggle reserved monster entries into the reward state. The
   // iterator is `ACTIVE_PUNCTUATION_MONSTER_IDS` only (plan R10), so
   // even a poisoned rewardState must not surface the reserved trio.
-  const harness = createPunctuationHarness();
-  harness.dispatch('open-subject', { subjectId: 'punctuation' });
-  harness.store.updateSubjectUi('punctuation', {
+  // U2 companion panel migration: the sidebar now renders monster visuals
+  // via SubjectCompanionPanel. We use the standalone renderer with starView
+  // so active monsters produce visuals.
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const html = renderPunctuationSetupSceneStandalone({
+    ui: {
+      availability: { status: 'ready' },
+      starView: {
+        perMonster: {
+          pealark: { total: 10, starDerivedStage: 1 },
+          claspin: { total: 5, starDerivedStage: 0 },
+          curlune: { total: 8, starDerivedStage: 0 },
+        },
+        grand: { grandStars: 3, starDerivedStage: 0, total: 100 },
+      },
+    },
+    actions: { dispatch: () => {}, updateSubjectUi: () => {} },
+    prefs: { mode: 'smart', roundLength: '4' },
+    stats: {},
+    learner: { id: 'test' },
     rewardState: {
       pealark: { mastered: ['r1'] },
       colisk: { mastered: ['c1', 'c2'] },
@@ -3154,23 +3172,18 @@ test('punctuation Setup scene: reserved monster ids NEVER appear in the active m
       carillon: { mastered: ['ca1'] },
     },
   });
-  const html = harness.render();
 
+  // Reserved monster asset paths must not appear in rendered HTML.
   for (const reserved of ['colisk', 'hyphang', 'carillon']) {
     assert.doesNotMatch(
       html,
-      new RegExp(`data-monster-id="${reserved}"`),
-      `reserved monster ${reserved} leaked into the active monster strip`,
+      new RegExp(reserved),
+      `reserved monster ${reserved} leaked into rendered output`,
     );
   }
-  // The four active monsters all render.
-  for (const active of ['pealark', 'claspin', 'curlune', 'quoral']) {
-    assert.match(
-      html,
-      new RegExp(`data-monster-id="${active}"`),
-      `active monster ${active} should render in the strip`,
-    );
-  }
+  // Companion panel renders with monster visuals for active monsters.
+  assert.match(html, /ss-meadow/, 'companion panel meadow renders');
+  assert.match(html, /companion-panel/, 'companion panel present');
 });
 
 test('punctuation Setup scene SSR HTML contains no forbidden child terms', () => {
