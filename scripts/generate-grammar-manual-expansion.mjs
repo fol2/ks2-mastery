@@ -409,9 +409,10 @@ function normaliseGrammarArticles(value) {
   // The original allow-list silently failed on "a apostrophe", "a article",
   // "a obvious" etc. — content drift that future evidence regen would surface.
   return String(value ?? '')
-    .replace(/\ba ([aeiou]\w+)\b/gi, (match, word) => {
+    .replace(/\b(a) ([aeiou]\w+)\b/gi, (match, article, word) => {
       if (ARTICLE_CONSONANT_ONSET_BLOCKLIST.has(word.toLowerCase())) return match;
-      return `an ${word}`;
+      const prefix = article[0] === 'A' ? 'An' : 'an';
+      return `${prefix} ${word}`;
     });
 }
 
