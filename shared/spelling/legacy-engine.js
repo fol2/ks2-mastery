@@ -727,6 +727,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
               nextAction: "advance",
             };
           }
+          session.promptCount += 1;
           return {
             correct: false,
             phase: "correction",

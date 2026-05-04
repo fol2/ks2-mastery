@@ -259,14 +259,22 @@ export function FeedbackSlot({ feedback, reserveSpace = false }) {
   }
   const tone = feedbackTone(feedback.kind);
   const icon = tone === 'good' ? <CheckIcon /> : tone === 'warn' ? '!' : '×';
+
+  // When no correct answer is revealed (retry phase), show the learner's typed attempt prominently.
+  const attemptedAnswer = String(feedback.attemptedAnswer || '').trim();
+  const ribbonWord = feedback.answer
+    ? feedback.answer
+    : attemptedAnswer || '';
+  const ribbonWordIsAttempt = !feedback.answer && !!attemptedAnswer;
+
   return (
     <div className="feedback-slot">
       <Ribbon
         tone={tone}
         icon={icon}
         headline={feedback.headline || ''}
-        word={feedback.answer || ''}
-        sub={feedbackSub(feedback)}
+        word={ribbonWord}
+        sub={ribbonWordIsAttempt ? 'Your answer' : feedbackSub(feedback)}
       />
       {feedback.footer ? <p className="feedback-foot small muted">{feedback.footer}</p> : null}
       <FamilyChips words={feedback.familyWords} />
