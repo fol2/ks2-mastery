@@ -61,7 +61,8 @@ test('ready subject companion panels map subject-owned data into real panel inpu
     {
       subject: 'spelling',
       path: 'src/subjects/spelling/components/SpellingSetupScene.jsx',
-      markers: ['codex', 'stats.secure', 'stats.due', 'stats.trouble', 'Trouble words need attention'],
+      markers: ['monsterVisuals', 'stats.secure', 'stats.due', 'stats.trouble', 'Trouble words need attention'],
+      useMonsterVisuals: true,
     },
     {
       subject: 'grammar',
@@ -80,7 +81,11 @@ test('ready subject companion panels map subject-owned data into real panel inpu
     const panel = text.match(/<SubjectCompanionPanel[\s\S]*?\/>/)?.[0] || '';
     assert.match(panel, new RegExp(`subjectId="${contract.subject}"`));
     assert.match(panel, /\svisible(?:\s|>|$|=)/);
-    assert.match(panel, /monsters=\{/);
+    if (contract.useMonsterVisuals) {
+      assert.match(panel, /monsterVisuals=\{/);
+    } else {
+      assert.match(panel, /monsters=\{/);
+    }
     assert.match(panel, /stats=\{/);
     assert.match(panel, /nextFocus=\{/);
     for (const marker of contract.markers) {

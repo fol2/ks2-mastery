@@ -406,6 +406,17 @@ export function SpellingSetupScene({
   const showVaultLayer = isPostMega && postMegaView === 'vault';
   const showWorkshopLayer = !showVaultLayer && !isHydrationChecking;
 
+  // Companion panel: pre-compute rich monster visuals for the sidebar meadow.
+  const monsterVisualConfig = useMonsterVisualConfig();
+  const caughtForPanel = (Array.isArray(codex) ? codex : [])
+    .filter((e) => e?.progress?.caught && e?.monster?.id)
+    .slice(0, 4);
+  const panelMonsterVisuals = caughtForPanel.map(({ monster, progress }) => ({
+    id: monster.id,
+    visual: monsterImageVisual(monster, progress, monsterVisualConfig?.config),
+    isEgg: progress.stage === 0,
+  }));
+
   return (
     <SubjectThemeScope subjectId="spelling" className="setup-grid" style={{ gridColumn: '1/-1' }}>
       <SoftLockoutBanner
@@ -489,24 +500,21 @@ export function SpellingSetupScene({
           </>
         )}
         body={(
-          <>
-            <SetupMeadow codex={codex} repositories={repositories} />
-            <SetupStatGrid stats={stats} />
-            <SubjectCompanionPanel
-              subjectId="spelling"
-              visible
-              monsters={(Array.isArray(codex) ? codex : [])
-                .filter((e) => e?.progress?.caught)
-                .map((e) => ({ name: e.monster?.name || e.monster?.id || '?', discovered: true }))}
-              stats={[
-                { label: 'Secure', value: String(stats.secure ?? 0) },
-                { label: 'Due today', value: String(stats.due ?? 0), tone: 'warn' },
-                { label: 'Weak spots', value: String(stats.trouble ?? 0) },
-              ]}
-              nextFocus={stats.trouble > 0 ? 'Trouble words need attention' : ''}
-              emptyState="Catch your first monster to see companion info."
-            />
-          </>
+          <SubjectCompanionPanel
+            subjectId="spelling"
+            visible
+            monsterVisuals={panelMonsterVisuals}
+            stats={[
+              { label: 'Total spellings', value: String(stats.total ?? 0) },
+              { label: 'Secure', value: String(stats.secure ?? 0) },
+              { label: 'Due today', value: String(stats.due ?? 0), tone: 'warn' },
+              { label: 'Weak spots', value: String(stats.trouble ?? 0) },
+              { label: 'Unseen', value: String(stats.fresh ?? 0) },
+              { label: 'Accuracy', value: stats.accuracy == null ? '—' : `${stats.accuracy}%` },
+            ]}
+            nextFocus={stats.trouble > 0 ? 'Trouble words need attention' : ''}
+            emptyState="Catch your first monster to see companion info."
+          />
         )}
         footer={(
           <button
