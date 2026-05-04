@@ -1,8 +1,9 @@
 /* Platform SubjectCompanionPanel primitive (P3 U5).
  *
  * Display-only panel: monsters list, stats (dl/dt/dd), next-focus text.
- * Props: subjectId, monsters [{name, discovered}], stats [{label, value, tone?}],
+ * Props: subjectId, head (ReactNode), monsters [{name, discovered}],
  * monsterVisuals [{id, visual: {style, imageProps}, isEgg}] (rich meadow mode),
+ * meadowEmpty (string), stats [{label, value, tone?}],
  * nextFocus (string), emptyState (string). Stateless (R10): no store, no mastery writes.
  */
 import { SectionHeader } from './SectionHeader.jsx';
@@ -12,12 +13,13 @@ export function SubjectCompanionPanel({
   head = null,
   monsters = [],
   monsterVisuals = [],
+  meadowEmpty = '',
   stats = [],
   nextFocus = '',
   emptyState = 'Nothing to show yet.',
   visible = false,
 }) {
-  const hasContent = head || monsterVisuals.length > 0 || monsters.length > 0 || stats.length > 0;
+  const hasContent = head || monsterVisuals.length > 0 || meadowEmpty || monsters.length > 0 || stats.length > 0;
   if (!hasContent) {
     return (
       <aside className="companion-panel" data-subject={subjectId || 'unknown'} data-testid="companion-panel" hidden={!visible}>
@@ -41,6 +43,8 @@ export function SubjectCompanionPanel({
             ))}
           </div>
         </section>
+      ) : meadowEmpty ? (
+        <div className="ss-meadow-empty small muted">{meadowEmpty}</div>
       ) : monsters.length > 0 ? (
         <section className="companion-panel-monsters">
           <SectionHeader title="Monsters" level={3} />

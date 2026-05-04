@@ -511,8 +511,8 @@ export function SpellingSetupScene({
               { label: 'Unseen', value: String(stats.fresh ?? 0) },
               { label: 'Accuracy', value: stats.accuracy == null ? '—' : `${stats.accuracy}%` },
             ]}
+            meadowEmpty="Catch your first monster to populate this meadow."
             nextFocus={stats.trouble > 0 ? 'Trouble words need attention' : ''}
-            emptyState="Catch your first monster to see companion info."
           />
         )}
         footer={(
