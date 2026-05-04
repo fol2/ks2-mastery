@@ -183,15 +183,22 @@ test('validateAnswerSpec: multiField recursively validates subfields', () => {
   }), /multiField\.broken/);
 });
 
-test('Backcompat: content.js inline accepted-array marking still works through the new marker', async () => {
-  // content.js markStringAnswer is now a thin adapter — it constructs a
-  // transient acceptedSet spec and delegates to markByAnswerSpec. Every
-  // existing inline `accepted: [...]` call in content.js continues to work
-  // because the shape is backwards compatible with the existing opts.
-  const { createGrammarQuestion, evaluateGrammarQuestion } = await import('../worker/src/subjects/grammar/content.js');
-  const question = createGrammarQuestion({ templateId: 'combine_clauses_rewrite', seed: 1 });
-  assert.ok(question, 'question should build');
-  const evaluation = evaluateGrammarQuestion(question, { answer: 'Although Mia was tired, she finished the race.' });
-  assert.equal(typeof evaluation.correct, 'boolean');
-  assert.ok(evaluation.maxScore >= 1);
+test('Backcompat: acceptedSet answerSpec still scores correctly through markByAnswerSpec', async () => {
+  // P19a fairness conversions retired the last two inline templates that
+  // used `acceptedSet` (combine_clauses_rewrite, proc3_clause_join_rewrite —
+  // both now manualReviewOnly). The acceptedSet shape itself remains a
+  // first-class kind in `ANSWER_SPEC_KINDS`, so this test now exercises the
+  // marker directly via answerSpec to keep coverage on the kind.
+  const { markByAnswerSpec } = await import('../worker/src/subjects/grammar/answer-spec.js');
+  const spec = {
+    kind: 'acceptedSet',
+    golden: ['Although Mia was tired, she finished the race.'],
+    nearMiss: [],
+    maxScore: 2,
+    misconception: 'subordinate_clause_confusion',
+    feedbackLong: 'A correct answer is: Although Mia was tired, she finished the race.',
+  };
+  const result = markByAnswerSpec(spec, { answer: 'Although Mia was tired, she finished the race.' });
+  assert.equal(result.correct, true);
+  assert.equal(result.maxScore, 2);
 });

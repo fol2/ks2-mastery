@@ -38,7 +38,13 @@ const SCHEDULER_READY_STATUS = 'certified_scheduler_ready';
 // sentence" / standalone "transfer". The contract A.1 says "or similar open
 // task" — narrow keyword matching let 18+ misconception_repair / build_np
 // templates score open text against a single golden answer.
-const OPEN_PROMPT_RE = /\b(explain|transfer|write\s+(?:the|an?|one|a\s+sentence)|rewrite|build|mixed\s+check|add\s+the|move\s+the|join\s+the|describe|complete\s+the\s+sentence|continue|extend)\b/i;
+//
+// P19a hotfix (post-second-adversarial-pass): added Combine/Correct/Copy/
+// Insert/Edit/Fix/Punctuate/Expand/Change/Type/Repair/Reorder verbs after
+// 29 templates were enumerated whose prompts started with these verbs and
+// were silently exempted. Bare add/move/join replace add\s+the/move\s+the/
+// join\s+the so "Add a hyphen", "Add commas for parenthesis" also match.
+const OPEN_PROMPT_RE = /\b(explain|transfer|write\s+(?:the|an?|one|a\s+sentence)|rewrite|build|mixed\s+check|add|move|join|describe|complete\s+the\s+sentence|continue|extend|combine|correct|copy|insert|edit|fix|punctuate|expand|change|type|repair|reorder)\b/i;
 const SELECTED_RESPONSE_CONVERSION_TEMPLATES = new Set();
 
 function caseTriggersFairnessFix(sourceCase) {

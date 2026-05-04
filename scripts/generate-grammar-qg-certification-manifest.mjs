@@ -20,14 +20,16 @@ async function computeFileHash(filePath) {
 }
 
 async function readMarkingMatrixEntryCount(prefix) {
+  // P19a hotfix: the legacy fallback to 80 was a silent miscalibration risk —
+  // a missing/unreadable matrix file would emit a manifest claiming 80 entries
+  // for any release, which the validator may then accept as the expected count.
+  // Fail loud instead so manifest generation can never produce a stale figure.
   const matrixPath = path.join(REPORTS_DIR, `${prefix}-marking-matrix.json`);
-  try {
-    const data = JSON.parse(await fs.readFile(matrixPath, 'utf8'));
-    if (Array.isArray(data?.entries)) return data.entries.length;
-  } catch (err) {
-    // Marking matrix is optional pre-Phase-7. Falling through to legacy 80.
+  const data = JSON.parse(await fs.readFile(matrixPath, 'utf8'));
+  if (!Array.isArray(data?.entries)) {
+    throw new Error(`Marking matrix at ${matrixPath} is missing entries array`);
   }
-  return 80;
+  return data.entries.length;
 }
 
 function parseCli() {

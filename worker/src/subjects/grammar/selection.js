@@ -157,14 +157,22 @@ function candidateVariantMetadata(template, seed) {
 
 // P19 Contract D.4 — return the most recent scored miss within the supplied
 // freshness window (milliseconds) so the retry lane can re-surface it once.
+//
+// P19a hotfix: previously read attemptedAt/timestamp only; the engine writes
+// attempts with createdAt (engine.js:1896), so attemptedAt was always 0 and
+// the staleness guard `attemptedAt > 0 && ... < nowTs` never fired — six-hour
+// old misses were re-surfaced as if fresh. Now reads createdAt as a third
+// fallback AND fails-closed when no timestamp can be parsed: a miss without
+// a known age must not be treated as fresh.
 function recentLastScoredMiss(recentAttempts, nowTs, windowMs) {
   const attempts = normaliseRecentAttempts(recentAttempts);
   for (let index = attempts.length - 1; index >= 0; index -= 1) {
     const attempt = attempts[index];
     const result = isPlainObject(attempt.result) ? attempt.result : {};
     if (!isScoredAttempt(attempt) || result.correct !== false) continue;
-    const attemptedAt = Number(attempt.attemptedAt) || Number(attempt.timestamp) || 0;
-    if (attemptedAt > 0 && attemptedAt + windowMs < nowTs) return null; // stale → no retry
+    const attemptedAt = Number(attempt.attemptedAt) || Number(attempt.timestamp) || Number(attempt.createdAt) || 0;
+    if (attemptedAt <= 0) return null; // unknown age → fail-closed, do not retry
+    if (attemptedAt + windowMs < nowTs) return null; // stale → no retry
     return attempt;
   }
   return null;

@@ -235,7 +235,11 @@ test('Grammar production smoke scans mini-test, support, and AI enrichment read 
 });
 
 test('Grammar production smoke has visible-data probes for every answer-spec family', () => {
-  const expectedFamilies = new Set(['exact', 'multiField', 'normalisedText', 'punctuationPattern', 'acceptedSet', 'manualReviewOnly']);
+  // P19a fairness conversion retired the last `normalisedText` and
+  // `acceptedSet` templates. The kinds remain valid in ANSWER_SPEC_KINDS
+  // (unit-tested in grammar-answer-spec.test.js); end-to-end smoke now
+  // covers the four families that any live template still emits.
+  const expectedFamilies = new Set(['exact', 'multiField', 'punctuationPattern', 'manualReviewOnly']);
   assert.deepEqual(new Set(GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS.map((item) => item.family)), expectedFamilies);
 
   for (const fixture of GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS) {

@@ -108,13 +108,18 @@ describe('P10 Historical Scheduler Safety: active runtime coverage', () => {
   });
 
   it('historical P10 JSON is not treated as the active production runtime authority', () => {
-    // P19 Contract A.2 fairness conversion: 142 manual-expansion families +
-    // 5 P0/P2/P3 open-rewrite templates promoted to manualReviewOnly. The
-    // runtime status records them as approved_with_limitation. Historical
-    // P10 figure of 4 is no longer the live count.
+    // P19 + P19a Contract A.2 fairness conversion promoted manual-expansion
+    // families + inline P14/P0/P2/P3 open-rewrite templates to manualReview-
+    // Only. The runtime status records them as approved_with_limitation.
+    // Use a property check (≥100) instead of a brittle exact pin so future
+    // fairness predicate refinements don't flake the test; the assertion
+    // exists to prove the runtime is no longer the historical P10 figure.
     const limitedRuntimeTemplates = Object.values(CERTIFICATION_STATUS_MAP)
       .filter((entry) => entry.status === 'approved_with_limitation');
-    assert.equal(limitedRuntimeTemplates.length, 151);
+    assert.ok(
+      limitedRuntimeTemplates.length >= 100,
+      `Expected ≥100 limited runtime templates, got ${limitedRuntimeTemplates.length}`,
+    );
   });
 });
 

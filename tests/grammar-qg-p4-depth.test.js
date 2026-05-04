@@ -74,11 +74,18 @@ describe('Grammar QG P4 explanation case-bank depth', () => {
     }
   });
 
-  it('constructed-response explanation items emit normalised-text specs without choice options', () => {
+  it('constructed-response explanation items emit normalised-text or manualReviewOnly specs without choice options', () => {
+    // P19/P19a Contract A.2 promoted many constructed explanation families to
+    // manualReviewOnly when their accepted-answer coverage was insufficient
+    // to mark fairly. Both kinds are valid open-text outcomes; the invariant
+    // that matters here is *no choice options are exposed*.
     assert.ok(CONSTRUCTED_ANSWERSPEC_FAMILIES.length > 0, 'P18 should include constructed explanation templates');
     for (const template of CONSTRUCTED_ANSWERSPEC_FAMILIES) {
       const q = createGrammarQuestion({ templateId: template.id, seed: 1 });
-      assert.strictEqual(q.answerSpec.kind, 'normalisedText', `${template.id} answerSpec.kind`);
+      assert.ok(
+        ['normalisedText', 'manualReviewOnly'].includes(q.answerSpec.kind),
+        `${template.id} answerSpec.kind must be normalisedText or manualReviewOnly, got ${q.answerSpec.kind}`,
+      );
       assert.ok(['text', 'textarea'].includes(q.inputSpec.type), `${template.id} inputSpec.type`);
       assert.equal(Array.isArray(q.inputSpec.options), false, `${template.id} must not expose choice options`);
     }

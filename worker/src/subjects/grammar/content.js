@@ -4615,10 +4615,13 @@ const TEMPLATES = [
     domain: "Clauses",
     questionType: "rewrite",
     difficulty: 3,
-    satsFriendly: true,
+    // P19a hotfix: fairness conversion to manualReviewOnly (only 2 accepted
+    // variants, learners' valid clarifications fail). Keep template visible
+    // at runtime as a non-scored exposure item.
+    satsFriendly: false,
     isSelectedResponse: false,
     requiresAnswerSpec: true,
-    answerSpecKind: "acceptedSet",
+    answerSpecKind: "manualReviewOnly",
     tags: [
       "builder",
       "surgery"
@@ -4627,13 +4630,11 @@ const TEMPLATES = [
       "clauses"
     ],
     generator(seed) {
+          // P19a hotfix: open-response combine task with only 2 accepted variants
+          // is unmarkable fairly. Convert to manual review (Contract A.1).
           const item = pickCyclic(seed, CLAUSE_COMBINE_ITEMS);
-          const answerSpec = acceptedSetAnswerSpec(item.accepted, [], {
-            maxScore:2,
-            misconception:"subordinate_clause_confusion",
-            punctuationMisconception:"punctuation_precision",
-            feedbackLong:`A correct answer is: ${item.accepted[0]}`,
-            answerText:item.accepted[0]
+          const answerSpec = manualReviewOnlyAnswerSpec({
+            feedbackLong:`Your combined sentence has been saved for review. A strong answer is: ${item.accepted[0]}`
           });
           return makeBaseQuestion(this, seed, {
             marks:2,
@@ -6189,11 +6190,13 @@ const TEMPLATES = [
     domain: "Clauses",
     questionType: "rewrite",
     difficulty: 2,
-    satsFriendly: true,
+    // P19a hotfix: fairness conversion to manualReviewOnly (only 2 accepted
+    // variants per conjunction). Keep visible as non-scored exposure item.
+    satsFriendly: false,
     isSelectedResponse: false,
     generative: true,
     requiresAnswerSpec: true,
-    answerSpecKind: "acceptedSet",
+    answerSpecKind: "manualReviewOnly",
     tags: [
       "builder"
     ],
@@ -6243,12 +6246,10 @@ const TEMPLATES = [
                 `${capFirst(sub)} if ${main}.`
               ]);
             }
-            const answerSpec = acceptedSetAnswerSpec(accepted, [], {
-              maxScore:2,
-              misconception:"subordinate_clause_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${accepted[0]}`,
-              answerText:accepted[0]
+            // P19a hotfix: open-response join task with only 2 accepted variants
+            // is unmarkable fairly. Convert to manual review (Contract A.1).
+            const answerSpec = manualReviewOnlyAnswerSpec({
+              feedbackLong:`Your combined sentence has been saved for review. A strong answer is: ${accepted[0]}`
             });
             return makeBaseQuestion(this, seed, {
               marks:2,
@@ -11289,7 +11290,11 @@ function buildP14SelectedQuestion(template, seed, family) {
 // constructed-rewrite P14 templates whose prompt is an open instruction
 // ("Add the missing comma…", "Write the corrected sentence…", etc.) are not
 // marked against a single accepted answer.
-const P14_OPEN_PROMPT_RE = /\b(explain|transfer|write\s+(?:the|an?|one|a\s+sentence)|rewrite|build|mixed\s+check|add\s+the|move\s+the|join\s+the|describe|complete\s+the\s+sentence|continue|extend)\b/i;
+//
+// P19a hotfix: verb list expanded post-second-adversarial-pass. Stay in lock-
+// step with scripts/generate-grammar-manual-expansion.mjs OPEN_PROMPT_RE and
+// scripts/audit-grammar-open-response-fairness.mjs isOpenPrompt.
+const P14_OPEN_PROMPT_RE = /\b(explain|transfer|write\s+(?:the|an?|one|a\s+sentence)|rewrite|build|mixed\s+check|add|move|join|describe|complete\s+the\s+sentence|continue|extend|combine|correct|copy|insert|edit|fix|punctuate|expand|change|type|repair|reorder)\b/i;
 
 function buildP14ConstructedQuestion(template, seed) {
   const item = p14ItemForConcept(template.skillIds[0], "rewrite", seed);
@@ -11436,10 +11441,20 @@ const P14_FAMILIES = Object.freeze([
 // buildP14ConstructedQuestion branches on this map so audits, metadata
 // consumers, and templateFitsMode all observe a consistent answerSpecKind.
 const P14_FAIRNESS_CONVERTED_TEMPLATE_IDS = new Map([
+  // selected-response: curated nearMisses give 4-option distractors.
   ['qg_p14_standard_english_constructed_rewrite', 'selectedResponse'],
   ['qg_p14_fronted_adverbials_constructed_rewrite', 'selectedResponse'],
   ['qg_p14_speech_punctuation_constructed_rewrite', 'selectedResponse'],
   ['qg_p14_parenthesis_commas_constructed_rewrite', 'selectedResponse'],
+  // P19a: manualReviewOnly fallback templates. Runtime already routes them
+  // through manualReviewOnlyAnswerSpec via the triggersFairness branch in
+  // buildP14ConstructedQuestion; declaring them here makes the metadata
+  // emit answerSpecKind: "manualReviewOnly" so audit doc / runtime stay in
+  // lock-step (otherwise meta.answerSpecKind drifts from runtime emission).
+  ['qg_p14_subject_object_constructed_rewrite', 'manualReviewOnly'],
+  ['qg_p14_subordinate_clauses_constructed_rewrite', 'manualReviewOnly'],
+  ['qg_p14_tense_aspect_constructed_rewrite', 'manualReviewOnly'],
+  ['qg_p14_expanded_noun_phrases_constructed_rewrite', 'manualReviewOnly'],
 ]);
 
 const P14_PRIORITY_TEMPLATES = P14_PRIORITY_CONCEPTS.flatMap((concept) => (

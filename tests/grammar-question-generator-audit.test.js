@@ -24,11 +24,14 @@ test('Grammar question-generator audit covers the current template inventory', (
   assert.equal(audit.constructedResponseTemplateCount, 189);
   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
   assert.equal(audit.legacyAdapterTemplateCount, 0);
-  // P19 Contract A.2: 142 manual-expansion families promoted to manualReviewOnly,
-  // 5 P0/P2/P3 open-rewrite templates promoted, and 4 P14 priority rewrites
-  // moved to selected-response (exact) instead of manualReviewOnly. Net
-  // runtime manualReviewOnly = 151 templates.
-  assert.equal(audit.manualReviewOnlyTemplateCount, 151);
+  // P19 Contract A.2: manual-expansion families promoted to manualReviewOnly +
+  // 5 P0/P2/P3 open-rewrite templates promoted + 4 P14 priority rewrites
+  // moved to selected-response (exact) instead of manualReviewOnly.
+  // P19a hotfix: predicate broadened (combine|correct|copy|insert|edit|fix|
+  // punctuate|expand|change|type) → 23 more manual-expansion families promoted
+  // and 2 inline templates (combine_clauses_rewrite, proc3_clause_join_rewrite)
+  // converted. Net runtime manualReviewOnly = 174 templates.
+  assert.equal(audit.manualReviewOnlyTemplateCount, 180);
   assert.equal(audit.p2MigrationComplete, true);
   assert.equal(audit.explainTemplateCount, 126);
   assert.equal(audit.conceptsWithExplainCoverage.length, GRAMMAR_CONCEPTS.length);
@@ -39,11 +42,9 @@ test('Grammar question-generator audit covers the current template inventory', (
     'Every Grammar concept should have at least one explanation template after QG P3.',
   );
   assert.deepEqual(audit.answerSpecKindCounts, {
-    acceptedSet: 2,
     exact: 234,
-    manualReviewOnly: 151,
+    manualReviewOnly: 180,
     multiField: 56,
-    normalisedText: 27,
     punctuationPattern: 9,
   });
 
@@ -97,7 +98,7 @@ test('Grammar question-generator P19 denominator assertions', () => {
   assert.equal(audit.lowDepthGeneratedTemplates.length, 0, 'Deep low-depth families must be zero');
   assert.equal(audit.answerSpecTemplateCount, 479);
   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
-  assert.equal(audit.manualReviewOnlyTemplateCount, 151);
+  assert.equal(audit.manualReviewOnlyTemplateCount, 180);
   assert.equal(audit.generatedSignatureCollisions.length, 0, 'Cross-template collisions must be zero');
 });
 

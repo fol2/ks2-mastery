@@ -1,6 +1,6 @@
 {
   "contentReleaseId": "grammar-qg-p19-2026-05-04",
-  "certificationPhase": "p19",
+  "certificationPhase": "grammar-qg-p19",
   "templateDenominator": 510,
   "seedWindow": {
     "certification": "1..30"
@@ -14,7 +14,7 @@
     "semantic-prompt-cue-audit": "1..30"
   },
   "expectedItemCount": 15300,
-  "expectedMarkingMatrixEntryCount": 190,
+  "expectedMarkingMatrixEntryCount": 45,
   "expectedOutputPaths": [
     "reports/grammar/grammar-qg-p10-render-inventory.json",
     "reports/grammar/grammar-qg-p10-render-inventory-redacted.md"
@@ -32,7 +32,7 @@
   "generatorScript": "scripts/generate-grammar-qg-quality-inventory.mjs",
   "generatorScriptHash": "3a1af25b8d10a5f4077aec408772cea62290ec068360d2a27aaa83480c1a6a87",
   "generationCommand": "node scripts/generate-grammar-qg-quality-inventory.mjs --seeds=1..30 --release=p19",
-  "generatedAt": "2026-05-04T02:26:14.295Z",
+  "generatedAt": "2026-05-04T08:40:21.554Z",
   "answerInternalsIncluded": true,
   "answerInternalsRedacted": true,
   "postDeployRequiredForPostDeployCertification": true
