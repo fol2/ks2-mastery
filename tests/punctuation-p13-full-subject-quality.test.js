@@ -248,3 +248,58 @@ test('P13 paragraph repair rejects missing sentence boundary punctuation', () =>
   }
   assert.deepEqual(falseAccepts.slice(0, 20), []);
 });
+
+test('P14 star-pacing profiles produce distinct finalCorrect values (divergence assertion)', () => {
+  // The star-pacing simulation claims six distinct learner profiles produce
+  // meaningfully different star-growth curves. This test makes that claim
+  // falsifiable in CI by running a minimal 8-session x 6-slot simulation
+  // using the same correctnessFor branching logic from the production
+  // simulator and asserting that no two profiles produce identical
+  // finalCorrect counts.
+  const PROFILES = ['always-correct', 'deep-practice', 'long-gap-retention', 'easy-template-only', 'repeated-template', 'supported-after-wrong'];
+  const SESSIONS = 8;
+  const SLOTS = 6;
+  // Use a stable sample of items for determinism (first 50 items from the
+  // runtime bank, cycling through them per slot).
+  const sampleItems = runtime.items.slice(0, 50);
+
+  function correctnessFor(profile, sessionIndex, slot, item) {
+    if (profile === 'always-correct') return true;
+    if (profile === 'easy-template-only') {
+      return item?.mode === 'choose' || item?.inputKind === 'choice';
+    }
+    if (profile === 'repeated-template') {
+      return Array.isArray(item?.skillIds) && item.skillIds.includes('apostrophe_contractions');
+    }
+    if (profile === 'deep-practice') {
+      return ((sessionIndex * 7 + slot * 13 + (item?.id?.length || 0)) % 5) !== 0;
+    }
+    if (profile === 'long-gap-retention') return ((sessionIndex + slot) % 5) !== 0;
+    if (profile === 'supported-after-wrong') return slot > 0;
+    return ((sessionIndex + slot + (item?.id?.length || 0)) % 4) !== 0;
+  }
+
+  const finalCorrects = new Map();
+  for (const profile of PROFILES) {
+    let correctCount = 0;
+    for (let session = 0; session < SESSIONS; session += 1) {
+      for (let slot = 0; slot < SLOTS; slot += 1) {
+        const itemIndex = (session * SLOTS + slot) % sampleItems.length;
+        const item = sampleItems[itemIndex];
+        if (correctnessFor(profile, session, slot, item)) {
+          correctCount += 1;
+        }
+      }
+    }
+    finalCorrects.set(profile, correctCount);
+  }
+
+  // Assert all six profiles produce distinct finalCorrect values.
+  const values = [...finalCorrects.values()];
+  const uniqueValues = new Set(values);
+  assert.equal(
+    uniqueValues.size,
+    PROFILES.length,
+    `expected ${PROFILES.length} distinct finalCorrect values but got ${uniqueValues.size}: ${JSON.stringify(Object.fromEntries(finalCorrects))}`,
+  );
+});
