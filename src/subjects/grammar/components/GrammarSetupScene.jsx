@@ -17,12 +17,10 @@ import {
   GRAMMAR_DASHBOARD_HERO,
   GRAMMAR_MORE_PRACTICE_MODES,
   GRAMMAR_PRIMARY_MODE_CARDS,
-  GRAMMAR_MONSTER_STRIP_CHILD_COPY,
   buildGrammarDashboardModel,
   grammarMonsterImageVisual,
 } from './grammar-view-model.js';
 import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConfigContext.jsx';
-import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
 import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
@@ -111,16 +109,6 @@ function isRepeatingEasyGrammarWork(recentAttempts = []) {
     templateCounts.set(templateId, (templateCounts.get(templateId) || 0) + 1);
   }
   return [...templateCounts.values()].some((count) => count >= 3);
-}
-
-function TodayCard({ card }) {
-  return (
-    <div className="grammar-today-card" data-today-id={card.id}>
-      <div className="grammar-today-label">{card.label}</div>
-      <div className="grammar-today-value">{card.value}</div>
-      <div className="grammar-today-detail">{card.detail}</div>
-    </div>
-  );
 }
 
 function MonsterStripEntry({ entry }) {
@@ -392,8 +380,6 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
         <SetupSidePanel
           asideClassName="grammar-setup-sidebar"
           cardClassName="grammar-setup-sidebar-card"
-          headClassName="grammar-setup-sidebar-head"
-          headTag="header"
           ariaLabel="Where you stand"
           body={(
             <SubjectCompanionPanel
@@ -418,9 +404,9 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
               meadowEmpty="Start practising to see your Grammar creatures."
               stats={[
                 { label: 'Concepts', value: String(dashboard.concordiumProgress?.total ?? 0) },
+                { label: 'Secure', value: String(dashboard.todayCards?.find(c => c.id === 'secure')?.value ?? 0) },
                 { label: 'Trouble', value: String(troubleCount), tone: troubleCount > 0 ? 'warn' : undefined },
-                { label: "Today's cards", value: String((dashboard.todayCards || []).length) },
-                { label: 'Accuracy', value: dashboard.todayCards?.find(c => c.id === 'accuracy')?.value != null ? `${dashboard.todayCards.find(c => c.id === 'accuracy').value}%` : '—' },
+                { label: 'Due today', value: String(dashboard.todayCards?.find(c => c.id === 'due')?.value ?? 0), tone: (dashboard.todayCards?.find(c => c.id === 'due')?.value ?? 0) > 0 ? 'warn' : undefined },
               ]}
               nextFocus={troubleCount > 0 ? 'Trouble concepts need revision' : ''}
             />
