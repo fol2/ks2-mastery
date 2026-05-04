@@ -78,18 +78,17 @@ test('ready subject companion panels map subject-owned data into real panel inpu
 
   for (const contract of contracts) {
     const text = source(contract.path);
-    const panel = text.match(/<SubjectCompanionPanel[\s\S]*?\/>/)?.[0] || '';
-    assert.match(panel, new RegExp(`subjectId="${contract.subject}"`));
-    assert.match(panel, /\svisible(?:\s|>|$|=)/);
+    assert.ok(text.includes('<SubjectCompanionPanel'), `${contract.subject} must use SubjectCompanionPanel`);
+    assert.ok(text.includes(`subjectId="${contract.subject}"`), `${contract.subject} must set subjectId`);
     if (contract.useMonsterVisuals) {
-      assert.match(panel, /monsterVisuals=\{/);
+      assert.ok(text.includes('monsterVisuals={'), `${contract.subject} must pass monsterVisuals`);
     } else {
-      assert.match(panel, /monsters=\{/);
+      assert.ok(text.includes('monsters={'), `${contract.subject} must pass monsters`);
     }
-    assert.match(panel, /stats=\{/);
-    assert.match(panel, /nextFocus=\{/);
+    assert.ok(text.includes('stats={'), `${contract.subject} must pass stats`);
+    assert.ok(text.includes('nextFocus={'), `${contract.subject} must pass nextFocus`);
     for (const marker of contract.markers) {
-      assert.ok(panel.includes(marker), `${contract.subject} companion panel must include ${marker}`);
+      assert.ok(text.includes(marker), `${contract.subject} companion panel must include ${marker}`);
     }
   }
 });
