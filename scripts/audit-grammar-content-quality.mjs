@@ -216,22 +216,19 @@ export function buildGrammarContentQualityAudit(seeds = DEFAULT_SEEDS) {
         }
       }
 
-      // --- HARD FAIL 8: Raw prompt passes marking ---
+      // --- HARD FAIL 8: Raw prompt passes marking (constructed-response only) ---
       const constructedKinds = ['normalisedText', 'acceptedSet', 'punctuationPattern'];
-      if (question.answerSpec && constructedKinds.includes(question.answerSpec.kind)) {
-        const nearMiss8 = question.answerSpec.nearMiss;
-        if (Array.isArray(nearMiss8) && nearMiss8.length > 0) {
-          for (const nm of nearMiss8) {
-            const result = markByAnswerSpec(question.answerSpec, nm);
-            if (result.correct === true) {
-              hardFailures.push({
-                rule: 'raw-prompt-passes',
-                templateId: template.id,
-                seed,
-                detail: `Near-miss/raw value "${nm}" passes markByAnswerSpec — question is a no-op`,
-              });
-              break;
-            }
+      if (constructedKinds.includes(question.answerSpec?.kind)) {
+        const rawPromptText = stripHtml(question.stemHtml || '').trim();
+        if (rawPromptText) {
+          const rawResult = markByAnswerSpec(question.answerSpec, rawPromptText);
+          if (rawResult?.correct) {
+            hardFailures.push({
+              rule: 'raw-prompt-passes',
+              templateId: template.id,
+              seed,
+              detail: `Submitting the raw prompt text "${rawPromptText.slice(0, 80)}..." as an answer marks correct.`,
+            });
           }
         }
       }
