@@ -1,8 +1,8 @@
-# CI Speed Optimisation: Shard node tests into 30 parallel matrix jobs.
+# CI Speed Optimisation: Shard node tests into 40 parallel matrix jobs.
 #
-# The 630+ file Node test suite is split across 30 shards using
-# `node --test --test-shard=N/30` (built-in since Node 22). Each shard
-# runs ~21 files in its own GitHub Actions matrix cell, targeting
+# The 630+ file Node test suite is split across 40 shards using
+# `node --test --test-shard=N/40` (built-in since Node 22). Each shard
+# runs ~16 files in its own GitHub Actions matrix cell, targeting
 # < 60s wall-clock. Heavy files split to prevent shard imbalance.
 #
 # Structure:
@@ -66,8 +66,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
-        total: [30]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+        total: [40]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
