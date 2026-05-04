@@ -115,10 +115,10 @@ test('SubjectCompanionPanel: stats render as dl/dt/dd elements', async () => {
   `);
   assert.match(html, /class="ss-stat-grid"/);
   assert.match(html, /class="ss-stat-label">Due<\/div>/);
-  assert.match(html, /class="ss-stat-value"[^>]*>5<\/div>/);
+  assert.match(html, /class="ss-stat-value">5<\/div>/);
   assert.match(html, /class="ss-stat-label">Secure<\/div>/);
-  assert.match(html, /class="ss-stat-value"[^>]*>20<\/div>/);
-  assert.match(html, /color:var\(--warn-strong\)/);
+  assert.match(html, /class="ss-stat-value">20<\/div>/);
+  assert.match(html, /ss-stat--warn/);
 });
 
 // ---------------------------------------------------------------

@@ -5709,6 +5709,9 @@ button.chip,
   margin-top: 2px;
   letter-spacing: -0.015em;
 }
+.ss-stat--warn .ss-stat-value {
+  color: var(--warn-strong);
+}
 
 /* Word bank jump — action-shaped tile under the stat grid. */
 .ss-bank-link {

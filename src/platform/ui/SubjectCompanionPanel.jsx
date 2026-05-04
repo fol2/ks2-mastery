@@ -63,9 +63,9 @@ export function SubjectCompanionPanel({
       {stats.length > 0 ? (
         <div className="ss-stat-grid">
           {stats.map((s) => (
-            <div className="ss-stat" key={s.label}>
+            <div className={`ss-stat${s.tone ? ` ss-stat--${s.tone}` : ''}`} key={s.label}>
               <div className="ss-stat-label">{s.label}</div>
-              <div className="ss-stat-value" style={s.tone === 'warn' ? { color: 'var(--warn-strong)' } : undefined}>{s.value}</div>
+              <div className="ss-stat-value">{s.value}</div>
             </div>
           ))}
         </div>
