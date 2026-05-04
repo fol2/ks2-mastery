@@ -23,7 +23,7 @@ Standing caveats (do NOT block FULL but must be disclosed alongside it):
 
 1. Round-2 document review F4 — the smoke validator's `attestation.releasePhase / runtimeItemCount / generatedFamilyDepths` mirror local imports for shape; the canonical worker-attested values flow through `punctuation.productionObserved` (release ID, runtime items, published reward units) and `smartSix.observedRuntimeStats`. The smoke output now carries an `_attestationSourceLegend` block flagging which sub-checks are client-asserted vs worker-attested.
 2. Round-2 document review F7 — release-ID namespace bump invalidates existing learner punctuation progress at deploy time. Comms must ship to parent + admin hubs **before** the production deploy, not after. See "Communications and rollout debt" section below.
-3. Round-2 document review F3 — Gate 6 inflation rule has been rewritten to be falsifiable (rule-version 3, normalised against the natural 6/4 = 1.5× round-length ratio). The canonical (always-correct) profile shows ratio 1.5 = natural, normalised 1.0 → no engine-level inflation. Two edge-case profiles (repeated-template, supported-after-wrong) breach the threshold and are surfaced as diagnostic findings — they do not flip Gate 6's roundLength but do warrant follow-up scheduler analysis.
+3. Round-2 document review F3 — Gate 6 inflation rule has been rewritten to be falsifiable (rule-version 3, normalised against the natural 6/4 = 1.5× round-length ratio). The canonical (always-correct) profile shows ratio 1.5 = natural, normalised 1.0 → no engine-level inflation. One edge-case profile (supported-after-wrong) breaches the threshold and is surfaced as a diagnostic finding — it does not flip Gate 6's roundLength but does warrant follow-up scheduler analysis.
 
 ## Pull request
 
@@ -163,16 +163,16 @@ Scheduler honesty (read-pass): `shared/punctuation/scheduler.js:240-269` `signat
 
 | Profile | 4q stars/correct | 6q stars/correct | Raw ratio | Normalised ratio | Inflation |
 | :--- | ---: | ---: | ---: | ---: | :--- |
-| **always-correct (canonical)** | (sim output) | (sim output) | 1.500 | 1.000 | none |
-| deep-practice | | | 1.510 | 1.007 | none |
-| long-gap-retention (7-day gap) | | | 1.500 | 1.000 | none |
-| easy-template-only (choose-only) | | | 1.500 | 1.000 | none |
-| repeated-template (apostrophe-only) | | | 1.909 | 1.273 | **diagnostic** |
-| supported-after-wrong | | | 1.667 | 1.111 | **diagnostic** |
+| **always-correct (canonical)** | 0.3125 | 0.2083 | 1.500 | 1.000 | none |
+| deep-practice | 0.3891 | 0.2597 | 1.498 | 0.999 | none |
+| long-gap-retention (7-day gap) | 0.3906 | 0.2604 | 1.500 | 1.000 | none |
+| easy-template-only (choose-only) | 1.2500 | 1.2500 | 1.000 | 0.667 | none |
+| repeated-template (apostrophe-only) | 5.0000 | 3.4483 | 1.450 | 0.967 | none |
+| supported-after-wrong | 0.4167 | 0.2500 | 1.667 | 1.111 | **diagnostic** |
 
 Source: `docs/plans/.../p14/punctuation-p14-star-pacing-simulation.json#/gate6Decision`.
 
-`gate6RoundLength: '4'` because the canonical profile sits exactly at the natural ratio (no inflation). Two diagnostic profiles exceed the 1.575 threshold (1.05 × natural); both are correctness-shaped edge cases, not engine inflation. They are reported in the simulation JSON's `diagnosticInflatedProfiles` block as scheduler-tuning input, not as a reason to flip skill-detail. See `PunctuationSkillDetailModal.jsx:170` (unchanged from P13).
+`gate6RoundLength: '4'` because the canonical profile sits exactly at the natural ratio (no inflation). One diagnostic profile (`supported-after-wrong`) exceeds the 1.575 threshold (1.05 × natural); it is a correctness-shaped edge case, not engine inflation. It is reported in the simulation JSON's `diagnosticInflatedProfiles` block as scheduler-tuning input, not as a reason to flip skill-detail. See `PunctuationSkillDetailModal.jsx:170` (unchanged from P13).
 
 ### Gate 7 — Star pacing simulator
 

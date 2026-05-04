@@ -20,6 +20,7 @@
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { PUNCTUATION_CONTENT_INDEXES } from '../shared/punctuation/content.js';
 import { selectPunctuationItem } from '../shared/punctuation/scheduler.js';
@@ -53,6 +54,14 @@ const PROFILES = Object.freeze([
   { id: 'supported-after-wrong', label: 'Supported-after-wrong learner (first-slot fails, rest succeed)', gapDays: 1 },
 ]);
 
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return hash >>> 0;
+}
+
 function makeRng(seed) {
   let state = seed >>> 0;
   return () => {
@@ -70,7 +79,9 @@ function correctnessFor(profile, sessionIndex, slot, item) {
   if (profile === 'easy-template-only') {
     // Only `choose`-mode items (the easiest answer surface) succeed; typed
     // surfaces fail, simulating a learner who avoids open production.
-    return item?.mode === 'choose' || item?.inputKind === 'choice';
+    // Note: check ONLY item.mode — inputKind is an internal property that may
+    // match more broadly and collapse this profile's trace into always-correct.
+    return item?.mode === 'choose';
   }
   if (profile === 'repeated-template') {
     // Strong on apostrophe_contractions only; wrong on every other skill.
@@ -237,6 +248,7 @@ function runSession({
     selectedSignatures: [],
     currentItemId: null,
     selectionReason: null,
+    answeredCount: 0,
   };
   const slotItems = [];
   // adv-r2-006: profileGapMs replaces the implicit DAY_MS cadence, letting
@@ -267,6 +279,7 @@ function runSession({
     });
     session.recentItemIds.push(item.id);
     session.currentItemId = item.id;
+    session.answeredCount += 1;
     if (item.variantSignature) session.selectedSignatures.push(item.variantSignature);
   }
   return slotItems;
@@ -275,7 +288,7 @@ function runSession({
 function simulateProfile({ profile, roundLength, prefs }) {
   const profileMeta = PROFILES.find((p) => p.id === profile);
   const profileGapMs = (profileMeta?.gapDays ?? 1) * DAY_MS;
-  const rng = makeRng(roundLength * 1000 + profile.length);
+  const rng = makeRng(hashCode(profile) * 31 + roundLength);
   const progressState = { items: {}, facets: {}, rewardUnits: {}, attempts: [] };
   const recentItemIds = [];
   const sessionRecords = [];
@@ -472,8 +485,27 @@ function main() {
   } else {
     process.stdout.write(`${json}\n`);
   }
+
+  // Gate 6 exit-code enforcement: CI must catch inflation violations.
+  const perProfile = decision.perProfile || [];
+  const canonical = perProfile.find((p) => p.profileId === 'always-correct');
+  if (canonical?.inflated) {
+    process.stderr.write(
+      `GATE 6 FAIL: canonical profile (always-correct) shows inflation — ` +
+      `normalised ratio ${canonical.normalisedRatio} exceeds threshold.\n`
+    );
+    process.exitCode = 1;
+  }
+  const decisionBearingInflated = perProfile.filter((p) => p.inflated);
+  if (decisionBearingInflated.length > 0 && !canonical?.inflated) {
+    process.stderr.write(
+      `GATE 6 WARNING: ${decisionBearingInflated.length} profile(s) show inflation ` +
+      `(${decisionBearingInflated.map((p) => p.profileId).join(', ')}). ` +
+      `Canonical profile is clean — no exit-code failure, but investigate.\n`
+    );
+  }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
   main();
 }
