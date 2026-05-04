@@ -1,11 +1,9 @@
 /**
- * Grammar QG P10 — Evidence Artefacts Integration Test
+ * Grammar QG — Evidence Artefacts Integration Test
  *
- * Verifies all P10 report files exist and have correct structure:
- * - Render inventory has 2,340 items
- * - Quality register has 78 entries
- * - Distractor audit has 0 S0 failures
- * - Certification status map matches quality register
+ * Verifies all evidence artefact files exist and have the expected structure.
+ * Counts are derived from GRAMMAR_TEMPLATE_METADATA so the test stays valid
+ * across release expansions (P10 → P14 → P18 → P19 …).
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,9 +11,17 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+import {
+  GRAMMAR_TEMPLATE_METADATA,
+  GRAMMAR_CONTENT_RELEASE_ID,
+} from '../worker/src/subjects/grammar/content.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
 const REPORTS_DIR = path.resolve(ROOT_DIR, 'reports', 'grammar');
+const SEED_RANGE_SIZE = 30;
+const EXPECTED_TEMPLATE_COUNT = GRAMMAR_TEMPLATE_METADATA.length;
+const EXPECTED_INVENTORY_ITEMS = EXPECTED_TEMPLATE_COUNT * SEED_RANGE_SIZE;
 
 // ---------------------------------------------------------------------------
 // 1. Report files exist
@@ -48,21 +54,21 @@ describe('P10 Evidence Artefacts: file existence', () => {
 describe('P10 Evidence Artefacts: render inventory', () => {
   const inventoryPath = path.join(REPORTS_DIR, 'grammar-qg-p10-render-inventory.json');
 
-  it('has 2,340 items (78 templates x 30 seeds)', () => {
+  it(`has ${EXPECTED_INVENTORY_ITEMS} items (${EXPECTED_TEMPLATE_COUNT} templates x ${SEED_RANGE_SIZE} seeds)`, () => {
     if (!fs.existsSync(inventoryPath)) {
       assert.fail('Render inventory file does not exist — run generate script first');
     }
     const data = JSON.parse(fs.readFileSync(inventoryPath, 'utf8'));
-    assert.equal(data.metadata.totalItems, 2340, `Expected 2340 items, got ${data.metadata.totalItems}`);
-    assert.equal(data.items.length, 2340, `Expected 2340 items array length, got ${data.items.length}`);
+    assert.equal(data.metadata.totalItems, EXPECTED_INVENTORY_ITEMS, `Expected ${EXPECTED_INVENTORY_ITEMS} items, got ${data.metadata.totalItems}`);
+    assert.equal(data.items.length, EXPECTED_INVENTORY_ITEMS, `Expected ${EXPECTED_INVENTORY_ITEMS} items array length, got ${data.items.length}`);
   });
 
   it('has correct metadata fields', () => {
     if (!fs.existsSync(inventoryPath)) return;
     const data = JSON.parse(fs.readFileSync(inventoryPath, 'utf8'));
-    assert.equal(data.metadata.templateCount, 78);
-    assert.equal(data.metadata.seedRange, '1..30');
-    assert.ok(data.metadata.contentReleaseId.startsWith('grammar-qg-p10'));
+    assert.equal(data.metadata.templateCount, EXPECTED_TEMPLATE_COUNT);
+    assert.equal(data.metadata.seedRange, `1..${SEED_RANGE_SIZE}`);
+    assert.equal(data.metadata.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
   });
 
   it('each item has required render fields', () => {
@@ -171,12 +177,12 @@ describe('P10 Evidence Artefacts: U6 render inventory enrichment', () => {
 describe('P10 Evidence Artefacts: quality register', () => {
   const registerPath = path.join(REPORTS_DIR, 'grammar-qg-p10-quality-register.json');
 
-  it('has 78 entries (one per template)', () => {
+  it(`has ${EXPECTED_TEMPLATE_COUNT} entries (one per template)`, () => {
     if (!fs.existsSync(registerPath)) {
       assert.fail('Quality register file does not exist — run generate script first');
     }
     const data = JSON.parse(fs.readFileSync(registerPath, 'utf8'));
-    assert.equal(data.entries.length, 78, `Expected 78 entries, got ${data.entries.length}`);
+    assert.equal(data.entries.length, EXPECTED_TEMPLATE_COUNT, `Expected ${EXPECTED_TEMPLATE_COUNT} entries, got ${data.entries.length}`);
   });
 
   it('each entry has all 14 required fields (13 content + templateId)', () => {
@@ -336,8 +342,14 @@ describe('P10 Evidence Artefacts: distractor audit', () => {
         `ambiguousConceptArea must be boolean for ${item.templateId}`);
       assert.ok(typeof item.requiresAdultReview === 'boolean',
         `requiresAdultReview must be boolean for ${item.templateId}`);
-      assert.equal(item.ambiguousConceptArea, item.requiresAdultReview,
-        'requiresAdultReview must mirror ambiguousConceptArea');
+      // requiresAdultReview is the union of ambiguous-concept-area and
+      // surface-cue risks (see scripts/audit-grammar-distractor-quality.mjs
+      // header), so an ambiguous concept must always require adult review,
+      // but adult review can also be triggered by surface-cue risk alone.
+      if (item.ambiguousConceptArea) {
+        assert.equal(item.requiresAdultReview, true,
+          `requiresAdultReview must be true when ambiguousConceptArea is true (${item.templateId})`);
+      }
     }
   });
 
@@ -381,10 +393,15 @@ describe('P10 Evidence Artefacts: status map vs quality register consistency', (
     }
   });
 
-  it('status map has 78 entries', () => {
+  it(`status map has ${EXPECTED_TEMPLATE_COUNT} entries`, () => {
     if (!fs.existsSync(statusMapPath)) return;
     const statusMap = JSON.parse(fs.readFileSync(statusMapPath, 'utf8'));
-    assert.equal(Object.keys(statusMap).length, 78);
+    // P19: status map is now `{ metadata, entries: [...] }` rather than the
+    // legacy flat templateId-keyed object. Walk `entries` for the count.
+    const entryCount = Array.isArray(statusMap?.entries)
+      ? statusMap.entries.length
+      : Object.keys(statusMap).length;
+    assert.equal(entryCount, EXPECTED_TEMPLATE_COUNT);
   });
 });
 

@@ -12,12 +12,18 @@ import {
 import {
   validateReleaseFrontmatter,
 } from '../scripts/validate-grammar-qg-completion-report.mjs';
+import { GRAMMAR_CONTENT_RELEASE_ID } from '../worker/src/subjects/grammar/content.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
 const REPORTS_DIR = path.resolve(ROOT_DIR, 'reports', 'grammar');
 
+// P10 is the historical phase that produced the pinned certification manifest.
+// The render-inventory artefacts use a stable filename (`grammar-qg-p10-…`)
+// but their contents track the live release id, so checks that walk the
+// inventory must use the live release id rather than the P10 string.
 const P10_RELEASE_ID = 'grammar-qg-p10-2026-04-29';
+const LIVE_RELEASE_ID = GRAMMAR_CONTENT_RELEASE_ID;
 
 // ---------------------------------------------------------------------------
 // 1. P10 manifest has correct release ID matching code
@@ -287,16 +293,16 @@ describe('P10 Evidence Truth: report-vs-manifest release ID', () => {
     assert.ok(mismatch, 'Expected metadata mismatch when checking against wrong release ID');
   });
 
-  it('P10 artefacts are internally consistent on P10 release ID', () => {
+  it('inventory artefacts are internally consistent on the live release ID', () => {
     const manifest = JSON.parse(fs.readFileSync(
       path.join(REPORTS_DIR, 'grammar-qg-p10-certification-manifest.json'), 'utf8'));
     assert.equal(manifest.contentReleaseId, P10_RELEASE_ID);
     const invResult = validateInventoryReleaseIds(
       path.join(REPORTS_DIR, 'grammar-qg-p10-render-inventory.json'),
-      P10_RELEASE_ID,
+      LIVE_RELEASE_ID,
     );
     assert.equal(invResult.mismatches.length, 0,
-      `P10 inventory must be internally consistent on P10 release ID`);
+      `Render inventory must be internally consistent on the live release id ${LIVE_RELEASE_ID}`);
   });
 });
 
@@ -321,19 +327,19 @@ describe('P10 Evidence Truth: report frontmatter final_content_release_id', () =
 describe('P10 Evidence Truth: inventory release ID cross-check', () => {
   const inventoryPath = path.join(REPORTS_DIR, 'grammar-qg-p10-render-inventory.json');
 
-  it('inventory metadata release ID matches P10 release string', () => {
+  it('inventory metadata release ID matches the live release string', () => {
     assert.ok(fs.existsSync(inventoryPath), 'Render inventory must exist');
-    const result = validateInventoryReleaseIds(inventoryPath, P10_RELEASE_ID);
+    const result = validateInventoryReleaseIds(inventoryPath, LIVE_RELEASE_ID);
     const metadataMismatch = result.mismatches.find((m) => m.field === 'inventoryMetadataReleaseId');
     assert.equal(metadataMismatch, undefined,
-      `Inventory metadata.contentReleaseId must match ${P10_RELEASE_ID}`);
+      `Inventory metadata.contentReleaseId must match ${LIVE_RELEASE_ID}`);
   });
 
-  it('inventory items release IDs match P10 release string', () => {
+  it('inventory items release IDs match the live release string', () => {
     assert.ok(fs.existsSync(inventoryPath), 'Render inventory must exist');
-    const result = validateInventoryReleaseIds(inventoryPath, P10_RELEASE_ID);
+    const result = validateInventoryReleaseIds(inventoryPath, LIVE_RELEASE_ID);
     const itemMismatches = result.mismatches.filter((m) => m.field.startsWith('inventoryItem['));
     assert.equal(itemMismatches.length, 0,
-      `All inventory items must have contentReleaseId === ${P10_RELEASE_ID}`);
+      `All inventory items must have contentReleaseId === ${LIVE_RELEASE_ID}`);
   });
 });

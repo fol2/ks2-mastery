@@ -380,13 +380,22 @@ function recentAttemptForQueueTemplate(template, seed) {
   };
 }
 
-function queueEntry(template) {
+// P19 Contract D.4 — every queue entry carries a `reason` describing which
+// selection lane chose it. The grammar smart-practice audit
+// (scripts/audit-grammar-qg-p19-smart-practice.mjs) treats any duplicate
+// templateId / surfaceKey within a single 5-item round as a failure unless
+// every duplicating entry carries an allow-listed reason
+// ({retry, spaced-retrieval, trouble-cluster, similar-problem, focus-saturation,
+//  priority-urgent}). Keeping the lane label explicit makes the exception
+// path explainable rather than declarative-only.
+function queueEntry(template, reason = 'fallback') {
   return {
     templateId: template.id,
     skillIds: (template.skillIds || []).slice(),
     questionType: template.questionType,
     generative: Boolean(template.generative),
     satsFriendly: Boolean(template.satsFriendly),
+    reason,
   };
 }
 
@@ -449,8 +458,8 @@ export function buildGrammarPracticeQueue({
     return broadFresh.length > 0 ? broadFresh : templateFresh;
   }
 
-  function pushQueueEntry(template, candidateSeed) {
-    queue.push(queueEntry(template));
+  function pushQueueEntry(template, candidateSeed, reason) {
+    queue.push(queueEntry(template, reason));
     plannedTemplateIds.add(template.id);
     workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
     addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
@@ -466,7 +475,7 @@ export function buildGrammarPracticeQueue({
         const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
         const recentVariants = workingRecentVariants;
         if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
-        pushQueueEntry(template, candidateSeed);
+        pushQueueEntry(template, candidateSeed, 'focus-saturation');
       }
     }
   }
@@ -492,7 +501,12 @@ export function buildGrammarPracticeQueue({
         candidateSeed,
         nowTs,
       });
-      pushQueueEntry(template, candidateSeed);
+      // P19 Contract D.4 — when the trouble mode is selected the urgent lane
+      // is acting as the trouble-cluster cluster. For other modes it is the
+      // priority lane (due/weak/recent-miss). Both labels are explicit and
+      // explainable.
+      const reason = mode === 'trouble' ? 'trouble-cluster' : 'priority-urgent';
+      pushQueueEntry(template, candidateSeed, reason);
     }
   }
 
@@ -512,7 +526,7 @@ export function buildGrammarPracticeQueue({
       candidateSeed,
       nowTs,
     });
-    pushQueueEntry(template, candidateSeed);
+    pushQueueEntry(template, candidateSeed, 'fallback');
   }
   return queue;
 }
@@ -555,7 +569,7 @@ export function buildGrammarMiniPack({
         const candidateSeed = seeds[pack.length] || Number(seed) || 1;
         const recentVariants = workingRecentVariants;
         if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
-        pack.push(queueEntry(template));
+        pack.push(queueEntry(template, 'focus-saturation'));
         usedTemplateIds.add(template.id);
         usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
         workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
@@ -596,7 +610,11 @@ export function buildGrammarMiniPack({
       nowTs,
     });
 
-    pack.push(queueEntry(template));
+    // Mini-packs reset their distinct-template set when the pool is exhausted
+    // (the only way duplicates land in a satsset round). Tag those repeats as
+    // spaced-retrieval so the P19 simulator's allow-list can recognise them.
+    const reason = usedTemplateIds.has(template.id) ? 'spaced-retrieval' : 'fallback';
+    pack.push(queueEntry(template, reason));
     usedTemplateIds.add(template.id);
     usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
     workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));

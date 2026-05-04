@@ -11254,9 +11254,42 @@ function buildP14SelectedQuestion(template, seed, family) {
   });
 }
 
+// P19 Contract A — open-response marking fairness for P14 priority templates.
+// Mirror the manual-expansion generator's predicate so the constructed-rewrite
+// P14 templates whose prompt is an open instruction ("Add the missing
+// comma…", "Add the parenthesis commas…", etc.) are not marked against a
+// single accepted answer.
+const P14_OPEN_PROMPT_RE = /\b(explain|transfer task|write one sentence|build an?|mixed check|add the|move the|join the)\b/i;
+
 function buildP14ConstructedQuestion(template, seed) {
   const item = p14ItemForConcept(template.skillIds[0], "rewrite", seed);
   const correct = cleanSpaces(item.correct);
+  const acceptedList = [correct].concat(Array.isArray(item.accepted) ? item.accepted.map(cleanSpaces) : []).filter(Boolean);
+  const promptText = String(item.prompt || '');
+  const triggersFairness = P14_OPEN_PROMPT_RE.test(promptText) && acceptedList.length < 3;
+
+  if (triggersFairness) {
+    const answerSpec = manualReviewOnlyAnswerSpec({
+      feedbackLong: item.why || 'Your answer has been saved for adult review.',
+      minimalHint: 'Write a full answer; this item is reviewed by an adult, not auto-marked.'
+    });
+    answerSpec.expectedAnswerSummary = correct;
+    answerSpec.conversionReason = 'p19-open-response-fairness';
+    return makeBaseQuestion(template, seed, {
+      marks: 0,
+      answerSpec,
+      nonScored: true,
+      manualReviewOnly: true,
+      stemHtml: `<p>${escapeHtml(item.prompt)}</p>`,
+      inputSpec: { type: 'text', label: 'Answer', placeholder: 'Type your answer (saved for adult review)' },
+      solutionLines: [
+        item.why || 'This open-response item is saved for adult review.',
+        `Expected answer summary: ${correct}`
+      ],
+      evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+    });
+  }
+
   const answerSpec = normalisedTextAnswerSpec(correct, item.nearMisses || [], {
     misconception: item.misconception,
     feedbackLong: item.why,
@@ -11321,26 +11354,47 @@ const P14_FAMILIES = Object.freeze([
   })
 ]);
 
+// P19 Contract A: P14 priority constructed_rewrite templates whose prompts
+// always begin with an open instruction ("Add the missing X…") cannot be
+// scored fairly against a single accepted answer. The runtime
+// buildP14ConstructedQuestion converts them to manualReviewOnly; this set
+// keeps the template metadata aligned with that runtime decision so audits
+// and metadata consumers see a consistent answerSpecKind.
+const P14_FAIRNESS_CONVERTED_TEMPLATE_IDS = new Set([
+  'qg_p14_fronted_adverbials_constructed_rewrite',
+  'qg_p14_speech_punctuation_constructed_rewrite',
+  'qg_p14_parenthesis_commas_constructed_rewrite',
+]);
+
 const P14_PRIORITY_TEMPLATES = P14_PRIORITY_CONCEPTS.flatMap((concept) => (
-  P14_FAMILIES.map((family) => Object.freeze({
-    id: `qg_p14_${concept.key}_${family.suffix}`,
-    label: `${concept.label} ${family.label}`,
-    domain: concept.domain,
-    questionType: family.questionType,
-    difficulty: family.family === "transfer" ? 3 : 2,
-    satsFriendly: true,
-    isSelectedResponse: family.isSelectedResponse,
-    generative: true,
-    generatorFamilyId: `qg_p14_${concept.key}_${family.suffix}`,
-    requiresAnswerSpec: true,
-    answerSpecKind: family.isSelectedResponse ? "exact" : "normalisedText",
-    tags: family.tags,
-    skillIds: [concept.id],
-    generator(seed) {
-      if (family.family === "rewrite") return buildP14ConstructedQuestion(this, seed);
-      return buildP14SelectedQuestion(this, seed, family.family);
-    }
-  }))
+  P14_FAMILIES.map((family) => {
+    const id = `qg_p14_${concept.key}_${family.suffix}`;
+    const fairnessConverted = P14_FAIRNESS_CONVERTED_TEMPLATE_IDS.has(id);
+    const inferredKind = family.isSelectedResponse ? "exact" : "normalisedText";
+    return Object.freeze({
+      id,
+      label: `${concept.label} ${family.label}`,
+      domain: concept.domain,
+      questionType: family.questionType,
+      difficulty: family.family === "transfer" ? 3 : 2,
+      // satsFriendly stays true for legacy parity except when fairness conversion
+      // promotes the template to manualReviewOnly — those items are nonScored
+      // and excluded from the satsset pool by templateFitsMode in selection.js.
+      satsFriendly: !fairnessConverted,
+      isSelectedResponse: family.isSelectedResponse,
+      generative: true,
+      generatorFamilyId: id,
+      requiresAnswerSpec: true,
+      answerSpecKind: fairnessConverted ? "manualReviewOnly" : inferredKind,
+      tags: fairnessConverted ? family.tags.concat(['p19-manual-review-only', 'non-scored']) : family.tags,
+      skillIds: [concept.id],
+      fairnessConversion: fairnessConverted ? 'manualReviewOnly' : null,
+      generator(seed) {
+        if (family.family === "rewrite") return buildP14ConstructedQuestion(this, seed);
+        return buildP14SelectedQuestion(this, seed, family.family);
+      }
+    });
+  })
 ));
 
 const MANUAL_EXPANSION_CONCEPT_MISCONCEPTIONS = Object.freeze({
@@ -11556,6 +11610,48 @@ function buildManualExpansionSelectedQuestion(template, seed, caseItem, family) 
 }
 
 function buildManualExpansionConstructedQuestion(template, seed, caseItem, family) {
+  // P19 Contract A — open-response marking fairness.
+  // Families flagged by the generator as fairnessConversion='manualReviewOnly'
+  // are emitted with a manualReviewOnly answerSpec so the deterministic engine
+  // does not score them against an undersized accepted set.
+  if (family && family.fairnessConversion === 'manualReviewOnly') {
+    const expectedSummary = manualExpansionSafeText(caseItem.expectedAnswerSummary)
+      || manualExpansionCorrectText(caseItem)
+      || '';
+    const answerSpec = manualReviewOnlyAnswerSpec({
+      feedbackLong: manualExpansionSafeText(caseItem.feedbackLong)
+        || 'Your answer has been saved for adult review.',
+      minimalHint: 'Write a full answer; this item is reviewed by an adult, not auto-marked.'
+    });
+    answerSpec.expectedAnswerSummary = expectedSummary;
+    answerSpec.conversionReason = 'p19-open-response-fairness';
+
+    return makeBaseQuestion(template, seed, {
+      marks: 0,
+      sourceCaseId: caseItem.id,
+      sourcePack: caseItem.sourcePack,
+      depthTier: caseItem.depthTier,
+      answerSpec,
+      nonScored: true,
+      manualReviewOnly: true,
+      stemHtml: `<p>${escapeHtml(caseItem.promptText)}</p>`,
+      inputSpec: {
+        type: caseItem.inputType === "textarea" ? "textarea" : "text",
+        label: "Your answer",
+        placeholder: caseItem.inputType === "textarea"
+          ? "Write your full answer (saved for adult review)"
+          : "Type your answer (saved for adult review)"
+      },
+      solutionLines: [
+        manualExpansionSafeText(caseItem.feedbackLong)
+          || "This open-response item is saved for adult review.",
+        expectedSummary ? `Expected answer summary: ${expectedSummary}` : "",
+        `Source case: ${caseItem.id}`
+      ].filter(Boolean),
+      evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+    });
+  }
+
   const accepted = (Array.isArray(caseItem.acceptedAnswers) && caseItem.acceptedAnswers.length > 0)
     ? caseItem.acceptedAnswers.map(manualExpansionSafeText).filter(Boolean)
     : [manualExpansionCorrectText(caseItem)].filter(Boolean);
@@ -11656,27 +11752,37 @@ function buildManualExpansionQuestion(template, seed, family) {
   return buildManualExpansionSelectedQuestion(template, seed, caseItem, family);
 }
 
-const MANUAL_EXPANSION_TEMPLATES = GRAMMAR_MANUAL_EXPANSION_FAMILIES.map((family) => Object.freeze({
-  id: manualExpansionTemplateId(family.id),
-  label: `P18 manual expansion: ${manualExpansionTitleFromId(family.id)}`,
-  domain: manualExpansionDomain(family),
-  questionType: family.questionType || "choose",
-  difficulty: (family.depthTiers || []).some((tier) => ["deep", "mixed-transfer", "sat-style", "transfer"].includes(tier)) ? 3 : 2,
-  satsFriendly: true,
-  isSelectedResponse: family.inputType === "single_choice" || family.inputType === "table_choice",
-  generative: true,
-  generatorFamilyId: manualExpansionTemplateId(family.id),
-  requiresAnswerSpec: true,
-  answerSpecKind: family.inputType === "table_choice"
+const MANUAL_EXPANSION_TEMPLATES = GRAMMAR_MANUAL_EXPANSION_FAMILIES.map((family) => {
+  const isManualReviewFamily = family.fairnessConversion === 'manualReviewOnly';
+  const inferredKind = family.inputType === "table_choice"
     ? "multiField"
-    : ((family.inputType === "text" || family.inputType === "textarea") ? "normalisedText" : "exact"),
-  tags: ["qg-p18", "manual-expansion"].concat(family.sourcePacks || [], family.depthTiers || []),
-  skillIds: (family.conceptIds || []).slice(),
-  manualExpansionCaseCount: (family.cases || []).length,
-  generator(seed) {
-    return buildManualExpansionQuestion(this, seed, family);
-  }
-}));
+    : ((family.inputType === "text" || family.inputType === "textarea") ? "normalisedText" : "exact");
+  return Object.freeze({
+    id: manualExpansionTemplateId(family.id),
+    label: `P18 manual expansion: ${manualExpansionTitleFromId(family.id)}`,
+    domain: manualExpansionDomain(family),
+    questionType: family.questionType || "choose",
+    difficulty: (family.depthTiers || []).some((tier) => ["deep", "mixed-transfer", "sat-style", "transfer"].includes(tier)) ? 3 : 2,
+    // P19 Contract A: manualReviewOnly families are not SATs-friendly; the
+    // mini-test pool already filters them via templateFitsMode (selection.js),
+    // and explicit satsFriendly=false keeps reporting consistent.
+    satsFriendly: !isManualReviewFamily,
+    isSelectedResponse: family.inputType === "single_choice" || family.inputType === "table_choice",
+    generative: true,
+    generatorFamilyId: manualExpansionTemplateId(family.id),
+    requiresAnswerSpec: true,
+    answerSpecKind: isManualReviewFamily ? "manualReviewOnly" : inferredKind,
+    tags: ["qg-p18", "manual-expansion"]
+      .concat(family.sourcePacks || [], family.depthTiers || [])
+      .concat(isManualReviewFamily ? ["p19-manual-review-only", "non-scored"] : []),
+    skillIds: (family.conceptIds || []).slice(),
+    manualExpansionCaseCount: (family.cases || []).length,
+    fairnessConversion: family.fairnessConversion || null,
+    generator(seed) {
+      return buildManualExpansionQuestion(this, seed, family);
+    }
+  });
+});
 
 TEMPLATES.push(...P14_PRIORITY_TEMPLATES);
 TEMPLATES.push(...MANUAL_EXPANSION_TEMPLATES);
@@ -11798,6 +11904,7 @@ export function grammarTemplateMetadata(template = {}) {
     generatorFamilyId: grammarTemplateGeneratorFamilyId(template),
     answerSpecKind: template.answerSpecKind || null,
     requiresAnswerSpec: Boolean(template.requiresAnswerSpec || template.answerSpecKind),
+    fairnessConversion: template.fairnessConversion || null,
     tags: Object.freeze((template.tags || []).slice()),
     skillIds: Object.freeze((template.skillIds || []).slice()),
   };
