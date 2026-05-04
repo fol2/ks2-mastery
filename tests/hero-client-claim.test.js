@@ -244,6 +244,20 @@ describe('createHeroModeClient — claimTask error paths', () => {
     assert.equal(err.retryable, false);
   });
 
+  it('nested error shape { error: { code } } extracts code correctly', async () => {
+    const fakeFetch = createMockFetch([{
+      ok: false, status: 400, data: { ok: false, error: { code: 'hero_claim_task_not_in_quest', message: 'Task not found' } },
+    }]);
+    const client = createHeroModeClient({ ...defaultOpts(), fetch: fakeFetch });
+
+    const err = await client.claimTask(baseArgs).catch(e => e);
+
+    assert.ok(err instanceof HeroModeClientError);
+    assert.equal(err.code, 'hero_claim_task_not_in_quest');
+    assert.equal(err.status, 400);
+    assert.equal(err.retryable, false);
+  });
+
   it('network failure throws retryable HeroModeClientError', async () => {
     const calls = [];
     async function failingFetch(url, init) {
