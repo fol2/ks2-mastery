@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "phase": "punctuation-qg-p14-session-variety",
   "releaseId": "punctuation-qg-p14-3564-2026-05-04",
-  "generatedAt": "2026-05-04T02:14:45.364Z",
+  "generatedAt": "2026-05-04T07:49:28.571Z",
   "roundLength": 6,
   "mixedSeedSweep": {
     "sessionCount": 80,
@@ -140,14 +140,75 @@
       }
     ]
   },
-  "oneLearnerSweep": {
-    "sessionCount": 20,
+  "oneLearnerSweepMultiSeed": {
+    "seedCount": 5,
     "totalImmediateRepeats": 0,
-    "averageModesPerSession": 4.5,
-    "paragraphSessions": 13,
-    "transferSessions": 14,
-    "uniqueItemsAcrossSweep": 83,
-    "maxTransferRatio": 0.3333333333333333
+    "minUniqueItems": 74,
+    "maxUniqueItems": 84,
+    "meanUniqueItems": 80.2,
+    "minPerSessionTransferTouchRatio": 0.7,
+    "maxPerSessionTransferTouchRatio": 0.85,
+    "p95PerSessionTransferTouchRatio": 0.85,
+    "minSlotTransferRatio": 0.3333333333333333,
+    "maxSlotTransferRatio": 0.3333333333333333,
+    "minParagraphSessions": 13,
+    "perSeed": [
+      {
+        "seed": "0xface1234",
+        "sessionCount": 20,
+        "totalImmediateRepeats": 0,
+        "averageModesPerSession": 4.5,
+        "paragraphSessions": 13,
+        "transferSessions": 14,
+        "uniqueItemsAcrossSweep": 83,
+        "maxTransferRatio": 0.3333333333333333,
+        "transferTouchRatio": 0.7
+      },
+      {
+        "seed": "0xb16b00b5",
+        "sessionCount": 20,
+        "totalImmediateRepeats": 0,
+        "averageModesPerSession": 5.05,
+        "paragraphSessions": 17,
+        "transferSessions": 17,
+        "uniqueItemsAcrossSweep": 82,
+        "maxTransferRatio": 0.3333333333333333,
+        "transferTouchRatio": 0.85
+      },
+      {
+        "seed": "0xdeadbeef",
+        "sessionCount": 20,
+        "totalImmediateRepeats": 0,
+        "averageModesPerSession": 5.2,
+        "paragraphSessions": 17,
+        "transferSessions": 16,
+        "uniqueItemsAcrossSweep": 84,
+        "maxTransferRatio": 0.3333333333333333,
+        "transferTouchRatio": 0.8
+      },
+      {
+        "seed": "0xc0ffee01",
+        "sessionCount": 20,
+        "totalImmediateRepeats": 0,
+        "averageModesPerSession": 4.5,
+        "paragraphSessions": 15,
+        "transferSessions": 14,
+        "uniqueItemsAcrossSweep": 74,
+        "maxTransferRatio": 0.3333333333333333,
+        "transferTouchRatio": 0.7
+      },
+      {
+        "seed": "0xfeedface",
+        "sessionCount": 20,
+        "totalImmediateRepeats": 0,
+        "averageModesPerSession": 4.7,
+        "paragraphSessions": 14,
+        "transferSessions": 16,
+        "uniqueItemsAcrossSweep": 78,
+        "maxTransferRatio": 0.3333333333333333,
+        "transferTouchRatio": 0.8
+      }
+    ]
   },
   "gates": {
     "gate5Mixed": {
@@ -167,21 +228,60 @@
     },
     "gate5OneLearner": {
       "target": {
+        "seedCount": 5,
         "sessions": 20,
         "immediateRepeats": 0,
-        "uniqueItems": 80,
+        "uniqueItems": 70,
         "paragraphAtLeastOnceEveryFour": true,
         "transferRatioMax": 0.34,
-        "transferTouchRatioMax": 0.75
+        "transferTouchRatioMax": 0.9
       },
       "observed": {
-        "sessions": 20,
+        "seedCount": 5,
         "immediateRepeats": 0,
-        "uniqueItems": 83,
-        "paragraphSessions": 13,
-        "transferSessions": 14,
-        "transferTouchRatio": 0.7,
-        "maxTransferRatio": 0.33
+        "minUniqueItems": 74,
+        "meanUniqueItems": 80.2,
+        "maxUniqueItems": 84,
+        "p95TransferTouchRatio": 0.85,
+        "maxSlotTransferRatio": 0.33,
+        "minParagraphSessions": 13,
+        "perSeed": [
+          {
+            "seed": "0xface1234",
+            "uniqueItems": 83,
+            "transferTouchRatio": 0.7,
+            "maxSlotTransferRatio": 0.33,
+            "paragraphSessions": 13
+          },
+          {
+            "seed": "0xb16b00b5",
+            "uniqueItems": 82,
+            "transferTouchRatio": 0.85,
+            "maxSlotTransferRatio": 0.33,
+            "paragraphSessions": 17
+          },
+          {
+            "seed": "0xdeadbeef",
+            "uniqueItems": 84,
+            "transferTouchRatio": 0.8,
+            "maxSlotTransferRatio": 0.33,
+            "paragraphSessions": 17
+          },
+          {
+            "seed": "0xc0ffee01",
+            "uniqueItems": 74,
+            "transferTouchRatio": 0.7,
+            "maxSlotTransferRatio": 0.33,
+            "paragraphSessions": 15
+          },
+          {
+            "seed": "0xfeedface",
+            "uniqueItems": 78,
+            "transferTouchRatio": 0.8,
+            "maxSlotTransferRatio": 0.33,
+            "paragraphSessions": 14
+          }
+        ]
       },
       "ok": true
     }

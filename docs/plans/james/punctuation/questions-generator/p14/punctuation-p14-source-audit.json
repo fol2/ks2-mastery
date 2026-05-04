@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "phase": "punctuation-qg-p14-source-audit",
   "releaseId": "punctuation-qg-p14-3564-2026-05-04",
-  "generatedAt": "2026-05-04T02:14:44.724Z",
+  "generatedAt": "2026-05-04T07:48:16.444Z",
   "productionDepth": 100,
   "counts": {
     "fixed": 512,
@@ -47,6 +47,36 @@
       "ok": true,
       "failureCount": 0,
       "sample": []
+    },
+    "apostropheVerbCoverage": {
+      "ok": true,
+      "knownVerbs": [
+        "begin",
+        "come",
+        "do",
+        "finish",
+        "forget",
+        "go",
+        "help",
+        "join",
+        "leave",
+        "listen",
+        "move",
+        "read",
+        "return",
+        "run",
+        "see",
+        "sit",
+        "stand",
+        "start",
+        "stop",
+        "swim",
+        "talk",
+        "walk",
+        "write"
+      ],
+      "offenders": [],
+      "note": "Every `<aux> ready to <verb>` pattern in the apostrophe quality-fix bank uses a verb the repair function recognises."
     }
   },
   "familyTemplateCounts": {

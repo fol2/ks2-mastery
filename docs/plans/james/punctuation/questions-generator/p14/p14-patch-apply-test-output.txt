@@ -1,17 +1,33 @@
-  GOLDEN MARKING: 200 templates tested, 360 accept cases passed, 592 reject cases passed
-✔ self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK (1.513125ms)
-✔ golden marking tests: generated choice families accept only their correct option (1.006ms)
-✔ golden marking tests: all DSL families pass accept cases and fail reject cases (65.649916ms)
-✔ vacuous truth guard: every DSL family has templates with at least 4 test cases each (2.4455ms)
-✔ P13 runtime keeps the 3,312 item production pool and model answers self-mark (222.15225ms)
-✔ P13 generated apostrophe items do not surface ungrammatical contraction stems/models (1.056958ms)
-✔ P13 generated apostrophe typed-answer models start as complete sentences (0.431375ms)
-✔ P13 paragraph repair rejects missing sentence boundary punctuation (19.473459ms)
-ℹ tests 8
+  GOLDEN MARKING: 452 templates tested, 612 accept cases passed, 1348 reject cases passed
+✔ self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK (0.806708ms)
+✔ golden marking tests: generated choice families accept only their correct option (1.083875ms)
+✔ golden marking tests: all DSL families pass accept cases and fail reject cases (74.409208ms)
+✔ vacuous truth guard: every DSL family has templates with at least 4 test cases each (4.352333ms)
+✔ P14 runtime serves the post-expansion production pool and model answers self-mark (237.277334ms)
+✔ P13 generated apostrophe items do not surface ungrammatical contraction stems/models (1.386417ms)
+✔ P13 generated apostrophe typed-answer models start as complete sentences (0.578125ms)
+✔ P14 apostrophe repair leaves grammatical inputs unchanged (no false positives) (0.406875ms)
+✔ P14 apostrophe repair preserves stem (no apostrophe) vs model (apostrophe) contrast (0.278833ms)
+✔ P14 countProseSentenceBoundaries handles common abbreviations (0.128ms)
+✔ P14 apostrophe repair handles lowercase apostropheless stems via single-pass call (adv-r2-002 regression) (0.400417ms)
+✔ P14 negative-contraction repair preserves sentence-initial capital (adv-r2-003 regression) (0.217458ms)
+✔ P14 generated apostrophe stem/model pairs maintain apostrophe-presence contrast (F5 regression) (1.384ms)
+✔ P13 paragraph repair rejects missing sentence boundary punctuation (18.658583ms)
+✔ P14 transfer pool meets the ≥250 runtime-item floor (0.576709ms)
+✔ P14 transfer pool covers every published skill with ≥12 items (0.834708ms)
+✔ P14 transfer model answers self-mark correctly (18.432875ms)
+✔ P14 token-only fragments are rejected across every transfer family (1.734167ms)
+✔ P14 transfer requiresTokens validator rejects token-stuffed padding (adv-r2-004) (0.468291ms)
+✔ P14 transfer requiresTokens validator still accepts genuine short sentences (adv-r2-004) (0.144833ms)
+✔ P14 short-but-valid answers like "Stop!" are not blocked by the fragment guard (0.210833ms)
+✔ P14 transfer prompts use a single consistent apostrophe style (adv-r2-001 regression) (0.163917ms)
+✔ P14 transfer family count is 14 (one per published skill) (0.177208ms)
+✔ P14 transfer items do not bleed into other modes (mode purity) (0.604083ms)
+ℹ tests 24
 ℹ suites 0
-ℹ pass 8
+ℹ pass 24
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 416.83025
+ℹ duration_ms 514.637209
