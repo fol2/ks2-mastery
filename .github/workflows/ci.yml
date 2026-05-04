@@ -54,6 +54,14 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Run tests (shard ${{ matrix.shard }}/${{ matrix.total }})
         run: node ./scripts/run-node-tests.mjs --test-shard=${{ matrix.shard }}/${{ matrix.total }}
+      - name: Upload shard timing
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}-timings
+          path: shard-*-timings.json
+          retention-days: 14
+          if-no-files-found: ignore
 
   audits:
     name: "Audits"
@@ -88,6 +96,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
+      - name: Download shard timings
+        if: always() && needs.test.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: shard-*-timings
+          merge-multiple: true
+      - name: Check shard balance
+        if: always() && needs.test.result == 'success'
+        run: |
+          node -e "
+            const fs = require('fs');
+            const files = fs.readdirSync('.').filter(f => f.startsWith('shard-') && f.endsWith('-timings.json'));
+            if (files.length < 2) { console.log('Not enough timing data'); process.exit(0); }
+            const durations = files.map(f => JSON.parse(fs.readFileSync(f)).wallMs);
+            const max = Math.max(...durations);
+            const min = Math.min(...durations);
+            const ratio = max / min;
+            console.log('Shard balance: max=' + max + 'ms min=' + min + 'ms ratio=' + ratio.toFixed(2));
+            if (ratio > 2.5) console.log('::warning::Shard imbalance detected (ratio ' + ratio.toFixed(2) + ' > 2.5). Consider splitting heavy test files.');
+          "
       - name: Evaluate results
         run: |
           if [ "${{ needs.test.result }}" = "failure" ]; then
