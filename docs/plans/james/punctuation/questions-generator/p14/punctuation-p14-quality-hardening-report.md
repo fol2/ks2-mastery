@@ -179,20 +179,20 @@ Validator: `scripts/validate-punctuation-qg-p14-live-evidence.mjs`. The validato
 
 ## Adversarial review summary
 
-A two-agent independent review (one adversarial code reviewer, one contract auditor) was run on the P14 work after the initial 5 commits. The code reviewer surfaced 10 findings; 4 were addressed in commit `8df540eb`:
+A two-agent independent review (one adversarial code reviewer, one contract auditor) was run on the P14 work after the initial 5 commits. The code reviewer surfaced 10 findings; **all 10 are now fixed** in commits `8df540eb` (first batch) and `8b5d71ce` (second batch):
 
 | ID | Severity | Status | Summary |
 | :--- | :--- | :--- | :--- |
-| adv-001 | Critical | **Fixed** | 10 production runtime items shipped ungrammatical `I've/I'll ready to + verb` and self-marked correct. Repair regex extended to cover the full pronoun + apostrophe-form matrix |
-| adv-002 | Major | Acknowledged (latent) | False-positive risk: `"It works well ready to move forwards."` would be over-rewritten. No current bank entry triggers this; documented for future authors |
-| adv-003 | Major | Acknowledged (latent) | `countProseSentenceBoundaries` over-counts on `Mr./U.K./Dr.` abbreviations. No current paragraph template uses these; documented |
-| adv-004 | Major | **Fixed** | Transfer fragment guard required all three predicates — let `"YES"`, `"OK"`, `"yes."`, `"?"`, `"!!"` through. Tightened to `tokenCount<=2 && (!hasTerminal || !hasCapital)` |
-| adv-005 | Major | **Fixed** | Sentinel regex in `tests/punctuation-p13-full-subject-quality.test.js` omitted `I've/I'll` patterns; passed vacuously while broken templates shipped. Sentinel now built from enumerated pronoun list |
-| adv-006 | Major | **Fixed** | `generatedDepth = constant` made `assertAttestationRuntimeCount` a tautology. Per-family depth field added to attestation + validator catches over-ships |
-| adv-007 | Minor | Documented | Variety audit `transferRatioMax = 0.5` interprets "does not dominate" as "not a majority". Observed max is 0.33 (well under 0.5); script comment explains the reading |
-| adv-008 | Minor | Acknowledged | Some test assertions were relaxed from `equal` to `>=` for forward-compat. Documented; consider tightening if drift becomes a problem |
-| adv-009 | Minor | Acknowledged | Release-ID format check is regex-only; embedded count not cross-checked against runtime length. Add as future hardening |
-| adv-010 | Minor | **Fixed** | Fragment-attack test only covered 3 of 14 transfer families. Stratified to cover all 14 plus the bypass attack set |
+| adv-001 | Critical | **Fixed** (`8df540eb`) | 10 production runtime items shipped ungrammatical `I've/I'll ready to + verb` and self-marked correct. Repair regex extended to cover the full pronoun + apostrophe-form matrix |
+| adv-002 | Major | **Fixed** (`8b5d71ce`) | False-positive risk: `"It works well ready to move forwards."`, `"It isnt forget-me-not season yet."` were being rewritten. Repair restructured as case-sensitive form-preserving rewrites; `(?!-)` lookahead added on verb group; capital-only matching for no-apostrophe forms; regression test covers all five false-positive shapes |
+| adv-003 | Major | **Fixed** (`8b5d71ce`) | `countProseSentenceBoundaries` over-counted on `Mr./Dr./Prof.` etc. Negative-lookbehind deny-list added (Mr/Mrs/Ms/Dr/Prof/St/Mt/Jr/Sr/i.e/e.g/vs/etc). Function exported and regression test asserts 12 cases including U.K./a.m. carve-outs |
+| adv-004 | Major | **Fixed** (`8df540eb`) | Transfer fragment guard required all three predicates — let `"YES"`, `"OK"`, `"yes."`, `"?"`, `"!!"` through. Tightened to `tokenCount<=2 && (!hasTerminal || !hasCapital)` |
+| adv-005 | Major | **Fixed** (`8df540eb`) | Sentinel regex in `tests/punctuation-p13-full-subject-quality.test.js` omitted `I've/I'll` patterns; passed vacuously while broken templates shipped. Sentinel now built from enumerated pronoun list |
+| adv-006 | Major | **Fixed** (`8df540eb`) | `generatedDepth = constant` made `assertAttestationRuntimeCount` a tautology. Per-family depth field added to attestation + validator catches over-ships |
+| adv-007 | Minor | **Fixed** (`8b5d71ce`) | Variety audit `transferRatioMax` tightened from 0.50 ("majority dominance") to 0.34 ("at most 2/6 transfer slots in a SmartSix"). Aggregate `transferTouchRatioMax: 0.75` added so transfer touches at most 75% of all sessions |
+| adv-008 | Minor | **Fixed** (`8b5d71ce`) | Restored strict equality on `sentenceEndings.answerContractCoverageCount` (now exactly 36). Failure-detail check requires ALL THREE expected skills (comma_clarity, semicolon_list, hyphen) to appear, not "any one of" |
+| adv-009 | Minor | **Fixed** (`8b5d71ce`) | Embedded-count cross-check added: `PUNCTUATION_CURRENT_RELEASE_ID` parsed and the embedded count asserted equal to `runtime.items.length`. A bogus ID `…-9999-…` would now fail even though it matches the format regex |
+| adv-010 | Minor | **Fixed** (`8df540eb`) | Fragment-attack test only covered 3 of 14 transfer families. Stratified to cover all 14 plus the bypass attack set |
 
 The contract auditor returned `PASS` or `PASS-WITH-NOTES` on Gates 1–7 and `BLOCKED` on Gate 8, which led to the creation of `scripts/punctuation-qg-p14-live-smoke.mjs` + `scripts/validate-punctuation-qg-p14-live-evidence.mjs` (commit `2438dee7`).
 
