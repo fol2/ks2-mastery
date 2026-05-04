@@ -140,7 +140,7 @@ test('ready subject companion panel data renders subject-owned stats without sha
     assert.match(html, new RegExp(`data-subject="${subjectId}"`));
   }
   for (const label of ['Secure', 'Due', 'Trouble', 'Confidence', 'Trouble concepts', 'Wobbly', 'Grand Stars']) {
-    assert.match(html, new RegExp(`<dt>${label}</dt>`));
+    assert.match(html, new RegExp(`ss-stat-label">${label}</div>`));
   }
   assert.match(html, /Try the next due word\./);
   assert.match(html, /Revise noun phrases\./);

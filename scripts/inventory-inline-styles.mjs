@@ -194,6 +194,7 @@ export const CLASSIFICATION = Object.freeze({
   // P3 U4: PracticeStage sets 1 inline style site for --ps-accent.
   // Value comes from the frozen subject-themes registry (static hex).
   'src/platform/ui/PracticeStage.jsx': 'css-var-ready',
+  'src/platform/ui/SubjectCompanionPanel.jsx': 'dynamic-content-driven',
   // P3 U8: AdminVisualEngineSection uses 5 inline style sites for
   // diagnostic card/grid layout (display, gap, padding, gridTemplate).
   'src/surfaces/hubs/AdminVisualEngineSection.jsx': 'shared-pattern-available',
@@ -303,9 +304,9 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // P4 U7 migrated 8 simple AdminVisualEngineSection spacing/opacity styles
 // into scoped CSS classes. The Visual Engine admin panel is now read-only and
 // inline-style-free; constants bumped from 254 -> 246.
-export const PRE_MIGRATION_TOTAL = 448;
+export const PRE_MIGRATION_TOTAL = 449;
 export const SITES_MIGRATED_THIS_PR = 202;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 246
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 247
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';
