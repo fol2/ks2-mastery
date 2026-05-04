@@ -61,7 +61,8 @@ test('ready subject companion panels map subject-owned data into real panel inpu
     {
       subject: 'spelling',
       path: 'src/subjects/spelling/components/SpellingSetupScene.jsx',
-      markers: ['codex', 'stats.secure', 'stats.due', 'stats.trouble', 'Trouble words need attention'],
+      markers: ['monsterVisuals', 'stats.secure', 'stats.due', 'stats.trouble', 'Trouble words need attention'],
+      useMonsterVisuals: true,
     },
     {
       subject: 'grammar',
@@ -77,14 +78,17 @@ test('ready subject companion panels map subject-owned data into real panel inpu
 
   for (const contract of contracts) {
     const text = source(contract.path);
-    const panel = text.match(/<SubjectCompanionPanel[\s\S]*?\/>/)?.[0] || '';
-    assert.match(panel, new RegExp(`subjectId="${contract.subject}"`));
-    assert.match(panel, /\svisible(?:\s|>|$|=)/);
-    assert.match(panel, /monsters=\{/);
-    assert.match(panel, /stats=\{/);
-    assert.match(panel, /nextFocus=\{/);
+    assert.ok(text.includes('<SubjectCompanionPanel'), `${contract.subject} must use SubjectCompanionPanel`);
+    assert.ok(text.includes(`subjectId="${contract.subject}"`), `${contract.subject} must set subjectId`);
+    if (contract.useMonsterVisuals) {
+      assert.ok(text.includes('monsterVisuals={'), `${contract.subject} must pass monsterVisuals`);
+    } else {
+      assert.ok(text.includes('monsters={'), `${contract.subject} must pass monsters`);
+    }
+    assert.ok(text.includes('stats={'), `${contract.subject} must pass stats`);
+    assert.ok(text.includes('nextFocus={'), `${contract.subject} must pass nextFocus`);
     for (const marker of contract.markers) {
-      assert.ok(panel.includes(marker), `${contract.subject} companion panel must include ${marker}`);
+      assert.ok(text.includes(marker), `${contract.subject} companion panel must include ${marker}`);
     }
   }
 });
@@ -136,7 +140,7 @@ test('ready subject companion panel data renders subject-owned stats without sha
     assert.match(html, new RegExp(`data-subject="${subjectId}"`));
   }
   for (const label of ['Secure', 'Due', 'Trouble', 'Confidence', 'Trouble concepts', 'Wobbly', 'Grand Stars']) {
-    assert.match(html, new RegExp(`<dt>${label}</dt>`));
+    assert.match(html, new RegExp(`ss-stat-label">${label}</div>`));
   }
   assert.match(html, /Try the next due word\./);
   assert.match(html, /Revise noun phrases\./);

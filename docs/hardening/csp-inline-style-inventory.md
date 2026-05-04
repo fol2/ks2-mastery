@@ -49,11 +49,11 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
-| `dynamic-content-driven` | 138 |
+| `dynamic-content-driven` | 139 |
 | `shared-pattern-available` | 99 |
 | `css-var-ready` | 7 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **246** |
+| **TOTAL** | **247** |
 
 ## Per-file inventory
 
@@ -100,6 +100,7 @@ Future migration PRs should:
 | `src/platform/ui/LengthPicker.jsx` | 1 | `shared-pattern-available` | no |
 | `src/platform/ui/LoadingSkeleton.jsx` | 1 | `css-var-ready` | no |
 | `src/platform/ui/PracticeStage.jsx` | 1 | `css-var-ready` | no |
+| `src/platform/ui/SubjectCompanionPanel.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/platform/ui/ProgressMeter.jsx` | 1 | `css-var-ready` | no |
 | `src/platform/ui/SubjectThemeScope.jsx` | 1 | `css-var-ready` | no |
 | `src/subjects/punctuation/components/PunctuationMapScene.jsx` | 1 | `dynamic-content-driven` | no |
