@@ -51,7 +51,7 @@ Legacy functionality is complete, but a subsequent review (`docs/plans/james/gra
 | I4. Legacy content gaps (thin explain/vocabulary/formality pools) | Deferred | - | Separate reviewed content-release plan. Per-question-type and per-concept floors pinned so erosion is detectable. |
 | I5. Transfer writing placeholder-only | Completed | U7 | PR #158 (Worker-side; React scene UI in a follow-up) |
 | I6. Strict mini-test needs behaviour-level QA | Completed | U4 | PR #150 (SSR harness; Playwright intentionally not added) |
-| I7. Mode focus behaviour unclear | Already fixed | - | `NO_STORED_FOCUS_MODES` / `NO_SESSION_FOCUS_MODES` already encode the intended table; covered by `tests/grammar-engine.test.js`. No reimplementation. |
+| I7. Mode focus behaviour unclear | Already fixed | - | `NO_STORED_FOCUS_MODES` / `NO_SESSION_FOCUS_MODES` already encode the intended table; covered by `tests/grammar-engine-generation.test.js`. No reimplementation. |
 | I8. Analytics show strength without confidence context | Completed | U6 | PR #156 |
 | I9. Accepted-answer registry | Completed | U5 | PR #153 (declarative machinery; per-template declarations follow in content-release PR) |
 

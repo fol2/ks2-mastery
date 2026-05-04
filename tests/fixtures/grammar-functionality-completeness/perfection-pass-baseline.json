@@ -83,9 +83,9 @@
         "worker/src/subjects/grammar/engine.js weakestConceptIdForTrouble"
       ],
       "supportingTests": [
-        "tests/grammar-engine.test.js"
+        "tests/grammar-engine-generation.test.js"
       ],
-      "note": "Review agent did not run tests; existing NO_STORED_FOCUS_MODES / NO_SESSION_FOCUS_MODES already encode the intended table, and grammar-engine.test.js covers trouble/surgery/builder focus handling. No reimplementation needed.",
+      "note": "Review agent did not run tests; existing NO_STORED_FOCUS_MODES / NO_SESSION_FOCUS_MODES already encode the intended table, and grammar-engine-generation.test.js covers trouble/surgery/builder focus handling. No reimplementation needed.",
       "ownerUnitAllowedByTest": false
     },
     {

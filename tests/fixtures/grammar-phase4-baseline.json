@@ -199,10 +199,10 @@
       "landedIn": "PR #256",
       "supportingTests": [
         "tests/grammar-production-smoke.test.js",
-        "tests/grammar-engine.test.js",
+        "tests/grammar-engine-generation.test.js",
         "tests/grammar-functionality-completeness.test.js"
       ],
-      "plannedReason": "Phase 4 must not bump GRAMMAR_CONTENT_RELEASE_ID. grammar-engine.test.js + grammar-functionality-completeness.test.js pin the id against the legacy oracle and completeness baseline; grammar-production-smoke.test.js pins it in the shipped smoke contract. Three independent anchors keep Phase 4 scope-locked."
+      "plannedReason": "Phase 4 must not bump GRAMMAR_CONTENT_RELEASE_ID. grammar-engine-generation.test.js + grammar-functionality-completeness.test.js pin the id against the legacy oracle and completeness baseline; grammar-production-smoke.test.js pins it in the shipped smoke contract. Three independent anchors keep Phase 4 scope-locked."
     }
   ],
   "phase4ReleaseGate": {
