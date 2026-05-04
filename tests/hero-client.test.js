@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createHeroModeClient, HeroModeClientError } from '../src/platform/hero/hero-client.js';
+import { createHeroModeClient, HeroModeClientError, extractErrorCode } from '../src/platform/hero/hero-client.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -447,5 +447,110 @@ describe('createHeroModeClient — factory validation', () => {
       () => createHeroModeClient({ fetch: 'not-a-function', getLearnerRevision: () => 0 }),
       /requires a fetch implementation/,
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractErrorCode — unit tests
+// ---------------------------------------------------------------------------
+
+describe('extractErrorCode', () => {
+  it('returns empty string for null/undefined', () => {
+    assert.equal(extractErrorCode(null), '');
+    assert.equal(extractErrorCode(undefined), '');
+  });
+
+  it('returns empty string for non-object', () => {
+    assert.equal(extractErrorCode('string'), '');
+    assert.equal(extractErrorCode(123), '');
+  });
+
+  it('extracts flat code string', () => {
+    assert.equal(extractErrorCode({ code: 'stale_write' }), 'stale_write');
+  });
+
+  it('extracts nested error.code string', () => {
+    assert.equal(extractErrorCode({ error: { code: 'hero_claim_no_evidence' } }), 'hero_claim_no_evidence');
+  });
+
+  it('flat code takes priority over nested error.code', () => {
+    assert.equal(extractErrorCode({ code: 'flat_code', error: { code: 'nested_code' } }), 'flat_code');
+  });
+
+  it('falls through to nested when flat code is empty string', () => {
+    assert.equal(extractErrorCode({ code: '', error: { code: 'nested_code' } }), 'nested_code');
+  });
+
+  it('extracts string error field', () => {
+    assert.equal(extractErrorCode({ error: 'hero-unavailable' }), 'hero-unavailable');
+  });
+
+  it('returns empty for non-string error.code (numeric)', () => {
+    assert.equal(extractErrorCode({ error: { code: 123 } }), '');
+  });
+
+  it('returns empty for error object without code field', () => {
+    assert.equal(extractErrorCode({ error: { message: 'failure' } }), '');
+  });
+
+  it('returns empty for null error field', () => {
+    assert.equal(extractErrorCode({ error: null }), '');
+  });
+
+  it('returns empty for empty object', () => {
+    assert.equal(extractErrorCode({}), '');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Nested error shape — readModel
+// ---------------------------------------------------------------------------
+
+describe('createHeroModeClient — readModel nested error shape', () => {
+  it('extracts code from nested { error: { code } } response', async () => {
+    const fakeFetch = mockFetch(403, { ok: false, error: { code: 'hero-unavailable', message: 'Hero blocked' } });
+    const client = createHeroModeClient({ ...defaultOpts(), fetch: fakeFetch });
+
+    const err = await client.readModel({ learnerId: 'abc' }).catch(e => e);
+
+    assert.ok(err instanceof HeroModeClientError);
+    assert.equal(err.code, 'hero-unavailable');
+    assert.equal(err.status, 403);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Nested error shape — startTask
+// ---------------------------------------------------------------------------
+
+describe('createHeroModeClient — startTask nested error shape', () => {
+  it('extracts code from nested { error: { code } } response', async () => {
+    const fakeFetch = mockFetch(400, { ok: false, error: { code: 'hero_task_not_launchable', message: 'Task not launchable' } });
+    const client = createHeroModeClient({ ...defaultOpts(), fetch: fakeFetch });
+
+    const err = await client.startTask({
+      learnerId: 'l', questId: 'q', questFingerprint: 'fp', taskId: 't', requestId: 'r',
+    }).catch(e => e);
+
+    assert.ok(err instanceof HeroModeClientError);
+    assert.equal(err.code, 'hero_task_not_launchable');
+    assert.equal(err.status, 400);
+  });
+
+  it('onStaleWrite fires when nested shape contains hero_quest_stale', async () => {
+    const fakeFetch = mockFetch(409, { ok: false, error: { code: 'hero_quest_stale' } });
+    const staleWrites = [];
+    const client = createHeroModeClient({
+      ...defaultOpts(),
+      fetch: fakeFetch,
+      onStaleWrite: (info) => staleWrites.push(info),
+    });
+
+    await client.startTask({
+      learnerId: 'l', questId: 'q', questFingerprint: 'fp', taskId: 't', requestId: 'r',
+    }).catch(() => {});
+
+    assert.equal(staleWrites.length, 1);
+    assert.equal(staleWrites[0].error.code, 'hero_quest_stale');
   });
 });

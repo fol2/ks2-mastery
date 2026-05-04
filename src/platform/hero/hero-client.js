@@ -58,7 +58,7 @@ const STALE_WRITE_CODES = new Set([
 // Error code extraction — handles both flat and nested response shapes
 // ---------------------------------------------------------------------------
 
-function extractErrorCode(payload) {
+export function extractErrorCode(payload) {
   if (!payload || typeof payload !== 'object') return '';
   if (typeof payload.code === 'string' && payload.code) return payload.code;
   if (payload.error && typeof payload.error === 'object' && typeof payload.error.code === 'string') return payload.error.code;
@@ -131,7 +131,7 @@ export function createHeroModeClient({
     const payload = await parseJson(response);
     if (!response.ok || payload?.ok === false) {
       throw new HeroModeClientError({
-        code: payload?.code || payload?.error || '',
+        code: extractErrorCode(payload),
         status: response.status,
         payload,
       });

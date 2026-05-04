@@ -258,6 +258,51 @@ describe('createHeroModeClient — claimTask error paths', () => {
     assert.equal(err.retryable, false);
   });
 
+  it('nested stale_write shape triggers auto-retry', async () => {
+    let revisionCallCount = 0;
+    const getLearnerRevision = () => {
+      revisionCallCount++;
+      return revisionCallCount === 1 ? 42 : 99;
+    };
+
+    const fakeFetch = createMockFetch([
+      { ok: false, status: 409, data: { ok: false, error: { code: 'stale_write' } } },
+      { ok: true, status: 200, data: { ok: true, heroClaim: { status: 'claimed' } } },
+    ]);
+
+    const client = createHeroModeClient({
+      ...defaultOpts(),
+      fetch: fakeFetch,
+      getLearnerRevision,
+      onStaleWrite: () => {},
+    });
+
+    const result = await client.claimTask(baseArgs);
+
+    assert.equal(fakeFetch.calls.length, 2, 'should retry once on nested stale_write');
+    assert.equal(fakeFetch.calls[1].body.expectedLearnerRevision, 99);
+    assert.deepStrictEqual(result, { ok: true, heroClaim: { status: 'claimed' } });
+  });
+
+  it('retry failure with nested error shape extracts code correctly', async () => {
+    const fakeFetch = createMockFetch([
+      { ok: false, status: 409, data: { ok: false, error: { code: 'stale_write' } } },
+      { ok: false, status: 400, data: { ok: false, error: { code: 'hero_claim_no_evidence', message: 'No evidence' } } },
+    ]);
+
+    const client = createHeroModeClient({
+      ...defaultOpts(),
+      fetch: fakeFetch,
+      onStaleWrite: () => {},
+    });
+
+    const err = await client.claimTask(baseArgs).catch(e => e);
+
+    assert.ok(err instanceof HeroModeClientError);
+    assert.equal(err.code, 'hero_claim_no_evidence');
+    assert.equal(err.retryable, false);
+  });
+
   it('network failure throws retryable HeroModeClientError', async () => {
     const calls = [];
     async function failingFetch(url, init) {
