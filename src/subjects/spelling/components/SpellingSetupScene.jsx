@@ -6,7 +6,6 @@ import { useSetupHeroContrast } from './useSetupHeroContrast.js';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import { SetupSidePanel } from '../../../platform/ui/SetupSidePanel.jsx';
-import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
 import { SubjectThemeScope } from '../../../platform/ui/SubjectThemeScope.jsx';
 import {
   BOSS_DEFAULT_ROUND_LENGTH,
@@ -492,20 +491,6 @@ export function SpellingSetupScene({
           <>
             <SetupMeadow codex={codex} repositories={repositories} />
             <SetupStatGrid stats={stats} />
-            <SubjectCompanionPanel
-              subjectId="spelling"
-              visible
-              monsters={(Array.isArray(codex) ? codex : [])
-                .filter((e) => e?.progress?.caught)
-                .map((e) => ({ name: e.monster?.name || e.monster?.id || '?', discovered: true }))}
-              stats={[
-                { label: 'Secure', value: String(stats.secure ?? 0) },
-                { label: 'Due today', value: String(stats.due ?? 0), tone: 'warn' },
-                { label: 'Weak spots', value: String(stats.trouble ?? 0) },
-              ]}
-              nextFocus={stats.trouble > 0 ? 'Trouble words need attention' : ''}
-              emptyState="Catch your first monster to see companion info."
-            />
           </>
         )}
         footer={(

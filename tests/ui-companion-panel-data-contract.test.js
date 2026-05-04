@@ -59,11 +59,6 @@ function absoluteSpecifier(relativePath) {
 test('ready subject companion panels map subject-owned data into real panel inputs', () => {
   const contracts = [
     {
-      subject: 'spelling',
-      path: 'src/subjects/spelling/components/SpellingSetupScene.jsx',
-      markers: ['codex', 'stats.secure', 'stats.due', 'stats.trouble', 'Trouble words need attention'],
-    },
-    {
       subject: 'grammar',
       path: 'src/subjects/grammar/components/GrammarSetupScene.jsx',
       markers: ['dashboard.monsterStrip', 'dashboard.todayCards', 'troubleCount', 'Trouble concepts need revision'],

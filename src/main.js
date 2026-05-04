@@ -1014,6 +1014,11 @@ async function heroClaimTask({ questId, questFingerprint, taskId, practiceSessio
   const learnerId = appState.learners?.selectedId;
   if (!learnerId || !questId || !taskId) return null;
 
+  // In-flight guard: if a claim is already pending for this taskId, skip the
+  // duplicate call. This prevents the 400 `hero_claim_stale_or_expired` errors
+  // caused by React effects or event handlers firing twice in rapid succession.
+  if (heroUi.pendingClaimKey === taskId) return null;
+
   const requestId = `hero-claim-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
   patchHeroUi({
