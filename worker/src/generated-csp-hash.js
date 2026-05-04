@@ -2,5 +2,5 @@
 // This file is committed so fresh clones can run `npm test` before
 // `npm run build` has produced a real hash. Build overwrites this.
 
-export const CSP_INLINE_SCRIPT_HASHES = Object.freeze(["sha256-06SFOq2Wj74Ww4wfCm1nJLKf6sUYs9usIiwlCVmZLfg=","sha256-w9p2spRl+qR+u0NyVm41sYKTd7oiQ2URnsVWP/4KKwQ="]);
+export const CSP_INLINE_SCRIPT_HASHES = Object.freeze(["sha256-d5B0kdrkvmMBHcWJ8TUVFkTDTxk/ACGS+ezi8RwKeZE=","sha256-D+GmWcLVxQQZeIPhTA9mNi9o4hfbpB6+00cTSVAMOOg="]);
 export const CSP_INLINE_SCRIPT_HASH = CSP_INLINE_SCRIPT_HASHES[0];

@@ -109,7 +109,7 @@ export function extractInlineScriptContents(html) {
  * @returns {string} e.g. `sha256-abc...=`
  */
 export function computeInlineScriptHash(html) {
-  const script = extractInlineScriptContents(html);
+  const script = extractInlineScriptContents(html).replace(/\r\n/g, '\n');
   const digest = createHash('sha256').update(script, 'utf8').digest('base64');
   return `sha256-${digest}`;
 }
@@ -130,7 +130,8 @@ export function computeInlineScriptHashes(html) {
   }
   assertExpectedIndexInlineScripts(blocks);
   return blocks.map(({ body }) => {
-    const digest = createHash('sha256').update(body, 'utf8').digest('base64');
+    const normalised = body.replace(/\r\n/g, '\n');
+    const digest = createHash('sha256').update(normalised, 'utf8').digest('base64');
     return `sha256-${digest}`;
   });
 }

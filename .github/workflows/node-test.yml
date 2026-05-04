@@ -1,11 +1,15 @@
-# SH2-U11: Node test + OAuth-deploy dry-run on every PR.
+# CI Speed Optimisation U1: Shard node tests into 10 parallel matrix jobs.
 #
-# Plan: docs/plans/2026-04-26-001-feat-sys-hardening-p2-plan.md (lines 747-799, R11).
+# The 626-file Node test suite is split across 10 shards using
+# `node --test --test-shard=N/10` (built-in since Node 22). Each shard
+# runs in its own GitHub Actions matrix cell, reducing wall-clock from
+# ~700s (single job) to < 60s.
 #
-# Runs `npm test` (node --test) and `npm run check` (which invokes
-# `scripts/wrangler-oauth.mjs deploy --dry-run`) on every PR. Playwright
-# scenes are skipped by `scripts/run-node-tests.mjs`; they run in the
-# sibling `playwright.yml` workflow.
+# Structure:
+#  1. `changes`        — docs-only classification (skip shards on trivial PRs)
+#  2. `test` (×10)     — parallel sharded test execution
+#  3. `wrangler-check` — deploy dry-run (schema-drift canary, auth-less)
+#  4. `ci-gate`        — fan-in gate for branch protection
 #
 # Security posture (deepening S-02):
 #  - `permissions: contents: read` only.
@@ -14,12 +18,10 @@
 #    fails in CI without OAuth — deploy-capable credentials are
 #    impossible to accidentally expose to a malicious PR because they
 #    simply are not available.
-#  - The `npm run check` step therefore runs under `continue-on-error`
+#  - The `wrangler-check` step therefore runs under `continue-on-error`
 #    so the absence of OAuth does not block a PR; what it catches is
 #    a wrangler-schema drift (the dry-run reports config-shape errors
-#    regardless of auth). Any other failure mode — broken package
-#    install, corrupted `wrangler.jsonc`, missing env binding schema —
-#    will surface in the step log even without a token.
+#    regardless of auth).
 
 name: Node Tests (PR)
 
@@ -56,34 +58,64 @@ jobs:
           head-sha: ${{ github.sha }}
 
   test:
-    name: npm test + npm run check
+    name: "Shard ${{ matrix.shard }}/${{ matrix.total }}"
     needs: changes
     if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 7
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        total: [15]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+      - name: Run tests (shard ${{ matrix.shard }}/${{ matrix.total }})
+        run: node ./scripts/run-node-tests.mjs --test-shard=${{ matrix.shard }}/${{ matrix.total }}
 
-      - name: Run unit + integration tests
-        run: npm test
-
+  wrangler-check:
+    name: Wrangler deploy dry-run
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.docs_only != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
       - name: Run wrangler deploy dry-run (schema-drift canary)
-        # Intentional safeguard: no CLOUDFLARE_API_TOKEN is configured
-        # in Actions secrets, so `npm run check` will report an auth
-        # failure here. The step stays on `continue-on-error: true`
-        # because the OAuth fallback is a local-developer path, not a
-        # CI path. The value of the step is early detection of
-        # `wrangler.jsonc` schema drift — wrangler exits with a
-        # distinct error code for schema errors vs auth errors.
         continue-on-error: true
         run: npm run check
+
+  ci-gate:
+    name: "Node Tests (gate)"
+    needs: [test, wrangler-check]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Evaluate results
+        run: |
+          if [ "${{ needs.test.result }}" = "failure" ]; then
+            echo "::error::One or more test shards failed"
+            exit 1
+          fi
+          if [ "${{ needs.test.result }}" = "cancelled" ]; then
+            echo "::error::Test shards were cancelled"
+            exit 1
+          fi
+          echo "All shards passed (or skipped for docs-only)"
