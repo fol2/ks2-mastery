@@ -440,12 +440,12 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
                   <button
                     type="button"
                     className="ss-codex-link"
-                    data-action="punctuation-open-map"
-                    aria-label="Open the Punctuation Map"
-                    onClick={() => { if (!disabled) actions.dispatch('punctuation-open-map'); }}
+                    data-action="open-codex"
+                    aria-label="Open the codex"
+                    onClick={() => { if (!disabled) actions.dispatch('open-codex'); }}
                     disabled={disabled}
                   >
-                    Open map →
+                    Open codex →
                   </button>
                 </>
               )}

@@ -2801,9 +2801,9 @@ test('punctuation Setup scene renders mission dashboard with primary CTA + secon
   }
   assert.match(html, />Wobbly Spots</);
   assert.match(html, />GPS Check</);
-  // Two Open Map affordances: head link ("Open map →") + footer ("Open Punctuation Map").
+  // One Open Punctuation Map affordance (footer link). Head uses global open-codex.
   const openMapMatches = html.match(/data-action="punctuation-open-map"/g) || [];
-  assert.equal(openMapMatches.length, 2, 'expected head + footer Open Map affordances');
+  assert.equal(openMapMatches.length, 1, 'expected exactly one Open Punctuation Map affordance (footer)');
   assert.match(html, />Open Punctuation Map</);
   // R8: data-section landmarks for journey spec testing.
   assert.match(html, /data-section="hero"/, 'missing hero landmark');

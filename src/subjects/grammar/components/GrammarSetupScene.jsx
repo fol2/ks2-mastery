@@ -400,10 +400,10 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
                   <p className="eyebrow">Where you stand</p>
                   <button
                     type="button"
-                    className="ss-codex-link grammar-setup-sidebar-codex-link"
-                    data-action="grammar-open-concept-bank"
-                    aria-label="Open the Grammar Bank"
-                    onClick={openConceptBank}
+                    className="ss-codex-link"
+                    data-action="open-codex"
+                    aria-label="Open the codex"
+                    onClick={() => actions.dispatch('open-codex')}
                     disabled={setupDisabled}
                   >
                     Open codex →
