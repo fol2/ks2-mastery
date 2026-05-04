@@ -13,12 +13,13 @@ import {
 import { PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 import { generateStableClusterId, BLOCKING_DECISIONS } from '../shared/punctuation/reviewer-decisions.js';
 
-const P12_PRODUCTION_COUNT = 3312;
-const P12_DEPTH_6_COUNT = 680;
+// P14 update: post-transfer-expansion totals.
+const P12_PRODUCTION_COUNT = 3564;
+const P12_DEPTH_6_COUNT = 764; // 512 fixed + (28 × 6 + 14 × 6) = 512 + 252
 
 // ─── Pool size invariants ───────────────────────────────────────────────────
 
-test('default production pack covers 3312 P12 items', () => {
+test('default production pack covers 3564 P14 items', () => {
   const { pool } = buildPool();
   assert.equal(pool.length, P12_PRODUCTION_COUNT);
 });

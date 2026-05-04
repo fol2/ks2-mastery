@@ -805,21 +805,42 @@ export function buildAttestationMetadata({
 } = {}) {
   const manifest = createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH });
   const indexes = createPunctuationContentIndexes(manifest);
-  const publishedFamilies = (manifest.generatorFamilies || []).filter((f) => f.published);
-  const generatedDepth = publishedFamilies.length > 0
-    ? Math.round(indexes.items.filter((i) => i.source === 'generated').length / publishedFamilies.length)
-    : 0;
+
+  // P14: families now ship at mixed depths (baseline 100/family, transfer 18/
+  // family via productionItemsLimit). `generatedDepth` reports the BASELINE
+  // family target — the global PRODUCTION_DEPTH constant — so a smoke that
+  // observes a different worker-side depth fails the validator. The mixed
+  // composition is captured separately in `generatedFamilyDepths` so a
+  // future bug that over-ships a capped family (e.g. transfer ships 100
+  // instead of 18) surfaces as a depth divergence rather than averaging
+  // away into the headline number.
+  const generatedDepth = PRODUCTION_DEPTH;
+  const generatedFamilyDepths = computeGeneratedFamilyDepths(indexes);
 
   return {
     environment,
     releaseId: manifest.releaseId || PUNCTUATION_RELEASE_ID,
     runtimeItemCount: indexes.items.length,
     generatedDepth,
+    generatedFamilyDepths,
     workerCommitSha,
     timestamp: new Date().toISOString(),
     authenticatedCoverage,
     adminHubCoverage,
   };
+}
+
+// Per-family depth observed from the local runtime manifest. The validator
+// can compare this against the deployed worker's per-family counts (when
+// available) to catch silent over-ships or under-ships of any family.
+function computeGeneratedFamilyDepths(indexes) {
+  const depths = {};
+  for (const item of indexes.items) {
+    if (item.source !== 'generated') continue;
+    const family = item.generatorFamilyId || 'unknown';
+    depths[family] = (depths[family] || 0) + 1;
+  }
+  return Object.fromEntries(Object.entries(depths).sort(([a], [b]) => a.localeCompare(b)));
 }
 
 export function assertAttestationRuntimeCount(attestation) {

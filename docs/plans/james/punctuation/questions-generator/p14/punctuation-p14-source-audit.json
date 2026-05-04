@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "phase": "punctuation-qg-p14-source-audit",
+  "releaseId": "punctuation-qg-p14-3564-2026-05-04",
+  "generatedAt": "2026-05-04T02:14:44.724Z",
+  "productionDepth": 100,
+  "counts": {
+    "fixed": 512,
+    "generated": 3052,
+    "total": 3564,
+    "transferItems": 276,
+    "baselineFamilies": 28,
+    "transferFamilies": 14,
+    "totalFamilies": 42,
+    "bankFamilyCount": 42
+  },
+  "transferBySkill": {
+    "sentence_endings": 20,
+    "list_commas": 21,
+    "apostrophe_contractions": 20,
+    "apostrophe_possession": 19,
+    "speech": 20,
+    "fronted_adverbial": 20,
+    "parenthesis": 19,
+    "comma_clarity": 20,
+    "colon_list": 20,
+    "semicolon": 19,
+    "dash_clause": 20,
+    "semicolon_list": 20,
+    "bullet_points": 19,
+    "hyphen": 21
+  },
+  "gates": {
+    "gate1SourceIdentity": {
+      "ok": true,
+      "note": "Runtime pool count is deterministic and family count matches the bank."
+    },
+    "gate4TransferDepth": {
+      "ok": true,
+      "threshold": {
+        "totalMin": 250,
+        "perSkillMin": 12
+      },
+      "note": "Every published skill has at least 12 transfer items."
+    },
+    "modelSelfMarking": {
+      "ok": true,
+      "failureCount": 0,
+      "sample": []
+    }
+  },
+  "familyTemplateCounts": {
+    "gen_apostrophe_contractions_fix": 100,
+    "gen_apostrophe_contractions_transfer": 18,
+    "gen_apostrophe_mix_paragraph": 100,
+    "gen_apostrophe_possession_choose": 100,
+    "gen_apostrophe_possession_insert": 100,
+    "gen_apostrophe_possession_transfer": 18,
+    "gen_bullet_points_fix": 100,
+    "gen_bullet_points_paragraph": 100,
+    "gen_bullet_points_transfer": 18,
+    "gen_colon_list_combine": 100,
+    "gen_colon_list_insert": 100,
+    "gen_colon_list_transfer": 18,
+    "gen_colon_semicolon_paragraph": 100,
+    "gen_comma_clarity_insert": 100,
+    "gen_comma_clarity_transfer": 18,
+    "gen_dash_clause_combine": 100,
+    "gen_dash_clause_fix": 100,
+    "gen_dash_clause_transfer": 18,
+    "gen_fronted_adverbial_combine": 100,
+    "gen_fronted_adverbial_fix": 100,
+    "gen_fronted_adverbial_transfer": 18,
+    "gen_fronted_speech_paragraph": 100,
+    "gen_hyphen_insert": 100,
+    "gen_hyphen_transfer": 18,
+    "gen_list_commas_choose": 100,
+    "gen_list_commas_combine": 100,
+    "gen_list_commas_insert": 100,
+    "gen_list_commas_transfer": 18,
+    "gen_parenthesis_combine": 100,
+    "gen_parenthesis_fix": 100,
+    "gen_parenthesis_speech_paragraph": 100,
+    "gen_parenthesis_transfer": 18,
+    "gen_semicolon_combine": 100,
+    "gen_semicolon_fix": 100,
+    "gen_semicolon_list_fix": 100,
+    "gen_semicolon_list_transfer": 18,
+    "gen_semicolon_transfer": 18,
+    "gen_sentence_endings_choose": 100,
+    "gen_sentence_endings_insert": 100,
+    "gen_sentence_endings_transfer": 18,
+    "gen_speech_insert": 100,
+    "gen_speech_transfer": 18
+  },
+  "schedulerVarietyPolicy": {
+    "ok": true,
+    "note": "Recent-avoidance penalises exposure, never strength. Weak/due/retry candidates can still win via dedicated weights (see scheduler.js EXPOSURE_WEIGHT_*). No fake-variety hiding observed."
+  }
+}

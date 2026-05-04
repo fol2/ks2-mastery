@@ -55,12 +55,26 @@ function simulateSession({ mode = 'smart', roundLength = '12', seed = 0 } = {}) 
 }
 
 test('P12 exposes a 3000+ Punctuation QG runtime pool', () => {
+  // P14 update: invariant is now "≥3000 runtime items, ≥500 fixed, ≥2500
+  // generated". The release ID is no longer pinned at the literal P12 value
+  // (post-P14 bump it carries punctuation-qg-p14-…); test the format only.
   const runtime = createPunctuationRuntimeManifest({ manifest: PUNCTUATION_CONTENT_MANIFEST, generatedPerFamily: PRODUCTION_DEPTH });
   const fixed = runtime.items.filter((item) => item.source !== 'generated');
   const generated = runtime.items.filter((item) => item.source === 'generated');
 
   assert.equal(PUNCTUATION_MANIFEST_VALIDATION.ok, true);
-  assert.equal(PUNCTUATION_CURRENT_RELEASE_ID, 'punctuation-qg-p12-3000-2026-05-02');
+  assert.match(PUNCTUATION_CURRENT_RELEASE_ID, /^punctuation-qg-p\d+-\d+-\d{4}-\d{2}-\d{2}$/);
+  // adv-009: the format check above leaves the embedded item-count
+  // unverified — a release ID with a bogus count would still pass. Cross-
+  // check the count against the actual runtime size so the release ID is
+  // a true claim, not just a well-shaped string.
+  const releaseIdMatch = PUNCTUATION_CURRENT_RELEASE_ID.match(/^punctuation-qg-p\d+-(\d+)-\d{4}-\d{2}-\d{2}$/);
+  assert.ok(releaseIdMatch, 'release ID format must yield a parseable item count');
+  assert.equal(
+    Number(releaseIdMatch[1]),
+    runtime.items.length,
+    `release ID embedded count ${releaseIdMatch[1]} does not match runtime size ${runtime.items.length}`,
+  );
   assert.equal(PRODUCTION_DEPTH, 100);
   assert.ok(fixed.length >= 500, `fixed=${fixed.length}`);
   assert.ok(generated.length >= 2500, `generated=${generated.length}`);
@@ -68,8 +82,16 @@ test('P12 exposes a 3000+ Punctuation QG runtime pool', () => {
 });
 
 test('P12 keeps one hundred unique templates in every generated family', () => {
-  assert.equal(Object.keys(GENERATED_TEMPLATE_BANK).length, 28);
+  // P14 update: 28 baseline P12 families × 100 + 14 P14 transfer families ×
+  // 18 = 42 families total. The 100-templates-per-family invariant only
+  // applies to the 28 baseline families; transfer families intentionally
+  // ship at 18 templates with productionItemsLimit caps.
+  assert.equal(
+    Object.keys(GENERATED_TEMPLATE_BANK).filter((id) => !id.endsWith('_transfer')).length,
+    28,
+  );
   for (const [familyId, templates] of Object.entries(GENERATED_TEMPLATE_BANK)) {
+    if (familyId.endsWith('_transfer')) continue;
     assert.equal(templates.length, 100, `${familyId} template count`);
     assert.equal(new Set(templates.map((template) => norm(template.stem))).size, 100, `${familyId} stem variety`);
     assert.equal(new Set(templates.map((template) => norm(template.model))).size, 100, `${familyId} model variety`);

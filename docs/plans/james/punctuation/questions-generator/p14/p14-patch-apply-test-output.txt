@@ -1,0 +1,17 @@
+  GOLDEN MARKING: 200 templates tested, 360 accept cases passed, 592 reject cases passed
+✔ self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK (1.513125ms)
+✔ golden marking tests: generated choice families accept only their correct option (1.006ms)
+✔ golden marking tests: all DSL families pass accept cases and fail reject cases (65.649916ms)
+✔ vacuous truth guard: every DSL family has templates with at least 4 test cases each (2.4455ms)
+✔ P13 runtime keeps the 3,312 item production pool and model answers self-mark (222.15225ms)
+✔ P13 generated apostrophe items do not surface ungrammatical contraction stems/models (1.056958ms)
+✔ P13 generated apostrophe typed-answer models start as complete sentences (0.431375ms)
+✔ P13 paragraph repair rejects missing sentence boundary punctuation (19.473459ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 416.83025

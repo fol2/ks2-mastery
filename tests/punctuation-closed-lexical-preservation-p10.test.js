@@ -69,9 +69,12 @@ function generatedItem(pool, familyId) {
 test('P10 lexical preservation covers the expanded P12 production pool', () => {
   const pool = productionPool();
   assert.equal(PRODUCTION_DEPTH, 100);
-  assert.equal(pool.length, 3312);
+  // P14 update: pool grew from 3,312 (P12) to 3,564 (P14 transfer expansion).
+  // 252 new transfer-mode items added; baseline 28 families × 100 templates
+  // unchanged at 2,800 baseline generated.
+  assert.equal(pool.length, 3564);
   assert.equal(pool.filter((item) => item._source === 'fixed').length, 512);
-  assert.equal(pool.filter((item) => item._source === 'generated').length, 2800);
+  assert.equal(pool.filter((item) => item._source === 'generated').length, 3052);
 });
 
 test('P10: generated closed insert/fix items reject known lexical substitutions', () => {

@@ -989,6 +989,39 @@ function markTransfer(item, answer) {
   const text = normaliseAnswerText(rawText);
   const validator = item.validator || {};
 
+  // P14 Gate 4: reject token-only fragments before any validator-specific
+  // logic. A transfer answer should at least look like a complete sentence
+  // when it's short — capital + terminal mark.
+  //
+  // Original (P14a) guard required ALL three of `tokenCount<=2`,
+  // `!hasTerminal`, `!hasCapital` to fire — it only caught lower-case
+  // multiword fragments like `"yes maybe"`. The adversarial review found
+  // bypasses: `"YES"`, `"OK"`, `"yes."`, `"?"`, `"!!"` all passed.
+  //
+  // Tightened (P14b) guard: only enforce shape on SHORT answers (<=2
+  // tokens). For longer answers — including legitimate multi-line bullet
+  // lists like `"Bring:\n- bread\n- cheese"` — the downstream validator
+  // is responsible for shape correctness. Short answers must have BOTH
+  // capital AND terminal mark; otherwise they're treated as fragments.
+  if (item.mode === 'transfer') {
+    const trimmed = text.trim();
+    const tokenCount = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+    // Terminal mark may be the last character OR followed by a closing
+    // quote (`."` / `?'` / `!”`) — speech models always end this way.
+    const hasTerminal = /[.!?]["'”’]?$/.test(trimmed);
+    const hasCapital = /^["'“‘]?[A-Z]/.test(trimmed);
+    const isShortFragment = tokenCount <= 2 && (!hasTerminal || !hasCapital);
+    if (isShortFragment) {
+      return {
+        correct: false,
+        expected: item.model || '',
+        note: 'Write a complete sentence — start with a capital letter and end with a full stop, question mark, or exclamation mark.',
+        misconceptionTags: ['transfer.fragment_only'],
+        facets: [facet('content_preservation', false)],
+      };
+    }
+  }
+
   // Content preservation gate: closed insert/fix transfer items must keep the
   // supplied words exactly. Learners should only add or repair punctuation.
   if ((item.mode === 'insert' || item.mode === 'fix') && validator.type) {
@@ -1419,17 +1452,55 @@ function markRequiredApostropheForms(check = {}, rawText = '') {
   };
 }
 
+// P14b — abbreviation deny-list. Adversarial review (adv-003) caught the
+// regex over-counting when a model contains common abbreviations:
+//   "Mr. Smith arrived. Then he sat down."  →  WRONG: 2 boundaries
+//                                               RIGHT: 1 boundary
+// The deny-list only includes abbreviations that are NEVER sentence-final
+// in normal English: title abbreviations (Mr/Mrs/Ms/Dr/Prof/St/Mt/Jr/Sr)
+// and inline latin abbreviations (i.e./e.g./vs/etc). Country codes like
+// U.K./U.S. and time markers like a.m./p.m. are deliberately NOT in the
+// list — when those appear before a capitalised sentence start, the
+// period serves BOTH as abbreviation marker AND sentence terminator, and
+// the boundary should count.
+const SENTENCE_BOUNDARY_ABBREV_DENY = /(?<=\b(?:Mr|Mrs|Ms|Dr|Prof|St|Mt|Jr|Sr|i\.e|e\.g|vs|etc))\.$/;
+
+export function countProseSentenceBoundaries(value) {
+  // Count only prose sentence breaks such as ". The". Bullet-list item
+  // punctuation is deliberately excluded because bullet-point paragraph items
+  // allow optional terminal stops on individual bullet lines.
+  // Abbreviation periods (e.g. "Mr.", "U.K.") are excluded via the deny-list
+  // lookbehind so we don't over-count them as sentence terminations.
+  const text = String(value ?? '');
+  const matches = text.matchAll(/[.!?](?=\s+[A-Z\"'“‘])/g);
+  let count = 0;
+  for (const match of matches) {
+    const upToHere = text.slice(0, match.index + 1);
+    if (SENTENCE_BOUNDARY_ABBREV_DENY.test(upToHere)) continue;
+    count += 1;
+  }
+  return count;
+}
+
 function markParagraphPassageShape(item, rawText = '') {
-  const expectedWords = stripPunctuation(item.model || acceptedAnswers(item)[0] || '');
+  const expectedText = item.model || acceptedAnswers(item)[0] || '';
+  const expectedWords = stripPunctuation(expectedText);
   const typedWords = stripPunctuation(rawText);
-  const correct = Boolean(expectedWords) && typedWords === expectedWords;
+  const wordsOk = Boolean(expectedWords) && typedWords === expectedWords;
+  const expectedSentenceBoundaries = countProseSentenceBoundaries(expectedText);
+  const typedSentenceBoundaries = countProseSentenceBoundaries(rawText);
+  const sentenceBoundaryOk = expectedSentenceBoundaries === 0 || typedSentenceBoundaries >= expectedSentenceBoundaries;
+  const correct = wordsOk && sentenceBoundaryOk;
   return {
     correct,
     expected: item.model || '',
-    note: correct ? 'The passage wording is preserved.' : 'Keep the whole passage wording and do not add extra sentences.',
-    misconceptionTags: correct ? [] : ['paragraph.words_changed'],
+    note: correct
+      ? 'The passage wording is preserved.'
+      : (wordsOk ? 'Keep the sentence-ending punctuation between the passage sentences.' : 'Keep the whole passage wording and do not add extra sentences.'),
+    misconceptionTags: correct ? [] : [wordsOk ? 'paragraph.sentence_boundary_missing' : 'paragraph.words_changed'],
     facets: [
-      facet('preservation', correct),
+      facet('preservation', wordsOk),
+      facet('terminal_punctuation', sentenceBoundaryOk),
     ],
   };
 }

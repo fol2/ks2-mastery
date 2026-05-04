@@ -4,46 +4,31 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-import {
-  createPunctuationContentIndexes,
-  PUNCTUATION_RELEASE_ID,
-} from '../shared/punctuation/content.js';
-import {
-  createPunctuationRuntimeManifest,
-  GENERATED_TEMPLATE_BANK,
-  PRODUCTION_DEPTH,
-} from '../shared/punctuation/generators.js';
+import { PUNCTUATION_CURRENT_RELEASE_ID } from '../src/subjects/punctuation/service-contract.js';
+import { PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 
-export const PUNCTUATION_QG_P13_LIVE_PHASE = 'punctuation-qg-p13-live-serving';
-export const PUNCTUATION_QG_P13_DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
+export const PUNCTUATION_QG_P14_LIVE_PHASE = 'punctuation-qg-p14-live-serving';
+export const PUNCTUATION_QG_P14_DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
 
-function countBy(items, keyFor) {
-  const counts = {};
-  for (const item of items) {
-    const key = keyFor(item);
-    counts[key] = (counts[key] || 0) + 1;
-  }
-  return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)));
-}
-
-// P14 update: this validator describes the FROZEN P13 live release, not the
-// current source tree. P13 served the P12 3,312-item pool with 28 generator
-// families × 100 templates each. Computing from live source post-P14 would
-// drift, so the expectation is now a frozen literal. The dynamic byMode /
-// bySkill / generatedTemplateCounts breakdowns were never asserted against,
-// so they can be omitted; consumers only checked the top-level counters.
-export function expectedPunctuationQGP13LiveManifest() {
+// P14 hardening release. Counts derive from the post-expansion runtime:
+//   512 fixed + 28 baseline families × 100 templates + 14 transfer families × 18 templates = 3,564.
+// The literals below are the contract for what `https://ks2.eugnel.uk` must
+// attest to once the P14 deploy reaches production. They mirror the shape of
+// `expectedPunctuationQGP13LiveManifest` but with P14 numbers.
+export function expectedPunctuationQGP14LiveManifest() {
   return Object.freeze({
-    phase: PUNCTUATION_QG_P13_LIVE_PHASE,
-    contentReleaseId: 'punctuation-qg-p12-3000-2026-05-02',
-    productionDepth: 100,
+    phase: PUNCTUATION_QG_P14_LIVE_PHASE,
+    contentReleaseId: PUNCTUATION_CURRENT_RELEASE_ID,
+    productionDepth: PRODUCTION_DEPTH,
     fixedItems: 512,
-    generatedItems: 2800,
-    runtimeItems: 3312,
+    generatedItems: 3052,
+    runtimeItems: 3564,
     publishedRewardUnits: 14,
-    generatedFamilies: 28,
-    templatesPerFamilyMin: 100,
-    templatesPerFamilyMax: 100,
+    baselineGeneratedFamilies: 28,
+    transferGeneratedFamilies: 14,
+    totalGeneratedFamilies: 42,
+    baselineTemplatesPerFamily: 100,
+    transferTemplatesPerFamily: 18,
   });
 }
 
@@ -55,11 +40,11 @@ function pushIf(errors, condition, message) {
   if (condition) errors.push(message);
 }
 
-export function validatePunctuationQGP13LiveEvidence(evidence, {
-  expectedOrigin = PUNCTUATION_QG_P13_DEFAULT_ORIGIN,
+export function validatePunctuationQGP14LiveEvidence(evidence, {
+  expectedOrigin = PUNCTUATION_QG_P14_DEFAULT_ORIGIN,
   requireWorkerIdentity = true,
 } = {}) {
-  const expected = expectedPunctuationQGP13LiveManifest();
+  const expected = expectedPunctuationQGP14LiveManifest();
   const errors = [];
 
   pushIf(errors, !evidence || typeof evidence !== 'object', 'evidence must be a JSON object');
@@ -78,14 +63,33 @@ export function validatePunctuationQGP13LiveEvidence(evidence, {
   pushIf(errors, evidence.ok !== true, 'ok must be true');
   pushIf(errors, evidence.origin !== expectedOrigin, `origin=${evidence.origin}, expected ${expectedOrigin}`);
   pushIf(errors, attestation.environment !== 'production', `attestation.environment=${attestation.environment}, expected production`);
-  pushIf(errors, attestation.releasePhase !== PUNCTUATION_QG_P13_LIVE_PHASE, `attestation.releasePhase=${attestation.releasePhase}, expected ${PUNCTUATION_QG_P13_LIVE_PHASE}`);
+  pushIf(errors, attestation.releasePhase !== PUNCTUATION_QG_P14_LIVE_PHASE, `attestation.releasePhase=${attestation.releasePhase}, expected ${PUNCTUATION_QG_P14_LIVE_PHASE}`);
   pushIf(errors, attestation.releaseId !== expected.contentReleaseId, `attestation.releaseId=${attestation.releaseId}, expected ${expected.contentReleaseId}`);
   pushIf(errors, attestation.runtimeItemCount !== expected.runtimeItems, `attestation.runtimeItemCount=${attestation.runtimeItemCount}, expected ${expected.runtimeItems}`);
   pushIf(errors, attestation.generatedDepth !== expected.productionDepth, `attestation.generatedDepth=${attestation.generatedDepth}, expected ${expected.productionDepth}`);
+  // P14: per-family depth catches silent over-ships (e.g. transfer family
+  // shipping at 100 instead of the 18 cap). Optional field on legacy
+  // artefacts but required for P14 attestation.
+  if (attestation.generatedFamilyDepths) {
+    const baselineEntries = Object.entries(attestation.generatedFamilyDepths)
+      .filter(([id]) => !id.endsWith('_transfer'));
+    const transferEntries = Object.entries(attestation.generatedFamilyDepths)
+      .filter(([id]) => id.endsWith('_transfer'));
+    pushIf(errors, baselineEntries.length !== expected.baselineGeneratedFamilies, `baselineGeneratedFamilies=${baselineEntries.length}, expected ${expected.baselineGeneratedFamilies}`);
+    pushIf(errors, transferEntries.length !== expected.transferGeneratedFamilies, `transferGeneratedFamilies=${transferEntries.length}, expected ${expected.transferGeneratedFamilies}`);
+    for (const [id, depth] of baselineEntries) {
+      pushIf(errors, depth !== expected.baselineTemplatesPerFamily, `family ${id} ships ${depth} items, expected baseline depth ${expected.baselineTemplatesPerFamily}`);
+    }
+    for (const [id, depth] of transferEntries) {
+      pushIf(errors, depth !== expected.transferTemplatesPerFamily, `family ${id} ships ${depth} items, expected transfer depth ${expected.transferTemplatesPerFamily}`);
+    }
+  } else {
+    errors.push('attestation.generatedFamilyDepths is required for a P14 attestation (per-family depth detail must be reported to surface over-ship/under-ship divergence)');
+  }
   pushIf(errors, attestation.authenticatedCoverage !== true, 'attestation.authenticatedCoverage must be true');
   pushIf(errors, !isNonEmptyString(attestation.timestamp), 'attestation.timestamp is required');
   if (requireWorkerIdentity) {
-    pushIf(errors, !isNonEmptyString(attestation.workerCommitSha) && !isNonEmptyString(attestation.workerVersionId) && !isNonEmptyString(attestation.deploymentId), 'workerCommitSha, workerVersionId, or deploymentId is required for a P13 live-serving claim');
+    pushIf(errors, !isNonEmptyString(attestation.workerCommitSha) && !isNonEmptyString(attestation.workerVersionId) && !isNonEmptyString(attestation.deploymentId), 'workerCommitSha, workerVersionId, or deploymentId is required for a P14 live-serving claim');
   }
 
   pushIf(errors, observed.releaseId !== expected.contentReleaseId, `productionObserved.releaseId=${observed.releaseId}, expected ${expected.contentReleaseId}`);
@@ -134,8 +138,8 @@ export function validatePunctuationQGP13LiveEvidence(evidence, {
     expected,
     errors,
     caveats: {
-      adminHubCoverage: attestation.adminHubCoverage === true ? 'covered' : 'not claimed by this P13 punctuation live-serving smoke',
-      contentReleaseId: 'P13 is a live-serving release gate for the P12 3000+ content pool; the content release id remains P12 unless deliberately bumped in content source.',
+      adminHubCoverage: attestation.adminHubCoverage === true ? 'covered' : 'not claimed by this P14 punctuation live-serving smoke',
+      contentReleaseId: 'P14 hardening release: 3,564 items (28 baseline families × 100 + 14 transfer families × 18 + 512 fixed). Existing learner punctuation progress is invalidated by the namespace bump.',
     },
   };
 }
@@ -149,10 +153,10 @@ function argValue(argv, ...names) {
 }
 
 function main(argv = process.argv) {
-  const file = argValue(argv, '--file') || argv[2] || 'reports/punctuation/punctuation-qg-p13-production-smoke.json';
-  const origin = argValue(argv, '--origin') || PUNCTUATION_QG_P13_DEFAULT_ORIGIN;
+  const file = argValue(argv, '--file') || argv[2] || 'reports/punctuation/punctuation-qg-p14-production-smoke.json';
+  const origin = argValue(argv, '--origin') || PUNCTUATION_QG_P14_DEFAULT_ORIGIN;
   const evidence = JSON.parse(readFileSync(file, 'utf8'));
-  const result = validatePunctuationQGP13LiveEvidence(evidence, {
+  const result = validatePunctuationQGP14LiveEvidence(evidence, {
     expectedOrigin: origin,
     requireWorkerIdentity: true,
   });
