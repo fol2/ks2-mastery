@@ -17,9 +17,10 @@ import {
   GRAMMAR_DASHBOARD_HERO,
   GRAMMAR_MORE_PRACTICE_MODES,
   GRAMMAR_PRIMARY_MODE_CARDS,
-  GRAMMAR_MONSTER_STRIP_CHILD_COPY,
   buildGrammarDashboardModel,
+  grammarMonsterImageVisual,
 } from './grammar-view-model.js';
+import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConfigContext.jsx';
 import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
@@ -109,16 +110,6 @@ function isRepeatingEasyGrammarWork(recentAttempts = []) {
     templateCounts.set(templateId, (templateCounts.get(templateId) || 0) + 1);
   }
   return [...templateCounts.values()].some((count) => count >= 3);
-}
-
-function TodayCard({ card }) {
-  return (
-    <div className="grammar-today-card" data-today-id={card.id}>
-      <div className="grammar-today-label">{card.label}</div>
-      <div className="grammar-today-value">{card.value}</div>
-      <div className="grammar-today-detail">{card.detail}</div>
-    </div>
-  );
 }
 
 function MonsterStripEntry({ entry }) {
@@ -257,6 +248,16 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
   const troubleCard = (dashboard.todayCards || []).find((card) => card.id === 'trouble');
   const troubleCount = Number(troubleCard?.value || 0);
 
+  const monsterVisualConfig = useMonsterVisualConfig();
+  const panelMonsterVisuals = dashboard.monsterStrip
+    .filter((entry) => entry.displayState !== 'not-found')
+    .slice(0, 4)
+    .map((entry) => ({
+      id: entry.monsterId,
+      visual: grammarMonsterImageVisual(entry.monsterId, entry.stageIndex, monsterVisualConfig?.config),
+      isEgg: entry.stageIndex === 0,
+    }));
+
   const selectedModeCard = GRAMMAR_PRIMARY_MODE_CARDS.find((card) => card.id === selectedMode);
   const selectedModeStartLabel = selectedMode === 'trouble'
     ? 'Fix Trouble Spots'
@@ -380,64 +381,45 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
         <SetupSidePanel
           asideClassName="grammar-setup-sidebar"
           cardClassName="grammar-setup-sidebar-card"
-          headClassName="grammar-setup-sidebar-head"
-          headTag="header"
           ariaLabel="Where you stand"
-          head={(
-            <>
-              <p className="eyebrow">Where you stand</p>
-              <button
-                type="button"
-                className="ss-codex-link grammar-setup-sidebar-codex-link"
-                data-action="grammar-open-concept-bank"
-                aria-label="Open the Grammar Bank"
-                onClick={openConceptBank}
-                disabled={setupDisabled}
-              >
-                Open bank →
-              </button>
-            </>
-          )}
           body={(
             <>
-              <section className="grammar-monster-strip" aria-label="Your Grammar creatures">
-                {dashboard.monsterStrip.map((entry) => (
-                  <MonsterStripEntry entry={entry} key={entry.monsterId} />
-                ))}
-                <p className="grammar-monster-strip-hint">{GRAMMAR_MONSTER_STRIP_CHILD_COPY}</p>
-              </section>
-
-              <section className="grammar-today" aria-label="Today at a glance">
-                {dashboard.isEmpty ? (
-                  <div className="grammar-today-empty" data-testid="grammar-today-empty">
-                    <EmptyState
-                      title="No rounds yet"
-                      body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
-                    />
-                  </div>
-                ) : (
-                  <div className="grammar-today-grid">
-                    {dashboard.todayCards.map((card) => (
-                      <TodayCard card={card} key={card.id} />
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              <SubjectCompanionPanel
-                subjectId="grammar"
-                visible
-                monsters={dashboard.monsterStrip.map((entry) => ({
-                  name: entry.name,
-                  discovered: entry.displayState !== 'not-found',
-                }))}
-                stats={(dashboard.todayCards || []).map((card) => ({
-                  label: card.label,
-                  value: String(card.value),
-                }))}
-                nextFocus={troubleCount > 0 ? 'Trouble concepts need revision' : ''}
-                emptyState="Start practising to see your Grammar companions."
-              />
+            {dashboard.isEmpty ? (
+              <div className="grammar-today-empty" data-testid="grammar-today-empty">
+                <EmptyState
+                  title="No rounds yet"
+                  body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
+                />
+              </div>
+            ) : null}
+            <SubjectCompanionPanel
+              subjectId="grammar"
+              visible
+              head={(
+                <>
+                  <p className="eyebrow">Where you stand</p>
+                  <button
+                    type="button"
+                    className="ss-codex-link grammar-setup-sidebar-codex-link"
+                    data-action="grammar-open-concept-bank"
+                    aria-label="Open the Grammar Bank"
+                    onClick={openConceptBank}
+                    disabled={setupDisabled}
+                  >
+                    Open bank →
+                  </button>
+                </>
+              )}
+              monsterVisuals={panelMonsterVisuals}
+              meadowEmpty="Start practising to see your Grammar creatures."
+              stats={[
+                { label: 'Concepts', value: String(dashboard.concordiumProgress?.total ?? 0) },
+                { label: 'Secure', value: String(dashboard.todayCards?.find(c => c.id === 'secure')?.value ?? 0) },
+                { label: 'Trouble', value: String(troubleCount), tone: troubleCount > 0 ? 'warn' : undefined },
+                { label: 'Due today', value: String(dashboard.todayCards?.find(c => c.id === 'due')?.value ?? 0), tone: (dashboard.todayCards?.find(c => c.id === 'due')?.value ?? 0) > 0 ? 'warn' : undefined },
+              ]}
+              nextFocus={troubleCount > 0 ? 'Trouble concepts need revision' : ''}
+            />
             </>
           )}
           footer={(

@@ -67,7 +67,8 @@ test('ready subject companion panels map subject-owned data into real panel inpu
     {
       subject: 'grammar',
       path: 'src/subjects/grammar/components/GrammarSetupScene.jsx',
-      markers: ['dashboard.monsterStrip', 'dashboard.todayCards', 'troubleCount', 'Trouble concepts need revision'],
+      markers: ['monsterVisuals', 'useMonsterVisualConfig', 'troubleCount', 'Trouble concepts need revision'],
+      useMonsterVisuals: true,
     },
     {
       subject: 'punctuation',

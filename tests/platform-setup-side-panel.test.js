@@ -138,7 +138,7 @@ test('SetupSidePanel: asideClassName / cardClassName / headClassName append with
       headTag: 'header',
       ariaLabel: 'Where you stand',
       head: React.createElement('p', { className: 'eyebrow' }, 'Where you stand'),
-      body: React.createElement('section', { className: 'grammar-monster-strip' }, 'monsters'),
+      body: React.createElement('div', { 'data-testid': 'companion-panel', 'data-subject': 'grammar' }, 'companion'),
       footer: React.createElement('button', { className: 'ss-bank-link grammar-setup-sidebar-bank-link' }, 'Bank'),
     });
     console.log(renderToStaticMarkup(tree));
@@ -150,7 +150,7 @@ test('SetupSidePanel: asideClassName / cardClassName / headClassName append with
   // head renders as <header> (not <div>), class composed.
   assert.match(html, /<header class="ss-head grammar-setup-sidebar-head"><p class="eyebrow">Where you stand<\/p><\/header>/);
   // Body + footer still render bare.
-  assert.match(html, /<section class="grammar-monster-strip">monsters<\/section>/);
+  assert.match(html, /<div data-testid="companion-panel" data-subject="grammar">companion<\/div>/);
   assert.match(html, /<button class="ss-bank-link grammar-setup-sidebar-bank-link">Bank<\/button>/);
   // Negative: no doubled spaces, no missing separator.
   assert.doesNotMatch(html, /class="setup-sidegrammar-/);
@@ -278,24 +278,13 @@ test('SetupSidePanel: complex nested body subtree passes through byte-identical'
   const html = await runFixture(`
     ${renderHeader(componentSpec)}
     const body = React.createElement(
-      React.Fragment,
-      null,
-      React.createElement(
-        'section',
-        { className: 'grammar-monster-strip', 'aria-label': 'Your Grammar creatures' },
-        React.createElement('div', { className: 'grammar-monster-strip-entry', key: 'a' }, 'A'),
-        React.createElement('div', { className: 'grammar-monster-strip-entry', key: 'b' }, 'B'),
-        React.createElement('p', { className: 'grammar-monster-strip-hint' }, 'Hint line'),
+      'div',
+      { 'data-testid': 'companion-panel', 'data-subject': 'grammar' },
+      React.createElement('div', { className: 'ss-stat-grid' },
+        React.createElement('div', { className: 'ss-stat', key: 'a' }, 'Concepts: 18'),
+        React.createElement('div', { className: 'ss-stat', key: 'b' }, 'Trouble: 2'),
       ),
-      React.createElement(
-        'section',
-        { className: 'grammar-today', 'aria-label': 'Today at a glance' },
-        React.createElement(
-          'div',
-          { className: 'grammar-today-grid' },
-          React.createElement('div', { className: 'grammar-today-card', 'data-today-id': 't1' }, 'card1'),
-        ),
-      ),
+      React.createElement('p', { className: 'companion-panel-focus' }, 'Trouble concepts need revision'),
     );
     const tree = React.createElement(SetupSidePanel, {
       asideClassName: 'grammar-setup-sidebar',
@@ -303,18 +292,17 @@ test('SetupSidePanel: complex nested body subtree passes through byte-identical'
       headClassName: 'grammar-setup-sidebar-head',
       headTag: 'header',
       ariaLabel: 'Where you stand',
-      head: React.createElement('p', { className: 'eyebrow' }, 'Where you stand'),
       body,
       footer: React.createElement('button', { className: 'ss-bank-link grammar-setup-sidebar-bank-link' }, 'Bank'),
     });
     console.log(renderToStaticMarkup(tree));
   `);
-  // Byte-identical expected shell.
-  assert.match(html, /^<aside class="setup-side grammar-setup-sidebar" aria-label="Where you stand"><div class="ss-card grammar-setup-sidebar-card"><header class="ss-head grammar-setup-sidebar-head"><p class="eyebrow">Where you stand<\/p><\/header>/);
-  // Monster strip section intact.
-  assert.match(html, /<section class="grammar-monster-strip" aria-label="Your Grammar creatures"><div class="grammar-monster-strip-entry">A<\/div><div class="grammar-monster-strip-entry">B<\/div><p class="grammar-monster-strip-hint">Hint line<\/p><\/section>/);
-  // Today section intact.
-  assert.match(html, /<section class="grammar-today" aria-label="Today at a glance"><div class="grammar-today-grid"><div class="grammar-today-card" data-today-id="t1">card1<\/div><\/div><\/section>/);
+  // Byte-identical expected shell — no head rendered because head prop is omitted.
+  assert.match(html, /^<aside class="setup-side grammar-setup-sidebar" aria-label="Where you stand"><div class="ss-card grammar-setup-sidebar-card">/);
+  // Companion panel body intact.
+  assert.match(html, /<div data-testid="companion-panel" data-subject="grammar"><div class="ss-stat-grid">/);
+  assert.match(html, /Concepts: 18/);
+  assert.match(html, /Trouble concepts need revision/);
   // Footer intact.
   assert.match(html, /<button class="ss-bank-link grammar-setup-sidebar-bank-link">Bank<\/button><\/div><\/aside>$/);
 });
