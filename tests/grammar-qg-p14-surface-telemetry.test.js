@@ -26,7 +26,9 @@ describe('Grammar QG P14 learner surface and telemetry contract', () => {
     assert.equal(committed.pass, true);
     assert.equal(committed.pathCount, 8);
     assert.deepEqual(committed.failures, []);
-    assert.equal(committedP18.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+    // committedP18 is a frozen historical artefact from the P18 cycle. It is
+    // pinned to its own release ID and should not track the live constant.
+    assert.equal(committedP18.contentReleaseId, 'grammar-qg-p18-2026-05-02');
     assert.equal(committedP18.pass, true);
     assert.equal(committedP18.pathCount, 8);
     assert.deepEqual(committedP18.failures, []);
@@ -46,7 +48,8 @@ describe('Grammar QG P14 learner surface and telemetry contract', () => {
       committed.profiles.some((profile) => profile.highStageViaRepeatedShallowItems),
       false,
     );
-    assert.equal(committedP18.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+    // committedP18 is a frozen historical artefact from the P18 cycle.
+    assert.equal(committedP18.contentReleaseId, 'grammar-qg-p18-2026-05-02');
     assert.equal(committedP18.templateCount, 510);
     assert.equal(committedP18.conclusion.pass, true);
     assert.equal(committedP18.conclusion.thresholdChange, 'none');

@@ -17,8 +17,13 @@ function parseSeeds(arg = '1..30') {
   return String(arg).split(',').map(Number).filter(Number.isInteger);
 }
 
+// Predicate kept in sync with scripts/generate-grammar-manual-expansion.mjs
+// OPEN_PROMPT_RE. Broadened to cover misconception_repair-style prompts
+// ("Write the corrected answer", "Write an expanded noun phrase") and bare
+// Rewrite/Build/Describe/Complete-the-sentence verbs that previously slipped
+// through. Contract A.1 says "or similar open task".
 function isOpenPrompt(prompt) {
-  return /\b(explain|transfer task|write one sentence|build an?|mixed check|add the|move the|join the)\b/i.test(prompt || '');
+  return /\b(explain|transfer|write\s+(?:the|an?|one|a\s+sentence)|rewrite|build|mixed\s+check|add\s+the|move\s+the|join\s+the|describe|complete\s+the\s+sentence|continue|extend)\b/i.test(prompt || '');
 }
 
 export function buildOpenResponseFairnessAudit(seeds = parseSeeds()) {

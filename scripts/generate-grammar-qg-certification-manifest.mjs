@@ -19,12 +19,28 @@ async function computeFileHash(filePath) {
   return createHash('sha256').update(content).digest('hex');
 }
 
+async function readMarkingMatrixEntryCount(prefix) {
+  const matrixPath = path.join(REPORTS_DIR, `${prefix}-marking-matrix.json`);
+  try {
+    const data = JSON.parse(await fs.readFile(matrixPath, 'utf8'));
+    if (Array.isArray(data?.entries)) return data.entries.length;
+  } catch (err) {
+    // Marking matrix is optional pre-Phase-7. Falling through to legacy 80.
+  }
+  return 80;
+}
+
 function parseCli() {
   const { values } = parseArgs({
     options: {
       phase: { type: 'string' },
       release: { type: 'string' },
       'output-dir': { type: 'string' },
+      // P19 follow-up: phases (P14, P18, P19) may reference the live P10
+      // artefact bundle rather than mint dedicated phase-prefixed copies.
+      // When set, expectedOutputPaths + artefacts use this prefix instead of
+      // the phase prefix derived from the release ID.
+      'artefact-prefix': { type: 'string' },
     },
     strict: false,
   });
@@ -49,6 +65,10 @@ async function main() {
 
   // certificationPhase: CLI --phase overrides; otherwise derive next phase from content release
   const certificationPhase = cliArgs.phase || `grammar-qg-${phase}`;
+  // Artefact prefix may override the phase-derived prefix so phases can
+  // reference the live, continuously-regenerated artefact bundle rather than
+  // mint a phase-specific snapshot every release.
+  const artefactPrefix = cliArgs['artefact-prefix'] || `grammar-qg-${phase}`;
 
   const manifest = {
     contentReleaseId,
@@ -64,17 +84,23 @@ async function main() {
       'semantic-prompt-cue-audit': '1..30',
     },
     expectedItemCount,
+    expectedMarkingMatrixEntryCount: await readMarkingMatrixEntryCount(artefactPrefix),
     expectedOutputPaths: [
-      `reports/grammar/grammar-qg-${phase}-render-inventory.json`,
-      `reports/grammar/grammar-qg-${phase}-render-inventory-redacted.md`,
+      `reports/grammar/${artefactPrefix}-render-inventory.json`,
+      `reports/grammar/${artefactPrefix}-render-inventory-redacted.md`,
     ],
     artefacts: {
-      renderInventory: `reports/grammar/grammar-qg-${phase}-render-inventory.json`,
-      renderInventoryRedacted: `reports/grammar/grammar-qg-${phase}-render-inventory-redacted.md`,
-      qualityRegister: `reports/grammar/grammar-qg-${phase}-quality-register.json`,
-      distractorAudit: `reports/grammar/grammar-qg-${phase}-distractor-audit.json`,
-      markingMatrix: `reports/grammar/grammar-qg-${phase}-marking-matrix.json`,
-      certificationStatusMap: `reports/grammar/grammar-qg-${phase}-certification-status-map.json`,
+      renderInventory: `reports/grammar/${artefactPrefix}-render-inventory.json`,
+      renderInventoryRedacted: `reports/grammar/${artefactPrefix}-render-inventory-redacted.md`,
+      qualityRegister: `reports/grammar/${artefactPrefix}-quality-register.json`,
+      distractorAudit: `reports/grammar/${artefactPrefix}-distractor-audit.json`,
+      markingMatrix: `reports/grammar/${artefactPrefix}-marking-matrix.json`,
+      // certificationStatusMap stays on the P11 register: it is the runtime
+      // authority that worker/src/subjects/grammar/certification-status.generated.js
+      // is regenerated from. The validator forbids P10 references in the
+      // runtime, so the manifest must point at the P11 (or later) status map
+      // even when the rest of the artefact bundle uses the P10 prefix.
+      certificationStatusMap: 'reports/grammar/grammar-qg-p11-certification-status-map.json',
       semanticAuditScript: 'scripts/audit-grammar-prompt-cues-semantic.mjs',
       productionSmoke: `reports/grammar/grammar-production-smoke-${contentReleaseId}.json`,
     },

@@ -2,16 +2,17 @@
 /**
  * Grammar QG P19 — Contract D smart-practice simulator.
  *
- * Replays buildGrammarPracticeQueue across 7 learner profiles × 30 seeds
+ * Replays buildGrammarPracticeQueue across 8 learner profiles × 30 seeds
  * (>= 200 sessions) and asserts that a normal 5-question smart round does
  * not contain duplicate template IDs or duplicate learner-visible surfaces
  * when the active template pool can avoid it. Reports concept / question-
  * type / constructed-selected / support-surface / repeated-surface metrics.
  *
- * The grammar selection module does not yet emit per-item retry/spaced-
- * retrieval reasons, so the audit fails closed on any duplicate (Contract D
- * criterion 4 advisory: extend selection.js queueEntry() with a reason field
- * to enable explicit exceptions).
+ * Contract D criterion 4 — every queue entry now carries an explicit reason
+ * (fallback, priority-urgent, focus-saturation, trouble-cluster, spaced-
+ * retrieval, retry, similar-problem). Duplicates are only allowed when the
+ * reason is on the explicit allow-list; missing or unknown reasons fail the
+ * audit closed.
  */
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -195,6 +196,73 @@ const PROFILES = [
       focusConceptId: '',
       mode: 'smart',
     }),
+  },
+  {
+    // Contract D.4 — explicit retry exception coverage. The retry lane fires
+    // when the most recent scored miss happened within the last 5 minutes
+    // and the same template is still eligible. The simulator must observe at
+    // least one queue entry with reason='retry' across the seed window.
+    type: 'retryActive',
+    label: 'Retry-eligible learner — last miss within 5 minutes (Contract D.4 retry lane)',
+    build: () => ({
+      mastery: masteryWith({
+        adverbials: { attempts: 4, correct: 2, wrong: 2, strength: 0.4, correctStreak: 0 },
+        standard_english: { attempts: 5, correct: 3, wrong: 2, strength: 0.55, correctStreak: 1 },
+      }),
+      recentAttempts: [
+        // The retry target template must exist in GRAMMAR_TEMPLATE_METADATA so
+        // the lane can find it in the smart-practice pool. fronted_adverbial_choose
+        // is a P0 generator template that ships in every smart pool.
+        recentAttempt({ templateId: 'fronted_adverbial_choose', conceptIds: ['adverbials'], questionType: 'choose', correct: false, ageMs: 60000 }),
+      ],
+      focusConceptId: '',
+      mode: 'smart',
+    }),
+  },
+  {
+    // Contract D.4 — explicit similar-problem exception coverage. After a
+    // miss on concept X with template T1, the lane surfaces a *different*
+    // template T2 covering the same concept so the learner gets a fresh
+    // attempt at the same skill rather than the exact failing item.
+    type: 'similarProblemEligible',
+    label: 'Similar-problem learner — recent stale miss with multi-template concept (Contract D.4 similar-problem lane)',
+    build: () => ({
+      mastery: masteryWith({
+        adverbials: { attempts: 6, correct: 3, wrong: 3, strength: 0.45, correctStreak: 0 },
+        tense_aspect: { attempts: 5, correct: 3, wrong: 2, strength: 0.5, correctStreak: 1 },
+      }),
+      recentAttempts: [
+        // Stale miss (older than 5 min) so the retry lane will not pre-empt
+        // similar-problem; we still want a recorded miss on the concept.
+        recentAttempt({ templateId: 'fronted_adverbial_choose', conceptIds: ['adverbials'], questionType: 'choose', correct: false, ageMs: 900000 }),
+      ],
+      focusConceptId: '',
+      mode: 'smart',
+    }),
+  },
+  {
+    // Contract D.4 — explicit spaced-retrieval exception coverage. A secured
+    // concept whose retention window has lapsed (correctStreak >= 3 AND dueAt
+    // overdue by >= 24h) becomes eligible to be revisited so retention does
+    // not silently decay.
+    type: 'spacedRetrievalDue',
+    label: 'Spaced-retrieval learner — secured concept overdue >24h (Contract D.4 spaced-retrieval lane)',
+    build: () => {
+      const concepts = {};
+      const securedOverdueIds = ['adverbials', 'tense_aspect', 'standard_english', 'subject_object'];
+      for (const id of securedOverdueIds) {
+        concepts[id] = {
+          attempts: 12,
+          correct: 11,
+          wrong: 1,
+          strength: 0.9,
+          correctStreak: 5,
+          // dueAt is well over 24h in the past, so the concept is overdue.
+          dueAt: NOW_TS - (3 * 86400000),
+        };
+      }
+      return { mastery: masteryWith(concepts), recentAttempts: [], focusConceptId: '', mode: 'smart' };
+    },
   },
   {
     // Contract D.4 — explicit retry/trouble exception coverage. Mode 'trouble'
@@ -460,6 +528,24 @@ function renderMarkdown(audit) {
     lines.push(`| ${profile.type} | ${profile.sessionCount} | ${profile.eligibleTemplateCount} | ${s.conceptDistinctMean.toFixed(2)} | ${s.questionTypeDistinctMean.toFixed(2)} | ${(s.constructedSelectedMix * 100).toFixed(1)}% | ${(s.manualReviewOnlyShare * 100).toFixed(1)}% | ${s.repeatedSurfaceCount} / ${s.uniqueSurfaceCount} |`);
   }
   lines.push('');
+  lines.push(`## Selection lane reasons exercised`);
+  lines.push('');
+  lines.push(`Contract D.4 — every queue entry carries an explicit lane reason. The table below shows how many entries each profile pulled from each lane across ${SEED_RANGE.length} seeds.`);
+  lines.push('');
+  const allReasons = new Set();
+  for (const profile of audit.profiles) {
+    for (const reason of Object.keys(profile.spread.reasonHistogram || {})) allReasons.add(reason);
+  }
+  const reasonColumns = [...allReasons].sort();
+  if (reasonColumns.length > 0) {
+    lines.push(`| Profile | ${reasonColumns.join(' | ')} |`);
+    lines.push(`|---${reasonColumns.map(() => '|---').join('')}|`);
+    for (const profile of audit.profiles) {
+      const cells = reasonColumns.map((reason) => String(profile.spread.reasonHistogram?.[reason] || 0));
+      lines.push(`| ${profile.type} | ${cells.join(' | ')} |`);
+    }
+    lines.push('');
+  }
   if (audit.failures.length > 0) {
     lines.push(`## Failures (${audit.failures.length})`);
     lines.push('');
@@ -486,7 +572,7 @@ function renderMarkdown(audit) {
   }
   lines.push(`## Notes`);
   lines.push('');
-  lines.push(`- The grammar selection module emits queue entries without per-item retry/spaced-retrieval reasons. The audit therefore fails closed on duplicate templates or surfaces. Adding a \`reason\` field to \`queueEntry()\` in \`worker/src/subjects/grammar/selection.js\` would enable explicit exceptions via the \`ALLOWED_DUPLICATE_REASONS\` allow-list (Contract D criterion 4).`);
+  lines.push(`- Every queue entry carries an explicit reason emitted by \`queueEntry()\` in \`worker/src/subjects/grammar/selection.js\` (fallback, priority-urgent, focus-saturation, trouble-cluster, spaced-retrieval, retry, similar-problem). Duplicate templates within a 5-question round are only permitted when the reason is on the \`ALLOWED_DUPLICATE_REASONS\` allow-list — missing or unknown reasons hard-fail the audit (Contract D criterion 4).`);
   lines.push(`- "Eligible pool" is computed from \`GRAMMAR_TEMPLATE_METADATA\` filtered by the profile's mastered concepts and (when set) focus concept. Sessions with eligible pool < ${SESSION_SIZE} record a \`pool-too-small\` advisory rather than a hard failure.`);
   lines.push('');
   return lines.join('\n');

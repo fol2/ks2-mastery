@@ -4,7 +4,7 @@ Content Release: grammar-qg-p19-2026-05-04
 Total Items: 15300
 Templates: 510
 Seed Range: 1..30
-Generated: 2026-05-03T21:36:25.950Z
+Generated: 2026-05-04T02:26:07.108Z
 
 _Answer internals stripped from this report._
 
@@ -2080,36 +2080,36 @@ _Answer internals stripped from this report._
 | qg_p3_apostrophe_possession_explain | 28 | single_choice | - | Why is 'the boys' changing room' plural possession? the boys |
 | qg_p3_apostrophe_possession_explain | 29 | single_choice | - | Why is 'the dog's bowls' singular possession? the dog's bowl |
 | qg_p3_apostrophe_possession_explain | 30 | single_choice | - | Why does 'James's' keep the extra s? James's pencil case |
-| proc3_apostrophe_rewrite | 1 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 2 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 3 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 4 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 5 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 6 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 7 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 8 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 9 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 10 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 11 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 12 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 13 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 14 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 15 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 16 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 17 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 18 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 19 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 20 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 21 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 22 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 23 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 24 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 25 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 26 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 27 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 28 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 29 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
-| proc3_apostrophe_rewrite | 30 | text | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 1 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 2 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 3 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 4 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 5 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 6 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 7 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 8 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 9 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 10 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 11 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 12 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 13 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 14 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 15 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 16 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 17 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 18 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 19 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 20 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 21 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 22 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 23 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 24 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 25 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 26 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 27 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 28 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 29 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
+| proc3_apostrophe_rewrite | 30 | textarea | - | Rewrite this phrase using the correct possessive apostrophe. |
 | qg_p4_sentence_speech_transfer | 1 | single_choice | - | Which option correctly punctuates the direct speech AND keep |
 | qg_p4_sentence_speech_transfer | 2 | single_choice | - | Which option correctly punctuates the speech AND makes the s |
 | qg_p4_sentence_speech_transfer | 3 | single_choice | - | Which option correctly punctuates the direct speech AND iden |
@@ -2380,36 +2380,36 @@ _Answer internals stripped from this report._
 | qg_p14_standard_english_diagnostic_choice | 28 | single_choice | - | Which correction fixes the Standard English error in this se |
 | qg_p14_standard_english_diagnostic_choice | 29 | single_choice | - | Which correction fixes the Standard English error in this se |
 | qg_p14_standard_english_diagnostic_choice | 30 | single_choice | - | Which correction fixes the Standard English error in this se |
-| qg_p14_standard_english_constructed_rewrite | 1 | text | - | Rewrite this sentence in Standard English: Ben done the libr |
-| qg_p14_standard_english_constructed_rewrite | 2 | text | - | Rewrite this sentence in Standard English: Cara don't know w |
-| qg_p14_standard_english_constructed_rewrite | 3 | text | - | Rewrite this sentence in Standard English: Dylan seen the sp |
-| qg_p14_standard_english_constructed_rewrite | 4 | text | - | Rewrite this sentence in Standard English: The players was w |
-| qg_p14_standard_english_constructed_rewrite | 5 | text | - | Rewrite this sentence in Standard English: Freya done the bl |
-| qg_p14_standard_english_constructed_rewrite | 6 | text | - | Rewrite this sentence in Standard English: Grace don't know  |
-| qg_p14_standard_english_constructed_rewrite | 7 | text | - | Rewrite this sentence in Standard English: Hassan seen the p |
-| qg_p14_standard_english_constructed_rewrite | 8 | text | - | Rewrite this sentence in Standard English: The players was w |
-| qg_p14_standard_english_constructed_rewrite | 9 | text | - | Rewrite this sentence in Standard English: Jasper done the r |
-| qg_p14_standard_english_constructed_rewrite | 10 | text | - | Rewrite this sentence in Standard English: Keira don't know  |
-| qg_p14_standard_english_constructed_rewrite | 11 | text | - | Rewrite this sentence in Standard English: Luca seen the lib |
-| qg_p14_standard_english_constructed_rewrite | 12 | text | - | Rewrite this sentence in Standard English: The players was w |
-| qg_p14_standard_english_constructed_rewrite | 13 | text | - | Rewrite this sentence in Standard English: Nina done the spo |
-| qg_p14_standard_english_constructed_rewrite | 14 | text | - | Rewrite this sentence in Standard English: Omar don't know w |
-| qg_p14_standard_english_constructed_rewrite | 15 | text | - | Rewrite this sentence in Standard English: Priya seen the bl |
-| qg_p14_standard_english_constructed_rewrite | 16 | text | - | Rewrite this sentence in Standard English: The players was w |
-| qg_p14_standard_english_constructed_rewrite | 17 | text | - | Rewrite this sentence in Standard English: Sofia done the pl |
-| qg_p14_standard_english_constructed_rewrite | 18 | text | - | Rewrite this sentence in Standard English: Theo don't know w |
-| qg_p14_standard_english_constructed_rewrite | 19 | text | - | Rewrite this sentence in Standard English: Zara seen the red |
-| qg_p14_standard_english_constructed_rewrite | 20 | text | - | Rewrite this sentence in Standard English: The players was w |
-| qg_p14_standard_english_constructed_rewrite | 21 | text | - | Rewrite this sentence in Standard English: Ben done the libr |
-| qg_p14_standard_english_constructed_rewrite | 22 | text | - | Rewrite this sentence in Standard English: Cara don't know w |
-| qg_p14_standard_english_constructed_rewrite | 23 | text | - | Rewrite this sentence in Standard English: Dylan seen the sp |
-| qg_p14_standard_english_constructed_rewrite | 24 | text | - | Rewrite this sentence in Standard English: The players was w |
-| qg_p14_standard_english_constructed_rewrite | 25 | text | - | Rewrite this sentence in Standard English: Freya done the bl |
-| qg_p14_standard_english_constructed_rewrite | 26 | text | - | Rewrite this sentence in Standard English: Grace don't know  |
-| qg_p14_standard_english_constructed_rewrite | 27 | text | - | Rewrite this sentence in Standard English: Hassan seen the p |
-| qg_p14_standard_english_constructed_rewrite | 28 | text | - | Rewrite this sentence in Standard English: The players was w |
-| qg_p14_standard_english_constructed_rewrite | 29 | text | - | Rewrite this sentence in Standard English: Jasper done the r |
-| qg_p14_standard_english_constructed_rewrite | 30 | text | - | Rewrite this sentence in Standard English: Keira don't know  |
+| qg_p14_standard_english_constructed_rewrite | 1 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 2 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 3 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 4 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 5 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 6 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 7 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 8 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 9 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 10 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 11 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 12 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 13 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 14 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 15 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 16 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 17 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 18 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 19 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 20 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 21 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 22 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 23 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 24 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 25 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 26 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 27 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 28 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 29 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
+| qg_p14_standard_english_constructed_rewrite | 30 | single_choice | - | Which rewrite uses Standard English correctly? Source senten |
 | qg_p14_standard_english_explain_why | 1 | single_choice | - | Why is this sentence Standard English? Ben did the library p |
 | qg_p14_standard_english_explain_why | 2 | single_choice | - | Why is this sentence Standard English? Cara doesn't know whe |
 | qg_p14_standard_english_explain_why | 3 | single_choice | - | Why is this sentence Standard English? Dylan saw the sports  |
@@ -2500,36 +2500,36 @@ _Answer internals stripped from this report._
 | qg_p14_fronted_adverbials_diagnostic_choice | 28 | single_choice | - | Which sentence is punctuated correctly for this idea: With c |
 | qg_p14_fronted_adverbials_diagnostic_choice | 29 | single_choice | - | Which sentence is punctuated correctly for this idea: Withou |
 | qg_p14_fronted_adverbials_diagnostic_choice | 30 | single_choice | - | Which sentence is punctuated correctly for this idea: In the |
-| qg_p14_fronted_adverbials_constructed_rewrite | 1 | text | - | Add the missing comma after the fronted adverbial: Before th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 2 | text | - | Add the missing comma after the fronted adverbial: During th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 3 | text | - | Add the missing comma after the fronted adverbial: At the ed |
-| qg_p14_fronted_adverbials_constructed_rewrite | 4 | text | - | Add the missing comma after the fronted adverbial: With care |
-| qg_p14_fronted_adverbials_constructed_rewrite | 5 | text | - | Add the missing comma after the fronted adverbial: Without a |
-| qg_p14_fronted_adverbials_constructed_rewrite | 6 | text | - | Add the missing comma after the fronted adverbial: In the mo |
-| qg_p14_fronted_adverbials_constructed_rewrite | 7 | text | - | Add the missing comma after the fronted adverbial: Beside th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 8 | text | - | Add the missing comma after the fronted adverbial: After che |
-| qg_p14_fronted_adverbials_constructed_rewrite | 9 | text | - | Add the missing comma after the fronted adverbial: During th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 10 | text | - | Add the missing comma after the fronted adverbial: At the en |
-| qg_p14_fronted_adverbials_constructed_rewrite | 11 | text | - | Add the missing comma after the fronted adverbial: With a st |
-| qg_p14_fronted_adverbials_constructed_rewrite | 12 | text | - | Add the missing comma after the fronted adverbial: After the |
-| qg_p14_fronted_adverbials_constructed_rewrite | 13 | text | - | Add the missing comma after the fronted adverbial: Before th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 14 | text | - | Add the missing comma after the fronted adverbial: During th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 15 | text | - | Add the missing comma after the fronted adverbial: At the ed |
-| qg_p14_fronted_adverbials_constructed_rewrite | 16 | text | - | Add the missing comma after the fronted adverbial: With care |
-| qg_p14_fronted_adverbials_constructed_rewrite | 17 | text | - | Add the missing comma after the fronted adverbial: Without a |
-| qg_p14_fronted_adverbials_constructed_rewrite | 18 | text | - | Add the missing comma after the fronted adverbial: In the mo |
-| qg_p14_fronted_adverbials_constructed_rewrite | 19 | text | - | Add the missing comma after the fronted adverbial: Beside th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 20 | text | - | Add the missing comma after the fronted adverbial: After che |
-| qg_p14_fronted_adverbials_constructed_rewrite | 21 | text | - | Add the missing comma after the fronted adverbial: During th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 22 | text | - | Add the missing comma after the fronted adverbial: At the en |
-| qg_p14_fronted_adverbials_constructed_rewrite | 23 | text | - | Add the missing comma after the fronted adverbial: With a st |
-| qg_p14_fronted_adverbials_constructed_rewrite | 24 | text | - | Add the missing comma after the fronted adverbial: After the |
-| qg_p14_fronted_adverbials_constructed_rewrite | 25 | text | - | Add the missing comma after the fronted adverbial: Before th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 26 | text | - | Add the missing comma after the fronted adverbial: During th |
-| qg_p14_fronted_adverbials_constructed_rewrite | 27 | text | - | Add the missing comma after the fronted adverbial: At the ed |
-| qg_p14_fronted_adverbials_constructed_rewrite | 28 | text | - | Add the missing comma after the fronted adverbial: With care |
-| qg_p14_fronted_adverbials_constructed_rewrite | 29 | text | - | Add the missing comma after the fronted adverbial: Without a |
-| qg_p14_fronted_adverbials_constructed_rewrite | 30 | text | - | Add the missing comma after the fronted adverbial: In the mo |
+| qg_p14_fronted_adverbials_constructed_rewrite | 1 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 2 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 3 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 4 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 5 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 6 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 7 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 8 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 9 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 10 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 11 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 12 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 13 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 14 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 15 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 16 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 17 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 18 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 19 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 20 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 21 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 22 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 23 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 24 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 25 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 26 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 27 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 28 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 29 | single_choice | - | Choose the version that adds the missing comma after the fro |
+| qg_p14_fronted_adverbials_constructed_rewrite | 30 | single_choice | - | Choose the version that adds the missing comma after the fro |
 | qg_p14_fronted_adverbials_explain_why | 1 | single_choice | - | Why does this sentence need a comma? Before the final bell,  |
 | qg_p14_fronted_adverbials_explain_why | 2 | single_choice | - | Why does this sentence need a comma? During the storm, Freya |
 | qg_p14_fronted_adverbials_explain_why | 3 | single_choice | - | Why does this sentence need a comma? At the edge of the fiel |
@@ -2980,36 +2980,36 @@ _Answer internals stripped from this report._
 | qg_p14_speech_punctuation_diagnostic_choice | 28 | single_choice | - | Which version punctuates Jasper's direct speech correctly: T |
 | qg_p14_speech_punctuation_diagnostic_choice | 29 | single_choice | - | Which version punctuates Keira's direct speech correctly: We |
 | qg_p14_speech_punctuation_diagnostic_choice | 30 | single_choice | - | Which version punctuates Luca's direct speech correctly: The |
-| qg_p14_speech_punctuation_constructed_rewrite | 1 | text | - | Add the missing speech marks and comma: Our team won the rel |
-| qg_p14_speech_punctuation_constructed_rewrite | 2 | text | - | Add the missing speech marks and comma: The model needs more |
-| qg_p14_speech_punctuation_constructed_rewrite | 3 | text | - | Add the missing speech marks and comma: I can hear thunder,  |
-| qg_p14_speech_punctuation_constructed_rewrite | 4 | text | - | Add the missing speech marks and comma: The trip starts tomo |
-| qg_p14_speech_punctuation_constructed_rewrite | 5 | text | - | Add the missing speech marks and comma: We should leave now, |
-| qg_p14_speech_punctuation_constructed_rewrite | 6 | text | - | Add the missing speech marks and comma: The gate is locked,  |
-| qg_p14_speech_punctuation_constructed_rewrite | 7 | text | - | Add the missing speech marks and comma: I found the missing  |
-| qg_p14_speech_punctuation_constructed_rewrite | 8 | text | - | Add the missing speech marks and comma: The library opens at |
-| qg_p14_speech_punctuation_constructed_rewrite | 9 | text | - | Add the missing speech marks and comma: Our team won the rel |
-| qg_p14_speech_punctuation_constructed_rewrite | 10 | text | - | Add the missing speech marks and comma: The model needs more |
-| qg_p14_speech_punctuation_constructed_rewrite | 11 | text | - | Add the missing speech marks and comma: I can hear thunder,  |
-| qg_p14_speech_punctuation_constructed_rewrite | 12 | text | - | Add the missing speech marks and comma: The trip starts tomo |
-| qg_p14_speech_punctuation_constructed_rewrite | 13 | text | - | Add the missing speech marks and comma: We should leave now, |
-| qg_p14_speech_punctuation_constructed_rewrite | 14 | text | - | Add the missing speech marks and comma: The gate is locked,  |
-| qg_p14_speech_punctuation_constructed_rewrite | 15 | text | - | Add the missing speech marks and comma: I found the missing  |
-| qg_p14_speech_punctuation_constructed_rewrite | 16 | text | - | Add the missing speech marks and comma: The library opens at |
-| qg_p14_speech_punctuation_constructed_rewrite | 17 | text | - | Add the missing speech marks and comma: Our team won the rel |
-| qg_p14_speech_punctuation_constructed_rewrite | 18 | text | - | Add the missing speech marks and comma: The model needs more |
-| qg_p14_speech_punctuation_constructed_rewrite | 19 | text | - | Add the missing speech marks and comma: I can hear thunder,  |
-| qg_p14_speech_punctuation_constructed_rewrite | 20 | text | - | Add the missing speech marks and comma: The trip starts tomo |
-| qg_p14_speech_punctuation_constructed_rewrite | 21 | text | - | Add the missing speech marks and comma: We should leave now, |
-| qg_p14_speech_punctuation_constructed_rewrite | 22 | text | - | Add the missing speech marks and comma: The gate is locked,  |
-| qg_p14_speech_punctuation_constructed_rewrite | 23 | text | - | Add the missing speech marks and comma: I found the missing  |
-| qg_p14_speech_punctuation_constructed_rewrite | 24 | text | - | Add the missing speech marks and comma: The library opens at |
-| qg_p14_speech_punctuation_constructed_rewrite | 25 | text | - | Add the missing speech marks and comma: Our team won the rel |
-| qg_p14_speech_punctuation_constructed_rewrite | 26 | text | - | Add the missing speech marks and comma: The model needs more |
-| qg_p14_speech_punctuation_constructed_rewrite | 27 | text | - | Add the missing speech marks and comma: I can hear thunder,  |
-| qg_p14_speech_punctuation_constructed_rewrite | 28 | text | - | Add the missing speech marks and comma: The trip starts tomo |
-| qg_p14_speech_punctuation_constructed_rewrite | 29 | text | - | Add the missing speech marks and comma: We should leave now, |
-| qg_p14_speech_punctuation_constructed_rewrite | 30 | text | - | Add the missing speech marks and comma: The gate is locked,  |
+| qg_p14_speech_punctuation_constructed_rewrite | 1 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 2 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 3 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 4 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 5 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 6 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 7 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 8 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 9 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 10 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 11 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 12 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 13 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 14 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 15 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 16 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 17 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 18 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 19 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 20 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 21 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 22 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 23 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 24 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 25 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 26 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 27 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 28 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 29 | single_choice | - | Choose the version that adds the missing speech marks and co |
+| qg_p14_speech_punctuation_constructed_rewrite | 30 | single_choice | - | Choose the version that adds the missing speech marks and co |
 | qg_p14_speech_punctuation_explain_why | 1 | single_choice | - | Why is the comma inside the speech marks here? "Our team won |
 | qg_p14_speech_punctuation_explain_why | 2 | single_choice | - | Why is the comma inside the speech marks here? "The model ne |
 | qg_p14_speech_punctuation_explain_why | 3 | single_choice | - | Why is the comma inside the speech marks here? "I can hear t |
@@ -3220,36 +3220,36 @@ _Answer internals stripped from this report._
 | qg_p14_parenthesis_commas_diagnostic_choice | 28 | single_choice | - | Which sentence uses commas for parenthesis correctly around  |
 | qg_p14_parenthesis_commas_diagnostic_choice | 29 | single_choice | - | Which sentence uses commas for parenthesis correctly around  |
 | qg_p14_parenthesis_commas_diagnostic_choice | 30 | single_choice | - | Which sentence uses commas for parenthesis correctly around  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 1 | text | - | Add the missing pair of commas around the parenthesis: Imani |
-| qg_p14_parenthesis_commas_constructed_rewrite | 2 | text | - | Add the missing pair of commas around the parenthesis: Jaspe |
-| qg_p14_parenthesis_commas_constructed_rewrite | 3 | text | - | Add the missing pair of commas around the parenthesis: Keira |
-| qg_p14_parenthesis_commas_constructed_rewrite | 4 | text | - | Add the missing pair of commas around the parenthesis: Luca  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 5 | text | - | Add the missing pair of commas around the parenthesis: Maya  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 6 | text | - | Add the missing pair of commas around the parenthesis: Nina  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 7 | text | - | Add the missing pair of commas around the parenthesis: Omar  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 8 | text | - | Add the missing pair of commas around the parenthesis: Priya |
-| qg_p14_parenthesis_commas_constructed_rewrite | 9 | text | - | Add the missing pair of commas around the parenthesis: Ravi  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 10 | text | - | Add the missing pair of commas around the parenthesis: Sofia |
-| qg_p14_parenthesis_commas_constructed_rewrite | 11 | text | - | Add the missing pair of commas around the parenthesis: Theo  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 12 | text | - | Add the missing pair of commas around the parenthesis: Zara  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 13 | text | - | Add the missing pair of commas around the parenthesis: Aisha |
-| qg_p14_parenthesis_commas_constructed_rewrite | 14 | text | - | Add the missing pair of commas around the parenthesis: Ben f |
-| qg_p14_parenthesis_commas_constructed_rewrite | 15 | text | - | Add the missing pair of commas around the parenthesis: Cara  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 16 | text | - | Add the missing pair of commas around the parenthesis: Dylan |
-| qg_p14_parenthesis_commas_constructed_rewrite | 17 | text | - | Add the missing pair of commas around the parenthesis: Eli f |
-| qg_p14_parenthesis_commas_constructed_rewrite | 18 | text | - | Add the missing pair of commas around the parenthesis: Freya |
-| qg_p14_parenthesis_commas_constructed_rewrite | 19 | text | - | Add the missing pair of commas around the parenthesis: Grace |
-| qg_p14_parenthesis_commas_constructed_rewrite | 20 | text | - | Add the missing pair of commas around the parenthesis: Hassa |
-| qg_p14_parenthesis_commas_constructed_rewrite | 21 | text | - | Add the missing pair of commas around the parenthesis: Imani |
-| qg_p14_parenthesis_commas_constructed_rewrite | 22 | text | - | Add the missing pair of commas around the parenthesis: Jaspe |
-| qg_p14_parenthesis_commas_constructed_rewrite | 23 | text | - | Add the missing pair of commas around the parenthesis: Keira |
-| qg_p14_parenthesis_commas_constructed_rewrite | 24 | text | - | Add the missing pair of commas around the parenthesis: Luca  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 25 | text | - | Add the missing pair of commas around the parenthesis: Maya  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 26 | text | - | Add the missing pair of commas around the parenthesis: Nina  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 27 | text | - | Add the missing pair of commas around the parenthesis: Omar  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 28 | text | - | Add the missing pair of commas around the parenthesis: Priya |
-| qg_p14_parenthesis_commas_constructed_rewrite | 29 | text | - | Add the missing pair of commas around the parenthesis: Ravi  |
-| qg_p14_parenthesis_commas_constructed_rewrite | 30 | text | - | Add the missing pair of commas around the parenthesis: Sofia |
+| qg_p14_parenthesis_commas_constructed_rewrite | 1 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 2 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 3 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 4 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 5 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 6 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 7 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 8 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 9 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 10 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 11 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 12 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 13 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 14 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 15 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 16 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 17 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 18 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 19 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 20 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 21 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 22 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 23 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 24 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 25 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 26 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 27 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 28 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 29 | single_choice | - | Choose the version that adds the missing pair of commas arou |
+| qg_p14_parenthesis_commas_constructed_rewrite | 30 | single_choice | - | Choose the version that adds the missing pair of commas arou |
 | qg_p14_parenthesis_commas_explain_why | 1 | single_choice | - | Why are paired commas used here? Imani found the science fol |
 | qg_p14_parenthesis_commas_explain_why | 2 | single_choice | - | Why are paired commas used here? Jasper found the red kite,  |
 | qg_p14_parenthesis_commas_explain_why | 3 | single_choice | - | Why are paired commas used here? Keira found the clay model, |

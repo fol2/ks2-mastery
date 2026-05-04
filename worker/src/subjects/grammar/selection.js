@@ -155,6 +155,54 @@ function candidateVariantMetadata(template, seed) {
   };
 }
 
+// P19 Contract D.4 — return the most recent scored miss within the supplied
+// freshness window (milliseconds) so the retry lane can re-surface it once.
+function recentLastScoredMiss(recentAttempts, nowTs, windowMs) {
+  const attempts = normaliseRecentAttempts(recentAttempts);
+  for (let index = attempts.length - 1; index >= 0; index -= 1) {
+    const attempt = attempts[index];
+    const result = isPlainObject(attempt.result) ? attempt.result : {};
+    if (!isScoredAttempt(attempt) || result.correct !== false) continue;
+    const attemptedAt = Number(attempt.attemptedAt) || Number(attempt.timestamp) || 0;
+    if (attemptedAt > 0 && attemptedAt + windowMs < nowTs) return null; // stale → no retry
+    return attempt;
+  }
+  return null;
+}
+
+// P19 Contract D.4 — collect concepts touched by recent scored misses so the
+// similar-problem lane can route to a fresh template covering the same skill.
+function recentMissedConceptSet(recentAttempts) {
+  const set = new Set();
+  for (const attempt of normaliseRecentAttempts(recentAttempts)) {
+    const result = isPlainObject(attempt.result) ? attempt.result : {};
+    if (!isScoredAttempt(attempt) || result.correct !== false) continue;
+    const conceptIds = Array.isArray(attempt.conceptIds) ? attempt.conceptIds : [];
+    for (const conceptId of conceptIds) if (typeof conceptId === 'string' && conceptId) set.add(conceptId);
+  }
+  return set;
+}
+
+// P19 Contract D.4 — concepts whose retention window has lapsed (overdue by
+// at least 24h with a strong correct streak) become eligible for the
+// spaced-retrieval lane so secured skills do not silently decay.
+function securedOverdueConceptIds(mastery, nowTs) {
+  const set = new Set();
+  if (!isPlainObject(mastery)) return set;
+  const conceptBag = isPlainObject(mastery.concepts) ? mastery.concepts : null;
+  if (!conceptBag) return set;
+  const overdueThresholdMs = 24 * 60 * 60 * 1000;
+  for (const [conceptId, raw] of Object.entries(conceptBag)) {
+    if (typeof conceptId !== 'string' || !conceptId) continue;
+    if (!isPlainObject(raw)) continue;
+    const correctStreak = Number(raw.correctStreak) || 0;
+    const dueAt = Number(raw.dueAt) || 0;
+    if (correctStreak < 3) continue;
+    if (dueAt > 0 && dueAt + overdueThresholdMs <= nowTs) set.add(conceptId);
+  }
+  return set;
+}
+
 function recentVariantIndex(recentAttempts) {
   const index = new Map();
   const attempts = normaliseRecentAttempts(recentAttempts);
@@ -476,6 +524,91 @@ export function buildGrammarPracticeQueue({
         const recentVariants = workingRecentVariants;
         if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
         pushQueueEntry(template, candidateSeed, 'focus-saturation');
+      }
+    }
+  }
+
+  // P19 Contract D.4 — retry lane. When the most recent attempt was a miss
+  // within the last 5 minutes and the same template is still eligible, surface
+  // it once as 'retry'. Audit-allow-listed for duplicate templates.
+  if (queue.length < safeSize) {
+    const lastAttempt = recentLastScoredMiss(recentAttempts, nowTs, 5 * 60 * 1000);
+    if (lastAttempt) {
+      const retryTemplate = pool.find((template) => template.id === lastAttempt.templateId);
+      if (retryTemplate && !plannedTemplateIds.has(retryTemplate.id)) {
+        const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
+        if (!hasRecentGeneratedVariant(retryTemplate, workingRecentVariants, candidateSeed)) {
+          pushQueueEntry(retryTemplate, candidateSeed, 'retry');
+        }
+      }
+    }
+  }
+
+  // P19 Contract D.4 — similar-problem lane. After any recent miss, surface a
+  // *different* template that shares a missed concept so the learner gets a
+  // fresh practice attempt at the same skill rather than the exact failing
+  // item again. Allow-listed for duplicate concepts (not duplicate templates).
+  if (queue.length < safeSize) {
+    const missedConcepts = recentMissedConceptSet(recentAttempts);
+    if (missedConcepts.size > 0) {
+      const recentMissTemplateIds = new Set(
+        normaliseRecentAttempts(recentAttempts)
+          .filter((attempt) => isScoredAttempt(attempt) && isPlainObject(attempt.result) && attempt.result.correct === false)
+          .map((attempt) => attempt.templateId),
+      );
+      const similarPool = pool.filter((template) => {
+        if (plannedTemplateIds.has(template.id)) return false;
+        if (recentMissTemplateIds.has(template.id)) return false;
+        const skills = template.skillIds || [];
+        return skills.some((skill) => missedConcepts.has(skill));
+      });
+      if (similarPool.length > 0) {
+        const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
+        const recentTemplates = recentTemplateIndex(workingRecent);
+        const recentConcepts = recentConceptIndex(workingRecent);
+        const template = pickTemplate({
+          pool: variantFreshPoolWithBroadFallback(similarPool, candidateSeed),
+          rng,
+          mastery,
+          focusConceptId: normalisedFocus,
+          recentTemplates,
+          recentConcepts,
+          recentVariants: workingRecentVariants,
+          candidateSeed,
+          nowTs,
+        });
+        if (template) pushQueueEntry(template, candidateSeed, 'similar-problem');
+      }
+    }
+  }
+
+  // P19 Contract D.4 — spaced-retrieval lane. When mastery shows secured
+  // concepts whose retention window has lapsed (overdue by >= 24h with a
+  // strong correct streak), revisit them once per round to defend retention.
+  if (queue.length < safeSize && mastery) {
+    const overdueConceptIds = securedOverdueConceptIds(mastery, nowTs);
+    if (overdueConceptIds.size > 0) {
+      const spacedPool = pool.filter((template) => {
+        if (plannedTemplateIds.has(template.id)) return false;
+        const skills = template.skillIds || [];
+        return skills.some((skill) => overdueConceptIds.has(skill));
+      });
+      if (spacedPool.length > 0) {
+        const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
+        const recentTemplates = recentTemplateIndex(workingRecent);
+        const recentConcepts = recentConceptIndex(workingRecent);
+        const template = pickTemplate({
+          pool: variantFreshPoolWithBroadFallback(spacedPool, candidateSeed),
+          rng,
+          mastery,
+          focusConceptId: normalisedFocus,
+          recentTemplates,
+          recentConcepts,
+          recentVariants: workingRecentVariants,
+          candidateSeed,
+          nowTs,
+        });
+        if (template) pushQueueEntry(template, candidateSeed, 'spaced-retrieval');
       }
     }
   }

@@ -1,11 +1,10 @@
 /**
  * Grammar QG P11 U1 — Evidence Truth Reconciliation Tests
  *
- * Validates:
- * 1. validateReportCounts passes when report wording matches artefact counts
- * 2. validateReportCounts fails when report claims 190 matrix entries but artefact has 80
- * 3. validateReleaseIdConsistency fails when manifest release ID disagrees with code
- * 4. Handles missing optional fields (smoke evidence not yet present)
+ * Validates the validator's count cross-check + release ID consistency
+ * mechanics. Historical 80/74+4 figures are seeded into a controlled
+ * temporary root so these tests stay decoupled from the live, regenerated
+ * P10 artefact files (which now reflect the P19 510-template inventory).
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -35,11 +34,54 @@ function writeTempReport(content) {
 }
 
 // ---------------------------------------------------------------------------
+// Helper: seed a temporary root with controlled P10 artefacts so the
+// validator's legacy-fallback code path reads predictable figures.
+// ---------------------------------------------------------------------------
+
+function createSeededRoot({
+  totalEntries = 80,
+  approved = 74,
+  approvedWithLimitation = 4,
+  templateCount = 78,
+} = {}) {
+  const tempRoot = path.join(
+    tmpdir(),
+    `grammar-qg-p11-evidence-truth-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  );
+  fs.mkdirSync(path.join(tempRoot, 'reports', 'grammar'), { recursive: true });
+  fs.writeFileSync(
+    path.join(tempRoot, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json'),
+    JSON.stringify({
+      metadata: {
+        contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
+        totalEntries,
+      },
+      entries: Array.from({ length: totalEntries }, (_, idx) => ({ id: `seed-${idx}` })),
+    }),
+  );
+  fs.writeFileSync(
+    path.join(tempRoot, 'reports', 'grammar', 'grammar-qg-p10-quality-register.json'),
+    JSON.stringify({
+      metadata: {
+        contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
+        templateCount,
+        approved,
+        approvedWithLimitation,
+        blocked: 0,
+      },
+      entries: [],
+    }),
+  );
+  return tempRoot;
+}
+
+// ---------------------------------------------------------------------------
 // 1. validateReportCounts passes when report matches artefacts
 // ---------------------------------------------------------------------------
 
 describe('P11 Evidence Truth: report count validation passes for correct claims', () => {
   it('report claiming 80 marking matrix entries matches artefact totalEntries', () => {
+    const tempRoot = createSeededRoot({ totalEntries: 80, approved: 74, approvedWithLimitation: 4 });
     const reportContent = [
       '---',
       'phase: grammar-qg-p10',
@@ -54,14 +96,16 @@ describe('P11 Evidence Truth: report count validation passes for correct claims'
     const tempPath = writeTempReport(reportContent);
     try {
       const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
-      const result = validateReportCounts(manifest, tempPath, { rootDir: ROOT_DIR });
+      const result = validateReportCounts(manifest, tempPath, { rootDir: tempRoot });
       assert.equal(result.pass, true, `Expected pass but got mismatches: ${JSON.stringify(result.mismatches)}`);
     } finally {
       fs.unlinkSync(tempPath);
+      fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it('report with Marking matrix (80 entries) table syntax also passes', () => {
+    const tempRoot = createSeededRoot({ totalEntries: 80, approved: 74, approvedWithLimitation: 4 });
     const reportContent = [
       '---',
       'phase: grammar-qg-p10',
@@ -73,10 +117,7 @@ describe('P11 Evidence Truth: report count validation passes for correct claims'
     const tempPath = writeTempReport(reportContent);
     try {
       const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
-      const result = validateReportCounts(manifest, tempPath, { rootDir: ROOT_DIR });
-      // Should pass — no marking matrix count regex match in table cell format
-      // (The regex expects "N marking matrix entries" not "Marking matrix (N entries")
-      // Actually both patterns are matched. Let's verify:
+      const result = validateReportCounts(manifest, tempPath, { rootDir: tempRoot });
       const matrixCountRegex = /(\d+)\s+marking\s+matrix\s+entries|[Mm]arking\s+matrix\s*\((\d+)\s+entries/;
       const match = reportContent.match(matrixCountRegex);
       if (match) {
@@ -86,6 +127,7 @@ describe('P11 Evidence Truth: report count validation passes for correct claims'
       assert.equal(result.pass, true, `Expected pass but got: ${JSON.stringify(result.mismatches)}`);
     } finally {
       fs.unlinkSync(tempPath);
+      fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 });
@@ -96,6 +138,7 @@ describe('P11 Evidence Truth: report count validation passes for correct claims'
 
 describe('P11 Evidence Truth: report count validation fails for overclaim', () => {
   it('report claiming 190 marking matrix entries fails against artefact with 80', () => {
+    const tempRoot = createSeededRoot({ totalEntries: 80, approved: 74, approvedWithLimitation: 4 });
     const reportContent = [
       '---',
       'phase: grammar-qg-p10',
@@ -109,7 +152,7 @@ describe('P11 Evidence Truth: report count validation fails for overclaim', () =
     const tempPath = writeTempReport(reportContent);
     try {
       const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
-      const result = validateReportCounts(manifest, tempPath, { rootDir: ROOT_DIR });
+      const result = validateReportCounts(manifest, tempPath, { rootDir: tempRoot });
       assert.equal(result.pass, false, 'Should fail for overclaim');
       const mismatch = result.mismatches.find((m) => m.field === 'markingMatrixCount');
       assert.ok(mismatch, 'Expected markingMatrixCount mismatch');
@@ -117,10 +160,12 @@ describe('P11 Evidence Truth: report count validation fails for overclaim', () =
       assert.equal(mismatch.actual, 80);
     } finally {
       fs.unlinkSync(tempPath);
+      fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
-  it('report claiming 78/78 templates approved fails when register has 74+4 split', () => {
+  it('report claiming 78/78 templates approved is acceptable when register has 74+4=78 split', () => {
+    const tempRoot = createSeededRoot({ totalEntries: 80, approved: 74, approvedWithLimitation: 4 });
     const reportContent = [
       '---',
       'phase: grammar-qg-p10',
@@ -134,18 +179,19 @@ describe('P11 Evidence Truth: report count validation fails for overclaim', () =
     const tempPath = writeTempReport(reportContent);
     try {
       const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
-      const result = validateReportCounts(manifest, tempPath, { rootDir: ROOT_DIR });
-      // 78 = 74 + 4, so "78/78 templates approved" is total-compatible
-      // The validator treats this as acceptable (total matches)
-      // This is correct behaviour — 78 is the actual total approved-for-ship
+      const result = validateReportCounts(manifest, tempPath, { rootDir: tempRoot });
+      // 78 = 74 + 4, so "78/78 templates approved" is total-compatible.
+      // The validator treats this as acceptable (total matches).
       assert.equal(result.pass, true,
         '78/78 is acceptable because 74+4=78 total approved-for-ship');
     } finally {
       fs.unlinkSync(tempPath);
+      fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it('report claiming wrong approved count (e.g. 70 approved + 4 approved_with_limitation) fails', () => {
+    const tempRoot = createSeededRoot({ totalEntries: 80, approved: 74, approvedWithLimitation: 4 });
     const reportContent = [
       '---',
       'phase: grammar-qg-p10',
@@ -159,7 +205,7 @@ describe('P11 Evidence Truth: report count validation fails for overclaim', () =
     const tempPath = writeTempReport(reportContent);
     try {
       const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
-      const result = validateReportCounts(manifest, tempPath, { rootDir: ROOT_DIR });
+      const result = validateReportCounts(manifest, tempPath, { rootDir: tempRoot });
       assert.equal(result.pass, false, 'Should fail for wrong approved count');
       const mismatch = result.mismatches.find((m) => m.field === 'qualityRegisterApproved');
       assert.ok(mismatch, 'Expected qualityRegisterApproved mismatch');
@@ -167,6 +213,7 @@ describe('P11 Evidence Truth: report count validation fails for overclaim', () =
       assert.equal(mismatch.actual, 74);
     } finally {
       fs.unlinkSync(tempPath);
+      fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 });
@@ -252,25 +299,26 @@ describe('P11 Evidence Truth: missing optional fields handled gracefully', () =>
 });
 
 // ---------------------------------------------------------------------------
-// 5. Integration: actual P10 report passes with corrected wording
+// 5. Integration: archived P10 report frontmatter + manifest still consistent
+//
+// The P10 final report is now an archived historical artefact. The live
+// `reports/grammar/grammar-qg-p10-*` JSON files are continually regenerated
+// against the latest content release (currently P19, 510 templates), so the
+// frozen 80/74+4 figures inside the archived report no longer match live
+// artefacts. We only assert the immovable historical metadata: the report's
+// frontmatter release ID, and the P10 manifest's release ID.
 // ---------------------------------------------------------------------------
 
-describe('P11 Evidence Truth: actual P10 report integration', () => {
+describe('P11 Evidence Truth: archived P10 report metadata', () => {
   const reportPath = path.join(
     ROOT_DIR, 'docs', 'plans', 'james', 'grammar', 'questions-generator',
-    'grammar-qg-p10-final-completion-report-2026-04-29.md'
+    'archive', 'grammar-qg-p10-final-completion-report-2026-04-29.md',
   );
   const manifestPath = path.join(REPORTS_DIR, 'grammar-qg-p10-certification-manifest.json');
 
-  it('corrected P10 report passes count validation', () => {
-    assert.ok(fs.existsSync(reportPath), 'P10 report must exist');
+  it('archived P10 report frontmatter declares the P10 release ID matching its manifest', () => {
+    assert.ok(fs.existsSync(reportPath), `P10 archived report must exist at ${reportPath}`);
     assert.ok(fs.existsSync(manifestPath), 'P10 manifest must exist');
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    const result = validateReportCounts(manifest, reportPath, { rootDir: ROOT_DIR });
-    assert.equal(result.pass, true, `Expected pass but got: ${JSON.stringify(result.mismatches)}`);
-  });
-
-  it('corrected P10 report frontmatter declares P10 release ID matching manifest', () => {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const reportContent = fs.readFileSync(reportPath, 'utf8');
     assert.match(reportContent, /final_content_release_id:\s*grammar-qg-p10-2026-04-29/,

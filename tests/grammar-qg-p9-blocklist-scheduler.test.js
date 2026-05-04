@@ -82,9 +82,13 @@ describe('P9 historical status map and active runtime coverage', () => {
   });
 
   it('historical P9 JSON is not treated as the active production runtime authority', () => {
+    // P19 Contract A.2 fairness conversion: 142 manual-expansion families +
+    // 5 P0/P2/P3 open-rewrite templates promoted to manualReviewOnly. The
+    // status map records them as approved_with_limitation. This assertion now
+    // pins the live count rather than the historical P9 figure of 4.
     const limitedRuntimeTemplates = Object.values(CERTIFICATION_STATUS_MAP)
       .filter((entry) => entry.status === 'approved_with_limitation');
-    assert.equal(limitedRuntimeTemplates.length, 4);
+    assert.equal(limitedRuntimeTemplates.length, 151);
   });
 });
 

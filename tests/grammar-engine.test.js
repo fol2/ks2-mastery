@@ -114,11 +114,12 @@ test('Grammar QG P3 baseline pins the historical explanation-depth release', () 
   assert.equal(baseline.p3ExplanationComplete, true);
   assert.deepEqual(baseline.thinPoolConcepts, []);
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
-  // Live content now reflects the P18 manual expansion.
+  // Live content now reflects the P19 follow-up: 4 P14 priority rewrites
+  // converted from constructed to selected-response (Contract A.2).
   assert.equal(GRAMMAR_CONCEPTS.length, 18);
   assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 510);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 317);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 193);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 321);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 189);
 });
 
 test('Grammar legacy content still generates serialisable questions matching frozen oracle samples', () => {

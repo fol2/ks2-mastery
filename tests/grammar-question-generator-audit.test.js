@@ -21,10 +21,14 @@ test('Grammar question-generator audit covers the current template inventory', (
   assert.deepEqual(audit.invalidAnswerSpecs, []);
   assert.equal(audit.conceptCoverage.length, GRAMMAR_CONCEPTS.length);
   assert.equal(audit.answerSpecTemplateCount, 479);
-  assert.equal(audit.constructedResponseTemplateCount, 193);
-  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 193);
+  assert.equal(audit.constructedResponseTemplateCount, 189);
+  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
   assert.equal(audit.legacyAdapterTemplateCount, 0);
-  assert.equal(audit.manualReviewOnlyTemplateCount, 4);
+  // P19 Contract A.2: 142 manual-expansion families promoted to manualReviewOnly,
+  // 5 P0/P2/P3 open-rewrite templates promoted, and 4 P14 priority rewrites
+  // moved to selected-response (exact) instead of manualReviewOnly. Net
+  // runtime manualReviewOnly = 151 templates.
+  assert.equal(audit.manualReviewOnlyTemplateCount, 151);
   assert.equal(audit.p2MigrationComplete, true);
   assert.equal(audit.explainTemplateCount, 126);
   assert.equal(audit.conceptsWithExplainCoverage.length, GRAMMAR_CONCEPTS.length);
@@ -36,10 +40,10 @@ test('Grammar question-generator audit covers the current template inventory', (
   );
   assert.deepEqual(audit.answerSpecKindCounts, {
     acceptedSet: 2,
-    exact: 230,
-    manualReviewOnly: 4,
+    exact: 234,
+    manualReviewOnly: 151,
     multiField: 56,
-    normalisedText: 178,
+    normalisedText: 27,
     punctuationPattern: 9,
   });
 
@@ -72,15 +76,17 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
   assert.notEqual(a, c);
 });
 
-test('Grammar question-generator P18 denominator assertions', () => {
+test('Grammar question-generator P19 denominator assertions', () => {
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
 
-  assert.equal(audit.releaseId, 'grammar-qg-p18-2026-05-02');
+  assert.equal(audit.releaseId, 'grammar-qg-p19-2026-05-04');
   assert.equal(audit.templateCount, 510);
   assert.equal(audit.conceptCount, 18);
-  assert.equal(audit.selectedResponseCount, 317);
-  assert.equal(audit.constructedResponseCount, 193);
+  // P19 Contract A.2 selected-response conversion: 4 P14 priority rewrites
+  // promoted from constructed-response to single_choice selected-response.
+  assert.equal(audit.selectedResponseCount, 321);
+  assert.equal(audit.constructedResponseCount, 189);
   assert.equal(audit.generatedTemplateCount, 484);
   assert.equal(audit.fixedTemplateCount, 26);
   assert.equal(audit.explainTemplateCount, 126);
@@ -90,12 +96,12 @@ test('Grammar question-generator P18 denominator assertions', () => {
   assert.equal(audit.repeatedGeneratedVariants.length, 0, 'Default-window repeated variants must be zero');
   assert.equal(audit.lowDepthGeneratedTemplates.length, 0, 'Deep low-depth families must be zero');
   assert.equal(audit.answerSpecTemplateCount, 479);
-  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 193);
-  assert.equal(audit.manualReviewOnlyTemplateCount, 4);
+  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
+  assert.equal(audit.manualReviewOnlyTemplateCount, 151);
   assert.equal(audit.generatedSignatureCollisions.length, 0, 'Cross-template collisions must be zero');
 });
 
-test('Grammar P6 baseline fixture remains frozen while P18 supersedes the live audit output', () => {
+test('Grammar P6 baseline fixture remains frozen while P19 supersedes the live audit output', () => {
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
   const baseline = readGrammarQuestionGeneratorP6Baseline();
@@ -112,7 +118,10 @@ test('Grammar P6 baseline fixture remains frozen while P18 supersedes the live a
   assert.ok(audit.mixedTransferTemplateCount > baseline.mixedTransferTemplateCount);
   assert.ok(audit.answerSpecTemplateCount > baseline.answerSpecTemplateCount);
   assert.ok(audit.constructedResponseAnswerSpecTemplateCount > baseline.constructedResponseAnswerSpecTemplateCount);
-  assert.equal(audit.manualReviewOnlyTemplateCount, baseline.manualReviewOnlyTemplateCount);
+  // P19 Contract A.2: live manualReviewOnly count grew from baseline 4 to 95
+  // after promoting 91 manual-expansion families to manualReviewOnly. The
+  // baseline stays frozen at the P6 figure; the live audit supersedes it.
+  assert.ok(audit.manualReviewOnlyTemplateCount >= baseline.manualReviewOnlyTemplateCount);
   assert.equal(audit.repeatedGeneratedVariants.length, baseline.repeatedGeneratedVariants.length);
   assert.equal(audit.generatedSignatureCollisions.length, baseline.generatedSignatureCollisions.length);
   assert.equal(audit.lowDepthGeneratedTemplates.length, baseline.lowDepthGeneratedTemplates.length);

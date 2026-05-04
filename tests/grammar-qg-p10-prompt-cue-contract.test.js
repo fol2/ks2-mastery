@@ -325,12 +325,16 @@ describe('P10 U2 REGRESSION: focusTarget never present on serialised output', ()
 });
 
 describe('P18 semantic prompt-cue audit evidence', () => {
-  it('commits the P18 semantic audit artefact for the certified release', () => {
+  it('commits the P18 semantic audit artefact as a frozen historical snapshot', () => {
+    // P19 supersedes P18; the P18 semantic audit is frozen at its release ID
+    // (`grammar-qg-p18-2026-05-02`) and template count, not the live
+    // GRAMMAR_CONTENT_RELEASE_ID. The pass condition and finding count remain
+    // load-bearing: they preserve the historical certification record.
     const audit = JSON.parse(fs.readFileSync(
       path.join(REPORTS_DIR, 'grammar-qg-p18-semantic-prompt-cue-audit.json'),
       'utf8',
     ));
-    assert.equal(audit.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+    assert.equal(audit.contentReleaseId, 'grammar-qg-p18-2026-05-02');
     assert.equal(audit.templateCount, GRAMMAR_TEMPLATE_METADATA.length);
     assert.equal(audit.seedRange, '1..30');
     assert.equal(audit.totalChecked, GRAMMAR_TEMPLATE_METADATA.length * 30);
