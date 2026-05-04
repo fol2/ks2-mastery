@@ -1,7 +1,7 @@
 # Grammar QG P19 — smart-practice surface audit
 
 Content release: `grammar-qg-p19-2026-05-04`
-Generated: `2026-05-04T09:02:43.747Z`
+Generated: `2026-05-04T10:08:21.271Z`
 Sessions: 330 (11 profiles × 30 seeds, size=5)
 Status: **PASS** — 0 failures, 0 advisories.
 
@@ -41,5 +41,6 @@ Contract D.4 — every queue entry carries an explicit lane reason. The table be
 
 ## Notes
 
-- Every queue entry carries an explicit reason emitted by `queueEntry()` in `worker/src/subjects/grammar/selection.js` (fallback, priority-urgent, focus-saturation, trouble-cluster, spaced-retrieval, retry, similar-problem). Duplicate templates within a 5-question round are only permitted when the reason is on the `ALLOWED_DUPLICATE_REASONS` allow-list — missing or unknown reasons hard-fail the audit (Contract D criterion 4).
+- Every queue entry carries an explicit reason emitted by `queueEntry()` in `worker/src/subjects/grammar/selection.js`. Six lanes are exercised by the simulator profiles: fallback, priority-urgent, retry, similar-problem, spaced-retrieval, trouble-cluster. The seventh lane — focus-saturation — fires only when a focus concept's mode-eligible pool is smaller than the queue size (1..4 templates). With the current 510-template inventory the smallest mode-eligible per-concept pool is 16 (satsset/active_passive), so focus-saturation is unreachable in production today; the lane stays wired so a future content release that retires a concept down to ≤4 active templates would activate it without a code change.
+- Duplicate templates within a 5-question round are only permitted when the reason is on the `ALLOWED_DUPLICATE_REASONS` allow-list — missing or unknown reasons hard-fail the audit (Contract D criterion 4).
 - "Eligible pool" is computed from `GRAMMAR_TEMPLATE_METADATA` filtered by the profile's mastered concepts and (when set) focus concept. Sessions with eligible pool < 5 record a `pool-too-small` advisory rather than a hard failure.

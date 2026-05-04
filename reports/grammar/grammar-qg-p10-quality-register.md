@@ -1,7 +1,7 @@
 # Grammar QG P10 — Quality Register
 
 **Content Release:** grammar-qg-p19-2026-05-04
-**Generated:** 2026-05-04T08:40:20.628Z
+**Generated:** 2026-05-04T10:03:21.829Z
 **Templates:** 510
 **Approved:** 330 | **Blocked:** 0
 **High-risk (1..15 seeds):** 199

@@ -572,7 +572,8 @@ function renderMarkdown(audit) {
   }
   lines.push(`## Notes`);
   lines.push('');
-  lines.push(`- Every queue entry carries an explicit reason emitted by \`queueEntry()\` in \`worker/src/subjects/grammar/selection.js\` (fallback, priority-urgent, focus-saturation, trouble-cluster, spaced-retrieval, retry, similar-problem). Duplicate templates within a 5-question round are only permitted when the reason is on the \`ALLOWED_DUPLICATE_REASONS\` allow-list — missing or unknown reasons hard-fail the audit (Contract D criterion 4).`);
+  lines.push(`- Every queue entry carries an explicit reason emitted by \`queueEntry()\` in \`worker/src/subjects/grammar/selection.js\`. Six lanes are exercised by the simulator profiles: fallback, priority-urgent, retry, similar-problem, spaced-retrieval, trouble-cluster. The seventh lane — focus-saturation — fires only when a focus concept's mode-eligible pool is smaller than the queue size (1..${SESSION_SIZE - 1} templates). With the current 510-template inventory the smallest mode-eligible per-concept pool is 16 (satsset/active_passive), so focus-saturation is unreachable in production today; the lane stays wired so a future content release that retires a concept down to ≤${SESSION_SIZE - 1} active templates would activate it without a code change.`);
+  lines.push(`- Duplicate templates within a ${SESSION_SIZE}-question round are only permitted when the reason is on the \`ALLOWED_DUPLICATE_REASONS\` allow-list — missing or unknown reasons hard-fail the audit (Contract D criterion 4).`);
   lines.push(`- "Eligible pool" is computed from \`GRAMMAR_TEMPLATE_METADATA\` filtered by the profile's mastered concepts and (when set) focus concept. Sessions with eligible pool < ${SESSION_SIZE} record a \`pool-too-small\` advisory rather than a hard failure.`);
   lines.push('');
   return lines.join('\n');

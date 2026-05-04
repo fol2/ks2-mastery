@@ -9,6 +9,16 @@ import {
 } from '../worker/src/subjects/grammar/content.js';
 import { markByAnswerSpec } from '../worker/src/subjects/grammar/answer-spec.js';
 
+// P19b polish: keep this block-list in lock-step with
+// scripts/generate-grammar-manual-expansion.mjs ARTICLE_CONSONANT_ONSET_BLOCKLIST.
+// Words that begin with a vowel letter but take "a", not "an", because they
+// are pronounced with a consonant onset.
+const ARTICLE_CONSONANT_ONSET_BLOCKLIST = new Set([
+  'union', 'unicorn', 'uniform', 'unit', 'unite', 'united', 'unity', 'universe',
+  'university', 'usage', 'use', 'used', 'useful', 'user', 'usual', 'european',
+  'ewe', 'one', 'once', 'oneness', 'ubiquitous', 'utility', 'utopia',
+]);
+
 const DEFAULT_SEEDS = Object.freeze([1, 2, 3]);
 
 export function parseSeedList(value) {
@@ -227,33 +237,56 @@ export function buildGrammarContentQualityAudit(seeds = DEFAULT_SEEDS) {
       }
 
       // --- HARD FAIL 9: Child-visible article agreement ---
+      // P19b polish: generalise from the triple allow-list (adverb|adjective|
+      // exclamation) to /\ba ([aeiou]\w+)\b/gi with the consonant-onset block-
+      // list above. Mirrors the upstream normaliser in the generator.
       const articleAgreementText = `${question.stemHtml || ''} ${(question.solutionLines || []).join(' ')} ${JSON.stringify(question.inputSpec || {})} ${JSON.stringify(question.answerSpec || {})}`;
-      const badArticleMatch = articleAgreementText.match(/\ba\s+(adverb|adjective|exclamation)\b/i);
-      if (badArticleMatch) {
+      const articleRe = /\ba\s+([aeiou]\w+)\b/gi;
+      let articleMatch;
+      while ((articleMatch = articleRe.exec(articleAgreementText)) !== null) {
+        const word = articleMatch[1];
+        if (ARTICLE_CONSONANT_ONSET_BLOCKLIST.has(word.toLowerCase())) continue;
         hardFailures.push({
           rule: 'article-agreement',
           templateId: template.id,
           seed,
-          detail: `Use "an ${badArticleMatch[1].toLowerCase()}" rather than "a ${badArticleMatch[1].toLowerCase()}"`,
+          detail: `Use "an ${word.toLowerCase()}" rather than "a ${word.toLowerCase()}"`,
         });
+        break; // one finding per template/seed is enough — keeps detail array short
       }
 
       // --- HARD FAIL 10: Pronoun-cohesion contradiction (P19 Contract C) ---
       // When the prompt asks about unclear/ambiguous reference, feedback must
-      // not assert the pronouns "clearly refer" without an accompanying contrast
+      // not assert a confident reference without an accompanying contrast
       // marker that explains the unclarity. Catches the pre-P19 pattern where
       // generated feedback contradicted the question.
+      //
+      // P19b polish: broadened trigger tokens (added vague|muddled|non-standard|
+      // incorrect), broadened assertion regex (clearly refer/identif/point/
+      // mean/indicate; definitely refer/mean; obvious(ly) refer/mean; no
+      // ambiguity), and required the contrast token within ±60 chars of the
+      // assertion match — a stray "because" elsewhere in feedback no longer
+      // satisfies the rule.
       const promptPlain10 = stripHtml(question.stemHtml || '').toLowerCase();
       const feedbackPlain10 = String(question.answerSpec?.feedbackLong || '').toLowerCase();
-      const contradictionTrigger = /\b(unclear|wrong|confusing|ambiguous)\b/.test(promptPlain10);
-      const contradictionAssertion = /clearly refer/.test(feedbackPlain10);
-      const contradictionContrast = /\b(but|however|whereas|not\s+clear|because)\b/.test(feedbackPlain10);
-      if (contradictionTrigger && contradictionAssertion && !contradictionContrast) {
+      const contradictionTrigger = /\b(unclear|wrong|confusing|ambiguous|vague|muddled|non[\s-]?standard|incorrect)\b/.test(promptPlain10);
+      const assertionPattern = /\b(clearly\s+(?:refer|identif|point|mean|indicate)|definitely\s+(?:refer|mean|point)|obvious(?:ly)?\s+(?:refer|mean|identif|point)|no\s+ambiguity)/;
+      const assertionMatch = assertionPattern.test(feedbackPlain10) ? feedbackPlain10.match(assertionPattern) : null;
+      let contradictionContradicts = false;
+      if (contradictionTrigger && assertionMatch) {
+        // ±60 char window around the assertion match
+        const matchStart = assertionMatch.index;
+        const matchEnd = matchStart + assertionMatch[0].length;
+        const window = feedbackPlain10.slice(Math.max(0, matchStart - 60), Math.min(feedbackPlain10.length, matchEnd + 60));
+        const localContrast = /\b(but|however|whereas|not\s+clear|because|despite|although|even\s+though)\b/.test(window);
+        contradictionContradicts = !localContrast;
+      }
+      if (contradictionContradicts) {
         hardFailures.push({
           rule: 'pronoun-cohesion-contradiction',
           templateId: template.id,
           seed,
-          detail: 'Prompt says the reference is unclear/ambiguous but feedback states the pronouns "clearly refer" without explaining the contrast.',
+          detail: 'Prompt says the reference is unclear/ambiguous but feedback asserts a confident reference without a nearby contrast/explanation marker.',
         });
       }
 

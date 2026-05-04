@@ -1,6 +1,6 @@
 # Grammar QG P10 — Marking Matrix (Full Variant Expansion)
 
-Generated: 2026-05-04T08:40:21.274Z
+Generated: 2026-05-04T10:03:22.510Z
 Content release: grammar-qg-p19-2026-05-04
 Seed range: 1..5
 Total entries: 45

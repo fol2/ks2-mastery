@@ -32,7 +32,7 @@
   "generatorScript": "scripts/generate-grammar-qg-quality-inventory.mjs",
   "generatorScriptHash": "3a1af25b8d10a5f4077aec408772cea62290ec068360d2a27aaa83480c1a6a87",
   "generationCommand": "node scripts/generate-grammar-qg-quality-inventory.mjs --seeds=1..30 --release=p19",
-  "generatedAt": "2026-05-04T08:40:21.554Z",
+  "generatedAt": "2026-05-04T10:03:22.823Z",
   "answerInternalsIncluded": true,
   "answerInternalsRedacted": true,
   "postDeployRequiredForPostDeployCertification": true
