@@ -313,7 +313,7 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   return (
     <PracticeStage subjectId="punctuation" scene="setup" backdrop="punctuation-map" motion="calm">
     <section
-      className="card border-top punctuation-surface punctuation-setup-scene punctuation-mission-dashboard"
+      className="punctuation-surface punctuation-setup-scene punctuation-mission-dashboard"
       data-punctuation-phase="setup"
     >
       <div className="setup-grid">
