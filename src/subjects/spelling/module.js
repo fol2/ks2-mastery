@@ -127,7 +127,6 @@ export const spellingModule = {
   visualAdapter: createReadySubjectVisualAdapter('spelling', {
     setup: { component: 'SpellingSetupScene', primaryAction: 'spelling-start' },
     sessionHud: { component: 'SessionHUD', adapter: 'SpellingSessionScene' },
-    companionPanel: { component: 'SubjectCompanionPanel', dataSource: 'codex+stats' },
     practiceStage: { component: 'PracticeStage', adopted: true },
     summaryFrame: { component: 'SessionSummaryFrame', adapter: 'SpellingSummaryFrameAdapter' },
   }),
