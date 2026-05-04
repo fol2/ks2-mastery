@@ -113,12 +113,12 @@ test('SubjectCompanionPanel: stats render as dl/dt/dd elements', async () => {
     });
     console.log(renderToStaticMarkup(tree));
   `);
-  assert.match(html, /<dl class="companion-panel-dl">/);
-  assert.match(html, /<dt>Due<\/dt>/);
-  assert.match(html, /<dd>5<\/dd>/);
-  assert.match(html, /<dt>Secure<\/dt>/);
-  assert.match(html, /<dd>20<\/dd>/);
-  assert.match(html, /data-tone="warn"/);
+  assert.match(html, /class="ss-stat-grid"/);
+  assert.match(html, /class="ss-stat-label">Due<\/div>/);
+  assert.match(html, /class="ss-stat-value"[^>]*>5<\/div>/);
+  assert.match(html, /class="ss-stat-label">Secure<\/div>/);
+  assert.match(html, /class="ss-stat-value"[^>]*>20<\/div>/);
+  assert.match(html, /color:var\(--warn-strong\)/);
 });
 
 // ---------------------------------------------------------------

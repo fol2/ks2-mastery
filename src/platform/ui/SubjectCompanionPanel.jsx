@@ -59,18 +59,16 @@ export function SubjectCompanionPanel({
         </section>
       ) : null}
 
-      {/* Stats grid */}
+      {/* Stats grid — uses ss-stat-grid classes for design consistency */}
       {stats.length > 0 ? (
-        <section className="companion-panel-stats">
-          <dl className="companion-panel-dl">
-            {stats.map((s) => (
-              <div key={s.label} className="companion-panel-stat" data-tone={s.tone || undefined}>
-                <dt>{s.label}</dt>
-                <dd>{s.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+        <div className="ss-stat-grid">
+          {stats.map((s) => (
+            <div className="ss-stat" key={s.label}>
+              <div className="ss-stat-label">{s.label}</div>
+              <div className="ss-stat-value" style={s.tone === 'warn' ? { color: 'var(--warn-strong)' } : undefined}>{s.value}</div>
+            </div>
+          ))}
+        </div>
       ) : null}
       {nextFocus ? <p className="companion-panel-focus">{nextFocus}</p> : null}
     </aside>
