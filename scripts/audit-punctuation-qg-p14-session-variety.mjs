@@ -14,8 +14,10 @@
  *   - >=80 unique items across 20 x 6 = 120 SmartSix questions.
  *   - paragraph appears at least once every 4 sessions on average.
  *   - transfer represented but not dominant. Contract phrasing is
- *     "appears but does not dominate"; dominance is the majority, so the
- *     gate caps any single session at <=50 % transfer slots.
+ *     "appears but does not dominate". P14b tightens the per-session cap
+ *     to <=34 % so a SmartSix session can hold at most 2 transfer slots
+ *     out of 6 (2/6 = 33.3 %); 3/6 (50 %) trips the gate. Aggregate
+ *     check: at most half of all sessions may contain any transfer item.
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -233,7 +235,13 @@ function evaluateGates(mixed, learner) {
         immediateRepeats: 0,
         uniqueItems: 80,
         paragraphAtLeastOnceEveryFour: true,
-        transferRatioMax: 0.5,
+        // adv-007: tightened from 0.5 (majority) to 0.34 (allows 2/6
+        // transfer slots in a SmartSix; rejects 3/6 = 50 %).
+        transferRatioMax: 0.34,
+        // Aggregate floor: at most half of all sessions should contain a
+        // transfer item — otherwise transfer is "everywhere" even if no
+        // single session is dominated by it.
+        transferTouchRatioMax: 0.75,
       },
       observed: {
         sessions: learner.sessionCount,
@@ -241,13 +249,15 @@ function evaluateGates(mixed, learner) {
         uniqueItems: learner.uniqueItemsAcrossSweep,
         paragraphSessions: learner.paragraphSessions,
         transferSessions: learner.transferSessions,
+        transferTouchRatio: Number((learner.transferSessions / Math.max(1, learner.sessionCount)).toFixed(2)),
         maxTransferRatio: Number(learner.maxTransferRatio.toFixed(2)),
       },
       ok:
         learner.totalImmediateRepeats === 0
         && learner.uniqueItemsAcrossSweep >= 80
         && learner.paragraphSessions >= Math.ceil(LEARNER_SESSION_COUNT / 4)
-        && learner.maxTransferRatio <= 0.5,
+        && learner.maxTransferRatio <= 0.34
+        && (learner.transferSessions / Math.max(1, learner.sessionCount)) <= 0.75,
     },
   };
 }

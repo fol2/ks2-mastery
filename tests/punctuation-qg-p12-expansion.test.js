@@ -64,6 +64,17 @@ test('P12 exposes a 3000+ Punctuation QG runtime pool', () => {
 
   assert.equal(PUNCTUATION_MANIFEST_VALIDATION.ok, true);
   assert.match(PUNCTUATION_CURRENT_RELEASE_ID, /^punctuation-qg-p\d+-\d+-\d{4}-\d{2}-\d{2}$/);
+  // adv-009: the format check above leaves the embedded item-count
+  // unverified — a release ID with a bogus count would still pass. Cross-
+  // check the count against the actual runtime size so the release ID is
+  // a true claim, not just a well-shaped string.
+  const releaseIdMatch = PUNCTUATION_CURRENT_RELEASE_ID.match(/^punctuation-qg-p\d+-(\d+)-\d{4}-\d{2}-\d{2}$/);
+  assert.ok(releaseIdMatch, 'release ID format must yield a parseable item count');
+  assert.equal(
+    Number(releaseIdMatch[1]),
+    runtime.items.length,
+    `release ID embedded count ${releaseIdMatch[1]} does not match runtime size ${runtime.items.length}`,
+  );
   assert.equal(PRODUCTION_DEPTH, 100);
   assert.ok(fixed.length >= 500, `fixed=${fixed.length}`);
   assert.ok(generated.length >= 2500, `generated=${generated.length}`);

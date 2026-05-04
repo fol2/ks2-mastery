@@ -206,25 +206,25 @@ function sentenceCaseFirst(value) {
 // rewritten — `is + ready to + verb` is grammatical and the bank uses them
 // deliberately as "missing apostrophe" exercises.
 //
-// Replacement strings preserve the original case (Title vs lower) by using
-// case-aware replacement functions, so a sentence-leading `"You've ready
-// to move…"` becomes `"You've moved…"` with the capital intact.
-function repairApostropheContractionGrammar(value) {
-  const text = String(value ?? '');
-  // Pronouns whose contractions resolve to `have` or `will` — paired with
-  // `ready to <v>` they need a grammar fix, not just an apostrophe.
-  const HAVE_PRONOUNS = ['I', 'you', 'we', 'they'];
-  const WILL_PRONOUNS = ['I', 'you', 'we', 'they', 'he', 'she', 'it', 'that', 'there'];
+// Two correctness guards (added P14b after adversarial review):
+//   * Without-apostrophe forms (`Well`/`Ill`/`Hell`/etc.) only match when
+//     **capitalised** (sentence start). Lowercase `well` (adverb), `ill`
+//     (adjective), `hell` (noun), `shell` (noun) mid-sentence are NOT
+//     touched. The case-sensitive matching is critical — these forms are
+//     ambiguous outside sentence-start context.
+//   * Verbs use `(?!-)` lookahead so hyphenated compounds like
+//     `forget-me-not` are excluded from the negative-contraction repairs.
+//
+// Replacement strings preserve original case via the dedicated `_REPAIR`
+// table (capital-first replacements for capital-first matches).
+export function repairApostropheContractionGrammar(value) {
+  let out = String(value ?? '');
+
   // Family of motion / activity verbs the manual bank pairs with `ready to`.
   // Not exhaustive — extend if new bank entries appear.
   const VERB_GROUP = '(?:move|forget|leave|go|run|walk|come|start|begin|do|see|talk|swim|read|write|sit|stand|stop|finish|help|join|listen|return)';
-  const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
-  let out = text;
-
-  // `<pronoun>'ve ready to <verb>` → `<pronoun>'ve <verb-ed>` (past participle).
-  // For irregular verbs (`go → gone`, `come → come`, etc.) we use a deny-table
-  // rather than a naive `+ed`. Anything not in the table falls back to `+ed`.
+  // Past participles for the `'ve`/`Ive` rewrites. Anything missing falls
+  // back to `+ed`.
   const PAST_PARTICIPLE = {
     move: 'moved', forget: 'forgotten', leave: 'left', go: 'gone', run: 'run',
     walk: 'walked', come: 'come', start: 'started', begin: 'begun',
@@ -233,40 +233,57 @@ function repairApostropheContractionGrammar(value) {
     finish: 'finished', help: 'helped', join: 'joined', listen: 'listened',
     return: 'returned',
   };
-  for (const pronoun of HAVE_PRONOUNS) {
-    for (const apostrophe of ["'ve", 've']) {
-      const pattern = new RegExp(`\\b(${pronoun}|${pronoun.toLowerCase()})${apostrophe} ready to ${VERB_GROUP}\\b`, 'g');
-      out = out.replace(pattern, (_match, p, _v) => {
-        const verb = _match.match(new RegExp(`${VERB_GROUP}$`, 'i'))[0].toLowerCase();
-        const past = PAST_PARTICIPLE[verb] || `${verb}ed`;
-        const isCap = p[0] === p[0].toUpperCase();
-        return `${isCap ? titleCase(pronoun) : pronoun.toLowerCase()}${apostrophe} ${past}`;
-      });
-    }
+
+  // --- 'have' family rewrites ---
+  // The bank's exercise design pairs a "broken" stem (no apostrophe) with
+  // a "fixed" model (with apostrophe). The repair must preserve the
+  // matched form so stems stay broken-apostrophe-only and models stay
+  // apostrophe-correct — only the `ready to <v>` → `<v-ed>` rewrite is
+  // applied. The matched literal is echoed back as the prefix.
+  const HAVE_FORMS = [
+    "I've", "i've", "you've", "You've", "we've", "We've", "they've", "They've",
+    // Without-apostrophe forms — capital-only to avoid false positives.
+    "Ive", "Youve", "Weve", "Theyve",
+  ];
+
+  for (const from of HAVE_FORMS) {
+    const pattern = new RegExp(`\\b${escapeRegExp(from)} ready to (${VERB_GROUP})(?!-)\\b`, 'g');
+    out = out.replace(pattern, (_match, verb) => {
+      const past = PAST_PARTICIPLE[verb.toLowerCase()] || `${verb.toLowerCase()}ed`;
+      return `${from} ${past}`;
+    });
   }
 
-  // `<pronoun>'ll ready to <verb>` → `<pronoun>'ll <verb>` (infinitive).
-  for (const pronoun of WILL_PRONOUNS) {
-    for (const apostrophe of ["'ll", 'll']) {
-      const pattern = new RegExp(`\\b(${pronoun}|${pronoun.toLowerCase()})${apostrophe} ready to (${VERB_GROUP})\\b`, 'g');
-      out = out.replace(pattern, (_match, p, verb) => {
-        const isCap = p[0] === p[0].toUpperCase();
-        return `${isCap ? titleCase(pronoun) : pronoun.toLowerCase()}${apostrophe} ${verb.toLowerCase()}`;
-      });
-    }
+  // --- 'will' family rewrites ---
+  const WILL_FORMS = [
+    "I'll", "i'll", "you'll", "You'll", "we'll", "We'll", "they'll", "They'll",
+    "he'll", "He'll", "she'll", "She'll", "it'll", "It'll",
+    "that'll", "That'll", "there'll", "There'll",
+    // Without-apostrophe forms — capital-only, to avoid lowercase `well`
+    // (adverb), `ill` (adjective), `hell` (noun), `shell` (noun) etc.
+    "Ill", "Youll", "Well", "Theyll", "Hell", "Shell", "Itll", "Thatll", "Therell",
+  ];
+
+  for (const from of WILL_FORMS) {
+    const pattern = new RegExp(`\\b${escapeRegExp(from)} ready to (${VERB_GROUP})(?!-)\\b`, 'g');
+    out = out.replace(pattern, (_match, verb) => `${from} ${verb.toLowerCase()}`);
   }
 
-  // Original P13 patches retained verbatim for the negative contractions
-  // (`isn't`, `aren't`).
+  // Negative contractions — kept verbatim from P13 patch but with `(?!-)`
+  // added so `forget-me-not` and similar hyphenated compounds escape.
   return out
-    .replace(/\bit isnt move\b/gi, 'it isnt safe to move')
-    .replace(/\bit isn't move\b/gi, "it isn't safe to move")
-    .replace(/\bwe arent move\b/gi, 'we arent ready to move')
-    .replace(/\bwe aren't move\b/gi, "we aren't ready to move")
-    .replace(/\bit isnt forget\b/gi, 'it isnt safe to forget')
-    .replace(/\bit isn't forget\b/gi, "it isn't safe to forget")
-    .replace(/\bwe arent forget\b/gi, 'we arent ready to forget')
-    .replace(/\bwe aren't forget\b/gi, "we aren't ready to forget");
+    .replace(/\bit isnt move(?!-)\b/gi, 'it isnt safe to move')
+    .replace(/\bit isn't move(?!-)\b/gi, "it isn't safe to move")
+    .replace(/\bwe arent move(?!-)\b/gi, 'we arent ready to move')
+    .replace(/\bwe aren't move(?!-)\b/gi, "we aren't ready to move")
+    .replace(/\bit isnt forget(?!-)\b/gi, 'it isnt safe to forget')
+    .replace(/\bit isn't forget(?!-)\b/gi, "it isn't safe to forget")
+    .replace(/\bwe arent forget(?!-)\b/gi, 'we arent ready to forget')
+    .replace(/\bwe aren't forget(?!-)\b/gi, "we aren't ready to forget");
+}
+
+function escapeRegExp(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function mapTemplateStrings(value, mapper) {

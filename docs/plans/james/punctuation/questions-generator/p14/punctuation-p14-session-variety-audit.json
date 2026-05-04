@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "phase": "punctuation-qg-p14-session-variety",
   "releaseId": "punctuation-qg-p14-3564-2026-05-04",
-  "generatedAt": "2026-05-04T01:58:31.332Z",
+  "generatedAt": "2026-05-04T02:14:45.364Z",
   "roundLength": 6,
   "mixedSeedSweep": {
     "sessionCount": 80,
@@ -171,7 +171,8 @@
         "immediateRepeats": 0,
         "uniqueItems": 80,
         "paragraphAtLeastOnceEveryFour": true,
-        "transferRatioMax": 0.5
+        "transferRatioMax": 0.34,
+        "transferTouchRatioMax": 0.75
       },
       "observed": {
         "sessions": 20,
@@ -179,6 +180,7 @@
         "uniqueItems": 83,
         "paragraphSessions": 13,
         "transferSessions": 14,
+        "transferTouchRatio": 0.7,
         "maxTransferRatio": 0.33
       },
       "ok": true

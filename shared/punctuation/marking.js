@@ -1452,11 +1452,34 @@ function markRequiredApostropheForms(check = {}, rawText = '') {
   };
 }
 
-function countProseSentenceBoundaries(value) {
+// P14b — abbreviation deny-list. Adversarial review (adv-003) caught the
+// regex over-counting when a model contains common abbreviations:
+//   "Mr. Smith arrived. Then he sat down."  →  WRONG: 2 boundaries
+//                                               RIGHT: 1 boundary
+// The deny-list only includes abbreviations that are NEVER sentence-final
+// in normal English: title abbreviations (Mr/Mrs/Ms/Dr/Prof/St/Mt/Jr/Sr)
+// and inline latin abbreviations (i.e./e.g./vs/etc). Country codes like
+// U.K./U.S. and time markers like a.m./p.m. are deliberately NOT in the
+// list — when those appear before a capitalised sentence start, the
+// period serves BOTH as abbreviation marker AND sentence terminator, and
+// the boundary should count.
+const SENTENCE_BOUNDARY_ABBREV_DENY = /(?<=\b(?:Mr|Mrs|Ms|Dr|Prof|St|Mt|Jr|Sr|i\.e|e\.g|vs|etc))\.$/;
+
+export function countProseSentenceBoundaries(value) {
   // Count only prose sentence breaks such as ". The". Bullet-list item
   // punctuation is deliberately excluded because bullet-point paragraph items
   // allow optional terminal stops on individual bullet lines.
-  return (String(value ?? '').match(/[.!?](?=\s+[A-Z\"'“‘])/g) || []).length;
+  // Abbreviation periods (e.g. "Mr.", "U.K.") are excluded via the deny-list
+  // lookbehind so we don't over-count them as sentence terminations.
+  const text = String(value ?? '');
+  const matches = text.matchAll(/[.!?](?=\s+[A-Z\"'“‘])/g);
+  let count = 0;
+  for (const match of matches) {
+    const upToHere = text.slice(0, match.index + 1);
+    if (SENTENCE_BOUNDARY_ABBREV_DENY.test(upToHere)) continue;
+    count += 1;
+  }
+  return count;
 }
 
 function markParagraphPassageShape(item, rawText = '') {

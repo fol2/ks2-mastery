@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { PUNCTUATION_CONTENT_MANIFEST } from '../shared/punctuation/content.js';
-import { PRODUCTION_DEPTH, createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
-import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
+import { PRODUCTION_DEPTH, createPunctuationRuntimeManifest, repairApostropheContractionGrammar } from '../shared/punctuation/generators.js';
+import { countProseSentenceBoundaries, markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
 const runtime = createPunctuationRuntimeManifest({
   manifest: PUNCTUATION_CONTENT_MANIFEST,
@@ -57,6 +57,80 @@ test('P13 generated apostrophe typed-answer models start as complete sentences',
     .filter((item) => item.mode !== 'choose')
     .filter((item) => !/^[A-Z"'“‘]/.test(String(item.model || '').trim()));
   assert.deepEqual(offenders.map((item) => ({ id: item.id, model: item.model })), []);
+});
+
+test('P14 apostrophe repair leaves grammatical inputs unchanged (no false positives)', () => {
+  // Adversarial review (adv-002) surfaced regex false positives:
+  //   * adverb `well` mid-sentence
+  //   * hyphenated compound `forget-me-not`
+  //   * adjective `ill`, noun `hell`, noun `shell`
+  // The repair must rewrite ONLY the contracted-aux + ready-to bigrams in
+  // sentence-start position (capitalised) or with apostrophe present.
+  const grammaticalInputs = [
+    'It works well ready to move forwards.',
+    'It isnt forget-me-not season yet.',
+    'He works well in this job.',
+    'She is ill ready to recover.',
+    'The shell ready to use is large.',
+    'Mr Smith said he was ready to go home.',
+    'The bell rings at noon.',
+    'Hell froze over before he agreed.', // unlikely but the noun is grammatical
+  ];
+  const offenders = grammaticalInputs.filter((input) => repairApostropheContractionGrammar(input) !== input);
+  assert.deepEqual(offenders, [], 'repair must not rewrite grammatical inputs');
+});
+
+test('P14 apostrophe repair preserves stem (no apostrophe) vs model (apostrophe) contrast', () => {
+  // The bank's "fix the apostrophe" exercise design pairs broken stems
+  // with corrected models. The repair should only fix the GRAMMAR (ready-
+  // to-verb → past-participle/infinitive), never silently add apostrophes
+  // — adding apostrophes would collapse the exercise into a tautology.
+  assert.equal(
+    repairApostropheContractionGrammar('Ive ready to move the lantern.'),
+    'Ive moved the lantern.',
+    'stem form must keep the no-apostrophe form',
+  );
+  assert.equal(
+    repairApostropheContractionGrammar("I've ready to move the lantern."),
+    "I've moved the lantern.",
+    'model form must keep the apostrophe form',
+  );
+  assert.equal(
+    repairApostropheContractionGrammar('Ill ready to move the chair.'),
+    'Ill move the chair.',
+    'will-stem form must keep no-apostrophe form',
+  );
+  assert.equal(
+    repairApostropheContractionGrammar("I'll ready to move the chair."),
+    "I'll move the chair.",
+    'will-model form must keep apostrophe form',
+  );
+});
+
+test('P14 countProseSentenceBoundaries handles common abbreviations', () => {
+  // adv-003 — title abbreviations (Mr/Mrs/Dr/Prof/St/etc) must NOT be
+  // counted as sentence terminators when followed by a capitalised name.
+  // Time markers (a.m./p.m.) and country codes (U.K./U.S.) DO count when
+  // they sit at a real sentence boundary, because the period serves both
+  // as abbreviation marker AND sentence terminator.
+  const cases = [
+    ['Mr. Smith arrived. Then he sat down.', 1, 'Mr. before name does not count; period after `arrived` does'],
+    ['Mrs. Jones smiled. The class waved.', 1, 'Mrs.'],
+    ['Dr. Patel arrived. The class clapped.', 1, 'Dr.'],
+    ['Prof. Lee asked a question. The room fell silent.', 1, 'Prof.'],
+    ['Mr. Smith greeted Dr. Patel. They shook hands.', 1, 'multiple titles in same sentence'],
+    ['Mr. Smith said hello.', 0, 'Mr. with no following sentence — zero boundaries'],
+    ['She paused. Then she ran.', 1, 'normal prose'],
+    ['One. Two. Three.', 2, 'three-sentence chain'],
+    ['It is 9 a.m. Time to go.', 1, 'a.m. before sentence start counts'],
+    ['We live in the U.K. The end.', 1, 'U.K. before sentence start counts'],
+  ];
+  const failures = [];
+  for (const [input, expected, note] of cases) {
+    const got = countProseSentenceBoundaries(input);
+    if (got !== expected) failures.push({ input, expected, got, note });
+  }
+  assert.deepEqual(failures, [], 'abbreviation handling regressed');
 });
 
 test('P13 paragraph repair rejects missing sentence boundary punctuation', () => {

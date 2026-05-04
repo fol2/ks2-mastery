@@ -177,7 +177,11 @@ test('punctuation content audit reports per-skill coverage and generated signatu
   assert.equal(sentenceEndings.generatedSignatureCount, 3);
   assert.ok(sentenceEndings.readinessCoverage.includes('insertion'));
   assert.equal(sentenceEndings.choiceItemCount, 33);
-  assert.ok(sentenceEndings.answerContractCoverageCount >= 35);
+  // adv-008: restored to strict equality so any future drift in the
+  // sentence-endings answer-contract coverage trips the test rather than
+  // silently passing under a permissive `>=`. The post-P14 value is 36
+  // (P13 baseline 35 + 1 transfer-family validator).
+  assert.equal(sentenceEndings.answerContractCoverageCount, 36);
   assert.equal(sentenceEndings.validatorCoverageCount, 3);
   assert.ok(speech.generatedItemCount >= 2);
   assert.ok(speech.validatorCoverageCount > 0);
@@ -441,17 +445,27 @@ test('punctuation content audit threshold failures are machine-readable', () => 
   });
 
   assert.equal(audit.ok, false);
-  // P14: skills that had only 1 baseline generator family now have 2 (with
-  // the new transfer family). With minGeneratedSignaturesPerPublishedSkill: 3,
-  // these skills (e.g. comma_clarity, semicolon_list, hyphen) trip the
-  // threshold instead of sentence_endings (which now has 3 families).
-  assert.match(audit.failures.join('\n'), /(?:comma_clarity|semicolon_list|hyphen) has 2 generated signatures/);
+  // adv-008: assert ALL THREE expected failing skills appear, not just any
+  // one. The previous alternation regex passed if comma_clarity OR
+  // semicolon_list OR hyphen appeared — masking the case where two of the
+  // three started passing while a different skill regressed.
+  const failureText = audit.failures.join('\n');
+  for (const expected of ['comma_clarity', 'semicolon_list', 'hyphen']) {
+    assert.match(failureText, new RegExp(`${expected} has 2 generated signatures`),
+      `expected published skill ${expected} to trip the >=3 signatures threshold`);
+  }
   assert.equal(Array.isArray(audit.bySkill), true);
   assert.equal(Array.isArray(audit.generatorFamilies), true);
-  assert.ok(audit.failureDetails.some((failure) => (
-    failure.code === 'skill_generated_signature_minimum'
-      && ['comma_clarity', 'semicolon_list', 'hyphen'].includes(failure.skillId)
-  )));
+  // Every one of the three expected skills must be in failureDetails — not
+  // "at least one of them".
+  const failingSkillIds = new Set(
+    audit.failureDetails
+      .filter((failure) => failure.code === 'skill_generated_signature_minimum')
+      .map((failure) => failure.skillId),
+  );
+  for (const expected of ['comma_clarity', 'semicolon_list', 'hyphen']) {
+    assert.ok(failingSkillIds.has(expected), `failureDetails missing skill ${expected}`);
+  }
 });
 
 test('punctuation content audit leaves duplicate generated models review-visible by default', () => {
