@@ -44,6 +44,7 @@ export function buildOpenResponseFairnessAudit(seeds = parseSeeds()) {
         && isOpenPrompt(prompt)
         && acceptedCount < 3
         && question.answerSpec?.manualReviewOnly !== true
+        && question.nonScored !== true
       ) {
         findings.push({ templateId: template.id, seed, inputType, kind, acceptedCount, nearMissCount, prompt });
       }
