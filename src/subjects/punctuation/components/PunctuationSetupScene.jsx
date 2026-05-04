@@ -21,8 +21,8 @@
 // testing (U9). The primary CTA carries `data-punctuation-cta`.
 //
 // U4 (refactor ui-consolidation): the mission dashboard is wrapped in the
-// shared `.setup-grid` / `.setup-main` / `.setup-content` rhythm (single-
-// column — no sidebar; see R3). The Bellstorm backdrop now paints via the
+// shared `.setup-grid` / `.setup-main` / `.setup-content` rhythm with a
+// right-hand sidebar (SetupSidePanel). The Bellstorm backdrop now paints via the
 // platform `HeroBackdrop` (cross-fade + pan) instead of a static `<img
 // srcSet>`, the round-length toggle is the platform `LengthPicker`, and
 // contrast tokens flow through `useSetupHeroContrast` so future darker
@@ -424,7 +424,7 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
           )}
           body={(
             <>
-              <section className="punctuation-monster-row" data-section="monster-row" aria-label="Your monsters">
+              <section className="punctuation-monster-row" data-section="monster-row" aria-label="Monster star progress">
                 {dashboard.activeMonsters.map((monster) => (
                   <MonsterStarMeter monster={monster} key={monster.id} />
                 ))}
