@@ -300,11 +300,22 @@ test('generated punctuation items are deterministic, unique, and family-scoped',
 
 test('generated punctuation first variants use the reviewed P12 surface bank', () => {
   const generated = createPunctuationGeneratedItems({ seed: 'legacy-runtime', perFamily: 1 });
-  const legacyComparable = generated.filter((item) => !GENERATED_CHOICE_FAMILIES.has(item.generatorFamilyId));
+  // P14: filter out new transfer-mode families (added post-P12) so the
+  // comparable surface matches the frozen P12 first-variant fixture.
+  const legacyComparable = generated
+    .filter((item) => !GENERATED_CHOICE_FAMILIES.has(item.generatorFamilyId))
+    .filter((item) => !/_transfer$/.test(item.generatorFamilyId || ''));
+  const legacyOrTransfer = generated.filter(
+    (item) => !GENERATED_CHOICE_FAMILIES.has(item.generatorFamilyId),
+  );
 
   assert.equal(legacyComparable.length, LEGACY_RUNTIME_GENERATED_FIXTURE.length);
+  // Transfer families add 14 to the non-choice count; total non-choice = 25 + 14.
+  assert.equal(legacyOrTransfer.length, LEGACY_RUNTIME_GENERATED_FIXTURE.length + 14);
   assert.equal(generated.every((item) => !/_template_\\d+$/.test(item.templateId)), true);
-  assert.equal(generated.every((item) => item.templateId.startsWith('p12q_')), true);
+  // Baseline templates use p12q_ prefix; transfer DSL templates use a generic
+  // hash prefix from the DSL framework.
+  assert.equal(legacyComparable.every((item) => item.templateId.startsWith('p12q_')), true);
   assert.equal(new Set(generated.map((item) => item.variantSignature)).size, generated.length);
   for (const item of generated.filter((entry) => GENERATED_CHOICE_FAMILIES.has(entry.generatorFamilyId))) {
     assert.equal(item.mode, 'choose', item.id);

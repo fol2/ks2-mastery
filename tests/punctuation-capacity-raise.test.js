@@ -15,7 +15,18 @@ import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
 const GENERATOR_FAMILY_COUNT = PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length;
 const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.length;
-const expectedRuntimeItems = (depth) => FIXED_ITEM_COUNT + (GENERATOR_FAMILY_COUNT * depth);
+// P14: families now ship with mixed depths (baseline 100; transfer capped at
+// 18 via productionItemsLimit). Compute total honouring per-family caps.
+const expectedRuntimeItems = (depth) => {
+  let total = FIXED_ITEM_COUNT;
+  for (const family of PUNCTUATION_CONTENT_MANIFEST.generatorFamilies) {
+    const familyLimit = Number.isFinite(family.productionItemsLimit)
+      ? family.productionItemsLimit
+      : depth;
+    total += Math.min(depth, familyLimit);
+  }
+  return total;
+};
 
 describe('Punctuation capacity raise mechanism', () => {
   it('exports PRODUCTION_DEPTH = 100', () => {
@@ -34,7 +45,7 @@ describe('Punctuation capacity raise mechanism', () => {
     assert.equal(indexes.items.length, expectedRuntimeItems(PRODUCTION_DEPTH));
   });
 
-  it('depth-6 mode produces the fixed bank plus 168 generated items', () => {
+  it('depth-6 mode produces the fixed bank plus 252 generated items (42 families × 6)', () => {
     const manifest = createPunctuationRuntimeManifest({
       generatedPerFamily: 6,
     });
@@ -70,12 +81,13 @@ describe('Punctuation capacity raise mechanism', () => {
 
   it('depth parameter overrides perFamily when explicitly provided', () => {
     const items = createPunctuationGeneratedItems({ perFamily: 4, depth: 6 });
-    assert.equal(items.length, GENERATOR_FAMILY_COUNT * 6);
+    // expectedRuntimeItems(6) - FIXED_ITEM_COUNT = generated total at depth 6
+    assert.equal(items.length, expectedRuntimeItems(6) - FIXED_ITEM_COUNT);
   });
 
   it('depth defaults to perFamily when not specified', () => {
     const items = createPunctuationGeneratedItems({ perFamily: 4 });
-    assert.equal(items.length, GENERATOR_FAMILY_COUNT * 4);
+    assert.equal(items.length, expectedRuntimeItems(4) - FIXED_ITEM_COUNT);
   });
 
   it('capacity depth produces the current runtime item count with no signature collisions', () => {

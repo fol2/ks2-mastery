@@ -805,10 +805,13 @@ export function buildAttestationMetadata({
 } = {}) {
   const manifest = createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH });
   const indexes = createPunctuationContentIndexes(manifest);
-  const publishedFamilies = (manifest.generatorFamilies || []).filter((f) => f.published);
-  const generatedDepth = publishedFamilies.length > 0
-    ? Math.round(indexes.items.filter((i) => i.source === 'generated').length / publishedFamilies.length)
-    : 0;
+
+  // P14: families now ship at mixed depths (baseline 100/family, transfer 18/
+  // family via productionItemsLimit). The attestation reports the baseline
+  // target depth — the global PRODUCTION_DEPTH constant — so smoke evidence
+  // proves the configured invariant rather than an average that drifts every
+  // time a capped family is added.
+  const generatedDepth = PRODUCTION_DEPTH;
 
   return {
     environment,

@@ -35,6 +35,22 @@ import { semicolonCombineDsl } from '../shared/punctuation/dsl-families/semicolo
 import { colonSemicolonParagraphDsl } from '../shared/punctuation/dsl-families/colon-semicolon-paragraph.js';
 import { bulletPointsFixDsl } from '../shared/punctuation/dsl-families/bullet-points-fix.js';
 import { bulletPointsParagraphDsl } from '../shared/punctuation/dsl-families/bullet-points-paragraph.js';
+import {
+  sentenceEndingsTransferDsl,
+  listCommasTransferDsl,
+  apostropheContractionsTransferDsl,
+  apostrophePossessionTransferDsl,
+  speechTransferDsl,
+  frontedAdverbialTransferDsl,
+  parenthesisTransferDsl,
+  commaClarityTransferDsl,
+  colonListTransferDsl,
+  semicolonTransferDsl,
+  dashClauseTransferDsl,
+  semicolonListTransferDsl,
+  bulletPointsTransferDsl,
+  hyphenTransferDsl,
+} from '../shared/punctuation/dsl-families/transfer-bank.js';
 
 import { GENERATED_TEMPLATE_BANK } from '../shared/punctuation/generators.js';
 
@@ -90,6 +106,21 @@ const FAMILIES = [
   { name: 'colon-semicolon-paragraph', dsl: colonSemicolonParagraphDsl, mode: 'paragraph' },
   { name: 'bullet-points-fix', dsl: bulletPointsFixDsl, mode: 'fix' },
   { name: 'bullet-points-paragraph', dsl: bulletPointsParagraphDsl, mode: 'paragraph' },
+  // P14 Gate 4: 14 transfer-mode families (one per published skill).
+  { name: 'sentence-endings-transfer', dsl: sentenceEndingsTransferDsl, mode: 'transfer' },
+  { name: 'list-commas-transfer', dsl: listCommasTransferDsl, mode: 'transfer' },
+  { name: 'apostrophe-contractions-transfer', dsl: apostropheContractionsTransferDsl, mode: 'transfer' },
+  { name: 'apostrophe-possession-transfer', dsl: apostrophePossessionTransferDsl, mode: 'transfer' },
+  { name: 'speech-transfer', dsl: speechTransferDsl, mode: 'transfer' },
+  { name: 'fronted-adverbial-transfer', dsl: frontedAdverbialTransferDsl, mode: 'transfer' },
+  { name: 'parenthesis-transfer', dsl: parenthesisTransferDsl, mode: 'transfer' },
+  { name: 'comma-clarity-transfer', dsl: commaClarityTransferDsl, mode: 'transfer' },
+  { name: 'colon-list-transfer', dsl: colonListTransferDsl, mode: 'transfer' },
+  { name: 'semicolon-transfer', dsl: semicolonTransferDsl, mode: 'transfer' },
+  { name: 'dash-clause-transfer', dsl: dashClauseTransferDsl, mode: 'transfer' },
+  { name: 'semicolon-list-transfer', dsl: semicolonListTransferDsl, mode: 'transfer' },
+  { name: 'bullet-points-transfer', dsl: bulletPointsTransferDsl, mode: 'transfer' },
+  { name: 'hyphen-transfer', dsl: hyphenTransferDsl, mode: 'transfer' },
 ];
 
 const CHOICE_FAMILIES = [

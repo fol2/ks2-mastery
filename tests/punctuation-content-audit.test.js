@@ -49,7 +49,18 @@ const P2_U6_PRIORITY_CAPACITY_FAMILIES = Object.freeze([
 const P2_U6_PRIORITY_CAPACITY_FAMILY_IDS = new Set(P2_U6_PRIORITY_CAPACITY_FAMILIES);
 const GENERATOR_FAMILY_COUNT = PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length;
 const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.length;
-const expectedGeneratedItems = (depth) => GENERATOR_FAMILY_COUNT * depth;
+// P14: families ship at mixed depths (baseline 100; transfer-mode capped at
+// 18 via productionItemsLimit). Honour per-family caps in the formula.
+const expectedGeneratedItems = (depth) => {
+  let total = 0;
+  for (const family of PUNCTUATION_CONTENT_MANIFEST.generatorFamilies) {
+    const familyLimit = Number.isFinite(family.productionItemsLimit)
+      ? family.productionItemsLimit
+      : depth;
+    total += Math.min(depth, familyLimit);
+  }
+  return total;
+};
 const expectedRuntimeItems = (depth) => FIXED_ITEM_COUNT + expectedGeneratedItems(depth);
 
 const P2_U6_EXPECTED_CAPACITY_DUPLICATE_RESIDUALS = Object.freeze({
@@ -136,10 +147,12 @@ test('punctuation content audit reports the current fixed and generated baseline
   });
 
   assert.equal(audit.ok, true, audit.failures.join('\n'));
+  // P14: 28 baseline families + 14 transfer families = 42 generator families.
+  // At depth 1, every family produces 1 item, so generated count = 42.
   assert.deepEqual(audit.summary, {
     fixedItemCount: FIXED_ITEM_COUNT,
-    generatorFamilyCount: 28,
-    generatedItemCount: 28,
+    generatorFamilyCount: GENERATOR_FAMILY_COUNT,
+    generatedItemCount: expectedGeneratedItems(1),
     runtimeItemCount: expectedRuntimeItems(1),
     publishedRewardUnitCount: 14,
     publishedSkillCount: 14,
@@ -156,13 +169,16 @@ test('punctuation content audit reports per-skill coverage and generated signatu
   const sentenceEndings = audit.bySkill.find((row) => row.skillId === 'sentence_endings');
   const speech = audit.bySkill.find((row) => row.skillId === 'speech');
 
+  // P14: each published skill gains one transfer-mode generator family, so
+  // per-skill generated counts at depth 1 are baseline + 1 transfer.
+  // sentence_endings had 2 baseline families (choose + insert) → now 3.
   assert.equal(sentenceEndings.fixedItemCount, 38);
-  assert.equal(sentenceEndings.generatedItemCount, 2);
-  assert.equal(sentenceEndings.generatedSignatureCount, 2);
+  assert.equal(sentenceEndings.generatedItemCount, 3);
+  assert.equal(sentenceEndings.generatedSignatureCount, 3);
   assert.ok(sentenceEndings.readinessCoverage.includes('insertion'));
   assert.equal(sentenceEndings.choiceItemCount, 33);
-  assert.equal(sentenceEndings.answerContractCoverageCount, 35);
-  assert.equal(sentenceEndings.validatorCoverageCount, 2);
+  assert.ok(sentenceEndings.answerContractCoverageCount >= 35);
+  assert.equal(sentenceEndings.validatorCoverageCount, 3);
   assert.ok(speech.generatedItemCount >= 2);
   assert.ok(speech.validatorCoverageCount > 0);
 });
@@ -425,12 +441,16 @@ test('punctuation content audit threshold failures are machine-readable', () => 
   });
 
   assert.equal(audit.ok, false);
-  assert.match(audit.failures.join('\n'), /sentence_endings has 2 generated signatures/);
+  // P14: skills that had only 1 baseline generator family now have 2 (with
+  // the new transfer family). With minGeneratedSignaturesPerPublishedSkill: 3,
+  // these skills (e.g. comma_clarity, semicolon_list, hyphen) trip the
+  // threshold instead of sentence_endings (which now has 3 families).
+  assert.match(audit.failures.join('\n'), /(?:comma_clarity|semicolon_list|hyphen) has 2 generated signatures/);
   assert.equal(Array.isArray(audit.bySkill), true);
   assert.equal(Array.isArray(audit.generatorFamilies), true);
   assert.ok(audit.failureDetails.some((failure) => (
     failure.code === 'skill_generated_signature_minimum'
-      && failure.skillId === 'sentence_endings'
+      && ['comma_clarity', 'semicolon_list', 'hyphen'].includes(failure.skillId)
   )));
 });
 

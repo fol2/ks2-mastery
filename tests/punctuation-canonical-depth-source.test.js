@@ -39,16 +39,31 @@ const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.filter(
 ).length;
 const FAMILY_COUNT = PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length;
 
+// P14 depth formula accounts for productionItemsLimit caps. Baseline families
+// produce PRODUCTION_DEPTH (100) items each; transfer families are capped at
+// their per-family productionItemsLimit (18). Formula:
+//   FIXED + Σ min(PRODUCTION_DEPTH, family.productionItemsLimit ?? PRODUCTION_DEPTH)
+function expectedRuntimeTotalAtProductionDepth() {
+  let total = FIXED_ITEM_COUNT;
+  for (const family of PUNCTUATION_CONTENT_MANIFEST.generatorFamilies) {
+    const familyLimit = Number.isFinite(family.productionItemsLimit)
+      ? family.productionItemsLimit
+      : PRODUCTION_DEPTH;
+    total += Math.min(PRODUCTION_DEPTH, familyLimit);
+  }
+  return total;
+}
+
 test('PRODUCTION_DEPTH is 100 after P12 manual expansion', () => {
   assert.equal(PRODUCTION_DEPTH, 100);
 });
 
-test('runtime manifest item count matches FIXED + FAMILIES * PRODUCTION_DEPTH', () => {
+test('runtime manifest item count matches FIXED + Σ depth-capped(FAMILY)', () => {
   const manifest = createPunctuationRuntimeManifest({
     manifest: PUNCTUATION_CONTENT_MANIFEST,
     generatedPerFamily: PRODUCTION_DEPTH,
   });
-  const expectedTotal = FIXED_ITEM_COUNT + FAMILY_COUNT * PRODUCTION_DEPTH;
+  const expectedTotal = expectedRuntimeTotalAtProductionDepth();
   assert.equal(manifest.items.length, expectedTotal);
 });
 
@@ -58,7 +73,7 @@ test('createPunctuationService default manifest uses PRODUCTION_DEPTH', () => {
     random: () => 0.5,
   });
   const stats = service.getStats('depth-parity-learner');
-  const expectedTotal = FIXED_ITEM_COUNT + FAMILY_COUNT * PRODUCTION_DEPTH;
+  const expectedTotal = expectedRuntimeTotalAtProductionDepth();
   assert.equal(
     stats.total,
     expectedTotal,

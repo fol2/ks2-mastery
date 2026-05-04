@@ -26,32 +26,25 @@ function countBy(items, keyFor) {
   return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)));
 }
 
+// P14 update: this validator describes the FROZEN P13 live release, not the
+// current source tree. P13 served the P12 3,312-item pool with 28 generator
+// families × 100 templates each. Computing from live source post-P14 would
+// drift, so the expectation is now a frozen literal. The dynamic byMode /
+// bySkill / generatedTemplateCounts breakdowns were never asserted against,
+// so they can be omitted; consumers only checked the top-level counters.
 export function expectedPunctuationQGP13LiveManifest() {
-  const manifest = createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH });
-  const indexes = createPunctuationContentIndexes(manifest);
-  const fixedItems = indexes.items.filter((item) => item.source !== 'generated');
-  const generatedItems = indexes.items.filter((item) => item.source === 'generated');
-  const templateCounts = Object.fromEntries(
-    Object.entries(GENERATED_TEMPLATE_BANK)
-      .map(([familyId, templates]) => [familyId, templates.length])
-      .sort(([a], [b]) => a.localeCompare(b)),
-  );
-
-  return {
+  return Object.freeze({
     phase: PUNCTUATION_QG_P13_LIVE_PHASE,
-    contentReleaseId: manifest.releaseId || PUNCTUATION_RELEASE_ID,
-    productionDepth: PRODUCTION_DEPTH,
-    fixedItems: fixedItems.length,
-    generatedItems: generatedItems.length,
-    runtimeItems: indexes.items.length,
-    publishedRewardUnits: indexes.publishedRewardUnits.length,
-    generatedFamilies: Object.keys(GENERATED_TEMPLATE_BANK).length,
-    templatesPerFamilyMin: Math.min(...Object.values(templateCounts)),
-    templatesPerFamilyMax: Math.max(...Object.values(templateCounts)),
-    byMode: countBy(indexes.items, (item) => item.mode || 'unknown'),
-    bySkill: countBy(indexes.items, (item) => (Array.isArray(item.skillIds) ? item.skillIds[0] : 'unknown')),
-    generatedTemplateCounts: templateCounts,
-  };
+    contentReleaseId: 'punctuation-qg-p12-3000-2026-05-02',
+    productionDepth: 100,
+    fixedItems: 512,
+    generatedItems: 2800,
+    runtimeItems: 3312,
+    publishedRewardUnits: 14,
+    generatedFamilies: 28,
+    templatesPerFamilyMin: 100,
+    templatesPerFamilyMax: 100,
+  });
 }
 
 function isNonEmptyString(value) {
