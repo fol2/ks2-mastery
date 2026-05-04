@@ -67,6 +67,25 @@ export function validatePunctuationQGP14LiveEvidence(evidence, {
   pushIf(errors, attestation.releaseId !== expected.contentReleaseId, `attestation.releaseId=${attestation.releaseId}, expected ${expected.contentReleaseId}`);
   pushIf(errors, attestation.runtimeItemCount !== expected.runtimeItems, `attestation.runtimeItemCount=${attestation.runtimeItemCount}, expected ${expected.runtimeItems}`);
   pushIf(errors, attestation.generatedDepth !== expected.productionDepth, `attestation.generatedDepth=${attestation.generatedDepth}, expected ${expected.productionDepth}`);
+  // P14: per-family depth catches silent over-ships (e.g. transfer family
+  // shipping at 100 instead of the 18 cap). Optional field on legacy
+  // artefacts but required for P14 attestation.
+  if (attestation.generatedFamilyDepths) {
+    const baselineEntries = Object.entries(attestation.generatedFamilyDepths)
+      .filter(([id]) => !id.endsWith('_transfer'));
+    const transferEntries = Object.entries(attestation.generatedFamilyDepths)
+      .filter(([id]) => id.endsWith('_transfer'));
+    pushIf(errors, baselineEntries.length !== expected.baselineGeneratedFamilies, `baselineGeneratedFamilies=${baselineEntries.length}, expected ${expected.baselineGeneratedFamilies}`);
+    pushIf(errors, transferEntries.length !== expected.transferGeneratedFamilies, `transferGeneratedFamilies=${transferEntries.length}, expected ${expected.transferGeneratedFamilies}`);
+    for (const [id, depth] of baselineEntries) {
+      pushIf(errors, depth !== expected.baselineTemplatesPerFamily, `family ${id} ships ${depth} items, expected baseline depth ${expected.baselineTemplatesPerFamily}`);
+    }
+    for (const [id, depth] of transferEntries) {
+      pushIf(errors, depth !== expected.transferTemplatesPerFamily, `family ${id} ships ${depth} items, expected transfer depth ${expected.transferTemplatesPerFamily}`);
+    }
+  } else {
+    errors.push('attestation.generatedFamilyDepths is required for a P14 attestation (per-family depth detail must be reported to surface over-ship/under-ship divergence)');
+  }
   pushIf(errors, attestation.authenticatedCoverage !== true, 'attestation.authenticatedCoverage must be true');
   pushIf(errors, !isNonEmptyString(attestation.timestamp), 'attestation.timestamp is required');
   if (requireWorkerIdentity) {

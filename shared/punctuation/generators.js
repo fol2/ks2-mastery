@@ -196,16 +196,69 @@ function sentenceCaseFirst(value) {
   return text.replace(/^([\s"'“‘]*)([a-z])/, (_match, prefix, first) => `${prefix}${first.toUpperCase()}`);
 }
 
+// Patches the historical manual-bank stems where a contracted auxiliary
+// (`'ve`/`'ll`) was paired with `ready to <verb>` — non-standard English,
+// because `have/will + ready to + verb` is not a licit construction.
+//
+// The repair rewrites `<aux>'ve ready to <v>` → `<aux>'ve <v-ed>` and
+// `<aux>'ll ready to <v>` → `<aux>'ll <v>`. The is-contractions
+// (`he's/she's/it's/that's/there's ready to <v>`) are intentionally NOT
+// rewritten — `is + ready to + verb` is grammatical and the bank uses them
+// deliberately as "missing apostrophe" exercises.
+//
+// Replacement strings preserve the original case (Title vs lower) by using
+// case-aware replacement functions, so a sentence-leading `"You've ready
+// to move…"` becomes `"You've moved…"` with the capital intact.
 function repairApostropheContractionGrammar(value) {
-  return String(value ?? '')
-    .replace(/\byouve ready to move\b/gi, 'youve moved')
-    .replace(/\byou've ready to move\b/gi, "you've moved")
-    .replace(/\bweve ready to move\b/gi, 'weve moved')
-    .replace(/\bwe've ready to move\b/gi, "we've moved")
-    .replace(/\btheyll ready to move\b/gi, 'theyll move')
-    .replace(/\bthey'll ready to move\b/gi, "they'll move")
-    .replace(/\bwell ready to move\b/gi, 'well move')
-    .replace(/\bwe'll ready to move\b/gi, "we'll move")
+  const text = String(value ?? '');
+  // Pronouns whose contractions resolve to `have` or `will` — paired with
+  // `ready to <v>` they need a grammar fix, not just an apostrophe.
+  const HAVE_PRONOUNS = ['I', 'you', 'we', 'they'];
+  const WILL_PRONOUNS = ['I', 'you', 'we', 'they', 'he', 'she', 'it', 'that', 'there'];
+  // Family of motion / activity verbs the manual bank pairs with `ready to`.
+  // Not exhaustive — extend if new bank entries appear.
+  const VERB_GROUP = '(?:move|forget|leave|go|run|walk|come|start|begin|do|see|talk|swim|read|write|sit|stand|stop|finish|help|join|listen|return)';
+  const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  let out = text;
+
+  // `<pronoun>'ve ready to <verb>` → `<pronoun>'ve <verb-ed>` (past participle).
+  // For irregular verbs (`go → gone`, `come → come`, etc.) we use a deny-table
+  // rather than a naive `+ed`. Anything not in the table falls back to `+ed`.
+  const PAST_PARTICIPLE = {
+    move: 'moved', forget: 'forgotten', leave: 'left', go: 'gone', run: 'run',
+    walk: 'walked', come: 'come', start: 'started', begin: 'begun',
+    do: 'done', see: 'seen', talk: 'talked', swim: 'swum', read: 'read',
+    write: 'written', sit: 'sat', stand: 'stood', stop: 'stopped',
+    finish: 'finished', help: 'helped', join: 'joined', listen: 'listened',
+    return: 'returned',
+  };
+  for (const pronoun of HAVE_PRONOUNS) {
+    for (const apostrophe of ["'ve", 've']) {
+      const pattern = new RegExp(`\\b(${pronoun}|${pronoun.toLowerCase()})${apostrophe} ready to ${VERB_GROUP}\\b`, 'g');
+      out = out.replace(pattern, (_match, p, _v) => {
+        const verb = _match.match(new RegExp(`${VERB_GROUP}$`, 'i'))[0].toLowerCase();
+        const past = PAST_PARTICIPLE[verb] || `${verb}ed`;
+        const isCap = p[0] === p[0].toUpperCase();
+        return `${isCap ? titleCase(pronoun) : pronoun.toLowerCase()}${apostrophe} ${past}`;
+      });
+    }
+  }
+
+  // `<pronoun>'ll ready to <verb>` → `<pronoun>'ll <verb>` (infinitive).
+  for (const pronoun of WILL_PRONOUNS) {
+    for (const apostrophe of ["'ll", 'll']) {
+      const pattern = new RegExp(`\\b(${pronoun}|${pronoun.toLowerCase()})${apostrophe} ready to (${VERB_GROUP})\\b`, 'g');
+      out = out.replace(pattern, (_match, p, verb) => {
+        const isCap = p[0] === p[0].toUpperCase();
+        return `${isCap ? titleCase(pronoun) : pronoun.toLowerCase()}${apostrophe} ${verb.toLowerCase()}`;
+      });
+    }
+  }
+
+  // Original P13 patches retained verbatim for the negative contractions
+  // (`isn't`, `aren't`).
+  return out
     .replace(/\bit isnt move\b/gi, 'it isnt safe to move')
     .replace(/\bit isn't move\b/gi, "it isn't safe to move")
     .replace(/\bwe arent move\b/gi, 'we arent ready to move')

@@ -64,19 +64,30 @@ test('P14 transfer model answers self-mark correctly', () => {
   );
 });
 
-test('P14 token-only fragments are rejected on transfer items', () => {
-  const sample = transferItems.slice(0, 50);
-  const fragmentAttacks = ['yes', 'no', 'well', 'ok', 'maybe', 'sure'];
+test('P14 token-only fragments are rejected across every transfer family', () => {
+  // Stratify by generator family so every transfer family is exercised at
+  // least once. The earlier `slice(0, 50)` only hit 3 families (fixed +
+  // sentence_endings + list_commas) — a regression in any other family's
+  // validator would have escaped the test.
+  const seenFamilies = new Map();
+  for (const item of transferItems) {
+    const familyId = item.generatorFamilyId || `(fixed)-${(item.skillIds || []).join(',')}`;
+    if (!seenFamilies.has(familyId)) seenFamilies.set(familyId, item);
+  }
+  const sampleByFamily = [...seenFamilies.values()];
+  // Cover the original lower-case fragment set plus the bypass cases the
+  // adversarial review surfaced (capitalised, terminal-only, single-letter).
+  const fragmentAttacks = ['yes', 'no', 'well', 'ok', 'maybe', 'sure', 'YES', 'OK', 'I', 'I.', '?', '!!', 'yes.', '   '];
   const acceptedFragments = [];
-  for (const item of sample) {
+  for (const item of sampleByFamily) {
     for (const attack of fragmentAttacks) {
       const result = markPunctuationAnswer({ item, answer: { typed: attack } });
       if (result.correct) {
-        acceptedFragments.push({ id: item.id, attack });
+        acceptedFragments.push({ id: item.id, family: item.generatorFamilyId || '(fixed)', attack });
       }
     }
   }
-  assert.deepEqual(acceptedFragments, [], 'token-only fragments must not pass any transfer item');
+  assert.deepEqual(acceptedFragments, [], 'token-only fragments must not pass any transfer family');
 });
 
 test('P14 short-but-valid answers like "Stop!" are not blocked by the fragment guard', () => {

@@ -990,14 +990,28 @@ function markTransfer(item, answer) {
   const validator = item.validator || {};
 
   // P14 Gate 4: reject token-only fragments before any validator-specific
-  // logic. A transfer answer must look like a complete sentence — capital +
-  // terminal mark — even when the validator branch is missing or permissive.
+  // logic. A transfer answer should at least look like a complete sentence
+  // when it's short — capital + terminal mark.
+  //
+  // Original (P14a) guard required ALL three of `tokenCount<=2`,
+  // `!hasTerminal`, `!hasCapital` to fire — it only caught lower-case
+  // multiword fragments like `"yes maybe"`. The adversarial review found
+  // bypasses: `"YES"`, `"OK"`, `"yes."`, `"?"`, `"!!"` all passed.
+  //
+  // Tightened (P14b) guard: only enforce shape on SHORT answers (<=2
+  // tokens). For longer answers — including legitimate multi-line bullet
+  // lists like `"Bring:\n- bread\n- cheese"` — the downstream validator
+  // is responsible for shape correctness. Short answers must have BOTH
+  // capital AND terminal mark; otherwise they're treated as fragments.
   if (item.mode === 'transfer') {
     const trimmed = text.trim();
     const tokenCount = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
-    const hasTerminal = /[.!?]$/.test(trimmed);
+    // Terminal mark may be the last character OR followed by a closing
+    // quote (`."` / `?'` / `!”`) — speech models always end this way.
+    const hasTerminal = /[.!?]["'”’]?$/.test(trimmed);
     const hasCapital = /^["'“‘]?[A-Z]/.test(trimmed);
-    if (tokenCount <= 2 && !hasTerminal && !hasCapital) {
+    const isShortFragment = tokenCount <= 2 && (!hasTerminal || !hasCapital);
+    if (isShortFragment) {
       return {
         correct: false,
         expected: item.model || '',

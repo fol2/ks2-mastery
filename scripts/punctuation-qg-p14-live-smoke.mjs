@@ -25,6 +25,18 @@ import {
   expectedPunctuationQGP14LiveManifest,
   PUNCTUATION_QG_P14_LIVE_PHASE,
 } from './validate-punctuation-qg-p14-live-evidence.mjs';
+import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
+
+function computeGeneratedFamilyDepthsFromLocal() {
+  const manifest = createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH });
+  const depths = {};
+  for (const item of manifest.items) {
+    if (item.source !== 'generated') continue;
+    const family = item.generatorFamilyId || 'unknown';
+    depths[family] = (depths[family] || 0) + 1;
+  }
+  return Object.fromEntries(Object.entries(depths).sort(([a], [b]) => a.localeCompare(b)));
+}
 
 function argValue(argv, ...names) {
   for (const name of names) {
@@ -289,6 +301,7 @@ export async function runPunctuationQGP14LiveSmoke(options = {}) {
       releaseId: expected.contentReleaseId,
       runtimeItemCount: expected.runtimeItems,
       generatedDepth: expected.productionDepth,
+      generatedFamilyDepths: computeGeneratedFamilyDepthsFromLocal(),
       workerCommitSha: args.commitSha || null,
       workerVersionId: args.workerVersionId || null,
       deploymentId: args.deploymentId || null,

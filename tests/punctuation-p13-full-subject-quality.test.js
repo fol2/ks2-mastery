@@ -19,7 +19,14 @@ function removeSentenceBoundary(text) {
   return String(text || '').replace(/\.\s+(?=[A-Z"'“‘])/u, ' ');
 }
 
-const BAD_APOSTROPHE_GRAMMAR = /\b(?:you've|youve|we've|weve|they'll|theyll|we'll|well)\s+ready\s+to\b|\b(?:it\s+isn't|it\s+isnt|we\s+aren't|we\s+arent)\s+(?:move|forget)\b/i;
+// Sentinel for ungrammatical "<contracted-aux> + ready to + verb" — built
+// from the full pronoun list rather than a hand-typed alternation so the
+// test stops being vacuous if a future bank entry uses a previously
+// untested pronoun. Excludes `'s` because `is + ready to + verb` IS
+// grammatical (e.g. `"She's ready to move"`).
+const HAVE_OR_WILL_PRONOUNS = ['I', 'you', 'we', 'they', 'he', 'she', 'it', 'that', 'there'];
+const HAVE_PRONOUN_GROUP = HAVE_OR_WILL_PRONOUNS.flatMap((p) => [`${p}'ve`, `${p.toLowerCase()}ve`, `${p}'ll`, `${p.toLowerCase()}ll`]).join('|');
+const BAD_APOSTROPHE_GRAMMAR = new RegExp(`\\b(?:${HAVE_PRONOUN_GROUP})\\s+ready\\s+to\\b|\\b(?:it\\s+isn't|it\\s+isnt|we\\s+aren't|we\\s+arent)\\s+(?:move|forget)\\b`, 'i');
 
 test('P14 runtime serves the post-expansion production pool and model answers self-mark', () => {
   // P13 baseline was 3,312 (512 fixed + 2,800 generated). P14 transfer
