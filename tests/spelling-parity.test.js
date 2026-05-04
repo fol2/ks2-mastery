@@ -72,7 +72,8 @@ test('live spelling card keeps family hidden and restores legacy phase-specific 
   harness.dispatch('spelling-submit-form', { formData: typedFormData('wrong') });
   const retryHtml = harness.render();
   assert.match(retryHtml, /Try again/);
-  assert.match(retryHtml, /You wrote &quot;wrong&quot;\./);
+  assert.match(retryHtml, /class="word is-attempt">“wrong”<\/span>/);
+  assert.match(retryHtml, /Your answer — No answer shown yet\./);
   assert.match(retryHtml, /placeholder="Try once more from memory"/);
 
   harness.dispatch('spelling-submit-form', { formData: typedFormData('still wrong') });
