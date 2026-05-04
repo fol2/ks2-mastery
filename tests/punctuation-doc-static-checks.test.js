@@ -22,6 +22,7 @@ const PLAN_DOC_PATH = resolve(
   'james',
   'punctuation',
   'questions-generator',
+  'archive',
   'punctuation-qg-p1.md',
 );
 const docContent = readFileSync(DOC_PATH, 'utf8');
