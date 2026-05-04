@@ -27,9 +27,10 @@
 //    neither a flag nor a file — node --test still rejects it cleanly.
 //  - Non-zero exit propagates.
 import { spawn } from 'node:child_process';
-import { readdir } from 'node:fs/promises';
+import { readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getShardFiles } from './shard-shuffle.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NODE_TEST_RE = /^(?:test-.*|.*\.(?:test|spec)\.(?:c|m)?jsx?|.*-test\.(?:c|m)?jsx?)$/;
@@ -169,11 +170,14 @@ if (isDirectInvocation) {
 
     // Parse relevant flags from argv
     const runOptions = { files, concurrency: true };
+    let shardIndex = null;
+    let shardTotal = null;
 
     for (const arg of userArgv) {
       const shardMatch = arg.match(/^--test-shard=(\d+)\/(\d+)$/);
       if (shardMatch) {
-        runOptions.shard = { index: Number(shardMatch[1]), total: Number(shardMatch[2]) };
+        shardIndex = Number(shardMatch[1]);
+        shardTotal = Number(shardMatch[2]);
         continue;
       }
       const concurrencyMatch = arg.match(/^--test-concurrency=(\d+)$/);
@@ -200,15 +204,51 @@ if (isDirectInvocation) {
       }
     }
 
+    // Apply seeded shuffle for shard distribution instead of Node's internal modulo
+    if (shardIndex !== null && shardTotal !== null) {
+      const filteredFiles = getShardFiles(files, shardIndex, shardTotal);
+      runOptions.files = filteredFiles;
+      console.log(`shard ${shardIndex}/${shardTotal}: ${filteredFiles.length} files (seed=ks2-shard-seed-2026)`);
+    }
+
+    const wallStart = Date.now();
+    const fileTimings = {};
     const stream = run(runOptions);
     let failures = 0;
-    stream.on('test:fail', () => { failures += 1; });
+
+    stream.on('test:pass', (data) => {
+      if (data?.file && data?.details?.duration_ms != null) {
+        fileTimings[data.file] = (fileTimings[data.file] || 0) + data.details.duration_ms;
+      }
+    });
+    stream.on('test:fail', (data) => {
+      failures += 1;
+      if (data?.file && data?.details?.duration_ms != null) {
+        fileTimings[data.file] = (fileTimings[data.file] || 0) + data.details.duration_ms;
+      }
+    });
 
     // Pipe through spec reporter to stdout
     const reporter = new SpecReporter();
     stream.compose(reporter).pipe(process.stdout);
 
-    stream.on('end', () => {
+    stream.on('end', async () => {
+      // Write shard timing artifact when running in shard mode
+      if (shardIndex !== null && shardTotal !== null) {
+        const wallMs = Date.now() - wallStart;
+        const timingData = {
+          shard: shardIndex,
+          total: shardTotal,
+          files: fileTimings,
+          wallMs,
+        };
+        try {
+          await writeFile(
+            path.join(process.cwd(), `shard-${shardIndex}-timings.json`),
+            JSON.stringify(timingData, null, 2)
+          );
+        } catch { /* non-fatal */ }
+      }
       process.exitCode = failures > 0 ? 1 : 0;
     });
   }
