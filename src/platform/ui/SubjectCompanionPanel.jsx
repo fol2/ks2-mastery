@@ -29,7 +29,10 @@ export function SubjectCompanionPanel({
           <SectionHeader title="Monsters" level={3} />
           <ul className="companion-panel-monster-list">
             {monsters.map((m) => (
-              <li key={m.name} data-discovered={m.discovered ? 'true' : 'false'}>{m.name}</li>
+              <li key={m.name} data-discovered={m.discovered ? 'true' : 'false'}>
+                <span className="companion-panel-monster-glyph" aria-hidden="true">{m.name?.[0]?.toUpperCase() || '?'}</span>
+                <span className="companion-panel-monster-name">{m.name}</span>
+              </li>
             ))}
           </ul>
         </section>
