@@ -466,6 +466,69 @@ test('spaced clean attempts emit a secure-unit event once', () => {
   assert.equal(service.getStats('learner-a').securedRewardUnits, 1);
 });
 
+test('P13→P14 release-ID transition orphans old reward entries cleanly', () => {
+  // Simulate a learner who had progress under a P13-era release ID. On the
+  // P14 read path the old-release entries must be completely invisible —
+  // trackedRewardUnits and securedRewardUnits both zero — rather than
+  // corrupted or partially visible.
+  const P13_RELEASE_ID = 'punctuation-qg-p13-3312-2026-05-02';
+  assert.notEqual(P13_RELEASE_ID, PUNCTUATION_RELEASE_ID);
+  const p13KeyA = createPunctuationMasteryKey({
+    releaseId: P13_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+  });
+  const p13KeyB = createPunctuationMasteryKey({
+    releaseId: P13_RELEASE_ID,
+    clusterId: 'apostrophe',
+    rewardUnitId: 'apostrophe-contractions-core',
+  });
+  const p13KeyC = createPunctuationMasteryKey({
+    releaseId: P13_RELEASE_ID,
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+  });
+  const repository = makeRepository();
+  repository.writeData('learner-a', {
+    prefs: { mode: 'smart', roundLength: '6' },
+    progress: {
+      items: {},
+      facets: {},
+      rewardUnits: {
+        [p13KeyA]: {
+          masteryKey: p13KeyA,
+          releaseId: P13_RELEASE_ID,
+          clusterId: 'endmarks',
+          rewardUnitId: 'sentence-endings-core',
+          securedAt: Date.UTC(2026, 4, 2),
+        },
+        [p13KeyB]: {
+          masteryKey: p13KeyB,
+          releaseId: P13_RELEASE_ID,
+          clusterId: 'apostrophe',
+          rewardUnitId: 'apostrophe-contractions-core',
+          securedAt: Date.UTC(2026, 4, 2),
+        },
+        [p13KeyC]: {
+          masteryKey: p13KeyC,
+          releaseId: P13_RELEASE_ID,
+          clusterId: 'speech',
+          rewardUnitId: 'speech-core',
+          securedAt: Date.UTC(2026, 4, 2),
+        },
+      },
+      attempts: [],
+      sessionsCompleted: 5,
+    },
+  });
+  const service = createPunctuationService({ repository, now: () => Date.UTC(2026, 4, 4), random: () => 0 });
+  const stats = service.getStats('learner-a');
+
+  assert.equal(stats.trackedRewardUnits, 0, 'P13-era entries must not count as tracked under P14');
+  assert.equal(stats.securedRewardUnits, 0, 'P13-era entries must not count as secured under P14');
+  assert.equal(stats.publishedRewardUnits, 14, 'published denominator is the P14 count');
+});
+
 test('getStats securedRewardUnits counts only entries with securedAt > 0 (defensive edge case)', () => {
   // Seed reward-unit entries where tracked != secured: 5 tracked, only 2
   // genuinely secured (positive securedAt). securedAt: 0, null, and missing

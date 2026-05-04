@@ -143,17 +143,19 @@ test('P14 short-but-valid answers like "Stop!" are not blocked by the fragment g
   // terminal, no capital). A capitalised exclamation should pass the guard
   // even though the validator may still reject it for not satisfying the
   // skill-specific shape — that's the validator's job, not the guard's.
+  // This test EXPLICITLY asserts the guard does not fire — a false-accept
+  // would surface as a missing misconception tag, not as a silent pass.
   const sample = transferItems.slice(0, 5);
   for (const item of sample) {
     const result = markPunctuationAnswer({ item, answer: { typed: 'Stop!' } });
-    // We only assert that the failure (if any) is NOT due to the fragment
-    // guard tag — i.e. the validator-specific tag won, not the guard.
-    if (!result.correct) {
-      assert.ok(
-        !Array.isArray(result.misconceptionTags) || !result.misconceptionTags.includes('transfer.fragment_only'),
-        `${item.id} blocked "Stop!" with the fragment guard, expected validator-specific rejection`,
-      );
-    }
+    // "Stop!" is NOT a valid transfer answer for any skill (it lacks the
+    // required punctuation structure), so it must be marked incorrect.
+    // The key assertion: the rejection must NOT come from the fragment guard.
+    assert.strictEqual(result.correct, false, `"Stop!" must be rejected by ${item.id} (lacks required punctuation structure)`);
+    assert.ok(
+      !Array.isArray(result.misconceptionTags) || !result.misconceptionTags.includes('transfer.fragment_only'),
+      `${item.id} blocked "Stop!" with the fragment guard, expected validator-specific rejection`,
+    );
   }
 });
 
@@ -190,4 +192,30 @@ test('P14 transfer items do not bleed into other modes (mode purity)', () => {
     .filter((item) => /^gen_[a-z_]+_transfer/.test(item.generatorFamilyId || ''))
     .filter((item) => item.mode !== 'transfer');
   assert.deepEqual(offenders.map((item) => ({ id: item.id, mode: item.mode })), []);
+});
+
+test('P14 transfer wrong-punctuation rejection: comma where semicolon is required', () => {
+  // Primary false-accept path: a learner submits a well-formed sentence with
+  // the correct words but the WRONG boundary punctuation mark (a comma instead
+  // of a semicolon). The marker must reject this as incorrect — failing here
+  // means the validator is not checking for the specific punctuation mark.
+  const semicolonItem = transferItems.find(
+    (item) => item.generatorFamilyId === 'gen_semicolon_transfer',
+  );
+  assert.ok(semicolonItem, 'must have at least one gen_semicolon_transfer item');
+
+  // Replace the semicolon with a comma — the sentence is otherwise identical
+  // to the model answer.
+  const wrongMark = semicolonItem.model.replace(';', ',');
+  assert.notEqual(wrongMark, semicolonItem.model, 'fixture must contain a semicolon to replace');
+
+  const result = markPunctuationAnswer({ item: semicolonItem, answer: { typed: wrongMark } });
+  assert.strictEqual(result.correct, false, 'comma where semicolon is required must be rejected');
+  assert.ok(
+    Array.isArray(result.misconceptionTags) && (
+      result.misconceptionTags.includes('boundary.comma_splice') ||
+      result.misconceptionTags.includes('boundary.semicolon_missing')
+    ),
+    `expected boundary misconception tag, got: ${JSON.stringify(result.misconceptionTags)}`,
+  );
 });
