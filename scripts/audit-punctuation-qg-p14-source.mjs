@@ -17,6 +17,7 @@
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { PUNCTUATION_CONTENT_MANIFEST } from '../shared/punctuation/content.js';
 import {
@@ -246,6 +247,6 @@ function main() {
   process.exitCode = allGatesOk ? 0 : 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
   main();
 }

@@ -22,6 +22,7 @@
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 import { createPunctuationService } from '../shared/punctuation/service.js';
@@ -361,6 +362,6 @@ function main() {
   process.exitCode = report.overallOk ? 0 : 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
   main();
 }
