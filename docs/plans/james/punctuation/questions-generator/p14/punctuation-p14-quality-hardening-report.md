@@ -75,6 +75,8 @@ Transfer-mode item count by published skill (Gate 4 floor ≥ 12, aim 18). Value
 
 Every published skill exceeds the 12-floor; minimum observed is 19, hyphen and list_commas top out at 21.
 
+Note: the per-skill values sum to 278, which exceeds the unique transfer-item count of 276 (`counts.transferItems`). This is because 2 transfer items serve multiple skills and are counted under each skill they belong to. The discrepancy is documented explicitly in the source-audit JSON via `transferBySkillSum` and `_transferCountingNote`.
+
 ## Gates
 
 ### Gate 1 — Source / runtime identity
