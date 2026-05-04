@@ -38,8 +38,10 @@ import {
   buildPunctuationDashboardModel,
   composeIsDisabled,
   punctuationMonsterDisplayName,
+  punctuationMonsterImageVisual,
   punctuationStageLabel,
 } from './punctuation-view-model.js';
+import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConfigContext.jsx';
 import {
   bellstormSceneForPhase,
   heroContrastProfileForPunctuationBg,
@@ -294,6 +296,16 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
     ? learner.name.trim()
     : '';
 
+  const monsterVisualConfig = useMonsterVisualConfig();
+  const panelMonsterVisuals = dashboard.activeMonsters
+    .filter((m) => (m.displayStars ?? m.totalStars) > 0)
+    .slice(0, 4)
+    .map((m) => ({
+      id: m.id,
+      visual: punctuationMonsterImageVisual(m.id, m.displayStage ?? m.starDerivedStage, monsterVisualConfig?.config),
+      isEgg: (m.displayStage ?? m.starDerivedStage) === 0,
+    }));
+
   function handlePrimaryCta() {
     if (disabled) return;
     if (ctaMode === 'continue') {
@@ -419,33 +431,20 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
           cardClassName="punctuation-setup-sidebar-card"
           headTag="header"
           ariaLabel="Your monsters"
-          head={(
-            <p className="eyebrow">Your monsters</p>
-          )}
           body={(
-            <>
-              <section className="punctuation-monster-row" data-section="monster-row" aria-label="Monster star progress">
-                {dashboard.activeMonsters.map((monster) => (
-                  <MonsterStarMeter monster={monster} key={monster.id} />
-                ))}
-              </section>
-
-              <SubjectCompanionPanel
-                subjectId="punctuation"
-                visible
-                monsters={dashboard.activeMonsters.map((m) => ({
-                  name: punctuationMonsterDisplayName(m.id),
-                  discovered: (m.displayStars ?? m.totalStars) > 0,
-                }))}
-                stats={[
-                  { label: 'Due today', value: String(dueCount), tone: dueCount > 0 ? 'warn' : undefined },
-                  { label: 'Wobbly', value: String(weakCount) },
-                  { label: 'Grand Stars', value: String(grandStars) },
-                ]}
-                nextFocus={weakCount > 0 ? 'Wobbly spots need practice' : ''}
-                emptyState="Start practising to discover your first egg."
-              />
-            </>
+            <SubjectCompanionPanel
+              subjectId="punctuation"
+              visible
+              head={<p className="eyebrow">Your monsters</p>}
+              monsterVisuals={panelMonsterVisuals}
+              meadowEmpty="Start practising to discover your first egg."
+              stats={[
+                { label: 'Due today', value: String(dueCount), tone: dueCount > 0 ? 'warn' : undefined },
+                { label: 'Wobbly', value: String(weakCount) },
+                { label: 'Grand Stars', value: String(grandStars) },
+              ]}
+              nextFocus={weakCount > 0 ? 'Wobbly spots need practice' : ''}
+            />
           )}
           footer={(
             <button

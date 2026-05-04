@@ -280,13 +280,13 @@ test('U5 Reward parity: one secured speech-core unit surfaces coherent progress 
     learner: null,
     rewardState: monsterCodexState,
   });
-  assert.match(setupHtml, /data-monster-id="pealark"/);
-  // Phase 5 U7: the Setup scene no longer shows "X/Y secure" per monster.
-  // Instead it renders star meters (X / 100 Stars) via starView. With no
-  // starView seeded, the meter reads "0 / 100 Stars" — still proves the
-  // monster renders and the reserved-monster filter is intact.
-  assert.match(setupHtml, /Pealark/);
-  assert.doesNotMatch(setupHtml, /data-monster-id="colisk"/);
+  // U2 companion panel migration: Setup sidebar now renders monster visuals
+  // via SubjectCompanionPanel. Without starView, all monsters have 0 stars so
+  // meadowEmpty text renders. The reserved-monster filter is intact because
+  // dashboard.activeMonsters only iterates ACTIVE_PUNCTUATION_MONSTER_IDS.
+  assert.match(setupHtml, /companion-panel/);
+  assert.match(setupHtml, /Start practising to discover your first egg/);
+  assert.doesNotMatch(setupHtml, /colisk/);
 
   // Summary — same rewardState prop; the strip reads pealark's stage.
   const summaryHtml = renderPunctuationSummarySceneStandalone({

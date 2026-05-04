@@ -96,11 +96,17 @@ export default async function run({ driver, artifacts, log, assert }) {
   await driver.screenshot(artifacts.path('05-landing-post-round'));
 
   log('assert landing skeleton intact after returning from Summary');
-  for (const section of ['hero', 'progress-row', 'monster-row', 'map-link', 'secondary']) {
-    const sel = `[data-section="${section}"]`;
+  const landmarks = [
+    { selector: '[data-section="hero"]', label: 'hero' },
+    { selector: '[data-section="progress-row"]', label: 'progress-row' },
+    { selector: '[data-testid="companion-panel"]', label: 'companion-panel' },
+    { selector: '[data-section="map-link"]', label: 'map-link' },
+    { selector: '[data-section="secondary"]', label: 'secondary' },
+  ];
+  for (const { selector, label } of landmarks) {
     const found = await driver.eval(
-      `(() => { const el = document.querySelector(${JSON.stringify(sel)}); return el ? 'yes' : 'no'; })()`,
+      `(() => { const el = document.querySelector(${JSON.stringify(selector)}); return el ? 'yes' : 'no'; })()`,
     );
-    assert(/yes/i.test(found), `Landing section "${section}" must still exist after returning from Summary.`);
+    assert(/yes/i.test(found), `Landing section "${label}" (${selector}) must still exist after returning from Summary.`);
   }
 }
