@@ -171,6 +171,7 @@ export function SpellingSessionScene({
     session.currentSlug,
     session.phase,
     session.promptCount,
+    session.correctionAttempt || 0,
     awaitingAdvance ? 'locked' : 'active',
   ].join(':');
   const questionLayoutKey = [

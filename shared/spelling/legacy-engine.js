@@ -714,6 +714,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         if (session.phase === "correction") {
           if (correct) {
             session.phase = "question";
+            session.correctionAttempt = 0;
             enqueueLater(session, word.slug, 2);
             return {
               correct: true,
@@ -727,7 +728,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
               nextAction: "advance",
             };
           }
-          session.promptCount += 1;
+          session.correctionAttempt = (session.correctionAttempt || 0) + 1;
           return {
             correct: false,
             phase: "correction",

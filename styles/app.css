@@ -6377,6 +6377,10 @@ button.chip,
   margin-left: 4px;
   letter-spacing: -0.01em;
 }
+.spelling-in-session .ribbon-body .word.is-attempt {
+  text-decoration: line-through;
+  opacity: 0.75;
+}
 .spelling-in-session .ribbon-body .sub {
   font-size: 0.88rem;
   margin-top: 2px;

@@ -161,13 +161,13 @@ export function FamilyChips({ words, label = 'Word family', requireMultiple = tr
   );
 }
 
-export function Ribbon({ tone, icon, headline, word, sub }) {
+export function Ribbon({ tone, icon, headline, word, sub, wordIsAttempt = false }) {
   return (
     <div className={`ribbon ${tone}`} role="status">
       <div className="ribbon-ic">{icon || null}</div>
       <div className="ribbon-body">
         {headline ? <b>{headline}</b> : null}
-        {word ? <span className="word">“{word}”</span> : null}
+        {word ? <span className={`word${wordIsAttempt ? ' is-attempt' : ''}`}>“{word}”</span> : null}
         {sub ? <div className="sub">{sub}</div> : null}
       </div>
     </div>
@@ -267,6 +267,10 @@ export function FeedbackSlot({ feedback, reserveSpace = false }) {
     : attemptedAnswer || '';
   const ribbonWordIsAttempt = !feedback.answer && !!attemptedAnswer;
 
+  const sub = ribbonWordIsAttempt
+    ? (feedback.body ? `Your answer — ${feedback.body}` : 'Your answer')
+    : feedbackSub(feedback);
+
   return (
     <div className="feedback-slot">
       <Ribbon
@@ -274,7 +278,8 @@ export function FeedbackSlot({ feedback, reserveSpace = false }) {
         icon={icon}
         headline={feedback.headline || ''}
         word={ribbonWord}
-        sub={ribbonWordIsAttempt ? 'Your answer' : feedbackSub(feedback)}
+        sub={sub}
+        wordIsAttempt={ribbonWordIsAttempt}
       />
       {feedback.footer ? <p className="feedback-foot small muted">{feedback.footer}</p> : null}
       <FamilyChips words={feedback.familyWords} />
