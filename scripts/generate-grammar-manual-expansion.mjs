@@ -481,6 +481,8 @@ function compactCase(rawCase) {
     inputType: cleanText(sourceCase.inputType),
     questionType: cleanText(sourceCase.questionType),
     depthTier: cleanText(sourceCase.depthTier),
+    manualReviewOnly: rawCase?.manualReviewOnly === true ? true : undefined,
+    nonScored: rawCase?.nonScored === true ? true : undefined,
     promptText: cleanText(sourceCase.promptText),
     expectedAnswerSummary: cleanText(sourceCase.expectedAnswerSummary),
     feedbackLong: cleanText(sourceCase.feedbackLong),
