@@ -21,6 +21,7 @@ import {
   grammarMonsterImageVisual,
 } from './grammar-view-model.js';
 import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConfigContext.jsx';
+import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
 import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
@@ -382,6 +383,15 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
           cardClassName="grammar-setup-sidebar-card"
           ariaLabel="Where you stand"
           body={(
+            <>
+            {dashboard.isEmpty ? (
+              <div className="grammar-today-empty" data-testid="grammar-today-empty">
+                <EmptyState
+                  title="No rounds yet"
+                  body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
+                />
+              </div>
+            ) : null}
             <SubjectCompanionPanel
               subjectId="grammar"
               visible
@@ -410,6 +420,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
               ]}
               nextFocus={troubleCount > 0 ? 'Trouble concepts need revision' : ''}
             />
+            </>
           )}
           footer={(
             <button
