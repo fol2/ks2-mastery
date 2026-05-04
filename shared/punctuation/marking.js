@@ -22,6 +22,7 @@ const FACET_LABELS = Object.freeze({
   terminal_punctuation: 'Terminal punctuation',
   single_sentence: 'One combined sentence',
   sentence_completeness: 'Complete sentence',
+  token_variety: 'Used different words',
   unwanted_punctuation: 'No duplicated punctuation outside the quote',
 });
 

@@ -2,6 +2,7 @@ import { currentReleaseRewardEntries, projectPunctuationStars } from './star-pro
 import { stageFor, PUNCTUATION_STAR_THRESHOLDS, PUNCTUATION_GRAND_STAR_THRESHOLDS } from '../../platform/game/monsters.js';
 import {
   PUNCTUATION_CLIENT_SKILLS,
+  PUNCTUATION_CLIENT_REWARD_UNITS,
 } from './punctuation-manifest.js';
 import { PUNCTUATION_CURRENT_RELEASE_ID } from './service-contract.js';
 
@@ -9,7 +10,8 @@ export { PUNCTUATION_CLIENT_SKILLS };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CURRENT_RELEASE_ID = PUNCTUATION_CURRENT_RELEASE_ID;
-const TOTAL_REWARD_UNITS = 14;
+const TOTAL_REWARD_UNITS = new Set(PUNCTUATION_CLIENT_REWARD_UNITS.map((ru) => ru.rewardUnitId)).size;
+if (TOTAL_REWARD_UNITS !== 14) throw new Error(`TOTAL_REWARD_UNITS drift: expected 14, got ${TOTAL_REWARD_UNITS}`);
 const DAILY_TARGET_ATTEMPTS = 4;
 
 const ITEM_MODE_LABELS = Object.freeze({

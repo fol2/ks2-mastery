@@ -815,8 +815,9 @@ const GRAND_TIERS = Object.freeze([
   { threshold: 100, minMonsters: 3, minSecured: 14, minDeepSecured: 14, requireMixed: true  },
 ]);
 
-// Total reward units across all clusters.
-const TOTAL_REWARD_UNITS = 14;
+// Total reward units across all clusters (derived from manifest).
+const TOTAL_REWARD_UNITS = new Set(PUNCTUATION_CLIENT_REWARD_UNITS.map((ru) => ru.rewardUnitId)).size;
+if (TOTAL_REWARD_UNITS !== 14) throw new Error(`TOTAL_REWARD_UNITS drift: expected 14, got ${TOTAL_REWARD_UNITS}`);
 
 function computeGrandStars(progress, rewardUnitEntries) {
   const facetEntries = isPlainObject(progress.facets) ? progress.facets : {};
