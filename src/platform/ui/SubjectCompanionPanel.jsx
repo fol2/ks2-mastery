@@ -9,6 +9,7 @@ import { SectionHeader } from './SectionHeader.jsx';
 
 export function SubjectCompanionPanel({
   subjectId,
+  head = null,
   monsters = [],
   monsterVisuals = [],
   stats = [],
@@ -16,7 +17,7 @@ export function SubjectCompanionPanel({
   emptyState = 'Nothing to show yet.',
   visible = false,
 }) {
-  const hasContent = monsterVisuals.length > 0 || monsters.length > 0 || stats.length > 0;
+  const hasContent = head || monsterVisuals.length > 0 || monsters.length > 0 || stats.length > 0;
   if (!hasContent) {
     return (
       <aside className="companion-panel" data-subject={subjectId || 'unknown'} data-testid="companion-panel" hidden={!visible}>
@@ -26,6 +27,7 @@ export function SubjectCompanionPanel({
   }
   return (
     <aside className="companion-panel" data-subject={subjectId || 'unknown'} data-testid="companion-panel" hidden={!visible}>
+      {head ? <div className="ss-head">{head}</div> : null}
       {/* Monster meadow — rich visuals when available, text glyphs fallback */}
       {monsterVisuals.length > 0 ? (
         <section className="companion-panel-monsters">

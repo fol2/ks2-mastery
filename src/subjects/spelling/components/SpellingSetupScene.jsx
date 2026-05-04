@@ -484,25 +484,24 @@ export function SpellingSetupScene({
       </section>
 
       <SetupSidePanel
-        headTag="div"
-        head={(
-          <>
-            <p className="eyebrow">Where you stand</p>
-            <button
-              type="button"
-              className="ss-codex-link"
-              data-action="open-codex"
-              aria-label="Open the full codex"
-              onClick={(event) => renderAction(actions, event, 'open-codex')}
-            >
-              Open codex →
-            </button>
-          </>
-        )}
         body={(
           <SubjectCompanionPanel
             subjectId="spelling"
             visible
+            head={(
+              <>
+                <p className="eyebrow">Where you stand</p>
+                <button
+                  type="button"
+                  className="ss-codex-link"
+                  data-action="open-codex"
+                  aria-label="Open the full codex"
+                  onClick={(event) => renderAction(actions, event, 'open-codex')}
+                >
+                  Open codex →
+                </button>
+              </>
+            )}
             monsterVisuals={panelMonsterVisuals}
             stats={[
               { label: 'Total spellings', value: String(stats.total ?? 0) },
