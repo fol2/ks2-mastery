@@ -21,8 +21,8 @@
 // testing (U9). The primary CTA carries `data-punctuation-cta`.
 //
 // U4 (refactor ui-consolidation): the mission dashboard is wrapped in the
-// shared `.setup-grid` / `.setup-main` / `.setup-content` rhythm (single-
-// column — no sidebar; see R3). The Bellstorm backdrop now paints via the
+// shared `.setup-grid` / `.setup-main` / `.setup-content` rhythm with a
+// right-hand sidebar (SetupSidePanel). The Bellstorm backdrop now paints via the
 // platform `HeroBackdrop` (cross-fade + pan) instead of a static `<img
 // srcSet>`, the round-length toggle is the platform `LengthPicker`, and
 // contrast tokens flow through `useSetupHeroContrast` so future darker
@@ -54,6 +54,7 @@ import { Button } from '../../../platform/ui/Button.jsx';
 import { ProgressMeter } from '../../../platform/ui/ProgressMeter.jsx';
 import { StatCard } from '../../../platform/ui/StatCard.jsx';
 import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
+import { SetupSidePanel } from '../../../platform/ui/SetupSidePanel.jsx';
 import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
 
 // The 6 Phase 2 cluster mode ids + `guided` — the set that triggers the
@@ -379,29 +380,6 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
               </div>
             </section>
 
-            {/* Monster row — 4 active monsters with star meters */}
-            <section className="punctuation-monster-row" data-section="monster-row" aria-label="Your monsters">
-              {dashboard.activeMonsters.map((monster) => (
-                <MonsterStarMeter monster={monster} key={monster.id} />
-              ))}
-            </section>
-
-            {/* Map link */}
-            <div data-section="map-link">
-              <button
-                type="button"
-                className="punctuation-map-link"
-                data-action="punctuation-open-map"
-                disabled={disabled}
-                onClick={() => {
-                  if (disabled) return;
-                  actions.dispatch('punctuation-open-map');
-                }}
-              >
-                Open Punctuation Map
-              </button>
-            </div>
-
             {/* Secondary practice drawer */}
             <section className="punctuation-secondary-drawer" data-section="secondary" aria-label="More practice options">
               <div className="punctuation-secondary-modes">
@@ -433,24 +411,62 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
                 />
               </div>
             </section>
-
-            <SubjectCompanionPanel
-              subjectId="punctuation"
-              visible
-              monsters={dashboard.activeMonsters.map((m) => ({
-                name: punctuationMonsterDisplayName(m.id),
-                discovered: (m.displayStars ?? m.totalStars) > 0,
-              }))}
-              stats={[
-                { label: 'Due today', value: String(dueCount), tone: dueCount > 0 ? 'warn' : undefined },
-                { label: 'Wobbly', value: String(weakCount) },
-                { label: 'Grand Stars', value: String(grandStars) },
-              ]}
-              nextFocus={weakCount > 0 ? 'Wobbly spots need practice' : ''}
-              emptyState="Start practising to discover your first egg."
-            />
           </div>
         </section>
+
+        <SetupSidePanel
+          asideClassName="punctuation-setup-sidebar"
+          cardClassName="punctuation-setup-sidebar-card"
+          headTag="header"
+          ariaLabel="Your monsters"
+          head={(
+            <p className="eyebrow">Your monsters</p>
+          )}
+          body={(
+            <>
+              <section className="punctuation-monster-row" data-section="monster-row" aria-label="Monster star progress">
+                {dashboard.activeMonsters.map((monster) => (
+                  <MonsterStarMeter monster={monster} key={monster.id} />
+                ))}
+              </section>
+
+              <SubjectCompanionPanel
+                subjectId="punctuation"
+                visible
+                monsters={dashboard.activeMonsters.map((m) => ({
+                  name: punctuationMonsterDisplayName(m.id),
+                  discovered: (m.displayStars ?? m.totalStars) > 0,
+                }))}
+                stats={[
+                  { label: 'Due today', value: String(dueCount), tone: dueCount > 0 ? 'warn' : undefined },
+                  { label: 'Wobbly', value: String(weakCount) },
+                  { label: 'Grand Stars', value: String(grandStars) },
+                ]}
+                nextFocus={weakCount > 0 ? 'Wobbly spots need practice' : ''}
+                emptyState="Start practising to discover your first egg."
+              />
+            </>
+          )}
+          footer={(
+            <button
+              type="button"
+              className="ss-bank-link punctuation-setup-sidebar-map-link"
+              data-action="punctuation-open-map"
+              data-section="map-link"
+              onClick={() => {
+                if (disabled) return;
+                actions.dispatch('punctuation-open-map');
+              }}
+              disabled={disabled}
+            >
+              <span className="ss-bank-link-body">
+                <span className="ss-bank-link-head">Open Punctuation Map</span>
+                <span className="ss-bank-link-sub">Explore all monsters and their habitats.</span>
+              </span>
+              <span className="ss-bank-link-arrow" aria-hidden="true">→</span>
+            </button>
+          )}
+        />
       </div>
     </section>
     </PracticeStage>

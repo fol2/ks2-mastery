@@ -150,8 +150,7 @@ test('punctuation Setup scene wraps the mission dashboard in .setup-grid / .setu
 
   const html = harness.render();
 
-  // `.setup-grid` is the collapsible grid-layout parent (single-column
-  // for Punctuation — no sidebar adopted this pass, see plan R3).
+  // `.setup-grid` is the two-column grid-layout parent (main + sidebar).
   assert.match(html, /<div class="setup-grid">/);
 
   // `.setup-main.punctuation-setup-main` — the second class is the
@@ -175,7 +174,7 @@ test('punctuation Setup scene wraps the mission dashboard in .setup-grid / .setu
   assert.match(html, /<div class="setup-content" data-section="hero">/);
 });
 
-test('punctuation Setup scene preserves every data-section landmark inside .setup-content', () => {
+test('punctuation Setup scene preserves every data-section landmark', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
 
@@ -183,14 +182,22 @@ test('punctuation Setup scene preserves every data-section landmark inside .setu
 
   // Hero landmark sits on `.setup-content`.
   assert.match(html, /data-section="hero"/);
-  // Progress row.
+  // Progress row (in main column).
   assert.match(html, /data-section="progress-row"/);
-  // Monster row.
+  // Monster row (in sidebar).
   assert.match(html, /data-section="monster-row"/);
-  // Map link wrapper.
+  // Map link (in sidebar footer).
   assert.match(html, /data-section="map-link"/);
-  // Secondary drawer.
+  // Secondary drawer (in main column).
   assert.match(html, /data-section="secondary"/);
+
+  // Structural containment: monster-row and map-link live inside the sidebar.
+  const sidebarStart = html.indexOf('class="setup-side punctuation-setup-sidebar"');
+  assert.ok(sidebarStart > -1, 'sidebar aside exists');
+  const monsterRowPos = html.indexOf('data-section="monster-row"');
+  const mapLinkPos = html.indexOf('data-section="map-link"');
+  assert.ok(monsterRowPos > sidebarStart, 'monster-row is inside sidebar');
+  assert.ok(mapLinkPos > sidebarStart, 'map-link is inside sidebar');
 
   // Phase marker on the outer `<section>` wrapper.
   assert.match(html, /data-punctuation-phase="setup"/);
