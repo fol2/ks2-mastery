@@ -222,7 +222,7 @@ U7 extended the CLIENT `buildGrammarLearnerReadModel` to produce `confidence` fo
 
 **Import style: relative paths only, no alias.** Worker uses `'../../../../shared/grammar/confidence.js'` from `worker/src/subjects/grammar/`; client uses `'../../../shared/grammar/confidence.js'` from `src/subjects/grammar/`; tests use `'../shared/grammar/confidence.js'` from `tests/`. Matches the existing `shared/spelling/` + `shared/punctuation/` convention. No `wrangler.toml` change — esbuild picks up relative imports from `shared/` automatically.
 
-**Backward-compat re-export on Worker engine.js.** Existing consumers (notably `tests/grammar-engine.test.js`) import `grammarConceptStatus` from `engine.js`. U8 keeps an `export { grammarConceptStatus }` alias pointing to the shared module — zero-cost, no duplicate definition.
+**Backward-compat re-export on Worker engine.js.** Existing consumers (notably `tests/grammar-engine-generation.test.js`) import `grammarConceptStatus` from `engine.js`. U8 keeps an `export { grammarConceptStatus }` alias pointing to the shared module — zero-cost, no duplicate definition.
 
 **Reviewer yield.** Correctness reviewer gave APPROVE with 1 MEDIUM: the `now === 0` handling subtly changed. Old Worker `Number(now) || Date.now()` treated 0 as "missing" (falsy fallback). New shared `Number.isFinite(Number(now)) ? Number(now) : Date.now()` honoured 0 as epoch (1970-01-01). No production caller passes 0 today, but the contract drift was silent. Follower reverted to `Number(now) || Date.now()` with inline comment + added regression-lock test (`now=0`, `NaN`, `'not-a-number'` all fall back to `Date.now()`). Test uses a future `dueAt` so epoch anchor would misclassify as `'due'`; asserting `'secured'` proves fallback fired.
 
@@ -360,7 +360,7 @@ All resolved + re-review verified 46/46 pass.
 
 1. `concordium-never-revoked` → `tests/grammar-concordium-invariant.test.js`.
 2. `confidence-label-shared-module` → `shared/grammar/confidence.js` + `tests/grammar-confidence-shared.test.js`.
-3. `release-id-impact-none` → `tests/grammar-production-smoke.test.js` + `tests/grammar-engine.test.js` (substituted for non-existent `grammar-legacy-baseline.test.js`; `grammar-engine.test.js:24` does pin `GRAMMAR_CONTENT_RELEASE_ID` against the legacy oracle baseline).
+3. `release-id-impact-none` → `tests/grammar-production-smoke.test.js` + `tests/grammar-engine-generation.test.js` (substituted for non-existent `grammar-legacy-baseline.test.js`; `grammar-engine.test.js:24` does pin `GRAMMAR_CONTENT_RELEASE_ID` against the legacy oracle baseline).
 
 **Validator enforces:** every row `resolutionStatus === "completed"`; `landedIn` matches regex `/^PR #\d+$/`; every supporting test file EXISTS on disk via `fs.existsSync`; `phase4ReleaseGate.contentReleaseId === 'grammar-legacy-reviewed-2026-04-24'`.
 

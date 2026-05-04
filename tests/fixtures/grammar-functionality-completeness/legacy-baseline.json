@@ -70,7 +70,7 @@
       "evidence": [
         "worker/src/subjects/grammar/content.js",
         "tests/fixtures/grammar-legacy-oracle/legacy-baseline.json",
-        "tests/grammar-engine.test.js"
+        "tests/grammar-engine-generation.test.js"
       ]
     },
     {
@@ -138,7 +138,7 @@
         "worker/src/subjects/grammar/read-models.js",
         "src/subjects/grammar/components/GrammarSessionScene.jsx",
         "src/subjects/grammar/components/GrammarSummaryScene.jsx",
-        "tests/grammar-engine.test.js",
+        "tests/grammar-engine-generation.test.js",
         "tests/worker-grammar-subject-runtime.test.js",
         "tests/react-grammar-surface.test.js"
       ]
@@ -151,7 +151,7 @@
         "worker/src/subjects/grammar/engine.js",
         "worker/src/subjects/grammar/read-models.js",
         "src/subjects/grammar/components/GrammarSetupScene.jsx",
-        "tests/grammar-engine.test.js",
+        "tests/grammar-engine-generation.test.js",
         "tests/worker-grammar-subject-runtime.test.js",
         "tests/react-grammar-surface.test.js"
       ]
@@ -165,7 +165,7 @@
         "src/subjects/grammar/module.js",
         "src/subjects/grammar/components/GrammarSetupScene.jsx",
         "src/subjects/grammar/components/GrammarSessionScene.jsx",
-        "tests/grammar-engine.test.js",
+        "tests/grammar-engine-generation.test.js",
         "tests/react-grammar-surface.test.js"
       ]
     },
@@ -179,7 +179,7 @@
         "worker/src/subjects/grammar/read-models.js",
         "src/subjects/grammar/module.js",
         "src/subjects/grammar/components/GrammarSessionScene.jsx",
-        "tests/grammar-engine.test.js",
+        "tests/grammar-engine-generation.test.js",
         "tests/worker-grammar-subject-runtime.test.js",
         "tests/react-grammar-surface.test.js"
       ]
@@ -208,7 +208,7 @@
         "src/subjects/grammar/module.js",
         "worker/src/subjects/grammar/engine.js",
         "tests/grammar-speech.test.js",
-        "tests/grammar-engine.test.js",
+        "tests/grammar-engine-generation.test.js",
         "tests/worker-grammar-subject-runtime.test.js",
         "tests/react-grammar-surface.test.js"
       ]
