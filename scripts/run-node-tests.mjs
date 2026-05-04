@@ -129,22 +129,87 @@ const isDirectInvocation = (() => {
 })();
 
 if (isDirectInvocation) {
-  let nodeArgs;
-  try {
-    nodeArgs = await buildSpawnArgs(process.argv.slice(2));
-  } catch (err) {
-    console.error(err?.message || err);
-    process.exit(1);
-  }
-  const child = spawn(process.execPath, nodeArgs, {
-    cwd: rootDir,
-    stdio: 'inherit',
-  });
-  child.on('exit', (code, signal) => {
-    if (signal) {
-      process.kill(process.pid, signal);
-    } else {
-      process.exit(code ?? 1);
+  const userArgv = process.argv.slice(2);
+
+  if (hasUserPositional(userArgv)) {
+    // Targeted run — small enough for OS argv; use spawn as before.
+    let nodeArgs;
+    try {
+      nodeArgs = await buildSpawnArgs(userArgv);
+    } catch (err) {
+      console.error(err?.message || err);
+      process.exit(1);
     }
-  });
+    const child = spawn(process.execPath, nodeArgs, {
+      cwd: rootDir,
+      stdio: 'inherit',
+    });
+    child.on('exit', (code, signal) => {
+      if (signal) {
+        process.kill(process.pid, signal);
+      } else {
+        process.exit(code ?? 1);
+      }
+    });
+  } else {
+    // Default `npm test` path — use node:test programmatic run() API so
+    // that 630+ file paths stay in-process memory and never touch OS argv.
+    // This avoids ENAMETOOLONG on Windows (32K CreateProcess limit).
+    const { run } = await import('node:test');
+    const { spec: SpecReporter } = await import('node:test/reporters');
+
+    let files;
+    try {
+      files = await resolveTestFiles();
+      if (!files.length) throw new Error('run-node-tests: no test files discovered under tests/ or scripts/.');
+    } catch (err) {
+      console.error(err?.message || err);
+      process.exit(1);
+    }
+
+    // Parse relevant flags from argv
+    const runOptions = { files, concurrency: true };
+
+    for (const arg of userArgv) {
+      const shardMatch = arg.match(/^--test-shard=(\d+)\/(\d+)$/);
+      if (shardMatch) {
+        runOptions.shard = { index: Number(shardMatch[1]), total: Number(shardMatch[2]) };
+        continue;
+      }
+      const concurrencyMatch = arg.match(/^--test-concurrency=(\d+)$/);
+      if (concurrencyMatch) {
+        runOptions.concurrency = Number(concurrencyMatch[1]);
+        continue;
+      }
+      const timeoutMatch = arg.match(/^--test-timeout=(\d+)$/);
+      if (timeoutMatch) {
+        runOptions.timeout = Number(timeoutMatch[1]);
+        continue;
+      }
+      const namePatternMatch = arg.match(/^--test-name-pattern=(.+)$/);
+      if (namePatternMatch) {
+        runOptions.testNamePatterns = [namePatternMatch[1]];
+        continue;
+      }
+    }
+
+    // Also handle detached --test-name-pattern <value> form
+    for (let i = 0; i < userArgv.length; i++) {
+      if (userArgv[i] === '--test-name-pattern' && i + 1 < userArgv.length) {
+        runOptions.testNamePatterns = [userArgv[i + 1]];
+      }
+    }
+
+    const stream = run(runOptions);
+    let failures = 0;
+    stream.on('test:fail', () => { failures += 1; });
+
+    // Pipe through spec reporter to stdout
+    const reporter = new SpecReporter();
+    stream.compose(reporter).pipe(process.stdout);
+
+    stream.on('end', () => {
+      process.exitCode = failures > 0 ? 1 : 0;
+    });
+  }
 }
