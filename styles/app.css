@@ -10525,8 +10525,7 @@ html { scroll-behavior: smooth; }
    mirrors the Spelling Setup's hero pattern, adapted for Bellstorm Coast. */
 
 .punctuation-mission-dashboard {
-  display: grid;
-  gap: 20px;
+  display: block;
 }
 
 /* --- U4 (refactor ui-consolidation): platform hero engine adoption ------- */
@@ -10540,7 +10539,33 @@ html { scroll-behavior: smooth; }
 .punctuation-setup-main {
   min-height: auto;
   overflow: visible;
-  view-transition-name: none;
+  view-transition-name: punctuation-hero-card;
+}
+
+/* Punctuation sidebar — mirrors Grammar's sidebar structure. */
+.punctuation-setup-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.punctuation-setup-sidebar .punctuation-setup-sidebar-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg, 28px);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  view-transition-name: punctuation-metrics-card;
+}
+.punctuation-setup-sidebar .ss-head {
+  margin-bottom: 12px;
+}
+.punctuation-setup-sidebar .ss-head .eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
 }
 
 /* KS2 44×44 tap-target floor for the platform `LengthPicker` adopted on
