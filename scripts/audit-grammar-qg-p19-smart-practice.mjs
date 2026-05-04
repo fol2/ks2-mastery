@@ -556,7 +556,7 @@ function renderMarkdown(audit) {
         ? `templateId=${failure.templateId} (count=${failure.count})`
         : failure.kind === 'duplicate-surface'
           ? `surfaceKey=${failure.surfaceKey.slice(0, 12)}… (count=${failure.count})`
-          : JSON.stringify(failure);
+          : JSON.stringify(failure).replace(/\|/g, '\\|');
       lines.push(`| ${failure.profile} | ${failure.seed} | ${failure.kind} | ${detail} |`);
     }
     if (audit.failures.length > 50) lines.push(`| … | … | … | (${audit.failures.length - 50} additional rows omitted) |`);
