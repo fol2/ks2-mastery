@@ -100,7 +100,9 @@
     "verify:punctuation-qg:p13-predeploy": "node scripts/verify-punctuation-qg-p13-predeploy.mjs",
     "smoke:production:punctuation:p13": "node scripts/punctuation-qg-p13-live-smoke.mjs --env production --authenticated --out reports/punctuation/punctuation-qg-p13-production-smoke.json",
     "verify:punctuation-qg:p13-live": "node scripts/validate-punctuation-qg-p13-live-evidence.mjs reports/punctuation/punctuation-qg-p13-production-smoke.json",
-    "deploy:punctuation-qg:p13": "node scripts/deploy-punctuation-qg-p13-live.mjs"
+    "deploy:punctuation-qg:p13": "node scripts/deploy-punctuation-qg-p13-live.mjs",
+    "smoke:production:punctuation:p14": "node scripts/punctuation-qg-p14-live-smoke.mjs --env production --authenticated --out reports/punctuation/punctuation-qg-p14-production-smoke.json",
+    "verify:punctuation-qg:p14-live": "node scripts/validate-punctuation-qg-p14-live-evidence.mjs reports/punctuation/punctuation-qg-p14-production-smoke.json"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
