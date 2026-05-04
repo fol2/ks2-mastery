@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 
 import { PUNCTUATION_CONTENT_MANIFEST } from '../shared/punctuation/content.js';
 import { PRODUCTION_DEPTH, createPunctuationRuntimeManifest, repairApostropheContractionGrammar } from '../shared/punctuation/generators.js';
+
+// Inline copy of the helper used inside generators.js — sentenceCaseFirst is
+// not exported because it is an internal pipeline step. Mirroring the
+// behaviour here lets the test exercise the repair pipeline as it runs at
+// bank-build time.
+function sentenceCaseFirstForTest(value) {
+  const text = String(value ?? '');
+  if (!text.length) return text;
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 import { countProseSentenceBoundaries, markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
 const runtime = createPunctuationRuntimeManifest({
@@ -131,6 +141,99 @@ test('P14 countProseSentenceBoundaries handles common abbreviations', () => {
     if (got !== expected) failures.push({ input, expected, got, note });
   }
   assert.deepEqual(failures, [], 'abbreviation handling regressed');
+});
+
+test('P14 apostrophe repair handles lowercase apostropheless stems via single-pass call (adv-r2-002 regression)', () => {
+  // Adversarial r2-002: previously the bank's lowercase apostropheless
+  // stems (`youve ready to…`, `weve ready to…`, `theyll ready to…`,
+  // `well ready to…`, `ill ready to…`) only resolved correctly because
+  // `qualityNormalisedGeneratedTemplate` happened to be applied twice in
+  // the pipeline. After a future DRY consolidation that drops the second
+  // pass, those 20 stems would silently regress. The fix: order the
+  // helper as `repair(sentenceCaseFirst(value))`, so the regex sees the
+  // capitalised form on a single pass. This test enforces that contract
+  // — running `sentenceCaseFirst` then `repair` exactly once must
+  // produce a grammatical past-participle / infinitive form for every
+  // lowercase apostropheless stem in the bank's design vocabulary.
+  const lowercaseStemSamples = [
+    ['youve ready to move the lantern.', 'Youve moved the lantern.'],
+    ['weve ready to forget the badge.', 'Weve forgotten the badge.'],
+    ['theyve ready to leave the field.', 'Theyve left the field.'],
+    ['ive ready to start the experiment.', 'Ive started the experiment.'],
+    ['youll ready to read the chapter.', 'Youll read the chapter.'],
+    ['theyll ready to swim the lap.', 'Theyll swim the lap.'],
+    ['itll ready to begin at noon.', 'Itll begin at noon.'],
+    ['thatll ready to do the trick.', 'Thatll do the trick.'],
+    ['therell ready to come a moment.', 'Therell come a moment.'],
+    ['well ready to move forward.', 'Well move forward.'],
+    ['ill ready to help the team.', 'Ill help the team.'],
+  ];
+  const failures = [];
+  for (const [input, expected] of lowercaseStemSamples) {
+    const got = repairApostropheContractionGrammar(sentenceCaseFirstForTest(input));
+    if (got !== expected) failures.push({ input, expected, got });
+  }
+  assert.deepEqual(failures, [], 'single-pass repair must produce grammatical output for lowercase stems');
+});
+
+test('P14 negative-contraction repair preserves sentence-initial capital (adv-r2-003 regression)', () => {
+  // Adversarial r2-003: previously these patterns used a `gi` flag with a
+  // lowercase replacement string, so `It isnt forget X.` became
+  // `it isnt safe to forget X.` — the function silently destroyed the
+  // sentence-initial capital. The fix uses a captured pronoun group as
+  // `$1` so the matched form is echoed verbatim.
+  const cases = [
+    ['It isnt forget about it later.', 'It isnt safe to forget about it later.'],
+    ['it isnt forget about it later.', 'it isnt safe to forget about it later.'],
+    ['It isnt move yet.', 'It isnt safe to move yet.'],
+    ["It isn't forget the keys.", "It isn't safe to forget the keys."],
+    ['We arent move the table here.', 'We arent ready to move the table here.'],
+    ['we arent forget the badges.', 'we arent ready to forget the badges.'],
+  ];
+  const failures = [];
+  for (const [input, expected] of cases) {
+    const got = repairApostropheContractionGrammar(input);
+    if (got !== expected) failures.push({ input, expected, got });
+  }
+  assert.deepEqual(failures, [], 'negative-contraction repair must preserve sentence-initial capital');
+});
+
+test('P14 generated apostrophe stem/model pairs maintain apostrophe-presence contrast (F5 regression)', () => {
+  // F5: future bank changes could produce a model that lost its
+  // apostrophe (or a stem that gained one), collapsing the
+  // "fix the apostrophe" exercise into a tautology. This assertion
+  // walks every generated apostrophe item and checks that whenever the
+  // stem contains an apostropheless contracted form (e.g. `arent`,
+  // `isnt`, `weve`, `youve`, `theyll`), the model contains the
+  // matching apostrophe form (e.g. `aren't`, `isn't`, `we've`,
+  // `you've`, `they'll`).
+  const PAIRS = [
+    [/\barent\b/i, /\baren't\b/i],
+    [/\bisnt\b/i, /\bisn't\b/i],
+    [/\bweve\b/i, /\bwe've\b/i],
+    [/\byouve\b/i, /\byou've\b/i],
+    [/\btheyve\b/i, /\bthey've\b/i],
+    [/\bive\b/i, /\bi've\b/i],
+    [/\byoull\b/i, /\byou'll\b/i],
+    [/\btheyll\b/i, /\bthey'll\b/i],
+    [/\bwell\b(?=\s+(?:moved|gone|started|done|finished))/i, /\bwe'll\b/i],
+    [/\bill\b(?=\s+(?:move|go|start|do|finish|help))/i, /\bi'll\b/i],
+  ];
+  const breakages = [];
+  for (const item of runtime.items) {
+    if (item.source !== 'generated') continue;
+    if (!/^gen_apostrophe_/.test(item.generatorFamilyId || '')) continue;
+    if (item.mode === 'choose') continue;
+    const stem = String(item.stem || '');
+    const model = String(item.model || '');
+    for (const [stemPattern, modelPattern] of PAIRS) {
+      if (stemPattern.test(stem) && !modelPattern.test(model)) {
+        breakages.push({ id: item.id, stem, model, stemPattern: String(stemPattern), modelPattern: String(modelPattern) });
+        break;
+      }
+    }
+  }
+  assert.deepEqual(breakages.slice(0, 10), [], 'apostrophe stem/model pairs must keep the apostropheless ↔ apostrophe contrast');
 });
 
 test('P13 paragraph repair rejects missing sentence boundary punctuation', () => {

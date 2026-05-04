@@ -142,7 +142,12 @@ export const apostropheContractionsTransferDsl = buildTransferFamily({
   explanation: 'A contraction uses an apostrophe in place of the missing letter or letters.',
   explanationRuleId: 'apostrophe.contraction',
   misconceptionTags: ['apostrophe.contraction_missing'],
-  validatorFor: (s) => ({ type: 'requiresTokens', tokens: s.tokens, minimumWordCount: 6, minMeaningfulWords: 0 }),
+  // adv-r2-004: anti-stuffing guard via `rejectTokenStuffing` — keeps
+  // `minMeaningfulWords: 0` so legitimate short contraction sentences
+  // (`We can't go yet.`) pass `hasVerbFrame`, but rejects token-padded
+  // nonsense like `Yes can't no can't yes can't.` (token repeated >2x or
+  // <3 unique non-token words).
+  validatorFor: (s) => ({ type: 'requiresTokens', tokens: s.tokens, minimumWordCount: 6, minMeaningfulWords: 0, rejectTokenStuffing: true }),
   scenarios: [
     { tokens: ["can't"], prompt: "Write a sentence about a closed door using the contraction 'can't'.", model: "We can't open the gate without the key." },
     { tokens: ["don't"], prompt: "Write a sentence advising the class using the contraction 'don't'.", model: "Don't forget to label the science books." },
@@ -175,24 +180,26 @@ export const apostrophePossessionTransferDsl = buildTransferFamily({
   explanation: 'A possessive apostrophe shows that something belongs to a noun (singular: \'s; plural ending in s: just \').',
   explanationRuleId: 'apostrophe.possession',
   misconceptionTags: ['apostrophe.possession_missing'],
-  validatorFor: (s) => ({ type: 'requiresTokens', tokens: s.tokens, minimumWordCount: 5, minMeaningfulWords: 0 }),
+  // adv-r2-004: anti-stuffing guard via `rejectTokenStuffing` (see
+  // apostrophe_contractions transfer family).
+  validatorFor: (s) => ({ type: 'requiresTokens', tokens: s.tokens, minimumWordCount: 5, minMeaningfulWords: 0, rejectTokenStuffing: true }),
   scenarios: [
     { tokens: ["dog's"], prompt: "Write a sentence about something belonging to one dog using 'dog's'.", model: "The dog's lead was tangled in the bush." },
-    { tokens: ["dogs'"], prompt: "Write a sentence about something belonging to several dogs using 'dogs'’.", model: "The dogs' bowls were lined up by the door." },
+    { tokens: ["dogs'"], prompt: "Write a sentence about something belonging to several dogs using 'dogs'.", model: "The dogs' bowls were lined up by the door." },
     { tokens: ["girl's"], prompt: "Write a sentence about a single girl's possession using 'girl's'.", model: "The girl's coat was hanging on the peg." },
-    { tokens: ["girls'"], prompt: "Write a sentence about something belonging to multiple girls using 'girls’'.", model: "The girls' bags were stacked in the corner." },
+    { tokens: ["girls'"], prompt: "Write a sentence about something belonging to multiple girls using 'girls'.", model: "The girls' bags were stacked in the corner." },
     { tokens: ["children's"], prompt: "Write a sentence about something belonging to children using 'children's'.", model: "The children's library opens at ten o'clock." },
     { tokens: ["teacher's"], prompt: "Write a sentence about a teacher's belonging using 'teacher's'.", model: "The teacher's marker rolled under the desk." },
     { tokens: ["coach's"], prompt: "Write a sentence about the coach using 'coach's'.", model: "The coach's whistle echoed across the field." },
     { tokens: ["boy's"], prompt: "Write a sentence about one boy using 'boy's'.", model: "The boy's helmet was almost new." },
-    { tokens: ["boys'"], prompt: "Write a sentence about several boys using 'boys’'.", model: "The boys' kit was waiting by the lockers." },
+    { tokens: ["boys'"], prompt: "Write a sentence about several boys using 'boys'.", model: "The boys' kit was waiting by the lockers." },
     { tokens: ["father's"], prompt: "Write a sentence about something belonging to a father using 'father's'.", model: "My father's keys are on the hall table." },
     { tokens: ["mother's"], prompt: "Write a sentence about something belonging to a mother using 'mother's'.", model: "My mother's recipe is the best cake I know." },
     { tokens: ["sister's"], prompt: "Write a sentence about a single sister's belonging using 'sister's'.", model: "My sister's bicycle has a basket on the front." },
     { tokens: ["brother's"], prompt: "Write a sentence about a brother using 'brother's'.", model: "My brother's gloves were soaked in the rain." },
     { tokens: ["women's"], prompt: "Write a sentence about something belonging to women using 'women's'.", model: "The women's choir performed in the main hall." },
     { tokens: ["men's"], prompt: "Write a sentence about something belonging to men using 'men's'.", model: "The men's team won the relay by a second." },
-    { tokens: ["pupils'"], prompt: "Write a sentence about something belonging to several pupils using 'pupils’'.", model: "The pupils' artwork covered the corridor walls." },
+    { tokens: ["pupils'"], prompt: "Write a sentence about something belonging to several pupils using 'pupils'.", model: "The pupils' artwork covered the corridor walls." },
     { tokens: ["captain's"], prompt: "Write a sentence about a captain using 'captain's'.", model: "The captain's voice carried across the deck." },
     { tokens: ["artist's"], prompt: "Write a sentence about an artist using 'artist's'.", model: "The artist's brush left a single bold streak." },
   ],
@@ -308,7 +315,9 @@ export const commaClarityTransferDsl = buildTransferFamily({
   explanation: 'A comma after the opening phrase keeps the meaning clear and prevents misreading the main clause.',
   explanationRuleId: 'comma.clarity-disambiguation',
   misconceptionTags: ['comma.clarity_missing'],
-  validatorFor: (s) => ({ type: 'requiresTokens', tokens: s.tokens, minimumWordCount: 5, minMeaningfulWords: 0 }),
+  // adv-r2-004: anti-stuffing guard via `rejectTokenStuffing` (see
+  // apostrophe_contractions transfer family).
+  validatorFor: (s) => ({ type: 'requiresTokens', tokens: s.tokens, minimumWordCount: 5, minMeaningfulWords: 0, rejectTokenStuffing: true }),
   scenarios: [
     { tokens: ['eating,', 'we'], prompt: "Write a sentence beginning 'After eating,' that makes the meaning clear.", model: 'After eating, we cleared the picnic table.' },
     { tokens: ['parents,'], prompt: "Write a sentence using 'my parents,' as a parenthetical aside.", model: 'My parents, who came along, took photographs.' },

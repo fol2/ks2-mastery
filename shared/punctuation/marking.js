@@ -518,6 +518,30 @@ const COMMON_VERB_FORMS = new Set([
   'hurry', 'hurries', 'hurried', 'hurrying',
 ]);
 
+/**
+ * adv-r2-004 anti-stuffing helper. Returns true when the answer is NOT
+ * pure token padding. Two failure modes are caught:
+ *   1. Any single required token appears more than twice in the answer.
+ *   2. Fewer than 3 unique non-token words remain after stripping the
+ *      required tokens.
+ * Designed to sit alongside `evaluateMeaningfulness({ minMeaningfulWords: 0 })`
+ * so legitimate short transfer sentences (e.g. `"We can't go yet."`) still
+ * pass while padding (`"Yes can't no can't yes can't."`) is rejected.
+ */
+export function answerSurvivesTokenStuffingCheck(text, tokens) {
+  const tokenSet = (Array.isArray(tokens) ? tokens : [])
+    .map((t) => stripPunctuation(t).toLowerCase())
+    .filter(Boolean);
+  if (tokenSet.length === 0) return true;
+  const answerWords = stripPunctuation(text).toLowerCase().split(' ').filter(Boolean);
+  for (const token of tokenSet) {
+    const occurrences = answerWords.filter((word) => word === token).length;
+    if (occurrences > 2) return false;
+  }
+  const uniqueNonToken = new Set(answerWords.filter((word) => !tokenSet.includes(word)));
+  return uniqueNonToken.size >= 3;
+}
+
 export function evaluateMeaningfulness(text, validator, item) {
   const minWords = validator.minMeaningfulWords ?? 5;
   if (minWords === 0) return { meaningful: true, wordCount: wordCount(text), allWordsRequired: false, hasVerbFrame: true };
@@ -1074,14 +1098,24 @@ function markTransfer(item, answer) {
       ? evaluateMeaningfulness(text, validator, item)
       : { meaningful: true, wordCount: wordCount(text), allWordsRequired: false };
     const meaningfulOk = meaningfulness.meaningful;
-    const correct = tokensOk && capitalOk && terminalOk && sentenceOk && completeOk && meaningfulOk;
+    // adv-r2-004: anti-stuffing guard. When the family opts in via
+    // `rejectTokenStuffing: true`, reject answers that pad to the word
+    // count by repeating the required token (>2 occurrences) or that
+    // contain fewer than 3 unique non-token words. Independent of the
+    // `hasVerbFrame` check inside `evaluateMeaningfulness` so legitimate
+    // short contraction sentences (`We can't go yet.`) still pass.
+    const stuffingOk = !validator.rejectTokenStuffing
+      || answerSurvivesTokenStuffingCheck(text, validator.tokens || []);
+    const correct = tokensOk && capitalOk && terminalOk && sentenceOk && completeOk && meaningfulOk && stuffingOk;
     const showMeaningfulFacet = minimumWordCount(validator) > 0 || !meaningfulOk;
     return {
       correct,
       expected: item.model || '',
-      note: !meaningfulOk
-        ? 'Include your punctuated forms in a complete sentence.'
-        : (missing.length ? `Include these exact forms: ${missing.join(', ')}.` : 'Good. The required punctuated forms are present.'),
+      note: !stuffingOk
+        ? 'Use the punctuated forms inside a varied sentence — avoid repeating the same word.'
+        : !meaningfulOk
+          ? 'Include your punctuated forms in a complete sentence.'
+          : (missing.length ? `Include these exact forms: ${missing.join(', ')}.` : 'Good. The required punctuated forms are present.'),
       misconceptionTags: correct ? [] : [...new Set([
         ...(tokensOk ? [] : itemTags(item)),
         ...(capitalOk ? [] : ['apostrophe.capitalisation_missing']),
@@ -1089,6 +1123,7 @@ function markTransfer(item, answer) {
         ...(sentenceOk ? [] : ['transfer.extra_sentence']),
         ...(completeOk ? [] : ['transfer.sentence_fragment']),
         ...(meaningfulOk ? [] : ['transfer.sentence_fragment']),
+        ...(stuffingOk ? [] : ['transfer.token_stuffing']),
       ])],
       facets: [
         facet('preservation', tokensOk),
@@ -1096,6 +1131,7 @@ function markTransfer(item, answer) {
         facet('terminal_punctuation', terminalOk),
         ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
         ...(showMeaningfulFacet ? [facet('sentence_completeness', completeOk && meaningfulOk)] : []),
+        ...(validator.rejectTokenStuffing ? [facet('token_variety', stuffingOk)] : []),
       ],
     };
   }

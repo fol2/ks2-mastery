@@ -210,6 +210,14 @@ async function runSmartSixSmoke({ origin, cookie, learnerId, revision }) {
   assert.equal(surfaced.length, 6, 'P14 Smart-six did not surface six answerable items.');
   const uniqueItems = new Set(surfaced.map((item) => item.itemId)).size;
   assert.equal(uniqueItems, 6, 'P14 Smart-six repeated an item inside one six-question live smoke.');
+  // adv-r2-007: uniqueItems===6 alone is trivially satisfied by any
+  // non-degenerate scheduler against a 3,564-item pool with recent-
+  // avoidance. Guard against a regression that surfaces six items of the
+  // same skill or mode by asserting mode and skill diversity floors.
+  const uniqueModes = new Set(surfaced.map((item) => item.mode)).size;
+  const uniqueSkills = new Set(surfaced.flatMap((item) => item.skillIds || [])).size;
+  assert.ok(uniqueModes >= 3, `P14 Smart-six surfaced only ${uniqueModes} mode(s) across six items; expected ≥3.`);
+  assert.ok(uniqueSkills >= 3, `P14 Smart-six surfaced only ${uniqueSkills} skill(s) across six items; expected ≥3.`);
 
   return {
     revision,
@@ -296,6 +304,16 @@ export async function runPunctuationQGP14LiveSmoke(options = {}) {
     accountId: demo.session.accountId,
     learnerId: bootstrap.learnerId,
     attestation: {
+      // F4 hardening: every field below labelled `_source: client` is
+      // computed locally from the deployed worker's bundle (the smoke runs
+      // against `https://ks2.eugnel.uk` and answers items via the worker,
+      // so worker-attested values flow into `punctuation.productionObserved`
+      // — see `validate-punctuation-qg-p14-live-evidence.mjs` for the
+      // production-attested cross-check). Fields below are intentionally
+      // mirrored against the worker's bundle so the validator can detect a
+      // local/worker drift, but consumers should treat
+      // `punctuation.productionObserved` as the canonical worker-attested
+      // surface for runtime stats.
       environment: args.environment,
       releasePhase: PUNCTUATION_QG_P14_LIVE_PHASE,
       releaseId: expected.contentReleaseId,
@@ -308,6 +326,13 @@ export async function runPunctuationQGP14LiveSmoke(options = {}) {
       timestamp: new Date().toISOString(),
       authenticatedCoverage: true,
       adminHubCoverage: Boolean(args.adminHubCoverage),
+      _attestationSourceLegend: {
+        releasePhase: 'client (cross-checked by validator against productionObserved.releaseId via the expected manifest)',
+        releaseId: 'client (worker echoes the same release id via productionObserved.releaseId — cross-checked)',
+        runtimeItemCount: 'client (worker echoes via productionObserved.runtimeItems — cross-checked)',
+        publishedRewardUnits: 'worker (read directly from runtimeStats inside the live SmartSix session)',
+        generatedFamilyDepths: 'client (computed from the same bundle the worker serves; validator asserts shape)',
+      },
     },
     punctuation: {
       productionObserved: {

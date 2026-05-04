@@ -27,6 +27,37 @@ import {
 import { PUNCTUATION_CURRENT_RELEASE_ID } from '../src/subjects/punctuation/service-contract.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
+// F9 build-time guard: the closed verb list inside
+// `repairApostropheContractionGrammar`. Mirroring it here lets the audit
+// fail loudly when a future bank entry adds a `<contracted-aux> ready to
+// <verb>` pattern with a verb outside the list — which the runtime repair
+// would silently leave untouched.
+const APOSTROPHE_REPAIR_VERB_GROUP = new Set([
+  'move', 'forget', 'leave', 'go', 'run', 'walk', 'come', 'start',
+  'begin', 'do', 'see', 'talk', 'swim', 'read', 'write', 'sit',
+  'stand', 'stop', 'finish', 'help', 'join', 'listen', 'return',
+]);
+const APOSTROPHE_REPAIR_TARGET_FAMILIES = new Set([
+  'gen_apostrophe_contractions_fix',
+  'gen_apostrophe_mix_paragraph',
+]);
+// The repair only targets `'ve` and `'ll` forms (and their apostropheless
+// mirrors). `'re/'s/'m` are present-tense be-forms — `<pronoun>'re ready
+// to <v>` is already grammatical (`"You're ready to check"` reads fine),
+// so those forms should be excluded from the audit pattern lest the
+// audit raise a false positive on a clean bank entry.
+const REPAIR_TARGETED_AUX_PREFIXES = new Set([
+  "I've", "i've", "you've", "You've", "we've", "We've", "they've", "They've",
+  "Ive", "ive", "Youve", "youve", "Weve", "weve", "Theyve", "theyve",
+  "I'll", "i'll", "you'll", "You'll", "we'll", "We'll", "they'll", "They'll",
+  "he'll", "He'll", "she'll", "She'll", "it'll", "It'll",
+  "that'll", "That'll", "there'll", "There'll",
+  "Ill", "Youll", "youll", "Well", "Theyll", "theyll",
+  "Hell", "Shell", "Itll", "itll", "Thatll", "thatll",
+  "Therell", "therell",
+]);
+const READY_TO_VERB_PATTERN = /\b([A-Za-z]+(?:'[a-z]+)?)\s+ready\s+to\s+([A-Za-z]+)\b/g;
+
 const PUBLISHED_SKILLS = [
   'sentence_endings',
   'list_commas',
@@ -104,6 +135,33 @@ function audit() {
       .sort(([a], [b]) => a.localeCompare(b)),
   );
 
+  // F9 build-time invariant: scan apostrophe quality-fix family stems +
+  // models for `<contracted-aux> ready to <verb>` patterns where the
+  // contracted aux belongs to the repair's targeted set (`'ve`/`'ll` and
+  // mirrors) AND the verb falls outside the closed list. Any such entry
+  // would silently slip through the runtime repair, leaving an
+  // ungrammatical stem in the runtime pool. `'re/'s/'m` forms are
+  // intentionally NOT in the targeted set — those are grammatical and
+  // the repair correctly leaves them alone.
+  const verbCoverageOffenders = [];
+  for (const item of generated) {
+    if (!APOSTROPHE_REPAIR_TARGET_FAMILIES.has(item.generatorFamilyId || '')) continue;
+    for (const [field, value] of [['stem', item.stem], ['model', item.model]]) {
+      const text = String(value || '');
+      READY_TO_VERB_PATTERN.lastIndex = 0;
+      let match;
+      // eslint-disable-next-line no-cond-assign
+      while ((match = READY_TO_VERB_PATTERN.exec(text)) !== null) {
+        const aux = match[1];
+        if (!REPAIR_TARGETED_AUX_PREFIXES.has(aux)) continue;
+        const verb = (match[2] || '').toLowerCase();
+        if (!APOSTROPHE_REPAIR_VERB_GROUP.has(verb)) {
+          verbCoverageOffenders.push({ id: item.id, field, aux, verb, snippet: match[0] });
+        }
+      }
+    }
+  }
+
   return {
     schemaVersion: 1,
     phase: 'punctuation-qg-p14-source-audit',
@@ -139,6 +197,14 @@ function audit() {
         failureCount: failures.length,
         sample: failures.slice(0, 10),
       },
+      apostropheVerbCoverage: {
+        ok: verbCoverageOffenders.length === 0,
+        knownVerbs: [...APOSTROPHE_REPAIR_VERB_GROUP].sort(),
+        offenders: verbCoverageOffenders.slice(0, 10),
+        note: verbCoverageOffenders.length === 0
+          ? 'Every `<aux> ready to <verb>` pattern in the apostrophe quality-fix bank uses a verb the repair function recognises.'
+          : 'One or more apostrophe quality-fix bank entries use a verb outside the closed `VERB_GROUP` in `repairApostropheContractionGrammar` — the runtime repair will leave those entries ungrammatical.',
+      },
     },
     familyTemplateCounts,
     schedulerVarietyPolicy: {
@@ -169,7 +235,8 @@ function main() {
   const allGatesOk =
     report.gates.gate1SourceIdentity.ok
     && report.gates.gate4TransferDepth.ok
-    && report.gates.modelSelfMarking.ok;
+    && report.gates.modelSelfMarking.ok
+    && report.gates.apostropheVerbCoverage.ok;
   process.exitCode = allGatesOk ? 0 : 1;
 }
 

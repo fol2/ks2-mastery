@@ -217,11 +217,41 @@ function sentenceCaseFirst(value) {
 //
 // Replacement strings preserve original case via the dedicated `_REPAIR`
 // table (capital-first replacements for capital-first matches).
+/**
+ * Apostrophe-contraction grammar repair (P13 quality patch + P14 hardening).
+ *
+ * The manual P12 quality bank ships with two known broken-grammar patterns:
+ *   1. `<contracted-aux> ready to <verb>`  — meaningless without an object,
+ *      e.g. `"I've ready to move"`. The intended exercise stem strips the
+ *      apostrophe (`Ive ready to move`) and the model corrects it to
+ *      `I've moved`. The repair rewrites both stem and model so:
+ *        - apostrophe forms collapse `<aux>'ve ready to <v>` → `<aux>'ve <past>`.
+ *        - apostropheless forms collapse `<aux>ve ready to <v>` → `<aux>ve <past>`.
+ *      Sixteen `(form, ready-to-verb)` regex pairs cover the bank's full
+ *      pronoun × auxiliary surface: 8 `'ve`-form + 18 `'ll`-form + apostropheless
+ *      mirrors. Failure modes covered:
+ *        * `I've / I'll`, `you've / you'll`, `we've / we'll`, `they've / they'll`,
+ *          `he'll`, `she'll`, `it'll`, `that'll`, `there'll`
+ *        * apostropheless mirrors of all of the above (capital + nonsense
+ *          lowercase like `weve`, `youll`)
+ *   2. Negative-contraction `<aux> isn't|aren't (?:move|forget)` — rewrites to
+ *      a grammatical hedge (`it isn't safe to move`, `we aren't ready to move`).
+ *
+ * The audit script `scripts/audit-punctuation-qg-p14-source.mjs` enforces a
+ * build-time invariant that no bank entry contains a `<contracted-aux> ready
+ * to <verb>` pattern where the verb falls outside the closed VERB_GROUP
+ * below — a regression in that audit is the early-warning system that this
+ * verb list has gone stale.
+ *
+ * The function is case-preserving via captured pronoun groups and is safe
+ * to call multiple times (idempotent on grammatical input — see test
+ * `P14 apostrophe repair leaves grammatical inputs unchanged`).
+ */
 export function repairApostropheContractionGrammar(value) {
   let out = String(value ?? '');
 
   // Family of motion / activity verbs the manual bank pairs with `ready to`.
-  // Not exhaustive — extend if new bank entries appear.
+  // Closed list, audited at source build time (see comment above).
   const VERB_GROUP = '(?:move|forget|leave|go|run|walk|come|start|begin|do|see|talk|swim|read|write|sit|stand|stop|finish|help|join|listen|return)';
   // Past participles for the `'ve`/`Ive` rewrites. Anything missing falls
   // back to `+ed`.
@@ -242,8 +272,15 @@ export function repairApostropheContractionGrammar(value) {
   // applied. The matched literal is echoed back as the prefix.
   const HAVE_FORMS = [
     "I've", "i've", "you've", "You've", "we've", "We've", "they've", "They've",
-    // Without-apostrophe forms — capital-only to avoid false positives.
-    "Ive", "Youve", "Weve", "Theyve",
+    // Without-apostrophe forms — both cases. The closed-verb suffix
+    // `ready to <verb>` makes false positives near-impossible (these
+    // strings are not real English words on their own anyway: `weve`,
+    // `youve`, `theyve` are nonsense; `ive` is too rare to worry about).
+    // Including lowercase makes single-pass repair complete; the bank
+    // contains 20 lowercase apostropheless stems that previously only
+    // landed grammatical because `qualityNormalisedGeneratedTemplate`
+    // happens to be applied twice in the pipeline.
+    "Ive", "ive", "Youve", "youve", "Weve", "weve", "Theyve", "theyve",
   ];
 
   for (const from of HAVE_FORMS) {
@@ -259,9 +296,20 @@ export function repairApostropheContractionGrammar(value) {
     "I'll", "i'll", "you'll", "You'll", "we'll", "We'll", "they'll", "They'll",
     "he'll", "He'll", "she'll", "She'll", "it'll", "It'll",
     "that'll", "That'll", "there'll", "There'll",
-    // Without-apostrophe forms — capital-only, to avoid lowercase `well`
-    // (adverb), `ill` (adjective), `hell` (noun), `shell` (noun) etc.
-    "Ill", "Youll", "Well", "Theyll", "Hell", "Shell", "Itll", "Thatll", "Therell",
+    // Without-apostrophe forms — capital forms always; lowercase forms only
+    // for nonsense strings that are not real English words. `well`, `ill`,
+    // `hell`, `shell` lowercase ARE real English (adverb / adjective / noun /
+    // noun) and the test
+    // `tests/punctuation-p13-full-subject-quality.test.js::P14 apostrophe repair leaves grammatical inputs unchanged`
+    // exercises mid-sentence false-positive cases for them — keep the
+    // lowercase forms of those four out of this list. The bank's broken
+    // stems that begin with `well`/`ill` lowercase still resolve correctly
+    // because `qualityNormalisedGeneratedTemplate` applies `sentenceCaseFirst`
+    // BEFORE this repair (see qualityNormalisedGeneratedTemplate below), so
+    // the form is already capitalised when this regex runs.
+    "Ill", "Youll", "youll", "Well", "Theyll", "theyll",
+    "Hell", "Shell", "Itll", "itll", "Thatll", "thatll",
+    "Therell", "therell",
   ];
 
   for (const from of WILL_FORMS) {
@@ -271,15 +319,19 @@ export function repairApostropheContractionGrammar(value) {
 
   // Negative contractions — kept verbatim from P13 patch but with `(?!-)`
   // added so `forget-me-not` and similar hyphenated compounds escape.
+  // Capture the matched subject pronoun as `$1` so sentence-initial case is
+  // preserved by the function itself (regression: previous `gi`-flag form
+  // turned `It isnt forget X` into `it isnt safe to forget X`, relying on
+  // a downstream `sentenceCaseFirst` to repair the case loss).
   return out
-    .replace(/\bit isnt move(?!-)\b/gi, 'it isnt safe to move')
-    .replace(/\bit isn't move(?!-)\b/gi, "it isn't safe to move")
-    .replace(/\bwe arent move(?!-)\b/gi, 'we arent ready to move')
-    .replace(/\bwe aren't move(?!-)\b/gi, "we aren't ready to move")
-    .replace(/\bit isnt forget(?!-)\b/gi, 'it isnt safe to forget')
-    .replace(/\bit isn't forget(?!-)\b/gi, "it isn't safe to forget")
-    .replace(/\bwe arent forget(?!-)\b/gi, 'we arent ready to forget')
-    .replace(/\bwe aren't forget(?!-)\b/gi, "we aren't ready to forget");
+    .replace(/\b([Ii]t) isnt move(?!-)\b/g, '$1 isnt safe to move')
+    .replace(/\b([Ii]t) isn't move(?!-)\b/g, "$1 isn't safe to move")
+    .replace(/\b([Ww]e) arent move(?!-)\b/g, '$1 arent ready to move')
+    .replace(/\b([Ww]e) aren't move(?!-)\b/g, "$1 aren't ready to move")
+    .replace(/\b([Ii]t) isnt forget(?!-)\b/g, '$1 isnt safe to forget')
+    .replace(/\b([Ii]t) isn't forget(?!-)\b/g, "$1 isn't safe to forget")
+    .replace(/\b([Ww]e) arent forget(?!-)\b/g, '$1 arent ready to forget')
+    .replace(/\b([Ww]e) aren't forget(?!-)\b/g, "$1 aren't ready to forget");
 }
 
 function escapeRegExp(text) {
@@ -296,8 +348,17 @@ function mapTemplateStrings(value, mapper) {
 function qualityNormalisedGeneratedTemplate(familyId, template) {
   if (!GENERATED_TEMPLATE_QUALITY_FIX_FAMILIES.has(familyId) || !isPlainObject(template)) return template;
   const clone = { ...template };
+  // Order matters: sentenceCaseFirst BEFORE repair so the regex sees the
+  // capital sentence-start form on lowercase apostropheless stems
+  // (`weve ready to move…` → `Weve ready to move…` → `Weve moved…`).
+  // Previously this was repair(sentenceCaseFirst(value)) which left
+  // lowercase forms unchanged on the first pass and only worked because the
+  // entire pipeline happened to call `qualityNormalisedGeneratedTemplate`
+  // twice (once at bank-build, once inside `buildGeneratedItem`). Any DRY
+  // consolidation that drops the double-application would have re-broken
+  // 20 lowercase bank stems silently.
   const repair = (value) => repairApostropheContractionGrammar(value);
-  const repairSentence = (value) => sentenceCaseFirst(repair(value));
+  const repairSentence = (value) => repair(sentenceCaseFirst(value));
 
   if (typeof clone.stem === 'string') clone.stem = repairSentence(clone.stem);
   if (typeof clone.model === 'string') clone.model = repairSentence(clone.model);
