@@ -13,6 +13,7 @@ const DEFAULT_SOURCE = path.join(
   'james',
   'grammar',
   'questions-generator',
+  'archive',
   'p14',
   'exp4',
   'grammar-qg-p18-manual-expansion-400-families.json',
@@ -22,8 +23,43 @@ const DEFAULT_OUT = path.join(ROOT_DIR, 'worker', 'src', 'subjects', 'grammar', 
 const EXPECTED_FAMILY_COUNT = 400;
 const EXPECTED_CASE_COUNT = 4800;
 const EXPECTED_CASES_PER_FAMILY = 12;
-const RELEASE_ID = 'grammar-qg-p18-2026-05-02';
+const RELEASE_ID = 'grammar-qg-p19-2026-05-04';
 const SCHEDULER_READY_STATUS = 'certified_scheduler_ready';
+
+// P19 Contract A — open-response marking fairness.
+// A family is converted to manualReviewOnly when ANY of its cases combines
+// (a) a free-text input type, (b) an open prompt verb, and (c) insufficient
+// accepted-answer coverage to mark fairly. Mixing scored and non-scored cases
+// inside a single family would create silent per-case rules, so the conversion
+// is promoted to family scope. See docs/plans/.../grammar-p19-follow-up-contracts.md.
+//
+// Predicate broadened post-review (P19 commit 2): also catches "Write the …",
+// "Write an expanded …", bare "Build" / "Rewrite" / "Describe" / "Complete the
+// sentence" / standalone "transfer". The contract A.1 says "or similar open
+// task" — narrow keyword matching let 18+ misconception_repair / build_np
+// templates score open text against a single golden answer.
+const OPEN_PROMPT_RE = /\b(explain|transfer|write\s+(?:the|an?|one|a\s+sentence)|rewrite|build|mixed\s+check|add\s+the|move\s+the|join\s+the|describe|complete\s+the\s+sentence|continue|extend)\b/i;
+const SELECTED_RESPONSE_CONVERSION_TEMPLATES = new Set();
+
+function caseTriggersFairnessFix(sourceCase) {
+  const inputType = cleanText(sourceCase?.inputType);
+  if (inputType !== 'text' && inputType !== 'textarea') return false;
+  const promptText = cleanText(sourceCase?.promptText);
+  if (!OPEN_PROMPT_RE.test(promptText)) return false;
+  const accepted = cleanArray(sourceCase?.acceptedAnswers);
+  const nearMiss = cleanArray(sourceCase?.nearMisses);
+  if (accepted.length >= 3 && nearMiss.length >= 1) return false;
+  if (sourceCase?.manualReviewOnly === true) return false;
+  if (sourceCase?.nonScored === true) return false;
+  return true;
+}
+
+function familyFairnessConversion(rawCases) {
+  for (const sourceCase of rawCases) {
+    if (caseTriggersFairnessFix(sourceCase)) return 'manualReviewOnly';
+  }
+  return null;
+}
 
 function correctionRow(key, label, correctAnswer, rationale = '') {
   return { key, label, correctAnswer, rationale };
@@ -43,6 +79,89 @@ function pickAllOptions(correct, nearMissA, nearMissB, nearMissC) {
 }
 
 const SOURCE_CASE_CORRECTIONS = Object.freeze({
+  // P19 Contract C — sister-family misconception_repair contradictions.
+  // Case 04 says "It clearly refers to the ball" without a contrast marker,
+  // tripping the pronoun-cohesion-contradiction regression audit. Adding
+  // "because <reason>" preserves the pedagogic message and satisfies the
+  // audit's required contrast/explanation token.
+  'grammar-qg-p17-manual-expansion-delta-100-families:pronouns_cohesion:misconception_repair:04': {
+    correctAnswer: 'clear. It clearly refers to the ball because only the ball can roll under the car.',
+    expectedAnswerSummary: 'clear. It clearly refers to the ball because only the ball can roll under the car.',
+    feedbackLong: 'Correct answer: clear. It clearly refers to the ball because only the ball can roll under the car (the dog cannot roll there).',
+    acceptedAnswers: ['clear. It clearly refers to the ball because only the ball can roll under the car.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:01': {
+    correctAnswer: 'It is unclear because the pronouns do not point to sensible nouns: a map cannot fold a person.',
+    expectedAnswerSummary: 'It is unclear because the pronouns do not point to sensible nouns: a map cannot fold a person.',
+    feedbackLong: 'The pronouns are unclear because “it” appears to refer to the map, but a map cannot fold “she”. The sentence needs clearer nouns or correct pronouns.',
+    acceptedAnswers: ['It is unclear because the pronouns do not point to sensible nouns: a map cannot fold a person.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:02': {
+    correctAnswer: 'It is unclear because he and him could refer to Ben or Lucas.',
+    expectedAnswerSummary: 'It is unclear because he and him could refer to Ben or Lucas.',
+    feedbackLong: 'The pronouns are ambiguous: “he” and “him” could refer to either Ben or Lucas, so the sentence should repeat a noun or use clearer wording.',
+    acceptedAnswers: ['It is unclear because he and him could refer to Ben or Lucas.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:03': {
+    correctAnswer: 'It is unclear because it could refer to the dog or the ball, but only the dog can bark.',
+    expectedAnswerSummary: 'It is unclear because it could refer to the dog or the ball, but only the dog can bark.',
+    feedbackLong: 'The pronoun “it” is unclear because it could point to the dog or the ball. The action “barked” shows the dog is meant.',
+    acceptedAnswers: ['It is unclear because it could refer to the dog or the ball, but only the dog can bark.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:04': {
+    correctAnswer: 'It is unclear because she and hers could refer to Maya or Priya.',
+    expectedAnswerSummary: 'It is unclear because she and hers could refer to Maya or Priya.',
+    feedbackLong: 'The pronouns are ambiguous because both Maya and Priya are possible referents. Repeating the intended name would make the meaning clear.',
+    acceptedAnswers: ['It is unclear because she and hers could refer to Maya or Priya.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:05': {
+    correctAnswer: 'It is unclear because a museum cannot welcome the class; a person such as a guide probably did.',
+    expectedAnswerSummary: 'It is unclear because a museum cannot welcome the class; a person such as a guide probably did.',
+    feedbackLong: 'The pronoun “it” points to the museum, but the action “welcomed” probably belongs to a guide or member of staff. The noun should be clearer.',
+    acceptedAnswers: ['It is unclear because a museum cannot welcome the class; a person such as a guide probably did.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:06': {
+    correctAnswer: 'It is unclear because the plate or cake cannot carry Tom.',
+    expectedAnswerSummary: 'It is unclear because the plate or cake cannot carry Tom.',
+    feedbackLong: 'The pronoun “it” creates a nonsense role: the plate or cake appears to carry Tom. Clearer nouns or corrected pronouns are needed.',
+    acceptedAnswers: ['It is unclear because the plate or cake cannot carry Tom.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:07': {
+    correctAnswer: 'It is unclear because the key cannot give Sara to the teacher.',
+    expectedAnswerSummary: 'It is unclear because the key cannot give Sara to the teacher.',
+    feedbackLong: 'The pronouns swap the roles. Sara can give the key to the teacher, but the key cannot give Sara.',
+    acceptedAnswers: ['It is unclear because the key cannot give Sara to the teacher.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:08': {
+    correctAnswer: 'It is unclear because the object pronoun should be them, not they.',
+    expectedAnswerSummary: 'It is unclear because the object pronoun should be them, not they.',
+    feedbackLong: 'The sentence needs the object pronoun “them”: “They left them by the door.” Using “they” there is non-standard and unclear.',
+    acceptedAnswers: ['It is unclear because the object pronoun should be them, not they.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:09': {
+    correctAnswer: 'It is unclear because the bike appears to test Omar, but Omar is the person doing the testing.',
+    expectedAnswerSummary: 'It is unclear because the bike appears to test Omar, but Omar is the person doing the testing.',
+    feedbackLong: 'The pronoun “it” makes the bike seem to do the testing. The sentence should make Omar the doer and the bike the thing tested.',
+    acceptedAnswers: ['It is unclear because the bike appears to test Omar, but Omar is the person doing the testing.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:10': {
+    correctAnswer: 'It is unclear because the feeder appears to perch, but birds perch.',
+    expectedAnswerSummary: 'It is unclear because the feeder appears to perch, but birds perch.',
+    feedbackLong: 'The pronoun “it” points to the feeder, but the action “perched” should refer to the birds. The noun reference is unclear.',
+    acceptedAnswers: ['It is unclear because the feeder appears to perch, but birds perch.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:11': {
+    correctAnswer: 'It is unclear because the cabinet appears to lock Nina, not the trophy or cabinet.',
+    expectedAnswerSummary: 'It is unclear because the cabinet appears to lock Nina, not the trophy or cabinet.',
+    feedbackLong: 'The pronoun “it” makes the role unclear. The sentence should say who locked the cabinet or what was locked.',
+    acceptedAnswers: ['It is unclear because the cabinet appears to lock Nina, not the trophy or cabinet.'],
+  },
+  'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:12': {
+    correctAnswer: 'It is unclear because the cups appear to dry Dad, but Dad dried the cups.',
+    expectedAnswerSummary: 'It is unclear because the cups appear to dry Dad, but Dad dried the cups.',
+    feedbackLong: 'The pronoun “they” points to the cups, but the action makes the roles backwards. Dad should be the doer and the cups the object.',
+    acceptedAnswers: ['It is unclear because the cups appear to dry Dad, but Dad dried the cups.'],
+  },
   'grammar-qg-p16-manual-expansion-delta-110-families:relative_clauses:relative_or_time_clause:07': {
     promptText: 'Classify the clause type in this sentence: Since the alarm rang, the team left the hall.',
     correctAnswer: 'reason clause',
@@ -265,8 +384,13 @@ const SOURCE_CASE_CORRECTIONS = Object.freeze({
   },
 });
 
+function normaliseGrammarArticles(value) {
+  return String(value ?? '')
+    .replace(/\ba (adverb|adjective|exclamation)\b/gi, (_match, word) => `an ${word}`);
+}
+
 function cleanText(value) {
-  return String(value ?? '').replace(/\s+/g, ' ').trim();
+  return normaliseGrammarArticles(value).replace(/\s+/g, ' ').trim();
 }
 
 function cleanArray(values) {
@@ -367,6 +491,10 @@ function buildFamilies(pack) {
     const questionTypes = [...new Set(rawCases.map((entry) => cleanText(entry.questionType)).filter(Boolean))].sort();
     const inputTypes = [...new Set(rawCases.map((entry) => cleanText(entry.inputType)).filter(Boolean))].sort();
     const depthTiers = [...new Set(rawCases.map((entry) => cleanText(entry.depthTier)).filter(Boolean))].sort();
+    const compactedCases = rawCases.map(compactCase);
+    const fairnessConversion = SELECTED_RESPONSE_CONVERSION_TEMPLATES.has(familyId)
+      ? 'selectedResponse'
+      : familyFairnessConversion(compactedCases);
     families.push({
       id: familyId,
       conceptIds,
@@ -374,7 +502,8 @@ function buildFamilies(pack) {
       questionType: questionTypes.length === 1 ? questionTypes[0] : cleanText(first.questionType),
       inputType: inputTypes.length === 1 ? inputTypes[0] : cleanText(first.inputType),
       depthTiers,
-      cases: rawCases.map(compactCase),
+      cases: compactedCases,
+      ...(fairnessConversion ? { fairnessConversion, fairnessConversionReason: 'p19-open-response-fairness' } : {}),
     });
   }
 
@@ -400,6 +529,9 @@ function assertSchedulerReady(pack) {
 
 function buildSummary(pack, families) {
   const cases = families.flatMap((family) => family.cases);
+  const convertedFamilies = families.filter((family) => family.fairnessConversion === 'manualReviewOnly');
+  const selectedResponseFamilies = families.filter((family) => family.fairnessConversion === 'selectedResponse');
+  const convertedCaseCount = convertedFamilies.reduce((sum, family) => sum + family.cases.length, 0);
   return {
     releaseId: RELEASE_ID,
     sourcePackId: cleanText(pack.packId),
@@ -419,6 +551,14 @@ function buildSummary(pack, families) {
       return counts;
     }, {}),
     sourcePacks: [...new Set(families.flatMap((family) => family.sourcePacks))].sort(),
+    p19ConversionStats: {
+      convertedToManualReview: convertedFamilies.length,
+      convertedCaseCount,
+      convertedFamilyIds: convertedFamilies.map((family) => family.id),
+      selectedResponseFamilies: selectedResponseFamilies.length,
+      keptScored: families.length - convertedFamilies.length - selectedResponseFamilies.length,
+      reason: 'p19-open-response-fairness',
+    },
   };
 }
 

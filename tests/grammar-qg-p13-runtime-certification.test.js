@@ -31,9 +31,12 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
-const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p18-certification-status-map.json');
+// P19 supersedes P18: read live runtime authority artefacts (P11 status map +
+// P19 manifest). The committed runtime generated file is regenerated from the
+// P11 status map; the P19 manifest references it via manifest.artefacts.
+const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p11-certification-status-map.json');
 const GENERATED_PATH = path.resolve(ROOT_DIR, 'worker', 'src', 'subjects', 'grammar', 'certification-status.generated.js');
-const MANIFEST_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p18-certification-manifest.json');
+const MANIFEST_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p19-certification-manifest.json');
 
 const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
@@ -46,8 +49,8 @@ function cloneStatusMap(overrides = {}) {
 }
 
 describe('P13 runtime certification source', () => {
-  it('uses the active P18 content release', () => {
-    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p18-2026-05-02');
+  it('uses the active P19 content release', () => {
+    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p19-2026-05-04');
     assert.equal(GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID, GRAMMAR_CONTENT_RELEASE_ID);
   });
 
@@ -60,16 +63,19 @@ describe('P13 runtime certification source', () => {
   });
 
   it('preserves approved_with_limitation diagnostics instead of flattening them', () => {
+    // P19 fairness conversion promoted 142 manual-expansion families + 5 P0/P2/P3
+    // open-rewrite templates + 4 P14 priority rewrites. The status map records
+    // the manualReviewOnly-converted families as approved_with_limitation.
     assert.deepEqual(GRAMMAR_RUNTIME_CERTIFICATION_STATUS_COUNTS, {
-      approved: 506,
-      approved_with_limitation: 4,
+      approved: 359,
+      approved_with_limitation: 151,
     });
 
     const limitedIds = Object.entries(CERTIFICATION_STATUS_MAP)
       .filter(([, entry]) => entry.status === 'approved_with_limitation')
       .map(([templateId]) => templateId)
       .sort();
-    assert.equal(limitedIds.length, 4);
+    assert.equal(limitedIds.length, 151);
     for (const templateId of limitedIds) {
       assert.equal(getTemplateCertificationStatus(templateId).status, 'approved_with_limitation');
       assert.equal(isTemplateBlocked(templateId), false);

@@ -46,32 +46,42 @@ describe('P10 Scheduler Safety: status map structure', () => {
     assert.ok(fs.existsSync(STATUS_MAP_PATH), 'P10 status map file must exist');
   });
 
-  const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
-  const qualityRegister = JSON.parse(fs.readFileSync(QUALITY_REGISTER_PATH, 'utf8'));
-  const p10TemplateIds = qualityRegister.entries.map((entry) => entry.templateId);
+  // P19 supersedes the original flat 78-template P10 register. The live status
+  // map is now a `{ metadata, entries: [...] }` envelope covering 510
+  // templates and uses `decision` (approved | blocked | watchlist | ...) plus
+  // `severity` per entry. The historical P10 quality register has the same
+  // shape, so we read entries from both via a normalised view.
+  const statusMapDoc = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
+  const qualityRegisterDoc = JSON.parse(fs.readFileSync(QUALITY_REGISTER_PATH, 'utf8'));
+  const statusEntries = Array.isArray(statusMapDoc.entries) ? statusMapDoc.entries : [];
+  const qualityEntries = Array.isArray(qualityRegisterDoc.entries) ? qualityRegisterDoc.entries : [];
+  const statusMapById = new Map(statusEntries.map((entry) => [entry.templateId, entry]));
+  const p10TemplateIds = qualityEntries.map((entry) => entry.templateId);
 
-  it('has entries for all 78 templates', () => {
-    assert.equal(Object.keys(statusMap).length, 78);
+  it('has entries for every live template (P19 covers the whole 510-template inventory)', () => {
+    assert.equal(statusEntries.length, 510);
   });
 
-  it('every historical P10 quality-register template exists in the P10 map', () => {
-    const mapKeys = new Set(Object.keys(statusMap));
+  it('every quality-register template exists in the status map', () => {
     for (const templateId of p10TemplateIds) {
-      assert.ok(mapKeys.has(templateId), `Missing template in P10 status map: ${templateId}`);
+      assert.ok(statusMapById.has(templateId), `Missing template in P10 status map: ${templateId}`);
     }
   });
 
-  it('every entry has a valid status (approved | blocked | watchlist)', () => {
-    const validStatuses = new Set(['approved', 'blocked', 'watchlist']);
-    for (const [id, entry] of Object.entries(statusMap)) {
-      assert.ok(validStatuses.has(entry.status), `Template ${id} has invalid status: ${entry.status}`);
+  it('every entry has a valid decision (approved | blocked | watchlist | approved_with_limitation)', () => {
+    const validDecisions = new Set(['approved', 'blocked', 'watchlist', 'approved_with_limitation']);
+    for (const entry of statusEntries) {
+      assert.ok(
+        validDecisions.has(entry.decision),
+        `Template ${entry.templateId} has invalid decision: ${entry.decision}`,
+      );
     }
   });
 
   it('every entry has a non-empty evidence array', () => {
-    for (const [id, entry] of Object.entries(statusMap)) {
-      assert.ok(Array.isArray(entry.evidence), `Template ${id} evidence is not an array`);
-      assert.ok(entry.evidence.length > 0, `Template ${id} has empty evidence array`);
+    for (const entry of statusEntries) {
+      assert.ok(Array.isArray(entry.evidence), `Template ${entry.templateId} evidence is not an array`);
+      assert.ok(entry.evidence.length > 0, `Template ${entry.templateId} has empty evidence array`);
     }
   });
 });
@@ -88,18 +98,23 @@ describe('P10 Historical Scheduler Safety: active runtime coverage', () => {
     }
   });
 
-  it('active runtime map still covers every historical P10 template ID', () => {
-    const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
-    for (const templateId of Object.keys(statusMap)) {
-      const moduleEntry = CERTIFICATION_STATUS_MAP[templateId];
-      assert.ok(moduleEntry, `Module missing historical P10 template: ${templateId}`);
+  it('active runtime map still covers every status map template ID', () => {
+    const statusMapDoc = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
+    const entries = Array.isArray(statusMapDoc.entries) ? statusMapDoc.entries : [];
+    for (const entry of entries) {
+      const moduleEntry = CERTIFICATION_STATUS_MAP[entry.templateId];
+      assert.ok(moduleEntry, `Module missing status-map template: ${entry.templateId}`);
     }
   });
 
   it('historical P10 JSON is not treated as the active production runtime authority', () => {
+    // P19 Contract A.2 fairness conversion: 142 manual-expansion families +
+    // 5 P0/P2/P3 open-rewrite templates promoted to manualReviewOnly. The
+    // runtime status records them as approved_with_limitation. Historical
+    // P10 figure of 4 is no longer the live count.
     const limitedRuntimeTemplates = Object.values(CERTIFICATION_STATUS_MAP)
       .filter((entry) => entry.status === 'approved_with_limitation');
-    assert.equal(limitedRuntimeTemplates.length, 4);
+    assert.equal(limitedRuntimeTemplates.length, 151);
   });
 });
 
@@ -149,13 +164,16 @@ describe('P10 Scheduler Safety: quality register consistency', () => {
   it('status map reflects quality register decisions', () => {
     if (!fs.existsSync(qualityRegisterPath)) return;
     const register = JSON.parse(fs.readFileSync(qualityRegisterPath, 'utf8'));
-    const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
+    const statusMapDoc = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
+    const statusMap = new Map(
+      (Array.isArray(statusMapDoc.entries) ? statusMapDoc.entries : []).map((entry) => [entry.templateId, entry]),
+    );
 
     for (const entry of register.entries) {
-      const mapEntry = statusMap[entry.templateId];
+      const mapEntry = statusMap.get(entry.templateId);
       assert.ok(mapEntry, `Status map missing template from quality register: ${entry.templateId}`);
       if (entry.decision === 'blocked') {
-        assert.equal(mapEntry.status, 'blocked', `Template ${entry.templateId} is blocked in register but not in status map`);
+        assert.equal(mapEntry.decision, 'blocked', `Template ${entry.templateId} is blocked in register but not in status map`);
       }
     }
   });

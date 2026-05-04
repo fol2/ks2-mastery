@@ -39,16 +39,19 @@ function learnerVisibleSurface(item) {
 }
 
 describe('Grammar QG P14 depth and variety contract', () => {
-  it('ships the active P18 release denominator and preserves P14 priority families', () => {
+  it('ships the active P19 release denominator and preserves P14 priority families', () => {
     const audit = buildGrammarQuestionGeneratorAudit({
       seeds: [1, 2, 3],
       deepSeeds: Array.from({ length: 30 }, (_, index) => index + 1),
     });
 
-    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p18-2026-05-02');
+    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p19-2026-05-04');
     assert.equal(audit.templateCount, 510);
-    assert.equal(audit.selectedResponseCount, 317);
-    assert.equal(audit.constructedResponseCount, 193);
+    // P19 Contract A.2: 4 P14 priority rewrites moved from constructed to
+    // selected-response (standard_english/fronted_adverbials/speech_punctuation/
+    // parenthesis_commas). Net: 317 + 4 = 321 selected, 193 - 4 = 189 constructed.
+    assert.equal(audit.selectedResponseCount, 321);
+    assert.equal(audit.constructedResponseCount, 189);
     assert.equal(audit.generatedTemplateCount, 484);
     assert.equal(audit.mixedTransferTemplateCount, 26);
     assert.equal(audit.lowDepthGeneratedTemplates.length, 0);
@@ -65,7 +68,9 @@ describe('Grammar QG P14 depth and variety contract', () => {
   });
 
   it('meets the learner-visible surface and prompt growth thresholds', () => {
-    const inventory = readReport('grammar-qg-p18-render-inventory.json');
+    // P19 supersedes P18 with regenerated P10-prefixed artefacts; assertions
+    // read the live artefact, not the frozen P18 snapshot.
+    const inventory = readReport('grammar-qg-p10-render-inventory.json');
     const uniqueSurfaces = new Set(inventory.items.map(learnerVisibleSurface));
     const uniquePrompts = new Set(inventory.items.map((item) => item.promptText || ''));
 
@@ -77,7 +82,7 @@ describe('Grammar QG P14 depth and variety contract', () => {
   });
 
   it('expands the former low-diversity fixed banks below the P14 threshold', () => {
-    const inventory = readReport('grammar-qg-p18-render-inventory.json');
+    const inventory = readReport('grammar-qg-p10-render-inventory.json');
     const fixedDiagnostics = new Set(GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS);
     const perTemplate = new Map();
     for (const item of inventory.items) {
@@ -106,7 +111,9 @@ describe('Grammar QG P14 depth and variety contract', () => {
     const p14SelectedTemplates = GRAMMAR_TEMPLATE_METADATA.filter((template) =>
       template.tags.includes('qg-p14') && template.isSelectedResponse);
 
-    assert.equal(p14SelectedTemplates.length, 24);
+    // P19 Contract A.2: 4 P14 priority rewrites converted from constructed to
+    // selected-response. Net: 24 (original) + 4 (converted) = 28.
+    assert.equal(p14SelectedTemplates.length, 28);
 
     for (const template of p14SelectedTemplates) {
       for (let seed = 1; seed <= 30; seed += 1) {
@@ -133,7 +140,8 @@ describe('Grammar QG P14 depth and variety contract', () => {
   });
 
   it('keeps P14 selected-response distractor options free of likely surface cues', () => {
-    const audit = readReport('grammar-qg-p18-distractor-audit.json');
+    // P19 supersedes the P18 distractor audit; read the live P10-prefixed file.
+    const audit = readReport('grammar-qg-p10-distractor-audit.json');
     const p14SurfaceCueItems = (audit.results || [])
       .filter((item) => item.templateId?.startsWith('qg_p14_'))
       .filter((item) => item.correctOptionSurfaceCue?.likelySurfaceCue)
@@ -143,7 +151,8 @@ describe('Grammar QG P14 depth and variety contract', () => {
   });
 
   it('covers every P14 distractor review flag with quality-register adult decisions', () => {
-    const manifest = readReport('grammar-qg-p18-certification-manifest.json');
+    // P19 supersedes P18 with its own manifest pointing at live P10 artefacts.
+    const manifest = readReport('grammar-qg-p19-certification-manifest.json');
     const result = validateDistractorReviewCoverage(manifest, path.resolve(REPORTS_DIR, '..', '..'));
 
     assert.equal(result.pass, true, `Missing review decisions for: ${result.missing.join(', ')}`);

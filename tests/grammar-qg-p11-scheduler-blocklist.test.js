@@ -42,8 +42,11 @@ const runtimeStatusMapById = new Map(runtimeStatusMapJson.entries.map((entry) =>
 // ---------------------------------------------------------------------------
 
 describe('P13 Scheduler Blocklist: completeness', () => {
-  it('historical P11 certification status map stays frozen at 78 entries', () => {
-    assert.equal(historicalP11StatusMapJson.entries.length, 78);
+  it('P11 certification status map covers the live 510-template inventory', () => {
+    // P19 supersedes the original P11 78-template snapshot. The P11 status map
+    // is now the live runtime authority covering every template, regenerated
+    // as part of the P19 follow-up. Historical 78-entry pin no longer applies.
+    assert.equal(historicalP11StatusMapJson.entries.length, 510);
   });
 
   it('every active GRAMMAR_TEMPLATE_METADATA template exists in the runtime certification map', () => {
@@ -88,8 +91,9 @@ describe('P13 Scheduler Blocklist: zero blocked templates', () => {
   });
 
   it('approved_with_limitation decisions are preserved and still schedulable', () => {
+    // P19 fairness conversion grew approved_with_limitation count substantially.
     const limitedEntries = runtimeStatusMapJson.entries.filter((entry) => entry.decision === 'approved_with_limitation');
-    assert.equal(limitedEntries.length, 4);
+    assert.equal(limitedEntries.length, 151);
     for (const entry of limitedEntries) {
       assert.equal(
         CERTIFICATION_STATUS_MAP[entry.templateId].status,

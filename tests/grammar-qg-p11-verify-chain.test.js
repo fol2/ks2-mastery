@@ -106,9 +106,10 @@ describe('P11 U10 Verify Chain: verify:grammar-qg-production-release', () => {
 
   it('verify:grammar-qg-production-release references the certification manifest', () => {
     const cmd = scripts['verify:grammar-qg-production-release'] || '';
+    // P19 supersedes P18: the gate now references the P19 manifest, not P18.
     assert.ok(
-      cmd.includes('grammar-qg-p18-certification-manifest.json'),
-      `verify:grammar-qg-production-release must reference the manifest. Actual: "${cmd}"`,
+      cmd.includes('grammar-qg-p19-certification-manifest.json'),
+      `verify:grammar-qg-production-release must reference the P19 manifest. Actual: "${cmd}"`,
     );
   });
 });

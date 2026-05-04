@@ -1,12 +1,12 @@
 /**
- * Grammar QG P18 — generated runtime certification status.
+ * Grammar QG P19 — generated runtime certification status.
  *
- * Source artefact: reports/grammar/grammar-qg-p18-certification-status-map.json
- * Content release: grammar-qg-p18-2026-05-02
+ * Source artefact: reports/grammar/grammar-qg-p11-certification-status-map.json
+ * Content release: grammar-qg-p19-2026-05-04
  * Template entries: 510
  *
  * Do not edit manually. Regenerate with:
- * node scripts/generate-grammar-qg-runtime-certification-status.mjs --status-map=reports/grammar/grammar-qg-p18-certification-status-map.json --out=worker/src/subjects/grammar/certification-status.generated.js
+ * node scripts/generate-grammar-qg-runtime-certification-status.mjs --status-map=reports/grammar/grammar-qg-p11-certification-status-map.json --out=worker/src/subjects/grammar/certification-status.generated.js
  */
 
 const RAW_CERTIFICATION_STATUS_MAP = {
@@ -154,7 +154,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "tense_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -198,7 +198,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "active_passive_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -385,7 +385,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "proc2_standard_english_fix": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -451,7 +451,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "proc2_passive_to_active": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -770,7 +770,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "proc3_apostrophe_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1243,7 +1243,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_active_passive_voice_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1298,7 +1298,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_adverbials_fronted_adverbial_comma": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1320,7 +1320,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_adverbials_move_adverbial": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1375,7 +1375,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_apostrophes_possession_possessive_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1485,7 +1485,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_clauses_repair_sub_fragment": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1518,7 +1518,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_formality_formal_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1661,7 +1661,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_noun_phrases_build_np_context": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1749,7 +1749,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_parenthesis_commas_parenthesis_replace": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1782,7 +1782,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_pronouns_cohesion_cohesion_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -1914,7 +1914,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_sentence_functions_punctuate_by_function": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2013,7 +2013,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_standard_english_standard_fix": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2145,7 +2145,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p15_tense_aspect_tense_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2211,7 +2211,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_active_passive_agent_object_explain": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2222,7 +2222,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_active_passive_rewrite_voice": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2299,7 +2299,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_adverbials_explain_fronted_comma": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2321,7 +2321,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_adverbials_fronted_comma_fix": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2332,7 +2332,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_adverbials_move_adverbial_to_front": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2354,7 +2354,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_apostrophes_possession_explain_position": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2365,7 +2365,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2431,7 +2431,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_boundary_punctuation_explain_colon_semicolon_dash": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2486,7 +2486,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_clauses_explain_subordination": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2563,7 +2563,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_formality_explain_formality_effect": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2574,7 +2574,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_formality_formal_sentence_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2629,7 +2629,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2684,7 +2684,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_modal_verbs_change_force_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2717,7 +2717,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_modal_verbs_modal_context_explain": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2750,7 +2750,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_noun_phrases_build_with_given_head": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2783,7 +2783,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_noun_phrases_explain_expansion": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2838,7 +2838,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_parenthesis_commas_explain_parenthesis": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2871,7 +2871,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_parenthesis_commas_replace_brackets_with_commas": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2893,7 +2893,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_pronouns_cohesion_explain_cohesion": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2915,7 +2915,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_pronouns_cohesion_reduce_repetition_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -2970,7 +2970,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_relative_clauses_explain_relative_clause": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3047,7 +3047,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_sentence_functions_explain_function_reasoning": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3080,7 +3080,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_speech_punctuation_explain_speech_rule": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3168,7 +3168,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_standard_english_explain_standard_choice": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3190,7 +3190,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_standard_english_rewrite_standard_english": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3212,7 +3212,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_subject_object_explain_roles": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3256,7 +3256,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_subject_object_rewrite_preserve_roles": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3289,7 +3289,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_tense_aspect_fix_wrong_form": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3300,7 +3300,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_tense_aspect_form_explanation": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3311,7 +3311,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_tense_aspect_rewrite_to_named_form": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3344,7 +3344,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_word_classes_build_word_class_sentence": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3410,7 +3410,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p16_word_classes_same_word_different_job": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3432,7 +3432,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_active_passive_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3465,7 +3465,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_active_passive_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3476,7 +3476,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_active_passive_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3487,7 +3487,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_adverbials_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3520,7 +3520,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_adverbials_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3531,7 +3531,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_adverbials_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3553,7 +3553,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_apostrophes_possession_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3586,7 +3586,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_apostrophes_possession_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3597,7 +3597,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_apostrophes_possession_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3619,7 +3619,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_boundary_punctuation_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3652,7 +3652,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_boundary_punctuation_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3663,7 +3663,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_boundary_punctuation_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3685,7 +3685,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_clauses_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3718,7 +3718,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_clauses_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3729,7 +3729,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_clauses_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3740,7 +3740,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_formality_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3773,7 +3773,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_formality_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3784,7 +3784,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_formality_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3806,7 +3806,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_hyphen_ambiguity_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3839,7 +3839,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_hyphen_ambiguity_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3850,7 +3850,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_hyphen_ambiguity_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3861,7 +3861,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_modal_verbs_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3894,7 +3894,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_modal_verbs_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3905,7 +3905,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_modal_verbs_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3927,7 +3927,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_noun_phrases_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3960,7 +3960,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_noun_phrases_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3971,7 +3971,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_noun_phrases_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -3982,7 +3982,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_parenthesis_commas_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4015,7 +4015,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_parenthesis_commas_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4026,7 +4026,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_parenthesis_commas_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4037,7 +4037,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_pronouns_cohesion_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4070,7 +4070,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_pronouns_cohesion_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4081,7 +4081,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_pronouns_cohesion_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4092,7 +4092,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_relative_clauses_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4125,7 +4125,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_relative_clauses_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4136,7 +4136,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_relative_clauses_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4147,7 +4147,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_sentence_functions_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4180,7 +4180,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_sentence_functions_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4191,7 +4191,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_sentence_functions_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4213,7 +4213,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_speech_punctuation_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4246,7 +4246,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_speech_punctuation_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4257,7 +4257,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_speech_punctuation_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4268,7 +4268,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_standard_english_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4301,7 +4301,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_standard_english_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4312,7 +4312,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_standard_english_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4334,7 +4334,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_subject_object_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4367,7 +4367,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_subject_object_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4378,7 +4378,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_subject_object_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4400,7 +4400,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_tense_aspect_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4433,7 +4433,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_tense_aspect_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4444,7 +4444,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_tense_aspect_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4466,7 +4466,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_word_classes_misconception_repair": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4499,7 +4499,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_word_classes_transfer_apply": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4510,7 +4510,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p17_word_classes_written_reason": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4521,7 +4521,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_active_passive_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4554,7 +4554,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_active_passive_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4576,7 +4576,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_active_passive_subject_object_voice_subject_object_roles": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4587,7 +4587,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_adverbials_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4598,7 +4598,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_adverbials_clauses_adverbial_clause_join": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4631,7 +4631,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_adverbials_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4653,7 +4653,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_apostrophes_possession_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4686,7 +4686,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4697,7 +4697,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4719,7 +4719,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_boundary_punctuation_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4752,7 +4752,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4774,7 +4774,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4785,7 +4785,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_clauses_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4818,7 +4818,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_clauses_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4840,7 +4840,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_formality_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4873,7 +4873,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_formality_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4895,7 +4895,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_hyphen_ambiguity_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4928,7 +4928,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4950,7 +4950,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_modal_verbs_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4983,7 +4983,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_modal_verbs_formality_modal_formality_strength": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -4994,7 +4994,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_modal_verbs_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5016,7 +5016,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_noun_phrases_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5049,7 +5049,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_noun_phrases_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5071,7 +5071,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_parenthesis_commas_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5126,7 +5126,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_pronouns_cohesion_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5159,7 +5159,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_pronouns_cohesion_formality_cohesion_formality_choice": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5170,7 +5170,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5192,7 +5192,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_relative_clauses_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5225,7 +5225,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_relative_clauses_parenthesis_commas_relative_parenthesis_punctuation": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5236,7 +5236,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_relative_clauses_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5258,7 +5258,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_sentence_functions_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5291,7 +5291,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_sentence_functions_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5313,7 +5313,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5324,7 +5324,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_speech_punctuation_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5379,7 +5379,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_standard_english_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5412,7 +5412,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_standard_english_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5434,7 +5434,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_subject_object_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5467,7 +5467,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_subject_object_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5489,7 +5489,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_tense_aspect_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5522,7 +5522,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_tense_aspect_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5544,7 +5544,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_tense_aspect_standard_english_tense_standard_register": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5555,7 +5555,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_word_classes_application_transfer": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5588,7 +5588,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_word_classes_noun_phrases_word_class_np_roles": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5599,7 +5599,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
     ]
   },
   "qg_p18_p18_word_classes_precision_repair_or_rewrite": {
-    "status": "approved",
+    "status": "approved_with_limitation",
     "severity": "none",
     "evidence": [
       "oracle",
@@ -5622,13 +5622,13 @@ const RAW_CERTIFICATION_STATUS_MAP = {
   }
 };
 
-export const GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID = "grammar-qg-p18-2026-05-02";
-export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE = "reports/grammar/grammar-qg-p18-certification-status-map.json";
-export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE_GENERATED_AT = "2026-05-02T21:14:22.935Z";
+export const GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID = "grammar-qg-p19-2026-05-04";
+export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE = "reports/grammar/grammar-qg-p11-certification-status-map.json";
+export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE_GENERATED_AT = "2026-05-04T02:26:08.635Z";
 export const GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT = 510;
 export const GRAMMAR_RUNTIME_CERTIFICATION_STATUS_COUNTS = Object.freeze({
-  "approved": 506,
-  "approved_with_limitation": 4
+  "approved": 359,
+  "approved_with_limitation": 151
 });
 
 export const CERTIFICATION_STATUS_MAP = Object.freeze(

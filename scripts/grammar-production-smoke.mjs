@@ -76,10 +76,14 @@ export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
     response: Object.freeze({ row0: 'subject', row1: 'object' }),
   }),
   Object.freeze({
+    // P19 Contract A.2 promoted tense_rewrite/active_passive_rewrite/proc2_*
+    // open-rewrite templates to manualReviewOnly. The smoke fixture for the
+    // normalisedText family now uses the P14 subject-object constructed
+    // template, which still emits a normalisedText answerSpec (single token).
     family: 'normalisedText',
-    templateId: 'tense_rewrite',
+    templateId: 'qg_p14_subject_object_constructed_rewrite',
     seed: 0,
-    response: Object.freeze({ answer: 'Ravi will have read the final chapter by Monday.' }),
+    response: Object.freeze({ answer: 'Aisha' }),
   }),
   Object.freeze({
     family: 'punctuationPattern',

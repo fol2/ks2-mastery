@@ -4363,7 +4363,7 @@ const TEMPLATES = [
             inputSpec:{ type:"single_choice", options:item.options.map(x=>({ value:x, label:`${x}` })) },
             solutionLines:[
               "Work out the underlined word’s job in the sentence.",
-              `Here, ‘${item.underlined}’ is ${item.correct === "adverb" ? "modifying the verb or whole clause" : "working as a " + item.correct}.`
+              `Here, ‘${item.underlined}’ is ${item.correct === "adverb" ? "modifying the verb or whole clause" : `working as ${/^[aeiou]/i.test(item.correct) ? "an" : "a"} ${item.correct}`}.`
             ],
             evaluate:(resp)=>{
               const ans = resp.answer || "";
@@ -4759,30 +4759,36 @@ const TEMPLATES = [
     domain: "Verb forms",
     questionType: "rewrite",
     difficulty: 3,
-    satsFriendly: true,
+    // P19 Contract A fairness conversion: open rewrite prompt with a single
+    // accepted answer cannot be auto-marked fairly. Promoted to manualReviewOnly.
+    satsFriendly: false,
     isSelectedResponse: false,
     requiresAnswerSpec: true,
-    answerSpecKind: "normalisedText",
+    answerSpecKind: "manualReviewOnly",
     tags: [
       "surgery",
-      "builder"
+      "builder",
+      "p19-manual-review-only",
+      "non-scored"
     ],
     skillIds: [
       "tense_aspect"
     ],
     generator(seed) {
           const item = pickCyclic(seed, TENSE_REWRITE_ITEMS, -1);
-          const answerSpec = normalisedTextAnswerSpec(item.accepted, [], {
-            maxScore:2,
-            misconception:"tense_confusion",
+          const answerSpec = manualReviewOnlyAnswerSpec({
             feedbackLong:`A correct answer is: ${item.accepted[0]}`,
-            answerText:item.accepted[0]
+            minimalHint:"Write the full rewritten sentence; this item is reviewed by an adult, not auto-marked."
           });
+          answerSpec.expectedAnswerSummary = item.accepted[0];
+          answerSpec.conversionReason = "p19-open-response-fairness";
           return makeBaseQuestion(this, seed, {
-            marks:2,
+            marks:0,
             answerSpec,
+            nonScored:true,
+            manualReviewOnly:true,
             stemHtml:`<p>${item.instruction}</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
-            inputSpec:{ type:"textarea", label:"Rewritten sentence", placeholder:"Write the full sentence." },
+            inputSpec:{ type:"textarea", label:"Rewritten sentence", placeholder:"Write the full sentence (saved for adult review)." },
             solutionLines:item.solution,
             evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
@@ -4914,30 +4920,36 @@ const TEMPLATES = [
     domain: "Sentence structure",
     questionType: "rewrite",
     difficulty: 3,
-    satsFriendly: true,
+    // P19 Contract A fairness conversion: open rewrite prompt with a single
+    // accepted answer cannot be auto-marked fairly. Promoted to manualReviewOnly.
+    satsFriendly: false,
     isSelectedResponse: false,
     requiresAnswerSpec: true,
-    answerSpecKind: "normalisedText",
+    answerSpecKind: "manualReviewOnly",
     tags: [
       "builder",
-      "surgery"
+      "surgery",
+      "p19-manual-review-only",
+      "non-scored"
     ],
     skillIds: [
       "active_passive"
     ],
     generator(seed) {
           const item = ACTIVE_PASSIVE_ITEMS[seed % ACTIVE_PASSIVE_ITEMS.length];
-          const answerSpec = normalisedTextAnswerSpec(item.accepted, [], {
-            maxScore:2,
-            misconception:"active_passive_confusion",
+          const answerSpec = manualReviewOnlyAnswerSpec({
             feedbackLong:`A correct answer is: ${item.accepted[0]}`,
-            answerText:item.accepted[0]
+            minimalHint:"Write the full rewritten sentence; this item is reviewed by an adult, not auto-marked."
           });
+          answerSpec.expectedAnswerSummary = item.accepted[0];
+          answerSpec.conversionReason = "p19-open-response-fairness";
           return makeBaseQuestion(this, seed, {
-            marks:2,
+            marks:0,
             answerSpec,
+            nonScored:true,
+            manualReviewOnly:true,
             stemHtml:`<p>${item.instruction}</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
-            inputSpec:{ type:"textarea", label:"Rewritten sentence", placeholder:"Write the full transformed sentence." },
+            inputSpec:{ type:"textarea", label:"Rewritten sentence", placeholder:"Write the full transformed sentence (saved for adult review)." },
             solutionLines:item.solution,
             evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
@@ -5608,13 +5620,17 @@ const TEMPLATES = [
     domain: "Standard English",
     questionType: "fix",
     difficulty: 2,
-    satsFriendly: true,
+    // P19 Contract A fairness conversion: open rewrite prompt with a single
+    // accepted answer cannot be auto-marked fairly. Promoted to manualReviewOnly.
+    satsFriendly: false,
     isSelectedResponse: false,
     generative: true,
     requiresAnswerSpec: true,
-    answerSpecKind: "normalisedText",
+    answerSpecKind: "manualReviewOnly",
     tags: [
-      "surgery"
+      "surgery",
+      "p19-manual-review-only",
+      "non-scored"
     ],
     skillIds: [
       "standard_english"
@@ -5622,17 +5638,19 @@ const TEMPLATES = [
     generator(seed) {
           const rng = mulberry32(seed);
           const item = generateStandardEnglishCase(rng);
-          const answerSpec = normalisedTextAnswerSpec([item.correct], [item.raw], {
-            maxScore:2,
-            misconception:"standard_english_confusion",
+          const answerSpec = manualReviewOnlyAnswerSpec({
             feedbackLong:`A correct answer is: ${item.correct}`,
-            answerText:item.correct
+            minimalHint:"Write the corrected sentence; this item is reviewed by an adult, not auto-marked."
           });
+          answerSpec.expectedAnswerSummary = item.correct;
+          answerSpec.conversionReason = "p19-open-response-fairness";
           return makeBaseQuestion(this, seed, {
-            marks:2,
+            marks:0,
             answerSpec,
+            nonScored:true,
+            manualReviewOnly:true,
             stemHtml:`<p>Rewrite the sentence in Standard English.</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
-            inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Write the corrected sentence." },
+            inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Write the corrected sentence (saved for adult review)." },
             solutionLines:[
               "Find the non-standard spoken form.",
               "Replace it with the Standard English verb form.",
@@ -5794,13 +5812,17 @@ const TEMPLATES = [
     domain: "Sentence structure",
     questionType: "rewrite",
     difficulty: 3,
-    satsFriendly: true,
+    // P19 Contract A fairness conversion: open rewrite prompt with a single
+    // accepted answer cannot be auto-marked fairly. Promoted to manualReviewOnly.
+    satsFriendly: false,
     isSelectedResponse: false,
     generative: true,
     requiresAnswerSpec: true,
-    answerSpecKind: "normalisedText",
+    answerSpecKind: "manualReviewOnly",
     tags: [
-      "builder"
+      "builder",
+      "p19-manual-review-only",
+      "non-scored"
     ],
     skillIds: [
       "active_passive"
@@ -5808,17 +5830,19 @@ const TEMPLATES = [
     generator(seed) {
           const rng = mulberry32(seed);
           const item = generatePassiveCase(rng);
-          const answerSpec = normalisedTextAnswerSpec(item.accepted, [item.raw], {
-            maxScore:2,
-            misconception:"active_passive_confusion",
+          const answerSpec = manualReviewOnlyAnswerSpec({
             feedbackLong:`A correct answer is: ${item.accepted[0]}`,
-            answerText:item.accepted[0]
+            minimalHint:"Write the full active-voice sentence; this item is reviewed by an adult, not auto-marked."
           });
+          answerSpec.expectedAnswerSummary = item.accepted[0];
+          answerSpec.conversionReason = "p19-open-response-fairness";
           return makeBaseQuestion(this, seed, {
-            marks:2,
+            marks:0,
             answerSpec,
+            nonScored:true,
+            manualReviewOnly:true,
             stemHtml:`<p>Rewrite the sentence in the active voice.</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
-            inputSpec:{ type:"textarea", label:"Rewritten sentence", placeholder:"Write the full sentence." },
+            inputSpec:{ type:"textarea", label:"Rewritten sentence", placeholder:"Write the full sentence (saved for adult review)." },
             solutionLines:[
               "Find the doer after ‘by’ in the passive sentence.",
               "Move that doer into the subject position and keep the tense steady.",
@@ -7368,14 +7392,18 @@ const TEMPLATES = [
     domain: "Punctuation for grammar",
     questionType: "rewrite",
     difficulty: 2,
-    satsFriendly: true,
+    // P19 Contract A fairness conversion: open rewrite prompt with a single
+    // accepted answer cannot be auto-marked fairly. Promoted to manualReviewOnly.
+    satsFriendly: false,
     isSelectedResponse: false,
     generative: true,
     punctStage: "produce",
     requiresAnswerSpec: true,
-    answerSpecKind: "normalisedText",
+    answerSpecKind: "manualReviewOnly",
     tags: [
-      "builder"
+      "builder",
+      "p19-manual-review-only",
+      "non-scored"
     ],
     skillIds: [
       "apostrophes_possession"
@@ -7401,17 +7429,19 @@ const TEMPLATES = [
               accepted = `the ${owner}'s ${item}`;
               why = "An irregular plural owner that does not end in s usually takes apostrophe + s.";
             }
-            const answerSpec = normalisedTextAnswerSpec([accepted], [prompt], {
-              maxScore:2,
-              misconception:"apostrophe_possession_confusion",
+            const answerSpec = manualReviewOnlyAnswerSpec({
               feedbackLong:`A correct answer is: ${accepted}`,
-              answerText:accepted
+              minimalHint:"Write the rewritten phrase; this item is reviewed by an adult, not auto-marked."
             });
+            answerSpec.expectedAnswerSummary = accepted;
+            answerSpec.conversionReason = "p19-open-response-fairness";
             return makeBaseQuestion(this, seed, {
-              marks:2,
+              marks:0,
               answerSpec,
+              nonScored:true,
+              manualReviewOnly:true,
               stemHtml:`<p>Rewrite this phrase using the correct <strong>possessive apostrophe</strong>.</p><p><strong>${escapeHtml(prompt)}</strong></p>`,
-              inputSpec:{ type:"text", label:"Rewritten phrase", placeholder:"Type the rewritten phrase." },
+              inputSpec:{ type:"textarea", label:"Rewritten phrase", placeholder:"Type the rewritten phrase (saved for adult review)." },
               solutionLines:[
                 "Work out who owns the noun.",
                 why,
@@ -11254,9 +11284,47 @@ function buildP14SelectedQuestion(template, seed, family) {
   });
 }
 
+// P19 Contract A — open-response marking fairness for P14 priority templates.
+// Mirror the manual-expansion generator's broadened predicate so the
+// constructed-rewrite P14 templates whose prompt is an open instruction
+// ("Add the missing comma…", "Write the corrected sentence…", etc.) are not
+// marked against a single accepted answer.
+const P14_OPEN_PROMPT_RE = /\b(explain|transfer|write\s+(?:the|an?|one|a\s+sentence)|rewrite|build|mixed\s+check|add\s+the|move\s+the|join\s+the|describe|complete\s+the\s+sentence|continue|extend)\b/i;
+
 function buildP14ConstructedQuestion(template, seed) {
   const item = p14ItemForConcept(template.skillIds[0], "rewrite", seed);
   const correct = cleanSpaces(item.correct);
+  const acceptedList = [correct].concat(Array.isArray(item.accepted) ? item.accepted.map(cleanSpaces) : []).filter(Boolean);
+  const promptText = String(item.prompt || '');
+  const triggersFairness = P14_OPEN_PROMPT_RE.test(promptText) && acceptedList.length < 3;
+  const conversionMode = P14_FAIRNESS_CONVERTED_TEMPLATE_IDS.get(template.id) || null;
+
+  if (triggersFairness && conversionMode === 'selectedResponse') {
+    return buildP14ConvertedSelectedQuestion(template, seed, item, correct);
+  }
+
+  if (triggersFairness) {
+    const answerSpec = manualReviewOnlyAnswerSpec({
+      feedbackLong: item.why || 'Your answer has been saved for adult review.',
+      minimalHint: 'Write a full answer; this item is reviewed by an adult, not auto-marked.'
+    });
+    answerSpec.expectedAnswerSummary = correct;
+    answerSpec.conversionReason = 'p19-open-response-fairness';
+    return makeBaseQuestion(template, seed, {
+      marks: 0,
+      answerSpec,
+      nonScored: true,
+      manualReviewOnly: true,
+      stemHtml: `<p>${escapeHtml(item.prompt)}</p>`,
+      inputSpec: { type: 'text', label: 'Answer', placeholder: 'Type your answer (saved for adult review)' },
+      solutionLines: [
+        item.why || 'This open-response item is saved for adult review.',
+        `Expected answer summary: ${correct}`
+      ],
+      evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+    });
+  }
+
   const answerSpec = normalisedTextAnswerSpec(correct, item.nearMisses || [], {
     misconception: item.misconception,
     feedbackLong: item.why,
@@ -11270,6 +11338,44 @@ function buildP14ConstructedQuestion(template, seed) {
     solutionLines: [
       item.why,
       `One correct answer is: ${correct}`
+    ],
+    evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+  });
+}
+
+// P19 Contract A target 1 — convert constructed_rewrite templates whose
+// rewrite-family prompt carries an open instruction into single_choice
+// selected-response. We pull the matching diagnostic-family item to source
+// strong distractors (each diagnostic default branch yields three plausible
+// permutations targeting the same rule), then merge with the rewrite's own
+// nearMisses so the option set still contains the surface variant a learner
+// would type ("missing comma" version, raw speech-mark drop, etc.).
+function buildP14ConvertedSelectedQuestion(template, seed, rewriteItem, correct) {
+  const rng = mulberry32(seed);
+  const diagnosticItem = p14ItemForConcept(template.skillIds[0], "diagnostic", seed);
+  const diagnosticDistractors = Array.isArray(diagnosticItem?.distractors) ? diagnosticItem.distractors : [];
+  const rewriteNearMisses = Array.isArray(rewriteItem?.nearMisses) ? rewriteItem.nearMisses : [];
+  const distractors = dedupePlain(rewriteNearMisses.concat(diagnosticDistractors).map(cleanSpaces))
+    .filter((option) => option && option !== correct)
+    .slice(0, 3);
+  const answerSpec = exactAnswerSpec(correct, distractors, {
+    misconception: rewriteItem.misconception || diagnosticItem?.misconception,
+    feedbackLong: rewriteItem.why || diagnosticItem?.why,
+    answerText: correct
+  });
+  const stemPrompt = String(rewriteItem.prompt || '')
+    .replace(/^Add\s+/i, 'Choose the version that adds ')
+    .replace(/^Rewrite\s+this\s+sentence\s+in\s+Standard\s+English:\s*/i, 'Which rewrite uses Standard English correctly? Source sentence: ')
+    .replace(/^Rewrite\s+/i, 'Choose the rewrite of ');
+  return makeBaseQuestion(template, seed, {
+    marks: 1,
+    answerSpec,
+    stemHtml: `<p>${escapeHtml(stemPrompt)}</p>`,
+    inputSpec: { type: "single_choice", label: "Choose one", options: buildChoiceOptions(rng, correct, distractors) },
+    solutionLines: [
+      "Pick the version that follows the punctuation rule named in the prompt, not the longest option.",
+      rewriteItem.why || diagnosticItem?.why || '',
+      `The correct option is: ${correct}`
     ],
     evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
   });
@@ -11321,26 +11427,59 @@ const P14_FAMILIES = Object.freeze([
   })
 ]);
 
+// P19 Contract A target 1: P14 priority constructed_rewrite templates whose
+// prompts always begin with an open instruction ("Add the missing X…") cannot
+// be scored fairly against a single accepted answer. We convert them to
+// single_choice selected-response (4 strong options sourced from rewrite
+// nearMisses + diagnostic distractors) so learners still get auto-marked
+// practice for the same rule, with no manual-review backlog. The runtime
+// buildP14ConstructedQuestion branches on this map so audits, metadata
+// consumers, and templateFitsMode all observe a consistent answerSpecKind.
+const P14_FAIRNESS_CONVERTED_TEMPLATE_IDS = new Map([
+  ['qg_p14_standard_english_constructed_rewrite', 'selectedResponse'],
+  ['qg_p14_fronted_adverbials_constructed_rewrite', 'selectedResponse'],
+  ['qg_p14_speech_punctuation_constructed_rewrite', 'selectedResponse'],
+  ['qg_p14_parenthesis_commas_constructed_rewrite', 'selectedResponse'],
+]);
+
 const P14_PRIORITY_TEMPLATES = P14_PRIORITY_CONCEPTS.flatMap((concept) => (
-  P14_FAMILIES.map((family) => Object.freeze({
-    id: `qg_p14_${concept.key}_${family.suffix}`,
-    label: `${concept.label} ${family.label}`,
-    domain: concept.domain,
-    questionType: family.questionType,
-    difficulty: family.family === "transfer" ? 3 : 2,
-    satsFriendly: true,
-    isSelectedResponse: family.isSelectedResponse,
-    generative: true,
-    generatorFamilyId: `qg_p14_${concept.key}_${family.suffix}`,
-    requiresAnswerSpec: true,
-    answerSpecKind: family.isSelectedResponse ? "exact" : "normalisedText",
-    tags: family.tags,
-    skillIds: [concept.id],
-    generator(seed) {
-      if (family.family === "rewrite") return buildP14ConstructedQuestion(this, seed);
-      return buildP14SelectedQuestion(this, seed, family.family);
-    }
-  }))
+  P14_FAMILIES.map((family) => {
+    const id = `qg_p14_${concept.key}_${family.suffix}`;
+    const fairnessMode = P14_FAIRNESS_CONVERTED_TEMPLATE_IDS.get(id) || null;
+    const fairnessConverted = fairnessMode !== null;
+    const isSelectedAfterConversion = fairnessMode === 'selectedResponse' ? true : family.isSelectedResponse;
+    const isManualReviewAfterConversion = fairnessMode === 'manualReviewOnly';
+    const inferredKind = isSelectedAfterConversion ? "exact" : "normalisedText";
+    const conversionTags = fairnessMode === 'selectedResponse'
+      ? family.tags.concat(['p19-selected-response-conversion'])
+      : (fairnessMode === 'manualReviewOnly'
+          ? family.tags.concat(['p19-manual-review-only', 'non-scored'])
+          : family.tags);
+    return Object.freeze({
+      id,
+      label: `${concept.label} ${family.label}`,
+      domain: concept.domain,
+      questionType: fairnessMode === 'selectedResponse' ? 'choose' : family.questionType,
+      difficulty: family.family === "transfer" ? 3 : 2,
+      // satsFriendly stays true for legacy parity. Only manualReviewOnly
+      // conversions drop it — those items are nonScored and excluded from
+      // the satsset pool by templateFitsMode in selection.js. Selected-response
+      // conversions remain SATs-style (single_choice with strong distractors).
+      satsFriendly: !isManualReviewAfterConversion,
+      isSelectedResponse: isSelectedAfterConversion,
+      generative: true,
+      generatorFamilyId: id,
+      requiresAnswerSpec: true,
+      answerSpecKind: fairnessMode === 'manualReviewOnly' ? "manualReviewOnly" : inferredKind,
+      tags: conversionTags,
+      skillIds: [concept.id],
+      fairnessConversion: fairnessMode,
+      generator(seed) {
+        if (family.family === "rewrite") return buildP14ConstructedQuestion(this, seed);
+        return buildP14SelectedQuestion(this, seed, family.family);
+      }
+    });
+  })
 ));
 
 const MANUAL_EXPANSION_CONCEPT_MISCONCEPTIONS = Object.freeze({
@@ -11556,6 +11695,48 @@ function buildManualExpansionSelectedQuestion(template, seed, caseItem, family) 
 }
 
 function buildManualExpansionConstructedQuestion(template, seed, caseItem, family) {
+  // P19 Contract A — open-response marking fairness.
+  // Families flagged by the generator as fairnessConversion='manualReviewOnly'
+  // are emitted with a manualReviewOnly answerSpec so the deterministic engine
+  // does not score them against an undersized accepted set.
+  if (family && family.fairnessConversion === 'manualReviewOnly') {
+    const expectedSummary = manualExpansionSafeText(caseItem.expectedAnswerSummary)
+      || manualExpansionCorrectText(caseItem)
+      || '';
+    const answerSpec = manualReviewOnlyAnswerSpec({
+      feedbackLong: manualExpansionSafeText(caseItem.feedbackLong)
+        || 'Your answer has been saved for adult review.',
+      minimalHint: 'Write a full answer; this item is reviewed by an adult, not auto-marked.'
+    });
+    answerSpec.expectedAnswerSummary = expectedSummary;
+    answerSpec.conversionReason = 'p19-open-response-fairness';
+
+    return makeBaseQuestion(template, seed, {
+      marks: 0,
+      sourceCaseId: caseItem.id,
+      sourcePack: caseItem.sourcePack,
+      depthTier: caseItem.depthTier,
+      answerSpec,
+      nonScored: true,
+      manualReviewOnly: true,
+      stemHtml: `<p>${escapeHtml(caseItem.promptText)}</p>`,
+      inputSpec: {
+        type: caseItem.inputType === "textarea" ? "textarea" : "text",
+        label: "Your answer",
+        placeholder: caseItem.inputType === "textarea"
+          ? "Write your full answer (saved for adult review)"
+          : "Type your answer (saved for adult review)"
+      },
+      solutionLines: [
+        manualExpansionSafeText(caseItem.feedbackLong)
+          || "This open-response item is saved for adult review.",
+        expectedSummary ? `Expected answer summary: ${expectedSummary}` : "",
+        `Source case: ${caseItem.id}`
+      ].filter(Boolean),
+      evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+    });
+  }
+
   const accepted = (Array.isArray(caseItem.acceptedAnswers) && caseItem.acceptedAnswers.length > 0)
     ? caseItem.acceptedAnswers.map(manualExpansionSafeText).filter(Boolean)
     : [manualExpansionCorrectText(caseItem)].filter(Boolean);
@@ -11656,27 +11837,37 @@ function buildManualExpansionQuestion(template, seed, family) {
   return buildManualExpansionSelectedQuestion(template, seed, caseItem, family);
 }
 
-const MANUAL_EXPANSION_TEMPLATES = GRAMMAR_MANUAL_EXPANSION_FAMILIES.map((family) => Object.freeze({
-  id: manualExpansionTemplateId(family.id),
-  label: `P18 manual expansion: ${manualExpansionTitleFromId(family.id)}`,
-  domain: manualExpansionDomain(family),
-  questionType: family.questionType || "choose",
-  difficulty: (family.depthTiers || []).some((tier) => ["deep", "mixed-transfer", "sat-style", "transfer"].includes(tier)) ? 3 : 2,
-  satsFriendly: true,
-  isSelectedResponse: family.inputType === "single_choice" || family.inputType === "table_choice",
-  generative: true,
-  generatorFamilyId: manualExpansionTemplateId(family.id),
-  requiresAnswerSpec: true,
-  answerSpecKind: family.inputType === "table_choice"
+const MANUAL_EXPANSION_TEMPLATES = GRAMMAR_MANUAL_EXPANSION_FAMILIES.map((family) => {
+  const isManualReviewFamily = family.fairnessConversion === 'manualReviewOnly';
+  const inferredKind = family.inputType === "table_choice"
     ? "multiField"
-    : ((family.inputType === "text" || family.inputType === "textarea") ? "normalisedText" : "exact"),
-  tags: ["qg-p18", "manual-expansion"].concat(family.sourcePacks || [], family.depthTiers || []),
-  skillIds: (family.conceptIds || []).slice(),
-  manualExpansionCaseCount: (family.cases || []).length,
-  generator(seed) {
-    return buildManualExpansionQuestion(this, seed, family);
-  }
-}));
+    : ((family.inputType === "text" || family.inputType === "textarea") ? "normalisedText" : "exact");
+  return Object.freeze({
+    id: manualExpansionTemplateId(family.id),
+    label: `P18 manual expansion: ${manualExpansionTitleFromId(family.id)}`,
+    domain: manualExpansionDomain(family),
+    questionType: family.questionType || "choose",
+    difficulty: (family.depthTiers || []).some((tier) => ["deep", "mixed-transfer", "sat-style", "transfer"].includes(tier)) ? 3 : 2,
+    // P19 Contract A: manualReviewOnly families are not SATs-friendly; the
+    // mini-test pool already filters them via templateFitsMode (selection.js),
+    // and explicit satsFriendly=false keeps reporting consistent.
+    satsFriendly: !isManualReviewFamily,
+    isSelectedResponse: family.inputType === "single_choice" || family.inputType === "table_choice",
+    generative: true,
+    generatorFamilyId: manualExpansionTemplateId(family.id),
+    requiresAnswerSpec: true,
+    answerSpecKind: isManualReviewFamily ? "manualReviewOnly" : inferredKind,
+    tags: ["qg-p18", "manual-expansion"]
+      .concat(family.sourcePacks || [], family.depthTiers || [])
+      .concat(isManualReviewFamily ? ["p19-manual-review-only", "non-scored"] : []),
+    skillIds: (family.conceptIds || []).slice(),
+    manualExpansionCaseCount: (family.cases || []).length,
+    fairnessConversion: family.fairnessConversion || null,
+    generator(seed) {
+      return buildManualExpansionQuestion(this, seed, family);
+    }
+  });
+});
 
 TEMPLATES.push(...P14_PRIORITY_TEMPLATES);
 TEMPLATES.push(...MANUAL_EXPANSION_TEMPLATES);
@@ -11798,6 +11989,7 @@ export function grammarTemplateMetadata(template = {}) {
     generatorFamilyId: grammarTemplateGeneratorFamilyId(template),
     answerSpecKind: template.answerSpecKind || null,
     requiresAnswerSpec: Boolean(template.requiresAnswerSpec || template.answerSpecKind),
+    fairnessConversion: template.fairnessConversion || null,
     tags: Object.freeze((template.tags || []).slice()),
     skillIds: Object.freeze((template.skillIds || []).slice()),
   };

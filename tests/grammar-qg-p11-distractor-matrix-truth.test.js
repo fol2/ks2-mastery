@@ -39,20 +39,26 @@ function createTempRoot() {
 // U7: Marking matrix count truth
 // ---------------------------------------------------------------------------
 
-describe('P11 U7: marking matrix totalEntries is exactly 80', () => {
-  it('real marking matrix reports 80 entries', () => {
-    const result = validateMarkingMatrixCounts({}, ROOT_DIR);
+describe('P11 U7: marking matrix totalEntries matches manifest expectation', () => {
+  it('real marking matrix matches expected entries when manifest is supplied', () => {
+    // P19 supersedes the historical P10 80-entry pin. The validator now reads
+    // expected entries from manifest.expectedMarkingMatrixEntryCount; when
+    // called with no manifest the legacy 80 fallback applies. Test the
+    // manifest-driven path against the live P19 manifest.
+    const manifestPath = path.join(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p19-certification-manifest.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    const result = validateMarkingMatrixCounts(manifest, ROOT_DIR);
     assert.equal(result.pass, true, `Expected pass but got: expected=${result.expected}, actual=${result.actual}`);
-    assert.equal(result.actual, 80);
-    assert.equal(result.expected, 80);
+    assert.equal(result.actual, manifest.expectedMarkingMatrixEntryCount);
+    assert.equal(result.expected, manifest.expectedMarkingMatrixEntryCount);
   });
 
-  it('validator fails when metadata.totalEntries is not 80', () => {
+  it('validator fails when metadata.totalEntries does not match manifest expectation', () => {
     const tempRoot = createTempRoot();
     try {
       const fakeMatrix = {
-        metadata: { totalEntries: 190 },
-        entries: Array.from({ length: 190 }, (_, index) => ({ id: `fake-${index}` })),
+        metadata: { totalEntries: 999 },
+        entries: Array.from({ length: 999 }, (_, index) => ({ id: `fake-${index}` })),
       };
       fs.writeFileSync(
         path.join(tempRoot, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json'),
@@ -60,7 +66,7 @@ describe('P11 U7: marking matrix totalEntries is exactly 80', () => {
       );
       const result = validateMarkingMatrixCounts({}, tempRoot);
       assert.equal(result.pass, false);
-      assert.equal(result.actual, 190);
+      assert.equal(result.actual, 999);
       assert.equal(result.expected, 80);
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });

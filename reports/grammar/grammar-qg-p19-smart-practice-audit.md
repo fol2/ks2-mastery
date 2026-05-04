@@ -1,0 +1,45 @@
+# Grammar QG P19 — smart-practice surface audit
+
+Content release: `grammar-qg-p19-2026-05-04`
+Generated: `2026-05-04T07:18:47.790Z`
+Sessions: 330 (11 profiles × 30 seeds, size=5)
+Status: **PASS** — 0 failures, 0 advisories.
+
+## Per-profile spread
+
+| Profile | Sessions | Eligible pool | Concept-distinct mean | Q-type-distinct mean | Constructed share | ManualReview share | Repeated surfaces |
+|---|---|---|---|---|---|---|---|
+| firstTime | 30 | 510 | 4.73 | 3.23 | 42.7% | 27.3% | 3 / 147 |
+| returning | 30 | 93 | 3.60 | 3.60 | 46.0% | 30.0% | 12 / 128 |
+| weak | 30 | 243 | 4.87 | 3.37 | 39.3% | 24.7% | 3 / 147 |
+| dueHeavy | 30 | 358 | 4.80 | 3.40 | 44.7% | 26.7% | 1 / 149 |
+| postMega | 30 | 300 | 4.73 | 3.53 | 46.7% | 26.0% | 3 / 147 |
+| focusConcept | 30 | 27 | 1.40 | 3.50 | 39.3% | 29.3% | 21 / 127 |
+| recentMisses | 30 | 95 | 4.30 | 3.63 | 48.7% | 27.3% | 3 / 147 |
+| retryActive | 30 | 63 | 3.13 | 3.47 | 40.7% | 24.7% | 16 / 124 |
+| similarProblemEligible | 30 | 64 | 3.17 | 3.20 | 36.7% | 24.0% | 15 / 125 |
+| spacedRetrievalDue | 30 | 125 | 4.73 | 3.73 | 48.7% | 26.7% | 2 / 148 |
+| troubleMode | 30 | 62 | 2.97 | 3.70 | 35.3% | 23.3% | 15 / 127 |
+
+## Selection lane reasons exercised
+
+Contract D.4 — every queue entry carries an explicit lane reason. The table below shows how many entries each profile pulled from each lane across 30 seeds.
+
+| Profile | fallback | priority-urgent | retry | similar-problem | spaced-retrieval | trouble-cluster |
+|---|---|---|---|---|---|---|
+| firstTime | 150 | 0 | 0 | 0 | 0 | 0 |
+| returning | 60 | 30 | 30 | 30 | 0 | 0 |
+| weak | 120 | 30 | 0 | 0 | 0 | 0 |
+| dueHeavy | 120 | 30 | 0 | 0 | 0 | 0 |
+| postMega | 150 | 0 | 0 | 0 | 0 | 0 |
+| focusConcept | 150 | 0 | 0 | 0 | 0 | 0 |
+| recentMisses | 90 | 30 | 0 | 30 | 0 | 0 |
+| retryActive | 60 | 30 | 30 | 30 | 0 | 0 |
+| similarProblemEligible | 60 | 30 | 30 | 30 | 0 | 0 |
+| spacedRetrievalDue | 90 | 30 | 0 | 0 | 30 | 0 |
+| troubleMode | 60 | 0 | 30 | 30 | 0 | 30 |
+
+## Notes
+
+- Every queue entry carries an explicit reason emitted by `queueEntry()` in `worker/src/subjects/grammar/selection.js` (fallback, priority-urgent, focus-saturation, trouble-cluster, spaced-retrieval, retry, similar-problem). Duplicate templates within a 5-question round are only permitted when the reason is on the `ALLOWED_DUPLICATE_REASONS` allow-list — missing or unknown reasons hard-fail the audit (Contract D criterion 4).
+- "Eligible pool" is computed from `GRAMMAR_TEMPLATE_METADATA` filtered by the profile's mastered concepts and (when set) focus concept. Sessions with eligible pool < 5 record a `pool-too-small` advisory rather than a hard failure.

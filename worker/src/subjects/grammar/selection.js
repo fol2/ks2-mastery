@@ -155,6 +155,54 @@ function candidateVariantMetadata(template, seed) {
   };
 }
 
+// P19 Contract D.4 — return the most recent scored miss within the supplied
+// freshness window (milliseconds) so the retry lane can re-surface it once.
+function recentLastScoredMiss(recentAttempts, nowTs, windowMs) {
+  const attempts = normaliseRecentAttempts(recentAttempts);
+  for (let index = attempts.length - 1; index >= 0; index -= 1) {
+    const attempt = attempts[index];
+    const result = isPlainObject(attempt.result) ? attempt.result : {};
+    if (!isScoredAttempt(attempt) || result.correct !== false) continue;
+    const attemptedAt = Number(attempt.attemptedAt) || Number(attempt.timestamp) || 0;
+    if (attemptedAt > 0 && attemptedAt + windowMs < nowTs) return null; // stale → no retry
+    return attempt;
+  }
+  return null;
+}
+
+// P19 Contract D.4 — collect concepts touched by recent scored misses so the
+// similar-problem lane can route to a fresh template covering the same skill.
+function recentMissedConceptSet(recentAttempts) {
+  const set = new Set();
+  for (const attempt of normaliseRecentAttempts(recentAttempts)) {
+    const result = isPlainObject(attempt.result) ? attempt.result : {};
+    if (!isScoredAttempt(attempt) || result.correct !== false) continue;
+    const conceptIds = Array.isArray(attempt.conceptIds) ? attempt.conceptIds : [];
+    for (const conceptId of conceptIds) if (typeof conceptId === 'string' && conceptId) set.add(conceptId);
+  }
+  return set;
+}
+
+// P19 Contract D.4 — concepts whose retention window has lapsed (overdue by
+// at least 24h with a strong correct streak) become eligible for the
+// spaced-retrieval lane so secured skills do not silently decay.
+function securedOverdueConceptIds(mastery, nowTs) {
+  const set = new Set();
+  if (!isPlainObject(mastery)) return set;
+  const conceptBag = isPlainObject(mastery.concepts) ? mastery.concepts : null;
+  if (!conceptBag) return set;
+  const overdueThresholdMs = 24 * 60 * 60 * 1000;
+  for (const [conceptId, raw] of Object.entries(conceptBag)) {
+    if (typeof conceptId !== 'string' || !conceptId) continue;
+    if (!isPlainObject(raw)) continue;
+    const correctStreak = Number(raw.correctStreak) || 0;
+    const dueAt = Number(raw.dueAt) || 0;
+    if (correctStreak < 3) continue;
+    if (dueAt > 0 && dueAt + overdueThresholdMs <= nowTs) set.add(conceptId);
+  }
+  return set;
+}
+
 function recentVariantIndex(recentAttempts) {
   const index = new Map();
   const attempts = normaliseRecentAttempts(recentAttempts);
@@ -380,13 +428,22 @@ function recentAttemptForQueueTemplate(template, seed) {
   };
 }
 
-function queueEntry(template) {
+// P19 Contract D.4 — every queue entry carries a `reason` describing which
+// selection lane chose it. The grammar smart-practice audit
+// (scripts/audit-grammar-qg-p19-smart-practice.mjs) treats any duplicate
+// templateId / surfaceKey within a single 5-item round as a failure unless
+// every duplicating entry carries an allow-listed reason
+// ({retry, spaced-retrieval, trouble-cluster, similar-problem, focus-saturation,
+//  priority-urgent}). Keeping the lane label explicit makes the exception
+// path explainable rather than declarative-only.
+function queueEntry(template, reason = 'fallback') {
   return {
     templateId: template.id,
     skillIds: (template.skillIds || []).slice(),
     questionType: template.questionType,
     generative: Boolean(template.generative),
     satsFriendly: Boolean(template.satsFriendly),
+    reason,
   };
 }
 
@@ -449,8 +506,8 @@ export function buildGrammarPracticeQueue({
     return broadFresh.length > 0 ? broadFresh : templateFresh;
   }
 
-  function pushQueueEntry(template, candidateSeed) {
-    queue.push(queueEntry(template));
+  function pushQueueEntry(template, candidateSeed, reason) {
+    queue.push(queueEntry(template, reason));
     plannedTemplateIds.add(template.id);
     workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
     addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
@@ -466,7 +523,92 @@ export function buildGrammarPracticeQueue({
         const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
         const recentVariants = workingRecentVariants;
         if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
-        pushQueueEntry(template, candidateSeed);
+        pushQueueEntry(template, candidateSeed, 'focus-saturation');
+      }
+    }
+  }
+
+  // P19 Contract D.4 — retry lane. When the most recent attempt was a miss
+  // within the last 5 minutes and the same template is still eligible, surface
+  // it once as 'retry'. Audit-allow-listed for duplicate templates.
+  if (queue.length < safeSize) {
+    const lastAttempt = recentLastScoredMiss(recentAttempts, nowTs, 5 * 60 * 1000);
+    if (lastAttempt) {
+      const retryTemplate = pool.find((template) => template.id === lastAttempt.templateId);
+      if (retryTemplate && !plannedTemplateIds.has(retryTemplate.id)) {
+        const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
+        if (!hasRecentGeneratedVariant(retryTemplate, workingRecentVariants, candidateSeed)) {
+          pushQueueEntry(retryTemplate, candidateSeed, 'retry');
+        }
+      }
+    }
+  }
+
+  // P19 Contract D.4 — similar-problem lane. After any recent miss, surface a
+  // *different* template that shares a missed concept so the learner gets a
+  // fresh practice attempt at the same skill rather than the exact failing
+  // item again. Allow-listed for duplicate concepts (not duplicate templates).
+  if (queue.length < safeSize) {
+    const missedConcepts = recentMissedConceptSet(recentAttempts);
+    if (missedConcepts.size > 0) {
+      const recentMissTemplateIds = new Set(
+        normaliseRecentAttempts(recentAttempts)
+          .filter((attempt) => isScoredAttempt(attempt) && isPlainObject(attempt.result) && attempt.result.correct === false)
+          .map((attempt) => attempt.templateId),
+      );
+      const similarPool = pool.filter((template) => {
+        if (plannedTemplateIds.has(template.id)) return false;
+        if (recentMissTemplateIds.has(template.id)) return false;
+        const skills = template.skillIds || [];
+        return skills.some((skill) => missedConcepts.has(skill));
+      });
+      if (similarPool.length > 0) {
+        const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
+        const recentTemplates = recentTemplateIndex(workingRecent);
+        const recentConcepts = recentConceptIndex(workingRecent);
+        const template = pickTemplate({
+          pool: variantFreshPoolWithBroadFallback(similarPool, candidateSeed),
+          rng,
+          mastery,
+          focusConceptId: normalisedFocus,
+          recentTemplates,
+          recentConcepts,
+          recentVariants: workingRecentVariants,
+          candidateSeed,
+          nowTs,
+        });
+        if (template) pushQueueEntry(template, candidateSeed, 'similar-problem');
+      }
+    }
+  }
+
+  // P19 Contract D.4 — spaced-retrieval lane. When mastery shows secured
+  // concepts whose retention window has lapsed (overdue by >= 24h with a
+  // strong correct streak), revisit them once per round to defend retention.
+  if (queue.length < safeSize && mastery) {
+    const overdueConceptIds = securedOverdueConceptIds(mastery, nowTs);
+    if (overdueConceptIds.size > 0) {
+      const spacedPool = pool.filter((template) => {
+        if (plannedTemplateIds.has(template.id)) return false;
+        const skills = template.skillIds || [];
+        return skills.some((skill) => overdueConceptIds.has(skill));
+      });
+      if (spacedPool.length > 0) {
+        const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
+        const recentTemplates = recentTemplateIndex(workingRecent);
+        const recentConcepts = recentConceptIndex(workingRecent);
+        const template = pickTemplate({
+          pool: variantFreshPoolWithBroadFallback(spacedPool, candidateSeed),
+          rng,
+          mastery,
+          focusConceptId: normalisedFocus,
+          recentTemplates,
+          recentConcepts,
+          recentVariants: workingRecentVariants,
+          candidateSeed,
+          nowTs,
+        });
+        if (template) pushQueueEntry(template, candidateSeed, 'spaced-retrieval');
       }
     }
   }
@@ -492,7 +634,12 @@ export function buildGrammarPracticeQueue({
         candidateSeed,
         nowTs,
       });
-      pushQueueEntry(template, candidateSeed);
+      // P19 Contract D.4 — when the trouble mode is selected the urgent lane
+      // is acting as the trouble-cluster cluster. For other modes it is the
+      // priority lane (due/weak/recent-miss). Both labels are explicit and
+      // explainable.
+      const reason = mode === 'trouble' ? 'trouble-cluster' : 'priority-urgent';
+      pushQueueEntry(template, candidateSeed, reason);
     }
   }
 
@@ -512,7 +659,7 @@ export function buildGrammarPracticeQueue({
       candidateSeed,
       nowTs,
     });
-    pushQueueEntry(template, candidateSeed);
+    pushQueueEntry(template, candidateSeed, 'fallback');
   }
   return queue;
 }
@@ -555,7 +702,7 @@ export function buildGrammarMiniPack({
         const candidateSeed = seeds[pack.length] || Number(seed) || 1;
         const recentVariants = workingRecentVariants;
         if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
-        pack.push(queueEntry(template));
+        pack.push(queueEntry(template, 'focus-saturation'));
         usedTemplateIds.add(template.id);
         usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
         workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
@@ -596,7 +743,11 @@ export function buildGrammarMiniPack({
       nowTs,
     });
 
-    pack.push(queueEntry(template));
+    // Mini-packs reset their distinct-template set when the pool is exhausted
+    // (the only way duplicates land in a satsset round). Tag those repeats as
+    // spaced-retrieval so the P19 simulator's allow-list can recognise them.
+    const reason = usedTemplateIds.has(template.id) ? 'spaced-retrieval' : 'fallback';
+    pack.push(queueEntry(template, reason));
     usedTemplateIds.add(template.id);
     usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
     workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));

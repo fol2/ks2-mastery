@@ -86,9 +86,12 @@ async function main() {
     strict: false,
   });
 
+  // P19: default to the comprehensive p10 register (510 entries, P14 + P18
+  // priority + manual-expansion). The legacy p11 register only covers 78
+  // templates and was the cause of the pre-P19 fail-closed regressions.
   const registerPath = values['quality-register']
     ? path.resolve(values['quality-register'])
-    : path.join(REPORTS_DIR, 'grammar-qg-p11-quality-register.json');
+    : path.join(REPORTS_DIR, 'grammar-qg-p10-quality-register.json');
 
   const outputPath = values.out
     ? path.resolve(values.out)

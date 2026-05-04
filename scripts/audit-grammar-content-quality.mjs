@@ -65,6 +65,11 @@ function stripHtml(html) {
  *  3. Multiple correct answers in selected-response templates
  *  4. Correct answer missing from options in selected-response templates
  *  5. Fix-task templates where raw prompt equals accepted answer
+ *  6. Near-miss marks correct
+ *  7. Near-miss equals golden (constructed-response only)
+ *  8. Raw prompt passes marking
+ *  9. Child-visible article agreement (a adverb/adjective/exclamation) — P19 Contract B
+ * 10. Pronoun-cohesion contradiction in feedback — P19 Contract C
  *
  * Advisory conditions (recorded but do not fail):
  *  6. Reversed curly quotes at start of quoted words
@@ -221,10 +226,43 @@ export function buildGrammarContentQualityAudit(seeds = DEFAULT_SEEDS) {
         }
       }
 
+      // --- HARD FAIL 9: Child-visible article agreement ---
+      const articleAgreementText = `${question.stemHtml || ''} ${(question.solutionLines || []).join(' ')} ${JSON.stringify(question.inputSpec || {})} ${JSON.stringify(question.answerSpec || {})}`;
+      const badArticleMatch = articleAgreementText.match(/\ba\s+(adverb|adjective|exclamation)\b/i);
+      if (badArticleMatch) {
+        hardFailures.push({
+          rule: 'article-agreement',
+          templateId: template.id,
+          seed,
+          detail: `Use "an ${badArticleMatch[1].toLowerCase()}" rather than "a ${badArticleMatch[1].toLowerCase()}"`,
+        });
+      }
+
+      // --- HARD FAIL 10: Pronoun-cohesion contradiction (P19 Contract C) ---
+      // When the prompt asks about unclear/ambiguous reference, feedback must
+      // not assert the pronouns "clearly refer" without an accompanying contrast
+      // marker that explains the unclarity. Catches the pre-P19 pattern where
+      // generated feedback contradicted the question.
+      const promptPlain10 = stripHtml(question.stemHtml || '').toLowerCase();
+      const feedbackPlain10 = String(question.answerSpec?.feedbackLong || '').toLowerCase();
+      const contradictionTrigger = /\b(unclear|wrong|confusing|ambiguous)\b/.test(promptPlain10);
+      const contradictionAssertion = /clearly refer/.test(feedbackPlain10);
+      const contradictionContrast = /\b(but|however|whereas|not\s+clear|because)\b/.test(feedbackPlain10);
+      if (contradictionTrigger && contradictionAssertion && !contradictionContrast) {
+        hardFailures.push({
+          rule: 'pronoun-cohesion-contradiction',
+          templateId: template.id,
+          seed,
+          detail: 'Prompt says the reference is unclear/ambiguous but feedback states the pronouns "clearly refer" without explaining the contrast.',
+        });
+      }
+
       // --- ADVISORY 6: Reversed curly quotes ---
       const allText = `${question.stemHtml || ''} ${(question.solutionLines || []).join(' ')}`;
-      if (/’\w/.test(allText) && !/‘/.test(allText)) {
-        // Closing single quote used at word start without any opening quote present
+      // Only flag a closing curly quote (’) used at the START of a word after
+      // whitespace/opening punctuation. The previous /’\w/ regex flagged
+      // possessives like dog’s and girls’.
+      if (/(^|[\s([{"“])’[A-Za-z]/.test(allText) && !/‘/.test(allText)) {
         advisories.push({
           rule: 'reversed-curly-quote',
           templateId: template.id,
