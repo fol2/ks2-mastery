@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  classify:
+    name: Classify changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Classify docs-only changes
+        id: classify
+        uses: ./.github/actions/classify-docs-only
+        with:
+          base-sha: ${{ github.event.pull_request.base.sha || github.event.before }}
+          head-sha: ${{ github.sha }}
+
+  ci-gate:
+    name: "Node Tests (gate)"
+    needs: classify
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.classify.outputs.docs_only != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build bundles
+        run: npm run build
+      - name: Run tests
+        run: npm test
+      - name: Client-bundle audit
+        run: npm run audit:client
+      - name: Punctuation content audit
+        run: npm run audit:punctuation-content -- --strict --generated-per-family 4 --min-validator-coverage-by-skill sentence_endings=1,list_commas=12,apostrophe_contractions=6,apostrophe_possession=10,speech=18,fronted_adverbial=16,parenthesis=17,comma_clarity=5,colon_list=16,semicolon=15,dash_clause=10,semicolon_list=5,bullet_points=12,hyphen=6 --min-fixed-items-by-skill sentence_endings=12,apostrophe_contractions=12,comma_clarity=12,semicolon_list=12,hyphen=12,dash_clause=12
+      - name: Wrangler deploy dry-run (schema canary)
+        continue-on-error: true
+        run: npm run check

@@ -423,6 +423,7 @@ test('button labels: every statically extractable label is classified', () => {
     // header affordance and intentionally short.
     'Open bank →',
     'Open codex →',
+    'Open map →',
     'Drill all',
     'Load more',
     '← Back to setup',
