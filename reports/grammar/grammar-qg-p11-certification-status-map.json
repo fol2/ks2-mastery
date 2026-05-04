@@ -1,7 +1,7 @@
 {
   "metadata": {
     "contentReleaseId": "grammar-qg-p19-2026-05-04",
-    "generatedAt": "2026-05-04T02:26:08.635Z",
+    "generatedAt": "2026-05-04T08:40:21.368Z",
     "templateCount": 510
   },
   "entries": [
@@ -115,7 +115,7 @@
     },
     {
       "templateId": "combine_clauses_rewrite",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -571,7 +571,7 @@
     },
     {
       "templateId": "proc3_clause_join_rewrite",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1051,7 +1051,7 @@
     },
     {
       "templateId": "qg_p14_subject_object_constructed_rewrite",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1099,7 +1099,7 @@
     },
     {
       "templateId": "qg_p14_subordinate_clauses_constructed_rewrite",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1147,7 +1147,7 @@
     },
     {
       "templateId": "qg_p14_tense_aspect_constructed_rewrite",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1243,7 +1243,7 @@
     },
     {
       "templateId": "qg_p14_expanded_noun_phrases_constructed_rewrite",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1507,7 +1507,7 @@
     },
     {
       "templateId": "qg_p18_p15_boundary_punctuation_boundary_fix",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1579,7 +1579,7 @@
     },
     {
       "templateId": "qg_p18_p15_clauses_combine_clause",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1711,7 +1711,7 @@
     },
     {
       "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1891,7 +1891,7 @@
     },
     {
       "templateId": "qg_p18_p15_parenthesis_commas_parenthesis_fix",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2023,7 +2023,7 @@
     },
     {
       "templateId": "qg_p18_p15_relative_clauses_punctuate_relative_clause",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2131,7 +2131,7 @@
     },
     {
       "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2215,7 +2215,7 @@
     },
     {
       "templateId": "qg_p18_p15_standard_english_standard_transfer",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2311,7 +2311,7 @@
     },
     {
       "templateId": "qg_p18_p15_tense_aspect_tense_editing",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2443,7 +2443,7 @@
     },
     {
       "templateId": "qg_p18_p16_active_passive_tense_preserving_voice",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2659,7 +2659,7 @@
     },
     {
       "templateId": "qg_p18_p16_boundary_punctuation_insert_boundary_mark",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2731,7 +2731,7 @@
     },
     {
       "templateId": "qg_p18_p16_clauses_join_with_given_conjunction",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2755,7 +2755,7 @@
     },
     {
       "templateId": "qg_p18_p16_clauses_punctuate_subordinate_first",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2875,7 +2875,7 @@
     },
     {
       "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -3007,7 +3007,7 @@
     },
     {
       "templateId": "qg_p18_p16_noun_phrases_expand_plain_noun",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -3067,7 +3067,7 @@
     },
     {
       "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -3163,7 +3163,7 @@
     },
     {
       "templateId": "qg_p18_p16_pronouns_cohesion_fix_pronoun_reference",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -3211,7 +3211,7 @@
     },
     {
       "templateId": "qg_p18_p16_relative_clauses_add_commas_non_defining",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -3343,7 +3343,7 @@
     },
     {
       "templateId": "qg_p18_p16_sentence_functions_repair_wrong_function_punctuation",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -3367,7 +3367,7 @@
     },
     {
       "templateId": "qg_p18_p16_speech_punctuation_fix_punctuation_outside_marks",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -3391,7 +3391,7 @@
     },
     {
       "templateId": "qg_p18_p16_speech_punctuation_punctuate_direct_speech",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -3463,7 +3463,7 @@
     },
     {
       "templateId": "qg_p18_p16_standard_english_fix_nonstandard",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5563,7 +5563,7 @@
     },
     {
       "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5839,7 +5839,7 @@
     },
     {
       "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
-      "decision": "approved",
+      "decision": "approved_with_limitation",
       "severity": "none",
       "evidence": [
         "oracle",

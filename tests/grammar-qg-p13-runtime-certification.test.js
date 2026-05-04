@@ -63,19 +63,19 @@ describe('P13 runtime certification source', () => {
   });
 
   it('preserves approved_with_limitation diagnostics instead of flattening them', () => {
-    // P19 fairness conversion promoted 142 manual-expansion families + 5 P0/P2/P3
-    // open-rewrite templates + 4 P14 priority rewrites. The status map records
-    // the manualReviewOnly-converted families as approved_with_limitation.
+    // P19a fairness predicate broadening promoted further manual-expansion
+    // families + 2 inline templates. The status map records all manualReview-
+    // Only-converted families as approved_with_limitation.
     assert.deepEqual(GRAMMAR_RUNTIME_CERTIFICATION_STATUS_COUNTS, {
-      approved: 359,
-      approved_with_limitation: 151,
+      approved: 330,
+      approved_with_limitation: 180,
     });
 
     const limitedIds = Object.entries(CERTIFICATION_STATUS_MAP)
       .filter(([, entry]) => entry.status === 'approved_with_limitation')
       .map(([templateId]) => templateId)
       .sort();
-    assert.equal(limitedIds.length, 151);
+    assert.equal(limitedIds.length, 180);
     for (const templateId of limitedIds) {
       assert.equal(getTemplateCertificationStatus(templateId).status, 'approved_with_limitation');
       assert.equal(isTemplateBlocked(templateId), false);
@@ -155,7 +155,7 @@ describe('P13 runtime certification generator', () => {
 });
 
 describe('P13 validator runtime authority gate', () => {
-  it('passes against the committed P18 manifest and runtime source', () => {
+  it('passes against the committed P19 manifest and runtime source', () => {
     const result = validateRuntimeCertificationAuthority(manifest, { rootDir: ROOT_DIR });
     assert.equal(result.pass, true, JSON.stringify(result.mismatches, null, 2));
   });

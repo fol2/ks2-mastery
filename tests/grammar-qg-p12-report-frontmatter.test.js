@@ -13,7 +13,10 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const REPORTS_DIR = join(__dirname, '..', 'docs', 'plans', 'james', 'grammar', 'questions-generator');
+// P19 follow-up: P11/P12 final reports are archived under archive/ and stay
+// frozen as historical evidence. The frontmatter tests still gate against
+// placeholder values so the historical artefacts cannot rot in place.
+const REPORTS_DIR = join(__dirname, '..', 'docs', 'plans', 'james', 'grammar', 'questions-generator', 'archive');
 
 const P12_REPORT = join(REPORTS_DIR, 'grammar-qg-p12-final-production-certification-report-2026-04-30.md');
 const P11_REPORT = join(REPORTS_DIR, 'grammar-qg-p11-final-completion-report-2026-04-30.md');

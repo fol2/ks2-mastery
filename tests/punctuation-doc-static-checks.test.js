@@ -14,6 +14,8 @@ import { resolve } from 'node:path';
 // ---------------------------------------------------------------------------
 
 const DOC_PATH = resolve(import.meta.dirname, '..', 'docs', 'punctuation-production.md');
+// Punctuation P1 plan was archived during P14 cleanup; static checks still
+// gate against stale references in the historical plan body.
 const PLAN_DOC_PATH = resolve(
   import.meta.dirname,
   '..',
@@ -22,6 +24,7 @@ const PLAN_DOC_PATH = resolve(
   'james',
   'punctuation',
   'questions-generator',
+  'archive',
   'punctuation-qg-p1.md',
 );
 const docContent = readFileSync(DOC_PATH, 'utf8');

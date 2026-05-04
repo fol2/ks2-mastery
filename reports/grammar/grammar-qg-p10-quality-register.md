@@ -1,9 +1,9 @@
 # Grammar QG P10 — Quality Register
 
 **Content Release:** grammar-qg-p19-2026-05-04
-**Generated:** 2026-05-04T02:26:07.856Z
+**Generated:** 2026-05-04T08:40:20.628Z
 **Templates:** 510
-**Approved:** 359 | **Blocked:** 0
+**Approved:** 330 | **Blocked:** 0
 **High-risk (1..15 seeds):** 199
 **Adult review decisions:** 103
 
@@ -20,7 +20,7 @@
 | 7 | `fronted_adverbial_choose` | approved | - | 1..10 | ship |
 | 8 | `fix_fronted_adverbial` | approved | - | 1..15 | ship |
 | 9 | `subordinate_clause_choice` | approved | - | 1..15 | ship |
-| 10 | `combine_clauses_rewrite` | approved | - | 1..15 | ship |
+| 10 | `combine_clauses_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 11 | `relative_clause_identify` | approved | - | 1..10 | ship |
 | 12 | `relative_clause_complete` | approved | - | 1..10 | ship |
 | 13 | `tense_form_choice` | approved | - | 1..10 | ship |
@@ -58,7 +58,7 @@
 | 45 | `proc3_sentence_function_choice` | approved | - | 1..10 | ship |
 | 46 | `proc3_word_class_contrast_choice` | approved | - | 1..10 | ship |
 | 47 | `proc3_noun_phrase_build` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 48 | `proc3_clause_join_rewrite` | approved | - | 1..15 | ship |
+| 48 | `proc3_clause_join_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 49 | `proc3_parenthesis_commas_fix` | approved | - | 1..15 | ship |
 | 50 | `proc3_hyphen_fix_meaning` | approved | - | 1..15 | ship |
 | 51 | `qg_active_passive_choice` | approved | - | 1..10 | ship |
@@ -98,15 +98,15 @@
 | 85 | `qg_p14_fronted_adverbials_explain_why` | approved | - | 1..10 | ship |
 | 86 | `qg_p14_fronted_adverbials_mixed_transfer` | approved | - | 1..10 | ship |
 | 87 | `qg_p14_subject_object_diagnostic_choice` | approved | - | 1..10 | ship |
-| 88 | `qg_p14_subject_object_constructed_rewrite` | approved | - | 1..15 | ship |
+| 88 | `qg_p14_subject_object_constructed_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 89 | `qg_p14_subject_object_explain_why` | approved | - | 1..10 | ship |
 | 90 | `qg_p14_subject_object_mixed_transfer` | approved | - | 1..10 | ship |
 | 91 | `qg_p14_subordinate_clauses_diagnostic_choice` | approved | - | 1..10 | ship |
-| 92 | `qg_p14_subordinate_clauses_constructed_rewrite` | approved | - | 1..15 | ship |
+| 92 | `qg_p14_subordinate_clauses_constructed_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 93 | `qg_p14_subordinate_clauses_explain_why` | approved | - | 1..10 | ship |
 | 94 | `qg_p14_subordinate_clauses_mixed_transfer` | approved | - | 1..10 | ship |
 | 95 | `qg_p14_tense_aspect_diagnostic_choice` | approved | - | 1..10 | ship |
-| 96 | `qg_p14_tense_aspect_constructed_rewrite` | approved | - | 1..15 | ship |
+| 96 | `qg_p14_tense_aspect_constructed_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 97 | `qg_p14_tense_aspect_explain_why` | approved | - | 1..10 | ship |
 | 98 | `qg_p14_tense_aspect_mixed_transfer` | approved | - | 1..10 | ship |
 | 99 | `qg_p14_speech_punctuation_diagnostic_choice` | approved | - | 1..10 | ship |
@@ -114,7 +114,7 @@
 | 101 | `qg_p14_speech_punctuation_explain_why` | approved | - | 1..10 | ship |
 | 102 | `qg_p14_speech_punctuation_mixed_transfer` | approved | - | 1..10 | ship |
 | 103 | `qg_p14_expanded_noun_phrases_diagnostic_choice` | approved | - | 1..10 | ship |
-| 104 | `qg_p14_expanded_noun_phrases_constructed_rewrite` | approved | - | 1..15 | ship |
+| 104 | `qg_p14_expanded_noun_phrases_constructed_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 105 | `qg_p14_expanded_noun_phrases_explain_why` | approved | - | 1..10 | ship |
 | 106 | `qg_p14_expanded_noun_phrases_mixed_transfer` | approved | - | 1..10 | ship |
 | 107 | `qg_p14_parenthesis_commas_diagnostic_choice` | approved | - | 1..10 | ship |
@@ -136,13 +136,13 @@
 | 123 | `qg_p18_p15_apostrophes_possession_possession_transfer` | approved | - | 1..10 | ship |
 | 124 | `qg_p18_p15_apostrophes_possession_possessive_choice` | approved | - | 1..10 | ship |
 | 125 | `qg_p18_p15_apostrophes_possession_possessive_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 126 | `qg_p18_p15_boundary_punctuation_boundary_fix` | approved | - | 1..15 | ship |
+| 126 | `qg_p18_p15_boundary_punctuation_boundary_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 127 | `qg_p18_p15_boundary_punctuation_boundary_label` | approved | - | 1..10 | ship |
 | 128 | `qg_p18_p15_boundary_punctuation_boundary_mark_choice` | approved | - | 1..10 | ship |
 | 129 | `qg_p18_p15_boundary_punctuation_boundary_transfer` | approved | - | 1..10 | ship |
 | 130 | `qg_p18_p15_boundary_punctuation_explain_boundary` | approved | - | 1..10 | ship |
 | 131 | `qg_p18_p15_clauses_clause_transfer` | approved | - | 1..10 | ship |
-| 132 | `qg_p18_p15_clauses_combine_clause` | approved | - | 1..15 | ship |
+| 132 | `qg_p18_p15_clauses_combine_clause` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 133 | `qg_p18_p15_clauses_explain_sub_clause` | approved | - | 1..10 | ship |
 | 134 | `qg_p18_p15_clauses_identify_sub_clause` | approved | - | 1..10 | ship |
 | 135 | `qg_p18_p15_clauses_repair_sub_fragment` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
@@ -153,7 +153,7 @@
 | 140 | `qg_p18_p15_formality_formality_transfer` | approved | - | 1..10 | ship |
 | 141 | `qg_p18_p15_hyphen_ambiguity_explain_hyphen` | approved | - | 1..10 | ship |
 | 142 | `qg_p18_p15_hyphen_ambiguity_hyphen_choice` | approved | - | 1..10 | ship |
-| 143 | `qg_p18_p15_hyphen_ambiguity_hyphen_fix` | approved | - | 1..15 | ship |
+| 143 | `qg_p18_p15_hyphen_ambiguity_hyphen_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 144 | `qg_p18_p15_hyphen_ambiguity_hyphen_meaning` | approved | - | 1..10 | ship |
 | 145 | `qg_p18_p15_hyphen_ambiguity_hyphen_transfer` | approved | - | 1..10 | ship |
 | 146 | `qg_p18_p15_modal_verbs_explain_modal` | approved | - | 1..10 | ship |
@@ -168,7 +168,7 @@
 | 155 | `qg_p18_p15_noun_phrases_np_not_clause` | approved | - | 1..10 | ship |
 | 156 | `qg_p18_p15_parenthesis_commas_explain_parenthesis` | approved | - | 1..10 | ship |
 | 157 | `qg_p18_p15_parenthesis_commas_parenthesis_choice` | approved | - | 1..10 | ship |
-| 158 | `qg_p18_p15_parenthesis_commas_parenthesis_fix` | approved | - | 1..15 | ship |
+| 158 | `qg_p18_p15_parenthesis_commas_parenthesis_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 159 | `qg_p18_p15_parenthesis_commas_parenthesis_replace` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 160 | `qg_p18_p15_parenthesis_commas_parenthesis_transfer` | approved | - | 1..10 | ship |
 | 161 | `qg_p18_p15_pronouns_cohesion_cohesion_choice` | approved | - | 1..10 | ship |
@@ -179,7 +179,7 @@
 | 166 | `qg_p18_p15_relative_clauses_complete_relative_clause` | approved | - | 1..10 | ship |
 | 167 | `qg_p18_p15_relative_clauses_explain_relative_clause` | approved | - | 1..10 | ship |
 | 168 | `qg_p18_p15_relative_clauses_identify_relative_clause` | approved | - | 1..10 | ship |
-| 169 | `qg_p18_p15_relative_clauses_punctuate_relative_clause` | approved | - | 1..15 | ship |
+| 169 | `qg_p18_p15_relative_clauses_punctuate_relative_clause` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 170 | `qg_p18_p15_relative_clauses_relative_transfer` | approved | - | 1..10 | ship |
 | 171 | `qg_p18_p15_sentence_functions_explain_function` | approved | - | 1..10 | ship |
 | 172 | `qg_p18_p15_sentence_functions_function_contrast` | approved | - | 1..15 | ship |
@@ -188,14 +188,14 @@
 | 175 | `qg_p18_p15_sentence_functions_sat_style_function` | approved | - | 1..10 | ship |
 | 176 | `qg_p18_p15_speech_punctuation_explain_speech` | approved | - | 1..10 | ship |
 | 177 | `qg_p18_p15_speech_punctuation_speech_choice` | approved | - | 1..10 | ship |
-| 178 | `qg_p18_p15_speech_punctuation_speech_fix` | approved | - | 1..15 | ship |
+| 178 | `qg_p18_p15_speech_punctuation_speech_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 179 | `qg_p18_p15_speech_punctuation_speech_reporter_position` | approved | - | 1..10 | ship |
 | 180 | `qg_p18_p15_speech_punctuation_speech_transfer` | approved | - | 1..10 | ship |
 | 181 | `qg_p18_p15_standard_english_explain_standard` | approved | - | 1..10 | ship |
 | 182 | `qg_p18_p15_standard_english_standard_choice` | approved | - | 1..10 | ship |
 | 183 | `qg_p18_p15_standard_english_standard_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 184 | `qg_p18_p15_standard_english_standard_pairs` | approved | - | 1..10 | ship |
-| 185 | `qg_p18_p15_standard_english_standard_transfer` | approved | - | 1..15 | ship |
+| 185 | `qg_p18_p15_standard_english_standard_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 186 | `qg_p18_p15_subject_object_explain_roles` | approved | - | 1..10 | ship |
 | 187 | `qg_p18_p15_subject_object_identify_object` | approved | - | 1..10 | ship |
 | 188 | `qg_p18_p15_subject_object_identify_subject` | approved | - | 1..10 | ship |
@@ -203,7 +203,7 @@
 | 190 | `qg_p18_p15_subject_object_role_transfer` | approved | - | 1..10 | ship |
 | 191 | `qg_p18_p15_tense_aspect_choose_tense_form` | approved | - | 1..10 | ship |
 | 192 | `qg_p18_p15_tense_aspect_explain_tense` | approved | - | 1..10 | ship |
-| 193 | `qg_p18_p15_tense_aspect_tense_editing` | approved | - | 1..15 | ship |
+| 193 | `qg_p18_p15_tense_aspect_tense_editing` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 194 | `qg_p18_p15_tense_aspect_tense_near_miss` | approved | - | 1..10 | ship |
 | 195 | `qg_p18_p15_tense_aspect_tense_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 196 | `qg_p18_p15_word_classes_explain_word_class` | approved | - | 1..10 | ship |
@@ -214,7 +214,7 @@
 | 201 | `qg_p18_p16_active_passive_agent_object_explain` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 202 | `qg_p18_p16_active_passive_rewrite_voice` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 203 | `qg_p18_p16_active_passive_same_meaning_choice` | approved | - | 1..10 | ship |
-| 204 | `qg_p18_p16_active_passive_tense_preserving_voice` | approved | - | 1..15 | ship |
+| 204 | `qg_p18_p16_active_passive_tense_preserving_voice` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 205 | `qg_p18_p16_active_passive_voice_error_spot` | approved | - | 1..10 | ship |
 | 206 | `qg_p18_p16_active_passive_voice_identify` | approved | - | 1..10 | ship |
 | 207 | `qg_p18_p16_adverbials_adverbial_or_not` | approved | - | 1..10 | ship |
@@ -232,15 +232,15 @@
 | 219 | `qg_p18_p16_boundary_punctuation_choose_boundary_mark` | approved | - | 1..10 | ship |
 | 220 | `qg_p18_p16_boundary_punctuation_choose_correct_boundary_sentence` | approved | - | 1..10 | ship |
 | 221 | `qg_p18_p16_boundary_punctuation_explain_colon_semicolon_dash` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 222 | `qg_p18_p16_boundary_punctuation_insert_boundary_mark` | approved | - | 1..15 | ship |
+| 222 | `qg_p18_p16_boundary_punctuation_insert_boundary_mark` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 223 | `qg_p18_p16_boundary_punctuation_match_mark_to_purpose` | approved | - | 1..10 | ship |
 | 224 | `qg_p18_p16_boundary_punctuation_semicolon_or_comma_splice` | approved | - | 1..10 | ship |
 | 225 | `qg_p18_p16_clauses_clause_order_meaning_transfer` | approved | - | 1..10 | ship |
 | 226 | `qg_p18_p16_clauses_explain_subordination` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 227 | `qg_p18_p16_clauses_fragment_or_sentence` | approved | - | 1..10 | ship |
-| 228 | `qg_p18_p16_clauses_join_with_given_conjunction` | approved | - | 1..15 | ship |
+| 228 | `qg_p18_p16_clauses_join_with_given_conjunction` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 229 | `qg_p18_p16_clauses_main_vs_subordinate_table` | approved | - | 1..10 | ship |
-| 230 | `qg_p18_p16_clauses_punctuate_subordinate_first` | approved | - | 1..15 | ship |
+| 230 | `qg_p18_p16_clauses_punctuate_subordinate_first` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 231 | `qg_p18_p16_clauses_subordinate_clause_identify` | approved | - | 1..10 | ship |
 | 232 | `qg_p18_p16_formality_choose_formal_word` | approved | - | 1..10 | ship |
 | 233 | `qg_p18_p16_formality_explain_formality_effect` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
@@ -250,7 +250,7 @@
 | 237 | `qg_p18_p16_formality_register_context_choice` | approved | - | 1..10 | ship |
 | 238 | `qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning` | approved | - | 1..10 | ship |
 | 239 | `qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 240 | `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase` | approved | - | 1..15 | ship |
+| 240 | `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 241 | `qg_p18_p16_hyphen_ambiguity_hyphen_function_choice` | approved | - | 1..10 | ship |
 | 242 | `qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table` | approved | - | 1..10 | ship |
 | 243 | `qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading` | approved | - | 1..10 | ship |
@@ -261,12 +261,12 @@
 | 248 | `qg_p18_p16_modal_verbs_modal_or_adverb` | approved | - | 1..10 | ship |
 | 249 | `qg_p18_p16_modal_verbs_rank_certainty_choice` | approved | - | 1..10 | ship |
 | 250 | `qg_p18_p16_noun_phrases_build_with_given_head` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 251 | `qg_p18_p16_noun_phrases_expand_plain_noun` | approved | - | 1..15 | ship |
+| 251 | `qg_p18_p16_noun_phrases_expand_plain_noun` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 252 | `qg_p18_p16_noun_phrases_expanded_or_not_choice` | approved | - | 1..10 | ship |
 | 253 | `qg_p18_p16_noun_phrases_explain_expansion` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 254 | `qg_p18_p16_noun_phrases_head_noun_identify` | approved | - | 1..10 | ship |
 | 255 | `qg_p18_p16_noun_phrases_noun_phrase_vs_clause` | approved | - | 1..10 | ship |
-| 256 | `qg_p18_p16_parenthesis_commas_add_parenthesis_commas` | approved | - | 1..15 | ship |
+| 256 | `qg_p18_p16_parenthesis_commas_add_parenthesis_commas` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 257 | `qg_p18_p16_parenthesis_commas_choose_parenthetical_part` | approved | - | 1..10 | ship |
 | 258 | `qg_p18_p16_parenthesis_commas_explain_parenthesis` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 259 | `qg_p18_p16_parenthesis_commas_parenthesis_or_not` | approved | - | 1..10 | ship |
@@ -274,11 +274,11 @@
 | 261 | `qg_p18_p16_parenthesis_commas_replace_brackets_with_commas` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 262 | `qg_p18_p16_pronouns_cohesion_choose_cohesive_sentence` | approved | - | 1..10 | ship |
 | 263 | `qg_p18_p16_pronouns_cohesion_explain_cohesion` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 264 | `qg_p18_p16_pronouns_cohesion_fix_pronoun_reference` | approved | - | 1..15 | ship |
+| 264 | `qg_p18_p16_pronouns_cohesion_fix_pronoun_reference` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 265 | `qg_p18_p16_pronouns_cohesion_reduce_repetition_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 266 | `qg_p18_p16_pronouns_cohesion_referent_identify` | approved | - | 1..10 | ship |
 | 267 | `qg_p18_p16_pronouns_cohesion_too_many_pronouns` | approved | - | 1..10 | ship |
-| 268 | `qg_p18_p16_relative_clauses_add_commas_non_defining` | approved | - | 1..15 | ship |
+| 268 | `qg_p18_p16_relative_clauses_add_commas_non_defining` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 269 | `qg_p18_p16_relative_clauses_complete_with_relative_clause` | approved | - | 1..10 | ship |
 | 270 | `qg_p18_p16_relative_clauses_explain_relative_clause` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 271 | `qg_p18_p16_relative_clauses_noun_linked_by_relative` | approved | - | 1..10 | ship |
@@ -289,17 +289,17 @@
 | 276 | `qg_p18_p16_sentence_functions_exclamation_not_excited_statement` | approved | - | 1..10 | ship |
 | 277 | `qg_p18_p16_sentence_functions_explain_function_reasoning` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 278 | `qg_p18_p16_sentence_functions_punctuation_vs_function_table` | approved | - | 1..10 | ship |
-| 279 | `qg_p18_p16_sentence_functions_repair_wrong_function_punctuation` | approved | - | 1..15 | ship |
+| 279 | `qg_p18_p16_sentence_functions_repair_wrong_function_punctuation` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 280 | `qg_p18_p16_speech_punctuation_explain_speech_rule` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 281 | `qg_p18_p16_speech_punctuation_fix_punctuation_outside_marks` | approved | - | 1..15 | ship |
+| 281 | `qg_p18_p16_speech_punctuation_fix_punctuation_outside_marks` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 282 | `qg_p18_p16_speech_punctuation_inside_marks_choice` | approved | - | 1..10 | ship |
-| 283 | `qg_p18_p16_speech_punctuation_punctuate_direct_speech` | approved | - | 1..15 | ship |
+| 283 | `qg_p18_p16_speech_punctuation_punctuate_direct_speech` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 284 | `qg_p18_p16_speech_punctuation_reporting_clause_position` | approved | - | 1..10 | ship |
 | 285 | `qg_p18_p16_speech_punctuation_speech_or_indirect` | approved | - | 1..10 | ship |
 | 286 | `qg_p18_p16_standard_english_choose_standard_sentence` | approved | - | 1..10 | ship |
 | 287 | `qg_p18_p16_standard_english_context_formal_standard` | approved | - | 1..10 | ship |
 | 288 | `qg_p18_p16_standard_english_explain_standard_choice` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 289 | `qg_p18_p16_standard_english_fix_nonstandard` | approved | - | 1..15 | ship |
+| 289 | `qg_p18_p16_standard_english_fix_nonstandard` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 290 | `qg_p18_p16_standard_english_rewrite_standard_english` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 291 | `qg_p18_p16_standard_english_standard_pairs_table` | approved | - | 1..10 | ship |
 | 292 | `qg_p18_p16_subject_object_explain_roles` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
@@ -474,7 +474,7 @@
 | 461 | `qg_p18_p18_parenthesis_commas_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 462 | `qg_p18_p18_parenthesis_commas_diagnostic_identify` | approved | - | 1..10 | ship |
 | 463 | `qg_p18_p18_parenthesis_commas_explain_reasoning` | approved | - | 1..10 | ship |
-| 464 | `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
+| 464 | `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 465 | `qg_p18_p18_parenthesis_commas_sat_table_classification` | approved | - | 1..10 | ship |
 | 466 | `qg_p18_p18_pronouns_cohesion_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 467 | `qg_p18_p18_pronouns_cohesion_diagnostic_identify` | approved | - | 1..10 | ship |
@@ -497,7 +497,7 @@
 | 484 | `qg_p18_p18_speech_punctuation_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 485 | `qg_p18_p18_speech_punctuation_diagnostic_identify` | approved | - | 1..10 | ship |
 | 486 | `qg_p18_p18_speech_punctuation_explain_reasoning` | approved | - | 1..10 | ship |
-| 487 | `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
+| 487 | `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 488 | `qg_p18_p18_speech_punctuation_sat_table_classification` | approved | - | 1..10 | ship |
 | 489 | `qg_p18_p18_standard_english_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 490 | `qg_p18_p18_standard_english_diagnostic_identify` | approved | - | 1..10 | ship |
@@ -767,31 +767,31 @@
 
 ### `combine_clauses_rewrite`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'clauses'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Combine the ideas into one sentence using when. The gate opened. The children..." → correct
-  - Feedback: A correct answer is: When the gate opened, the children ran outside.
-- Seed 2: "Combine the ideas into one sentence using if. The weather improves. We will h..." → correct
-  - Feedback: A correct answer is: If the weather improves, we will hold sports day outside.
-- Seed 3: "Combine the ideas into one sentence using because. Sam wore gloves. It was cold." → correct
-  - Feedback: A correct answer is: Sam wore gloves because it was cold.
-- Seed 4: "Combine the ideas into one sentence using although. The puzzle was hard. Nina..." → correct
-  - Feedback: A correct answer is: Although the puzzle was hard, Nina solved it.
-- Seed 5: "Combine the ideas into one sentence using before. The visitors left. They tha..." → correct
-  - Feedback: A correct answer is: Before the visitors left, they thanked the guide.
+- Seed 1: "Combine the ideas into one sentence using when. The gate opened. The children..." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: When the gate opened, the c...
+- Seed 2: "Combine the ideas into one sentence using if. The weather improves. We will h..." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: If the weather improves, we...
+- Seed 3: "Combine the ideas into one sentence using because. Sam wore gloves. It was cold." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: Sam wore gloves because it ...
+- Seed 4: "Combine the ideas into one sentence using although. The puzzle was hard. Nina..." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: Although the puzzle was har...
+- Seed 5: "Combine the ideas into one sentence using before. The visitors left. They tha..." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: Before the visitors left, t...
 
 ### `relative_clause_identify`
 
@@ -1797,31 +1797,31 @@
 
 ### `proc3_clause_join_rewrite`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'clauses'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Combine these ideas into one sentence using because. We stayed inside. It was..." → correct
-  - Feedback: A correct answer is: We stayed inside because it was raining.
-- Seed 2: "Combine these ideas into one sentence using because. Ben hurried home. He had..." → correct
-  - Feedback: A correct answer is: Ben hurried home because he had forgotten his kit.
-- Seed 3: "Combine these ideas into one sentence using because. Mia smiled. She had foun..." → correct
-  - Feedback: A correct answer is: Mia smiled because she had found the missing map.
-- Seed 4: "Combine these ideas into one sentence using although. Mia was tired. She fini..." → correct
-  - Feedback: A correct answer is: Although Mia was tired, she finished the race.
-- Seed 5: "Combine these ideas into one sentence using although. The path was muddy. The..." → correct
-  - Feedback: A correct answer is: Although the path was muddy, the walkers kept going.
+- Seed 1: "Combine these ideas into one sentence using because. We stayed inside. It was..." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: We stayed inside because it...
+- Seed 2: "Combine these ideas into one sentence using because. Ben hurried home. He had..." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: Ben hurried home because he...
+- Seed 3: "Combine these ideas into one sentence using because. Mia smiled. She had foun..." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: Mia smiled because she had ...
+- Seed 4: "Combine these ideas into one sentence using although. Mia was tired. She fini..." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: Although Mia was tired, she...
+- Seed 5: "Combine these ideas into one sentence using although. The path was muddy. The..." → non-scored
+  - Feedback: Your combined sentence has been saved for review. A strong answer is: Although the path was muddy...
 
 ### `proc3_parenthesis_commas_fix`
 
@@ -2866,30 +2866,30 @@
 
 ### `qg_p14_subject_object_constructed_rewrite`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'subject_object'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Type the object in this sentence: Ben lifted the clay model behind the stage ..." → correct
+- Seed 1: "Type the object in this sentence: Ben lifted the clay model behind the stage ..." → non-scored
   - Feedback: The object receives the action of the verb.
-- Seed 2: "Type the subject in this sentence: Cara painted the library pass next to the ..." → correct
+- Seed 2: "Type the subject in this sentence: Cara painted the library pass next to the ..." → non-scored
   - Feedback: The subject is the person or thing doing the action.
-- Seed 3: "Type the object in this sentence: Dylan cleaned the class trophy beside the c..." → correct
+- Seed 3: "Type the object in this sentence: Dylan cleaned the class trophy beside the c..." → non-scored
   - Feedback: The object receives the action of the verb.
-- Seed 4: "Type the subject in this sentence: Eli carried the sports bib beside the hall..." → correct
+- Seed 4: "Type the subject in this sentence: Eli carried the sports bib beside the hall..." → non-scored
   - Feedback: The subject is the person or thing doing the action.
-- Seed 5: "Type the object in this sentence: Freya opened the history poster near the ol..." → correct
+- Seed 5: "Type the object in this sentence: Freya opened the history poster near the ol..." → non-scored
   - Feedback: The object receives the action of the verb.
 
 ### `qg_p14_subject_object_explain_why`
@@ -2981,30 +2981,30 @@
 
 ### `qg_p14_subordinate_clauses_constructed_rewrite`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'clauses'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Combine the clauses with the subordinate clause first: Freya checked the reci..." → correct
+- Seed 1: "Combine the clauses with the subordinate clause first: Freya checked the reci..." → non-scored
   - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
-- Seed 2: "Combine the clauses with the subordinate clause first: Grace checked the play..." → correct
+- Seed 2: "Combine the clauses with the subordinate clause first: Grace checked the play..." → non-scored
   - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
-- Seed 3: "Combine the clauses with the subordinate clause first: Hassan checked the sci..." → correct
+- Seed 3: "Combine the clauses with the subordinate clause first: Hassan checked the sci..." → non-scored
   - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
-- Seed 4: "Combine the clauses with the subordinate clause first: Imani checked the red ..." → correct
+- Seed 4: "Combine the clauses with the subordinate clause first: Imani checked the red ..." → non-scored
   - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
-- Seed 5: "Combine the clauses with the subordinate clause first: Jasper checked the cla..." → correct
+- Seed 5: "Combine the clauses with the subordinate clause first: Jasper checked the cla..." → non-scored
   - Feedback: A fronted subordinate clause is followed by a comma before the main clause.
 
 ### `qg_p14_subordinate_clauses_explain_why`
@@ -3091,30 +3091,30 @@
 
 ### `qg_p14_tense_aspect_constructed_rewrite`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'tense_aspect'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Correct the verb form: Dylan has finished the class trophy yesterday." → correct
+- Seed 1: "Correct the verb form: Dylan has finished the class trophy yesterday." → non-scored
   - Feedback: A finished past time signal needs the simple past form.
-- Seed 2: "Correct the verb form: Eli chose the sports bib by the time the bell rang." → correct
+- Seed 2: "Correct the verb form: Eli chose the sports bib by the time the bell rang." → non-scored
   - Feedback: The past perfect shows an action completed before another past event.
-- Seed 3: "Correct the verb form: Freya wrote the history poster since Monday." → correct
+- Seed 3: "Correct the verb form: Freya wrote the history poster since Monday." → non-scored
   - Feedback: The present perfect links an earlier action to the present.
-- Seed 4: "Correct the verb form: Grace has broken the blue lantern last week." → correct
+- Seed 4: "Correct the verb form: Grace has broken the blue lantern last week." → non-scored
   - Feedback: A finished past time signal needs the simple past form.
-- Seed 5: "Correct the verb form: Hassan hid the recipe card just." → correct
+- Seed 5: "Correct the verb form: Hassan hid the recipe card just." → non-scored
   - Feedback: The present perfect links an earlier action to the present.
 
 ### `qg_p14_tense_aspect_explain_why`
@@ -3287,30 +3287,30 @@
 
 ### `qg_p14_expanded_noun_phrases_constructed_rewrite`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'noun_phrases'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Type the expanded noun phrase from this sentence: The cracked ceramic kite be..." → correct
+- Seed 1: "Type the expanded noun phrase from this sentence: The cracked ceramic kite be..." → non-scored
   - Feedback: The full phrase is centred on the noun and includes its modifiers.
-- Seed 2: "Type the expanded noun phrase from this sentence: The tiny wooden badge besid..." → correct
+- Seed 2: "Type the expanded noun phrase from this sentence: The tiny wooden badge besid..." → non-scored
   - Feedback: The full phrase is centred on the noun and includes its modifiers.
-- Seed 3: "Type the expanded noun phrase from this sentence: The heavy school painting n..." → correct
+- Seed 3: "Type the expanded noun phrase from this sentence: The heavy school painting n..." → non-scored
   - Feedback: The full phrase is centred on the noun and includes its modifiers.
-- Seed 4: "Type the expanded noun phrase from this sentence: The silver glass glove insi..." → correct
+- Seed 4: "Type the expanded noun phrase from this sentence: The silver glass glove insi..." → non-scored
   - Feedback: The full phrase is centred on the noun and includes its modifiers.
-- Seed 5: "Type the expanded noun phrase from this sentence: The muddy festival rucksack..." → correct
+- Seed 5: "Type the expanded noun phrase from this sentence: The muddy festival rucksack..." → non-scored
   - Feedback: The full phrase is centred on the noun and includes its modifiers.
 
 ### `qg_p14_expanded_noun_phrases_explain_why`
@@ -3845,30 +3845,30 @@
 
 ### `qg_p18_p15_boundary_punctuation_boundary_fix`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'boundary_punctuation'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'boundary_punctuation'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Copy the sentence using the best boundary punctuation: The sky darkened ___ t..." → correct
+- Seed 1: "Copy the sentence using the best boundary punctuation: The sky darkened ___ t..." → non-scored
   - Feedback: semi-colon joins two closely related main clauses
-- Seed 2: "Copy the sentence using the best boundary punctuation: I needed only one thin..." → correct
+- Seed 2: "Copy the sentence using the best boundary punctuation: I needed only one thin..." → non-scored
   - Feedback: colon introduces the explanation of the thing needed
-- Seed 3: "Copy the sentence using the best boundary punctuation: The answer was obvious..." → correct
+- Seed 3: "Copy the sentence using the best boundary punctuation: The answer was obvious..." → non-scored
   - Feedback: dash creates a strong break before a surprising clause
-- Seed 4: "Copy the sentence using the best boundary punctuation: Mum packed three snack..." → correct
+- Seed 4: "Copy the sentence using the best boundary punctuation: Mum packed three snack..." → non-scored
   - Feedback: colon introduces a list
-- Seed 5: "Copy the sentence using the best boundary punctuation: The road was flooded _..." → correct
+- Seed 5: "Copy the sentence using the best boundary punctuation: The road was flooded _..." → non-scored
   - Feedback: semi-colon links balanced main clauses
 
 ### `qg_p18_p15_boundary_punctuation_boundary_label`
@@ -3998,30 +3998,30 @@
 
 ### `qg_p18_p15_clauses_combine_clause`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'clauses'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Combine into one sentence: Although the wind was strong. the boat reached the..." → correct
+- Seed 1: "Combine into one sentence: Although the wind was strong. the boat reached the..." → non-scored
   - Feedback: Use the subordinate clause with the main clause in one sentence.
-- Seed 2: "Combine into one sentence: When the bell rang. the pupils lined up quietly." → correct
+- Seed 2: "Combine into one sentence: When the bell rang. the pupils lined up quietly." → non-scored
   - Feedback: Use the subordinate clause with the main clause in one sentence.
-- Seed 3: "Combine into one sentence: If the path is icy. wear your boots." → correct
+- Seed 3: "Combine into one sentence: If the path is icy. wear your boots." → non-scored
   - Feedback: Use the subordinate clause with the main clause in one sentence.
-- Seed 4: "Combine into one sentence: Because the oven was hot. Dad used thick gloves." → correct
+- Seed 4: "Combine into one sentence: Because the oven was hot. Dad used thick gloves." → non-scored
   - Feedback: Use the subordinate clause with the main clause in one sentence.
-- Seed 5: "Combine into one sentence: While the rain hammered down. the dog hid under th..." → correct
+- Seed 5: "Combine into one sentence: While the rain hammered down. the dog hid under th..." → non-scored
   - Feedback: Use the subordinate clause with the main clause in one sentence.
 
 ### `qg_p18_p15_clauses_explain_sub_clause`
@@ -4299,30 +4299,30 @@
 
 ### `qg_p18_p15_hyphen_ambiguity_hyphen_fix`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'hyphen_ambiguity'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Add a hyphen if needed to avoid ambiguity: man eating shark" → correct
+- Seed 1: "Add a hyphen if needed to avoid ambiguity: man eating shark" → non-scored
   - Feedback: The intended meaning is a shark that eats people.
-- Seed 2: "Add a hyphen if needed to avoid ambiguity: recover the chair" → correct
+- Seed 2: "Add a hyphen if needed to avoid ambiguity: recover the chair" → non-scored
   - Feedback: The intended meaning is cover the chair again.
-- Seed 3: "Add a hyphen if needed to avoid ambiguity: twenty odd children" → correct
+- Seed 3: "Add a hyphen if needed to avoid ambiguity: twenty odd children" → non-scored
   - Feedback: The intended meaning is about twenty children.
-- Seed 4: "Add a hyphen if needed to avoid ambiguity: small business owner" → correct
+- Seed 4: "Add a hyphen if needed to avoid ambiguity: small business owner" → non-scored
   - Feedback: The intended meaning is owner of a small business.
-- Seed 5: "Add a hyphen if needed to avoid ambiguity: little used path" → correct
+- Seed 5: "Add a hyphen if needed to avoid ambiguity: little used path" → non-scored
   - Feedback: The intended meaning is a path that is not used often.
 
 ### `qg_p18_p15_hyphen_ambiguity_hyphen_meaning`
@@ -4697,30 +4697,30 @@
 
 ### `qg_p18_p15_parenthesis_commas_parenthesis_fix`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'parenthesis_commas'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Add commas to mark the parenthesis: Our class visited York the oldest city on..." → correct
+- Seed 1: "Add commas to mark the parenthesis: Our class visited York the oldest city on..." → non-scored
   - Feedback: The extra information can be lifted out, so mark it with commas.
-- Seed 2: "Add commas to mark the parenthesis: Luca who was first in line opened the door." → correct
+- Seed 2: "Add commas to mark the parenthesis: Luca who was first in line opened the door." → non-scored
   - Feedback: The extra information can be lifted out, so mark it with commas.
-- Seed 3: "Add commas to mark the parenthesis: The trophy made of silver stood on the sh..." → correct
+- Seed 3: "Add commas to mark the parenthesis: The trophy made of silver stood on the sh..." → non-scored
   - Feedback: The extra information can be lifted out, so mark it with commas.
-- Seed 4: "Add commas to mark the parenthesis: Mrs Patel our headteacher announced the w..." → correct
+- Seed 4: "Add commas to mark the parenthesis: Mrs Patel our headteacher announced the w..." → non-scored
   - Feedback: The extra information can be lifted out, so mark it with commas.
-- Seed 5: "Add commas to mark the parenthesis: The cave cold and silent stretched beneat..." → correct
+- Seed 5: "Add commas to mark the parenthesis: The cave cold and silent stretched beneat..." → non-scored
   - Feedback: The extra information can be lifted out, so mark it with commas.
 
 ### `qg_p18_p15_parenthesis_commas_parenthesis_replace`
@@ -4993,30 +4993,30 @@
 
 ### `qg_p18_p15_relative_clauses_punctuate_relative_clause`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'relative_clauses'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Add commas for the extra relative clause if needed: The girl who had lost her..." → correct
+- Seed 1: "Add commas for the extra relative clause if needed: The girl who had lost her..." → non-scored
   - Feedback: Non-essential relative clauses can be marked with commas.
-- Seed 2: "Add commas for the extra relative clause if needed: The bicycle that was lock..." → correct
+- Seed 2: "Add commas for the extra relative clause if needed: The bicycle that was lock..." → non-scored
   - Feedback: Non-essential relative clauses can be marked with commas.
-- Seed 3: "Add commas for the extra relative clause if needed: The village which sits be..." → correct
+- Seed 3: "Add commas for the extra relative clause if needed: The village which sits be..." → non-scored
   - Feedback: Non-essential relative clauses can be marked with commas.
-- Seed 4: "Add commas for the extra relative clause if needed: The author who visited ou..." → correct
+- Seed 4: "Add commas for the extra relative clause if needed: The author who visited ou..." → non-scored
   - Feedback: Non-essential relative clauses can be marked with commas.
-- Seed 5: "Add commas for the extra relative clause if needed: The cave where the bats s..." → correct
+- Seed 5: "Add commas for the extra relative clause if needed: The cave where the bats s..." → non-scored
   - Feedback: Non-essential relative clauses can be marked with commas.
 
 ### `qg_p18_p15_relative_clauses_relative_transfer`
@@ -5231,30 +5231,30 @@
 
 ### `qg_p18_p15_speech_punctuation_speech_fix`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'speech_punctuation'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Correct the direct speech punctuation: "Where are you going" asked Mum." → correct
+- Seed 1: "Correct the direct speech punctuation: "Where are you going" asked Mum." → non-scored
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
-- Seed 2: "Correct the direct speech punctuation: "Sit down" said the coach." → correct
+- Seed 2: "Correct the direct speech punctuation: "Sit down" said the coach." → non-scored
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
-- Seed 3: "Correct the direct speech punctuation: Dad asked "Have you packed your boots"" → correct
+- Seed 3: "Correct the direct speech punctuation: Dad asked "Have you packed your boots"" → non-scored
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
-- Seed 4: "Correct the direct speech punctuation: "I found the key" whispered Ana." → correct
+- Seed 4: "Correct the direct speech punctuation: "I found the key" whispered Ana." → non-scored
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
-- Seed 5: "Correct the direct speech punctuation: "Look at the sky" shouted Omar." → correct
+- Seed 5: "Correct the direct speech punctuation: "Look at the sky" shouted Omar." → non-scored
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
 
 ### `qg_p18_p15_speech_punctuation_speech_reporter_position`
@@ -5412,30 +5412,30 @@
 
 ### `qg_p18_p15_standard_english_standard_transfer`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Edit for a formal school report: We was late for assembly." → correct
+- Seed 1: "Edit for a formal school report: We was late for assembly." → non-scored
   - Feedback: Formal writing should use Standard English.
-- Seed 2: "Edit for a formal school report: I done my project yesterday." → correct
+- Seed 2: "Edit for a formal school report: I done my project yesterday." → non-scored
   - Feedback: Formal writing should use Standard English.
-- Seed 3: "Edit for a formal school report: She seen the poster in the library." → correct
+- Seed 3: "Edit for a formal school report: She seen the poster in the library." → non-scored
   - Feedback: Formal writing should use Standard English.
-- Seed 4: "Edit for a formal school report: They was waiting by the gate." → correct
+- Seed 4: "Edit for a formal school report: They was waiting by the gate." → non-scored
   - Feedback: Formal writing should use Standard English.
-- Seed 5: "Edit for a formal school report: He brung his lunch in a blue box." → correct
+- Seed 5: "Edit for a formal school report: He brung his lunch in a blue box." → non-scored
   - Feedback: Formal writing should use Standard English.
 
 ### `qg_p18_p15_subject_object_explain_roles`
@@ -5628,30 +5628,30 @@
 
 ### `qg_p18_p15_tense_aspect_tense_editing`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'tense_aspect'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Fix the verb form so it matches "present perfect": I finish my homework." → correct
+- Seed 1: "Fix the verb form so it matches "present perfect": I finish my homework." → non-scored
   - Feedback: Change only what is needed to match the tense/aspect.
-- Seed 2: "Fix the verb form so it matches "past perfect": She packs her bag before the ..." → correct
+- Seed 2: "Fix the verb form so it matches "past perfect": She packs her bag before the ..." → non-scored
   - Feedback: Change only what is needed to match the tense/aspect.
-- Seed 3: "Fix the verb form so it matches "past progressive": The dog chases the cat." → correct
+- Seed 3: "Fix the verb form so it matches "past progressive": The dog chases the cat." → non-scored
   - Feedback: Change only what is needed to match the tense/aspect.
-- Seed 4: "Fix the verb form so it matches "present progressive": We eat lunch in the hall." → correct
+- Seed 4: "Fix the verb form so it matches "present progressive": We eat lunch in the hall." → non-scored
   - Feedback: Change only what is needed to match the tense/aspect.
-- Seed 5: "Fix the verb form so it matches "present perfect": He writes the report." → correct
+- Seed 5: "Fix the verb form so it matches "present perfect": He writes the report." → non-scored
   - Feedback: Change only what is needed to match the tense/aspect.
 
 ### `qg_p18_p15_tense_aspect_tense_near_miss`
@@ -5912,30 +5912,30 @@
 
 ### `qg_p18_p16_active_passive_tense_preserving_voice`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'active_passive'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Change voice but keep tense: The chef baked the bread." → correct
+- Seed 1: "Change voice but keep tense: The chef baked the bread." → non-scored
   - Feedback: Keep the same tense while changing voice: The bread was baked by the chef.
-- Seed 2: "Change voice but keep tense: The council maintains the park." → correct
+- Seed 2: "Change voice but keep tense: The council maintains the park." → non-scored
   - Feedback: Keep the same tense while changing voice: The park is maintained by the council.
-- Seed 3: "Change voice but keep tense: Sam opened the gate." → correct
+- Seed 3: "Change voice but keep tense: Sam opened the gate." → non-scored
   - Feedback: Keep the same tense while changing voice: The gate was opened by Sam.
-- Seed 4: "Change voice but keep tense: The team will collect the trophy." → correct
+- Seed 4: "Change voice but keep tense: The team will collect the trophy." → non-scored
   - Feedback: Keep the same tense while changing voice: The trophy will be collected by the team.
-- Seed 5: "Change voice but keep tense: The artist painted the mural." → correct
+- Seed 5: "Change voice but keep tense: The artist painted the mural." → non-scored
   - Feedback: Keep the same tense while changing voice: The mural was painted by the artist.
 
 ### `qg_p18_p16_active_passive_voice_error_spot`
@@ -6372,30 +6372,30 @@
 
 ### `qg_p18_p16_boundary_punctuation_insert_boundary_mark`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'boundary_punctuation'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'boundary_punctuation'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Insert the missing semicolon: The sky darkened the gulls flew inland." → correct
+- Seed 1: "Insert the missing semicolon: The sky darkened the gulls flew inland." → non-scored
   - Feedback: A correct version is: The sky darkened; the gulls flew inland.
-- Seed 2: "Insert the missing colon: I needed one thing a torch." → correct
+- Seed 2: "Insert the missing colon: I needed one thing a torch." → non-scored
   - Feedback: A correct version is: I needed one thing: a torch.
-- Seed 3: "Insert the missing dash: The answer was clear we had to turn back." → correct
+- Seed 3: "Insert the missing dash: The answer was clear we had to turn back." → non-scored
   - Feedback: A correct version is: The answer was clear — we had to turn back.
-- Seed 4: "Insert the missing semicolon: The path was steep the rain made it worse." → correct
+- Seed 4: "Insert the missing semicolon: The path was steep the rain made it worse." → non-scored
   - Feedback: A correct version is: The path was steep; the rain made it worse.
-- Seed 5: "Insert the missing colon: Bring these items boots, gloves and a hat." → correct
+- Seed 5: "Insert the missing colon: Bring these items boots, gloves and a hat." → non-scored
   - Feedback: A correct version is: Bring these items: boots, gloves and a hat.
 
 ### `qg_p18_p16_boundary_punctuation_match_mark_to_purpose`
@@ -6539,30 +6539,30 @@
 
 ### `qg_p18_p16_clauses_join_with_given_conjunction`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'clauses'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Join these ideas using "Although": the wind was strong. the boat reached the ..." → correct
+- Seed 1: "Join these ideas using "Although": the wind was strong. the boat reached the ..." → non-scored
   - Feedback: A strong answer is: Although the wind was strong, the boat reached the shore.
-- Seed 2: "Join these ideas using "When": the bell rang. the pupils lined up." → correct
+- Seed 2: "Join these ideas using "When": the bell rang. the pupils lined up." → non-scored
   - Feedback: A strong answer is: When the bell rang, the pupils lined up.
-- Seed 3: "Join these ideas using "Because": it was raining. we stayed inside." → correct
+- Seed 3: "Join these ideas using "Because": it was raining. we stayed inside." → non-scored
   - Feedback: A strong answer is: Because it was raining, we stayed inside.
-- Seed 4: "Join these ideas using "If": the path is icy. wear your boots." → correct
+- Seed 4: "Join these ideas using "If": the path is icy. wear your boots." → non-scored
   - Feedback: A strong answer is: If the path is icy, wear your boots.
-- Seed 5: "Join these ideas using "Before": the bus arrived. Zara checked her ticket." → correct
+- Seed 5: "Join these ideas using "Before": the bus arrived. Zara checked her ticket." → non-scored
   - Feedback: A strong answer is: Before the bus arrived, Zara checked her ticket.
 
 ### `qg_p18_p16_clauses_main_vs_subordinate_table`
@@ -6591,30 +6591,30 @@
 
 ### `qg_p18_p16_clauses_punctuate_subordinate_first`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'clauses'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Add punctuation when the subordinate clause comes first: Although the wind wa..." → correct
+- Seed 1: "Add punctuation when the subordinate clause comes first: Although the wind wa..." → non-scored
   - Feedback: When the subordinate clause comes first, use a comma before the main clause: Although the wind wa...
-- Seed 2: "Add punctuation when the subordinate clause comes first: When the bell rang t..." → correct
+- Seed 2: "Add punctuation when the subordinate clause comes first: When the bell rang t..." → non-scored
   - Feedback: When the subordinate clause comes first, use a comma before the main clause: When the bell rang, ...
-- Seed 3: "Add punctuation when the subordinate clause comes first: Because it was raini..." → correct
+- Seed 3: "Add punctuation when the subordinate clause comes first: Because it was raini..." → non-scored
   - Feedback: When the subordinate clause comes first, use a comma before the main clause: Because it was raini...
-- Seed 4: "Add punctuation when the subordinate clause comes first: If the path is icy w..." → correct
+- Seed 4: "Add punctuation when the subordinate clause comes first: If the path is icy w..." → non-scored
   - Feedback: When the subordinate clause comes first, use a comma before the main clause: If the path is icy, ...
-- Seed 5: "Add punctuation when the subordinate clause comes first: Before the bus arriv..." → correct
+- Seed 5: "Add punctuation when the subordinate clause comes first: Before the bus arriv..." → non-scored
   - Feedback: When the subordinate clause comes first, use a comma before the main clause: Before the bus arriv...
 
 ### `qg_p18_p16_clauses_subordinate_clause_identify`
@@ -6867,30 +6867,30 @@
 
 ### `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'hyphen_ambiguity'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Add a hyphen if needed to show this meaning: a shark that eats people — man e..." → correct
+- Seed 1: "Add a hyphen if needed to show this meaning: a shark that eats people — man e..." → non-scored
   - Feedback: The clearer version is man-eating shark.
-- Seed 2: "Add a hyphen if needed to show this meaning: a man who eats shark — man-eatin..." → correct
+- Seed 2: "Add a hyphen if needed to show this meaning: a man who eats shark — man-eatin..." → non-scored
   - Feedback: The clearer version is man eating shark.
-- Seed 3: "Add a hyphen if needed to show this meaning: a machine that makes ice cream —..." → correct
+- Seed 3: "Add a hyphen if needed to show this meaning: a machine that makes ice cream —..." → non-scored
   - Feedback: The clearer version is ice-cream maker.
-- Seed 4: "Add a hyphen if needed to show this meaning: a maker made of ice cream — ice-..." → correct
+- Seed 4: "Add a hyphen if needed to show this meaning: a maker made of ice cream — ice-..." → non-scored
   - Feedback: The clearer version is ice cream maker.
-- Seed 5: "Add a hyphen if needed to show this meaning: a bird with a red breast — red b..." → correct
+- Seed 5: "Add a hyphen if needed to show this meaning: a bird with a red breast — red b..." → non-scored
   - Feedback: The clearer version is red-breasted bird.
 
 ### `qg_p18_p16_hyphen_ambiguity_hyphen_function_choice`
@@ -7172,30 +7172,30 @@
 
 ### `qg_p18_p16_noun_phrases_expand_plain_noun`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'noun_phrases'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Expand this noun into a noun phrase of at least four words: gate" → correct
+- Seed 1: "Expand this noun into a noun phrase of at least four words: gate" → non-scored
   - Feedback: A strong expanded noun phrase is: the bright gate beside the library.
-- Seed 2: "Expand this noun into a noun phrase of at least four words: boat" → correct
+- Seed 2: "Expand this noun into a noun phrase of at least four words: boat" → non-scored
   - Feedback: A strong expanded noun phrase is: the nervous boat beside the harbour.
-- Seed 3: "Expand this noun into a noun phrase of at least four words: pencil" → correct
+- Seed 3: "Expand this noun into a noun phrase of at least four words: pencil" → non-scored
   - Feedback: A strong expanded noun phrase is: the ancient pencil beside the school hall.
-- Seed 4: "Expand this noun into a noun phrase of at least four words: window" → correct
+- Seed 4: "Expand this noun into a noun phrase of at least four words: window" → non-scored
   - Feedback: A strong expanded noun phrase is: the silver window beside the park.
-- Seed 5: "Expand this noun into a noun phrase of at least four words: badge" → correct
+- Seed 5: "Expand this noun into a noun phrase of at least four words: badge" → non-scored
   - Feedback: A strong expanded noun phrase is: the muddy badge beside the science lab.
 
 ### `qg_p18_p16_noun_phrases_expanded_or_not_choice`
@@ -7300,30 +7300,30 @@
 
 ### `qg_p18_p16_parenthesis_commas_add_parenthesis_commas`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'parenthesis_commas'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Add commas for parenthesis if needed: Luca who was first in line opened the d..." → correct
+- Seed 1: "Add commas for parenthesis if needed: Luca who was first in line opened the d..." → non-scored
   - Feedback: A correct version is: Luca, who was first in line, opened the door.
-- Seed 2: "Add commas for parenthesis if needed: The guide who had visited before led us." → correct
+- Seed 2: "Add commas for parenthesis if needed: The guide who had visited before led us." → non-scored
   - Feedback: A correct version is: The guide, who had visited before, led us.
-- Seed 3: "Add commas for parenthesis if needed: Our class visited York the oldest city ..." → correct
+- Seed 3: "Add commas for parenthesis if needed: Our class visited York the oldest city ..." → non-scored
   - Feedback: A correct version is: Our class visited York, the oldest city on our route, first.
-- Seed 4: "Add commas for parenthesis if needed: The cake baked by Aisha tasted wonderful." → correct
+- Seed 4: "Add commas for parenthesis if needed: The cake baked by Aisha tasted wonderful." → non-scored
   - Feedback: A correct version is: The cake, baked by Aisha, tasted wonderful.
-- Seed 5: "Add commas for parenthesis if needed: Maya my neighbour won the race." → correct
+- Seed 5: "Add commas for parenthesis if needed: Maya my neighbour won the race." → non-scored
   - Feedback: A correct version is: Maya, my neighbour, won the race.
 
 ### `qg_p18_p16_parenthesis_commas_choose_parenthetical_part`
@@ -7508,30 +7508,30 @@
 
 ### `qg_p18_p16_pronouns_cohesion_fix_pronoun_reference`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'pronouns_cohesion'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'pronouns_cohesion'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Fix the unclear pronouns: Amira picked up the map. It folded it carefully." → correct
+- Seed 1: "Fix the unclear pronouns: Amira picked up the map. It folded it carefully." → non-scored
   - Feedback: A clear version is: Amira picked up the map. She folded it carefully.
-- Seed 2: "Fix the unclear pronouns: He gave it to her because he had finished her." → correct
+- Seed 2: "Fix the unclear pronouns: He gave it to her because he had finished her." → non-scored
   - Feedback: A clear version is: Omar gave his book to his sister because he had finished it.
-- Seed 3: "Fix the unclear pronouns: Mila put her coat on the chair before it zipped her..." → correct
+- Seed 3: "Fix the unclear pronouns: Mila put her coat on the chair before it zipped her..." → non-scored
   - Feedback: A clear version is: Mila put her coat on the chair before she zipped her bag.
-- Seed 4: "Fix the unclear pronouns: The dog chased the ball. He rolled under the bench." → correct
+- Seed 4: "Fix the unclear pronouns: The dog chased the ball. He rolled under the bench." → non-scored
   - Feedback: A clear version is: The dog chased the ball. It rolled under the bench.
-- Seed 5: "Fix the unclear pronouns: Zara found the key and placed she on the table." → correct
+- Seed 5: "Fix the unclear pronouns: Zara found the key and placed she on the table." → non-scored
   - Feedback: A clear version is: Zara found the key and placed it on the table.
 
 ### `qg_p18_p16_pronouns_cohesion_reduce_repetition_rewrite`
@@ -7612,30 +7612,30 @@
 
 ### `qg_p18_p16_relative_clauses_add_commas_non_defining`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'relative_clauses'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "If needed, add commas around the relative clause: The teacher who had visited..." → correct
+- Seed 1: "If needed, add commas around the relative clause: The teacher who had visited..." → non-scored
   - Feedback: Non-defining relative clauses often need commas. A correct version is: The teacher who had visite...
-- Seed 2: "If needed, add commas around the relative clause: The bicycle that was locked..." → correct
+- Seed 2: "If needed, add commas around the relative clause: The bicycle that was locked..." → non-scored
   - Feedback: Non-defining relative clauses often need commas. A correct version is: The bicycle that was locke...
-- Seed 3: "If needed, add commas around the relative clause: The village which sits by t..." → correct
+- Seed 3: "If needed, add commas around the relative clause: The village which sits by t..." → non-scored
   - Feedback: Non-defining relative clauses often need commas. A correct version is: The village, which sits by...
-- Seed 4: "If needed, add commas around the relative clause: The boy who dropped his hat..." → correct
+- Seed 4: "If needed, add commas around the relative clause: The boy who dropped his hat..." → non-scored
   - Feedback: Non-defining relative clauses often need commas. A correct version is: The boy who dropped his ha...
-- Seed 5: "If needed, add commas around the relative clause: The book that I borrowed wa..." → correct
+- Seed 5: "If needed, add commas around the relative clause: The book that I borrowed wa..." → non-scored
   - Feedback: Non-defining relative clauses often need commas. A correct version is: The book that I borrowed w...
 
 ### `qg_p18_p16_relative_clauses_complete_with_relative_clause`
@@ -7908,30 +7908,30 @@
 
 ### `qg_p18_p16_sentence_functions_repair_wrong_function_punctuation`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Correct the punctuation so the sentence is a command: Turn off the tap?" → correct
+- Seed 1: "Correct the punctuation so the sentence is a command: Turn off the tap?" → non-scored
   - Feedback: The punctuation should match the sentence function. A command needs this ending: Turn off the tap.
-- Seed 2: "Correct the punctuation so the sentence is a question: Where is the spare key." → correct
+- Seed 2: "Correct the punctuation so the sentence is a question: Where is the spare key." → non-scored
   - Feedback: The punctuation should match the sentence function. A question needs this ending: Where is the sp...
-- Seed 3: "Correct the punctuation so the sentence is an exclamation: What a tiny seed t..." → correct
+- Seed 3: "Correct the punctuation so the sentence is an exclamation: What a tiny seed t..." → non-scored
   - Feedback: The punctuation should match the sentence function. an exclamation needs this ending: What a tiny...
-- Seed 4: "Correct the punctuation so the sentence is a statement: The picnic starts at ..." → correct
+- Seed 4: "Correct the punctuation so the sentence is a statement: The picnic starts at ..." → non-scored
   - Feedback: The punctuation should match the sentence function. A statement needs this ending: The picnic sta...
-- Seed 5: "Correct the punctuation so the sentence is a command: Bring the register?" → correct
+- Seed 5: "Correct the punctuation so the sentence is a command: Bring the register?" → non-scored
   - Feedback: The punctuation should match the sentence function. A command needs this ending: Bring the register.
 
 ### `qg_p18_p16_speech_punctuation_explain_speech_rule`
@@ -7964,30 +7964,30 @@
 
 ### `qg_p18_p16_speech_punctuation_fix_punctuation_outside_marks`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'speech_punctuation'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Fix the speech punctuation: "Where are you going"? asked Mum." → correct
+- Seed 1: "Fix the speech punctuation: "Where are you going"? asked Mum." → non-scored
   - Feedback: The end punctuation belongs inside the speech marks: "Where are you going?" asked Mum.
-- Seed 2: "Fix the speech punctuation: "Sit down"! said the coach." → correct
+- Seed 2: "Fix the speech punctuation: "Sit down"! said the coach." → non-scored
   - Feedback: The end punctuation belongs inside the speech marks: "Sit down!" said the coach.
-- Seed 3: "Fix the speech punctuation: "I found the key", said Zara." → correct
+- Seed 3: "Fix the speech punctuation: "I found the key", said Zara." → non-scored
   - Feedback: The end punctuation belongs inside the speech marks: "I found the key," said Zara.
-- Seed 4: "Fix the speech punctuation: "Be careful"! called Dad." → correct
+- Seed 4: "Fix the speech punctuation: "Be careful"! called Dad." → non-scored
   - Feedback: The end punctuation belongs inside the speech marks: "Be careful!" called Dad.
-- Seed 5: "Fix the speech punctuation: "Can I help"? asked Omar." → correct
+- Seed 5: "Fix the speech punctuation: "Can I help"? asked Omar." → non-scored
   - Feedback: The end punctuation belongs inside the speech marks: "Can I help?" asked Omar.
 
 ### `qg_p18_p16_speech_punctuation_inside_marks_choice`
@@ -8016,30 +8016,30 @@
 
 ### `qg_p18_p16_speech_punctuation_punctuate_direct_speech`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'speech_punctuation'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Punctuate the direct speech: Where are you going asked Mum." → correct
+- Seed 1: "Punctuate the direct speech: Where are you going asked Mum." → non-scored
   - Feedback: Correct direct speech punctuation: "Where are you going?" asked Mum.
-- Seed 2: "Punctuate the direct speech: Sit down said the coach." → correct
+- Seed 2: "Punctuate the direct speech: Sit down said the coach." → non-scored
   - Feedback: Correct direct speech punctuation: "Sit down!" said the coach.
-- Seed 3: "Punctuate the direct speech: I found the key said Zara." → correct
+- Seed 3: "Punctuate the direct speech: I found the key said Zara." → non-scored
   - Feedback: Correct direct speech punctuation: "I found the key," said Zara.
-- Seed 4: "Punctuate the direct speech: Be careful called Dad." → correct
+- Seed 4: "Punctuate the direct speech: Be careful called Dad." → non-scored
   - Feedback: Correct direct speech punctuation: "Be careful!" called Dad.
-- Seed 5: "Punctuate the direct speech: Can I help asked Omar." → correct
+- Seed 5: "Punctuate the direct speech: Can I help asked Omar." → non-scored
   - Feedback: Correct direct speech punctuation: "Can I help?" asked Omar.
 
 ### `qg_p18_p16_speech_punctuation_reporting_clause_position`
@@ -8168,30 +8168,30 @@
 
 ### `qg_p18_p16_standard_english_fix_nonstandard`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Fix this non-standard sentence: We was late." → correct
+- Seed 1: "Fix this non-standard sentence: We was late." → non-scored
   - Feedback: Use the Standard English form: We were late.
-- Seed 2: "Fix this non-standard sentence: I done my homework." → correct
+- Seed 2: "Fix this non-standard sentence: I done my homework." → non-scored
   - Feedback: Use the Standard English form: I did my homework.
-- Seed 3: "Fix this non-standard sentence: She seen the poster." → correct
+- Seed 3: "Fix this non-standard sentence: She seen the poster." → non-scored
   - Feedback: Use the Standard English form: She saw the poster.
-- Seed 4: "Fix this non-standard sentence: They was ready." → correct
+- Seed 4: "Fix this non-standard sentence: They was ready." → non-scored
   - Feedback: Use the Standard English form: They were ready.
-- Seed 5: "Fix this non-standard sentence: He have finished." → correct
+- Seed 5: "Fix this non-standard sentence: He have finished." → non-scored
   - Feedback: Use the Standard English form: He has finished.
 
 ### `qg_p18_p16_standard_english_rewrite_standard_english`
@@ -12831,30 +12831,30 @@
 
 ### `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'parenthesis_commas'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Copy the sentence and add commas for parenthesis. Luca who was first in line ..." → correct
+- Seed 1: "Copy the sentence and add commas for parenthesis. Luca who was first in line ..." → non-scored
   - Feedback: Commas mark the parenthesis.
-- Seed 2: "Copy the sentence and add commas for parenthesis. The castle built in 1200 ov..." → correct
+- Seed 2: "Copy the sentence and add commas for parenthesis. The castle built in 1200 ov..." → non-scored
   - Feedback: The extra information can be lifted out.
-- Seed 3: "Copy the sentence and add commas for parenthesis. Our teacher a keen cyclist ..." → correct
+- Seed 3: "Copy the sentence and add commas for parenthesis. Our teacher a keen cyclist ..." → non-scored
   - Feedback: The appositive phrase is parenthetical.
-- Seed 4: "Copy the sentence and add commas for parenthesis. The match which lasted two ..." → correct
+- Seed 4: "Copy the sentence and add commas for parenthesis. The match which lasted two ..." → non-scored
   - Feedback: The relative clause is extra information.
-- Seed 5: "Copy the sentence and add commas for parenthesis. Mina wearing her red scarf ..." → correct
+- Seed 5: "Copy the sentence and add commas for parenthesis. Mina wearing her red scarf ..." → non-scored
   - Feedback: The phrase adds removable detail.
 
 ### `qg_p18_p18_parenthesis_commas_sat_table_classification`
@@ -13437,30 +13437,30 @@
 
 ### `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds accept the golden constructed answer
-- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
+- **Grammar logic:** Grammar logic partially valid for concept 'speech_punctuation'; some seeds produce incorrect marking
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
-- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
+- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
-- Seed 1: "Copy and correct the speech punctuation. "Where are you going" asked Mum." → correct
+- Seed 1: "Copy and correct the speech punctuation. "Where are you going" asked Mum." → non-scored
   - Feedback: The question mark belongs inside the speech marks.
-- Seed 2: "Copy and correct the speech punctuation. "Sit down" shouted the coach." → correct
+- Seed 2: "Copy and correct the speech punctuation. "Sit down" shouted the coach." → non-scored
   - Feedback: The exclamation mark belongs inside the speech marks.
-- Seed 3: "Copy and correct the speech punctuation. "I found the key" said Zara." → correct
+- Seed 3: "Copy and correct the speech punctuation. "I found the key" said Zara." → non-scored
   - Feedback: Use a comma before the reporting clause.
-- Seed 4: "Copy and correct the speech punctuation. Dad asked "Have you packed your bag"" → correct
+- Seed 4: "Copy and correct the speech punctuation. Dad asked "Have you packed your bag"" → non-scored
   - Feedback: Use a comma before speech and a question mark inside.
-- Seed 5: "Copy and correct the speech punctuation. "Please wait here" whispered the guide." → correct
+- Seed 5: "Copy and correct the speech punctuation. "Please wait here" whispered the guide." → non-scored
   - Feedback: Use a comma inside the closing speech mark.
 
 ### `qg_p18_p18_speech_punctuation_sat_table_classification`

@@ -76,27 +76,17 @@ export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
     response: Object.freeze({ row0: 'subject', row1: 'object' }),
   }),
   Object.freeze({
-    // P19 Contract A.2 promoted tense_rewrite/active_passive_rewrite/proc2_*
-    // open-rewrite templates to manualReviewOnly. The smoke fixture for the
-    // normalisedText family now uses the P14 subject-object constructed
-    // template, which still emits a normalisedText answerSpec (single token).
-    family: 'normalisedText',
-    templateId: 'qg_p14_subject_object_constructed_rewrite',
-    seed: 0,
-    response: Object.freeze({ answer: 'Aisha' }),
-  }),
-  Object.freeze({
     family: 'punctuationPattern',
     templateId: 'fix_fronted_adverbial',
     seed: 0,
     response: Object.freeze({ answer: 'After the concert, the audience cheered loudly.' }),
   }),
-  Object.freeze({
-    family: 'acceptedSet',
-    templateId: 'combine_clauses_rewrite',
-    seed: 0,
-    response: Object.freeze({ answer: 'Although Mia was tired, she finished the race.' }),
-  }),
+  // P19a Contract A fairness conversion retired the last `normalisedText`
+  // and `acceptedSet` templates (the four P14 *_constructed_rewrite plus
+  // combine_clauses_rewrite/proc3_clause_join_rewrite all moved to
+  // `manualReviewOnly`). The kinds remain valid in `ANSWER_SPEC_KINDS` and
+  // unit-tested in tests/grammar-answer-spec.test.js, but no template now
+  // emits them, so end-to-end smoke fixtures for those families are dropped.
   Object.freeze({
     family: 'manualReviewOnly',
     templateId: 'build_noun_phrase',
