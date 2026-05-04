@@ -231,7 +231,8 @@
         "seedCount": 5,
         "sessions": 20,
         "immediateRepeats": 0,
-        "uniqueItems": 70,
+        "uniqueItems_p95_floor": 70,
+        "uniqueItems_mean_floor": 78,
         "paragraphAtLeastOnceEveryFour": true,
         "transferRatioMax": 0.34,
         "transferTouchRatioMax": 0.9

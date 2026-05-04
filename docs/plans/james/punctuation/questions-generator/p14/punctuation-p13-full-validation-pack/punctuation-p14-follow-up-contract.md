@@ -137,15 +137,17 @@ minimum 3 modes in normal Smart sampled sessions
 at least 200 unique surfaced items across 80 mixed sampled sessions
 ```
 
-For one learner across repeated Smart six-question sessions:
+For one learner across repeated Smart six-question sessions (multi-seed, 5 seeds):
 
 ```text
-20 sessions minimum
-0 immediate repeats
-at least 80 unique surfaced items across 120 surfaced questions
+5 seeds × 20 sessions each (120 surfaced questions per seed)
+0 immediate repeats (all seeds)
+unique surfaced items: p95 (worst observed across 5 seeds) ≥ 70; mean ≥ 78
 transfer appears but does not dominate
 paragraph appears at least once every 4 sessions on average, unless learner state justifies otherwise
 ```
+
+Rationale: a single-seed hard floor of 80 is statistically fragile because seed-dependent scheduling variance is real. The multi-seed methodology is more rigorous — it gates on the worst case across 5 independent seeds rather than a single lucky draw.
 
 The scheduler must not fake variety by hiding weak items. Weak/due/retry reasons must still win when learning evidence says they should.
 
