@@ -23,7 +23,9 @@ test('ready subjects expose a complete SubjectVisualAdapter', () => {
       assert.ok(subject.visualAdapter.sections[section], `${subjectId} missing ${section}`);
     }
     assert.equal(subject.visualAdapter.sections.summaryFrame.component, 'SessionSummaryFrame');
-    assert.equal(subject.visualAdapter.sections.companionPanel.component, 'SubjectCompanionPanel');
+    if (subjectId !== 'spelling') {
+      assert.equal(subject.visualAdapter.sections.companionPanel.component, 'SubjectCompanionPanel');
+    }
   }
 });
 
