@@ -184,19 +184,19 @@ test('punctuation Setup scene preserves every data-section landmark', () => {
   assert.match(html, /data-section="hero"/);
   // Progress row (in main column).
   assert.match(html, /data-section="progress-row"/);
-  // Monster row (in sidebar).
-  assert.match(html, /data-section="monster-row"/);
+  // Companion panel (in sidebar).
+  assert.match(html, /data-testid="companion-panel"/);
   // Map link (in sidebar footer).
   assert.match(html, /data-section="map-link"/);
   // Secondary drawer (in main column).
   assert.match(html, /data-section="secondary"/);
 
-  // Structural containment: monster-row and map-link live inside the sidebar.
+  // Structural containment: companion-panel and map-link live inside the sidebar.
   const sidebarStart = html.indexOf('class="setup-side punctuation-setup-sidebar"');
   assert.ok(sidebarStart > -1, 'sidebar aside exists');
-  const monsterRowPos = html.indexOf('data-section="monster-row"');
+  const companionPanelPos = html.indexOf('data-testid="companion-panel"');
   const mapLinkPos = html.indexOf('data-section="map-link"');
-  assert.ok(monsterRowPos > sidebarStart, 'monster-row is inside sidebar');
+  assert.ok(companionPanelPos > sidebarStart, 'companion-panel is inside sidebar');
   assert.ok(mapLinkPos > sidebarStart, 'map-link is inside sidebar');
 
   // Phase marker on the outer `<section>` wrapper.
