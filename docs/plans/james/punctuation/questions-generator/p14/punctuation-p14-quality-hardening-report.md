@@ -2,7 +2,7 @@
 title: Punctuation P14 Quality Hardening Report
 phase: punctuation-p14
 releaseId: punctuation-qg-p14-3564-2026-05-04
-verdict: SOURCE_VERIFIED — production smoke pending deploy
+verdict: QUALITY_PATCH_READY
 generatedAt: 2026-05-04
 contract: docs/plans/james/punctuation/questions-generator/p14/punctuation-p13-full-validation-pack/punctuation-p14-follow-up-contract.md
 prNumber: 845
@@ -13,7 +13,7 @@ prUrl: https://github.com/fol2/ks2-mastery/pull/845
 
 ## Verdict
 
-**Pre-deploy verdict: source-tree gates 1–7 PASS** with caveats recorded below. Gate 8 production smoke is **pending** the production deploy of release `punctuation-qg-p14-3564-2026-05-04`. After deploy + smoke, the verdict will upgrade to one of:
+**Standing verdict: `QUALITY_PATCH_READY`** — source-tree gates 1–7 PASS with caveats recorded below. Gate 8 production smoke is **pending** the production deploy of release `punctuation-qg-p14-3564-2026-05-04`. After deploy + smoke, the verdict will upgrade to one of:
 
 - All gates green AND release-ID communications shipped → `FULL_PUNCTUATION_SUBJECT_CERTIFIED`
 - Gate 4 ≥ 12-per-cluster floor missed → `QUALITY_PATCH_PRODUCTION_VERIFIED + TRANSFER_DEPTH_HARDENED`
