@@ -315,7 +315,7 @@ function eligibleTemplateIds(profile) {
   const concepts = new Set(Object.keys(profile.mastery?.concepts || {}));
   if (concepts.size === 0) return GRAMMAR_TEMPLATE_METADATA.length;
   return GRAMMAR_TEMPLATE_METADATA.filter((template) => {
-    if (!Array.isArray(template.skillIds) || template.skillIds.length === 0) return true;
+    if (!Array.isArray(template.skillIds) || template.skillIds.length === 0) return !profile.focusConceptId;
     if (profile.focusConceptId) return template.skillIds.includes(profile.focusConceptId);
     return template.skillIds.some((id) => concepts.has(id));
   }).length;
