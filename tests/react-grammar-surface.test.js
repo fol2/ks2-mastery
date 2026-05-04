@@ -45,22 +45,21 @@ test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   assert.match(html, /Fix Trouble Spots/);
   assert.match(html, /Mini Test/);
   assert.match(html, /Grammar Bank/);
-  // Brand-new learner: Today section renders the empty-state callout
-  // instead of the four zero tiles (U1 follower, empty_returning_states).
-  assert.match(html, /Start your first round to see your scores here\./);
+  // Brand-new learner: companion panel meadow shows encouraging empty text.
+  assert.match(html, /Start practising to see your Grammar creatures\./);
   // Smart Practice is marked featured/recommended (U1 follower, cta_hierarchy).
   assert.match(html, /data-mode-id="smart"[^>]*data-featured="true"/);
   assert.match(html, /class="grammar-primary-mode[^"]*is-recommended[^"]*"[^>]*data-mode-id="smart"/);
   // Aligned design: badge is uppercase "RECOMMENDED" inside the mc-top
   // row to match Spelling's mode-card silhouette.
   assert.match(html, /RECOMMENDED/);
-  // U7 Phase 5: Monster strip with 4 active creatures + child-facing copy.
-  assert.match(html, /grammar-monster-strip/);
-  assert.match(html, /data-monster-id="bracehart"/);
-  assert.match(html, /data-monster-id="bracehart" data-display-state="not-found"/);
-  assert.match(html, /data-monster-id="concordium"/);
-  assert.match(html, /0 \/ 100 Stars/);
-  assert.match(html, /Get 1 Star to find the Egg\. Reach 100 Stars for Mega\./);
+  // U7 Phase 5: companion panel renders with subject id.
+  assert.match(html, /data-subject="grammar"/);
+  // Fresh learner sees meadow-empty text rather than monster images.
+  assert.match(html, /Start practising to see your Grammar creatures\./);
+  // Stats grid carries curated labels.
+  assert.match(html, /Concepts/);
+  assert.match(html, /Trouble/);
   // More practice disclosure is present and closed by default.
   assert.match(html, /<details class="setup-more-practice grammar-more-practice"><summary>More practice<\/summary>/);
   // U8 Phase 5: Writing Try now inside More practice (not primary area).

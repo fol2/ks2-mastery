@@ -49,8 +49,8 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
-| `dynamic-content-driven` | 139 |
-| `shared-pattern-available` | 99 |
+| `dynamic-content-driven` | 141 |
+| `shared-pattern-available` | 97 |
 | `css-var-ready` | 7 |
 | `third-party-boundary` | 2 |
 | **TOTAL** | **247** |
@@ -84,7 +84,7 @@ Future migration PRs should:
 | `src/surfaces/hubs/AdminSectionTabs.jsx` | 3 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterVisualPreviewGrid.jsx` | 3 | `dynamic-content-driven` | no |
 | `src/platform/game/render/effects/celebration-shell.js` | 2 | `third-party-boundary` | no |
-| `src/subjects/grammar/components/GrammarSetupScene.jsx` | 2 | `shared-pattern-available` | no |
+| `src/subjects/grammar/components/GrammarSetupScene.jsx` | 2 | `dynamic-content-driven` | no |
 | `src/subjects/spelling/components/SpellingCommon.jsx` | 2 | `css-var-ready` | no |
 | `src/subjects/spelling/components/SpellingWordDetailModal.jsx` | 2 | `dynamic-content-driven` | no |
 | `src/surfaces/home/CodexCard.jsx` | 2 | `dynamic-content-driven` | no |
@@ -100,8 +100,8 @@ Future migration PRs should:
 | `src/platform/ui/LengthPicker.jsx` | 1 | `shared-pattern-available` | no |
 | `src/platform/ui/LoadingSkeleton.jsx` | 1 | `css-var-ready` | no |
 | `src/platform/ui/PracticeStage.jsx` | 1 | `css-var-ready` | no |
-| `src/platform/ui/SubjectCompanionPanel.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/platform/ui/ProgressMeter.jsx` | 1 | `css-var-ready` | no |
+| `src/platform/ui/SubjectCompanionPanel.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/platform/ui/SubjectThemeScope.jsx` | 1 | `css-var-ready` | no |
 | `src/subjects/punctuation/components/PunctuationMapScene.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/subjects/spelling/components/SpellingSummaryScene.jsx` | 1 | `dynamic-content-driven` | no |

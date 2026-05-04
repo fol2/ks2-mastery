@@ -31,6 +31,8 @@ import {
 } from '../../../platform/game/mastery/grammar.js';
 import { GRAMMAR_GRAND_MONSTER_ID } from '../../../platform/game/mastery/shared.js';
 import { MONSTERS } from '../../../platform/game/monsters.js';
+import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
+import { monsterVisualFrameStyle } from '../../../platform/game/monster-visual-style.js';
 
 // --- Frozen option lists ----------------------------------------------------
 
@@ -555,6 +557,27 @@ export function buildGrammarDashboardModel(grammar, _learner, rewardState, maste
     primaryMode,
     moreModes: GRAMMAR_MORE_PRACTICE_MODES,
     writingTryAvailable: true,
+  };
+}
+
+// --- Monster image visual helper (companion panel meadow) -------------------
+
+export function grammarMonsterImageVisual(monsterId, stage, visualConfig = null) {
+  const visual = resolveMonsterVisual({
+    monsterId,
+    branch: 'b1',
+    stage,
+    context: 'codexCard',
+    config: visualConfig,
+    preferredSize: 320,
+  });
+  return {
+    style: monsterVisualFrameStyle(visual),
+    imageProps: {
+      src: visual.src,
+      srcSet: visual.srcSet,
+      sizes: 'min(30vw, 120px)',
+    },
   };
 }
 
