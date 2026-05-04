@@ -139,10 +139,10 @@ const SOURCE_CASE_CORRECTIONS = Object.freeze({
     acceptedAnswers: ['It is unclear because the key cannot give Sara to the teacher.'],
   },
   'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:08': {
-    correctAnswer: 'It is unclear because “they” in object position makes it hard to tell who was left by the door.',
-    expectedAnswerSummary: 'It is unclear because “they” in object position makes it hard to tell who was left by the door.',
-    feedbackLong: 'Using “they” where “them” is needed creates confusion about the sentence roles. The reader cannot easily tell who left whom by the door.',
-    acceptedAnswers: ['It is unclear because “they” in object position makes it hard to tell who was left by the door.'],
+    correctAnswer: 'It is unclear because the object pronoun should be them, not they.',
+    expectedAnswerSummary: 'It is unclear because the object pronoun should be them, not they.',
+    feedbackLong: 'The sentence needs the object pronoun “them”: “They left them by the door.” Using “they” there is non-standard and unclear.',
+    acceptedAnswers: ['It is unclear because the object pronoun should be them, not they.'],
   },
   'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:09': {
     correctAnswer: 'It is unclear because the bike appears to test Omar, but Omar is the person doing the testing.',
@@ -157,10 +157,10 @@ const SOURCE_CASE_CORRECTIONS = Object.freeze({
     acceptedAnswers: ['It is unclear because the feeder appears to perch, but birds perch.'],
   },
   'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:11': {
-    correctAnswer: 'It is unclear because “it” makes the cabinet appear to lock Nina, reversing who did the action.',
-    expectedAnswerSummary: 'It is unclear because “it” makes the cabinet appear to lock Nina, reversing who did the action.',
-    feedbackLong: 'The pronoun “it” points to the cabinet, making the sentence say the cabinet locked Nina. The writer probably meant Nina locked the cabinet, so clearer nouns are needed.',
-    acceptedAnswers: ['It is unclear because “it” makes the cabinet appear to lock Nina, reversing who did the action.'],
+    correctAnswer: 'It is unclear because the cabinet appears to lock Nina, not the trophy or cabinet.',
+    expectedAnswerSummary: 'It is unclear because the cabinet appears to lock Nina, not the trophy or cabinet.',
+    feedbackLong: 'The pronoun “it” makes the role unclear. The sentence should say who locked the cabinet or what was locked.',
+    acceptedAnswers: ['It is unclear because the cabinet appears to lock Nina, not the trophy or cabinet.'],
   },
   'grammar-qg-p18-manual-expansion-delta-100-families:pronouns_cohesion:application_transfer:12': {
     correctAnswer: 'It is unclear because the cups appear to dry Dad, but Dad dried the cups.',
@@ -390,27 +390,9 @@ const SOURCE_CASE_CORRECTIONS = Object.freeze({
   },
 });
 
-// Words that begin with a vowel letter but are pronounced with a consonant
-// onset, so the indefinite article stays "a", not "an": "a university",
-// "a one-off", "a European". Lowercased; matched case-insensitively below.
-// This list is intentionally narrow — only widely-agreed phonotactic exceptions
-// for primary-school vocabulary. Add new entries cautiously when the audit
-// surfaces a false positive in render evidence.
-const ARTICLE_CONSONANT_ONSET_BLOCKLIST = new Set([
-  'union', 'unicorn', 'uniform', 'unit', 'unite', 'united', 'unity', 'universe',
-  'university', 'usage', 'use', 'used', 'useful', 'user', 'usual', 'european',
-  'ewe', 'one', 'once', 'oneness', 'ubiquitous', 'utility', 'utopia',
-]);
-
 function normaliseGrammarArticles(value) {
-  // P19b polish: replaced the triple allow-list (adverb|adjective|exclamation)
-  // with a general /\ba ([aeiou]\w+)\b/gi pattern that catches every "a +
-  // vowel-initial word" pairing, then skips the consonant-onset exceptions.
-  // The original allow-list silently failed on "a apostrophe", "a article",
-  // "a obvious" etc. — content drift that future evidence regen would surface.
   return String(value ?? '')
-    .replace(/\b(a) ([aeiou]\w+)\b/gi, (match, article, word) => {
-      if (ARTICLE_CONSONANT_ONSET_BLOCKLIST.has(word.toLowerCase())) return match;
+    .replace(/\b(a) (adverb|adjective|exclamation)\b/gi, (_match, article, word) => {
       const prefix = article[0] === 'A' ? 'An' : 'an';
       return `${prefix} ${word}`;
     });
@@ -481,8 +463,6 @@ function compactCase(rawCase) {
     inputType: cleanText(sourceCase.inputType),
     questionType: cleanText(sourceCase.questionType),
     depthTier: cleanText(sourceCase.depthTier),
-    manualReviewOnly: rawCase?.manualReviewOnly === true ? true : undefined,
-    nonScored: rawCase?.nonScored === true ? true : undefined,
     promptText: cleanText(sourceCase.promptText),
     expectedAnswerSummary: cleanText(sourceCase.expectedAnswerSummary),
     feedbackLong: cleanText(sourceCase.feedbackLong),
