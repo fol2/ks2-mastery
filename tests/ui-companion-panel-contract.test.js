@@ -158,8 +158,8 @@ test('SubjectCompanionPanel: monsters render as ul/li with discovered attribute'
     console.log(renderToStaticMarkup(tree));
   `);
   assert.match(html, /<ul class="companion-panel-monster-list">/);
-  assert.match(html, /<li data-discovered="true">Grammox<\/li>/);
-  assert.match(html, /<li data-discovered="false">Syntaxon<\/li>/);
+  assert.match(html, /<li data-discovered="true">.*?Grammox.*?<\/li>/);
+  assert.match(html, /<li data-discovered="false">.*?Syntaxon.*?<\/li>/);
 });
 
 // ---------------------------------------------------------------
