@@ -104,7 +104,11 @@
     "verify:punctuation-qg:p13-live": "node scripts/validate-punctuation-qg-p13-live-evidence.mjs reports/punctuation/punctuation-qg-p13-production-smoke.json",
     "deploy:punctuation-qg:p13": "node scripts/deploy-punctuation-qg-p13-live.mjs",
     "smoke:production:punctuation:p14": "node scripts/punctuation-qg-p14-live-smoke.mjs --env production --authenticated --out reports/punctuation/punctuation-qg-p14-production-smoke.json",
-    "verify:punctuation-qg:p14-live": "node scripts/validate-punctuation-qg-p14-live-evidence.mjs reports/punctuation/punctuation-qg-p14-production-smoke.json"
+    "verify:punctuation-qg:p14-live": "node scripts/validate-punctuation-qg-p14-live-evidence.mjs reports/punctuation/punctuation-qg-p14-production-smoke.json",
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-push": "node scripts/hooks/pre-push.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
@@ -112,6 +116,7 @@
     "jsdom": "^29.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "simple-git-hooks": "^2.11.0",
     "wrangler": "^4.83.0"
   }
 }
