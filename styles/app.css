@@ -13664,8 +13664,8 @@ html { scroll-behavior: smooth; }
 .companion-panel-monster-glyph {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
   background: color-mix(in oklab, var(--subject-accent-soft, var(--line-soft)) 60%, transparent);
   font-family: var(--font-serif);
@@ -13699,6 +13699,7 @@ html { scroll-behavior: smooth; }
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+  min-width: 0;
   padding: 12px 14px;
   border: 1px solid var(--line-soft);
   border-radius: 14px;
@@ -13780,6 +13781,9 @@ html { scroll-behavior: smooth; }
   .action-row .btn,
   .home-hero-scene-actions .btn {
     width: 100%;
+  }
+  .companion-panel-stat {
+    flex-direction: column;
   }
 }
 
