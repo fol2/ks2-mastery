@@ -22,13 +22,13 @@ The PR CI pipeline currently takes **~12 minutes** wall-clock, with the `Node Te
 - Maintain docs-only skip behaviour (existing `classify-docs-only` action)
 - Maintain `continue-on-error` on the wrangler dry-run step (only runs in one shard)
 - Keep concurrency group and cancel-in-progress behaviour
+- Split or restructure individual test files that exceed per-shard time budgets, provided there is zero test regression (same assertions, same coverage, same pass/fail behaviour)
 
 **Out of scope:**
 - Changing the Playwright, Client Bundle Audit, or Punctuation Content Audit workflows (already fast)
-- Changing test file organisation or splitting the test suite into separate packages
 - Adding third-party CI services or test-splitting tools
 - Changing the nightly workflows (`mega-invariant-nightly.yml`, `playwright-nightly.yml`)
-- Modifying individual test files
+- Deleting tests or reducing assertion coverage
 
 ---
 
