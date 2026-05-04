@@ -188,7 +188,7 @@ test('Punctuation Setup scene preserves journey selectors', () => {
     'data-punctuation-cta',
     'data-section="hero"',
     'data-section="progress-row"',
-    'data-section="monster-row"',
+    'SubjectCompanionPanel',
     'data-section="map-link"',
     'data-section="secondary"',
     'punctuation-start',

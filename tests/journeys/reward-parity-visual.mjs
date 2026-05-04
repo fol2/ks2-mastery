@@ -131,18 +131,19 @@ export default async function run({ driver, artifacts, log, assert }) {
 
   const starMeterPattern = /\d+ \/ 100 Stars/;
 
-  // Extract star meter values from the monster row on the landing page.
-  const landingMonsterRowText = await driver.eval(
-    "(() => { const el = document.querySelector('[data-section=\"monster-row\"]'); return el ? el.textContent : ''; })()",
+  // Extract stat labels from the companion panel on the landing page.
+  const companionPanelText = await driver.eval(
+    "(() => { const el = document.querySelector('[data-testid=\"companion-panel\"]'); return el ? el.textContent : ''; })()",
   );
-  log(`Landing monster row text (star meters): "${landingMonsterRowText.slice(0, 200)}"`);
-  assert(starMeterPattern.test(landingMonsterRowText),
-    `Landing monster row must use star meters (X / 100 Stars), not "Stage X of 4". Got: "${landingMonsterRowText.slice(0, 200)}"`);
+  log(`Companion panel text: "${companionPanelText.slice(0, 200)}"`);
+  const statLabelPattern = /Due today|Wobbly|Grand Stars/;
+  assert(statLabelPattern.test(companionPanelText),
+    `Companion panel must contain stat labels (Due today, Wobbly, Grand Stars). Got: "${companionPanelText.slice(0, 200)}"`);
 
   // Negative: no "Stage X of 4" copy on the landing page.
   const stageOfPattern = /Stage \d+ of 4/;
-  assert(!stageOfPattern.test(landingMonsterRowText),
-    `Landing monster row must NOT contain "Stage X of 4". Got: "${landingMonsterRowText.slice(0, 200)}"`);
+  assert(!stageOfPattern.test(companionPanelText),
+    `Companion panel must NOT contain "Stage X of 4". Got: "${companionPanelText.slice(0, 200)}"`);
 
   // Navigate back into Summary to verify star meter there too.
   log('re-enter Smart Review to drive to Summary for star parity check');

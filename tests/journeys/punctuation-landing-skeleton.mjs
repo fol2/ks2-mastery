@@ -34,7 +34,7 @@ export default async function run({ driver, artefacts, log, assert }) {
   const landmarks = [
     { selector: '[data-section="hero"]', label: 'hero' },
     { selector: '[data-section="progress-row"]', label: 'progress-row' },
-    { selector: '[data-section="monster-row"]', label: 'monster-row' },
+    { selector: '[data-testid="companion-panel"]', label: 'companion-panel' },
     { selector: '[data-section="map-link"]', label: 'map-link' },
     { selector: '[data-section="secondary"]', label: 'secondary' },
   ];
@@ -57,13 +57,13 @@ export default async function run({ driver, artefacts, log, assert }) {
 
   // --- Star meter text ---
 
-  log('assert star meter text matches /\\d+ \\/ 100 Stars/ pattern');
-  const monsterRowText = await driver.eval(
-    "(() => { const el = document.querySelector('[data-section=\"monster-row\"]'); return el ? el.textContent : ''; })()",
+  log('assert companion panel contains stat labels');
+  const companionText = await driver.eval(
+    "(() => { const el = document.querySelector('[data-testid=\"companion-panel\"]'); return el ? el.textContent : ''; })()",
   );
-  const starPattern = /\d+ \/ 100 Stars/;
-  assert(starPattern.test(monsterRowText),
-    `Monster row must contain star meter text matching ${starPattern}. Got: "${monsterRowText.slice(0, 200)}"`);
+  const statPattern = /Due today|Wobbly|Grand Stars/;
+  assert(statPattern.test(companionText),
+    `Companion panel must contain stat labels. Got: "${companionText.slice(0, 200)}"`);
 
   await driver.screenshot(artefacts.path('02-landing-verified'));
   log('PASS — landing skeleton verified with all 5 landmarks, CTA, and star meters');

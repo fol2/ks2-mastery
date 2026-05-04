@@ -73,7 +73,8 @@ test('ready subject companion panels map subject-owned data into real panel inpu
     {
       subject: 'punctuation',
       path: 'src/subjects/punctuation/components/PunctuationSetupScene.jsx',
-      markers: ['dashboard.activeMonsters', 'dueCount', 'weakCount', 'grandStars', 'Wobbly spots need practice'],
+      markers: ['monsterVisuals', 'useMonsterVisualConfig', 'dueCount', 'weakCount', 'grandStars', 'Wobbly spots need practice'],
+      useMonsterVisuals: true,
     },
   ];
 
@@ -87,6 +88,7 @@ test('ready subject companion panels map subject-owned data into real panel inpu
       assert.ok(text.includes('monsters={'), `${contract.subject} must pass monsters`);
     }
     assert.ok(text.includes('stats={'), `${contract.subject} must pass stats`);
+    assert.ok(text.includes('head={'), `${contract.subject} must pass head`);
     assert.ok(text.includes('nextFocus={'), `${contract.subject} must pass nextFocus`);
     for (const marker of contract.markers) {
       assert.ok(text.includes(marker), `${contract.subject} companion panel must include ${marker}`);

@@ -21,6 +21,7 @@
 
 import { punctuationDisplayStateForStars } from '../../../platform/game/monsters.js';
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
+import { monsterVisualFrameStyle } from '../../../platform/game/monster-visual-style.js';
 import {
   PUNCTUATION_CLIENT_SKILLS,
   PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER,
@@ -89,6 +90,25 @@ export function punctuationMonsterAsset(monsterId = FALLBACK_MONSTER, stage = 0,
     stage: safeStage,
     src: visual.src,
     srcSet: visual.srcSet,
+  };
+}
+
+export function punctuationMonsterImageVisual(monsterId, stage, visualConfig = null) {
+  const visual = resolveMonsterVisual({
+    monsterId,
+    branch: 'b1',
+    stage,
+    context: 'codexCard',
+    config: visualConfig,
+    preferredSize: 320,
+  });
+  return {
+    style: monsterVisualFrameStyle(visual),
+    imageProps: {
+      src: visual.src,
+      srcSet: visual.srcSet,
+      sizes: 'min(30vw, 120px)',
+    },
   };
 }
 
