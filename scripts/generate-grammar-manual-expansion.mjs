@@ -390,9 +390,29 @@ const SOURCE_CASE_CORRECTIONS = Object.freeze({
   },
 });
 
+// Words that begin with a vowel letter but are pronounced with a consonant
+// onset, so the indefinite article stays "a", not "an": "a university",
+// "a one-off", "a European". Lowercased; matched case-insensitively below.
+// This list is intentionally narrow — only widely-agreed phonotactic exceptions
+// for primary-school vocabulary. Add new entries cautiously when the audit
+// surfaces a false positive in render evidence.
+const ARTICLE_CONSONANT_ONSET_BLOCKLIST = new Set([
+  'union', 'unicorn', 'uniform', 'unit', 'unite', 'united', 'unity', 'universe',
+  'university', 'usage', 'use', 'used', 'useful', 'user', 'usual', 'european',
+  'ewe', 'one', 'once', 'oneness', 'ubiquitous', 'utility', 'utopia',
+]);
+
 function normaliseGrammarArticles(value) {
+  // P19b polish: replaced the triple allow-list (adverb|adjective|exclamation)
+  // with a general /\ba ([aeiou]\w+)\b/gi pattern that catches every "a +
+  // vowel-initial word" pairing, then skips the consonant-onset exceptions.
+  // The original allow-list silently failed on "a apostrophe", "a article",
+  // "a obvious" etc. — content drift that future evidence regen would surface.
   return String(value ?? '')
-    .replace(/\ba (adverb|adjective|exclamation)\b/gi, (_match, word) => `an ${word}`);
+    .replace(/\ba ([aeiou]\w+)\b/gi, (match, word) => {
+      if (ARTICLE_CONSONANT_ONSET_BLOCKLIST.has(word.toLowerCase())) return match;
+      return `an ${word}`;
+    });
 }
 
 function cleanText(value) {

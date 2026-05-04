@@ -11363,6 +11363,32 @@ function buildP14ConvertedSelectedQuestion(template, seed, rewriteItem, correct)
   const distractors = dedupePlain(rewriteNearMisses.concat(diagnosticDistractors).map(cleanSpaces))
     .filter((option) => option && option !== correct)
     .slice(0, 3);
+  // P19b polish: defensive invariant. The four current P14 selected-response
+  // conversions always produce ≥3 distractors after dedup, but a future content
+  // edit on p14*Item could return colliding nearMiss/distractor sets that
+  // collapse the pool. Shipping a 1-2 option "single_choice" question would
+  // be worse than degrading to manualReviewOnly — bail out cleanly.
+  if (distractors.length < 3) {
+    const fallbackSpec = manualReviewOnlyAnswerSpec({
+      feedbackLong: `Your answer has been saved for review. Expected: ${correct}.`,
+      minimalHint: 'This item is reviewed by an adult, not auto-marked.',
+    });
+    fallbackSpec.expectedAnswerSummary = correct;
+    fallbackSpec.conversionReason = 'p19b-distractor-pool-too-small';
+    return makeBaseQuestion(template, seed, {
+      marks: 0,
+      answerSpec: fallbackSpec,
+      nonScored: true,
+      manualReviewOnly: true,
+      stemHtml: `<p>${escapeHtml(rewriteItem.prompt || '')}</p>`,
+      inputSpec: { type: 'text', label: 'Answer', placeholder: 'Type your answer (saved for adult review)' },
+      solutionLines: [
+        rewriteItem.why || diagnosticItem?.why || 'This open-response item is saved for adult review.',
+        `Expected answer: ${correct}`,
+      ],
+      evaluate: (resp) => markByAnswerSpec(fallbackSpec, resp),
+    });
+  }
   const answerSpec = exactAnswerSpec(correct, distractors, {
     misconception: rewriteItem.misconception || diagnosticItem?.misconception,
     feedbackLong: rewriteItem.why || diagnosticItem?.why,
