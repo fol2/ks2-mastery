@@ -190,7 +190,11 @@ test('SubjectCompanionPanel: imports SectionHeader from platform/ui', () => {
 // 3-subject adoption gate: spelling, punctuation, grammar
 // ---------------------------------------------------------------
 
-test('SubjectCompanionPanel: adopted by punctuation and grammar subjects', () => {
+test('SubjectCompanionPanel: adopted by all three ready subjects', () => {
+  const spellingSource = readFileSync(
+    path.join(rootDir, 'src/subjects/spelling/components/SpellingSetupScene.jsx'),
+    'utf8',
+  );
   const punctuationSource = readFileSync(
     path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'),
     'utf8',
@@ -199,12 +203,14 @@ test('SubjectCompanionPanel: adopted by punctuation and grammar subjects', () =>
     path.join(rootDir, 'src/subjects/grammar/components/GrammarSetupScene.jsx'),
     'utf8',
   );
+  assert.match(spellingSource, /SubjectCompanionPanel/);
   assert.match(punctuationSource, /SubjectCompanionPanel/);
   assert.match(grammarSource, /SubjectCompanionPanel/);
 });
 
 test('P4 U5: ready-subject setup call-sites make the companion panel visible', () => {
   const subjects = [
+    ['spelling', 'src/subjects/spelling/components/SpellingSetupScene.jsx'],
     ['punctuation', 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'],
     ['grammar', 'src/subjects/grammar/components/GrammarSetupScene.jsx'],
   ];

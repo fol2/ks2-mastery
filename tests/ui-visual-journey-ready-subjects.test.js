@@ -62,10 +62,7 @@ test('ready subject journeys expose setup, session HUD, summary, and home return
     const session = stripLineComments(source(subject.session));
     const summary = source(subject.summary);
 
-    // Spelling uses SetupMeadow + SetupStatGrid instead of SubjectCompanionPanel
-    if (subject.id !== 'spelling') {
-      assert.match(setup, /<SubjectCompanionPanel[\s\S]*\svisible/);
-    }
+    assert.match(setup, /<SubjectCompanionPanel[\s\S]*\svisible/);
     assert.ok(setup.includes(subject.startAction), `${subject.id} setup must expose start action`);
     assert.match(session, /<SessionHUD[\s\S]*subjectId=/);
     assert.doesNotMatch(session, /Question\s+\{[^}]*\}\s+of\s+\{[^}]*\}/);

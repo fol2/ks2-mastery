@@ -174,11 +174,11 @@ test('P3 ratchet: all 3 summary scenes import SessionSummaryFrame', () => {
 });
 
 // ────────────────────────────────────────────────────────────────────
-// 7. SubjectCompanionPanel adoption: grammar + punctuation setup scenes.
-//    Spelling uses SetupMeadow + SetupStatGrid (approved design).
+// 7. SubjectCompanionPanel adoption: all 3 setup scenes.
 // ────────────────────────────────────────────────────────────────────
-test('P3 ratchet: grammar and punctuation setup scenes import SubjectCompanionPanel', () => {
+test('P3 ratchet: all 3 setup scenes import SubjectCompanionPanel', () => {
   const setups = [
+    'src/subjects/spelling/components/SpellingSetupScene.jsx',
     'src/subjects/grammar/components/GrammarSetupScene.jsx',
     'src/subjects/punctuation/components/PunctuationSetupScene.jsx',
   ];
