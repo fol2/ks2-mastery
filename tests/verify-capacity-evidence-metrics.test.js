@@ -73,6 +73,72 @@ function writeTempDoc(doc) {
   return docPath;
 }
 
+// Helpers: build a throwaway git repo with the canonical evidence layout so
+// each round 6+ test can reason about ancestry independently.
+function writeSmallPilotConfig(configPath) {
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
+  }));
+}
+
+function writeSmallPilotDoc(docPath, commitPrefix) {
+  writeFileSync(docPath, makeDoc([
+    [
+      '2026-04-25',
+      commitPrefix,
+      'preview',
+      'Free',
+      '10',
+      '10',
+      '1',
+      '320',
+      '180',
+      '81000',
+      '0',
+      'none',
+      'small-pilot-provisional',
+      'reports/capacity/latest-preview.json',
+    ],
+  ]));
+}
+
+function writeSmallPilotEvidence(evidencePath, commitSha) {
+  writeFileSync(evidencePath, JSON.stringify({
+    ok: true,
+    reportMeta: {
+      commit: commitSha,
+      evidenceSchemaVersion: 1,
+      learners: 10,
+      bootstrapBurst: 10,
+      rounds: 1,
+    },
+    safety: { mode: 'production', origin: 'https://example.test', authMode: 'cookie' },
+    summary: {
+      ok: true,
+      totalRequests: 20,
+      startedAt: '2026-04-25T00:00:00Z',
+      finishedAt: '2026-04-25T00:00:30Z',
+      endpoints: {
+        'GET /api/bootstrap': { sampleCount: 10, count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000 },
+        'POST /api/subjects/grammar/command': { sampleCount: 10, count: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+      },
+      signals: {},
+      failures: [],
+    },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+    },
+    failures: [],
+  }));
+}
+
 test('CAPACITY_VERIFY_SKIP_ANCESTRY=1 emits an audit warning in verify output (r6-probe-c)', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-r6c-'));
   const docPath = join(tempDir, 'capacity.md');
