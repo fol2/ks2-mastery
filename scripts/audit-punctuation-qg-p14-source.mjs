@@ -179,6 +179,12 @@ function audit() {
       bankFamilyCount: Object.keys(GENERATED_TEMPLATE_BANK).length,
     },
     transferBySkill,
+    transferBySkillSum: Object.values(transferBySkill).reduce((a, b) => a + b, 0),
+    _transferCountingNote:
+      `transferBySkill values sum to ${Object.values(transferBySkill).reduce((a, b) => a + b, 0)}`
+      + ` which exceeds counts.transferItems (${transfer.length}) because`
+      + ` ${Object.values(transferBySkill).reduce((a, b) => a + b, 0) - transfer.length}`
+      + ` items serve multiple skills and are counted under each.`,
     gates: {
       gate1SourceIdentity: {
         ok: manifest.items.length === fixed.length + generated.length

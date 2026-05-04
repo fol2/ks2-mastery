@@ -30,6 +30,8 @@
     "bullet_points": 19,
     "hyphen": 21
   },
+  "transferBySkillSum": 278,
+  "_transferCountingNote": "transferBySkill values sum to 278 which exceeds counts.transferItems (276) because 2 items serve multiple skills and are counted under each.",
   "gates": {
     "gate1SourceIdentity": {
       "ok": true,
