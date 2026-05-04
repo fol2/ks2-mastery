@@ -55,6 +55,18 @@ const STALE_WRITE_CODES = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
+// Error code extraction — handles both flat and nested response shapes
+// ---------------------------------------------------------------------------
+
+export function extractErrorCode(payload) {
+  if (!payload || typeof payload !== 'object') return '';
+  if (typeof payload.code === 'string' && payload.code) return payload.code;
+  if (payload.error && typeof payload.error === 'object' && typeof payload.error.code === 'string') return payload.error.code;
+  if (typeof payload.error === 'string' && payload.error) return payload.error;
+  return '';
+}
+
+// ---------------------------------------------------------------------------
 // JSON parsing helper (mirrors subject-command-client.js)
 // ---------------------------------------------------------------------------
 
@@ -119,7 +131,7 @@ export function createHeroModeClient({
     const payload = await parseJson(response);
     if (!response.ok || payload?.ok === false) {
       throw new HeroModeClientError({
-        code: payload?.code || payload?.error || '',
+        code: extractErrorCode(payload),
         status: response.status,
         payload,
       });
@@ -181,7 +193,7 @@ export function createHeroModeClient({
     const responsePayload = await parseJson(response);
 
     if (!response.ok || responsePayload?.ok === false) {
-      const errorCode = responsePayload?.code || responsePayload?.error || '';
+      const errorCode = extractErrorCode(responsePayload);
       const heroError = new HeroModeClientError({
         code: errorCode,
         status: response.status,
@@ -266,7 +278,7 @@ export function createHeroModeClient({
     const responsePayload = await parseJson(response);
 
     // Auto-retry once on stale_write (revision conflict)
-    if (!response.ok && responsePayload?.code === 'stale_write') {
+    if (!response.ok && extractErrorCode(responsePayload) === 'stale_write') {
       if (typeof onStaleWrite === 'function') {
         onStaleWrite({
           error: new HeroModeClientError({
@@ -311,7 +323,7 @@ export function createHeroModeClient({
 
       if (!retryResponse.ok) {
         throw new HeroModeClientError({
-          code: retryPayload?.code || retryPayload?.error || 'hero_claim_failed',
+          code: extractErrorCode(retryPayload) || 'hero_claim_failed',
           status: retryResponse.status,
           retryable: false,
           payload: retryPayload,
@@ -323,7 +335,7 @@ export function createHeroModeClient({
 
     // Non-stale errors
     if (!response.ok || responsePayload?.ok === false) {
-      const errorCode = responsePayload?.code || responsePayload?.error || 'hero_claim_failed';
+      const errorCode = extractErrorCode(responsePayload) || 'hero_claim_failed';
       const heroError = new HeroModeClientError({
         code: errorCode,
         status: response.status,
@@ -394,7 +406,7 @@ export function createHeroModeClient({
     const responsePayload = await parseJson(response);
 
     if (!response.ok || responsePayload?.ok === false) {
-      const errorCode = responsePayload?.code || responsePayload?.error || 'hero_unlock_failed';
+      const errorCode = extractErrorCode(responsePayload) || 'hero_unlock_failed';
       const heroError = new HeroModeClientError({
         code: errorCode,
         status: response.status,
@@ -463,7 +475,7 @@ export function createHeroModeClient({
     const responsePayload = await parseJson(response);
 
     if (!response.ok || responsePayload?.ok === false) {
-      const errorCode = responsePayload?.code || responsePayload?.error || 'hero_evolve_failed';
+      const errorCode = extractErrorCode(responsePayload) || 'hero_evolve_failed';
       const heroError = new HeroModeClientError({
         code: errorCode,
         status: response.status,
