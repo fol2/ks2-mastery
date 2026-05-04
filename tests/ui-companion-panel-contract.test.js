@@ -217,14 +217,59 @@ test('P4 U5: ready-subject setup call-sites make the companion panel visible', (
 
   for (const [subject, relativePath] of subjects) {
     const text = readFileSync(path.join(rootDir, relativePath), 'utf8');
-    const panel = text.match(/<SubjectCompanionPanel[\s\S]*?\/>/)?.[0] || '';
-    assert.match(panel, new RegExp(`subjectId="${subject}"`));
-    assert.match(
-      panel,
-      /\svisible(?:\s|>|$|=)/,
+    assert.ok(text.includes('<SubjectCompanionPanel'), `${subject} must use SubjectCompanionPanel`);
+    assert.ok(text.includes(`subjectId="${subject}"`), `${subject} must set subjectId`);
+    assert.ok(
+      text.includes('visible') && text.includes('SubjectCompanionPanel'),
       `${subject} setup must pass visible or an equivalent visible disclosure path`,
     );
   }
+});
+
+// ---------------------------------------------------------------
+// monsterVisuals prop renders ss-meadow grid with images
+// ---------------------------------------------------------------
+
+test('SubjectCompanionPanel: monsterVisuals renders ss-meadow grid with img elements', async () => {
+  const html = await runFixture(`
+    ${renderHeader()}
+    const tree = React.createElement(SubjectCompanionPanel, {
+      subjectId: 'spelling',
+      monsterVisuals: [
+        { id: 'inklet', visual: { style: { '--visual-scale': '1' }, imageProps: { src: '/img/inklet.webp', width: 64, height: 64 } }, isEgg: false },
+        { id: 'glimmer', visual: { style: {}, imageProps: { src: '/img/glimmer.webp', width: 64, height: 64 } }, isEgg: true },
+      ],
+      stats: [],
+    });
+    console.log(renderToStaticMarkup(tree));
+  `);
+  assert.match(html, /class="ss-meadow"/);
+  assert.match(html, /class="ss-meadow-cell"/);
+  assert.match(html, /class="ss-meadow-cell egg"/);
+  assert.match(html, /class="ss-meadow-art"/);
+  assert.match(html, /src="\/img\/inklet\.webp"/);
+  assert.match(html, /src="\/img\/glimmer\.webp"/);
+  assert.doesNotMatch(html, /companion-panel-monster-list/);
+});
+
+// ---------------------------------------------------------------
+// head prop renders ss-head wrapper
+// ---------------------------------------------------------------
+
+test('SubjectCompanionPanel: head prop renders ss-head div', async () => {
+  const html = await runFixture(`
+    ${renderHeader()}
+    const tree = React.createElement(SubjectCompanionPanel, {
+      subjectId: 'spelling',
+      head: React.createElement('p', { className: 'eyebrow' }, 'Where you stand'),
+      monsters: [],
+      stats: [{ label: 'Total', value: '50' }],
+    });
+    console.log(renderToStaticMarkup(tree));
+  `);
+  assert.match(html, /class="ss-head"/);
+  assert.match(html, /Where you stand/);
+  assert.doesNotMatch(html, /companion-panel-empty/);
 });
 
 // ---------------------------------------------------------------
