@@ -441,9 +441,8 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
                     type="button"
                     className="ss-codex-link"
                     data-action="open-codex"
-                    aria-label="Open the codex"
-                    onClick={() => { if (!disabled) actions.dispatch('open-codex'); }}
-                    disabled={disabled}
+                    aria-label="Open the full codex"
+                    onClick={() => actions.dispatch('open-codex')}
                   >
                     Open codex →
                   </button>

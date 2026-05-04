@@ -402,9 +402,8 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
                     type="button"
                     className="ss-codex-link"
                     data-action="open-codex"
-                    aria-label="Open the codex"
+                    aria-label="Open the full codex"
                     onClick={() => actions.dispatch('open-codex')}
-                    disabled={setupDisabled}
                   >
                     Open codex →
                   </button>
