@@ -521,6 +521,14 @@ export function buildGrammarPracticeQueue({
     addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
   }
 
+  // P19b polish: focus-saturation lane fires only when the focus concept's
+  // mode-eligible pool is smaller than the queue size (1..safeSize-1
+  // templates). With the current 510-template inventory the smallest mode-
+  // eligible per-concept pool is 16 (satsset/active_passive), so the lane is
+  // currently unreachable in production AND in audit simulation. Kept in
+  // place for forward compatibility — a future content release that retires
+  // a concept down to ≤4 active templates would activate it cleanly without
+  // a code change. The audit MD documents the reachability gap honestly.
   if (normalisedFocus) {
     const focusTemplates = templateFreshPool(
       pool.filter((template) => (template.skillIds || []).includes(normalisedFocus)),
