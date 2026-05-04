@@ -429,13 +429,26 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
         <SetupSidePanel
           asideClassName="punctuation-setup-sidebar"
           cardClassName="punctuation-setup-sidebar-card"
-          headTag="header"
           ariaLabel="Your monsters"
           body={(
             <SubjectCompanionPanel
               subjectId="punctuation"
               visible
-              head={<p className="eyebrow">Your monsters</p>}
+              head={(
+                <>
+                  <p className="eyebrow">Your monsters</p>
+                  <button
+                    type="button"
+                    className="ss-codex-link"
+                    data-action="punctuation-open-map"
+                    aria-label="Open the Punctuation Map"
+                    onClick={() => { if (!disabled) actions.dispatch('punctuation-open-map'); }}
+                    disabled={disabled}
+                  >
+                    Open map →
+                  </button>
+                </>
+              )}
               monsterVisuals={panelMonsterVisuals}
               meadowEmpty="Start practising to discover your first egg."
               stats={[

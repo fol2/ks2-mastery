@@ -406,7 +406,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
                     onClick={openConceptBank}
                     disabled={setupDisabled}
                   >
-                    Open bank →
+                    Open codex →
                   </button>
                 </>
               )}
