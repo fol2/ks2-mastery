@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "phase": "punctuation-qg-p14-session-variety",
+  "releaseId": "punctuation-qg-p14-3564-2026-05-04",
+  "generatedAt": "2026-05-04T01:26:10.546Z",
+  "roundLength": 6,
+  "mixedSeedSweep": {
+    "sessionCount": 80,
+    "totalImmediateRepeats": 0,
+    "averageModesPerSession": 5.15,
+    "paragraphSessions": 68,
+    "transferSessions": 65,
+    "uniqueItemsAcrossSweep": 216,
+    "maxTransferRatio": 0.25,
+    "sample": [
+      {
+        "items": [
+          "fx12_sentence_endings_024",
+          "se_choose_exclaim",
+          "se_insert_question",
+          "fx_se_choose_river_question",
+          "fx_se_choose_command_full_stop",
+          "se_fix_excited_statement"
+        ],
+        "uniqueItems": 6,
+        "modes": [
+          "choose",
+          "insert",
+          "fix"
+        ],
+        "uniqueSkills": 1,
+        "immediateRepeats": 0,
+        "hasParagraph": false,
+        "hasTransfer": false,
+        "transferRatio": 0
+      },
+      {
+        "items": [
+          "se_choose_exclaim",
+          "se_insert_question",
+          "fx12_sentence_endings_001",
+          "fx12_sentence_endings_002",
+          "gen_list_commas_combine_16l4gcg_2",
+          "gen_apostrophe_mix_paragraph_bcmgds_13",
+          "bp_choose_bring",
+          "bp_insert_kit"
+        ],
+        "uniqueItems": 8,
+        "modes": [
+          "choose",
+          "insert",
+          "combine",
+          "paragraph"
+        ],
+        "uniqueSkills": 5,
+        "immediateRepeats": 0,
+        "hasParagraph": true,
+        "hasTransfer": false,
+        "transferRatio": 0
+      },
+      {
+        "items": [
+          "fx_ac_choose_isnt_wouldnt",
+          "fx_ac_choose_cant_were",
+          "sl_fix_stalls",
+          "gen_sentence_endings_transfer_w51199_8",
+          "pa_combine_lighthouse",
+          "gen_apostrophe_mix_paragraph_hqa5u6_26",
+          "sc_choose_rain_pitch",
+          "sc_insert_lights_audience",
+          "sc_fix_path_map",
+          "sc_transfer_rain_pitch",
+          "gen_list_commas_combine_19exs4k_26",
+          "gen_apostrophe_mix_paragraph_iu8km2_22"
+        ],
+        "uniqueItems": 12,
+        "modes": [
+          "choose",
+          "fix",
+          "transfer",
+          "combine",
+          "paragraph",
+          "insert"
+        ],
+        "uniqueSkills": 7,
+        "immediateRepeats": 0,
+        "hasParagraph": true,
+        "hasTransfer": true,
+        "transferRatio": 0.16666666666666666
+      },
+      {
+        "items": [
+          "ac_choose_contractions",
+          "ac_insert_contractions",
+          "gen_apostrophe_contractions_fix_tdz6ot_7",
+          "dc_transfer_curtain_rose",
+          "gen_list_commas_combine_15itvx1_18",
+          "gen_apostrophe_mix_paragraph_fyc7bh_9"
+        ],
+        "uniqueItems": 6,
+        "modes": [
+          "choose",
+          "insert",
+          "fix",
+          "transfer",
+          "combine",
+          "paragraph"
+        ],
+        "uniqueSkills": 4,
+        "immediateRepeats": 0,
+        "hasParagraph": true,
+        "hasTransfer": true,
+        "transferRatio": 0.16666666666666666
+      },
+      {
+        "items": [
+          "dc_choose_flooded_route",
+          "dc_insert_door_froze",
+          "dc_fix_signal_team",
+          "dc_transfer_flooded_route",
+          "gen_list_commas_combine_14yuoj3_16",
+          "pg_colon_semicolon",
+          "cc_choose_grandma",
+          "cc_insert_time_travellers"
+        ],
+        "uniqueItems": 8,
+        "modes": [
+          "choose",
+          "insert",
+          "fix",
+          "transfer",
+          "combine",
+          "paragraph"
+        ],
+        "uniqueSkills": 5,
+        "immediateRepeats": 0,
+        "hasParagraph": true,
+        "hasTransfer": true,
+        "transferRatio": 0.125
+      }
+    ]
+  },
+  "oneLearnerSweep": {
+    "sessionCount": 20,
+    "totalImmediateRepeats": 0,
+    "averageModesPerSession": 4.5,
+    "paragraphSessions": 13,
+    "transferSessions": 14,
+    "uniqueItemsAcrossSweep": 83,
+    "maxTransferRatio": 0.3333333333333333
+  },
+  "gates": {
+    "gate5Mixed": {
+      "target": {
+        "sessions": 80,
+        "immediateRepeats": 0,
+        "modesPerSession": 3,
+        "uniqueItems": 200
+      },
+      "observed": {
+        "sessions": 80,
+        "immediateRepeats": 0,
+        "averageModesPerSession": 5.15,
+        "uniqueItems": 216
+      },
+      "ok": true
+    },
+    "gate5OneLearner": {
+      "target": {
+        "sessions": 20,
+        "immediateRepeats": 0,
+        "uniqueItems": 80,
+        "paragraphAtLeastOnceEveryFour": true,
+        "transferRatioMax": 0.5
+      },
+      "observed": {
+        "sessions": 20,
+        "immediateRepeats": 0,
+        "uniqueItems": 83,
+        "paragraphSessions": 13,
+        "transferSessions": 14,
+        "maxTransferRatio": 0.33
+      },
+      "ok": true
+    }
+  },
+  "overallOk": true
+}

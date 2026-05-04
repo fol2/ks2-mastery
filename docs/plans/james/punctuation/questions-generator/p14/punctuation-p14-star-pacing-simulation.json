@@ -1,0 +1,1199 @@
+{
+  "schemaVersion": 1,
+  "phase": "punctuation-qg-p14-star-pacing-simulation",
+  "releaseId": "punctuation-qg-p14-3564-2026-05-04",
+  "generatedAt": "2026-05-04T01:26:09.497Z",
+  "sessionsPerProfile": 80,
+  "profiles": [
+    {
+      "id": "always-correct",
+      "label": "Always-correct learner"
+    },
+    {
+      "id": "deep-practice",
+      "label": "Deep-practice learner (returns over days)"
+    },
+    {
+      "id": "long-gap-retention",
+      "label": "Long-gap retention learner (sparse return)"
+    },
+    {
+      "id": "easy-template-only",
+      "label": "Easy-template-only learner (sticks to one skill)"
+    },
+    {
+      "id": "repeated-template",
+      "label": "Repeated-template learner (loops same skill)"
+    },
+    {
+      "id": "supported-after-wrong",
+      "label": "Supported-after-wrong learner (first-attempt fails, second succeeds)"
+    }
+  ],
+  "roundLength_4": {
+    "roundLength": 4,
+    "profiles": [
+      {
+        "profileId": "always-correct",
+        "label": "Always-correct learner",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 2,
+          "Growing": 10
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 36,
+          "grand": 100
+        },
+        "finalAttempts": 320,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 7,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 2,
+              "curlune": 7,
+              "claspin": 0,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 26,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 35,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "deep-practice",
+        "label": "Deep-practice learner (returns over days)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 4,
+          "Growing": 13
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 36,
+          "grand": 100
+        },
+        "finalAttempts": 320,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 7,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 2,
+              "curlune": 7,
+              "claspin": 0,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 32,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "long-gap-retention",
+        "label": "Long-gap retention learner (sparse return)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 5,
+          "Growing": 15
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 31,
+          "grand": 100
+        },
+        "finalAttempts": 320,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 3,
+            "maxDirectStars": 5,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 5,
+              "curlune": 1,
+              "claspin": 2,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 2,
+            "correctCount": 3,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 36,
+              "curlune": 40,
+              "claspin": 26,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 2,
+            "correctCount": 3,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 31,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 3,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 31,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 3,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 31,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "easy-template-only",
+        "label": "Easy-template-only learner (sticks to one skill)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 5,
+          "Growing": 14
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 36,
+          "grand": 100
+        },
+        "finalAttempts": 320,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 5,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 5,
+              "curlune": 2,
+              "claspin": 2,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 2,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 31,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "repeated-template",
+        "label": "Repeated-template learner (loops same skill)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 3,
+          "Growing": 12
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 36,
+          "grand": 100
+        },
+        "finalAttempts": 320,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 5,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 5,
+              "curlune": 5,
+              "claspin": 0,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 31,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 35,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "supported-after-wrong",
+        "label": "Supported-after-wrong learner (first-attempt fails, second succeeds)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 4,
+          "Growing": 13
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 32,
+          "grand": 100
+        },
+        "finalAttempts": 320,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 3,
+            "maxDirectStars": 3,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 2,
+              "curlune": 3,
+              "claspin": 2,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 3,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 31,
+              "curlune": 40,
+              "claspin": 26,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 3,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 31,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 3,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 32,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 4,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 3,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 32,
+              "grand": 100
+            }
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "alwaysCorrectStageReachedAt": {
+        "Egg found": 1,
+        "Hatched": 2,
+        "Growing": 10
+      }
+    }
+  },
+  "roundLength_6": {
+    "roundLength": 6,
+    "profiles": [
+      {
+        "profileId": "always-correct",
+        "label": "Always-correct learner",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 2,
+          "Growing": 8
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 36,
+          "grand": 100
+        },
+        "finalAttempts": 480,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 6,
+            "maxDirectStars": 10,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 5,
+              "curlune": 10,
+              "claspin": 0,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 5,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 34,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 5,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "deep-practice",
+        "label": "Deep-practice learner (returns over days)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 3,
+          "Growing": 8
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 36,
+          "grand": 100
+        },
+        "finalAttempts": 480,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 6,
+            "maxDirectStars": 10,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 2,
+              "curlune": 10,
+              "claspin": 2,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 33,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 5,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "long-gap-retention",
+        "label": "Long-gap retention learner (sparse return)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 3,
+          "Growing": 10
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 33,
+          "grand": 100
+        },
+        "finalAttempts": 480,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 4,
+            "maxDirectStars": 6,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 6,
+              "curlune": 3,
+              "claspin": 2,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 30,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 33,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 4,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 33,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 5,
+            "correctCount": 5,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 33,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "easy-template-only",
+        "label": "Easy-template-only learner (sticks to one skill)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 2,
+          "Growing": 8
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 36,
+          "grand": 100
+        },
+        "finalAttempts": 480,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 5,
+            "correctCount": 6,
+            "maxDirectStars": 10,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 10,
+              "curlune": 2,
+              "claspin": 2,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 34,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 5,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "repeated-template",
+        "label": "Repeated-template learner (loops same skill)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 3,
+          "Growing": 8
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 36,
+          "grand": 100
+        },
+        "finalAttempts": 480,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 6,
+            "maxDirectStars": 10,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 10,
+              "curlune": 5,
+              "claspin": 0,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 35,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 4,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 5,
+            "correctCount": 6,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 36,
+              "grand": 100
+            }
+          }
+        ]
+      },
+      {
+        "profileId": "supported-after-wrong",
+        "label": "Supported-after-wrong learner (first-attempt fails, second succeeds)",
+        "stageReachedAt": {
+          "Egg found": 1,
+          "Hatched": 3,
+          "Growing": 8
+        },
+        "finalStars": {
+          "pealark": 40,
+          "curlune": 40,
+          "claspin": 34,
+          "grand": 100
+        },
+        "finalAttempts": 480,
+        "sessionCount": 80,
+        "samples": [
+          {
+            "session": 1,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 5,
+            "maxDirectStars": 6,
+            "stage": "Egg found",
+            "stars": {
+              "pealark": 5,
+              "curlune": 6,
+              "claspin": 2,
+              "grand": 100
+            }
+          },
+          {
+            "session": 21,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 5,
+            "correctCount": 5,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 29,
+              "grand": 100
+            }
+          },
+          {
+            "session": 41,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 6,
+            "correctCount": 5,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 34,
+              "grand": 100
+            }
+          },
+          {
+            "session": 61,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 5,
+            "correctCount": 5,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 34,
+              "grand": 100
+            }
+          },
+          {
+            "session": 80,
+            "itemsServed": 6,
+            "uniqueModes": 1,
+            "uniqueSkills": 3,
+            "correctCount": 5,
+            "maxDirectStars": 40,
+            "stage": "Growing",
+            "stars": {
+              "pealark": 40,
+              "curlune": 40,
+              "claspin": 34,
+              "grand": 100
+            }
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "alwaysCorrectStageReachedAt": {
+        "Egg found": 1,
+        "Hatched": 2,
+        "Growing": 8
+      }
+    }
+  },
+  "gate6Decision": {
+    "gate6RoundLength": "4",
+    "reasoning": "No progress inflation at 4q. Skill-detail stays at 4 (focused rescue surface).",
+    "stages4": {
+      "Egg found": 1,
+      "Hatched": 2,
+      "Growing": 10
+    },
+    "stages6": {
+      "Egg found": 1,
+      "Hatched": 2,
+      "Growing": 8
+    }
+  }
+}
