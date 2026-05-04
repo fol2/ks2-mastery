@@ -307,7 +307,7 @@ function visibleOptions(inputSpec) {
 function surfaceKeyFor(question, serialised) {
   const promptText = String(serialised?.promptText || '');
   const optionsBlob = JSON.stringify(visibleOptions(serialised?.inputSpec) || null);
-  const focusCue = String(serialised?.focusCue || '');
+  const focusCue = JSON.stringify(serialised?.focusCue ?? '');
   return crypto.createHash('sha1').update(`${promptText}|${optionsBlob}|${focusCue}`).digest('hex');
 }
 
