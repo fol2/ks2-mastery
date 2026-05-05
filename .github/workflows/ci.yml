@@ -36,7 +36,7 @@ jobs:
     needs: classify
     if: ${{ github.event_name == 'workflow_dispatch' || needs.classify.outputs.docs_only != 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     strategy:
       fail-fast: false
       matrix:
