@@ -1,0 +1,6 @@
+Grammar QG P19 smart-practice audit: PASS
+  Sessions: 330 (11 profiles × 30 seeds)
+  Failures: 0
+  Advisories: 0
+  JSON: ${REPO_ROOT}/reports/grammar/grammar-qg-p19-smart-practice-audit.json
+  MD: ${REPO_ROOT}/reports/grammar/grammar-qg-p19-smart-practice-audit.md
