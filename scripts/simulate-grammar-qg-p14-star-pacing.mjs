@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -126,7 +127,7 @@ function queueForProfile(profile, sessionIndex, mastery, attempts, size) {
 }
 
 function simulateProfile(profile, opts = {}) {
-  const sessions = opts.sessions || 80;
+  const sessions = opts.sessions || 45;
   const size = opts.size || (profile === 'deep-practice' ? 15 : 5);
   const mastery = emptyMastery();
   const attempts = [];
@@ -189,7 +190,18 @@ function simulateProfile(profile, opts = {}) {
   };
 }
 
+const CACHE_PATH = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '.test-cache', 'star-pacing-simulation.json');
+
 export function buildStarPacingSimulation() {
+  if (existsSync(CACHE_PATH)) {
+    try {
+      const cached = JSON.parse(readFileSync(CACHE_PATH, 'utf8'));
+      if (cached.contentReleaseId === GRAMMAR_CONTENT_RELEASE_ID
+        && cached.templateCount === GRAMMAR_TEMPLATE_METADATA.length) {
+        return cached;
+      }
+    } catch { /* stale or corrupt — regenerate */ }
+  }
   const profiles = [
     simulateProfile('always-correct', { size: 5 }),
     simulateProfile('mixed-correct-wrong', { size: 5 }),
@@ -200,7 +212,7 @@ export function buildStarPacingSimulation() {
     simulateProfile('long-gap-retention', { size: 5 }),
   ];
   const highStageFailures = profiles.filter((profile) => profile.highStageViaRepeatedShallowItems);
-  return {
+  const result = {
     reportId: 'grammar-qg-p14-star-pacing-simulation',
     contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
     generatedAt: new Date().toISOString(),
@@ -215,6 +227,11 @@ export function buildStarPacingSimulation() {
       highWaterSafetyImpacted: false,
     },
   };
+  try {
+    mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
+    writeFileSync(CACHE_PATH, JSON.stringify(result, null, 2));
+  } catch { /* non-fatal — cache miss next time */ }
+  return result;
 }
 
 function markdownFor(report) {

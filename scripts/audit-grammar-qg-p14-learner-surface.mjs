@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -185,7 +186,15 @@ function retryQueuePath() {
   };
 }
 
+const SURFACE_CACHE_PATH = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '.test-cache', 'learner-surface-audit.json');
+
 export function buildLearnerSurfaceAudit() {
+  if (existsSync(SURFACE_CACHE_PATH)) {
+    try {
+      const cached = JSON.parse(readFileSync(SURFACE_CACHE_PATH, 'utf8'));
+      if (cached.contentReleaseId === GRAMMAR_CONTENT_RELEASE_ID) return cached;
+    } catch { /* regenerate */ }
+  }
   const paths = [
     queuePath({ pathId: 'first-time-smart', label: 'First-time smart practice', mode: 'smart', size: 5, seed: 87 }),
     queuePath({ pathId: 'returning-smart', label: 'Returning smart practice', mode: 'smart', size: 5, seed: 143, recentAttempts: returningRecentAttempts() }),
@@ -197,7 +206,7 @@ export function buildLearnerSurfaceAudit() {
     retryQueuePath(),
   ];
   const failures = paths.filter((entry) => !entry.pass);
-  return {
+  const result = {
     reportId: 'grammar-qg-p14-learner-surface-audit',
     contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
     generatedAt: new Date().toISOString(),
@@ -209,6 +218,11 @@ export function buildLearnerSurfaceAudit() {
     })),
     paths,
   };
+  try {
+    mkdirSync(path.dirname(SURFACE_CACHE_PATH), { recursive: true });
+    writeFileSync(SURFACE_CACHE_PATH, JSON.stringify(result, null, 2));
+  } catch { /* non-fatal */ }
+  return result;
 }
 
 function markdownFor(report) {

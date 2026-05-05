@@ -54,3 +54,4 @@ tests/playwright/__screenshots__/
 # Session artefacts — not source
 .claude/*.txt
 *.diff
+.test-cache/
