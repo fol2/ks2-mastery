@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Grammar QG P19 — Contract D smart-practice simulator.
+ * Grammar QG smart-practice simulator.
  *
- * Replays buildGrammarPracticeQueue across 11 learner profiles × 30 seeds
+ * Replays buildGrammarPracticeQueue across 11 learner profiles and 30 seeds
  * (330 sessions) and asserts that a normal 5-question smart round does
  * not contain duplicate template IDs or duplicate learner-visible surfaces
  * when the active template pool can avoid it. Reports concept / question-
@@ -536,9 +536,15 @@ export function buildSmartPracticeAudit({ seeds = SEED_RANGE } = {}) {
   };
 }
 
+function getSmartPracticeReportLabel(contentReleaseId) {
+  const match = String(contentReleaseId || '').match(/grammar-qg-p(\d+)-/i);
+  return match ? `P${match[1]}` : 'current';
+}
+
 function renderMarkdown(audit, seeds = SEED_RANGE) {
+  const reportLabel = getSmartPracticeReportLabel(audit.metadata.contentReleaseId);
   const lines = [];
-  lines.push(`# Grammar QG P19 — smart-practice surface audit`);
+  lines.push(`# Grammar QG ${reportLabel} — smart-practice surface audit`);
   lines.push('');
   lines.push(`Content release: \`${audit.metadata.contentReleaseId}\``);
   lines.push(`Generated: \`${audit.metadata.generatedAt}\``);
@@ -628,7 +634,8 @@ async function main() {
   await fs.writeFile(jsonOut, JSON.stringify(audit, null, 2) + '\n', 'utf8');
   await fs.writeFile(mdOut, renderMarkdown(audit, seeds), 'utf8');
 
-  console.log(`Grammar QG P19 smart-practice audit: ${audit.summary.pass ? 'PASS' : 'FAIL'}`);
+  const reportLabel = getSmartPracticeReportLabel(audit.metadata.contentReleaseId);
+  console.log(`Grammar QG ${reportLabel} smart-practice audit: ${audit.summary.pass ? 'PASS' : 'FAIL'}`);
   console.log(`  Sessions: ${audit.summary.sessionCount} (${audit.summary.profileCount} profiles × ${seeds.length} seeds)`);
   console.log(`  Failures: ${audit.summary.failureCount}`);
   console.log(`  Advisories: ${audit.summary.advisoryCount}`);
