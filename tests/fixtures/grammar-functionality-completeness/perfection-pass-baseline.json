@@ -24,7 +24,8 @@
       "landedIn": "PR #146 (U2)",
       "evidence": [
         "worker/src/subjects/grammar/selection.js",
-        "tests/grammar-selection-core.test.js",
+        "tests/grammar-selection-core-weights.test.js",
+        "tests/grammar-selection-core-freshness.test.js",
         "tests/grammar-selection-edge.test.js"
       ],
       "ownerUnitAllowedByTest": true

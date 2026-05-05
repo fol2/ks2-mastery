@@ -15,22 +15,10 @@ function readReport(filename) {
   return JSON.parse(fs.readFileSync(path.join(REPORTS_DIR, filename), 'utf8'));
 }
 
-describe('Grammar QG P14 learner surface and telemetry contract (part B)', () => {
-  it('keeps the star-pacing simulation below mastery-inflation thresholds', () => {
-    const fresh = buildStarPacingSimulation();
-    const committed = readReport('grammar-qg-p14-star-pacing-simulation.json');
+describe('Grammar QG P14 historical P18 artefact validation (part B2)', () => {
+  it('validates the frozen P18 historical artefact', () => {
     const committedP18 = readReport('grammar-qg-p18-star-pacing-simulation.json');
 
-    assert.equal(fresh.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
-    assert.equal(fresh.conclusion.pass, true);
-    assert.equal(committed.conclusion.pass, true);
-    assert.equal(committed.conclusion.thresholdChange, 'none');
-    assert.equal(committed.conclusion.migrationRequired, false);
-    assert.equal(
-      committed.profiles.some((profile) => profile.highStageViaRepeatedShallowItems),
-      false,
-    );
-    // committedP18 is a frozen historical artefact from the P18 cycle.
     assert.equal(committedP18.contentReleaseId, 'grammar-qg-p18-2026-05-02');
     assert.equal(committedP18.templateCount, 510);
     assert.equal(committedP18.conclusion.pass, true);
