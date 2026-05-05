@@ -627,6 +627,7 @@ async function smokePunctuationTargetedAnswer({
         skillIds: currentItem.skillIds || [],
         feedbackKind: feedbackModel.feedback.kind,
         misconceptionTags: feedbackModel.feedback.misconceptionTags || [],
+        submittedAnswer: answer,
         seenItems: seen.map(seenItemLabel),
       };
     }
@@ -706,6 +707,8 @@ async function smokePunctuationDashAcceptance({ origin, cookie, learnerId, revis
       itemId: result.itemId,
       mode: result.mode,
       skillIds: result.skillIds,
+      feedbackKind: result.feedbackKind,
+      acceptedAnswer: result.submittedAnswer?.typed || null,
     });
   }
   return {

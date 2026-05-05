@@ -124,6 +124,22 @@ export function validatePunctuationQGP20LiveEvidence({ smokePath = DEFAULT_SMOKE
   if (Number(smartSix.uniqueItems) !== 6) failures.push(`smartSix.uniqueItems=${smartSix.uniqueItems}, expected 6`);
   if (Number(smartSix.immediateRepeats) !== 0) failures.push(`smartSix.immediateRepeats=${smartSix.immediateRepeats}, expected 0`);
 
+  const dashAcceptance = Array.isArray(punctuation.dashAcceptance) ? punctuation.dashAcceptance : [];
+  const dashByVariant = new Map(dashAcceptance.map((entry) => [entry?.variant, entry]));
+  for (const variant of ['spaced-hyphen', 'en-dash', 'em-dash']) {
+    const entry = dashByVariant.get(variant);
+    if (!entry) {
+      failures.push(`dashAcceptance missing ${variant}`);
+      continue;
+    }
+    if (entry.feedbackKind !== 'success') {
+      failures.push(`dashAcceptance.${variant}.feedbackKind=${entry.feedbackKind || 'missing'}, expected success`);
+    }
+    if (typeof entry.acceptedAnswer !== 'string' || !entry.acceptedAnswer.trim()) {
+      failures.push(`dashAcceptance.${variant}.acceptedAnswer missing`);
+    }
+  }
+
   let auditStatus = null;
   if (!audit.exists) failures.push(`missing local P20 expansion audit evidence: ${auditPath}`);
   else if (audit.error) failures.push(`P20 expansion audit is not valid JSON: ${audit.error}`);
@@ -153,6 +169,11 @@ export function validatePunctuationQGP20LiveEvidence({ smokePath = DEFAULT_SMOKE
         uniqueItems: smartSix.uniqueItems ?? null,
         immediateRepeats: smartSix.immediateRepeats ?? null,
       },
+      dashAcceptance: dashAcceptance.map((entry) => ({
+        variant: entry?.variant ?? null,
+        feedbackKind: entry?.feedbackKind ?? null,
+        hasAcceptedAnswer: typeof entry?.acceptedAnswer === 'string' && entry.acceptedAnswer.trim().length > 0,
+      })),
       auditStatus,
     },
     failures,

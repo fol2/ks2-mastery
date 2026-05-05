@@ -31,6 +31,20 @@ test('normalisedText: accepts whitespace + case variants, preserves the golden',
   assert.equal(markByAnswerSpec(spec, { answer: 'subordinate' }).correct, false);
 });
 
+test('normalisedText: preserves grammar-critical terminal apostrophes while stripping real wrapper quotes', () => {
+  const spec = { kind: 'normalisedText', golden: ["dogs'"], nearMiss: ['dogs'], maxScore: 1 };
+  assert.equal(markByAnswerSpec(spec, { answer: "dogs'" }).correct, true);
+  assert.equal(markByAnswerSpec(spec, { answer: "\"dogs'\"" }).correct, true);
+  assert.equal(markByAnswerSpec(spec, { answer: 'dogs' }).correct, false, 'missing possessive apostrophe must not be accepted');
+});
+
+test('normalisedText: accepts semicolon spelling aliases for punctuation mark labels', () => {
+  const spec = { kind: 'normalisedText', golden: ['semicolon'], nearMiss: ['colon'], maxScore: 1 };
+  assert.equal(markByAnswerSpec(spec, { answer: 'semicolon' }).correct, true);
+  assert.equal(markByAnswerSpec(spec, { answer: 'semi-colon' }).correct, true);
+  assert.equal(markByAnswerSpec(spec, { answer: 'semi colon' }).correct, true);
+});
+
 test('acceptedSet: two equivalent clause-combine sentences both score full marks', () => {
   const spec = {
     kind: 'acceptedSet',
@@ -91,6 +105,19 @@ test('punctuationPattern: optionalCommas=false rejects comma-free variant', () =
   };
   const withoutCommas = markByAnswerSpec(spec, { answer: 'The cat which sat on the mat was fat.' });
   assert.equal(withoutCommas.correct, false);
+});
+
+test('punctuationPattern: optionalTerminalFullStop accepts only incidental final full-stop differences', () => {
+  const spec = {
+    kind: 'punctuationPattern',
+    golden: ['Before sunrise, the campers packed their bags.'],
+    nearMiss: [],
+    params: { optionalTerminalFullStop: true },
+    maxScore: 1,
+  };
+  assert.equal(markByAnswerSpec(spec, { answer: 'Before sunrise, the campers packed their bags.' }).correct, true);
+  assert.equal(markByAnswerSpec(spec, { answer: 'Before sunrise, the campers packed their bags' }).correct, true);
+  assert.equal(markByAnswerSpec(spec, { answer: 'Before sunrise the campers packed their bags.' }).correct, false);
 });
 
 test('multiField: scores each sub-field independently and aggregates', () => {

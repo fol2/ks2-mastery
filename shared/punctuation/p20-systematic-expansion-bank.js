@@ -133,6 +133,21 @@ function wrongLower(model) {
   return text.replace(/^([A-Z])/, (match) => match.toLowerCase()).replace(/[.!?]\s*$/, '');
 }
 
+function pluralPossessiveDistractor(possessor) {
+  const text = String(possessor ?? '').trim();
+  if (!text) return "";
+  if (/(?:s|x|z|ch|sh)$/i.test(text)) return `${text}es'`;
+  return `${text}s'`;
+}
+
+function singularPossessiveDistractor(possessor) {
+  const text = String(possessor ?? '').trim();
+  if (!text) return "";
+  if (/ies$/i.test(text)) return `${text.slice(0, -3)}y's`;
+  if (/s$/i.test(text)) return `${text.slice(0, -1)}'s`;
+  return `${text}'s`;
+}
+
 function freezeTemplates(rows) {
   return Object.freeze(rows.map((row) => Object.freeze({
     ...row,
@@ -236,9 +251,9 @@ function coreForSkill(skillId, index, familyId) {
         model,
         bad,
         wrongOne: c.possessorGood.endsWith("'s")
-          ? `The ${c.possessorBad}s' ${c.object} was beside the ${c.record}.`
-          : `The ${c.possessorBad}'s ${c.object} was beside the ${c.record}.`,
-        wrongTwo: `The ${c.possessorGood.replace(/'/g, '')} ${c.object} was beside the ${c.record}.`,
+          ? `The ${pluralPossessiveDistractor(c.possessorBad)} ${c.object} was beside the ${c.record}.`
+          : `The ${singularPossessiveDistractor(c.possessorBad)} ${c.object} was beside the ${c.record}.`,
+        wrongTwo: `The ${c.possessorBad} ${c.object} was beside the ${c.record}.`,
     explanation: 'An apostrophe shows that the thing belongs to the person or group named.',
         explanationRuleId: 'apostrophe.possession',
         misconceptionTags: ['apostrophe.possession_missing', 'apostrophe.plural_possession_confusion'],

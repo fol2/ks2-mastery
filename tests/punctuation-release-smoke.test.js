@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { createPunctuationContentIndexes } from '../shared/punctuation/content.js';
 import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
+import { p20SystematicTemplatesForFamily } from '../shared/punctuation/p20-systematic-expansion-bank.js';
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
 import {
   PUNCTUATION_DASH_ACCEPTANCE_SESSION_OPTIONS,
@@ -313,6 +314,19 @@ test('Punctuation P2 smoke helper builds accepted dash and Oxford-comma probes',
     answer: { typed: oxfordCommaAnswerFor(listSource) },
   });
   assert.equal(oxfordResult.correct, true);
+});
+
+test('Punctuation P20 apostrophe possession distractors do not generate malformed class/friends plurals', () => {
+  const templates = p20SystematicTemplatesForFamily('gen_p20_apostrophe_possession_choose');
+  const surfaces = [];
+  for (const template of templates) {
+    surfaces.push(template.stem, template.model, ...(template.options || []), ...(template.tests?.reject || []));
+  }
+
+  const joined = surfaces.filter(Boolean).join('\n');
+  assert.doesNotMatch(joined, /\bclasss\b/i);
+  assert.doesNotMatch(joined, /\b(?:friends|players)'s\b/i);
+  assert.match(joined, /\bclasses'/i, 'Expected class/classs regression coverage to exercise classes plural possessive.');
 });
 
 test('Punctuation P11 smoke targets dash acceptance through guided dash practice', () => {

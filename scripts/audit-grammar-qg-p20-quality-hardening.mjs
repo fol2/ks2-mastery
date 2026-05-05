@@ -113,6 +113,10 @@ function answerVariantsFor(question) {
       variants.push({ label: 'outer-whitespace', answer: `  ${text}  ` });
       const smart = smartPunctuationVariant(text);
       if (smart !== text) variants.push({ label: 'smart-punctuation', answer: smart });
+      if (question.answerSpec?.params?.optionalTerminalFullStop) {
+        const terminalVariant = /\.$/.test(text) ? text.replace(/\.+$/g, '') : `${text}.`;
+        variants.push({ label: 'optional-terminal-full-stop', answer: terminalVariant });
+      }
     }
   }
   const seen = new Set();
@@ -268,7 +272,7 @@ export function buildGrammarQGP20QualityHardeningAudit({ seeds = DEFAULT_SEEDS, 
     fairnessFindings,
     templateQualityFindings,
     unsafeAutoMarkedOpenPrompts,
-    p20ClosedAutoMark: p20ClosedAutoMark.slice(0, 200),
+    p20ClosedAutoMark,
     smartPractice: {
       metadata: smartPractice.metadata,
       summary: smartPractice.summary,

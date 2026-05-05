@@ -11705,6 +11705,96 @@ function manualExpansionP20ClosedAutoMarkKindForFamily(family = {}) {
   return familyKind;
 }
 
+function escapeRegExpLiteral(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function trimTerminalFullStop(value) {
+  return manualExpansionSafeText(value).replace(/\.+$/g, '').trim();
+}
+
+function sentenceAfterPromptColon(promptText) {
+  const text = manualExpansionSafeText(promptText);
+  const colonIndex = text.lastIndexOf(':');
+  return colonIndex >= 0 ? text.slice(colonIndex + 1).trim() : '';
+}
+
+function manualExpansionBlankFillAnswerVariants(promptText, acceptedAnswer) {
+  const sentence = sentenceAfterPromptColon(promptText);
+  if (!sentence.includes('___')) return [];
+  const parts = sentence.split('___');
+  if (parts.length < 2) return [];
+  const before = trimTerminalFullStop(parts.shift());
+  const after = trimTerminalFullStop(parts.join('___'));
+  const accepted = trimTerminalFullStop(acceptedAnswer);
+  if (!accepted || (!before && !after)) return [];
+
+  const beforePattern = before ? `${escapeRegExpLiteral(before)}\\s+` : '';
+  const afterPattern = after ? `\\s+${escapeRegExpLiteral(after)}` : '';
+  const match = accepted.match(new RegExp(`^${beforePattern}(.+?)${afterPattern}$`, 'i'));
+  if (!match) return [];
+  const fill = manualExpansionSafeText(match[1]);
+  if (!fill) return [];
+  const variants = [fill];
+  if (/^not\b/i.test(after) && !/\bnot$/i.test(fill)) variants.push(`${fill} not`);
+  return variants;
+}
+
+function tokeniseForGrammarDiff(value) {
+  return trimTerminalFullStop(value).split(/\s+/).filter(Boolean);
+}
+
+function manualExpansionVerbFormAnswerVariants(promptText, acceptedAnswer) {
+  if (!/\bfix\s+the\s+verb\s+form\b/i.test(promptText)) return [];
+  const sourceSentence = sentenceAfterPromptColon(promptText);
+  if (!sourceSentence) return [];
+  const sourceTokens = tokeniseForGrammarDiff(sourceSentence);
+  const acceptedTokens = tokeniseForGrammarDiff(acceptedAnswer);
+  if (sourceTokens.length === 0 || acceptedTokens.length === 0) return [];
+
+  let prefix = 0;
+  while (
+    prefix < sourceTokens.length
+    && prefix < acceptedTokens.length
+    && sourceTokens[prefix].toLowerCase() === acceptedTokens[prefix].toLowerCase()
+  ) {
+    prefix += 1;
+  }
+
+  let suffix = 0;
+  while (
+    suffix < sourceTokens.length - prefix
+    && suffix < acceptedTokens.length - prefix
+    && sourceTokens[sourceTokens.length - 1 - suffix].toLowerCase() === acceptedTokens[acceptedTokens.length - 1 - suffix].toLowerCase()
+  ) {
+    suffix += 1;
+  }
+
+  const replacement = acceptedTokens.slice(prefix, acceptedTokens.length - suffix).join(' ');
+  return replacement && replacement !== trimTerminalFullStop(acceptedAnswer) ? [replacement] : [];
+}
+
+function manualExpansionP20NormalisedAcceptedValues(caseItem, acceptedAnswers) {
+  const promptText = manualExpansionSafeText(caseItem?.promptText);
+  const variants = [];
+  for (const accepted of acceptedAnswers || []) {
+    variants.push(...manualExpansionBlankFillAnswerVariants(promptText, accepted));
+    variants.push(...manualExpansionVerbFormAnswerVariants(promptText, accepted));
+  }
+  return dedupePlain(acceptedAnswers.concat(variants).map(manualExpansionAnswerValue).filter(Boolean));
+}
+
+function manualExpansionP20PunctuationPatternParams(caseItem) {
+  const promptText = manualExpansionSafeText(caseItem?.promptText);
+  if (/\b(ending\s+punctuation|direct\s+speech|speech\s+punctuation|punctuate\s+the\s+direct\s+speech)\b/i.test(promptText)) {
+    return {};
+  }
+  if (/\b(comma|commas|hyphen|parenthesis)\b/i.test(promptText)) {
+    return { optionalTerminalFullStop: true };
+  }
+  return {};
+}
+
 function manualExpansionReadableRowLabel(label) {
   const text = manualExpansionSafeText(label);
   const match = text.match(/^(.+?)\s+in:\s+(.+)$/i);
@@ -11824,7 +11914,9 @@ function buildManualExpansionConstructedQuestion(template, seed, caseItem, famil
     const accepted = (Array.isArray(caseItem.acceptedAnswers) && caseItem.acceptedAnswers.length > 0)
       ? caseItem.acceptedAnswers.map(manualExpansionSafeText).filter(Boolean)
       : [manualExpansionCorrectText(caseItem)].filter(Boolean);
-    const acceptedValues = accepted.map(manualExpansionAnswerValue).filter(Boolean);
+    const acceptedValues = p20ClosedKind === 'normalisedText'
+      ? manualExpansionP20NormalisedAcceptedValues(caseItem, accepted)
+      : accepted.map(manualExpansionAnswerValue).filter(Boolean);
     const answerText = accepted[0] || "";
     const nearMisses = manualExpansionNearMisses(caseItem, acceptedValues);
     const answerSpec = p20ClosedKind === 'punctuationPattern'
@@ -11832,6 +11924,7 @@ function buildManualExpansionConstructedQuestion(template, seed, caseItem, famil
           misconception: manualExpansionMisconception(family),
           feedbackLong: manualExpansionSafeText(caseItem.feedbackLong) || `Correct answer: ${answerText}`,
           answerText,
+          params: manualExpansionP20PunctuationPatternParams(caseItem),
         })
       : normalisedTextAnswerSpec(acceptedValues, nearMisses, {
           misconception: manualExpansionMisconception(family),

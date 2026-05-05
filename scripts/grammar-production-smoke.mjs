@@ -63,6 +63,51 @@ const GRAMMAR_NOUN_PHRASE_CUE_ITEM = Object.freeze({
   seed: 1,
 });
 
+const GRAMMAR_P20A_HOTFIX_SMOKE_ITEMS = Object.freeze([
+  Object.freeze({
+    id: 'modal-fill-only-should',
+    templateId: 'qg_p18_p18_modal_verbs_precision_repair_or_rewrite',
+    seed: 1,
+    response: Object.freeze({ answer: 'should' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'modal-fill-only-must-not',
+    templateId: 'qg_p18_p18_modal_verbs_precision_repair_or_rewrite',
+    seed: 7,
+    response: Object.freeze({ answer: 'must not' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'tense-verb-phrase',
+    templateId: 'qg_p18_p15_tense_aspect_tense_editing',
+    seed: 1,
+    response: Object.freeze({ answer: 'have finished' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'semicolon-label-alias',
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 1,
+    response: Object.freeze({ answer: 'semi-colon' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'parenthesis-final-full-stop-omission',
+    templateId: 'qg_p18_p16_parenthesis_commas_add_parenthesis_commas',
+    seed: 1,
+    response: Object.freeze({ answer: 'Luca, who was first in line, opened the door' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'possessive-terminal-apostrophe-required',
+    templateId: 'qg_p18_p16_apostrophes_possession_fix_missing_apostrophe',
+    seed: 11,
+    response: Object.freeze({ answer: 'the classs display' }),
+    expectedCorrect: false,
+  }),
+]);
+
 export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
   Object.freeze({
     family: 'exact',
@@ -649,6 +694,76 @@ async function smokeGrammarCueAssertions({ origin, cookie, learnerId, revision }
   };
 }
 
+async function smokeGrammarP20aHotfixCases({ origin, cookie, learnerId, revision }) {
+  const cases = [];
+  for (const fixture of GRAMMAR_P20A_HOTFIX_SMOKE_ITEMS) {
+    let step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'start-session',
+      payload: {
+        mode: 'smart',
+        roundLength: 1,
+        templateId: fixture.templateId,
+        seed: fixture.seed,
+      },
+    });
+    revision = step.revision;
+    const startModel = step.payload.subjectReadModel;
+    const item = startModel?.session?.currentItem;
+    assert.equal(startModel?.phase, 'session', `Grammar P20a ${fixture.id} did not start in session phase.`);
+    assert.equal(item?.templateId, fixture.templateId, `Grammar P20a ${fixture.id} served the wrong template.`);
+    assert.equal(Number(item?.seed), Number(fixture.seed), `Grammar P20a ${fixture.id} served the wrong seed.`);
+    assert.equal(
+      item?.contentReleaseId,
+      CONFIGURED_RELEASE_ID,
+      `Grammar P20a ${fixture.id} did not serve expected release ${CONFIGURED_RELEASE_ID}.`,
+    );
+    assertNoForbiddenGrammarReadModelKeys(startModel, `grammar.p20a.${fixture.id}.startModel`);
+
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'submit-answer',
+      payload: { response: fixture.response },
+    });
+    revision = step.revision;
+    const feedbackModel = step.payload.subjectReadModel;
+    const correct = Boolean(feedbackModel?.feedback?.result?.correct);
+    assert.equal(feedbackModel?.phase, 'feedback', `Grammar P20a ${fixture.id} did not return feedback.`);
+    assert.equal(correct, fixture.expectedCorrect, `Grammar P20a ${fixture.id} returned correct=${correct}.`);
+    assertNoForbiddenGrammarReadModelKeys(feedbackModel, `grammar.p20a.${fixture.id}.feedbackModel`);
+
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'continue-session',
+    });
+    revision = step.revision;
+    assert.equal(step.payload.subjectReadModel?.phase, 'summary', `Grammar P20a ${fixture.id} did not reach summary.`);
+    assertNoForbiddenGrammarReadModelKeys(step.payload.subjectReadModel, `grammar.p20a.${fixture.id}.summaryModel`);
+
+    cases.push({
+      id: fixture.id,
+      templateId: fixture.templateId,
+      seed: fixture.seed,
+      expectedCorrect: fixture.expectedCorrect,
+      observedCorrect: correct,
+    });
+  }
+
+  return { revision, cases };
+}
+
 async function smokeGrammar({ origin, cookie, learnerId, revision }) {
   const normal = await smokeGrammarNormalRound({ origin, cookie, learnerId, revision });
   const miniTest = await smokeGrammarMiniTest({
@@ -675,14 +790,21 @@ async function smokeGrammar({ origin, cookie, learnerId, revision }) {
     learnerId,
     revision: answerSpecFamilies.revision,
   });
+  const p20aHotfix = await smokeGrammarP20aHotfixCases({
+    origin,
+    cookie,
+    learnerId,
+    revision: cueAssertions.revision,
+  });
 
   return {
-    revision: cueAssertions.revision,
+    revision: p20aHotfix.revision,
     normal,
     miniTest,
     repairAi,
     answerSpecFamilies,
     cueAssertions,
+    p20aHotfix,
   };
 }
 
@@ -730,6 +852,7 @@ async function main() {
   let miniTestResult = { ok: false, detail: '' };
   let repairResult = { ok: false, detail: '' };
   let cueAssertionResult = { ok: false, detail: '' };
+  let p20aHotfixResult = { ok: false, detail: '' };
   let forbiddenKeyScanResult = { ok: true, detail: 'checked via assertNoForbiddenGrammarReadModelKeys in each phase' };
   let testedTemplateIds = [];
   let overallOk = true;
@@ -749,12 +872,17 @@ async function main() {
       ok: true,
       detail: `targetSentence=${grammar.cueAssertions.targetSentenceTemplateId}, nounPhrase=${grammar.cueAssertions.nounPhraseTemplateId}`,
     };
+    p20aHotfixResult = {
+      ok: grammar.p20aHotfix.cases.every((item) => item.expectedCorrect === item.observedCorrect),
+      detail: `cases=${grammar.p20aHotfix.cases.length}`,
+    };
     testedTemplateIds = [
       GRAMMAR_SMOKE_ITEM.templateId,
       GRAMMAR_MINI_TEST_ITEM.templateId,
       ...GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS.map((item) => item.templateId),
       GRAMMAR_TARGET_SENTENCE_CUE_ITEM.templateId,
       GRAMMAR_NOUN_PHRASE_CUE_ITEM.templateId,
+      ...GRAMMAR_P20A_HOTFIX_SMOKE_ITEMS.map((item) => item.templateId),
     ];
   } catch (error) {
     overallOk = false;
@@ -767,6 +895,8 @@ async function main() {
       repairResult = { ok: false, detail: msg };
     } else if (msg.includes('cue') || msg.includes('read-aloud') || msg.includes('screen-reader') || msg.includes('noun-phrase')) {
       cueAssertionResult = { ok: false, detail: msg };
+    } else if (msg.includes('P20a')) {
+      p20aHotfixResult = { ok: false, detail: msg };
     } else {
       normalRoundResult = { ok: false, detail: msg };
     }
@@ -796,6 +926,7 @@ async function main() {
           aiKind: grammar.repairAi.aiKind,
           answerSpecFamilies: grammar.answerSpecFamilies.covered,
           cueAssertions: grammar.cueAssertions,
+          p20aHotfixCases: grammar.p20aHotfix.cases,
         },
         spelling: {
           progressTotal: spelling.progressTotal,
@@ -832,6 +963,12 @@ async function main() {
       answerSpecFamiliesCovered: grammar
         ? grammar.answerSpecFamilies.covered
         : [],
+      p20aHotfix: grammar
+        ? {
+            ok: p20aHotfixResult.ok,
+            cases: grammar.p20aHotfix.cases,
+          }
+        : { ok: false, cases: [] },
       command,
       learnerFixtureType: 'demo-session',
       itemCreationResult: normalRoundResult,
@@ -846,8 +983,9 @@ async function main() {
       miniTestResult,
       repairResult,
       cueAssertionResult,
+      p20aHotfixResult,
       forbiddenKeyScanResult,
-      failureDetails: overallOk ? null : { normalRoundResult, miniTestResult, repairResult, cueAssertionResult },
+      failureDetails: overallOk ? null : { normalRoundResult, miniTestResult, repairResult, cueAssertionResult, p20aHotfixResult },
       timestamp: new Date().toISOString(),
       commitSha: getCommitSha(),
     };

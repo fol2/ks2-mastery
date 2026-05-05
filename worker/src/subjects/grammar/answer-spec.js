@@ -96,9 +96,18 @@ const GRAMMAR_LABEL_ARTICLE_CANONICALS = new Set([
 ]);
 
 function stripWrappingQuotes(text) {
-  return safeString(text)
-    .replace(/^[\s"'`]+|[\s"'`]+$/g, '')
-    .trim();
+  let value = safeString(text).trim();
+  let changed = true;
+  while (changed && value.length >= 2) {
+    changed = false;
+    const first = value[0];
+    const last = value[value.length - 1];
+    if ((first === '"' && last === '"') || (first === '`' && last === '`') || (first === "'" && last === "'")) {
+      value = value.slice(1, -1).trim();
+      changed = true;
+    }
+  }
+  return value;
 }
 
 function stripTerminalSentencePunctuation(text) {
@@ -110,12 +119,22 @@ function stripTerminalSentencePunctuation(text) {
   return value.replace(/[.!?]+$/g, '').trim();
 }
 
+const GRAMMAR_LABEL_ALIASES = Object.freeze({
+  'semi colon': 'semicolon',
+  'semi-colon': 'semicolon',
+});
+
+function normaliseGrammarLabelAlias(text) {
+  const value = safeString(text).trim();
+  return GRAMMAR_LABEL_ALIASES[value.toLowerCase()] || value;
+}
+
 function stripGrammarLabelArticle(text) {
   const value = safeString(text).trim();
   const articleMatch = value.match(/^(?:a|an|the)\s+(.+)$/i);
-  if (!articleMatch) return value;
-  const candidate = articleMatch[1].trim();
-  return GRAMMAR_LABEL_ARTICLE_CANONICALS.has(candidate.toLowerCase()) ? candidate : value;
+  if (!articleMatch) return normaliseGrammarLabelAlias(value);
+  const candidate = normaliseGrammarLabelAlias(articleMatch[1].trim());
+  return GRAMMAR_LABEL_ARTICLE_CANONICALS.has(candidate.toLowerCase()) ? candidate : normaliseGrammarLabelAlias(value);
 }
 
 export function normaliseGrammarAnswerText(text, { stripTerminalPunctuation = true, stripLabelArticle = true } = {}) {
@@ -158,14 +177,21 @@ function compareAcceptedSet(response, acceptedList) {
   return acceptedList.some((accepted) => normaliseGrammarAnswerText(accepted) === candidate);
 }
 
-function comparePunctuationPattern(response, accepted, { optionalCommas = false } = {}) {
+function stripTerminalFullStopForPattern(text) {
+  return normaliseWhitespace(safeString(text).replace(/\.+$/g, ''));
+}
+
+function comparePunctuationPattern(response, accepted, { optionalCommas = false, optionalTerminalFullStop = false } = {}) {
   const candidate = collapsePunctuationPattern(response);
   const target = collapsePunctuationPattern(accepted);
   if (candidate === target) return true;
+  const candidateForTerminal = optionalTerminalFullStop ? stripTerminalFullStopForPattern(candidate) : candidate;
+  const targetForTerminal = optionalTerminalFullStop ? stripTerminalFullStopForPattern(target) : target;
+  if (optionalTerminalFullStop && candidateForTerminal === targetForTerminal) return true;
   if (optionalCommas) {
     // Accept the same sentence with surrounding commas stripped.
     const stripCommas = (text) => text.replace(/\s*,\s*/g, ' ').replace(/\s+/g, ' ').trim();
-    if (stripCommas(candidate) === stripCommas(target)) return true;
+    if (stripCommas(candidateForTerminal) === stripCommas(targetForTerminal)) return true;
   }
   return false;
 }
@@ -295,6 +321,7 @@ function markPunctuationPattern(spec, response) {
   const accepted = Array.isArray(spec.golden) && spec.golden.length ? spec.golden : [];
   const compareParams = {
     optionalCommas: Boolean(spec.params?.optionalCommas),
+    optionalTerminalFullStop: Boolean(spec.params?.optionalTerminalFullStop),
   };
   const matched = accepted.find((entry) => comparePunctuationPattern(response, entry, compareParams)) || null;
   const correct = Boolean(matched);
