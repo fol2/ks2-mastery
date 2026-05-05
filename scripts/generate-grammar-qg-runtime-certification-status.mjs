@@ -21,6 +21,10 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const DEFAULT_STATUS_MAP_PATH = path.join(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p11-certification-status-map.json');
 const DEFAULT_OUTPUT_PATH = path.join(ROOT_DIR, 'worker', 'src', 'subjects', 'grammar', 'certification-status.generated.js');
 
+function repoRelativePath(filePath) {
+  return path.relative(ROOT_DIR, filePath).replaceAll('\\', '/');
+}
+
 const VALID_RUNTIME_STATUSES = new Set([
   'approved',
   'approved_with_limitation',
@@ -137,7 +141,7 @@ export function buildRuntimeCertificationStatus(statusMap, opts = {}) {
 
   return {
     releaseId: GRAMMAR_CONTENT_RELEASE_ID,
-    sourcePath: path.relative(ROOT_DIR, statusMapPath),
+    sourcePath: repoRelativePath(statusMapPath),
     sourceGeneratedAt: statusMap.metadata.generatedAt || null,
     templateCount: Object.keys(orderedEntries).length,
     statusCounts: Object.values(orderedEntries).reduce((counts, entry) => {
