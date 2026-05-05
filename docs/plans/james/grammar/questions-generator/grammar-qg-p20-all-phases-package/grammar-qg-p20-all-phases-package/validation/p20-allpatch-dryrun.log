@@ -1,0 +1,11 @@
+checking file docs/plans/james/grammar/grammar-answer-spec-audit.md
+checking file docs/plans/james/grammar/questions-generator/p20/grammar-qg-p20-answer-acceptance-template-quality-variety-expansion-contract.md
+checking file package.json
+checking file scripts/audit-grammar-open-response-fairness.mjs
+checking file scripts/audit-grammar-qg-p19-smart-practice.mjs
+checking file scripts/audit-grammar-qg-p20-quality-hardening.mjs
+checking file tests/grammar-qg-p20-answer-acceptance.test.js
+checking file tests/grammar-qg-p20-quality-hardening.test.js
+checking file tests/grammar-question-generator-audit.test.js
+checking file worker/src/subjects/grammar/answer-spec.js
+checking file worker/src/subjects/grammar/content.js

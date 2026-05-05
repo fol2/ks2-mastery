@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+ok 1 - P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+  ---
+  duration_ms: 3.142122
+  type: 'test'
+  ...
+# Subtest: P20 accepts harmless learner formatting around deterministic subject/object answers
+ok 2 - P20 accepts harmless learner formatting around deterministic subject/object answers
+  ---
+  duration_ms: 0.884364
+  type: 'test'
+  ...
+# Subtest: P20 recovered punctuation rewrites still require the grammar-critical punctuation
+ok 3 - P20 recovered punctuation rewrites still require the grammar-critical punctuation
+  ---
+  duration_ms: 0.653252
+  type: 'test'
+  ...
+# Subtest: P20 keeps genuinely open clause-combine writing as manual-review-only
+ok 4 - P20 keeps genuinely open clause-combine writing as manual-review-only
+  ---
+  duration_ms: 0.31349
+  type: 'test'
+  ...
+# Subtest: P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+ok 5 - P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+  ---
+  duration_ms: 1.745295
+  type: 'test'
+  ...
+# Subtest: P20 quality-hardening audit passes a reviewer smoke window across all five phases
+ok 6 - P20 quality-hardening audit passes a reviewer smoke window across all five phases
+  ---
+  duration_ms: 5405.6555
+  type: 'test'
+  ...
+# Subtest: P20 metadata keeps recovered closed families visible for reviewers
+ok 7 - P20 metadata keeps recovered closed families visible for reviewers
+  ---
+  duration_ms: 0.437142
+  type: 'test'
+  ...
+# Subtest: P20 does not hide learner-facing prompt defects behind HTML stripping
+ok 8 - P20 does not hide learner-facing prompt defects behind HTML stripping
+  ---
+  duration_ms: 90.899194
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6246.013568

@@ -1,0 +1,939 @@
+diff --git a/docs/plans/james/grammar/grammar-answer-spec-audit.md b/docs/plans/james/grammar/grammar-answer-spec-audit.md
+index faf5585..aafcb14 100644
+--- a/docs/plans/james/grammar/grammar-answer-spec-audit.md
++++ b/docs/plans/james/grammar/grammar-answer-spec-audit.md
+@@ -158,14 +158,14 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p15_active_passive_voice_transfer` | `active_passive` | choose | answerSpec: exact | `exact` | The bread was baked by the chef. | wrong visible option value | high | NO |
+ | `qg_p18_p15_adverbials_adverbial_transfer` | `adverbials` | choose | answerSpec: exact | `exact` | Before sunrise, the campers packed their bags. | wrong visible option value | low | NO |
+ | `qg_p18_p15_adverbials_explain_fronted_adv` | `adverbials` | explain | answerSpec: exact | `exact` | It gives when, where or how information at the start of the sentence. | wrong visible option value | low | NO |
+-| `qg_p18_p15_adverbials_fronted_adverbial_comma` | `adverbials` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
++| `qg_p18_p15_adverbials_fronted_adverbial_comma` | `adverbials` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
+ | `qg_p18_p15_adverbials_identify_fronted_adv` | `adverbials` | identify | answerSpec: exact | `exact` | Before sunrise | wrong visible option value | low | NO |
+ | `qg_p18_p15_adverbials_move_adverbial` | `adverbials` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
+ | `qg_p18_p15_apostrophes_possession_explain_possession` | `apostrophes_possession` | explain | answerSpec: exact | `exact` | The apostrophe shows ownership, and its position shows whether the owner is singular or plural. | wrong visible option value | low | NO |
+ | `qg_p18_p15_apostrophes_possession_possession_table` | `apostrophes_possession` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p15_apostrophes_possession_possession_transfer` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
+ | `qg_p18_p15_apostrophes_possession_possessive_choice` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
+-| `qg_p18_p15_apostrophes_possession_possessive_rewrite` | `apostrophes_possession` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | the dog's bowl | grammar target changed | medium | YES |
++| `qg_p18_p15_apostrophes_possession_possessive_rewrite` | `apostrophes_possession` | rewrite | answerSpec: normalisedText | `normalisedText` | the dog's bowl | grammar target changed | medium | YES |
+ | `qg_p18_p15_boundary_punctuation_boundary_fix` | `boundary_punctuation` | fix | answerSpec: normalisedText | `manualReviewOnly` | The sky darkened; the gulls flew inland. | grammar target changed | medium | YES |
+ | `qg_p18_p15_boundary_punctuation_boundary_label` | `boundary_punctuation` | identify | answerSpec: exact | `exact` | semi-colon | wrong visible option value | low | NO |
+ | `qg_p18_p15_boundary_punctuation_boundary_mark_choice` | `boundary_punctuation` | choose | answerSpec: exact | `exact` | ; | wrong visible option value | low | NO |
+@@ -183,7 +183,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p15_formality_formality_transfer` | `formality` | choose | answerSpec: exact | `exact` | Please discover whether the hall is open. | wrong visible option value | high | NO |
+ | `qg_p18_p15_hyphen_ambiguity_explain_hyphen` | `hyphen_ambiguity` | explain | answerSpec: exact | `exact` | The hyphen links words so the reader sees the intended meaning clearly. | wrong visible option value | high | NO |
+ | `qg_p18_p15_hyphen_ambiguity_hyphen_choice` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man-eating shark | wrong visible option value | high | NO |
+-| `qg_p18_p15_hyphen_ambiguity_hyphen_fix` | `hyphen_ambiguity` | fix | answerSpec: normalisedText | `manualReviewOnly` | man-eating shark | grammar target changed | high | YES |
++| `qg_p18_p15_hyphen_ambiguity_hyphen_fix` | `hyphen_ambiguity` | fix | answerSpec: punctuationPattern | `punctuationPattern` | man-eating shark | grammar target changed | high | YES |
+ | `qg_p18_p15_hyphen_ambiguity_hyphen_meaning` | `hyphen_ambiguity` | identify | answerSpec: exact | `exact` | a shark that eats people | wrong visible option value | high | NO |
+ | `qg_p18_p15_hyphen_ambiguity_hyphen_transfer` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man-eating shark | wrong visible option value | high | NO |
+ | `qg_p18_p15_modal_verbs_explain_modal` | `modal_verbs` | explain | answerSpec: exact | `exact` | It changes the force of the verb to show strong advice. | wrong visible option value | high | NO |
+@@ -214,16 +214,16 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p15_sentence_functions_explain_function` | `sentence_functions` | explain | answerSpec: exact | `exact` | It tells someone to do something. | wrong visible option value | low | NO |
+ | `qg_p18_p15_sentence_functions_function_contrast` | `sentence_functions` | choose | answerSpec: exact | `exact` | command | wrong visible option value | low | NO |
+ | `qg_p18_p15_sentence_functions_identify_function` | `sentence_functions` | identify | answerSpec: exact | `exact` | command | wrong visible option value | low | NO |
+-| `qg_p18_p15_sentence_functions_punctuate_by_function` | `sentence_functions` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | Close the library door quietly. | grammar target changed | medium | YES |
++| `qg_p18_p15_sentence_functions_punctuate_by_function` | `sentence_functions` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Close the library door quietly. | grammar target changed | medium | YES |
+ | `qg_p18_p15_sentence_functions_sat_style_function` | `sentence_functions` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p15_speech_punctuation_explain_speech` | `speech_punctuation` | explain | answerSpec: exact | `exact` | The spoken words are enclosed in speech marks and their punctuation is inside the marks. | wrong visible option value | low | NO |
+ | `qg_p18_p15_speech_punctuation_speech_choice` | `speech_punctuation` | choose | answerSpec: exact | `exact` | "Where are you going?" asked Mum. | wrong visible option value | low | NO |
+-| `qg_p18_p15_speech_punctuation_speech_fix` | `speech_punctuation` | fix | answerSpec: normalisedText | `manualReviewOnly` | "Where are you going?" asked Mum. | grammar target changed | medium | YES |
++| `qg_p18_p15_speech_punctuation_speech_fix` | `speech_punctuation` | fix | answerSpec: punctuationPattern | `punctuationPattern` | "Where are you going?" asked Mum. | grammar target changed | medium | YES |
+ | `qg_p18_p15_speech_punctuation_speech_reporter_position` | `speech_punctuation` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p15_speech_punctuation_speech_transfer` | `speech_punctuation` | choose | answerSpec: exact | `exact` | "Where are you going?" asked Mum. | wrong visible option value | low | NO |
+ | `qg_p18_p15_standard_english_explain_standard` | `standard_english` | explain | answerSpec: exact | `exact` | It uses the accepted written grammar form expected in formal school writing. | wrong visible option value | low | NO |
+ | `qg_p18_p15_standard_english_standard_choice` | `standard_english` | choose | answerSpec: exact | `exact` | We were late for assembly. | wrong visible option value | low | NO |
+-| `qg_p18_p15_standard_english_standard_fix` | `standard_english` | fix | answerSpec: normalisedText | `manualReviewOnly` | We were late for assembly. | grammar target changed | medium | YES |
++| `qg_p18_p15_standard_english_standard_fix` | `standard_english` | fix | answerSpec: normalisedText | `normalisedText` | We were late for assembly. | grammar target changed | medium | YES |
+ | `qg_p18_p15_standard_english_standard_pairs` | `standard_english` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p15_standard_english_standard_transfer` | `standard_english` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | We were late for assembly. | grammar target changed | medium | YES |
+ | `qg_p18_p15_subject_object_explain_roles` | `subject_object` | explain | answerSpec: exact | `exact` | The subject does the action and the object receives it. | wrong visible option value | high | NO |
+@@ -233,7 +233,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p15_subject_object_role_transfer` | `subject_object` | choose | answerSpec: exact | `exact` | The noisy gull stole the sandwich from Max. | wrong visible option value | high | NO |
+ | `qg_p18_p15_tense_aspect_choose_tense_form` | `tense_aspect` | fill | answerSpec: exact | `exact` | I have finished my homework. | wrong visible option value | low | NO |
+ | `qg_p18_p15_tense_aspect_explain_tense` | `tense_aspect` | explain | answerSpec: exact | `exact` | It uses the verb form needed for the present perfect. | wrong visible option value | low | NO |
+-| `qg_p18_p15_tense_aspect_tense_editing` | `tense_aspect` | fix | answerSpec: normalisedText | `manualReviewOnly` | I have finished my homework. | grammar target changed | medium | YES |
++| `qg_p18_p15_tense_aspect_tense_editing` | `tense_aspect` | fix | answerSpec: normalisedText | `normalisedText` | I have finished my homework. | grammar target changed | medium | YES |
+ | `qg_p18_p15_tense_aspect_tense_near_miss` | `tense_aspect` | choose | answerSpec: exact | `exact` | I have finished my homework. | wrong visible option value | low | NO |
+ | `qg_p18_p15_tense_aspect_tense_rewrite` | `tense_aspect` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | I have finished my homework. | grammar target changed | medium | YES |
+ | `qg_p18_p15_word_classes_explain_word_class` | `word_classes` | explain | answerSpec: exact | `exact` | It is a adverb because of the job it does in this sentence. | wrong visible option value | low | NO |
+@@ -251,11 +251,11 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p16_adverbials_choose_best_opening_adverbial` | `adverbials` | choose | answerSpec: exact | `exact` | Before sunrise | wrong visible option value | low | NO |
+ | `qg_p18_p16_adverbials_explain_fronted_comma` | `adverbials` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The comma separates the fronted adverbial "Before sunrise" from the main clause. | grammar target changed | medium | YES |
+ | `qg_p18_p16_adverbials_fronted_adverbial_type` | `adverbials` | classify | answerSpec: exact | `exact` | when | wrong visible option value | low | NO |
+-| `qg_p18_p16_adverbials_fronted_comma_fix` | `adverbials` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
++| `qg_p18_p16_adverbials_fronted_comma_fix` | `adverbials` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
+ | `qg_p18_p16_adverbials_move_adverbial_to_front` | `adverbials` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
+ | `qg_p18_p16_apostrophes_possession_choose_possessive_phrase` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
+ | `qg_p18_p16_apostrophes_possession_explain_position` | `apostrophes_possession` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The apostrophe position shows whether one owner or more than one owner possesses the noun. | grammar target changed | medium | YES |
+-| `qg_p18_p16_apostrophes_possession_fix_missing_apostrophe` | `apostrophes_possession` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | the dog's bowl | grammar target changed | medium | YES |
++| `qg_p18_p16_apostrophes_possession_fix_missing_apostrophe` | `apostrophes_possession` | fix | answerSpec: normalisedText | `normalisedText` | the dog's bowl | grammar target changed | medium | YES |
+ | `qg_p18_p16_apostrophes_possession_meaning_change_choice` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
+ | `qg_p18_p16_apostrophes_possession_possession_not_contraction` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | possession | wrong visible option value | low | NO |
+ | `qg_p18_p16_apostrophes_possession_singular_plural_possession` | `apostrophes_possession` | classify | answerSpec: exact | `exact` | singular | wrong visible option value | low | NO |
+@@ -280,7 +280,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p16_formality_register_context_choice` | `formality` | choose | answerSpec: exact | `exact` | I would like to request. | wrong visible option value | high | NO |
+ | `qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man-eating shark | wrong visible option value | high | NO |
+ | `qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning` | `hyphen_ambiguity` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The hyphen links words so they work together to express "a shark that eats people". | grammar target changed | high | YES |
+-| `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase` | `hyphen_ambiguity` | fix | answerSpec: normalisedText | `manualReviewOnly` | man-eating shark | grammar target changed | high | YES |
++| `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase` | `hyphen_ambiguity` | fix | answerSpec: punctuationPattern | `punctuationPattern` | man-eating shark | grammar target changed | high | YES |
+ | `qg_p18_p16_hyphen_ambiguity_hyphen_function_choice` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | It links words to make the intended meaning clear. | wrong visible option value | high | NO |
+ | `qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table` | `hyphen_ambiguity` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | high | NO |
+ | `qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man eating shark | wrong visible option value | high | NO |
+@@ -296,7 +296,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p16_noun_phrases_explain_expansion` | `noun_phrases` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | It is centred on a noun and has extra words that describe or specify that noun. | grammar target changed | medium | YES |
+ | `qg_p18_p16_noun_phrases_head_noun_identify` | `noun_phrases` | identify | answerSpec: exact | `exact` | explorer | wrong visible option value | low | NO |
+ | `qg_p18_p16_noun_phrases_noun_phrase_vs_clause` | `noun_phrases` | classify | answerSpec: exact | `exact` | expanded noun phrase | wrong visible option value | low | NO |
+-| `qg_p18_p16_parenthesis_commas_add_parenthesis_commas` | `parenthesis_commas` | fix | answerSpec: normalisedText | `manualReviewOnly` | Luca, who was first in line, opened the door. | grammar target changed | medium | YES |
++| `qg_p18_p16_parenthesis_commas_add_parenthesis_commas` | `parenthesis_commas` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Luca, who was first in line, opened the door. | grammar target changed | medium | YES |
+ | `qg_p18_p16_parenthesis_commas_choose_parenthetical_part` | `parenthesis_commas` | identify | answerSpec: exact | `exact` | the extra information between commas | wrong visible option value | low | NO |
+ | `qg_p18_p16_parenthesis_commas_explain_parenthesis` | `parenthesis_commas` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The commas mark extra information that could be lifted out without destroying the main sentence. | grammar target changed | medium | YES |
+ | `qg_p18_p16_parenthesis_commas_parenthesis_or_not` | `parenthesis_commas` | choose | answerSpec: exact | `exact` | yes | wrong visible option value | low | NO |
+@@ -467,18 +467,18 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p18_apostrophes_possession_diagnostic_identify` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
+ | `qg_p18_p18_apostrophes_possession_explain_reasoning` | `apostrophes_possession` | explain | answerSpec: exact | `exact` | One dog owns the bowl, so apostrophe before s. | wrong visible option value | low | NO |
+ | `qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision` | `apostrophes_possession`, `hyphen_ambiguity` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | the dog's bowl; man-eating shark | grammar target changed | high | YES |
+-| `qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite` | `apostrophes_possession` | fix | answerSpec: normalisedText | `manualReviewOnly` | the dog's bowl | grammar target changed | medium | YES |
++| `qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite` | `apostrophes_possession` | fix | answerSpec: normalisedText | `normalisedText` | the dog's bowl | grammar target changed | medium | YES |
+ | `qg_p18_p18_apostrophes_possession_sat_table_classification` | `apostrophes_possession` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p18_boundary_punctuation_application_transfer` | `boundary_punctuation` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | A semi-colon links two related main clauses. | grammar target changed | medium | YES |
+ | `qg_p18_p18_boundary_punctuation_diagnostic_identify` | `boundary_punctuation` | choose | answerSpec: exact | `exact` | semicolon | wrong visible option value | low | NO |
+ | `qg_p18_p18_boundary_punctuation_explain_reasoning` | `boundary_punctuation` | explain | answerSpec: exact | `exact` | A semi-colon links two related main clauses. | wrong visible option value | low | NO |
+-| `qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite` | `boundary_punctuation` | fix | answerSpec: normalisedText | `manualReviewOnly` | semicolon | grammar target changed | medium | YES |
++| `qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite` | `boundary_punctuation` | fix | answerSpec: normalisedText | `normalisedText` | semicolon | grammar target changed | medium | YES |
+ | `qg_p18_p18_boundary_punctuation_sat_table_classification` | `boundary_punctuation` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation` | `boundary_punctuation`, `speech_punctuation` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | semicolon; "Where are you going?" asked Mum. | grammar target changed | medium | YES |
+ | `qg_p18_p18_clauses_application_transfer` | `clauses` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Although the path was muddy, the hikers kept walking. | grammar target changed | medium | YES |
+ | `qg_p18_p18_clauses_diagnostic_identify` | `clauses` | choose | answerSpec: exact | `exact` | Although the path was muddy | wrong visible option value | low | NO |
+ | `qg_p18_p18_clauses_explain_reasoning` | `clauses` | explain | answerSpec: exact | `exact` | The although-clause depends on the main clause. | wrong visible option value | low | NO |
+-| `qg_p18_p18_clauses_precision_repair_or_rewrite` | `clauses` | fix | answerSpec: normalisedText | `manualReviewOnly` | Although the path was muddy | grammar target changed | medium | YES |
++| `qg_p18_p18_clauses_precision_repair_or_rewrite` | `clauses` | fix | answerSpec: normalisedText | `normalisedText` | Although the path was muddy | grammar target changed | medium | YES |
+ | `qg_p18_p18_clauses_sat_table_classification` | `clauses` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p18_formality_application_transfer` | `formality` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Established is more formal than got set up. | grammar target changed | high | YES |
+ | `qg_p18_p18_formality_diagnostic_identify` | `formality` | choose | answerSpec: exact | `exact` | The club was established last year. | wrong visible option value | high | NO |
+@@ -488,13 +488,13 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p18_hyphen_ambiguity_application_transfer` | `hyphen_ambiguity` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The hyphen shows man-eating describes the shark. | grammar target changed | high | YES |
+ | `qg_p18_p18_hyphen_ambiguity_diagnostic_identify` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man-eating shark | wrong visible option value | high | NO |
+ | `qg_p18_p18_hyphen_ambiguity_explain_reasoning` | `hyphen_ambiguity` | explain | answerSpec: exact | `exact` | The hyphen shows man-eating describes the shark. | wrong visible option value | high | NO |
+-| `qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite` | `hyphen_ambiguity` | fix | answerSpec: normalisedText | `manualReviewOnly` | man-eating shark | grammar target changed | high | YES |
++| `qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite` | `hyphen_ambiguity` | fix | answerSpec: punctuationPattern | `punctuationPattern` | man-eating shark | grammar target changed | high | YES |
+ | `qg_p18_p18_hyphen_ambiguity_sat_table_classification` | `hyphen_ambiguity` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | high | NO |
+ | `qg_p18_p18_modal_verbs_application_transfer` | `modal_verbs` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Should gives strong advice. | grammar target changed | high | YES |
+ | `qg_p18_p18_modal_verbs_diagnostic_identify` | `modal_verbs` | choose | answerSpec: exact | `exact` | should | wrong visible option value | high | NO |
+ | `qg_p18_p18_modal_verbs_explain_reasoning` | `modal_verbs` | explain | answerSpec: exact | `exact` | Should gives strong advice. | wrong visible option value | high | NO |
+ | `qg_p18_p18_modal_verbs_formality_modal_formality_strength` | `formality`, `modal_verbs` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | should; The club was established last year. | grammar target changed | high | YES |
+-| `qg_p18_p18_modal_verbs_precision_repair_or_rewrite` | `modal_verbs` | fix | answerSpec: normalisedText | `manualReviewOnly` | You should wear a helmet on this trail. | grammar target changed | high | YES |
++| `qg_p18_p18_modal_verbs_precision_repair_or_rewrite` | `modal_verbs` | fix | answerSpec: normalisedText | `normalisedText` | You should wear a helmet on this trail. | grammar target changed | high | YES |
+ | `qg_p18_p18_modal_verbs_sat_table_classification` | `modal_verbs` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | high | NO |
+ | `qg_p18_p18_noun_phrases_application_transfer` | `noun_phrases` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | rolled beneath is not centred on a noun; the small blue marble is a noun phrase. | grammar target changed | medium | YES |
+ | `qg_p18_p18_noun_phrases_diagnostic_identify` | `noun_phrases` | choose | answerSpec: exact | `exact` | the small blue marble | wrong visible option value | low | NO |
+@@ -504,7 +504,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p18_parenthesis_commas_application_transfer` | `parenthesis_commas` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Commas mark the parenthesis. | grammar target changed | medium | YES |
+ | `qg_p18_p18_parenthesis_commas_diagnostic_identify` | `parenthesis_commas` | choose | answerSpec: exact | `exact` | Luca, who was first in line, opened the door. | wrong visible option value | low | NO |
+ | `qg_p18_p18_parenthesis_commas_explain_reasoning` | `parenthesis_commas` | explain | answerSpec: exact | `exact` | Commas mark the parenthesis. | wrong visible option value | low | NO |
+-| `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite` | `parenthesis_commas` | fix | answerSpec: normalisedText | `manualReviewOnly` | Luca, who was first in line, opened the door. | grammar target changed | medium | YES |
++| `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite` | `parenthesis_commas` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Luca, who was first in line, opened the door. | grammar target changed | medium | YES |
+ | `qg_p18_p18_parenthesis_commas_sat_table_classification` | `parenthesis_commas` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p18_pronouns_cohesion_application_transfer` | `pronouns_cohesion` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The pronouns clearly refer back to Amira and the map. | grammar target changed | high | YES |
+ | `qg_p18_p18_pronouns_cohesion_diagnostic_identify` | `pronouns_cohesion` | choose | answerSpec: exact | `exact` | Amira picked up the map. She folded it carefully. | wrong visible option value | high | NO |
+@@ -516,28 +516,28 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p18_relative_clauses_diagnostic_identify` | `relative_clauses` | choose | answerSpec: exact | `exact` | who painted the mural | wrong visible option value | low | NO |
+ | `qg_p18_p18_relative_clauses_explain_reasoning` | `relative_clauses` | explain | answerSpec: exact | `exact` | The clause begins with who and adds information about the artist. | wrong visible option value | low | NO |
+ | `qg_p18_p18_relative_clauses_parenthesis_commas_relative_parenthesis_punctuation` | `parenthesis_commas`, `relative_clauses` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | who painted the mural; Commas mark the parenthesis. | grammar target changed | medium | YES |
+-| `qg_p18_p18_relative_clauses_precision_repair_or_rewrite` | `relative_clauses` | fix | answerSpec: normalisedText | `manualReviewOnly` | who painted the mural | grammar target changed | medium | YES |
++| `qg_p18_p18_relative_clauses_precision_repair_or_rewrite` | `relative_clauses` | fix | answerSpec: normalisedText | `normalisedText` | who painted the mural | grammar target changed | medium | YES |
+ | `qg_p18_p18_relative_clauses_sat_table_classification` | `relative_clauses` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p18_sentence_functions_application_transfer` | `sentence_functions` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | It is a command because it tells someone what to do. | grammar target changed | medium | YES |
+ | `qg_p18_p18_sentence_functions_diagnostic_identify` | `sentence_functions` | identify | answerSpec: exact | `exact` | command | wrong visible option value | low | NO |
+ | `qg_p18_p18_sentence_functions_explain_reasoning` | `sentence_functions` | explain | answerSpec: exact | `exact` | It tells someone what to do. | wrong visible option value | low | NO |
+-| `qg_p18_p18_sentence_functions_precision_repair_or_rewrite` | `sentence_functions` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | Please return the atlas to the shelf. | grammar target changed | medium | YES |
++| `qg_p18_p18_sentence_functions_precision_repair_or_rewrite` | `sentence_functions` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Please return the atlas to the shelf. | grammar target changed | medium | YES |
+ | `qg_p18_p18_sentence_functions_sat_table_classification` | `sentence_functions` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary` | `sentence_functions`, `speech_punctuation` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | command; "Where are you going?" asked Mum. | grammar target changed | medium | YES |
+ | `qg_p18_p18_speech_punctuation_application_transfer` | `speech_punctuation` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The question mark belongs inside the speech marks. | grammar target changed | medium | YES |
+ | `qg_p18_p18_speech_punctuation_diagnostic_identify` | `speech_punctuation` | choose | answerSpec: exact | `exact` | "Where are you going?" asked Mum. | wrong visible option value | low | NO |
+ | `qg_p18_p18_speech_punctuation_explain_reasoning` | `speech_punctuation` | explain | answerSpec: exact | `exact` | The question mark belongs inside the speech marks. | wrong visible option value | low | NO |
+-| `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite` | `speech_punctuation` | fix | answerSpec: normalisedText | `manualReviewOnly` | "Where are you going?" asked Mum. | grammar target changed | medium | YES |
++| `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite` | `speech_punctuation` | fix | answerSpec: punctuationPattern | `punctuationPattern` | "Where are you going?" asked Mum. | grammar target changed | medium | YES |
+ | `qg_p18_p18_speech_punctuation_sat_table_classification` | `speech_punctuation` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p18_standard_english_application_transfer` | `standard_english` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Were is the Standard English form with we. | grammar target changed | medium | YES |
+ | `qg_p18_p18_standard_english_diagnostic_identify` | `standard_english` | choose | answerSpec: exact | `exact` | We were late for practice. | wrong visible option value | low | NO |
+ | `qg_p18_p18_standard_english_explain_reasoning` | `standard_english` | explain | answerSpec: exact | `exact` | Were is the Standard English form with we. | wrong visible option value | low | NO |
+-| `qg_p18_p18_standard_english_precision_repair_or_rewrite` | `standard_english` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | We were late for practice. | grammar target changed | medium | YES |
++| `qg_p18_p18_standard_english_precision_repair_or_rewrite` | `standard_english` | rewrite | answerSpec: normalisedText | `normalisedText` | We were late for practice. | grammar target changed | medium | YES |
+ | `qg_p18_p18_standard_english_sat_table_classification` | `standard_english` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ | `qg_p18_p18_subject_object_application_transfer` | `subject_object` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The noisy gull is the subject; the sandwich is the object. The gull does the stealing; the sandwich receives the action. | grammar target changed | high | YES |
+ | `qg_p18_p18_subject_object_diagnostic_identify` | `subject_object` | identify | answerSpec: exact | `exact` | the sandwich | wrong visible option value | high | NO |
+ | `qg_p18_p18_subject_object_explain_reasoning` | `subject_object` | explain | answerSpec: exact | `exact` | The gull does the stealing; the sandwich receives the action. | wrong visible option value | high | NO |
+-| `qg_p18_p18_subject_object_precision_repair_or_rewrite` | `subject_object` | fix | answerSpec: normalisedText | `manualReviewOnly` | The noisy gull | grammar target changed | high | YES |
++| `qg_p18_p18_subject_object_precision_repair_or_rewrite` | `subject_object` | fix | answerSpec: normalisedText | `normalisedText` | The noisy gull | grammar target changed | high | YES |
+ | `qg_p18_p18_subject_object_sat_table_classification` | `subject_object` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | high | NO |
+ | `qg_p18_p18_tense_aspect_application_transfer` | `tense_aspect` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Past perfect uses had plus past participle for an earlier past action. | grammar target changed | medium | YES |
+ | `qg_p18_p18_tense_aspect_diagnostic_identify` | `tense_aspect` | choose | answerSpec: exact | `exact` | She had packed her bag before the trip. | wrong visible option value | low | NO |
+@@ -549,7 +549,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
+ | `qg_p18_p18_word_classes_diagnostic_identify` | `word_classes` | identify | answerSpec: exact | `exact` | adverb | wrong visible option value | low | NO |
+ | `qg_p18_p18_word_classes_explain_reasoning` | `word_classes` | explain | answerSpec: exact | `exact` | It describes how Maya folded the map. | wrong visible option value | low | NO |
+ | `qg_p18_p18_word_classes_noun_phrases_word_class_np_roles` | `noun_phrases`, `word_classes` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | adverb; head noun marble | grammar target changed | medium | YES |
+-| `qg_p18_p18_word_classes_precision_repair_or_rewrite` | `word_classes` | fix | answerSpec: normalisedText | `manualReviewOnly` | adverb | grammar target changed | medium | YES |
++| `qg_p18_p18_word_classes_precision_repair_or_rewrite` | `word_classes` | fix | answerSpec: normalisedText | `normalisedText` | adverb | grammar target changed | medium | YES |
+ | `qg_p18_p18_word_classes_sat_table_classification` | `word_classes` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
+ ---
+ 
+diff --git a/docs/plans/james/grammar/questions-generator/p20/grammar-qg-p20-answer-acceptance-template-quality-variety-expansion-contract.md b/docs/plans/james/grammar/questions-generator/p20/grammar-qg-p20-answer-acceptance-template-quality-variety-expansion-contract.md
+new file mode 100644
+index 0000000..ff87c31
+--- /dev/null
++++ b/docs/plans/james/grammar/questions-generator/p20/grammar-qg-p20-answer-acceptance-template-quality-variety-expansion-contract.md
+@@ -0,0 +1,198 @@
++---
++title: "Grammar QG P20 — Answer Acceptance, Template Quality, Pool Audit, Variety, and Expansion Gate Contract"
++subject: grammar
++phase: p20
++status: patch-ready
++baseRelease: grammar-qg-p19-2026-05-04
++targetRelease: grammar-qg-p20-2026-05-05
++created: 2026-05-05
++scope: "Grammar question engine only"
++---
++
++# Grammar QG P20 — quality-recovery contract
++
++This contract is for the Grammar subject only. It does not change punctuation subject code, punctuation content, punctuation audits, or punctuation learner surfaces.
++
++P20 is based on the P19 Grammar QG release (`grammar-qg-p19-2026-05-04`) and the P18 full-scope review pack under `docs/plans/james/grammar/questions-generator/p18/grammar-p18-fullscope-review-pack`. P19 made the correct safety move by converting many open constructed-response items to `manualReviewOnly`; P20 keeps that fairness boundary, but recovers deterministic closed answers that can be safely auto-marked.
++
++The target release id is `grammar-qg-p20-2026-05-05` because P20 changes learner-visible marking behaviour. Previously non-scored deterministic closed items can now score when the learner gives a valid answer, and normalised answers accept harmless learner variants.
++
++## Product goal
++
++Learners should not lose trust because a logically correct Grammar answer is refused. Heavy users should also see a broad, stable pool without obvious repetition or low-quality learner-facing wording.
++
++P20 therefore does not expand the learner-facing pool first. It improves the trustworthiness of the current pool and blocks further expansion unless answer acceptance, fairness, template wording, pool quality, and smart-practice variety gates pass.
++
++## Phase 1 — Answer acceptance repair
++
++Problem: Some deterministic Grammar answers are valid in more than one learner form, but the marker previously treated only a narrow exact text as correct.
++
++Implementation requirements:
++
++1. Introduce a shared Grammar answer normaliser for constructed answers.
++2. Accept harmless variants for `normalisedText` and `acceptedSet` answers:
++   - trimmed and collapsed whitespace;
++   - case differences;
++   - harmless terminal sentence punctuation on a short answer;
++   - wrapping straight or curly quotation marks;
++   - optional `a`, `an`, or `the` before known grammar labels such as `adverb`, `noun`, `subject`, `relative clause`, and `modal verb`.
++3. Do not loosen `punctuationPattern` into content-insensitive marking. Grammar-critical punctuation must still be required.
++4. Add tests that prove examples such as `adverb`, `an adverb`, `ADVERB.`, and `"adverb"` are accepted while wrong labels remain rejected.
++
++Acceptance evidence:
++
++- `tests/grammar-qg-p20-answer-acceptance.test.js`
++- `scripts/audit-grammar-qg-p20-quality-hardening.mjs`
++
++## Phase 2 — Template quality and learner-surface repair
++
++Problem: Some generated or serialised learner text exposed low-trust surface defects, especially spacing caused by stripped legacy HTML and awkward table-choice prompts such as `Classify the grammar feature shown in this row: X in: Sentence`.
++
++Implementation requirements:
++
++1. Strip legacy HTML without leaving spaces before punctuation.
++2. Remove spaces just inside brackets after serialisation.
++3. Rewrite table-choice manual-expansion prompts to a cleaner learner instruction: `Classify the target word or phrase by its grammar role.`
++4. Rewrite table row labels from raw `X in: Sentence` style into a clear target/sentence surface.
++5. Add a quality audit rule that fails on:
++   - space before punctuation;
++   - article-agreement defects such as `a adverb`;
++   - awkward table-row copy.
++
++Acceptance evidence:
++
++- `tests/grammar-qg-p20-answer-acceptance.test.js`
++- `tests/grammar-qg-p20-quality-hardening.test.js`
++- `scripts/audit-grammar-qg-p20-quality-hardening.mjs`
++
++## Phase 3 — 15k pool audit and safe quarantine boundary
++
++Problem: A large pool is not automatically a trusted pool. P19 protected the riskiest open-response items by making them non-scored; P20 must avoid undoing that protection accidentally.
++
++Implementation requirements:
++
++1. Keep genuinely open writing as `manualReviewOnly` and `nonScored`.
++2. Recover only closed deterministic P19 manual-expansion families where every case in the family matches the same safe auto-mark kind.
++3. Tag recovered families with `p20-closed-auto-mark` and expose `p20ClosedAutoMarkKind` in Grammar template metadata.
++4. Keep the open-response fairness audit strict, with an explicit exception only for `p20ClosedAutoMark` deterministic closed items.
++5. Add a P20 audit that checks the full seed window and reports:
++   - recovered closed auto-mark template count;
++   - recovered case count;
++   - answer-acceptance failures;
++   - open-response fairness findings;
++   - template-quality findings;
++   - unsafe auto-marked open prompts.
++
++Acceptance evidence from this patch:
++
++- Manual-review-only count reduces from 180 to 157.
++- 23 deterministic closed manual-expansion families are recovered to safe auto-marking.
++- 690 recovered generated cases pass the 30-seed P20 audit window.
++- Genuinely open clause-combine writing remains manual-review-only.
++
++## Phase 4 — Variety and anti-repetition hardening
++
++Problem: Session variety must be reviewable without requiring every reviewer to run a long release audit locally.
++
++Implementation requirements:
++
++1. Extend the Grammar smart-practice audit CLI with `--seeds` so reviewers can run a small smoke window and release can run the full window.
++2. Preserve the existing smart-practice checks for concept balancing, manual-review-only exclusion from auto-scored lanes, recent-miss routing, spaced retrieval, and repeated-template/session risks.
++3. Emit seed-window metadata in JSON/Markdown output so evidence is reproducible.
++
++Acceptance evidence:
++
++- `node scripts/audit-grammar-qg-p19-smart-practice.mjs --seeds=1..6 --json-out=/tmp/grammar-smart.json --md-out=/tmp/grammar-smart.md`
++- Full release command should use `--seeds=1..30` where the CI/release environment can run the longer audit.
++
++## Phase 5 — Expansion gate
++
++Problem: Expanding beyond the current pool before trust gates are stable would increase the number of possible learner challenges.
++
++Implementation requirements:
++
++1. Add no new learner-facing Grammar template families in P20.
++2. Treat expansion as blocked unless all P20 gates pass:
++   - answer-acceptance audit;
++   - template-quality audit;
++   - open-response fairness audit;
++   - smart-practice variety audit;
++   - existing Grammar QG audit/deep audit.
++3. Record the expansion stance in the P20 audit output.
++4. Expand only in the next phase, after P20 stays green under the full release seed window.
++
++The P20 expansion gate deliberately reports `newLearnerFacingFamiliesAdded: 0`.
++
++## Files changed by the patch
++
++Core implementation:
++
++- `worker/src/subjects/grammar/answer-spec.js`
++- `worker/src/subjects/grammar/content.js`
++- `scripts/audit-grammar-open-response-fairness.mjs`
++- `scripts/audit-grammar-qg-p19-smart-practice.mjs`
++- `scripts/audit-grammar-qg-p20-quality-hardening.mjs`
++
++Tests and gates:
++
++- `tests/grammar-qg-p20-answer-acceptance.test.js`
++- `tests/grammar-qg-p20-quality-hardening.test.js`
++- `tests/grammar-question-generator-audit.test.js`
++- `tests/grammar-answer-spec-audit.test.js`
++- `docs/plans/james/grammar/grammar-answer-spec-audit.md`
++- `package.json`
++
++## Required post-patch commands
++
++Reviewer smoke:
++
++```bash
++npm run audit:grammar-qg
++npm run audit:grammar-qg:deep
++node scripts/audit-grammar-content-quality.mjs --seeds=1..30 --json
++npm run audit:grammar-qg:open-response-fairness
++node scripts/audit-grammar-qg-p20-quality-hardening.mjs --seeds=1..30 --smart-seeds=1..6 --out=reports/grammar/grammar-qg-p20-quality-hardening.json
++node --test tests/grammar-answer-spec.test.js tests/grammar-answer-spec-audit.test.js tests/grammar-question-generator-audit.test.js tests/grammar-qg-p20-answer-acceptance.test.js tests/grammar-qg-p20-quality-hardening.test.js
++```
++
++Convenience command added by the patch:
++
++```bash
++npm run verify:grammar-qg-p20
++```
++
++Release variety gate, where runtime permits the longer audit:
++
++```bash
++node scripts/audit-grammar-qg-p19-smart-practice.mjs --seeds=1..30 --json-out=reports/grammar/grammar-qg-p20-smart-practice-full.json --md-out=reports/grammar/grammar-qg-p20-smart-practice-full.md
++```
++
++## Acceptance criteria
++
++P20 is accepted only when all of the following are true:
++
++1. `GRAMMAR_CONTENT_RELEASE_ID` reports `grammar-qg-p20-2026-05-05`.
++2. Grammar QG audit and deep audit pass with 510 templates.
++3. Manual-review-only count is 157.
++4. `answerSpecKindCounts` are:
++   - `exact`: 234
++   - `manualReviewOnly`: 157
++   - `multiField`: 56
++   - `normalisedText`: 12
++   - `punctuationPattern`: 20
++5. P20 quality-hardening audit passes with zero answer-acceptance failures, zero fairness findings, zero template-quality findings, and zero unsafe auto-marked open prompts.
++6. Open-response fairness audit passes.
++7. Existing answer-spec audit documentation matches runtime metadata.
++8. The P20 test files pass.
++9. No punctuation subject files are changed.
++
++## Explicit non-goals
++
++- No punctuation subject work.
++- No Stars, mastery, rewards, Hero Mode, Hero Coins, monster progression, or dashboard reward changes.
++- No new learner-facing Grammar expansion in P20.
++- No claim of live production certification without live smoke evidence.
++
++## Follow-up phase after P20
++
++The next phase may expand the Grammar pool, but only after P20 has passed the full release seed window and any adult review/quarantine decisions are recorded. Expansion should prioritise concepts with low variety after the P20 denominator is stable, and each new family must ship with answer acceptance tests from day one.
+diff --git a/scripts/audit-grammar-qg-p20-quality-hardening.mjs b/scripts/audit-grammar-qg-p20-quality-hardening.mjs
+new file mode 100644
+index 0000000..c61ce7c
+--- /dev/null
++++ b/scripts/audit-grammar-qg-p20-quality-hardening.mjs
+@@ -0,0 +1,300 @@
++#!/usr/bin/env node
++import fs from 'node:fs/promises';
++import path from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { parseArgs } from 'node:util';
++
++import {
++  GRAMMAR_CONTENT_RELEASE_ID,
++  GRAMMAR_TEMPLATE_METADATA,
++  createGrammarQuestion,
++  serialiseGrammarQuestion,
++} from '../worker/src/subjects/grammar/content.js';
++import { markByAnswerSpec } from '../worker/src/subjects/grammar/answer-spec.js';
++import { buildSmartPracticeAudit } from './audit-grammar-qg-p19-smart-practice.mjs';
++
++const __dirname = path.dirname(fileURLToPath(import.meta.url));
++const ROOT_DIR = path.resolve(__dirname, '..');
++const DEFAULT_SEEDS = Object.freeze(Array.from({ length: 30 }, (_, i) => i + 1));
++const DEFAULT_SMART_SEEDS = Object.freeze([1, 2, 3, 4, 5, 6]);
++const GRAMMAR_LABELS = new Set([
++  'active voice', 'adjective', 'adverb', 'apostrophe', 'bracket', 'colon',
++  'comma', 'command', 'conjunction', 'dash', 'determiner', 'exclamation',
++  'expanded noun phrase', 'fronted adverbial', 'hyphen', 'main clause',
++  'modal verb', 'noun', 'noun phrase', 'object', 'parenthesis', 'passive voice',
++  'preposition', 'pronoun', 'question', 'relative clause', 'semicolon',
++  'sentence', 'singular possession', 'plural possession', 'statement',
++  'subject', 'subordinate clause', 'verb',
++]);
++
++function parseSeedList(value = '', fallback = DEFAULT_SEEDS) {
++  const text = String(value || '').trim();
++  if (!text) return fallback.slice();
++  const seeds = [];
++  for (const token of text.split(',')) {
++    const part = token.trim();
++    if (!part) continue;
++    const range = part.match(/^(\d+)\.\.(\d+)$/);
++    if (range) {
++      const start = Number(range[1]);
++      const end = Number(range[2]);
++      if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start) {
++        throw new Error(`Invalid seed range: ${part}`);
++      }
++      for (let seed = start; seed <= end; seed += 1) seeds.push(seed);
++      continue;
++    }
++    const seed = Number(part);
++    if (!Number.isInteger(seed) || seed < 1) throw new Error(`Invalid seed value: ${part}`);
++    seeds.push(seed);
++  }
++  const unique = Array.from(new Set(seeds)).sort((a, b) => a - b);
++  if (unique.length === 0) throw new Error(`No valid seeds parsed from: ${value}`);
++  return unique;
++}
++
++function normaliseSpaces(text) {
++  return String(text || '').replace(/\s+/g, ' ').trim();
++}
++
++function stripHtml(html) {
++  return normaliseSpaces(String(html || '')
++    .replace(/<br\s*\/?>/gi, ' ')
++    .replace(/<\/p>/gi, ' ')
++    .replace(/<\/li>/gi, ' ')
++    .replace(/<[^>]*>/g, ' ')
++    .replace(/&nbsp;/g, ' ')
++    .replace(/&amp;/g, '&')
++    .replace(/&lt;/g, '<')
++    .replace(/&gt;/g, '>')
++    .replace(/&quot;/g, '"'))
++    .replace(/\s+([.,!?;:])/g, '$1')
++    .replace(/([([{])\s+/g, '$1')
++    .replace(/\s+([)\]}])/g, '$1');
++}
++
++function isOpenPrompt(prompt) {
++  return /\b(explain|transfer|write\s+(?:the|an?|one|a\s+sentence)|rewrite|build|mixed\s+check|add|move|join|describe|complete\s+the\s+sentence|continue|extend|combine|correct|copy|insert|edit|fix|punctuate|expand|change|type|repair|reorder)\b/i.test(prompt || '');
++}
++
++function isGrammarLabel(text) {
++  return GRAMMAR_LABELS.has(String(text || '').trim().toLowerCase());
++}
++
++function articleFor(text) {
++  return /^[aeiou]/i.test(String(text || '').trim()) ? 'an' : 'a';
++}
++
++function smartPunctuationVariant(text) {
++  return String(text || '')
++    .replace(/"([^"\n]+)"/g, '“$1”')
++    .replace(/\b([A-Za-z]+)'s\b/g, '$1’s')
++    .replace(/ - /g, ' – ');
++}
++
++function answerVariantsFor(question) {
++  const kind = question.answerSpec?.kind;
++  const golden = Array.isArray(question.answerSpec?.golden) ? question.answerSpec.golden : [];
++  const variants = [];
++  for (const answer of golden.slice(0, 3)) {
++    const text = String(answer || '').trim();
++    if (!text) continue;
++    variants.push({ label: 'golden', answer: text });
++    if (kind === 'normalisedText' || kind === 'acceptedSet') {
++      variants.push({ label: 'case-fold', answer: text.toUpperCase() });
++      if (!/[.!?]$/.test(text)) variants.push({ label: 'terminal-full-stop', answer: `${text}.` });
++      variants.push({ label: 'wrapping-quotes', answer: `"${text}"` });
++      if (isGrammarLabel(text)) {
++        variants.push({ label: 'article-label', answer: `${articleFor(text)} ${text}` });
++        variants.push({ label: 'the-label', answer: `the ${text}` });
++      }
++    }
++    if (kind === 'punctuationPattern') {
++      variants.push({ label: 'outer-whitespace', answer: `  ${text}  ` });
++      const smart = smartPunctuationVariant(text);
++      if (smart !== text) variants.push({ label: 'smart-punctuation', answer: smart });
++    }
++  }
++  const seen = new Set();
++  return variants.filter((variant) => {
++    const key = `${variant.label}\0${variant.answer}`;
++    if (seen.has(key)) return false;
++    seen.add(key);
++    return true;
++  });
++}
++
++function evaluate(question, answer) {
++  if (question?.answerSpec) return markByAnswerSpec(question.answerSpec, { answer });
++  if (typeof question?.evaluate === 'function') return question.evaluate({ answer });
++  return null;
++}
++
++function buildTemplateQualityFindings(question, template, seed, serialised) {
++  const findings = [];
++  const text = [
++    serialised?.promptText || stripHtml(question.stemHtml),
++    ...(serialised?.solutionLines || []),
++    JSON.stringify(serialised?.inputSpec || question.inputSpec || {}),
++  ].join(' ');
++  if (/\s+[.,!?;:]/.test(text)) {
++    findings.push({ rule: 'space-before-punctuation', templateId: template.id, seed, text: text.slice(0, 240) });
++  }
++  const badArticle = text.match(/\ba\s+(adverb|adjective|apostrophe|exclamation|expanded\s+noun\s+phrase)\b/i);
++  if (badArticle) {
++    findings.push({ rule: 'article-agreement', templateId: template.id, seed, text: badArticle[0] });
++  }
++  if (/\bClassify the grammar feature shown in this row:\s*[^.?!:]+\s+in:\s*/i.test(text)) {
++    findings.push({ rule: 'awkward-table-row-copy', templateId: template.id, seed, text: text.slice(0, 180) });
++  }
++  return findings;
++}
++
++export function buildGrammarQGP20QualityHardeningAudit({ seeds = DEFAULT_SEEDS, smartSeeds = DEFAULT_SMART_SEEDS } = {}) {
++  const answerAcceptanceFailures = [];
++  const fairnessFindings = [];
++  const templateQualityFindings = [];
++  const p20ClosedAutoMark = [];
++  const unsafeAutoMarkedOpenPrompts = [];
++  const answerSpecKindCounts = {};
++
++  for (const template of GRAMMAR_TEMPLATE_METADATA) {
++    answerSpecKindCounts[template.answerSpecKind || 'none'] = (answerSpecKindCounts[template.answerSpecKind || 'none'] || 0) + 1;
++    for (const seed of seeds) {
++      const question = createGrammarQuestion({ templateId: template.id, seed });
++      if (!question) continue;
++      const serialised = serialiseGrammarQuestion(question);
++      const prompt = serialised?.promptText || stripHtml(question.stemHtml || '');
++      const inputType = question.inputSpec?.type;
++      const kind = question.answerSpec?.kind;
++      const acceptedCount = Array.isArray(question.answerSpec?.golden) ? question.answerSpec.golden.length : 0;
++
++      if (question.p20ClosedAutoMark || question.answerSpec?.p20ClosedAutoMark) {
++        p20ClosedAutoMark.push({ templateId: template.id, seed, kind, prompt });
++        if (isOpenPrompt(prompt) && !question.answerSpec?.p20ClosedAutoMark) {
++          unsafeAutoMarkedOpenPrompts.push({ templateId: template.id, seed, kind, prompt });
++        }
++      }
++
++      if (
++        ['text', 'textarea'].includes(inputType)
++        && ['normalisedText', 'acceptedSet'].includes(kind)
++        && isOpenPrompt(prompt)
++        && acceptedCount < 3
++        && question.manualReviewOnly !== true
++        && question.nonScored !== true
++        && question.p20ClosedAutoMark !== true
++        && question.answerSpec?.p20ClosedAutoMark !== true
++      ) {
++        fairnessFindings.push({ templateId: template.id, seed, kind, acceptedCount, prompt });
++      }
++
++      if (!question.manualReviewOnly && !question.nonScored && ['normalisedText', 'acceptedSet', 'punctuationPattern'].includes(kind)) {
++        for (const variant of answerVariantsFor(question)) {
++          const result = evaluate(question, variant.answer);
++          if (!result?.correct) {
++            answerAcceptanceFailures.push({
++              templateId: template.id,
++              seed,
++              kind,
++              variant: variant.label,
++              answer: variant.answer,
++              expected: question.answerSpec?.golden?.[0] || '',
++              prompt,
++              feedback: result?.feedbackLong || '',
++            });
++            break;
++          }
++        }
++      }
++
++      templateQualityFindings.push(...buildTemplateQualityFindings(question, template, seed, serialised));
++    }
++  }
++
++  const smartPractice = buildSmartPracticeAudit({ seeds: smartSeeds });
++  const expansionGate = {
++    passed: answerAcceptanceFailures.length === 0
++      && fairnessFindings.length === 0
++      && templateQualityFindings.length === 0
++      && unsafeAutoMarkedOpenPrompts.length === 0
++      && smartPractice.summary.pass === true,
++    stance: 'Expansion is allowed only after the current pool stays clean under answer-acceptance, template-quality, fairness, and smart-practice gates.',
++    newLearnerFacingFamiliesAdded: 0,
++  };
++
++  const phaseStatus = {
++    phase1AnswerAcceptance: answerAcceptanceFailures.length === 0,
++    phase2TemplateQuality: templateQualityFindings.length === 0,
++    phase3PoolAuditAndQuarantine: fairnessFindings.length === 0 && unsafeAutoMarkedOpenPrompts.length === 0,
++    phase4VarietyAndAntiRepetition: smartPractice.summary.pass === true,
++    phase5ExpansionGate: expansionGate.passed,
++  };
++  const passed = Object.values(phaseStatus).every(Boolean);
++
++  return {
++    metadata: {
++      contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
++      generatedAt: new Date().toISOString(),
++      seeds,
++      smartSeeds,
++    },
++    passed,
++    phaseStatus,
++    summary: {
++      templateCount: GRAMMAR_TEMPLATE_METADATA.length,
++      seedsChecked: seeds.length,
++      answerSpecKindCounts,
++      p20ClosedAutoMarkTemplateCount: new Set(p20ClosedAutoMark.map((item) => item.templateId)).size,
++      p20ClosedAutoMarkCaseCount: p20ClosedAutoMark.length,
++      answerAcceptanceFailureCount: answerAcceptanceFailures.length,
++      fairnessFindingCount: fairnessFindings.length,
++      templateQualityFindingCount: templateQualityFindings.length,
++      unsafeAutoMarkedOpenPromptCount: unsafeAutoMarkedOpenPrompts.length,
++      smartPracticeFailureCount: smartPractice.summary.failureCount,
++      smartPracticeAdvisoryCount: smartPractice.summary.advisoryCount,
++    },
++    answerAcceptanceFailures,
++    fairnessFindings,
++    templateQualityFindings,
++    unsafeAutoMarkedOpenPrompts,
++    p20ClosedAutoMark: p20ClosedAutoMark.slice(0, 200),
++    smartPractice: {
++      metadata: smartPractice.metadata,
++      summary: smartPractice.summary,
++      failures: smartPractice.failures,
++      advisories: smartPractice.advisories,
++    },
++    expansionGate,
++  };
++}
++
++async function main() {
++  const { values } = parseArgs({
++    options: {
++      seeds: { type: 'string', default: '' },
++      'smart-seeds': { type: 'string', default: '' },
++      out: { type: 'string', default: '' },
++    },
++  });
++  const seeds = parseSeedList(values.seeds || '', DEFAULT_SEEDS);
++  const smartSeeds = parseSeedList(values['smart-seeds'] || '', DEFAULT_SMART_SEEDS);
++  const audit = buildGrammarQGP20QualityHardeningAudit({ seeds, smartSeeds });
++  const json = JSON.stringify(audit, null, 2);
++  if (values.out) {
++    const outPath = path.resolve(values.out);
++    await fs.mkdir(path.dirname(outPath), { recursive: true });
++    await fs.writeFile(outPath, `${json}\n`, 'utf8');
++    console.log(`Grammar QG P20 quality-hardening audit: ${audit.passed ? 'PASS' : 'FAIL'} -> ${outPath}`);
++  } else {
++    console.log(json);
++  }
++  if (!audit.passed) process.exit(1);
++}
++
++if (fileURLToPath(import.meta.url) === path.resolve(process.argv[1] || '')) {
++  main().catch((err) => {
++    console.error(err?.stack || err?.message || err);
++    process.exit(1);
++  });
++}
+diff --git a/tests/grammar-qg-p20-answer-acceptance.test.js b/tests/grammar-qg-p20-answer-acceptance.test.js
+new file mode 100644
+index 0000000..8708571
+--- /dev/null
++++ b/tests/grammar-qg-p20-answer-acceptance.test.js
+@@ -0,0 +1,95 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import {
++  createGrammarQuestion,
++  serialiseGrammarQuestion,
++} from '../worker/src/subjects/grammar/content.js';
++import { markByAnswerSpec } from '../worker/src/subjects/grammar/answer-spec.js';
++
++function mark(question, answer) {
++  assert.ok(question?.answerSpec, 'question should expose an answerSpec');
++  return markByAnswerSpec(question.answerSpec, { answer });
++}
++
++test('P20 accepts logically equivalent word-class labels without making learners type one exact phrase', () => {
++  const question = createGrammarQuestion({
++    templateId: 'qg_p18_p18_word_classes_precision_repair_or_rewrite',
++    seed: 1,
++  });
++
++  assert.equal(question.answerSpec.kind, 'normalisedText');
++  assert.equal(question.p20ClosedAutoMark, true);
++  assert.equal(question.answerSpec.p20ClosedAutoMark, true);
++
++  for (const answer of ['adverb', 'ADVERB', 'adverb.', '"adverb"', 'an adverb', 'the adverb', '  adverb  ']) {
++    assert.equal(mark(question, answer).correct, true, `${answer} should be accepted`);
++  }
++
++  assert.equal(mark(question, 'verb').correct, false, 'a wrong grammar label must still be rejected');
++});
++
++test('P20 accepts harmless learner formatting around deterministic subject/object answers', () => {
++  const question = createGrammarQuestion({
++    templateId: 'qg_p18_p18_subject_object_precision_repair_or_rewrite',
++    seed: 1,
++  });
++
++  assert.equal(question.answerSpec.kind, 'normalisedText');
++  assert.equal(question.p20ClosedAutoMark, true);
++  assert.equal(question.answerSpec.golden[0], 'The noisy gull');
++
++  for (const answer of ['The noisy gull', 'the noisy gull', 'THE NOISY GULL', 'The noisy gull.', '“The noisy gull”']) {
++    assert.equal(mark(question, answer).correct, true, `${answer} should be accepted`);
++  }
++
++  assert.equal(mark(question, 'the sandwich').correct, false, 'the object must not be accepted as the subject');
++});
++
++test('P20 recovered punctuation rewrites still require the grammar-critical punctuation', () => {
++  const question = createGrammarQuestion({
++    templateId: 'qg_p18_p15_adverbials_fronted_adverbial_comma',
++    seed: 1,
++  });
++
++  assert.equal(question.answerSpec.kind, 'punctuationPattern');
++  assert.equal(question.p20ClosedAutoMark, true);
++  assert.equal(mark(question, 'Before sunrise, the campers packed their bags.').correct, true);
++  assert.equal(mark(question, '  Before sunrise, the campers packed their bags.  ').correct, true);
++  assert.equal(
++    mark(question, 'Before sunrise the campers packed their bags.').correct,
++    false,
++    'missing the fronted-adverbial comma should remain incorrect',
++  );
++});
++
++test('P20 keeps genuinely open clause-combine writing as manual-review-only', () => {
++  const question = createGrammarQuestion({
++    templateId: 'qg_p18_p15_clauses_combine_clause',
++    seed: 1,
++  });
++
++  assert.equal(question.answerSpec.kind, 'manualReviewOnly');
++  assert.equal(question.manualReviewOnly, true);
++  assert.equal(question.nonScored, true);
++  const result = mark(question, 'Although the wind was strong, the boat reached the shore.');
++  assert.equal(result.correct, false);
++  assert.equal(result.score, 0);
++  assert.equal(result.manualReviewOnly, true);
++});
++
++test('P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy', () => {
++  const clauseQuestion = createGrammarQuestion({ templateId: 'combine_clauses_rewrite', seed: 1 });
++  const clauseSerialised = serialiseGrammarQuestion(clauseQuestion);
++  assert.doesNotMatch(clauseSerialised.promptText, /\s+[.,!?;:]/);
++  assert.match(clauseSerialised.promptText, /using when\./);
++
++  const tableQuestion = createGrammarQuestion({
++    templateId: 'qg_p18_p18_word_classes_sat_table_classification',
++    seed: 1,
++  });
++  const tableSerialised = serialiseGrammarQuestion(tableQuestion);
++  assert.equal(tableSerialised.promptText, 'Classify the target word or phrase by its grammar role.');
++  assert.doesNotMatch(JSON.stringify(tableSerialised.inputSpec), /Classify the grammar feature shown in this row:/);
++  assert.match(JSON.stringify(tableSerialised.inputSpec), /Target “carefully” in sentence:/);
++});
+diff --git a/tests/grammar-qg-p20-quality-hardening.test.js b/tests/grammar-qg-p20-quality-hardening.test.js
+new file mode 100644
+index 0000000..2d02236
+--- /dev/null
++++ b/tests/grammar-qg-p20-quality-hardening.test.js
+@@ -0,0 +1,64 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import { buildGrammarQGP20QualityHardeningAudit } from '../scripts/audit-grammar-qg-p20-quality-hardening.mjs';
++import {
++  GRAMMAR_TEMPLATE_METADATA,
++  createGrammarQuestion,
++  serialiseGrammarQuestion,
++} from '../worker/src/subjects/grammar/content.js';
++
++test('P20 quality-hardening audit passes a reviewer smoke window across all five phases', () => {
++  const audit = buildGrammarQGP20QualityHardeningAudit({ seeds: [1, 2, 3], smartSeeds: [1, 2] });
++
++  assert.equal(audit.passed, true);
++  assert.deepEqual(audit.phaseStatus, {
++    phase1AnswerAcceptance: true,
++    phase2TemplateQuality: true,
++    phase3PoolAuditAndQuarantine: true,
++    phase4VarietyAndAntiRepetition: true,
++    phase5ExpansionGate: true,
++  });
++  assert.equal(audit.summary.answerAcceptanceFailureCount, 0);
++  assert.equal(audit.summary.fairnessFindingCount, 0);
++  assert.equal(audit.summary.templateQualityFindingCount, 0);
++  assert.equal(audit.summary.unsafeAutoMarkedOpenPromptCount, 0);
++  assert.equal(audit.expansionGate.newLearnerFacingFamiliesAdded, 0);
++  assert.ok(
++    audit.summary.p20ClosedAutoMarkTemplateCount >= 20,
++    'P20 should recover a meaningful set of deterministic closed Grammar items from manual-review-only',
++  );
++});
++
++test('P20 metadata keeps recovered closed families visible for reviewers', () => {
++  const recovered = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.p20ClosedAutoMarkKind);
++  assert.ok(recovered.length >= 20);
++  assert.ok(recovered.every((template) => template.tags.includes('p20-closed-auto-mark')));
++  assert.ok(recovered.every((template) => ['normalisedText', 'punctuationPattern'].includes(template.p20ClosedAutoMarkKind)));
++
++  const question = createGrammarQuestion({ templateId: recovered[0].id, seed: 1 });
++  assert.equal(question.answerSpec.p20ClosedAutoMark, true);
++  assert.equal(question.answerSpec.conversionReason, 'p20-closed-deterministic-quality-recovery');
++});
++
++test('P20 does not hide learner-facing prompt defects behind HTML stripping', () => {
++  const seeds = [1, 2, 3];
++  for (const template of GRAMMAR_TEMPLATE_METADATA) {
++    for (const seed of seeds) {
++      const question = createGrammarQuestion({ templateId: template.id, seed });
++      if (!question) continue;
++      const serialised = serialiseGrammarQuestion(question);
++      const learnerText = [
++        serialised.promptText,
++        ...(serialised.solutionLines || []),
++        JSON.stringify(serialised.inputSpec || {}),
++      ].join(' ');
++      assert.doesNotMatch(learnerText, /\s+[.,!?;:]/, `${template.id}:${seed} has spacing before punctuation`);
++      assert.doesNotMatch(
++        learnerText,
++        /\bClassify the grammar feature shown in this row:\s*[^.?!:]+\s+in:\s*/i,
++        `${template.id}:${seed} exposes awkward table-row copy`,
++      );
++    }
++  }
++});
+diff --git a/tests/grammar-question-generator-audit.test.js b/tests/grammar-question-generator-audit.test.js
+index 571daba..dac020e 100644
+--- a/tests/grammar-question-generator-audit.test.js
++++ b/tests/grammar-question-generator-audit.test.js
+@@ -24,14 +24,10 @@ test('Grammar question-generator audit covers the current template inventory', (
+   assert.equal(audit.constructedResponseTemplateCount, 189);
+   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
+   assert.equal(audit.legacyAdapterTemplateCount, 0);
+-  // P19 Contract A.2: manual-expansion families promoted to manualReviewOnly +
+-  // 5 P0/P2/P3 open-rewrite templates promoted + 4 P14 priority rewrites
+-  // moved to selected-response (exact) instead of manualReviewOnly.
+-  // P19a hotfix: predicate broadened (combine|correct|copy|insert|edit|fix|
+-  // punctuate|expand|change|type) → 23 more manual-expansion families promoted
+-  // and 2 inline templates (combine_clauses_rewrite, proc3_clause_join_rewrite)
+-  // converted. Net runtime manualReviewOnly = 174 templates.
+-  assert.equal(audit.manualReviewOnlyTemplateCount, 180);
++  // P20 quality recovery keeps P19's open-response fairness boundary, but
++  // returns 23 deterministic closed manual-expansion families to safe
++  // auto-marking. Genuinely open writing remains manualReviewOnly.
++  assert.equal(audit.manualReviewOnlyTemplateCount, 157);
+   assert.equal(audit.p2MigrationComplete, true);
+   assert.equal(audit.explainTemplateCount, 126);
+   assert.equal(audit.conceptsWithExplainCoverage.length, GRAMMAR_CONCEPTS.length);
+@@ -43,9 +39,10 @@ test('Grammar question-generator audit covers the current template inventory', (
+   );
+   assert.deepEqual(audit.answerSpecKindCounts, {
+     exact: 234,
+-    manualReviewOnly: 180,
++    manualReviewOnly: 157,
+     multiField: 56,
+-    punctuationPattern: 9,
++    normalisedText: 12,
++    punctuationPattern: 20,
+   });
+ 
+   // P4 mixed-transfer assertions
+@@ -77,11 +74,11 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
+   assert.notEqual(a, c);
+ });
+ 
+-test('Grammar question-generator P19 denominator assertions', () => {
++test('Grammar question-generator P20 quality-recovery denominator assertions', () => {
+   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
+   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
+ 
+-  assert.equal(audit.releaseId, 'grammar-qg-p19-2026-05-04');
++  assert.equal(audit.releaseId, 'grammar-qg-p20-2026-05-05');
+   assert.equal(audit.templateCount, 510);
+   assert.equal(audit.conceptCount, 18);
+   // P19 Contract A.2 selected-response conversion: 4 P14 priority rewrites
+@@ -98,11 +95,11 @@ test('Grammar question-generator P19 denominator assertions', () => {
+   assert.equal(audit.lowDepthGeneratedTemplates.length, 0, 'Deep low-depth families must be zero');
+   assert.equal(audit.answerSpecTemplateCount, 479);
+   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
+-  assert.equal(audit.manualReviewOnlyTemplateCount, 180);
++  assert.equal(audit.manualReviewOnlyTemplateCount, 157);
+   assert.equal(audit.generatedSignatureCollisions.length, 0, 'Cross-template collisions must be zero');
+ });
+ 
+-test('Grammar P6 baseline fixture remains frozen while P19 supersedes the live audit output', () => {
++test('Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output', () => {
+   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
+   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
+   const baseline = readGrammarQuestionGeneratorP6Baseline();
+@@ -119,9 +116,9 @@ test('Grammar P6 baseline fixture remains frozen while P19 supersedes the live a
+   assert.ok(audit.mixedTransferTemplateCount > baseline.mixedTransferTemplateCount);
+   assert.ok(audit.answerSpecTemplateCount > baseline.answerSpecTemplateCount);
+   assert.ok(audit.constructedResponseAnswerSpecTemplateCount > baseline.constructedResponseAnswerSpecTemplateCount);
+-  // P19 Contract A.2: live manualReviewOnly count grew from baseline 4 to 95
+-  // after promoting 91 manual-expansion families to manualReviewOnly. The
+-  // baseline stays frozen at the P6 figure; the live audit supersedes it.
++  // P20 recovery reduces the live manualReviewOnly count by returning safe
++  // deterministic closed items to auto-marking. The P6 baseline stays frozen;
++  // the live audit supersedes it.
+   assert.ok(audit.manualReviewOnlyTemplateCount >= baseline.manualReviewOnlyTemplateCount);
+   assert.equal(audit.repeatedGeneratedVariants.length, baseline.repeatedGeneratedVariants.length);
+   assert.equal(audit.generatedSignatureCollisions.length, baseline.generatedSignatureCollisions.length);
