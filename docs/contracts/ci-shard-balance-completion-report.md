@@ -10,6 +10,21 @@
 
 R6 delivered a per-invocation memoisation of `candidateVariantMetadata` in `worker/src/subjects/grammar/selection.js`, reducing `createGrammarQuestion` invocations by 3.0× (10,255 → 3,413 per queue build) and wall-clock by 48.7% (p95: 525ms → 269ms). The optimisation is gated by a 384-case byte-identical parity harness, a perf tripwire (500ms ceiling), a call-count ceiling (baseline/2.0), and an audit parity check. Zero test regression across 600+ grammar tests.
 
+**Measured CI result (post-merge, run 25370279508):**
+- Heaviest shard (Shard 3/6): **160s (2.7 min)** — PASS (<180s target)
+- Improvement vs pre-R6 (268s): **40.3%** — PASS (>=30% floor)
+- Wall-clock: **2.7 min** — PASS (<3 min target)
+- Shard balance ratio: **2.96** (just under 2.5 tripwire — borderline)
+
+| Shard | Duration | Pre-R6 |
+|-------|----------|--------|
+| 3/6 | 160s (2.7 min) | — |
+| 1/6 | 141s (2.4 min) | 268s (4.5 min) |
+| 4/6 | 89s (1.5 min) | — |
+| 2/6 | 83s (1.4 min) | — |
+| 6/6 | 76s (1.3 min) | — |
+| 5/6 | 54s (0.9 min) | — |
+
 ---
 
 ## Contract Requirements vs Delivery
