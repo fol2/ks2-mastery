@@ -1,0 +1,251 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "accountId": "demo-yfOz_mGpP7QsoA",
+  "learnerId": "learner-demo-4Y09-ue2bVcJig",
+  "attestation": {
+    "environment": "production",
+    "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+    "runtimeItemCount": 15072,
+    "generatedDepth": 120,
+    "generatedFamilyDepths": {
+      "gen_apostrophe_contractions_fix": 100,
+      "gen_apostrophe_contractions_transfer": 120,
+      "gen_apostrophe_mix_paragraph": 100,
+      "gen_apostrophe_possession_choose": 100,
+      "gen_apostrophe_possession_insert": 100,
+      "gen_apostrophe_possession_transfer": 120,
+      "gen_bullet_points_fix": 100,
+      "gen_bullet_points_paragraph": 100,
+      "gen_bullet_points_transfer": 120,
+      "gen_colon_list_combine": 100,
+      "gen_colon_list_insert": 100,
+      "gen_colon_list_transfer": 120,
+      "gen_colon_semicolon_paragraph": 100,
+      "gen_comma_clarity_insert": 100,
+      "gen_comma_clarity_transfer": 120,
+      "gen_dash_clause_combine": 100,
+      "gen_dash_clause_fix": 100,
+      "gen_dash_clause_transfer": 120,
+      "gen_fronted_adverbial_combine": 100,
+      "gen_fronted_adverbial_fix": 100,
+      "gen_fronted_adverbial_transfer": 120,
+      "gen_fronted_speech_paragraph": 100,
+      "gen_hyphen_insert": 100,
+      "gen_hyphen_transfer": 120,
+      "gen_list_commas_choose": 100,
+      "gen_list_commas_combine": 100,
+      "gen_list_commas_insert": 100,
+      "gen_list_commas_transfer": 120,
+      "gen_p20_apostrophe_contractions_choose": 120,
+      "gen_p20_apostrophe_contractions_combine": 120,
+      "gen_p20_apostrophe_contractions_fix": 120,
+      "gen_p20_apostrophe_contractions_insert": 120,
+      "gen_p20_apostrophe_contractions_paragraph": 120,
+      "gen_p20_apostrophe_contractions_transfer": 120,
+      "gen_p20_apostrophe_possession_choose": 120,
+      "gen_p20_apostrophe_possession_combine": 120,
+      "gen_p20_apostrophe_possession_fix": 120,
+      "gen_p20_apostrophe_possession_insert": 120,
+      "gen_p20_apostrophe_possession_paragraph": 120,
+      "gen_p20_apostrophe_possession_transfer": 120,
+      "gen_p20_bullet_points_choose": 120,
+      "gen_p20_bullet_points_combine": 120,
+      "gen_p20_bullet_points_fix": 120,
+      "gen_p20_bullet_points_insert": 120,
+      "gen_p20_bullet_points_paragraph": 120,
+      "gen_p20_bullet_points_transfer": 120,
+      "gen_p20_colon_list_choose": 120,
+      "gen_p20_colon_list_combine": 120,
+      "gen_p20_colon_list_fix": 120,
+      "gen_p20_colon_list_insert": 120,
+      "gen_p20_colon_list_paragraph": 120,
+      "gen_p20_colon_list_transfer": 120,
+      "gen_p20_comma_clarity_choose": 120,
+      "gen_p20_comma_clarity_combine": 120,
+      "gen_p20_comma_clarity_fix": 120,
+      "gen_p20_comma_clarity_insert": 120,
+      "gen_p20_comma_clarity_paragraph": 120,
+      "gen_p20_comma_clarity_transfer": 120,
+      "gen_p20_dash_clause_choose": 120,
+      "gen_p20_dash_clause_combine": 120,
+      "gen_p20_dash_clause_fix": 120,
+      "gen_p20_dash_clause_insert": 120,
+      "gen_p20_dash_clause_paragraph": 120,
+      "gen_p20_dash_clause_transfer": 120,
+      "gen_p20_fronted_adverbial_choose": 120,
+      "gen_p20_fronted_adverbial_combine": 120,
+      "gen_p20_fronted_adverbial_fix": 120,
+      "gen_p20_fronted_adverbial_insert": 120,
+      "gen_p20_fronted_adverbial_paragraph": 120,
+      "gen_p20_fronted_adverbial_transfer": 120,
+      "gen_p20_hyphen_choose": 120,
+      "gen_p20_hyphen_combine": 120,
+      "gen_p20_hyphen_fix": 120,
+      "gen_p20_hyphen_insert": 120,
+      "gen_p20_hyphen_paragraph": 120,
+      "gen_p20_hyphen_transfer": 120,
+      "gen_p20_list_commas_choose": 120,
+      "gen_p20_list_commas_combine": 120,
+      "gen_p20_list_commas_fix": 120,
+      "gen_p20_list_commas_insert": 120,
+      "gen_p20_list_commas_paragraph": 120,
+      "gen_p20_list_commas_transfer": 120,
+      "gen_p20_parenthesis_choose": 120,
+      "gen_p20_parenthesis_combine": 120,
+      "gen_p20_parenthesis_fix": 120,
+      "gen_p20_parenthesis_insert": 120,
+      "gen_p20_parenthesis_paragraph": 120,
+      "gen_p20_parenthesis_transfer": 120,
+      "gen_p20_semicolon_choose": 120,
+      "gen_p20_semicolon_combine": 120,
+      "gen_p20_semicolon_fix": 120,
+      "gen_p20_semicolon_insert": 120,
+      "gen_p20_semicolon_list_choose": 120,
+      "gen_p20_semicolon_list_combine": 120,
+      "gen_p20_semicolon_list_fix": 120,
+      "gen_p20_semicolon_list_insert": 120,
+      "gen_p20_semicolon_list_paragraph": 120,
+      "gen_p20_semicolon_list_transfer": 120,
+      "gen_p20_semicolon_paragraph": 120,
+      "gen_p20_semicolon_transfer": 120,
+      "gen_p20_sentence_endings_choose": 120,
+      "gen_p20_sentence_endings_combine": 120,
+      "gen_p20_sentence_endings_fix": 120,
+      "gen_p20_sentence_endings_insert": 120,
+      "gen_p20_sentence_endings_paragraph": 120,
+      "gen_p20_sentence_endings_transfer": 120,
+      "gen_p20_speech_choose": 120,
+      "gen_p20_speech_combine": 120,
+      "gen_p20_speech_fix": 120,
+      "gen_p20_speech_insert": 120,
+      "gen_p20_speech_paragraph": 120,
+      "gen_p20_speech_transfer": 120,
+      "gen_parenthesis_combine": 100,
+      "gen_parenthesis_fix": 100,
+      "gen_parenthesis_speech_paragraph": 100,
+      "gen_parenthesis_transfer": 120,
+      "gen_semicolon_combine": 100,
+      "gen_semicolon_fix": 100,
+      "gen_semicolon_list_fix": 100,
+      "gen_semicolon_list_transfer": 120,
+      "gen_semicolon_transfer": 120,
+      "gen_sentence_endings_choose": 100,
+      "gen_sentence_endings_insert": 100,
+      "gen_sentence_endings_transfer": 120,
+      "gen_speech_insert": 100,
+      "gen_speech_transfer": 120
+    },
+    "workerCommitSha": "07203e837e6e07361cba983c827f2e7808e27be6",
+    "workerVersionId": null,
+    "deploymentId": null,
+    "timestamp": "2026-05-05T09:56:31.529Z",
+    "authenticatedCoverage": true,
+    "adminHubCoverage": true
+  },
+  "punctuation": {
+    "productionObserved": {
+      "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+      "runtimeItems": 15072,
+      "publishedRewardUnits": 14,
+      "generatedItemCommandPathProbe": {
+        "itemId": "gen_p20_speech_fix_ciaywm_3",
+        "mode": "fix",
+        "skillIds": [
+          "speech"
+        ],
+        "feedbackKind": "error",
+        "misconceptionTags": [
+          "speech.reporting_comma_missing",
+          "speech.terminal_inside_quotes_missing"
+        ]
+      }
+    },
+    "localReleaseManifestExpectation": {
+      "fixedItems": 512,
+      "generatedItems": 14560,
+      "generatedPerFamily": 120,
+      "runtimeItems": 15072,
+      "publishedRewardUnits": 14
+    },
+    "smartItemId": "sc_insert_lights_audience",
+    "smartSummaryTotal": 1,
+    "smartSix": {
+      "revision": 13,
+      "observedRuntimeStats": {
+        "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+        "runtimeItems": 15072,
+        "publishedRewardUnits": 14
+      },
+      "summaryTotal": 6,
+      "uniqueItems": 6,
+      "immediateRepeats": 0
+    },
+    "generatedIncorrectItemId": "gen_p20_speech_fix_ciaywm_3",
+    "generatedIncorrectMisconceptionTags": [
+      "speech.reporting_comma_missing",
+      "speech.terminal_inside_quotes_missing"
+    ],
+    "dashAcceptance": [
+      {
+        "variant": "spaced-hyphen",
+        "itemId": "gen_p20_dash_clause_insert_1qci0zw_3",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      },
+      {
+        "variant": "en-dash",
+        "itemId": "gen_p20_dash_clause_insert_xzsmgd_24",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      },
+      {
+        "variant": "em-dash",
+        "itemId": "gen_p20_dash_clause_insert_xftf2f_22",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      }
+    ],
+    "oxfordCommaItemId": "gen_list_commas_combine_ezhrp7_24",
+    "oxfordCommaAcceptance": {
+      "itemId": "gen_list_commas_combine_ezhrp7_24",
+      "mode": "combine",
+      "skillIds": [
+        "list_commas"
+      ],
+      "feedbackKind": "success"
+    },
+    "advancedMode": "gps",
+    "advancedItemId": "fx_ac_choose_ill_youll",
+    "advancedReviewItems": 1,
+    "parentHubAttempts": 18,
+    "parentHubEvidence": {
+      "hasEvidence": true,
+      "attempts": 18,
+      "accuracyPercent": 94,
+      "progressSnapshotsHasPunctuation": true,
+      "redactionChecks": {
+        "punctuationEvidence": true,
+        "progressSnapshots": true,
+        "misconceptionPatterns": true
+      },
+      "sessionModes": [
+        "smart",
+        "guided",
+        "comma_flow",
+        "gps",
+        "speech"
+      ]
+    }
+  },
+  "spelling": {
+    "progressTotal": 1,
+    "hasPromptToken": true
+  }
+}

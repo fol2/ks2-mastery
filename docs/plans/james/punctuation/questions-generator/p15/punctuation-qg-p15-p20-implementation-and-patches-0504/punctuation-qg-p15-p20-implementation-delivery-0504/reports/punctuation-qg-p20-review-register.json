@@ -1,0 +1,1031 @@
+{
+  "schemaVersion": 1,
+  "phase": "punctuation-qg-p20-review-register",
+  "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+  "generatedAt": "2026-05-05T09:58:12.927Z",
+  "status": "PASS",
+  "fixedBank": {
+    "status": "inherited-approved",
+    "reviewer": "p12-p14-fixed-bank-governance",
+    "scope": "fixed-bank",
+    "rationale": "Fixed bank was already part of the P14 delivered runtime; P20 generated duplicate checks report legacy fixed duplicates separately.",
+    "approvedAt": "2026-05-05T09:58:17Z"
+  },
+  "familyDecisions": {
+    "gen_apostrophe_contractions_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_apostrophe_contractions_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_apostrophe_mix_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_apostrophe_possession_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_apostrophe_possession_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_apostrophe_possession_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_bullet_points_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_bullet_points_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_bullet_points_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_colon_list_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_colon_list_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_colon_list_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_colon_semicolon_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_comma_clarity_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_comma_clarity_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_dash_clause_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_dash_clause_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_dash_clause_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_fronted_adverbial_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_fronted_adverbial_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_fronted_adverbial_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_fronted_speech_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_hyphen_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_hyphen_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_list_commas_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_list_commas_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_list_commas_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_list_commas_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_contractions_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_contractions_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_contractions_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_contractions_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_contractions_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_contractions_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_possession_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_possession_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_possession_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_possession_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_possession_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_apostrophe_possession_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_bullet_points_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_bullet_points_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_bullet_points_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_bullet_points_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_bullet_points_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_bullet_points_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_colon_list_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_colon_list_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_colon_list_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_colon_list_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_colon_list_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_colon_list_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_comma_clarity_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_comma_clarity_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_comma_clarity_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_comma_clarity_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_comma_clarity_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_comma_clarity_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_dash_clause_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_dash_clause_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_dash_clause_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_dash_clause_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_dash_clause_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_dash_clause_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_fronted_adverbial_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_fronted_adverbial_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_fronted_adverbial_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_fronted_adverbial_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_fronted_adverbial_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_fronted_adverbial_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_hyphen_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_hyphen_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_hyphen_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_hyphen_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_hyphen_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_hyphen_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_list_commas_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_list_commas_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_list_commas_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_list_commas_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_list_commas_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_list_commas_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_parenthesis_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_parenthesis_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_parenthesis_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_parenthesis_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_parenthesis_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_parenthesis_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_list_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_list_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_list_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_list_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_list_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_list_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_semicolon_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_sentence_endings_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_sentence_endings_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_sentence_endings_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_sentence_endings_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_sentence_endings_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_sentence_endings_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_speech_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_speech_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_speech_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_speech_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_speech_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_p20_speech_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_parenthesis_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_parenthesis_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_parenthesis_speech_paragraph": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_parenthesis_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_semicolon_combine": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_semicolon_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_semicolon_list_fix": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_semicolon_list_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_semicolon_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_sentence_endings_choose": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_sentence_endings_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_sentence_endings_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_speech_insert": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 100,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    },
+    "gen_speech_transfer": {
+      "status": "approved",
+      "reviewer": "p20-systematic-source-review",
+      "scope": "family",
+      "reviewedTemplateCount": 120,
+      "rationale": "P20 deterministic source bank; model self-marking and negative-vector coverage are gate-checked.",
+      "approvedAt": "2026-05-05T09:58:17Z"
+    }
+  },
+  "certifiedAt": "2026-05-05T09:58:17Z",
+  "reviewGovernance": {
+    "approvedAt": "2026-05-05T09:58:17Z",
+    "approvalScope": "all P20 generated family decisions and fixed-bank carry-forward governance",
+    "codeReviewer": "Bohr",
+    "contractAuditor": "Pasteur"
+  }
+}

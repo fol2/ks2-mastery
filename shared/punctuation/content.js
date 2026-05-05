@@ -3,6 +3,7 @@ import {
   PUNCTUATION_GENERATED_ITEM_SEED,
 } from '../../src/subjects/punctuation/service-contract.js';
 import { PUNCTUATION_FIXED_EXPANSION_ITEMS } from './fixed-expansion-items.js';
+import { PUNCTUATION_P20_SYSTEMATIC_GENERATOR_FAMILIES } from './p20-systematic-expansion-bank.js';
 
 export const PUNCTUATION_SUBJECT_ID = 'punctuation';
 export const PUNCTUATION_RELEASE_ID = PUNCTUATION_CURRENT_RELEASE_ID;
@@ -2588,16 +2589,16 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     mode: 'paragraph',
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
-  // P14 Gate 4: 14 transfer-mode generator families (one per published skill).
-  // productionItemsLimit caps each transfer family at 18 templates so the
-  // total expansion stays at ~252 transfer items, not 14×PRODUCTION_DEPTH.
+  // P20: legacy P14 transfer families now ship at full P20 depth. The
+  // post-P20 bank supplies 120 transfer templates per family, and the cap
+  // remains explicit so an accidental depth raise cannot silently over-ship.
   {
     id: 'gen_sentence_endings_transfer',
     skillId: 'sentence_endings',
     rewardUnitId: 'sentence-endings-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2606,7 +2607,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'list-commas-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2615,7 +2616,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'apostrophe-contractions-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2624,7 +2625,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'apostrophe-possession-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2633,7 +2634,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'speech-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2642,7 +2643,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'fronted-adverbials-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2651,7 +2652,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'parenthesis-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2660,7 +2661,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'comma-clarity-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2669,7 +2670,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'colons-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2678,7 +2679,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'semicolons-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2687,7 +2688,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'dash-clauses-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2696,7 +2697,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'semicolon-lists-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2705,7 +2706,7 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'bullet-points-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
   {
@@ -2714,9 +2715,10 @@ export const PUNCTUATION_GENERATOR_FAMILIES = Object.freeze([
     rewardUnitId: 'hyphens-core',
     published: true,
     mode: 'transfer',
-    productionItemsLimit: 18,
+    productionItemsLimit: 120,
     deterministicSeedFields: ['learnerId', 'sessionId', 'itemIndex'],
   },
+  ...PUNCTUATION_P20_SYSTEMATIC_GENERATOR_FAMILIES,
 ]);
 
 export const PUNCTUATION_CONTENT_MANIFEST = Object.freeze({

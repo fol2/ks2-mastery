@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import {
+  GENERATED_TEMPLATE_BANK,
   createPunctuationRuntimeManifest,
   PRODUCTION_DEPTH,
 } from '../shared/punctuation/generators.js';
@@ -39,23 +40,24 @@ const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.filter(
 ).length;
 const FAMILY_COUNT = PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length;
 
-// P14 depth formula accounts for productionItemsLimit caps. Baseline families
-// produce PRODUCTION_DEPTH (100) items each; transfer families are capped at
-// their per-family productionItemsLimit (18). Formula:
-//   FIXED + Σ min(PRODUCTION_DEPTH, family.productionItemsLimit ?? PRODUCTION_DEPTH)
+// P20 depth formula accounts for productionItemsLimit caps and actual template
+// bank length. Legacy baseline families still have 100 templates while transfer
+// and P20 extension families have 120. Formula:
+//   FIXED + Σ min(PRODUCTION_DEPTH, family.productionItemsLimit ?? PRODUCTION_DEPTH, templates.length)
 function expectedRuntimeTotalAtProductionDepth() {
   let total = FIXED_ITEM_COUNT;
   for (const family of PUNCTUATION_CONTENT_MANIFEST.generatorFamilies) {
     const familyLimit = Number.isFinite(family.productionItemsLimit)
       ? family.productionItemsLimit
       : PRODUCTION_DEPTH;
-    total += Math.min(PRODUCTION_DEPTH, familyLimit);
+    const templateCount = GENERATED_TEMPLATE_BANK[family.id]?.length ?? PRODUCTION_DEPTH;
+    total += Math.min(PRODUCTION_DEPTH, familyLimit, templateCount);
   }
   return total;
 }
 
-test('PRODUCTION_DEPTH is 100 after P12 manual expansion', () => {
-  assert.equal(PRODUCTION_DEPTH, 100);
+test('PRODUCTION_DEPTH is 120 after P20 systematic expansion', () => {
+  assert.equal(PRODUCTION_DEPTH, 120);
 });
 
 test('runtime manifest item count matches FIXED + Σ depth-capped(FAMILY)', () => {

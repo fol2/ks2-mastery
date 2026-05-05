@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 
 const repoRoot = process.cwd();
 const repoName = path.basename(repoRoot);
+const DEFAULT_EXCLUDES = ['assets/**', 'worktrees/**', '.worktrees/**'];
 
 function pad2(value) {
   return String(value).padStart(2, '0');
@@ -39,7 +40,7 @@ Usage:
 
 Options:
   --output <path>        ZIP output path (exact path, no auto suffix)
-  --exclude <glob>       Exclude glob (repeatable). Default: assets/**
+  --exclude <glob>       Exclude glob (repeatable). Default: ${DEFAULT_EXCLUDES.join(', ')}
   --mode <mode>          How to treat excluded files:
                          - omit        : do not include excluded files
                          - placeholder : include 0-byte files at same paths (default)
@@ -58,7 +59,7 @@ Examples:
 function parseArgs(argv) {
   const config = {
     output: defaultOutput,
-    excludes: ['assets/**'],
+    excludes: [...DEFAULT_EXCLUDES],
     mode: 'placeholder',
     maxMb: 100,
   };
@@ -138,6 +139,46 @@ async function removeIfExists(targetPath) {
   }
 }
 
+function runZipWithFallback(stagingRoot, zipOutput) {
+  const nativeZip = spawnSync('zip', ['-qr', zipOutput, '.'], {
+    cwd: stagingRoot,
+    encoding: 'utf8',
+  });
+
+  if (nativeZip.status === 0) {
+    return;
+  }
+
+  if (nativeZip.error && nativeZip.error.code !== 'ENOENT') {
+    throw new Error(`zip failed: ${nativeZip.error.message}`);
+  }
+
+  const tarZip = spawnSync('tar', ['-a', '-cf', zipOutput, '.'], {
+    cwd: stagingRoot,
+    encoding: 'utf8',
+  });
+  if (tarZip.status === 0) {
+    return;
+  }
+
+  const escapedOutput = zipOutput.replace(/'/g, "''");
+  const psCommand = `Get-ChildItem -Force | Compress-Archive -DestinationPath '${escapedOutput}' -Force`;
+  const powershellZip = spawnSync('powershell', ['-NoProfile', '-Command', psCommand], {
+    cwd: stagingRoot,
+    encoding: 'utf8',
+  });
+  if (powershellZip.status === 0) {
+    return;
+  }
+
+  const errors = [
+    nativeZip.stderr || nativeZip.error?.message,
+    tarZip.stderr || tarZip.error?.message,
+    powershellZip.stderr || powershellZip.error?.message,
+  ].filter(Boolean);
+  throw new Error(`zip failed across zip/tar/Compress-Archive: ${errors.join(' | ') || 'unknown error'}`);
+}
+
 async function packageLeanZip(config) {
   const excludes = config.excludes.map((glob) => ({
     glob,
@@ -154,7 +195,9 @@ async function packageLeanZip(config) {
     omitted: 0,
     placeholders: 0,
     symlinks: 0,
+    missing: 0,
     omittedPaths: [],
+    missingPaths: [],
   };
 
   try {
@@ -167,6 +210,23 @@ async function packageLeanZip(config) {
       const shouldExclude = excludes.some((rule) => rule.regex.test(relPath));
       const src = path.join(repoRoot, relPath);
       const dest = path.join(stagingRoot, relPath);
+      let srcExists = true;
+
+      try {
+        await lstat(src);
+      } catch (error) {
+        if (error && error.code === 'ENOENT') {
+          srcExists = false;
+        } else {
+          throw error;
+        }
+      }
+
+      if (!srcExists) {
+        stats.missing += 1;
+        stats.missingPaths.push(relPath);
+        continue;
+      }
 
       if (!shouldExclude) {
         await ensureParent(dest);
@@ -207,22 +267,20 @@ async function packageLeanZip(config) {
       `omitted=${stats.omitted}`,
       `placeholders=${stats.placeholders}`,
       `symlinks=${stats.symlinks}`,
+      `missing=${stats.missing}`,
       '',
       'omitted_paths:',
       ...stats.omittedPaths.map((p) => `- ${p}`),
+      '',
+      'missing_paths:',
+      ...stats.missingPaths.map((p) => `- ${p}`),
       '',
     ].join('\n');
     await writeFile(path.join(stagingRoot, 'LEAN_ZIP_MANIFEST.txt'), manifest, 'utf8');
 
     await ensureParent(zipOutput);
     await removeIfExists(zipOutput);
-    const zipResult = spawnSync('zip', ['-qr', zipOutput, '.'], {
-      cwd: stagingRoot,
-      encoding: 'utf8',
-    });
-    if (zipResult.status !== 0) {
-      throw new Error(`zip failed: ${zipResult.stderr || 'unknown error'}`);
-    }
+    runZipWithFallback(stagingRoot, zipOutput);
 
     const zipInfo = await stat(zipOutput);
     const sizeMb = zipInfo.size / (1024 * 1024);
@@ -233,6 +291,9 @@ async function packageLeanZip(config) {
     console.log(`Tracked files: ${stats.totalTracked}`);
     console.log(`Copied files: ${stats.copied}`);
     console.log(`Excluded files: ${stats.omitted}`);
+    if (stats.missing > 0) {
+      console.log(`Missing tracked files skipped: ${stats.missing}`);
+    }
     if (config.mode !== 'omit') {
       console.log(`Excluded materialisation: placeholders=${stats.placeholders}, symlinks=${stats.symlinks}`);
     }

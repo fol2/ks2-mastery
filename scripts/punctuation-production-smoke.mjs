@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 import {
@@ -124,6 +125,23 @@ export function assertPunctuationP2RuntimeStats(readModel, path = 'punctuation.s
     `${path}.stats.publishedRewardUnits did not preserve the P2 reward denominator.`,
   );
   return observed;
+}
+
+function itemRecord(readItem) {
+  return {
+    itemId: readItem?.id || '',
+    source: readItem?.source || '',
+    mode: readItem?.mode || '',
+    skillIds: Array.isArray(readItem?.skillIds) ? readItem.skillIds : [],
+  };
+}
+
+function immediateRepeatCount(items) {
+  let count = 0;
+  for (let index = 1; index < items.length; index += 1) {
+    if (items[index].itemId === items[index - 1].itemId) count += 1;
+  }
+  return count;
 }
 
 function isAllowedActiveCurrentItemMetadata({ key, child, parent, pathSegments, rootPhase }) {
@@ -413,6 +431,87 @@ async function startPunctuationSearchSession({
 
 function seenItemLabel(entry) {
   return `${entry.itemId}:${entry.source}:${entry.mode}:${entry.skills.join('+')}`;
+}
+
+async function smokePunctuationSmartSix({ origin, cookie, learnerId, revision }) {
+  let step = await subjectCommand({
+    origin,
+    cookie,
+    subjectId: 'punctuation',
+    learnerId,
+    revision,
+    command: 'start-session',
+    payload: { mode: 'smart', roundLength: '6' },
+  });
+  revision = step.revision;
+  let model = step.payload.subjectReadModel;
+  const observedRuntimeStats = assertPunctuationP2RuntimeStats(model, 'punctuation.p20SmartSix.startModel');
+  assert.equal(model?.phase, 'active-item', 'Punctuation Smart-six smoke did not start in active-item phase.');
+  assert.equal(model?.session?.serverAuthority, 'worker', 'Punctuation Smart-six session was not Worker-owned.');
+  assert.equal(model?.session?.length, 6, 'Punctuation Smart-six session did not start a six-question session.');
+  assertNoForbiddenPunctuationReadModelKeys(model, 'punctuation.p20SmartSix.startModel');
+
+  const surfaced = [];
+  let guard = 0;
+  while (guard < 30) {
+    guard += 1;
+    assertPunctuationP2RuntimeStats(model, `punctuation.p20SmartSix.model.${guard}`);
+    assertNoForbiddenPunctuationReadModelKeys(model, `punctuation.p20SmartSix.model.${guard}`);
+
+    if (model?.phase === 'summary') {
+      break;
+    }
+
+    if (model?.phase === 'feedback') {
+      step = await subjectCommand({
+        origin,
+        cookie,
+        subjectId: 'punctuation',
+        learnerId,
+        revision,
+        command: 'continue-session',
+      });
+      revision = step.revision;
+      model = step.payload.subjectReadModel;
+      continue;
+    }
+
+    assert.equal(model?.phase, 'active-item', `Punctuation Smart-six reached unexpected phase ${model?.phase}.`);
+    const readItem = model.session?.currentItem;
+    const source = punctuationSourceFor(readItem);
+    assert.ok(source?.id, `Punctuation Smart-six source lookup failed for ${readItem?.id}`);
+    surfaced.push(itemRecord(readItem));
+    const answer = punctuationAnswerFor(readItem);
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'punctuation',
+      learnerId,
+      revision,
+      command: 'submit-answer',
+      payload: {
+        ...answer,
+        ...punctuationExpectedContextFor(model.session),
+      },
+    });
+    revision = step.revision;
+    model = step.payload.subjectReadModel;
+    assert.equal(model?.feedback?.kind, 'success', `Punctuation Smart-six answer was not accepted for ${source.id}.`);
+  }
+
+  assert.equal(model?.phase, 'summary', 'Punctuation Smart-six did not reach summary.');
+  assert.equal(model?.summary?.total, 6, 'Punctuation Smart-six summary total did not equal six.');
+  assert.equal(surfaced.length, 6, 'Punctuation Smart-six did not surface six answerable items.');
+  const uniqueItems = new Set(surfaced.map((item) => item.itemId)).size;
+  assert.equal(uniqueItems, 6, 'Punctuation Smart-six repeated an item inside one six-question live smoke.');
+
+  return {
+    revision,
+    observedRuntimeStats,
+    summaryTotal: model.summary.total,
+    uniqueItems,
+    immediateRepeats: immediateRepeatCount(surfaced),
+  };
 }
 
 async function smokePunctuationTargetedAnswer({
@@ -720,7 +819,8 @@ async function smokePunctuationParentEvidence({ origin, cookie, learnerId }) {
 }
 
 async function smokePunctuation({ origin, cookie, learnerId, revision }) {
-  const smart = await smokePunctuationSmartRound({ origin, cookie, learnerId, revision });
+  const smartSix = await smokePunctuationSmartSix({ origin, cookie, learnerId, revision });
+  const smart = await smokePunctuationSmartRound({ origin, cookie, learnerId, revision: smartSix.revision });
   const generatedIncorrect = await smokePunctuationGeneratedIncorrect({
     origin,
     cookie,
@@ -748,6 +848,7 @@ async function smokePunctuation({ origin, cookie, learnerId, revision }) {
   const parentHub = await smokePunctuationParentEvidence({ origin, cookie, learnerId });
   return {
     revision: advanced.revision,
+    smartSix,
     smart,
     generatedIncorrect,
     dashAcceptance,
@@ -784,22 +885,62 @@ export async function smokeSpelling({ origin, cookie, learnerId, revision }) {
   };
 }
 
+function readSafeGitCommitSha() {
+  try {
+    const sha = execSync('git rev-parse HEAD', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    return /^[0-9a-f]{7,40}$/i.test(sha) ? sha : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseArgValue(argv, name) {
+  const index = argv.indexOf(name);
+  return index !== -1 && index + 1 < argv.length ? argv[index + 1] : '';
+}
+
 // ─── CLI argument parsing for attestation ───────────────────────────────────
 
 function parseAttestationArgs(argv) {
   const envIndex = argv.indexOf('--env');
   const environment = envIndex >= 0 && argv[envIndex + 1] ? argv[envIndex + 1] : 'local';
-  const commitIndex = argv.indexOf('--commit-sha');
-  const workerCommitSha = commitIndex >= 0 && argv[commitIndex + 1] ? argv[commitIndex + 1] : null;
+  const workerCommitSha = parseArgValue(argv, '--commit-sha')
+    || process.env.GITHUB_SHA
+    || process.env.WORKER_COMMIT_SHA
+    || process.env.CF_PAGES_COMMIT_SHA
+    || process.env.CF_PAGES_SHA
+    || process.env.COMMIT_SHA
+    || readSafeGitCommitSha()
+    || null;
+  const workerVersionId = parseArgValue(argv, '--worker-version-id')
+    || process.env.WORKER_VERSION_ID
+    || null;
+  const deploymentId = parseArgValue(argv, '--deployment-id')
+    || process.env.CLOUDFLARE_DEPLOYMENT_ID
+    || process.env.DEPLOYMENT_ID
+    || null;
   const authenticated = argv.includes('--authenticated');
   const adminHub = argv.includes('--admin-hub');
   const jsonOutput = argv.includes('--json');
-  return { environment, workerCommitSha, authenticated, adminHub, jsonOutput };
+  return {
+    environment,
+    workerCommitSha,
+    workerVersionId,
+    deploymentId,
+    authenticated,
+    adminHub,
+    jsonOutput,
+  };
 }
 
 export function buildAttestationMetadata({
   environment = 'local',
   workerCommitSha = null,
+  workerVersionId = null,
+  deploymentId = null,
   authenticatedCoverage = false,
   adminHubCoverage = false,
 } = {}) {
@@ -824,6 +965,8 @@ export function buildAttestationMetadata({
     generatedDepth,
     generatedFamilyDepths,
     workerCommitSha,
+    workerVersionId,
+    deploymentId,
     timestamp: new Date().toISOString(),
     authenticatedCoverage,
     adminHubCoverage,
@@ -880,6 +1023,8 @@ async function main() {
   const attestation = buildAttestationMetadata({
     environment: attestationArgs.environment,
     workerCommitSha: attestationArgs.workerCommitSha,
+    workerVersionId: attestationArgs.workerVersionId,
+    deploymentId: attestationArgs.deploymentId,
     authenticatedCoverage: attestationArgs.authenticated,
     adminHubCoverage: attestationArgs.adminHub,
   });
@@ -916,6 +1061,7 @@ async function main() {
       },
       smartItemId: punctuation.smart.itemId,
       smartSummaryTotal: punctuation.smart.summaryTotal,
+      smartSix: punctuation.smartSix,
       generatedIncorrectItemId: punctuation.generatedIncorrect.itemId,
       generatedIncorrectMisconceptionTags: punctuation.generatedIncorrect.misconceptionTags,
       dashAcceptance: punctuation.dashAcceptance.variants,

@@ -75,26 +75,34 @@ test('P12 exposes a 3000+ Punctuation QG runtime pool', () => {
     runtime.items.length,
     `release ID embedded count ${releaseIdMatch[1]} does not match runtime size ${runtime.items.length}`,
   );
-  assert.equal(PRODUCTION_DEPTH, 100);
+  assert.ok(PRODUCTION_DEPTH >= 100, `PRODUCTION_DEPTH=${PRODUCTION_DEPTH}`);
   assert.ok(fixed.length >= 500, `fixed=${fixed.length}`);
   assert.ok(generated.length >= 2500, `generated=${generated.length}`);
   assert.ok(runtime.items.length >= 3000, `runtime=${runtime.items.length}`);
 });
 
-test('P12 keeps one hundred unique templates in every generated family', () => {
-  // P14 update: 28 baseline P12 families × 100 + 14 P14 transfer families ×
-  // 18 = 42 families total. The 100-templates-per-family invariant only
-  // applies to the 28 baseline families; transfer families intentionally
-  // ship at 18 templates with productionItemsLimit caps.
-  assert.equal(
-    Object.keys(GENERATED_TEMPLATE_BANK).filter((id) => !id.endsWith('_transfer')).length,
-    28,
-  );
-  for (const [familyId, templates] of Object.entries(GENERATED_TEMPLATE_BANK)) {
-    if (familyId.endsWith('_transfer')) continue;
+test('P12 legacy families keep one hundred unique templates while P20 families expand beyond them', () => {
+  const legacyBaselineFamilies = Object.entries(GENERATED_TEMPLATE_BANK)
+    .filter(([familyId]) => !familyId.endsWith('_transfer') && !familyId.startsWith('gen_p20_'));
+  const transferFamilies = Object.entries(GENERATED_TEMPLATE_BANK)
+    .filter(([familyId]) => familyId.endsWith('_transfer'));
+  const p20Families = Object.entries(GENERATED_TEMPLATE_BANK)
+    .filter(([familyId]) => familyId.startsWith('gen_p20_'));
+
+  assert.equal(legacyBaselineFamilies.length, 28);
+  assert.ok(transferFamilies.length >= 14, `transfer families=${transferFamilies.length}`);
+  assert.ok(p20Families.length >= 84, `P20 families=${p20Families.length}`);
+
+  for (const [familyId, templates] of legacyBaselineFamilies) {
     assert.equal(templates.length, 100, `${familyId} template count`);
     assert.equal(new Set(templates.map((template) => norm(template.stem))).size, 100, `${familyId} stem variety`);
     assert.equal(new Set(templates.map((template) => norm(template.model))).size, 100, `${familyId} model variety`);
+  }
+
+  for (const [familyId, templates] of [...transferFamilies, ...p20Families]) {
+    assert.ok(templates.length >= 100, `${familyId} template count`);
+    const surfaces = new Set(templates.map((template) => norm([template.prompt, template.stem, template.model].join(' '))));
+    assert.ok(surfaces.size >= 100, `${familyId} learner surface variety`);
   }
 });
 

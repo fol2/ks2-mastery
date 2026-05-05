@@ -179,11 +179,14 @@ test('P14 transfer prompts use a single consistent apostrophe style (adv-r2-001 
   assert.deepEqual(offenders.slice(0, 10), [], 'transfer prompts must not mix straight and curly apostrophes');
 });
 
-test('P14 transfer family count is 14 (one per published skill)', () => {
+test('P14 legacy transfer family count remains 14 while P20 adds extension transfer families', () => {
   const transferFamilies = runtime.generatorFamilies.filter((family) => family.mode === 'transfer');
-  assert.equal(transferFamilies.length, 14);
-  const skillIds = transferFamilies.map((family) => family.skillId).sort();
-  assert.deepEqual(skillIds, [...PUBLISHED_SKILLS].sort());
+  const legacyTransferFamilies = transferFamilies.filter((family) => !String(family.id || '').startsWith('gen_p20_'));
+  const p20TransferFamilies = transferFamilies.filter((family) => String(family.id || '').startsWith('gen_p20_'));
+  assert.equal(legacyTransferFamilies.length, 14);
+  assert.equal(p20TransferFamilies.length, 14);
+  assert.deepEqual(legacyTransferFamilies.map((family) => family.skillId).sort(), [...PUBLISHED_SKILLS].sort());
+  assert.deepEqual(p20TransferFamilies.map((family) => family.skillId).sort(), [...PUBLISHED_SKILLS].sort());
 });
 
 test('P14 transfer items do not bleed into other modes (mode purity)', () => {

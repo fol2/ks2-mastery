@@ -10,6 +10,10 @@ import {
   PUNCTUATION_MANUAL_EXPANSION_TARGET_DEPTH,
 } from './manual-expansion-bank.js';
 import { manualP12QualityTemplatesForFamily } from './manual-p12-quality-bank.js';
+import {
+  PUNCTUATION_P20_SYSTEMATIC_TARGET_DEPTH,
+  PUNCTUATION_P20_SYSTEMATIC_TEMPLATE_BANK,
+} from './p20-systematic-expansion-bank.js';
 import { sentenceEndingsInsertDsl } from './dsl-families/sentence-endings-insert.js';
 import { apostropheContractionsDsl } from './dsl-families/apostrophe-contractions-fix.js';
 import { commaClarityInsertDsl } from './dsl-families/comma-clarity-insert.js';
@@ -611,6 +615,7 @@ export const GENERATED_TEMPLATE_BANK = Object.freeze({
   gen_semicolon_list_transfer: expandDslTemplates(semicolonListTransferDsl, { embedTemplateId: false }),
   gen_bullet_points_transfer: expandDslTemplates(bulletPointsTransferDsl, { embedTemplateId: false }),
   gen_hyphen_transfer: expandDslTemplates(hyphenTransferDsl, { embedTemplateId: false }),
+  ...PUNCTUATION_P20_SYSTEMATIC_TEMPLATE_BANK,
 });
 
 function buildGeneratedItem({ family, skill, template, templateIndex, seed, variantIndex }) {
@@ -648,8 +653,11 @@ function buildGeneratedItem({ family, skill, template, templateIndex, seed, vari
   };
 }
 
-/** Current production depth after manual content expansion. */
-export const PRODUCTION_DEPTH = PUNCTUATION_MANUAL_EXPANSION_TARGET_DEPTH;
+// Keep the manual expansion import live for historical audit scripts.
+void PUNCTUATION_MANUAL_EXPANSION_TARGET_DEPTH;
+
+/** Current production depth after P20 systematic expansion. */
+export const PRODUCTION_DEPTH = PUNCTUATION_P20_SYSTEMATIC_TARGET_DEPTH;
 
 /** Maximum audited depth — used for capacity verification and 1000+ item pool checks. */
 export const CAPACITY_DEPTH = Math.max(PRODUCTION_DEPTH, 40);
@@ -679,7 +687,7 @@ export function createPunctuationGeneratedItems({
     const familyLimit = Number.isFinite(family.productionItemsLimit)
       ? Math.max(0, Math.floor(family.productionItemsLimit))
       : limit;
-    const effectiveFamilyLimit = Math.min(limit, familyLimit);
+    const effectiveFamilyLimit = Math.min(limit, familyLimit, templates.length);
     for (let index = 0; index < effectiveFamilyLimit; index += 1) {
       const picked = pickTemplate(templates, seed, family.id, index, {
         legacyTemplateCount: contextTemplates.length ? 1 : 2,

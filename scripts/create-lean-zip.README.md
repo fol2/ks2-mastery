@@ -23,6 +23,8 @@ By default, the ZIP is written to the **parent folder** of this repository:
 Default exclude glob:
 
 - `assets/**`
+- `worktrees/**`
+- `.worktrees/**`
 
 Default mode:
 
@@ -123,6 +125,7 @@ node scripts/create-lean-zip.mjs --mode omit
 The script:
 
 - reads tracked files via `git ls-files`,
+- applies default excludes for large assets and local worktree folders (`assets/**`, `worktrees/**`, `.worktrees/**`),
 - stages a temporary lean tree,
 - creates a ZIP,
 - cleans temporary files.

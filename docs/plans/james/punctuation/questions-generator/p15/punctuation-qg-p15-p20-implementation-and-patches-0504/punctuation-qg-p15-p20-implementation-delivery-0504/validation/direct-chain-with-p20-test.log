@@ -1,0 +1,58 @@
+P20 review register written: reports/punctuation/punctuation-qg-p20-review-register.json
+P20 negative-vector register written: reports/punctuation/punctuation-qg-p20-negative-vector-register.json
+P20 heavy-play simulation written: reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
+  one learner unique: 300
+  multi learner unique: 2525
+  open production ratio: 0.333
+Punctuation QG P20 expansion audit: PASS
+  release: punctuation-qg-p20-15072-2026-05-04
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15066/15072
+  generated families: 126
+  failing gates: none
+TAP version 13
+# Subtest: P20 release identity and runtime pool scale are certified
+ok 1 - P20 release identity and runtime pool scale are certified
+  ---
+  duration_ms: 1.518053
+  type: 'test'
+  ...
+# Subtest: P20 learner-facing surfaces and generated family depth are heavy-play ready
+ok 2 - P20 learner-facing surfaces and generated family depth are heavy-play ready
+  ---
+  duration_ms: 0.304459
+  type: 'test'
+  ...
+# Subtest: P20 per-skill balance gives every published punctuation skill enough depth
+ok 3 - P20 per-skill balance gives every published punctuation skill enough depth
+  ---
+  duration_ms: 0.358479
+  type: 'test'
+  ...
+# Subtest: P20 marking, review governance, and negative vectors are production-clean
+ok 4 - P20 marking, review governance, and negative vectors are production-clean
+  ---
+  duration_ms: 0.221473
+  type: 'test'
+  ...
+# Subtest: P20 heavy-play scheduler simulation does not make repetition noticeable
+ok 5 - P20 heavy-play scheduler simulation does not make repetition noticeable
+  ---
+  duration_ms: 0.244514
+  type: 'test'
+  ...
+# Subtest: P20 expansion audit is globally PASS
+ok 6 - P20 expansion audit is globally PASS
+  ---
+  duration_ms: 0.272206
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 233.240789

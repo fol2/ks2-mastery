@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  GENERATED_TEMPLATE_BANK,
   createPunctuationGeneratedItems,
   createPunctuationRuntimeManifest,
   PRODUCTION_DEPTH,
@@ -15,26 +16,28 @@ import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
 const GENERATOR_FAMILY_COUNT = PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length;
 const FIXED_ITEM_COUNT = PUNCTUATION_CONTENT_MANIFEST.items.length;
-// P14: families now ship with mixed depths (baseline 100; transfer capped at
-// 18 via productionItemsLimit). Compute total honouring per-family caps.
+// P20: families now ship with mixed depths (legacy baseline 100; transfer and
+// P20 extension families 120). Compute total honouring per-family caps and the
+// actual template bank length so the expectation cannot over-count legacy banks.
 const expectedRuntimeItems = (depth) => {
   let total = FIXED_ITEM_COUNT;
   for (const family of PUNCTUATION_CONTENT_MANIFEST.generatorFamilies) {
     const familyLimit = Number.isFinite(family.productionItemsLimit)
       ? family.productionItemsLimit
       : depth;
-    total += Math.min(depth, familyLimit);
+    const templateCount = GENERATED_TEMPLATE_BANK[family.id]?.length ?? depth;
+    total += Math.min(depth, familyLimit, templateCount);
   }
   return total;
 };
 
 describe('Punctuation capacity raise mechanism', () => {
-  it('exports PRODUCTION_DEPTH = 100', () => {
-    assert.equal(PRODUCTION_DEPTH, 100);
+  it('exports PRODUCTION_DEPTH = 120 after P20 systematic expansion', () => {
+    assert.equal(PRODUCTION_DEPTH, 120);
   });
 
-  it('exports CAPACITY_DEPTH = 100', () => {
-    assert.equal(CAPACITY_DEPTH, 100);
+  it('exports CAPACITY_DEPTH = 120 after P20 systematic expansion', () => {
+    assert.equal(CAPACITY_DEPTH, 120);
   });
 
   it('default production depth produces the current runtime item count', () => {
@@ -45,7 +48,7 @@ describe('Punctuation capacity raise mechanism', () => {
     assert.equal(indexes.items.length, expectedRuntimeItems(PRODUCTION_DEPTH));
   });
 
-  it('depth-6 mode produces the fixed bank plus 252 generated items (42 families × 6)', () => {
+  it('depth-6 mode produces the fixed bank plus generated depth-capped items', () => {
     const manifest = createPunctuationRuntimeManifest({
       generatedPerFamily: 6,
     });

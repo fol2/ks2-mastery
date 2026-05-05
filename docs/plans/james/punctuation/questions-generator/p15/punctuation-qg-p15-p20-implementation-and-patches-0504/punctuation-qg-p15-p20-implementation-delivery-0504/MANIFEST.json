@@ -1,0 +1,91 @@
+{
+  "delivery": "punctuation-qg-p15-p20-implementation-delivery-0504",
+  "refreshedAt": "2026-05-05T09:58:17Z",
+  "files": [
+    {
+      "path": "contracts/punctuation-qg-p15-p20-systematic-expansion-contract.md",
+      "bytes": 15319,
+      "sha256": "221316ece619a71736f386d9a617da7288dff7fff413f6c3787a80948bb0ca0a"
+    },
+    {
+      "path": "docs/punctuation-qg-p15-baseline-report.md",
+      "bytes": 3546,
+      "sha256": "b531daf33907a80d5be3c9c53ee5b7e107139eabb614096fd27a02778eac77ce"
+    },
+    {
+      "path": "docs/punctuation-qg-p20-systematic-expansion-completion-report.md",
+      "bytes": 5693,
+      "sha256": "c3ea9c671ff0d6277efded88f42178a941dc2f8af0234e41f445c4c490958c11"
+    },
+    {
+      "path": "MANIFEST.json",
+      "bytes": 0,
+      "sha256": "self-referential-manifest"
+    },
+    {
+      "path": "patches/000-combined-punctuation-qg-p15-p20-implementation-and-gates.patch",
+      "bytes": 982410,
+      "sha256": "811436e588873a324fa4771efd62038bce1110353726b5c60ffb7c4f2909bb96"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3308,
+      "sha256": "279dde851b3b4abb9c7b8c7151b595df7eed09334ea565634d2fd3cae49d216a"
+    },
+    {
+      "path": "reports/punctuation-qg-p15-baseline-audit.json",
+      "bytes": 44429,
+      "sha256": "d269f0b124ec6c39bbbe478a889cf5f7c1879aabea6d8fa3f8e7b4da5317089d"
+    },
+    {
+      "path": "reports/punctuation-qg-p20-expansion-audit.json",
+      "bytes": 51395,
+      "sha256": "3f3747945bc69abf86c4f351939e61357f42096ef95f99c736be3c9fa8da87d4"
+    },
+    {
+      "path": "reports/punctuation-qg-p20-heavy-play-simulation.json",
+      "bytes": 2006,
+      "sha256": "87ceb29f5268b7663141c034a90713a4a546d05c831e9bb4693090e1ab543494"
+    },
+    {
+      "path": "reports/punctuation-qg-p20-negative-vector-register.json",
+      "bytes": 246541,
+      "sha256": "419f239163e76cc86425bb4a986ec0a66ba0a0ab770531487823b4d10a5bdaf0"
+    },
+    {
+      "path": "reports/punctuation-qg-p20-production-smoke.json",
+      "bytes": 8675,
+      "sha256": "4f7081748be2d90ba93d9989c1180893a389e29c3d5080bc62292e60992a64b0"
+    },
+    {
+      "path": "reports/punctuation-qg-p20-review-register.json",
+      "bytes": 44318,
+      "sha256": "c133bea05f64955e625f42c1cae543403a9c393e37b9e37922cd81f4bea65ae0"
+    },
+    {
+      "path": "validation/direct-chain-with-p20-test.log",
+      "bytes": 1921,
+      "sha256": "c3c08d3b82797bf889332a6c3036f7b7959503c7b383679078d2b8320dc9143c"
+    },
+    {
+      "path": "validation/full-p20-deploy-verification.log",
+      "bytes": 2168,
+      "sha256": "ae83a9a0d810e3f859c48abf481dd73552b7b4c9f27cc155373f15262449f6aa"
+    },
+    {
+      "path": "validation/mod-npm-verify-p20-expansion.log",
+      "bytes": 1190,
+      "sha256": "f8a92e49abe88fbc9f55a28ccbacbb21704f0352c7ea3479b861ee205695e761"
+    },
+    {
+      "path": "validation/patch-apply-direct-chain.log",
+      "bytes": 774,
+      "sha256": "fa5f2e3df6a8fe5cc20a0f2bf0f0045d83185a28be514d23132d8bc4ffd9ae13"
+    },
+    {
+      "path": "validation/validation-summary.md",
+      "bytes": 1709,
+      "sha256": "3072310fdd4b250892d7ed4c2b52d37ff9b468c6c54eb4029bb82b24f69fbf60"
+    }
+  ]
+}

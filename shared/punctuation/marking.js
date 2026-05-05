@@ -142,6 +142,10 @@ function acceptedAnswers(item) {
   return [...new Set([...accepted, ...model].filter((entry) => typeof entry === 'string' && entry))];
 }
 
+function normaliseDashBoundaryMarks(value) {
+  return canonicalPunctuationText(value).replace(/[–—]/g, '-');
+}
+
 function markChoose(item, answer) {
   const raw = isPlainObject(answer) ? answer.choiceIndex ?? answer.value ?? answer.typed : answer;
   const parsed = parseChoiceIndex(raw);
@@ -1757,6 +1761,11 @@ function markExact(item, answer) {
   const text = normalise(isPlainObject(answer) ? answer.typed ?? answer.answer : answer);
   const accepted = acceptedAnswers(item).map(normalise);
   let exact = accepted.includes(text);
+  if (!exact && Array.isArray(item?.skillIds) && item.skillIds.includes('dash_clause')) {
+    const normalisedText = normaliseDashBoundaryMarks(text);
+    const normalisedAccepted = accepted.map((entry) => normaliseDashBoundaryMarks(entry));
+    exact = normalisedAccepted.includes(normalisedText);
+  }
   let rubricResult = null;
 
   if (item.rubric?.type === 'speech') {
