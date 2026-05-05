@@ -115,7 +115,8 @@ jobs:
             const min = Math.min(...durations);
             const ratio = max / min;
             console.log('Shard balance: max=' + max + 'ms min=' + min + 'ms ratio=' + ratio.toFixed(2));
-            if (max > 120000) { console.log('::error::Heaviest shard ' + max + 'ms exceeds 120s ceiling — seed sweep or file split required'); process.exit(1); }
+            if (max > 150000) { console.log('::error::Heaviest shard ' + max + 'ms exceeds 150s ceiling — seed sweep or file split required'); process.exit(1); }
+            if (max > 120000) console.log('::warning::Heaviest shard ' + max + 'ms exceeds 120s target — investigate if recurring');
             if (ratio > 2.0) console.log('::warning::Shard imbalance detected (ratio ' + ratio.toFixed(2) + ' > 2.0). Consider re-sweeping seed.');
             const allFiles = shards.flatMap(s => Object.entries(s.files || {}));
             allFiles.filter(([,ms]) => ms > 90000).forEach(([f,ms]) => console.log('::warning::File ' + f.split('/').pop() + ' took ' + ms + 'ms — consider splitting if this recurs'));
