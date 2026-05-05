@@ -1,4 +1,4 @@
-# Grammar QG P19 — smart-practice surface audit
+# Grammar QG P20 — smart-practice surface audit
 
 Content release: `grammar-qg-p20-2026-05-05`
 Generated: `2026-05-05T15:43:23.715Z`

@@ -9,6 +9,7 @@ import {
   registeredSubjectIds,
   grammarProvider,
   punctuationProvider,
+  readingProvider,
   spellingProvider,
 } from '../worker/src/hero/providers/index.js';
 
@@ -25,15 +26,23 @@ function loadFixture(name) {
 
 test('registry: runProvider returns null for unregistered subjects', () => {
   assert.equal(runProvider('arithmetic', {}), null);
-  assert.equal(runProvider('reading', {}), null);
 });
 
-test('registry: registeredSubjectIds lists exactly three subjects', () => {
+test('registry: registeredSubjectIds lists exactly four subjects', () => {
   const ids = registeredSubjectIds();
-  assert.equal(ids.length, 3);
+  assert.equal(ids.length, 4);
   assert.ok(ids.includes('grammar'));
   assert.ok(ids.includes('punctuation'));
+  assert.ok(ids.includes('reading'));
   assert.ok(ids.includes('spelling'));
+});
+
+test('reading: missing readable signals returns available:false', () => {
+  const result = readingProvider({});
+  assert.equal(result.subjectId, 'reading');
+  assert.equal(result.available, false);
+  assert.equal(result.unavailableReason, 'missing-hero-readable-signals');
+  assert.deepEqual(result.envelopes, []);
 });
 
 test('provider registry covers all ready subject IDs', () => {
@@ -287,6 +296,7 @@ test('provider modules do not import runtime.js or any command handler (structur
     resolve(__dirname, '..', 'worker', 'src', 'hero', 'providers', 'index.js'),
     resolve(__dirname, '..', 'worker', 'src', 'hero', 'providers', 'grammar.js'),
     resolve(__dirname, '..', 'worker', 'src', 'hero', 'providers', 'punctuation.js'),
+    resolve(__dirname, '..', 'worker', 'src', 'hero', 'providers', 'reading.js'),
     resolve(__dirname, '..', 'worker', 'src', 'hero', 'providers', 'spelling.js'),
   ];
   // Only match actual import statements (lines starting with import), not comments.
@@ -322,7 +332,7 @@ test('each fixture produces valid provider output with valid envelopes', () => {
 
   for (const name of fixtureNames) {
     const fixture = loadFixture(name);
-    for (const subjectId of ['grammar', 'punctuation', 'spelling']) {
+    for (const subjectId of ['grammar', 'punctuation', 'reading', 'spelling']) {
       const readModel = fixture[subjectId];
       const result = runProvider(subjectId, readModel);
       assert.ok(result, `runProvider('${subjectId}') returned null for fixture ${name}`);
@@ -380,7 +390,7 @@ test('punctuation-disabled fixture: punctuation returns available:false, others 
 test('provider signals always contain all required fields', () => {
   const requiredSignalKeys = ['dueCount', 'weakCount', 'secureCount', 'megaLike', 'postMegaAvailable', 'retentionDueCount'];
   const fixture = loadFixture('fresh-three-subjects');
-  for (const subjectId of ['grammar', 'punctuation', 'spelling']) {
+  for (const subjectId of ['grammar', 'punctuation', 'reading', 'spelling']) {
     const result = runProvider(subjectId, fixture[subjectId]);
     for (const key of requiredSignalKeys) {
       assert.ok(

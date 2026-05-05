@@ -11874,6 +11874,60 @@ html { scroll-behavior: smooth; }
   margin-top: 12px;
 }
 
+/* Reading subject production surface. Scoped static classes replace the
+   initial promoted patch's inline layout styles so the CSP inline-style
+   budget remains stable while Reading moves from placeholder to ready. */
+.reading-accent-card {
+  border-top-color: var(--subject-accent, #4B7A4A);
+}
+
+.reading-setup-form,
+.reading-actions-spaced,
+.reading-callout-spaced {
+  margin-top: 16px;
+}
+
+.reading-chip-row-before {
+  margin-bottom: 12px;
+}
+
+.reading-passage {
+  max-height: 68vh;
+  overflow: auto;
+}
+
+.reading-passage.is-poetry p {
+  white-space: pre-line;
+}
+
+.reading-paragraph-number {
+  margin-right: 8px;
+}
+
+.reading-feedback {
+  margin-top: 14px;
+}
+
+.reading-feedback-model {
+  margin-top: 10px;
+}
+
+.reading-session-hud {
+  margin-bottom: 18px;
+}
+
+.reading-section-nav {
+  margin-top: 12px;
+}
+
+.reading-analytics {
+  margin-top: 18px;
+}
+
+.reading-skill-meter {
+  min-width: 80px;
+}
+
 /* -- writing try admin ---------------------------------------------------- */
 
 .admin-writing-try-section {

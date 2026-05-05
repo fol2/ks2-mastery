@@ -1,16 +1,17 @@
 // Hero Mode P0 — Provider registry.
 //
-// Maps subjectId to provider function. Only spelling, grammar, and
-// punctuation have providers. Returns null for arithmetic, reasoning,
-// and reading (no provider registered).
+// Maps subjectId to provider function for ready subjects. Arithmetic and
+// reasoning remain locked until their Worker engines are implemented.
 
 import { grammarProvider } from './grammar.js';
 import { punctuationProvider } from './punctuation.js';
+import { readingProvider } from './reading.js';
 import { spellingProvider } from './spelling.js';
 
 const PROVIDER_MAP = Object.freeze({
   grammar: grammarProvider,
   punctuation: punctuationProvider,
+  reading: readingProvider,
   spelling: spellingProvider,
 });
 
@@ -41,4 +42,5 @@ export function registeredSubjectIds() {
 
 export { grammarProvider } from './grammar.js';
 export { punctuationProvider } from './punctuation.js';
+export { readingProvider } from './reading.js';
 export { spellingProvider } from './spelling.js';

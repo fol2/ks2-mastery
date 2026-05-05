@@ -1,0 +1,93 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createServerReadingEngine } from '../worker/src/subjects/reading/engine.js';
+import { buildReadingReadModel } from '../worker/src/subjects/reading/read-models.js';
+import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
+
+function fakeContext() {
+  let subjectRecord = null;
+  return {
+    now: 1000,
+    session: { accountId: 'acc1' },
+    repository: {
+      async readSubjectRuntime(_accountId, _learnerId, subjectId) {
+        assert.equal(subjectId, 'reading');
+        return { subjectRecord, latestSession: null };
+      },
+      async readLearnerProjectionInput() {
+        return { projectionState: { gameState: {}, events: [] }, tokens: [] };
+      },
+    },
+    setRecord(next) { subjectRecord = next; },
+  };
+}
+
+test('reading engine starts a passage-first session and hides answer metadata before attempt', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
+  assert.equal(started.state.phase, 'question');
+  assert.ok(started.state.session.sections[0].questionIds.length > 0);
+  const readModel = buildReadingReadModel({ learnerId: 'l1', state: started.state, data: started.data, stats: started.stats, analytics: started.analytics });
+  assert.equal(readModel.session.passage.id, 'red_tin_box');
+  assert.ok(readModel.session.currentQuestion.stem);
+  assert.equal(readModel.session.currentQuestion.modelAnswer, undefined);
+  assert.equal(readModel.session.currentQuestion.explanation, undefined);
+});
+
+test('reading engine marks deterministically and then exposes feedback safely', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
+  const session = started.state.session;
+  const qid = session.sections[0].questionIds[0];
+  const marked = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'folded slips of paper' } },
+    requestId: 'r2',
+  });
+  assert.equal(marked.state.phase, 'feedback');
+  assert.equal(marked.state.feedback.result.score, 1);
+  assert.equal(marked.events[0].type, 'reading.answer-submitted');
+  const readModel = buildReadingReadModel({ learnerId: 'l1', state: marked.state, data: marked.data, stats: marked.stats, analytics: marked.analytics });
+  assert.ok(readModel.feedback.result.modelAnswer.includes('Folded'));
+  assert.ok(readModel.session.currentQuestion.modelAnswer.includes('Folded'));
+});
+
+test('worker subject runtime wires reading command handlers', async () => {
+  const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
+  const context = fakeContext();
+  const started = await runtime.dispatch({
+    subjectId: 'reading',
+    command: 'start-session',
+    learnerId: 'l1',
+    requestId: 'r1',
+    expectedLearnerRevision: 0,
+    payload: { mode: 'guided', viewMode: 'one' },
+  }, context);
+  assert.equal(started.subjectId, 'reading');
+  assert.equal(started.subjectReadModel.subjectId, 'reading');
+  assert.equal(started.subjectReadModel.phase, 'question');
+  assert.ok(started.runtimeWrite.state.session.id);
+});
+
+import { projectReadingRewards } from '../worker/src/projections/rewards.js';
+
+test('reading secured skill events project into reading-owned monster rewards', () => {
+  const projection = projectReadingRewards({
+    learnerId: 'l1',
+    domainEvents: [{
+      type: 'reading.skill-secured',
+      subjectId: 'reading',
+      learnerId: 'l1',
+      skillId: '2d',
+      contentReleaseId: 'reading-poc-promoted-2026-05-05',
+    }],
+    gameState: {},
+    random: () => 0,
+  });
+  assert.ok(projection.rewardEvents.length >= 1);
+  assert.equal(projection.rewardEvents[0].subjectId, 'reading');
+  assert.equal(projection.rewardEvents[0].monsterId, 'inferane');
+  assert.ok(projection.changedGameState['monster-codex'].inferane.caught);
+});

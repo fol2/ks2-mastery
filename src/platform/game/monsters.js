@@ -181,6 +181,50 @@ export const MONSTERS = {
     nameByStage: ['Concordium Egg', 'Concordium', 'Syntaxwing', 'Crowncord', 'Grand Concordium'],
     masteredMax: 18,
   },
+  readbloom: {
+    id: 'readbloom',
+    assetId: 'glossbloom',
+    name: 'Readbloom',
+    blurb: 'Blooms as vocabulary and author-word evidence becomes secure.',
+    accent: '#B45C83',
+    secondary: '#E6A8C7',
+    pale: '#F8E9F1',
+    nameByStage: ['Readbloom Egg', 'Readbloom', 'Cluebloom', 'Lexileaf', 'Mega Lexileaf'],
+    masteredMax: 4,
+  },
+  readrill: {
+    id: 'readrill',
+    assetId: 'loomrill',
+    name: 'Readrill',
+    blurb: 'Threads retrieval and summarising into a clear whole-text picture.',
+    accent: '#4E79A8',
+    secondary: '#9EC4E6',
+    pale: '#E8F1FA',
+    nameByStage: ['Readrill Egg', 'Readrill', 'Detailrill', 'Summaryloom', 'Mega Summaryloom'],
+    masteredMax: 4,
+  },
+  inferane: {
+    id: 'inferane',
+    assetId: 'mirrane',
+    name: 'Inferane',
+    blurb: 'Reflects inference, prediction and exact evidence.',
+    accent: '#6F7D86',
+    secondary: '#B8C7CF',
+    pale: '#EDF2F4',
+    nameByStage: ['Inferane Egg', 'Inferane', 'Evidenceglint', 'Proofglass', 'Mega Proofglass'],
+    masteredMax: 4,
+  },
+  structurillon: {
+    id: 'structurillon',
+    assetId: 'carillon',
+    name: 'Structurillon',
+    blurb: 'Rings clearly when structure and comparison are secure.',
+    accent: '#D08A2C',
+    secondary: '#E8C45A',
+    pale: '#F6EED7',
+    nameByStage: ['Structurillon Egg', 'Structurillon', 'Shapechord', 'Comparebell', 'Mega Comparebell'],
+    masteredMax: 4,
+  },
 };
 
 export const MONSTERS_BY_SUBJECT = {
@@ -200,6 +244,9 @@ export const MONSTERS_BY_SUBJECT = {
   // `src/platform/game/mastery/grammar.js`.
   grammar: ['bracehart', 'chronalyx', 'couronnail', 'concordium'],
   grammarReserve: ['glossbloom', 'loomrill', 'mirrane'],
+  // Reading owns separate state ids while reusing existing reserve art via
+  // each monster's assetId. This avoids Grammar/Punctuation state collision.
+  reading: ['readbloom', 'readrill', 'inferane', 'structurillon'],
 };
 
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);
@@ -253,7 +300,8 @@ export function monsterAsset(monsterId, stage, size = 320, branch = DEFAULT_MONS
   const safeStage = Math.max(0, Math.min(4, Number(stage) || 0));
   const safeSize = normaliseMonsterAssetSize(size);
   const safeBranch = normaliseMonsterBranch(branch);
-  return `./assets/monsters/${monsterId}/${safeBranch}/${monsterId}-${safeBranch}-${safeStage}.${safeSize}.webp?v=${MONSTER_ASSET_VERSION}`;
+  const assetId = MONSTERS[monsterId]?.assetId || monsterId;
+  return `./assets/monsters/${assetId}/${safeBranch}/${assetId}-${safeBranch}-${safeStage}.${safeSize}.webp?v=${MONSTER_ASSET_VERSION}`;
 }
 
 export function monsterAssetSrcSet(monsterId, stage, branch = DEFAULT_MONSTER_BRANCH) {

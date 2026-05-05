@@ -33,6 +33,7 @@ const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/service\.js$/, reason: 'client-side spelling runtime service' },
   { pattern: /^src\/subjects\/spelling\/content\/(model|repository|service)\.js$/, reason: 'content-heavy client read/write builders' },
   { pattern: /^src\/subjects\/spelling\/data\/word-data\.js$/, reason: 'derived word dataset' },
+  { pattern: /^shared\/reading\/content\.js$/, reason: 'server-side Reading passages, questions, answer keys and marking content' },
   { pattern: /^shared\/punctuation\/(content|context-packs|generators|marking|scheduler|service)\.js$/, reason: 'server-side punctuation engine and content' },
   { pattern: /^worker\/src\/subjects\/punctuation\//, reason: 'server-side punctuation command runtime' },
   { pattern: /^src\/subjects\/punctuation\/(service|repository)\.js$/, reason: 'browser-side import of punctuation runtime service' },

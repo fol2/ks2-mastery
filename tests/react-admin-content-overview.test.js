@@ -199,8 +199,8 @@ function baseModel(overrides = {}) {
         {
           subjectKey: 'reading',
           displayName: 'Reading',
-          status: 'placeholder',
-          releaseVersion: null,
+          status: 'live',
+          releaseVersion: 'reading-poc-promoted-2026-05-05',
           validationErrors: 0,
           errorCount7d: 0,
           supportLoadSignal: 'none',
@@ -345,7 +345,7 @@ test('buildSubjectContentOverview sorts live before placeholder', async () => {
     import { buildSubjectContentOverview } from ${ADAPTER_PATH};
     const overview = buildSubjectContentOverview({
       subjects: [
-        { subjectKey: 'reading', displayName: 'Reading', status: 'placeholder', errorCount7d: 0 },
+        { subjectKey: 'reading', displayName: 'Reading', status: 'live', errorCount7d: 0 },
         { subjectKey: 'spelling', displayName: 'Spelling', status: 'live', errorCount7d: 0 },
         { subjectKey: 'arithmetic', displayName: 'Arithmetic', status: 'placeholder', errorCount7d: 0 },
         { subjectKey: 'grammar', displayName: 'Grammar', status: 'live', errorCount7d: 0 },
@@ -356,7 +356,7 @@ test('buildSubjectContentOverview sorts live before placeholder', async () => {
 
   assert.equal(result[0].status, 'live');
   assert.equal(result[1].status, 'live');
-  assert.equal(result[2].status, 'placeholder');
+  assert.equal(result[2].status, 'live');
   assert.equal(result[3].status, 'placeholder');
 });
 
@@ -410,6 +410,7 @@ test('live subjects show Live badge with good class', async () => {
 
   assert.match(html, /data-testid="status-badge-spelling"[^>]*>Live</, 'Spelling has Live badge');
   assert.match(html, /data-testid="status-badge-grammar"[^>]*>Live</, 'Grammar has Live badge');
+  assert.match(html, /data-testid="status-badge-reading"[^>]*>Live</, 'Reading has Live badge');
   assert.match(html, /chip good[^>]*data-testid="status-badge-spelling"/, 'Spelling badge has good class');
 });
 

@@ -404,6 +404,35 @@ for (const forbiddenModule of FORBIDDEN_SHARED_PUNCTUATION_MODULES) {
   });
 }
 
+test('client bundle audit fails when Reading server content is in the metafile', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
+  const bundle = path.join(dir, 'app.bundle.js');
+  const metafile = path.join(dir, 'app.bundle.meta.json');
+  const publicDir = path.join(dir, 'public');
+  await mkdir(publicDir, { recursive: true });
+  await writeFile(bundle, 'console.log("ok");\n');
+  await writeFile(metafile, JSON.stringify({
+    inputs: {
+      'shared/reading/content.js': { bytes: 1 },
+    },
+  }));
+
+  assert.throws(() => {
+    execFileSync(process.execPath, [
+      './scripts/audit-client-bundle.mjs',
+      '--bundle',
+      bundle,
+      '--metafile',
+      metafile,
+      '--public-dir',
+      publicDir,
+    ], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    });
+  }, /shared\/reading\/content\.js/);
+});
+
 test('client bundle audit fails when public output exposes shared punctuation source', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
   const bundle = path.join(dir, 'app.bundle.js');

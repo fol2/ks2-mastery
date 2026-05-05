@@ -34,6 +34,8 @@ export function isHeroSessionTerminal(subjectId, phase, sessionPresent) {
       return phase === 'idle' || phase === 'dashboard' || phase === 'complete';
     case 'punctuation':
       return phase === 'summary' || phase === 'complete' || phase === 'idle';
+    case 'reading':
+      return phase === 'summary' || phase === 'setup';
     default:
       return false;
   }

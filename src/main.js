@@ -46,6 +46,12 @@ import {
   createPunctuationOnCommandError,
   punctuationSubjectCommandActions,
 } from './subjects/punctuation/command-actions.js';
+import { createReadingReadModelService } from './subjects/reading/client-read-models.js';
+import {
+  applyReadingCommandResponse,
+  readingSubjectCommandActions,
+  setReadingRuntimeError,
+} from './subjects/reading/command-actions.js';
 import { createRemoteSpellingActionHandler } from './subjects/spelling/remote-actions.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import {
@@ -263,6 +269,7 @@ await repositories.hydrate();
 
 const services = {
   punctuation: null,
+  reading: null,
   spelling: null,
 };
 let store = null;
@@ -1378,7 +1385,15 @@ function rebuildPunctuationService() {
   return services.punctuation;
 }
 
+function rebuildReadingService() {
+  services.reading = createReadingReadModelService({
+    getState: () => store?.getState?.() || null,
+  });
+  return services.reading;
+}
+
 rebuildPunctuationService();
+rebuildReadingService();
 rebuildSpellingService();
 
 function buildSignedInHubModels(appState) {
@@ -1436,6 +1451,7 @@ const controller = createAppController({
     // context subjects receive.
     session: { ...boot.session, platformRole: shellPlatformRole },
     handleRemoteSpellingAction,
+    handleRemoteReadingAction,
   }),
   tts,
   services,
@@ -2477,6 +2493,7 @@ function contextFor(subjectId = null) {
     // `boot.session.platformRole` captured at boot time.
     session: { ...boot.session, platformRole: shellPlatformRole },
     handleRemoteSpellingAction,
+    handleRemoteReadingAction,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
     // P3 U10: hero auto-claim hook — subjects call this when their session ends.
     notifyHeroSubjectSessionEnded,
@@ -3616,6 +3633,10 @@ function setPunctuationRuntimeError(message) {
   store.updateSubjectUi('punctuation', { error: message || 'Punctuation practice is temporarily unavailable.' });
 }
 
+function setReadingRuntimeErrorMessage(message) {
+  setReadingRuntimeError(store, message);
+}
+
 function applyPunctuationCommandResponse(response) {
   const previousPunctuationUi = store.getState().subjectUi?.punctuation || null;
   const subjectReadModel = response?.subjectReadModel;
@@ -3673,6 +3694,27 @@ const punctuationCommandActions = createSubjectCommandActionHandler({
   actions: punctuationSubjectCommandActions,
 });
 
+
+const pendingReadingCommandKeys = new Set();
+
+const readingCommandActions = createSubjectCommandActionHandler({
+  subjectId: 'reading',
+  subjectCommands,
+  getState: () => store.getState(),
+  isReadOnly: runtimeIsReadOnly,
+  setSubjectError: setReadingRuntimeErrorMessage,
+  pendingKeys: pendingReadingCommandKeys,
+  onBeforeCommand: ({ command }) => store.updateSubjectUi('reading', { pendingCommand: command, error: '' }),
+  onCommandResult: applyReadingCommandResponse({
+    store,
+    shouldDelayMonsterCelebrations,
+    subjectSessionEnded,
+    notifyHeroSubjectSessionEnded,
+  }),
+  onCommandSettled: () => store.updateSubjectUi('reading', { pendingCommand: '' }),
+  actions: readingSubjectCommandActions,
+});
+
 function handleRemoteSpellingAction(action, data = {}) {
   return remoteSpellingActions?.handle(action, data) || false;
 }
@@ -3691,6 +3733,19 @@ function handleRemotePunctuationAction(action, data = {}) {
     return true;
   }
   return punctuationCommandActions.handle(action, data);
+}
+
+function handleRemoteReadingAction(action, data = {}) {
+  if (!action || !action.startsWith('reading-')) return false;
+  if (!isSubjectExposed(getSubject('reading'), subjectExposureGates)) {
+    store.goHome();
+    return true;
+  }
+  if (action === 'reading-back') {
+    store.updateSubjectUi('reading', { phase: 'setup', session: null, feedback: null, summary: null, error: '' });
+    return true;
+  }
+  return readingCommandActions.handle(action, data);
 }
 
 function handleSubjectAction(action, data) {
@@ -3732,7 +3787,7 @@ function handleSubjectAction(action, data) {
 function dispatchAction(action, data = {}) {
   controller.autoAdvance.clear();
   captureWordDetailTrigger(action, data);
-  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data) && !handleRemotePunctuationAction(action, data)) {
+  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data) && !handleRemotePunctuationAction(action, data) && !handleRemoteReadingAction(action, data)) {
     handleSubjectAction(action, data);
   }
   ensureSpellingAutoAdvanceFromCurrentState();

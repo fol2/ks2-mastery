@@ -28,6 +28,9 @@ export const GRAMMAR_MONSTER_IDS = Object.freeze(
 export const GRAMMAR_RESERVED_MONSTER_IDS = Object.freeze(
   (MONSTERS_BY_SUBJECT.grammarReserve || []).filter((monsterId) => MONSTERS[monsterId]),
 );
+export const READING_MONSTER_IDS = Object.freeze(
+  (MONSTERS_BY_SUBJECT.reading || []).filter((monsterId) => MONSTERS[monsterId]),
+);
 export const DIRECT_SPELLING_MONSTER_IDS = Object.freeze(
   SPELLING_MONSTER_IDS.filter((monsterId) => monsterId !== 'phaeton'),
 );

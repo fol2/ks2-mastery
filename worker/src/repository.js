@@ -157,6 +157,8 @@ import {
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
 import { buildGrammarReadModel } from './subjects/grammar/read-models.js';
+import { buildReadingReadModel } from './subjects/reading/read-models.js';
+import { __readingEngineInternals } from './subjects/reading/engine.js';
 import { listPunctuationEvents } from './subjects/punctuation/events.js';
 import { createPunctuationService } from '../../shared/punctuation/service.js';
 import {
@@ -350,6 +352,18 @@ function redactGrammarUiForClient(ui, data = {}, learnerId = '', { now = Date.no
   });
 }
 
+function redactReadingUiForClient(ui, data = {}, learnerId = '') {
+  const runtimeData = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+  const runtimeState = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
+  return buildReadingReadModel({
+    learnerId,
+    state: runtimeState,
+    data: runtimeData,
+    stats: __readingEngineInternals.buildStats(runtimeData),
+    analytics: __readingEngineInternals.buildAnalytics(runtimeData),
+  });
+}
+
 const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
   async spelling({ record, row, spellingContentSnapshot, now }) {
     const audio = await buildSpellingAudioCue({
@@ -367,6 +381,9 @@ const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
   },
   grammar({ record, row, now }) {
     return redactGrammarUiForClient(record.ui, record.data, row.learner_id, { now });
+  },
+  reading({ record, row }) {
+    return redactReadingUiForClient(record.ui, record.data, row.learner_id);
   },
 });
 
@@ -1812,7 +1829,7 @@ const CONTENT_OVERVIEW_SUBJECTS = [
   { subjectKey: 'punctuation', displayName: 'Punctuation', queryLive: true },
   { subjectKey: 'arithmetic', displayName: 'Arithmetic', queryLive: false },
   { subjectKey: 'reasoning', displayName: 'Reasoning', queryLive: false },
-  { subjectKey: 'reading', displayName: 'Reading', queryLive: false },
+  { subjectKey: 'reading', displayName: 'Reading', queryLive: true },
 ];
 
 async function readSubjectContentOverviewData(db, { now, actorAccountId, actor = null } = {}) {

@@ -41,4 +41,14 @@ export {
   GRAMMAR_GRAND_MONSTER_ID,
   GRAMMAR_MONSTER_IDS,
   GRAMMAR_RESERVED_MONSTER_IDS,
+  READING_MONSTER_IDS,
 } from './shared.js';
+export {
+  READING_REWARD_RELEASE_ID,
+  READING_SKILL_TO_MONSTER,
+  activeReadingMonsterSummaryFromState,
+  monsterIdForReadingSkill,
+  progressForReadingMonster,
+  readingMasteryKey,
+  recordReadingSkillMastery,
+} from './reading.js';
