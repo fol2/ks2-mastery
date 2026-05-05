@@ -134,6 +134,6 @@
     "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
   },
   "failureDetails": null,
-  "timestamp": "2026-05-05T19:54:59.727Z",
-  "commitSha": "aeb4a125df5e76378e3b058179eab2922e49766a"
+  "timestamp": "2026-05-05T20:00:12.814Z",
+  "commitSha": "092566ce765e73b7d3434dc14238650dcef899ed"
 }

@@ -1,8 +1,8 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "accountId": "demo-yfOz_mGpP7QsoA",
-  "learnerId": "learner-demo-4Y09-ue2bVcJig",
+  "accountId": "demo-OyfPLsfbVlRxPg",
+  "learnerId": "learner-demo-MJYJ_uD8Aw5tzw",
   "attestation": {
     "environment": "production",
     "releaseId": "punctuation-qg-p20-15072-2026-05-04",
@@ -136,10 +136,10 @@
       "gen_speech_insert": 100,
       "gen_speech_transfer": 120
     },
-    "workerCommitSha": "07203e837e6e07361cba983c827f2e7808e27be6",
+    "workerCommitSha": "092566ce765e73b7d3434dc14238650dcef899ed",
     "workerVersionId": null,
     "deploymentId": null,
-    "timestamp": "2026-05-05T09:56:31.529Z",
+    "timestamp": "2026-05-05T20:00:44.460Z",
     "authenticatedCoverage": true,
     "adminHubCoverage": true
   },
@@ -149,7 +149,7 @@
       "runtimeItems": 15072,
       "publishedRewardUnits": 14,
       "generatedItemCommandPathProbe": {
-        "itemId": "gen_p20_speech_fix_ciaywm_3",
+        "itemId": "gen_p20_speech_fix_1xurp9x_15",
         "mode": "fix",
         "skillIds": [
           "speech"
@@ -168,7 +168,7 @@
       "runtimeItems": 15072,
       "publishedRewardUnits": 14
     },
-    "smartItemId": "sc_insert_lights_audience",
+    "smartItemId": "gen_sentence_endings_insert_gij6oc_4",
     "smartSummaryTotal": 1,
     "smartSix": {
       "revision": 13,
@@ -181,7 +181,7 @@
       "uniqueItems": 6,
       "immediateRepeats": 0
     },
-    "generatedIncorrectItemId": "gen_p20_speech_fix_ciaywm_3",
+    "generatedIncorrectItemId": "gen_p20_speech_fix_1xurp9x_15",
     "generatedIncorrectMisconceptionTags": [
       "speech.reporting_comma_missing",
       "speech.terminal_inside_quotes_missing"
@@ -189,32 +189,38 @@
     "dashAcceptance": [
       {
         "variant": "spaced-hyphen",
-        "itemId": "gen_p20_dash_clause_insert_1qci0zw_3",
+        "itemId": "gen_p20_dash_clause_insert_1rovk6b_15",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
-        ]
+        ],
+        "feedbackKind": "success",
+        "acceptedAnswer": "Kai opened the weather chart - the room fell silent - and read the note."
       },
       {
         "variant": "en-dash",
-        "itemId": "gen_p20_dash_clause_insert_xzsmgd_24",
+        "itemId": "gen_p20_dash_clause_insert_1sstyy7_11",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
-        ]
+        ],
+        "feedbackKind": "success",
+        "acceptedAnswer": "Leo opened the sample tray – the room fell silent – and read the note."
       },
       {
         "variant": "em-dash",
-        "itemId": "gen_p20_dash_clause_insert_xftf2f_22",
+        "itemId": "gen_p20_dash_clause_insert_yjuzca_32",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
-        ]
+        ],
+        "feedbackKind": "success",
+        "acceptedAnswer": "Nia opened the score sheet — the room fell silent — and read the note."
       }
     ],
-    "oxfordCommaItemId": "gen_list_commas_combine_ezhrp7_24",
+    "oxfordCommaItemId": "gen_list_commas_combine_1bg1wr7_17",
     "oxfordCommaAcceptance": {
-      "itemId": "gen_list_commas_combine_ezhrp7_24",
+      "itemId": "gen_list_commas_combine_1bg1wr7_17",
       "mode": "combine",
       "skillIds": [
         "list_commas"
@@ -222,7 +228,7 @@
       "feedbackKind": "success"
     },
     "advancedMode": "gps",
-    "advancedItemId": "fx_ac_choose_ill_youll",
+    "advancedItemId": "fx_se_choose_command_full_stop",
     "advancedReviewItems": 1,
     "parentHubAttempts": 18,
     "parentHubEvidence": {
