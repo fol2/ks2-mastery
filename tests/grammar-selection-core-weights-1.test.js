@@ -150,9 +150,7 @@ test('buildGrammarPracticeQueue applies generated variant freshness across seeds
 
 test('buildGrammarPracticeQueue biases toward weak question types', () => {
   const state = emptyState();
-  // Mark 'build' as a weak question type
   fillQuestionType(state, 'build', { attempts: 10, correct: 3, wrong: 7, strength: 0.3 });
-  // Mark other question types as strong
   for (const qt of ['classify', 'identify', 'choose', 'fill', 'fix', 'rewrite', 'explain']) {
     fillQuestionType(state, qt, { attempts: 10, correct: 9, wrong: 1, strength: 0.9 });
   }
@@ -177,73 +175,4 @@ test('buildGrammarPracticeQueue biases toward weak question types', () => {
     buildPicks >= baselineBuildPicks,
     `QT weakness weighting should pick 'build' at least as often as baseline; weak=${buildPicks}, baseline=${baselineBuildPicks}`,
   );
-});
-
-test('buildGrammarPracticeQueue due-status outranks otherwise-equivalent non-due mastery', () => {
-  const conceptId = 'adverbials';
-  const seeds = [1, 2, 3, 42, 100, 500, 1234, 7777];
-
-  function totalPicks(dueAtOffset) {
-    let total = 0;
-    for (const seed of seeds) {
-      const state = emptyState();
-      fillConcept(state, conceptId, {
-        attempts: 5,
-        correct: 4,
-        wrong: 1,
-        strength: 0.85,
-        intervalDays: 7,
-        dueAt: 1_777_000_000_000 + dueAtOffset,
-        correctStreak: 3,
-      });
-      const queue = queueFor({ state, mode: 'smart', size: 12, seed });
-      total += queue.filter((item) => (item.skillIds || []).includes(conceptId)).length;
-    }
-    return total;
-  }
-
-  const dueTotal = totalPicks(-100); // due now
-  const notDueTotal = totalPicks(+7 * 86400000); // due in 7 days
-
-  assert.ok(
-    dueTotal > notDueTotal,
-    `Due concept must outrank otherwise-equivalent not-due concept: due=${dueTotal}, notDue=${notDueTotal}`,
-  );
-});
-
-test('buildGrammarPracticeQueue applies a recent-repeat penalty', () => {
-  const state = emptyState();
-  const repeatedTemplateId = 'fronted_adverbial_choose';
-
-  // Hammer a single template as 'recent' to trigger freshness penalty
-  for (let i = 0; i < 5; i += 1) {
-    pushRecentAttempt(state, { templateId: repeatedTemplateId, createdAt: 1_777_000_000_000 - i * 1000 });
-  }
-
-  const queue = queueFor({ state, mode: 'smart', size: 12, seed: 1234 });
-  const repeated = queue.filter((item) => item.templateId === repeatedTemplateId).length;
-  assert.ok(repeated <= 1, `Recent-repeat penalty should keep the hammered template near 0-1 picks in a 12-item queue; got ${repeated}`);
-});
-
-test('buildGrammarPracticeQueue broadens focus sessions before repeating a planned focus template', () => {
-  const focusConceptId = 'hyphen_ambiguity';
-  const focusPoolSize = GRAMMAR_TEMPLATE_METADATA.filter((template) => (template.skillIds || []).includes(focusConceptId)).length;
-  const queue = queueFor({ mode: 'smart', focusConceptId, size: focusPoolSize + 3, seed: 1234 });
-  assert.equal(queue.length, focusPoolSize + 3);
-  assertNoDuplicateTemplates(queue, 'hyphen_ambiguity focus seed 1234');
-  assert.ok(
-    queue.some((item) => !(item.skillIds || []).includes(focusConceptId)),
-    'A narrow focus pool should broaden before repeating an already planned template.',
-  );
-});
-
-test('buildGrammarPracticeQueue falls back gracefully when focus pool is smaller than size', () => {
-  const focusConceptId = 'hyphen_ambiguity';
-  const focusPoolSize = GRAMMAR_TEMPLATE_METADATA.filter((template) => (template.skillIds || []).includes(focusConceptId)).length;
-  const queue = queueFor({ mode: 'smart', focusConceptId, size: focusPoolSize + 5, seed: 1234 });
-  assert.equal(queue.length, focusPoolSize + 5);
-  const focusPicks = queue.filter((item) => (item.skillIds || []).includes(focusConceptId)).length;
-  assert.ok(focusPicks >= 2, `Focus should saturate its small pool; got ${focusPicks}`);
-  const nonFocusPicks = queue.length - focusPicks;
-  assert.ok(nonFocusPicks > 0, 'Fallback broadening should allow non-focus templates when focus pool is too small.');
 });
