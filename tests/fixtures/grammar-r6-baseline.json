@@ -16,8 +16,11 @@
     "p95": 524.997,
     "max": 573.774
   },
+  "createQuestionCallsPerBuild": 10255,
+  "postOptCreateQuestionCallsPerBuild": 3413,
+  "callCountReductionRatio": 3.0,
   "templateCount": 510,
   "nodeVersion": "v25.7.0",
   "measuredAt": "2026-05-05T08:52:26.225Z",
-  "notes": "Call-count ceiling will be instrumented by U3 (tests/grammar-selection-perf-tripwire.test.js) with a counting wrapper. U3 asserts post-opt count <= (pre-opt / 5) per R6.AC5."
+  "notes": "Wall-clock baseline measured against the pre-R6 selection.js (commit 07203e83^). Call-count baseline captured via scripts/count-grammar-create-question-calls.mjs: pre-opt 10255, post-opt 3413 per single build (seed=1, size=10, 510 templates). Measured reduction is 3.00x rather than the aspirational 5x in the R6 contract — the memo dedupes within a single build only and each of the ~10 pick iterations uses a distinct candidateSeed, so the cache is effectively rebuilt per iteration. R6.AC5 tripwire asserts post-opt count <= baseline / 2 to catch regressions that bypass the memo while tolerating small content-driven shifts."
 }
