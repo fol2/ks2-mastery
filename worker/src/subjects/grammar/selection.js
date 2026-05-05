@@ -144,15 +144,26 @@ function variantKey(generatorFamilyId, variantSignature) {
   return `${generatorFamilyId}:${variantSignature}`;
 }
 
-function candidateVariantMetadata(template, seed) {
+function candidateVariantMetadata(template, seed, variantMemo) {
   if (!template) return { generatorFamilyId: '', variantSignature: '' };
+  const memoKey = template.generative ? `${template.id}:${seed >>> 0}` : template.id;
+  if (variantMemo) {
+    const cached = variantMemo.get(memoKey);
+    if (cached) return cached;
+  }
   const generatorFamilyId = grammarTemplateGeneratorFamilyId(template);
-  if (!template.generative) return { generatorFamilyId, variantSignature: '' };
+  if (!template.generative) {
+    const result = { generatorFamilyId, variantSignature: '' };
+    if (variantMemo) variantMemo.set(memoKey, result);
+    return result;
+  }
   const question = createGrammarQuestion({ templateId: template.id, seed });
-  return {
+  const result = {
     generatorFamilyId,
     variantSignature: grammarQuestionVariantSignature(question) || '',
   };
+  if (variantMemo) variantMemo.set(memoKey, result);
+  return result;
 }
 
 // P19 Contract D.4 — return the most recent scored miss within the supplied
@@ -231,8 +242,8 @@ function recentVariantIndex(recentAttempts) {
   return index;
 }
 
-function addPlannedGeneratedVariant(index, template, seed) {
-  const candidateVariant = candidateVariantMetadata(template, seed);
+function addPlannedGeneratedVariant(index, template, seed, variantMemo) {
+  const candidateVariant = candidateVariantMetadata(template, seed, variantMemo);
   const key = variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature);
   if (!key) return;
   const entry = index.get(key) || { lastDistance: Infinity, count: 0, lastMissDistance: Infinity };
@@ -243,15 +254,15 @@ function addPlannedGeneratedVariant(index, template, seed) {
   });
 }
 
-function hasRecentGeneratedVariant(template, recentVariants, candidateSeed) {
-  const candidateVariant = candidateVariantMetadata(template, candidateSeed);
+function hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo) {
+  const candidateVariant = candidateVariantMetadata(template, candidateSeed, variantMemo);
   if (!candidateVariant.variantSignature) return false;
   const recentVariant = recentVariants?.get(variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature));
   return Boolean(recentVariant && recentVariant.lastDistance <= 6);
 }
 
-function variantFreshTemplates(pool, recentVariants, candidateSeed) {
-  const fresh = pool.filter((template) => !hasRecentGeneratedVariant(template, recentVariants, candidateSeed));
+function variantFreshTemplates(pool, recentVariants, candidateSeed, variantMemo) {
+  const fresh = pool.filter((template) => !hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo));
   return fresh.length > 0 ? fresh : pool;
 }
 
@@ -272,6 +283,7 @@ function weightFor(template, context) {
     recentVariants,
     candidateSeed,
     nowTs,
+    variantMemo,
   } = context;
 
   const conceptNodes = template.skillIds.map((id) => nodeFromMastery(mastery, 'concepts', id));
@@ -308,7 +320,7 @@ function weightFor(template, context) {
   // Generated variant freshness penalty. The signature is derived from visible
   // prompt/input surface data only, so it avoids repeating the same generated
   // variant without storing hidden answers in learner-facing read models.
-  const candidateVariant = candidateVariantMetadata(template, candidateSeed);
+  const candidateVariant = candidateVariantMetadata(template, candidateSeed, variantMemo);
   const recentVariant = recentVariants?.get(variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature));
   if (recentVariant) {
     if (recentVariant.lastDistance <= 6) {
@@ -354,8 +366,8 @@ function normaliseFocus(focusConceptId) {
   return typeof focusConceptId === 'string' && GRAMMAR_CONCEPT_IDS.has(focusConceptId) ? focusConceptId : '';
 }
 
-function pickTemplate({ pool, rng, mastery, focusConceptId, recentTemplates, recentConcepts, recentVariants, candidateSeed, nowTs }) {
-  const candidatePool = variantFreshTemplates(pool, recentVariants, candidateSeed);
+function pickTemplate({ pool, rng, mastery, focusConceptId, recentTemplates, recentConcepts, recentVariants, candidateSeed, nowTs, variantMemo }) {
+  const candidatePool = variantFreshTemplates(pool, recentVariants, candidateSeed, variantMemo);
   const weighted = candidatePool.map((template) => [template, weightFor(template, {
     mastery,
     focusConceptId,
@@ -364,6 +376,7 @@ function pickTemplate({ pool, rng, mastery, focusConceptId, recentTemplates, rec
     recentVariants,
     candidateSeed,
     nowTs,
+    variantMemo,
   })]);
   const total = weighted.reduce((sum, entry) => sum + entry[1], 0);
   if (!(total > 0)) return weighted[0]?.[0] || pool[0];
@@ -424,8 +437,8 @@ function urgentTemplatePool(pool, mastery, recentConcepts, nowTs) {
   return pool.filter((template) => (template.skillIds || []).some((conceptId) => topConcepts.has(conceptId)));
 }
 
-function recentAttemptForQueueTemplate(template, seed) {
-  const variant = candidateVariantMetadata(template, seed);
+function recentAttemptForQueueTemplate(template, seed, variantMemo) {
+  const variant = candidateVariantMetadata(template, seed, variantMemo);
   return {
     templateId: template.id,
     conceptIds: (template.skillIds || []).slice(),
@@ -478,6 +491,8 @@ export function buildGrammarPracticeQueue({
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
   const workingRecentVariants = recentVariantIndex(recentAttempts);
+  // Per-invocation memo. Key: "templateId:seed>>>0" (generative) or "templateId" (non-generative). Depends on I3 (createGrammarQuestion purity); remove if I3 violated. See R6 contract.
+  const variantMemo = new Map();
   const plannedTemplateIds = new Set(
     [...(avoidTemplateIds instanceof Set ? avoidTemplateIds : (Array.isArray(avoidTemplateIds) ? avoidTemplateIds : []))]
       .filter((id) => typeof id === 'string' && id),
@@ -505,11 +520,11 @@ export function buildGrammarPracticeQueue({
     if (candidatePool.length === 0) return candidatePool;
     const templateFresh = templateFreshPool(candidatePool);
     const variantFresh = templateFresh.filter(
-      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed),
+      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo),
     );
     if (variantFresh.length > 0) return variantFresh;
     const broadFresh = unplannedTemplates(broadPool).filter(
-      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed),
+      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo),
     );
     return broadFresh.length > 0 ? broadFresh : templateFresh;
   }
@@ -517,8 +532,8 @@ export function buildGrammarPracticeQueue({
   function pushQueueEntry(template, candidateSeed, reason) {
     queue.push(queueEntry(template, reason));
     plannedTemplateIds.add(template.id);
-    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
-    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
+    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed, variantMemo));
+    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo);
   }
 
   // P19b polish: focus-saturation lane fires only when the focus concept's
@@ -538,7 +553,7 @@ export function buildGrammarPracticeQueue({
         if (queue.length >= safeSize) break;
         const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
         const recentVariants = workingRecentVariants;
-        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
+        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo)) continue;
         pushQueueEntry(template, candidateSeed, 'focus-saturation');
       }
     }
@@ -553,7 +568,7 @@ export function buildGrammarPracticeQueue({
       const retryTemplate = pool.find((template) => template.id === lastAttempt.templateId);
       if (retryTemplate && !plannedTemplateIds.has(retryTemplate.id)) {
         const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
-        if (!hasRecentGeneratedVariant(retryTemplate, workingRecentVariants, candidateSeed)) {
+        if (!hasRecentGeneratedVariant(retryTemplate, workingRecentVariants, candidateSeed, variantMemo)) {
           pushQueueEntry(retryTemplate, candidateSeed, 'retry');
         }
       }
@@ -592,6 +607,7 @@ export function buildGrammarPracticeQueue({
           recentVariants: workingRecentVariants,
           candidateSeed,
           nowTs,
+          variantMemo,
         });
         if (template) pushQueueEntry(template, candidateSeed, 'similar-problem');
       }
@@ -623,6 +639,7 @@ export function buildGrammarPracticeQueue({
           recentVariants: workingRecentVariants,
           candidateSeed,
           nowTs,
+          variantMemo,
         });
         if (template) pushQueueEntry(template, candidateSeed, 'spaced-retrieval');
       }
@@ -649,6 +666,7 @@ export function buildGrammarPracticeQueue({
         recentVariants,
         candidateSeed,
         nowTs,
+        variantMemo,
       });
       // P19 Contract D.4 — when the trouble mode is selected the urgent lane
       // is acting as the trouble-cluster cluster. For other modes it is the
@@ -674,6 +692,7 @@ export function buildGrammarPracticeQueue({
       recentVariants,
       candidateSeed,
       nowTs,
+      variantMemo,
     });
     pushQueueEntry(template, candidateSeed, 'fallback');
   }
@@ -702,6 +721,8 @@ export function buildGrammarMiniPack({
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
   const workingRecentVariants = recentVariantIndex(recentAttempts);
+  // Per-invocation memo. Key: "templateId:seed>>>0" (generative) or "templateId" (non-generative). Depends on I3 (createGrammarQuestion purity); remove if I3 violated. See R6 contract.
+  const variantMemo = new Map();
   const seeds = Array.from({ length: safeSize }, (_, index) => ((Number(seed) || 1) + index * 104729) >>> 0);
   const pack = [];
   const usedTemplateIds = new Set();
@@ -717,12 +738,12 @@ export function buildGrammarMiniPack({
         if (pack.length >= safeSize) break;
         const candidateSeed = seeds[pack.length] || Number(seed) || 1;
         const recentVariants = workingRecentVariants;
-        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
+        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo)) continue;
         pack.push(queueEntry(template, 'focus-saturation'));
         usedTemplateIds.add(template.id);
         usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
-        workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
-        addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
+        workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed, variantMemo));
+        addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo);
       }
     }
   }
@@ -757,6 +778,7 @@ export function buildGrammarMiniPack({
       recentVariants,
       candidateSeed,
       nowTs,
+      variantMemo,
     });
 
     // Mini-packs reset their distinct-template set when the pool is exhausted
@@ -766,8 +788,8 @@ export function buildGrammarMiniPack({
     pack.push(queueEntry(template, reason));
     usedTemplateIds.add(template.id);
     usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
-    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
-    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
+    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed, variantMemo));
+    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo);
   }
 
   return pack.slice(0, safeSize);
