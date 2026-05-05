@@ -127,7 +127,7 @@ function queueForProfile(profile, sessionIndex, mastery, attempts, size) {
 }
 
 function simulateProfile(profile, opts = {}) {
-  const sessions = opts.sessions || 45;
+  const sessions = opts.sessions || 25;
   const size = opts.size || (profile === 'deep-practice' ? 15 : 5);
   const mastery = emptyMastery();
   const attempts = [];
