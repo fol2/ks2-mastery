@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-const SEED = 'ks2-shard-seed-2026';
+const SEED = 'ks2-280';
 
 export function seededShuffle(files, seed = SEED) {
   const hashed = files.map(f => ({

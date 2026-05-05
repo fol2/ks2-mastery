@@ -691,7 +691,7 @@ export function buildGrammarMiniPack({
 } = {}) {
   // Contract parity with buildGrammarPracticeQueue: size=0 returns an empty
   // array rather than silently coercing to a single-item pack. Surfaced by
-  // the U6 seeded simulation suite (tests/grammar-learning-integrity.test.js).
+  // the U6 seeded simulation suite (tests/grammar-learning-integrity-{a,b,c}.test.js).
   const requestedSize = Math.floor(Number(size) || 0);
   if (requestedSize <= 0) return [];
   const safeSize = Math.max(1, requestedSize);
