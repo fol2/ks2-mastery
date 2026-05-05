@@ -202,6 +202,7 @@ test('Worker runtime registers punctuation command handlers', async () => {
   assert.equal(runtimeReads, 1);
   assert.equal(result.subjectId, 'punctuation');
   assert.equal(result.subjectReadModel.phase, 'active-item');
+  assert.equal(result.subjectReadModel.analytics, null);
 });
 
 test('punctuation command route starts a session and persists through generic runtime stores', async () => {

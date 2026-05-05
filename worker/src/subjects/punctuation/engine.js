@@ -204,7 +204,10 @@ export function createServerPunctuationEngine({ now = Date.now, random = Math.ra
         events: transition.events || [],
         prefs: transition.prefs || service.getPrefs(learnerId),
         stats: service.getStats(learnerId),
-        analytics: service.getAnalyticsSnapshot(learnerId),
+        // P20 command responses must stay inside the Worker CPU budget. The
+        // full analytics projection scans the expanded runtime bank and remains
+        // available through the dedicated analytics snapshot path.
+        analytics: null,
       };
     },
   };

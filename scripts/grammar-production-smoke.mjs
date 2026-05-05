@@ -945,7 +945,7 @@ async function main() {
         }
       : { ok: false, detail: `contentReleaseId not observed; expected ${CONFIGURED_RELEASE_ID}` };
     const command = [
-      'npm run smoke:production:grammar -- --json',
+      'node scripts/grammar-production-smoke.mjs --json',
       `--evidence-origin=${CONFIGURED_ORIGIN_VALUE}`,
       `--expected-release=${CONFIGURED_RELEASE_ID}`,
       ...(CONFIGURED_OUT_PATH ? [`--out=${CONFIGURED_OUT_PATH}`] : []),
