@@ -41,6 +41,10 @@ const MANIFEST_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p
 const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 
+function normaliseLineEndings(value) {
+  return String(value).replace(/\r\n/g, '\n');
+}
+
 function cloneStatusMap(overrides = {}) {
   return {
     ...structuredClone(statusMap),
@@ -100,7 +104,7 @@ describe('P13 runtime certification generator', () => {
     const expectedRuntime = buildRuntimeCertificationStatus(statusMap, { statusMapPath: STATUS_MAP_PATH });
     const expectedSource = buildGeneratedSource(expectedRuntime);
     const committedSource = fs.readFileSync(GENERATED_PATH, 'utf8');
-    assert.equal(committedSource, expectedSource);
+    assert.equal(normaliseLineEndings(committedSource), normaliseLineEndings(expectedSource));
   });
 
   it('rejects a missing current metadata template', () => {

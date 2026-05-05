@@ -160,6 +160,10 @@ function sameStringArray(left, right) {
   return left.every((value, index) => value === right[index]);
 }
 
+function normaliseLineEndings(value) {
+  return String(value).replace(/\r\n/g, '\n');
+}
+
 function addMismatch(mismatches, field, claimed, actual, message) {
   mismatches.push({ field, claimed, actual, message });
 }
@@ -246,7 +250,7 @@ export function validateRuntimeCertificationAuthority(manifest, opts = {}) {
     );
   } else {
     const committedSource = readFileSync(generatedPath, 'utf8');
-    if (committedSource !== expectedGeneratedSource) {
+    if (normaliseLineEndings(committedSource) !== normaliseLineEndings(expectedGeneratedSource)) {
       addMismatch(
         mismatches,
         'runtimeGeneratedSourceDrift',
