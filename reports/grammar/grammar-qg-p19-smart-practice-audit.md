@@ -1,7 +1,7 @@
 # Grammar QG P19 — smart-practice surface audit
 
-Content release: `grammar-qg-p19-2026-05-04`
-Generated: `2026-05-05T12:25:56.487Z`
+Content release: `grammar-qg-p20-2026-05-05`
+Generated: `2026-05-05T15:43:23.715Z`
 Sessions: 330 (11 profiles × 30 seeds, size=5)
 Status: **PASS** — 0 failures, 0 advisories.
 
@@ -9,17 +9,17 @@ Status: **PASS** — 0 failures, 0 advisories.
 
 | Profile | Sessions | Eligible pool | Concept-distinct mean | Q-type-distinct mean | Constructed share | ManualReview share | Repeated surfaces |
 |---|---|---|---|---|---|---|---|
-| firstTime | 30 | 510 | 4.73 | 3.23 | 42.7% | 29.3% | 3 / 147 |
-| returning | 30 | 93 | 4.40 | 3.50 | 46.7% | 34.0% | 3 / 147 |
-| weak | 30 | 243 | 4.87 | 3.37 | 39.3% | 29.3% | 3 / 147 |
-| dueHeavy | 30 | 358 | 4.80 | 3.40 | 44.7% | 29.3% | 1 / 149 |
-| postMega | 30 | 300 | 4.73 | 3.53 | 46.7% | 34.7% | 3 / 147 |
+| firstTime | 30 | 510 | 4.73 | 3.23 | 42.7% | 27.3% | 3 / 147 |
+| returning | 30 | 93 | 4.40 | 3.50 | 46.7% | 28.7% | 3 / 147 |
+| weak | 30 | 243 | 4.87 | 3.37 | 39.3% | 27.3% | 3 / 147 |
+| dueHeavy | 30 | 358 | 4.80 | 3.40 | 44.7% | 28.7% | 1 / 149 |
+| postMega | 30 | 300 | 4.73 | 3.53 | 46.7% | 31.3% | 3 / 147 |
 | focusConcept | 30 | 27 | 1.40 | 3.50 | 39.3% | 32.7% | 21 / 127 |
-| recentMisses | 30 | 95 | 4.30 | 3.63 | 48.7% | 36.7% | 3 / 147 |
-| retryActive | 30 | 63 | 3.13 | 3.47 | 40.7% | 25.3% | 16 / 124 |
-| similarProblemEligible | 30 | 64 | 3.87 | 3.37 | 46.0% | 33.3% | 4 / 146 |
-| spacedRetrievalDue | 30 | 125 | 4.73 | 3.73 | 48.7% | 32.7% | 2 / 148 |
-| troubleMode | 30 | 62 | 3.77 | 3.47 | 42.7% | 36.7% | 8 / 142 |
+| recentMisses | 30 | 95 | 4.30 | 3.63 | 48.7% | 33.3% | 3 / 147 |
+| retryActive | 30 | 63 | 3.13 | 3.47 | 40.7% | 23.3% | 16 / 124 |
+| similarProblemEligible | 30 | 64 | 3.87 | 3.37 | 46.0% | 29.3% | 4 / 146 |
+| spacedRetrievalDue | 30 | 125 | 4.73 | 3.73 | 48.7% | 31.3% | 2 / 148 |
+| troubleMode | 30 | 62 | 3.77 | 3.47 | 42.7% | 32.0% | 8 / 142 |
 
 ## Selection lane reasons exercised
 

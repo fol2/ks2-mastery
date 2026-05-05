@@ -24,14 +24,10 @@ test('Grammar question-generator audit covers the current template inventory', (
   assert.equal(audit.constructedResponseTemplateCount, 189);
   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
   assert.equal(audit.legacyAdapterTemplateCount, 0);
-  // P19 Contract A.2: manual-expansion families promoted to manualReviewOnly +
-  // 5 P0/P2/P3 open-rewrite templates promoted + 4 P14 priority rewrites
-  // moved to selected-response (exact) instead of manualReviewOnly.
-  // P19a hotfix: predicate broadened (combine|correct|copy|insert|edit|fix|
-  // punctuate|expand|change|type) → 23 more manual-expansion families promoted
-  // and 2 inline templates (combine_clauses_rewrite, proc3_clause_join_rewrite)
-  // converted. Net runtime manualReviewOnly = 174 templates.
-  assert.equal(audit.manualReviewOnlyTemplateCount, 180);
+  // P20 quality recovery keeps P19's open-response fairness boundary, but
+  // returns 23 deterministic closed manual-expansion families to safe
+  // auto-marking. Genuinely open writing remains manualReviewOnly.
+  assert.equal(audit.manualReviewOnlyTemplateCount, 157);
   assert.equal(audit.p2MigrationComplete, true);
   assert.equal(audit.explainTemplateCount, 126);
   assert.equal(audit.conceptsWithExplainCoverage.length, GRAMMAR_CONCEPTS.length);
@@ -43,9 +39,10 @@ test('Grammar question-generator audit covers the current template inventory', (
   );
   assert.deepEqual(audit.answerSpecKindCounts, {
     exact: 234,
-    manualReviewOnly: 180,
+    manualReviewOnly: 157,
     multiField: 56,
-    punctuationPattern: 9,
+    normalisedText: 12,
+    punctuationPattern: 20,
   });
 
   // P4 mixed-transfer assertions
@@ -77,11 +74,11 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
   assert.notEqual(a, c);
 });
 
-test('Grammar question-generator P19 denominator assertions', () => {
+test('Grammar question-generator P20 quality-recovery denominator assertions', () => {
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
 
-  assert.equal(audit.releaseId, 'grammar-qg-p19-2026-05-04');
+  assert.equal(audit.releaseId, 'grammar-qg-p20-2026-05-05');
   assert.equal(audit.templateCount, 510);
   assert.equal(audit.conceptCount, 18);
   // P19 Contract A.2 selected-response conversion: 4 P14 priority rewrites
@@ -98,11 +95,11 @@ test('Grammar question-generator P19 denominator assertions', () => {
   assert.equal(audit.lowDepthGeneratedTemplates.length, 0, 'Deep low-depth families must be zero');
   assert.equal(audit.answerSpecTemplateCount, 479);
   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
-  assert.equal(audit.manualReviewOnlyTemplateCount, 180);
+  assert.equal(audit.manualReviewOnlyTemplateCount, 157);
   assert.equal(audit.generatedSignatureCollisions.length, 0, 'Cross-template collisions must be zero');
 });
 
-test('Grammar P6 baseline fixture remains frozen while P19 supersedes the live audit output', () => {
+test('Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output', () => {
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
   const baseline = readGrammarQuestionGeneratorP6Baseline();
@@ -119,9 +116,9 @@ test('Grammar P6 baseline fixture remains frozen while P19 supersedes the live a
   assert.ok(audit.mixedTransferTemplateCount > baseline.mixedTransferTemplateCount);
   assert.ok(audit.answerSpecTemplateCount > baseline.answerSpecTemplateCount);
   assert.ok(audit.constructedResponseAnswerSpecTemplateCount > baseline.constructedResponseAnswerSpecTemplateCount);
-  // P19 Contract A.2: live manualReviewOnly count grew from baseline 4 to 95
-  // after promoting 91 manual-expansion families to manualReviewOnly. The
-  // baseline stays frozen at the P6 figure; the live audit supersedes it.
+  // P20 recovery reduces the live manualReviewOnly count by returning safe
+  // deterministic closed items to auto-marking. The P6 baseline stays frozen;
+  // the live audit supersedes it.
   assert.ok(audit.manualReviewOnlyTemplateCount >= baseline.manualReviewOnlyTemplateCount);
   assert.equal(audit.repeatedGeneratedVariants.length, baseline.repeatedGeneratedVariants.length);
   assert.equal(audit.generatedSignatureCollisions.length, baseline.generatedSignatureCollisions.length);

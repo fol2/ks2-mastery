@@ -1,0 +1,64 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import { buildGrammarQGP20QualityHardeningAudit } from '../scripts/audit-grammar-qg-p20-quality-hardening.mjs';
+import {
+  GRAMMAR_TEMPLATE_METADATA,
+  createGrammarQuestion,
+  serialiseGrammarQuestion,
+} from '../worker/src/subjects/grammar/content.js';
+
+test('P20 quality-hardening audit passes a reviewer smoke window across all five phases', () => {
+  const audit = buildGrammarQGP20QualityHardeningAudit({ seeds: [1, 2, 3], smartSeeds: [1, 2] });
+
+  assert.equal(audit.passed, true);
+  assert.deepEqual(audit.phaseStatus, {
+    phase1AnswerAcceptance: true,
+    phase2TemplateQuality: true,
+    phase3PoolAuditAndQuarantine: true,
+    phase4VarietyAndAntiRepetition: true,
+    phase5ExpansionGate: true,
+  });
+  assert.equal(audit.summary.answerAcceptanceFailureCount, 0);
+  assert.equal(audit.summary.fairnessFindingCount, 0);
+  assert.equal(audit.summary.templateQualityFindingCount, 0);
+  assert.equal(audit.summary.unsafeAutoMarkedOpenPromptCount, 0);
+  assert.equal(audit.expansionGate.newLearnerFacingFamiliesAdded, 0);
+  assert.ok(
+    audit.summary.p20ClosedAutoMarkTemplateCount >= 20,
+    'P20 should recover a meaningful set of deterministic closed Grammar items from manual-review-only',
+  );
+});
+
+test('P20 metadata keeps recovered closed families visible for reviewers', () => {
+  const recovered = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.p20ClosedAutoMarkKind);
+  assert.ok(recovered.length >= 20);
+  assert.ok(recovered.every((template) => template.tags.includes('p20-closed-auto-mark')));
+  assert.ok(recovered.every((template) => ['normalisedText', 'punctuationPattern'].includes(template.p20ClosedAutoMarkKind)));
+
+  const question = createGrammarQuestion({ templateId: recovered[0].id, seed: 1 });
+  assert.equal(question.answerSpec.p20ClosedAutoMark, true);
+  assert.equal(question.answerSpec.conversionReason, 'p20-closed-deterministic-quality-recovery');
+});
+
+test('P20 does not hide learner-facing prompt defects behind HTML stripping', () => {
+  const seeds = [1, 2, 3];
+  for (const template of GRAMMAR_TEMPLATE_METADATA) {
+    for (const seed of seeds) {
+      const question = createGrammarQuestion({ templateId: template.id, seed });
+      if (!question) continue;
+      const serialised = serialiseGrammarQuestion(question);
+      const learnerText = [
+        serialised.promptText,
+        ...(serialised.solutionLines || []),
+        JSON.stringify(serialised.inputSpec || {}),
+      ].join(' ');
+      assert.doesNotMatch(learnerText, /\s+[.,!?;:]/, `${template.id}:${seed} has spacing before punctuation`);
+      assert.doesNotMatch(
+        learnerText,
+        /\bClassify the grammar feature shown in this row:\s*[^.?!:]+\s+in:\s*/i,
+        `${template.id}:${seed} exposes awkward table-row copy`,
+      );
+    }
+  }
+});

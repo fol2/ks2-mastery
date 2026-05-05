@@ -11645,6 +11645,83 @@ function manualExpansionNearMisses(caseItem, acceptedAnswers) {
     .filter((nearMiss) => !accepted.has(manualExpansionComparableAnswer(nearMiss)));
 }
 
+
+// P20 quality recovery — P19 correctly protected unfair open-response items by
+// converting them to manualReviewOnly. Some converted families are not genuinely
+// open, though: they ask for a closed grammar label, a quoted clause, or a
+// precise punctuation rewrite with a known accepted answer. These patterns are
+// safe to auto-mark again as long as they stay deterministic and keep their
+// p20-closed-auto-mark tag visible in reports.
+const P20_MANUAL_EXPANSION_CLOSED_AUTOMARK_RULES = Object.freeze([
+  { kind: 'normalisedText', regex: /\bwrite\s+the\s+word\s+class\b/i },
+  { kind: 'normalisedText', regex: /\bwrite\s+the\s+(?:subject|object)\b/i },
+  { kind: 'normalisedText', regex: /\bwrite\s+the\s+(?:relative|subordinate)\s+clause\b/i },
+  { kind: 'normalisedText', regex: /\bwrite\s+the\s+punctuation\s+mark\b/i },
+  { kind: 'normalisedText', regex: /\bcomplete\s+the\s+sentence\s+with\s+the\s+best\s+modal\s+verb\b/i },
+  { kind: 'normalisedText', regex: /\bwrite\s+the\s+possessive\s+phrase\b/i },
+  { kind: 'normalisedText', regex: /\badd\s+the\s+apostrophe\b/i },
+  { kind: 'normalisedText', regex: /\brewrite\s+this\s+in\s+standard\s+english\b/i },
+  { kind: 'normalisedText', regex: /\brewrite\s+the\s+sentence\s+in\s+standard\s+english\b/i },
+  { kind: 'normalisedText', regex: /\brewrite\s+this\s+sentence\s+using\s+standard\s+english\b/i },
+  { kind: 'normalisedText', regex: /\bfix\s+the\s+verb\s+form\b/i },
+  { kind: 'punctuationPattern', regex: /\bcopy\s+the\s+sentence\s+and\s+add\s+the\s+comma\b/i },
+  { kind: 'punctuationPattern', regex: /\badd\s+the\s+comma\s+after\s+the\s+fronted\s+adverbial\b/i },
+  { kind: 'punctuationPattern', regex: /\badd\s+commas?\s+(?:to|for)\s+(?:show\s+)?(?:the\s+)?parenthesis\b/i },
+  { kind: 'punctuationPattern', regex: /\binsert\s+a\s+pair\s+of\s+brackets\b/i },
+  { kind: 'punctuationPattern', regex: /\bpunctuate\s+the\s+direct\s+speech\b/i },
+  { kind: 'punctuationPattern', regex: /\bcorrect\s+the\s+direct\s+speech\s+punctuation\b/i },
+  { kind: 'punctuationPattern', regex: /\bcopy\s+and\s+correct\s+the\s+speech\s+punctuation\b/i },
+  { kind: 'punctuationPattern', regex: /\badd\s+the\s+correct\s+ending\s+punctuation\b/i },
+  { kind: 'punctuationPattern', regex: /\brewrite\s+with\s+a\s+hyphen\b/i },
+  { kind: 'punctuationPattern', regex: /\badd\s+a\s+hyphen\b/i },
+]);
+
+const P20_MANUAL_EXPANSION_OPEN_GUARD_RE = /\b(explain|why|give\s+a\s+reason|mixed\s+check|build|write\s+an?\s+(?:expanded\s+)?noun\s+phrase|write\s+one\s+sentence|continue|extend|describe|transfer|improve\s+pronoun\s+cohesion|more\s+formal\s+style|join\s+the\s+ideas|combine\s+(?:the\s+)?ideas|add\s+the\s+main\s+clause)\b/i;
+
+export function grammarP20ManualExpansionClosedAutoMarkKind(family = {}, caseItem = {}) {
+  if (family?.fairnessConversion !== 'manualReviewOnly') return null;
+  if (caseItem?.manualReviewOnly === true || caseItem?.nonScored === true) return null;
+  const accepted = Array.isArray(caseItem?.acceptedAnswers)
+    ? caseItem.acceptedAnswers.map(manualExpansionSafeText).filter(Boolean)
+    : [];
+  if (accepted.length === 0) return null;
+  const promptText = manualExpansionSafeText(caseItem?.promptText);
+  if (!promptText || P20_MANUAL_EXPANSION_OPEN_GUARD_RE.test(promptText)) return null;
+  const match = P20_MANUAL_EXPANSION_CLOSED_AUTOMARK_RULES.find((rule) => rule.regex.test(promptText));
+  return match ? match.kind : null;
+}
+
+function manualExpansionP20ClosedAutoMarkKindForFamily(family = {}) {
+  if (family?.fairnessConversion !== 'manualReviewOnly') return null;
+  const cases = Array.isArray(family?.cases) ? family.cases : [];
+  if (cases.length === 0) return null;
+  let familyKind = null;
+  for (const caseItem of cases) {
+    const kind = grammarP20ManualExpansionClosedAutoMarkKind(family, caseItem);
+    if (!kind) return null;
+    if (!familyKind) familyKind = kind;
+    if (familyKind !== kind) return null;
+  }
+  return familyKind;
+}
+
+function manualExpansionReadableRowLabel(label) {
+  const text = manualExpansionSafeText(label);
+  const match = text.match(/^(.+?)\s+in:\s+(.+)$/i);
+  if (!match) return text;
+  const target = match[1].trim();
+  const sentence = match[2].trim();
+  return `Target “${target}” in sentence: ${sentence}`;
+}
+
+function manualExpansionReadablePromptText(caseItem, fallback = '') {
+  const raw = manualExpansionSafeText(caseItem?.promptText || fallback);
+  if (caseItem?.inputType === 'table_choice' && /^Classify the grammar feature shown in this row:/i.test(raw)) {
+    return 'Classify the target word or phrase by its grammar role.';
+  }
+  return raw;
+}
+
 function classifySentenceFunctionSurface(label) {
   const text = manualExpansionSafeText(label)
     .replace(/[?!.,;:]+$/g, '')
@@ -11686,7 +11763,7 @@ function manualExpansionRows(caseItem, family) {
       : {};
     return caseItem.rows.map((row, index) => ({
       key: manualExpansionSafeText(row.key) || `row${index}`,
-      label: manualExpansionSafeText(row.label),
+      label: manualExpansionReadableRowLabel(row.label),
       options: Array.isArray(row.options) ? row.options.map(manualExpansionSafeText).filter(Boolean) : [],
       correctAnswer: manualExpansionNormaliseRowAnswer(family, {
         ...row,
@@ -11699,7 +11776,7 @@ function manualExpansionRows(caseItem, family) {
   if (caseItem?.correctAnswer && typeof caseItem.correctAnswer === 'object' && !Array.isArray(caseItem.correctAnswer)) {
     return Object.entries(caseItem.correctAnswer).map(([label, answer], index) => ({
       key: `row${index}`,
-      label: manualExpansionSafeText(label),
+      label: manualExpansionReadableRowLabel(label),
       options: [],
       correctAnswer: manualExpansionSafeText(answer),
       rationale: manualExpansionSafeText(caseItem.feedbackLong),
@@ -11725,7 +11802,7 @@ function buildManualExpansionSelectedQuestion(template, seed, caseItem, family) 
     sourcePack: caseItem.sourcePack,
     depthTier: caseItem.depthTier,
     answerSpec,
-    stemHtml: `<p>${escapeHtml(caseItem.promptText)}</p>`,
+    stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
     inputSpec: { type: "single_choice", label: "Choose one", options: options.map(({ value, label }) => ({ value, label })) },
     solutionLines: [
       manualExpansionSafeText(caseItem.feedbackLong) || `The correct option is: ${correct}`,
@@ -11739,7 +11816,53 @@ function buildManualExpansionConstructedQuestion(template, seed, caseItem, famil
   // P19 Contract A — open-response marking fairness.
   // Families flagged by the generator as fairnessConversion='manualReviewOnly'
   // are emitted with a manualReviewOnly answerSpec so the deterministic engine
-  // does not score them against an undersized accepted set.
+  // does not score genuinely open writing against an undersized accepted set.
+  // P20 quality recovery re-enables auto-marking only for closed deterministic
+  // prompts matched by grammarP20ManualExpansionClosedAutoMarkKind().
+  const p20ClosedKind = manualExpansionP20ClosedAutoMarkKindForFamily(family);
+  if (family && family.fairnessConversion === 'manualReviewOnly' && p20ClosedKind) {
+    const accepted = (Array.isArray(caseItem.acceptedAnswers) && caseItem.acceptedAnswers.length > 0)
+      ? caseItem.acceptedAnswers.map(manualExpansionSafeText).filter(Boolean)
+      : [manualExpansionCorrectText(caseItem)].filter(Boolean);
+    const acceptedValues = accepted.map(manualExpansionAnswerValue).filter(Boolean);
+    const answerText = accepted[0] || "";
+    const nearMisses = manualExpansionNearMisses(caseItem, acceptedValues);
+    const answerSpec = p20ClosedKind === 'punctuationPattern'
+      ? punctuationPatternAnswerSpec(acceptedValues, nearMisses, {
+          misconception: manualExpansionMisconception(family),
+          feedbackLong: manualExpansionSafeText(caseItem.feedbackLong) || `Correct answer: ${answerText}`,
+          answerText,
+        })
+      : normalisedTextAnswerSpec(acceptedValues, nearMisses, {
+          misconception: manualExpansionMisconception(family),
+          feedbackLong: manualExpansionSafeText(caseItem.feedbackLong) || `One accepted answer is: ${answerText}`,
+          answerText,
+        });
+    answerSpec.p20ClosedAutoMark = true;
+    answerSpec.conversionReason = 'p20-closed-deterministic-quality-recovery';
+
+    return makeBaseQuestion(template, seed, {
+      marks: 1,
+      sourceCaseId: caseItem.id,
+      sourcePack: caseItem.sourcePack,
+      depthTier: caseItem.depthTier,
+      answerSpec,
+      p20ClosedAutoMark: true,
+      stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
+      inputSpec: {
+        type: caseItem.inputType === "textarea" ? "textarea" : "text",
+        label: "Your answer",
+        placeholder: caseItem.inputType === "textarea" ? "Write the full corrected answer" : "Type the answer"
+      },
+      solutionLines: [
+        manualExpansionSafeText(caseItem.feedbackLong) || "Check the grammar target and answer exactly.",
+        `Accepted answer: ${answerText}`,
+        `Source case: ${caseItem.id}`
+      ],
+      evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+    });
+  }
+
   if (family && family.fairnessConversion === 'manualReviewOnly') {
     const expectedSummary = manualExpansionSafeText(caseItem.expectedAnswerSummary)
       || manualExpansionCorrectText(caseItem)
@@ -11760,7 +11883,7 @@ function buildManualExpansionConstructedQuestion(template, seed, caseItem, famil
       answerSpec,
       nonScored: true,
       manualReviewOnly: true,
-      stemHtml: `<p>${escapeHtml(caseItem.promptText)}</p>`,
+      stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
       inputSpec: {
         type: caseItem.inputType === "textarea" ? "textarea" : "text",
         label: "Your answer",
@@ -11795,7 +11918,7 @@ function buildManualExpansionConstructedQuestion(template, seed, caseItem, famil
     sourcePack: caseItem.sourcePack,
     depthTier: caseItem.depthTier,
     answerSpec,
-    stemHtml: `<p>${escapeHtml(caseItem.promptText)}</p>`,
+    stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
     inputSpec: {
       type: caseItem.inputType === "textarea" ? "textarea" : "text",
       label: "Your answer",
@@ -11853,7 +11976,7 @@ function buildManualExpansionTableQuestion(template, seed, caseItem, family) {
     sourcePack: caseItem.sourcePack,
     depthTier: caseItem.depthTier,
     answerSpec,
-    stemHtml: `<p>${escapeHtml(caseItem.promptText)}</p>`,
+    stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
     inputSpec: {
       type: "table_choice",
       columns: displayColumns,
@@ -11879,7 +12002,8 @@ function buildManualExpansionQuestion(template, seed, family) {
 }
 
 const MANUAL_EXPANSION_TEMPLATES = GRAMMAR_MANUAL_EXPANSION_FAMILIES.map((family) => {
-  const isManualReviewFamily = family.fairnessConversion === 'manualReviewOnly';
+  const p20ClosedAutoMarkKind = manualExpansionP20ClosedAutoMarkKindForFamily(family);
+  const isManualReviewFamily = family.fairnessConversion === 'manualReviewOnly' && !p20ClosedAutoMarkKind;
   const inferredKind = family.inputType === "table_choice"
     ? "multiField"
     : ((family.inputType === "text" || family.inputType === "textarea") ? "normalisedText" : "exact");
@@ -11889,21 +12013,23 @@ const MANUAL_EXPANSION_TEMPLATES = GRAMMAR_MANUAL_EXPANSION_FAMILIES.map((family
     domain: manualExpansionDomain(family),
     questionType: family.questionType || "choose",
     difficulty: (family.depthTiers || []).some((tier) => ["deep", "mixed-transfer", "sat-style", "transfer"].includes(tier)) ? 3 : 2,
-    // P19 Contract A: manualReviewOnly families are not SATs-friendly; the
-    // mini-test pool already filters them via templateFitsMode (selection.js),
-    // and explicit satsFriendly=false keeps reporting consistent.
+    // P19 Contract A: genuinely open manualReviewOnly families are not SATs-
+    // friendly. P20 closed auto-mark recoveries are deterministic scored items
+    // and may rejoin SATs-friendly scheduling.
     satsFriendly: !isManualReviewFamily,
     isSelectedResponse: family.inputType === "single_choice" || family.inputType === "table_choice",
     generative: true,
     generatorFamilyId: manualExpansionTemplateId(family.id),
     requiresAnswerSpec: true,
-    answerSpecKind: isManualReviewFamily ? "manualReviewOnly" : inferredKind,
+    answerSpecKind: isManualReviewFamily ? "manualReviewOnly" : (p20ClosedAutoMarkKind || inferredKind),
     tags: ["qg-p18", "manual-expansion"]
       .concat(family.sourcePacks || [], family.depthTiers || [])
-      .concat(isManualReviewFamily ? ["p19-manual-review-only", "non-scored"] : []),
+      .concat(isManualReviewFamily ? ["p19-manual-review-only", "non-scored"] : [])
+      .concat(p20ClosedAutoMarkKind ? ["p20-closed-auto-mark", `p20-${p20ClosedAutoMarkKind}`] : []),
     skillIds: (family.conceptIds || []).slice(),
     manualExpansionCaseCount: (family.cases || []).length,
-    fairnessConversion: family.fairnessConversion || null,
+    fairnessConversion: isManualReviewFamily ? (family.fairnessConversion || null) : null,
+    p20ClosedAutoMarkKind,
     generator(seed) {
       return buildManualExpansionQuestion(this, seed, family);
     }
@@ -11925,7 +12051,10 @@ function stripLegacyHtml(value) {
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"'));
+    .replace(/&quot;/g, '"'))
+    .replace(/\s+([.,!?;:])/g, '$1')
+    .replace(/([([{])\s+/g, '$1')
+    .replace(/\s+([)\]}])/g, '$1');
 }
 
 function cloneSerialisable(value) {
@@ -11995,7 +12124,8 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = GRAMMAR_MANUAL_EXPANSION_RELEASE_ID;
+export const GRAMMAR_CONTENT_BASE_RELEASE_ID = GRAMMAR_MANUAL_EXPANSION_RELEASE_ID;
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p20-2026-05-05';
 export const GRAMMAR_MANUAL_EXPANSION_RELEASE_SUMMARY = Object.freeze(GRAMMAR_MANUAL_EXPANSION_SUMMARY);
 export const GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS = Object.freeze(P14_FIXED_DIAGNOSTIC_TEMPLATE_IDS.slice());
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
@@ -12031,6 +12161,7 @@ export function grammarTemplateMetadata(template = {}) {
     answerSpecKind: template.answerSpecKind || null,
     requiresAnswerSpec: Boolean(template.requiresAnswerSpec || template.answerSpecKind),
     fairnessConversion: template.fairnessConversion || null,
+    p20ClosedAutoMarkKind: template.p20ClosedAutoMarkKind || null,
     tags: Object.freeze((template.tags || []).slice()),
     skillIds: Object.freeze((template.skillIds || []).slice()),
   };

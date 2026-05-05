@@ -1,10 +1,10 @@
 {
   "metadata": {
-    "contentReleaseId": "grammar-qg-p19-2026-05-04",
-    "generatedAt": "2026-05-04T10:03:21.829Z",
+    "contentReleaseId": "grammar-qg-p20-2026-05-05",
+    "generatedAt": "2026-05-05T15:30:37.119Z",
     "templateCount": 510,
-    "approved": 330,
-    "approvedWithLimitation": 180,
+    "approved": 353,
+    "approvedWithLimitation": 157,
     "blocked": 0,
     "highRiskCount": 199,
     "adultReviewDecisionCount": 103
@@ -6634,7 +6634,7 @@
     },
     {
       "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -6643,46 +6643,46 @@
         {
           "seed": 1,
           "promptText": "Copy the sentence and add the comma after the fronted adverbial. Before sunrise the campers packed their bags.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Before sunrise, the campers packed their bags.",
+          "markingResult": "correct",
           "feedbackSnippet": "\"Before sunrise\" is fronted, so add a comma after it."
         },
         {
           "seed": 2,
           "promptText": "Copy the sentence and add the comma after the fronted adverbial. After the concert the audience cheered loudly.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "After the concert, the audience cheered loudly.",
+          "markingResult": "correct",
           "feedbackSnippet": "\"After the concert\" is fronted, so add a comma after it."
         },
         {
           "seed": 3,
           "promptText": "Copy the sentence and add the comma after the fronted adverbial. In the corner of the hall the orchestra tuned up.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "In the corner of the hall, the orchestra tuned up.",
+          "markingResult": "correct",
           "feedbackSnippet": "\"In the corner of the hall\" is fronted, so add a comma after it."
         },
         {
           "seed": 4,
           "promptText": "Copy the sentence and add the comma after the fronted adverbial. With great care Lena carried the glass model.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "With great care, Lena carried the glass model.",
+          "markingResult": "correct",
           "feedbackSnippet": "\"With great care\" is fronted, so add a comma after it."
         },
         {
           "seed": 5,
           "promptText": "Copy the sentence and add the comma after the fronted adverbial. During the thunderstorm the lights flickered twice.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "During the thunderstorm, the lights flickered twice.",
+          "markingResult": "correct",
           "feedbackSnippet": "\"During the thunderstorm\" is fronted, so add a comma after it."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'adverbials'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'adverbials'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_adverbials_identify_fronted_adv",
@@ -6997,7 +6997,7 @@
     },
     {
       "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -7006,46 +7006,46 @@
         {
           "seed": 1,
           "promptText": "Write the possessive phrase for: one dog owns a bowl.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the dog's bowl",
+          "markingResult": "correct",
           "feedbackSnippet": "Singular and plural possession use different apostrophe positions."
         },
         {
           "seed": 2,
           "promptText": "Write the possessive phrase for: several girls own boots.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the girls' boots",
+          "markingResult": "correct",
           "feedbackSnippet": "Singular and plural possession use different apostrophe positions."
         },
         {
           "seed": 3,
           "promptText": "Write the possessive phrase for: one teacher owns a desk.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the teacher's desk",
+          "markingResult": "correct",
           "feedbackSnippet": "Singular and plural possession use different apostrophe positions."
         },
         {
           "seed": 4,
           "promptText": "Write the possessive phrase for: several players own shirts.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the players' shirts",
+          "markingResult": "correct",
           "feedbackSnippet": "Singular and plural possession use different apostrophe positions."
         },
         {
           "seed": 5,
           "promptText": "Write the possessive phrase for: one baby owns a blanket.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the baby's blanket",
+          "markingResult": "correct",
           "feedbackSnippet": "Singular and plural possession use different apostrophe positions."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'apostrophes_possession'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'apostrophes_possession'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_boundary_punctuation_boundary_fix",
@@ -7998,7 +7998,7 @@
     },
     {
       "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -8007,46 +8007,46 @@
         {
           "seed": 1,
           "promptText": "Add a hyphen if needed to avoid ambiguity: man eating shark",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "man-eating shark",
+          "markingResult": "correct",
           "feedbackSnippet": "The intended meaning is a shark that eats people."
         },
         {
           "seed": 2,
           "promptText": "Add a hyphen if needed to avoid ambiguity: recover the chair",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "re-cover the chair",
+          "markingResult": "correct",
           "feedbackSnippet": "The intended meaning is cover the chair again."
         },
         {
           "seed": 3,
           "promptText": "Add a hyphen if needed to avoid ambiguity: twenty odd children",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "twenty-odd children",
+          "markingResult": "correct",
           "feedbackSnippet": "The intended meaning is about twenty children."
         },
         {
           "seed": 4,
           "promptText": "Add a hyphen if needed to avoid ambiguity: small business owner",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "small-business owner",
+          "markingResult": "correct",
           "feedbackSnippet": "The intended meaning is owner of a small business."
         },
         {
           "seed": 5,
           "promptText": "Add a hyphen if needed to avoid ambiguity: little used path",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "little-used path",
+          "markingResult": "correct",
           "feedbackSnippet": "The intended meaning is a path that is not used often."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'hyphen_ambiguity'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'hyphen_ambiguity'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_meaning",
@@ -9771,7 +9771,7 @@
     },
     {
       "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -9780,46 +9780,46 @@
         {
           "seed": 1,
           "promptText": "Add the correct ending punctuation for the command: Close the library door quietly",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Close the library door quietly.",
+          "markingResult": "correct",
           "feedbackSnippet": "A command needs the ending punctuation shown in the answer here."
         },
         {
           "seed": 2,
           "promptText": "Add the correct ending punctuation for the exclamation: How bright the comet looked",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
-          "feedbackSnippet": "an exclamation needs the ending punctuation shown in the answer here."
+          "goldenAnswer": "How bright the comet looked!",
+          "markingResult": "correct",
+          "feedbackSnippet": "An exclamation needs the ending punctuation shown in the answer here."
         },
         {
           "seed": 3,
           "promptText": "Add the correct ending punctuation for the question: Did Maya remember her reading journal",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Did Maya remember her reading journal?",
+          "markingResult": "correct",
           "feedbackSnippet": "A question needs the ending punctuation shown in the answer here."
         },
         {
           "seed": 4,
           "promptText": "Add the correct ending punctuation for the statement: The old clock chimed at noon",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The old clock chimed at noon.",
+          "markingResult": "correct",
           "feedbackSnippet": "A statement needs the ending punctuation shown in the answer here."
         },
         {
           "seed": 5,
           "promptText": "Add the correct ending punctuation for the command: Please pass the glue stick",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Please pass the glue stick.",
+          "markingResult": "correct",
           "feedbackSnippet": "A command needs the ending punctuation shown in the answer here."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'sentence_functions'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_sentence_functions_sat_style_function",
@@ -9976,7 +9976,7 @@
     },
     {
       "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -9985,46 +9985,46 @@
         {
           "seed": 1,
           "promptText": "Correct the direct speech punctuation: \"Where are you going\" asked Mum.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "\"Where are you going?\" asked Mum.",
+          "markingResult": "correct",
           "feedbackSnippet": "Punctuation belonging to the spoken words goes inside the speech marks."
         },
         {
           "seed": 2,
           "promptText": "Correct the direct speech punctuation: \"Sit down\" said the coach.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "\"Sit down!\" said the coach.",
+          "markingResult": "correct",
           "feedbackSnippet": "Punctuation belonging to the spoken words goes inside the speech marks."
         },
         {
           "seed": 3,
           "promptText": "Correct the direct speech punctuation: Dad asked \"Have you packed your boots\"",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Dad asked, \"Have you packed your boots?\"",
+          "markingResult": "correct",
           "feedbackSnippet": "Punctuation belonging to the spoken words goes inside the speech marks."
         },
         {
           "seed": 4,
           "promptText": "Correct the direct speech punctuation: \"I found the key\" whispered Ana.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "\"I found the key,\" whispered Ana.",
+          "markingResult": "correct",
           "feedbackSnippet": "Punctuation belonging to the spoken words goes inside the speech marks."
         },
         {
           "seed": 5,
           "promptText": "Correct the direct speech punctuation: \"Look at the sky\" shouted Omar.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "\"Look at the sky!\" shouted Omar.",
+          "markingResult": "correct",
           "feedbackSnippet": "Punctuation belonging to the spoken words goes inside the speech marks."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'speech_punctuation'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'speech_punctuation'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_speech_punctuation_speech_reporter_position",
@@ -10231,7 +10231,7 @@
     },
     {
       "templateId": "qg_p18_p15_standard_english_standard_fix",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -10240,46 +10240,46 @@
         {
           "seed": 1,
           "promptText": "Rewrite this sentence using Standard English: We was late for assembly.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "We were late for assembly.",
+          "markingResult": "correct",
           "feedbackSnippet": "Use the accepted written form rather than a spoken non-standard form."
         },
         {
           "seed": 2,
           "promptText": "Rewrite this sentence using Standard English: I done my project yesterday.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "I did my project yesterday.",
+          "markingResult": "correct",
           "feedbackSnippet": "Use the accepted written form rather than a spoken non-standard form."
         },
         {
           "seed": 3,
           "promptText": "Rewrite this sentence using Standard English: She seen the poster in the library.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "She saw the poster in the library.",
+          "markingResult": "correct",
           "feedbackSnippet": "Use the accepted written form rather than a spoken non-standard form."
         },
         {
           "seed": 4,
           "promptText": "Rewrite this sentence using Standard English: They was waiting by the gate.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "They were waiting by the gate.",
+          "markingResult": "correct",
           "feedbackSnippet": "Use the accepted written form rather than a spoken non-standard form."
         },
         {
           "seed": 5,
           "promptText": "Rewrite this sentence using Standard English: He brung his lunch in a blue box.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "He brought his lunch in a blue box.",
+          "markingResult": "correct",
           "feedbackSnippet": "Use the accepted written form rather than a spoken non-standard form."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'standard_english'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_standard_english_standard_pairs",
@@ -10768,7 +10768,7 @@
     },
     {
       "templateId": "qg_p18_p15_tense_aspect_tense_editing",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -10777,46 +10777,46 @@
         {
           "seed": 1,
           "promptText": "Fix the verb form so it matches \"present perfect\": I finish my homework.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "I have finished my homework.",
+          "markingResult": "correct",
           "feedbackSnippet": "Change only what is needed to match the tense/aspect."
         },
         {
           "seed": 2,
           "promptText": "Fix the verb form so it matches \"past perfect\": She packs her bag before the trip.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "She had packed her bag before the trip.",
+          "markingResult": "correct",
           "feedbackSnippet": "Change only what is needed to match the tense/aspect."
         },
         {
           "seed": 3,
           "promptText": "Fix the verb form so it matches \"past progressive\": The dog chases the cat.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The dog was chasing the cat.",
+          "markingResult": "correct",
           "feedbackSnippet": "Change only what is needed to match the tense/aspect."
         },
         {
           "seed": 4,
           "promptText": "Fix the verb form so it matches \"present progressive\": We eat lunch in the hall.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "We are eating lunch in the hall.",
+          "markingResult": "correct",
           "feedbackSnippet": "Change only what is needed to match the tense/aspect."
         },
         {
           "seed": 5,
           "promptText": "Fix the verb form so it matches \"present perfect\": He writes the report.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "He has written the report.",
+          "markingResult": "correct",
           "feedbackSnippet": "Change only what is needed to match the tense/aspect."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'tense_aspect'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'tense_aspect'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_tense_aspect_tense_near_miss",
@@ -11722,7 +11722,7 @@
     },
     {
       "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -11731,46 +11731,46 @@
         {
           "seed": 1,
           "promptText": "Add the comma after the fronted adverbial: Before sunrise the campers packed their bags.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Before sunrise, the campers packed their bags.",
+          "markingResult": "correct",
           "feedbackSnippet": "The fronted adverbial is \"Before sunrise\", so add a comma after it."
         },
         {
           "seed": 2,
           "promptText": "Add the comma after the fronted adverbial: After the concert the audience cheered loudly.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "After the concert, the audience cheered loudly.",
+          "markingResult": "correct",
           "feedbackSnippet": "The fronted adverbial is \"After the concert\", so add a comma after it."
         },
         {
           "seed": 3,
           "promptText": "Add the comma after the fronted adverbial: In the old library the pupils read quietly.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "In the old library, the pupils read quietly.",
+          "markingResult": "correct",
           "feedbackSnippet": "The fronted adverbial is \"In the old library\", so add a comma after it."
         },
         {
           "seed": 4,
           "promptText": "Add the comma after the fronted adverbial: With great care Maya lifted the glass bowl.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "With great care, Maya lifted the glass bowl.",
+          "markingResult": "correct",
           "feedbackSnippet": "The fronted adverbial is \"With great care\", so add a comma after it."
         },
         {
           "seed": 5,
           "promptText": "Add the comma after the fronted adverbial: During the storm the dog hid under the table.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "During the storm, the dog hid under the table.",
+          "markingResult": "correct",
           "feedbackSnippet": "The fronted adverbial is \"During the storm\", so add a comma after it."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'adverbials'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'adverbials'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p16_adverbials_move_adverbial_to_front",
@@ -11930,7 +11930,7 @@
     },
     {
       "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -11939,46 +11939,46 @@
         {
           "seed": 1,
           "promptText": "Add the apostrophe: the dogs bowl",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the dog's bowl",
+          "markingResult": "correct",
           "feedbackSnippet": "The correct form is the dog's bowl."
         },
         {
           "seed": 2,
           "promptText": "Add the apostrophe: the girls boots",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the girls' boots",
+          "markingResult": "correct",
           "feedbackSnippet": "The correct form is the girls' boots."
         },
         {
           "seed": 3,
           "promptText": "Add the apostrophe: the teachers desk",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the teacher's desk",
+          "markingResult": "correct",
           "feedbackSnippet": "The correct form is the teacher's desk."
         },
         {
           "seed": 4,
           "promptText": "Add the apostrophe: the teachers mugs",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the teachers' mugs",
+          "markingResult": "correct",
           "feedbackSnippet": "The correct form is the teachers' mugs."
         },
         {
           "seed": 5,
           "promptText": "Add the apostrophe: the foxs den",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the fox's den",
+          "markingResult": "correct",
           "feedbackSnippet": "The correct form is the fox's den."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'apostrophes_possession'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'apostrophes_possession'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p16_apostrophes_possession_meaning_change_choice",
@@ -13295,7 +13295,7 @@
     },
     {
       "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -13304,46 +13304,46 @@
         {
           "seed": 1,
           "promptText": "Add a hyphen if needed to show this meaning: a shark that eats people — man eating shark",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "man-eating shark",
+          "markingResult": "correct",
           "feedbackSnippet": "The clearer version is man-eating shark."
         },
         {
           "seed": 2,
           "promptText": "Add a hyphen if needed to show this meaning: a man who eats shark — man-eating shark",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "man eating shark",
+          "markingResult": "correct",
           "feedbackSnippet": "The clearer version is man eating shark."
         },
         {
           "seed": 3,
           "promptText": "Add a hyphen if needed to show this meaning: a machine that makes ice cream — ice cream maker",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "ice-cream maker",
+          "markingResult": "correct",
           "feedbackSnippet": "The clearer version is ice-cream maker."
         },
         {
           "seed": 4,
           "promptText": "Add a hyphen if needed to show this meaning: a maker made of ice cream — ice-cream maker",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "ice cream maker",
+          "markingResult": "correct",
           "feedbackSnippet": "The clearer version is ice cream maker."
         },
         {
           "seed": 5,
           "promptText": "Add a hyphen if needed to show this meaning: a bird with a red breast — red breasted bird",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "red-breasted bird",
+          "markingResult": "correct",
           "feedbackSnippet": "The clearer version is red-breasted bird."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'hyphen_ambiguity'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'hyphen_ambiguity'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p16_hyphen_ambiguity_hyphen_function_choice",
@@ -14179,7 +14179,7 @@
     },
     {
       "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -14188,46 +14188,46 @@
         {
           "seed": 1,
           "promptText": "Add commas for parenthesis if needed: Luca who was first in line opened the door.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Luca, who was first in line, opened the door.",
+          "markingResult": "correct",
           "feedbackSnippet": "A correct version is: Luca, who was first in line, opened the door."
         },
         {
           "seed": 2,
           "promptText": "Add commas for parenthesis if needed: The guide who had visited before led us.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The guide, who had visited before, led us.",
+          "markingResult": "correct",
           "feedbackSnippet": "A correct version is: The guide, who had visited before, led us."
         },
         {
           "seed": 3,
           "promptText": "Add commas for parenthesis if needed: Our class visited York the oldest city on our route first.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Our class visited York, the oldest city on our route, first.",
+          "markingResult": "correct",
           "feedbackSnippet": "A correct version is: Our class visited York, the oldest city on our route, first."
         },
         {
           "seed": 4,
           "promptText": "Add commas for parenthesis if needed: The cake baked by Aisha tasted wonderful.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The cake, baked by Aisha, tasted wonderful.",
+          "markingResult": "correct",
           "feedbackSnippet": "A correct version is: The cake, baked by Aisha, tasted wonderful."
         },
         {
           "seed": 5,
           "promptText": "Add commas for parenthesis if needed: Maya my neighbour won the race.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Maya, my neighbour, won the race.",
+          "markingResult": "correct",
           "feedbackSnippet": "A correct version is: Maya, my neighbour, won the race."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'parenthesis_commas'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'parenthesis_commas'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p16_parenthesis_commas_choose_parenthetical_part",
@@ -15444,7 +15444,7 @@
           "promptText": "Correct the punctuation so the sentence is an exclamation: What a tiny seed this is.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
-          "feedbackSnippet": "The punctuation should match the sentence function. an exclamation needs this ending: What a tiny seed this is!"
+          "feedbackSnippet": "The punctuation should match the sentence function. An exclamation needs this ending: What a tiny seed this is!"
         },
         {
           "seed": 4,
@@ -22391,19 +22391,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: The bread was baked by the chef.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: The roof was damaged by the storm.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: The park is maintained by the council.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -22740,19 +22740,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: Before the bell",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: Beside the river",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: With great care",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -22977,7 +22977,7 @@
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -22986,46 +22986,46 @@
         {
           "seed": 1,
           "promptText": "Write the possessive phrase for one dog owns a bowl.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the dog's bowl",
+          "markingResult": "correct",
           "feedbackSnippet": "One dog owns the bowl, so apostrophe before s."
         },
         {
           "seed": 2,
           "promptText": "Write the possessive phrase for several girls own boots.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the girls' boots",
+          "markingResult": "correct",
           "feedbackSnippet": "Girls is plural ending in s, so apostrophe after s."
         },
         {
           "seed": 3,
           "promptText": "Write the possessive phrase for one teacher owns a desk.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the teacher's desk",
+          "markingResult": "correct",
           "feedbackSnippet": "One teacher, apostrophe before s."
         },
         {
           "seed": 4,
           "promptText": "Write the possessive phrase for several birds own nests.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the birds' nests",
+          "markingResult": "correct",
           "feedbackSnippet": "Plural birds takes apostrophe after s."
         },
         {
           "seed": 5,
           "promptText": "Write the possessive phrase for one child owns a coat.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the child's coat",
+          "markingResult": "correct",
           "feedbackSnippet": "Child is singular, so child's."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'apostrophes_possession'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'apostrophes_possession'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_sat_table_classification",
@@ -23037,19 +23037,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: the dog's bowl",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: the girls' boots",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: the teacher's desk",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -23222,7 +23222,7 @@
     },
     {
       "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -23231,46 +23231,46 @@
         {
           "seed": 1,
           "promptText": "Write the punctuation mark used in this sentence: The sky darkened; the gulls flew inland.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "semicolon",
+          "markingResult": "correct",
           "feedbackSnippet": "A semi-colon links two related main clauses."
         },
         {
           "seed": 2,
           "promptText": "Write the punctuation mark used in this sentence: I needed only one thing: a torch.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "colon",
+          "markingResult": "correct",
           "feedbackSnippet": "The colon introduces an explanation of the one thing."
         },
         {
           "seed": 3,
           "promptText": "Write the punctuation mark used in this sentence: The gate opened — nobody moved.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "dash",
+          "markingResult": "correct",
           "feedbackSnippet": "The dash creates a dramatic break."
         },
         {
           "seed": 4,
           "promptText": "Write the punctuation mark used in this sentence: The path was narrow; the river rushed below.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "semicolon",
+          "markingResult": "correct",
           "feedbackSnippet": "Both sides are complete linked clauses."
         },
         {
           "seed": 5,
           "promptText": "Write the punctuation mark used in this sentence: Bring these items: a pencil, a ruler and a compass.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "colon",
+          "markingResult": "correct",
           "feedbackSnippet": "The colon introduces a list."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'boundary_punctuation'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'boundary_punctuation'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_boundary_punctuation_sat_table_classification",
@@ -23282,19 +23282,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: The sky darkened; the gulls flew inland.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: I needed only one thing: a torch.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: The gate opened — nobody moved.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -23543,7 +23543,7 @@
     },
     {
       "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -23552,46 +23552,46 @@
         {
           "seed": 1,
           "promptText": "Write the subordinate clause from this sentence: Although the path was muddy, the hikers kept walking.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Although the path was muddy",
+          "markingResult": "correct",
           "feedbackSnippet": "The although-clause depends on the main clause."
         },
         {
           "seed": 2,
           "promptText": "Write the subordinate clause from this sentence: When the whistle blew, the players ran onto the pitch.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "When the whistle blew",
+          "markingResult": "correct",
           "feedbackSnippet": "The when-clause gives the time and depends on the main clause."
         },
         {
           "seed": 3,
           "promptText": "Write the subordinate clause from this sentence: Because the lift was broken, we used the stairs.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Because the lift was broken",
+          "markingResult": "correct",
           "feedbackSnippet": "The because-clause gives the reason."
         },
         {
           "seed": 4,
           "promptText": "Write the subordinate clause from this sentence: If the library is open, I will return the books.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "If the library is open",
+          "markingResult": "correct",
           "feedbackSnippet": "The if-clause gives a condition."
         },
         {
           "seed": 5,
           "promptText": "Write the subordinate clause from this sentence: While the soup simmered, Dad chopped the carrots.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "While the soup simmered",
+          "markingResult": "correct",
           "feedbackSnippet": "The while-clause gives simultaneous time."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'clauses'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'clauses'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_clauses_sat_table_classification",
@@ -23603,19 +23603,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: Although the path was muddy",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: When the whistle blew",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: Because the lift was broken",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -23872,19 +23872,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: The club was established last year.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: Please discover whether the hall is available.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: We need to request additional equipment.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -24052,7 +24052,7 @@
     },
     {
       "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -24061,46 +24061,46 @@
         {
           "seed": 1,
           "promptText": "Rewrite with a hyphen to make this meaning clear (a shark that eats people): man eating shark",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "man-eating shark",
+          "markingResult": "correct",
           "feedbackSnippet": "The hyphen shows man-eating describes the shark."
         },
         {
           "seed": 2,
           "promptText": "Rewrite with a hyphen to make this meaning clear (cover the chair again): recover the chair",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "re-cover the chair",
+          "markingResult": "correct",
           "feedbackSnippet": "The hyphen separates re-cover from recover."
         },
         {
           "seed": 3,
           "promptText": "Rewrite with a hyphen to make this meaning clear (about twenty pupils): twenty odd pupils",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "twenty-odd pupils",
+          "markingResult": "correct",
           "feedbackSnippet": "The hyphen shows twenty-odd is one estimate."
         },
         {
           "seed": 4,
           "promptText": "Rewrite with a hyphen to make this meaning clear (a keeper of small animals): small animal keeper",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "small-animal keeper",
+          "markingResult": "correct",
           "feedbackSnippet": "The hyphen shows small-animal describes the keeper's work."
         },
         {
           "seed": 5,
           "promptText": "Rewrite with a hyphen to make this meaning clear (a club outside lessons): extra curricular club",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "extra-curricular club",
+          "markingResult": "correct",
           "feedbackSnippet": "The hyphen joins the compound adjective."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'hyphen_ambiguity'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'hyphen_ambiguity'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_hyphen_ambiguity_sat_table_classification",
@@ -24112,19 +24112,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: man-eating shark",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: re-cover the chair",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: twenty-odd pupils",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -24373,7 +24373,7 @@
     },
     {
       "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -24382,46 +24382,46 @@
         {
           "seed": 1,
           "promptText": "Complete the sentence with the best modal verb for strong advice: You ___ wear a helmet on this trail.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "You should wear a helmet on this trail.",
+          "markingResult": "correct",
           "feedbackSnippet": "Should gives strong advice."
         },
         {
           "seed": 2,
           "promptText": "Complete the sentence with the best modal verb for possibility: It ___ rain later, but the sky is clear now.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "It might rain later, but the sky is clear now.",
+          "markingResult": "correct",
           "feedbackSnippet": "Might shows possibility."
         },
         {
           "seed": 3,
           "promptText": "Complete the sentence with the best modal verb for certainty: The train ___ arrive at six because it is on the timetable.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The train will arrive at six because it is on the timetable.",
+          "markingResult": "correct",
           "feedbackSnippet": "Will shows expected certainty."
         },
         {
           "seed": 4,
           "promptText": "Complete the sentence with the best modal verb for obligation/advice: You ___ apologise if you broke the model.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "You should apologise if you broke the model.",
+          "markingResult": "correct",
           "feedbackSnippet": "Should gives advice about the right action."
         },
         {
           "seed": 5,
           "promptText": "Complete the sentence with the best modal verb for strong certainty: The parcel ___ be in the office; I saw it delivered.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The parcel must be in the office; I saw it delivered.",
+          "markingResult": "correct",
           "feedbackSnippet": "Must shows strong certainty."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'modal_verbs'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'modal_verbs'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_modal_verbs_sat_table_classification",
@@ -24433,19 +24433,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: You should wear a helmet on this trail.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: It might rain later, but the sky is clear now.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: The train will arrive at six because it is on the timetable.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -24678,19 +24678,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: the small blue marble",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: the patient guide with a red scarf",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: the ancient coin from the chest",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -24863,7 +24863,7 @@
     },
     {
       "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -24872,46 +24872,46 @@
         {
           "seed": 1,
           "promptText": "Copy the sentence and add commas for parenthesis. Luca who was first in line opened the door.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Luca, who was first in line, opened the door.",
+          "markingResult": "correct",
           "feedbackSnippet": "Commas mark the parenthesis."
         },
         {
           "seed": 2,
           "promptText": "Copy the sentence and add commas for parenthesis. The castle built in 1200 overlooks the river.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The castle, built in 1200, overlooks the river.",
+          "markingResult": "correct",
           "feedbackSnippet": "The extra information can be lifted out."
         },
         {
           "seed": 3,
           "promptText": "Copy the sentence and add commas for parenthesis. Our teacher a keen cyclist arrived early.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Our teacher, a keen cyclist, arrived early.",
+          "markingResult": "correct",
           "feedbackSnippet": "The appositive phrase is parenthetical."
         },
         {
           "seed": 4,
           "promptText": "Copy the sentence and add commas for parenthesis. The match which lasted two hours ended in a draw.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The match, which lasted two hours, ended in a draw.",
+          "markingResult": "correct",
           "feedbackSnippet": "The relative clause is extra information."
         },
         {
           "seed": 5,
           "promptText": "Copy the sentence and add commas for parenthesis. Mina wearing her red scarf waved from the bus.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Mina, wearing her red scarf, waved from the bus.",
+          "markingResult": "correct",
           "feedbackSnippet": "The phrase adds removable detail."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'parenthesis_commas'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'parenthesis_commas'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_parenthesis_commas_sat_table_classification",
@@ -24923,19 +24923,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: who was first in line",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: built in 1200",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: a keen cyclist",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -25220,19 +25220,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: Amira picked up the map. She folded it carefully.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: Ben showed the photo to Lucas. Lucas smiled at it.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: The dog chased the ball. It rolled under the bench.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -25482,7 +25482,7 @@
     },
     {
       "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -25491,46 +25491,46 @@
         {
           "seed": 1,
           "promptText": "Write the relative clause from this sentence: The artist who painted the mural visited our class.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "who painted the mural",
+          "markingResult": "correct",
           "feedbackSnippet": "The clause begins with who and adds information about the artist."
         },
         {
           "seed": 2,
           "promptText": "Write the relative clause from this sentence: The compass that we borrowed pointed north.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "that we borrowed",
+          "markingResult": "correct",
           "feedbackSnippet": "The relative clause adds information about the compass."
         },
         {
           "seed": 3,
           "promptText": "Write the relative clause from this sentence: The village where my uncle lives has one shop.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "where my uncle lives",
+          "markingResult": "correct",
           "feedbackSnippet": "Where introduces a relative clause linked to village."
         },
         {
           "seed": 4,
           "promptText": "Write the relative clause from this sentence: The player whose boot was missing laughed.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "whose boot was missing",
+          "markingResult": "correct",
           "feedbackSnippet": "Whose links the extra information to player."
         },
         {
           "seed": 5,
           "promptText": "Write the relative clause from this sentence: The cake which Grandma baked smelled delicious.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "which Grandma baked",
+          "markingResult": "correct",
           "feedbackSnippet": "Which introduces extra information about the cake."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'relative_clauses'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'relative_clauses'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_relative_clauses_sat_table_classification",
@@ -25542,19 +25542,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: who painted the mural",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: that we borrowed",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: where my uncle lives",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -25727,7 +25727,7 @@
     },
     {
       "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -25736,46 +25736,46 @@
         {
           "seed": 1,
           "promptText": "Add the correct ending punctuation, then copy the sentence: Please return the atlas to the shelf",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Please return the atlas to the shelf.",
+          "markingResult": "correct",
           "feedbackSnippet": "It tells someone what to do. The ending punctuation must match the function."
         },
         {
           "seed": 2,
           "promptText": "Add the correct ending punctuation, then copy the sentence: How bright the lanterns looked above the square",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "How bright the lanterns looked above the square!",
+          "markingResult": "correct",
           "feedbackSnippet": "It begins with how and shows strong feeling. The ending punctuation must match the function."
         },
         {
           "seed": 3,
           "promptText": "Add the correct ending punctuation, then copy the sentence: Did the choir practise before assembly",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Did the choir practise before assembly?",
+          "markingResult": "correct",
           "feedbackSnippet": "It asks for an answer. The ending punctuation must match the function."
         },
         {
           "seed": 4,
           "promptText": "Add the correct ending punctuation, then copy the sentence: The fossils were displayed beside the library window",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The fossils were displayed beside the library window.",
+          "markingResult": "correct",
           "feedbackSnippet": "It gives information. The ending punctuation must match the function."
         },
         {
           "seed": 5,
           "promptText": "Add the correct ending punctuation, then copy the sentence: Close the greenhouse door before the wind gets stronger",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Close the greenhouse door before the wind gets stronger.",
+          "markingResult": "correct",
           "feedbackSnippet": "It instructs someone to act. The ending punctuation must match the function."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'sentence_functions'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_sentence_functions_sat_table_classification",
@@ -25787,19 +25787,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: Please return the atlas to the shelf.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: How bright the lanterns looked above the square!",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: Did the choir practise before assembly?",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -26020,7 +26020,7 @@
     },
     {
       "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -26029,46 +26029,46 @@
         {
           "seed": 1,
           "promptText": "Copy and correct the speech punctuation. \"Where are you going\" asked Mum.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "\"Where are you going?\" asked Mum.",
+          "markingResult": "correct",
           "feedbackSnippet": "The question mark belongs inside the speech marks."
         },
         {
           "seed": 2,
           "promptText": "Copy and correct the speech punctuation. \"Sit down\" shouted the coach.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "\"Sit down!\" shouted the coach.",
+          "markingResult": "correct",
           "feedbackSnippet": "The exclamation mark belongs inside the speech marks."
         },
         {
           "seed": 3,
           "promptText": "Copy and correct the speech punctuation. \"I found the key\" said Zara.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "\"I found the key,\" said Zara.",
+          "markingResult": "correct",
           "feedbackSnippet": "Use a comma before the reporting clause."
         },
         {
           "seed": 4,
           "promptText": "Copy and correct the speech punctuation. Dad asked \"Have you packed your bag\"",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "Dad asked, \"Have you packed your bag?\"",
+          "markingResult": "correct",
           "feedbackSnippet": "Use a comma before speech and a question mark inside."
         },
         {
           "seed": 5,
           "promptText": "Copy and correct the speech punctuation. \"Please wait here\" whispered the guide.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "\"Please wait here,\" whispered the guide.",
+          "markingResult": "correct",
           "feedbackSnippet": "Use a comma inside the closing speech mark."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'speech_punctuation'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'speech_punctuation'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_speech_punctuation_sat_table_classification",
@@ -26080,19 +26080,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: \"Where are you going?\" asked Mum.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: \"Sit down!\" shouted the coach.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: \"I found the key,\" said Zara.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -26265,7 +26265,7 @@
     },
     {
       "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -26274,46 +26274,46 @@
         {
           "seed": 1,
           "promptText": "Rewrite this in Standard English: We was late for practice.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "We were late for practice.",
+          "markingResult": "correct",
           "feedbackSnippet": "Were is the Standard English form with we."
         },
         {
           "seed": 2,
           "promptText": "Rewrite this in Standard English: I done the washing-up.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "I did the washing-up.",
+          "markingResult": "correct",
           "feedbackSnippet": "Did is the Standard English past form."
         },
         {
           "seed": 3,
           "promptText": "Rewrite this in Standard English: She seen the poster yesterday.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "She saw the poster yesterday.",
+          "markingResult": "correct",
           "feedbackSnippet": "Saw is the simple past form."
         },
         {
           "seed": 4,
           "promptText": "Rewrite this in Standard English: They has finished already.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "They have finished already.",
+          "markingResult": "correct",
           "feedbackSnippet": "Have agrees with they."
         },
         {
           "seed": 5,
           "promptText": "Rewrite this in Standard English: There was three pencils on the desk.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "There were three pencils on the desk.",
+          "markingResult": "correct",
           "feedbackSnippet": "Were agrees with three pencils."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'standard_english'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_standard_english_sat_table_classification",
@@ -26325,19 +26325,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: We were late for practice.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: I did the washing-up.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: She saw the poster yesterday.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -26535,7 +26535,7 @@
     },
     {
       "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -26544,46 +26544,46 @@
         {
           "seed": 1,
           "promptText": "Write the subject of this sentence: The noisy gull stole the sandwich from Max.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The noisy gull",
+          "markingResult": "correct",
           "feedbackSnippet": "The gull does the stealing; the sandwich receives the action."
         },
         {
           "seed": 2,
           "promptText": "Write the subject of this sentence: After lunch, the goalkeeper caught the ball.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the goalkeeper",
+          "markingResult": "correct",
           "feedbackSnippet": "Ignore the opening adverbial."
         },
         {
           "seed": 3,
           "promptText": "Write the subject of this sentence: The librarian stamped the new ticket.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The librarian",
+          "markingResult": "correct",
           "feedbackSnippet": "The librarian performs the action."
         },
         {
           "seed": 4,
           "promptText": "Write the subject of this sentence: During the storm, the wind snapped the branch.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "the wind",
+          "markingResult": "correct",
           "feedbackSnippet": "The wind does the snapping."
         },
         {
           "seed": 5,
           "promptText": "Write the subject of this sentence: The engineer tested the bridge carefully.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "The engineer",
+          "markingResult": "correct",
           "feedbackSnippet": "The bridge is tested."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'subject_object'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'subject_object'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_subject_object_sat_table_classification",
@@ -26595,19 +26595,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: the sandwich",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: the ball",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: the new ticket",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -26852,19 +26852,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: She had packed her bag before the trip.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: I have finished my homework.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: The dog was chasing the cat.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -27153,7 +27153,7 @@
     },
     {
       "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": null,
       "reviewerId": "automated-p10-oracle",
       "reviewMethod": "automated-oracle-with-concrete-evidence",
@@ -27162,46 +27162,46 @@
         {
           "seed": 1,
           "promptText": "Write the word class of 'carefully' in this sentence: Maya carefully folded the silver map.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "adverb",
+          "markingResult": "correct",
           "feedbackSnippet": "It describes how Maya folded the map."
         },
         {
           "seed": 2,
           "promptText": "Write the word class of 'Those' in this sentence: Those tiny shells glittered near the pool.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "determiner",
+          "markingResult": "correct",
           "feedbackSnippet": "It comes before the noun phrase and helps specify it."
         },
         {
           "seed": 3,
           "promptText": "Write the word class of 'bounded' in this sentence: The puppy bounded across the grass.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "verb",
+          "markingResult": "correct",
           "feedbackSnippet": "It is the action."
         },
         {
           "seed": 4,
           "promptText": "Write the word class of 'After' in this sentence: After breakfast, the class visited the museum.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "preposition",
+          "markingResult": "correct",
           "feedbackSnippet": "It links breakfast to time in the sentence."
         },
         {
           "seed": 5,
           "promptText": "Write the word class of 'curious' in this sentence: The curious otter watched us from the bank.",
-          "goldenAnswer": "test response",
-          "markingResult": "non-scored",
+          "goldenAnswer": "adjective",
+          "markingResult": "correct",
           "feedbackSnippet": "It describes the otter."
         }
       ],
-      "answerabilityJudgement": "All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design",
-      "grammarLogicJudgement": "Grammar logic partially valid for concept 'word_classes'; some seeds produce incorrect marking",
+      "answerabilityJudgement": "All 15 seeds accept the golden constructed answer",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'word_classes'",
       "distractorQualityJudgement": "Constructed-response: no distractors (free text input)",
-      "markingJudgement": "Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required",
-      "feedbackJudgement": "Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness",
+      "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship-with-monitoring"
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p18_word_classes_sat_table_classification",
@@ -27213,19 +27213,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the grammar feature shown in this row: carefully in: Maya carefully folded the silver map.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the grammar feature shown in this row: Those in: Those tiny shells glittered near the pool.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the grammar feature shown in this row: bounded in: The puppy bounded across the grass.",
+          "promptText": "Classify the target word or phrase by its grammar role.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }

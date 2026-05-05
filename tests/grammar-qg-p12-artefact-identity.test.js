@@ -84,8 +84,8 @@ describe('Grammar QG P12 — P11 artefact identity', () => {
       assert.equal(statusMap.metadata.templateCount, 510);
     });
 
-    it('metadata.contentReleaseId matches the current P19 runtime release', () => {
-      assert.equal(statusMap.metadata.contentReleaseId, 'grammar-qg-p19-2026-05-04');
+    it('metadata.contentReleaseId matches the current P20 runtime release', () => {
+      assert.equal(statusMap.metadata.contentReleaseId, 'grammar-qg-p20-2026-05-05');
     });
 
     it('rejects unknown template ID (fail-closed assertion)', () => {

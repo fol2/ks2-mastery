@@ -1,13 +1,14 @@
 {
   "metadata": {
-    "contentReleaseId": "grammar-qg-p19-2026-05-04",
-    "generatedAt": "2026-05-05T12:25:56.487Z",
+    "contentReleaseId": "grammar-qg-p20-2026-05-05",
+    "generatedAt": "2026-05-05T15:43:23.715Z",
     "sessionCount": 330,
     "profileCount": 11,
     "sessionSize": 5,
     "seedRange": {
       "from": 1,
-      "to": 30
+      "to": 30,
+      "count": 30
     },
     "pass": true
   },
@@ -26,7 +27,7 @@
         "conceptDistinctMean": 4.733333333333333,
         "questionTypeDistinctMean": 3.2333333333333334,
         "constructedSelectedMix": 0.4266666666666667,
-        "manualReviewOnlyShare": 0.29333333333333333,
+        "manualReviewOnlyShare": 0.2733333333333333,
         "repeatedSurfaceCount": 3,
         "uniqueSurfaceCount": 147,
         "reasonHistogram": {
@@ -108,7 +109,7 @@
               "seed": 418917,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "84f8e679cdf1746903e753816d4d7692e47b6eab",
+              "surfaceKey": "150c7e0092ab454f17400448cf335b67522f24ab",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -442,7 +443,7 @@
               "seed": 314192,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "5784c32b27acc53d2ee5efd986f97d5deff1c2fe",
+              "surfaceKey": "cc7f65c23b6647df559305f3e38abb42650f916a",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -1056,7 +1057,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "b0118eb9d5c3baca25adb4a1c5ec25ae26f097bb",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -1079,7 +1080,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "fallback": 5
             }
@@ -1885,7 +1886,7 @@
               "seed": 22,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "2ee467a33e89aee030ed085a2b0d8e8368f38c61",
+              "surfaceKey": "7749b9f72b4a83546f7540caa7ae0f39a3ed65a3",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -1914,7 +1915,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "d7670db27669a628c37f770be12d9b72d3213592",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -1951,7 +1952,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 1,
+            "manualReviewOnlyCount": 0,
             "reasonCounts": {
               "fallback": 5
             }
@@ -2074,7 +2075,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "c72276fa90d8e17b67bc173c9bb8818aa6b2dabf",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -2125,7 +2126,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 1,
+            "manualReviewOnlyCount": 0,
             "reasonCounts": {
               "fallback": 5
             }
@@ -2666,7 +2667,7 @@
         "conceptDistinctMean": 4.4,
         "questionTypeDistinctMean": 3.5,
         "constructedSelectedMix": 0.4666666666666667,
-        "manualReviewOnlyShare": 0.34,
+        "manualReviewOnlyShare": 0.2866666666666667,
         "repeatedSurfaceCount": 3,
         "uniqueSurfaceCount": 147,
         "reasonHistogram": {
@@ -2749,7 +2750,7 @@
               "seed": 418917,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "84f8e679cdf1746903e753816d4d7692e47b6eab",
+              "surfaceKey": "150c7e0092ab454f17400448cf335b67522f24ab",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -3017,7 +3018,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "8e76aa30bff30700aae6fa7c28d0621710d06ba2",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -3026,7 +3027,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -3255,7 +3256,7 @@
               "seed": 209465,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "4c9277f74250d9d7d92fbb882398889466be7cb1",
+              "surfaceKey": "0d8720d92a185cc98d27370dc7edf34198001e1f",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -3587,7 +3588,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "3fa2182d24fea60761a92514972a318f2f6d752a",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "similar-problem"
             },
             {
@@ -3652,7 +3653,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -4090,7 +4091,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "c4211087254e43d72904ce026c19dfd507f909a0",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -4099,7 +4100,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -4122,7 +4123,7 @@
               "seed": 17,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "3ce349cb45d27dd6d94550bcae36914a12f965de",
+              "surfaceKey": "6c77d472a380d41da697b04012e71009b44a852c",
               "manualReviewOnly": false,
               "reason": "similar-problem"
             },
@@ -4212,7 +4213,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "073cc6f588f0cf2301b4cf10a5f2f322e0c4fefd",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "similar-problem"
             },
             {
@@ -4226,7 +4227,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "3fa2182d24fea60761a92514972a318f2f6d752a",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -4277,7 +4278,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -4405,7 +4406,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "3629c946a69e9c98a450580c0f6db90d768281d0",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -4456,7 +4457,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 1,
+            "manualReviewOnlyCount": 0,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -4926,7 +4927,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "9d64bf58326331afd672a3f0c0b4e4bd5a1b250d",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "similar-problem"
             },
             {
@@ -4991,7 +4992,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 5,
             "selectedItemCount": 0,
-            "manualReviewOnlyCount": 4,
+            "manualReviewOnlyCount": 3,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -5015,7 +5016,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "638f33bfca0c6a1deff00fe1b7039ee16c76cb51",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "similar-problem"
             },
             {
@@ -5080,7 +5081,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -5369,7 +5370,7 @@
         "conceptDistinctMean": 4.866666666666666,
         "questionTypeDistinctMean": 3.3666666666666667,
         "constructedSelectedMix": 0.3933333333333333,
-        "manualReviewOnlyShare": 0.29333333333333333,
+        "manualReviewOnlyShare": 0.2733333333333333,
         "repeatedSurfaceCount": 3,
         "uniqueSurfaceCount": 147,
         "reasonHistogram": {
@@ -6206,7 +6207,7 @@
               "seed": 104739,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "1b9f8b6e24821b649af9156388b64199fa97d758",
+              "surfaceKey": "d5caf02cf6ec458ee53777c31748224f1a09877c",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -6545,7 +6546,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "9d64bf58326331afd672a3f0c0b4e4bd5a1b250d",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -6587,7 +6588,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "60e3e6ae17ddf24bd91b7c53a27c1b65ce901d6e",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -6610,7 +6611,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 0,
             "reasonCounts": {
               "priority-urgent": 1,
               "fallback": 4
@@ -6809,7 +6810,7 @@
               "seed": 17,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "b5d6b6e49b8ae51be4887f2baf577c0993bd6f47",
+              "surfaceKey": "64fab2926be45c21ac2d7880ef661911590da8c7",
               "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
@@ -7426,7 +7427,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "0c79ac4310c87ece660ee1d0b4338f27a59886ff",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -7491,7 +7492,7 @@
             "questionTypeDistinct": 5,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "priority-urgent": 1,
               "fallback": 4
@@ -8038,7 +8039,7 @@
         "conceptDistinctMean": 4.8,
         "questionTypeDistinctMean": 3.4,
         "constructedSelectedMix": 0.44666666666666666,
-        "manualReviewOnlyShare": 0.29333333333333333,
+        "manualReviewOnlyShare": 0.2866666666666667,
         "repeatedSurfaceCount": 1,
         "uniqueSurfaceCount": 149,
         "reasonHistogram": {
@@ -8209,7 +8210,7 @@
               "seed": 418918,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "c6ef238c9705e988efce2933d15244a70ff83c0b",
+              "surfaceKey": "ad64ebadf3e0a932063bc2852f0dece7277a654c",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -8460,7 +8461,7 @@
               "seed": 314192,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "5784c32b27acc53d2ee5efd986f97d5deff1c2fe",
+              "surfaceKey": "cc7f65c23b6647df559305f3e38abb42650f916a",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -9079,7 +9080,7 @@
               "seed": 314199,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "f993b2279a7bef4041d54a5396cb95f7ff91845f",
+              "surfaceKey": "d209fdb6c8b580d01bda56f40b1bbb6b18ad75b2",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -9832,7 +9833,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "5f6fc0a16d93d75a5a06e642528e3da52c90444d",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -9897,7 +9898,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "priority-urgent": 1,
               "fallback": 4
@@ -10109,7 +10110,7 @@
               "seed": 104753,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "11fd6baf549a825645f148d66868a2099d6f1a1e",
+              "surfaceKey": "7e6f33fb97481a682a9f7285db30cc49528d0178",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -10327,7 +10328,7 @@
               "seed": 418942,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "20aff821bf94957d191f24d1cf19e447a1f205dd",
+              "surfaceKey": "76c5bede22eaf7cc73ff85d5c9961f9677824470",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -10708,7 +10709,7 @@
         "conceptDistinctMean": 4.733333333333333,
         "questionTypeDistinctMean": 3.533333333333333,
         "constructedSelectedMix": 0.4666666666666667,
-        "manualReviewOnlyShare": 0.3466666666666667,
+        "manualReviewOnlyShare": 0.31333333333333335,
         "repeatedSurfaceCount": 3,
         "uniqueSurfaceCount": 147,
         "reasonHistogram": {
@@ -10776,7 +10777,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "ba1e169bcae6374b49e03be6166aa010ba4dec72",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -10799,7 +10800,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "fallback": 5
             }
@@ -10994,7 +10995,7 @@
               "seed": 4,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "8a2b3383fa099119a2387e55cc9b2677a022a6cd",
+              "surfaceKey": "7e7f04ab31a5e89a772215cb8247ab16531ab228",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -11023,7 +11024,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "ca32baa11e0415af80d0f33411d8fdcaa1761698",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -11060,7 +11061,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 1,
+            "manualReviewOnlyCount": 0,
             "reasonCounts": {
               "fallback": 5
             }
@@ -11443,7 +11444,7 @@
               "seed": 104738,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "8db751bee2a302cbc64f4c6a8f51fd6710aee2da",
+              "surfaceKey": "26a45f6ec27b76a640a38ebb1b8ff78e7a35bc23",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -11519,7 +11520,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "1981f75bfda973b18f5ae015041f3226454de28f",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -11584,7 +11585,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "fallback": 5
             }
@@ -11968,7 +11969,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "9e0c67b9f1470a3ee08cde002930cdd31681e80a",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -12019,7 +12020,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 4,
             "selectedItemCount": 1,
-            "manualReviewOnlyCount": 4,
+            "manualReviewOnlyCount": 3,
             "reasonCounts": {
               "fallback": 5
             }
@@ -12358,7 +12359,7 @@
               "seed": 418935,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "ba29df4b87f8f9f37328be34118d91eef05370b8",
+              "surfaceKey": "c87431aed9837c7e636d34dbe541e4b4e1901f5e",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -12389,7 +12390,7 @@
               "seed": 20,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "277a4e6dcde30ba975e022b0be9f017d8a38eece",
+              "surfaceKey": "80c70bd195a6793b6bb08f05d25a3c6c8e9ad154",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -12620,7 +12621,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "073cc6f588f0cf2301b4cf10a5f2f322e0c4fefd",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -12629,7 +12630,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 1,
+            "manualReviewOnlyCount": 0,
             "reasonCounts": {
               "fallback": 5
             }
@@ -12751,7 +12752,7 @@
               "seed": 104753,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "207f3a10cd9b324df196a96b9916f838fdc7a42a",
+              "surfaceKey": "1f0661c820f78083ec03bf8c487731f5e40d489b",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -13411,7 +13412,7 @@
               "seed": 314188,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "c2e76985c59774dffbdc762fc7b068b07e8cf33d",
+              "surfaceKey": "4ac8308131fddf9db77a8b14d1f737ab092a4097",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -13921,7 +13922,7 @@
               "seed": 209465,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "2c023018bf784a867ac16787895f680022663892",
+              "surfaceKey": "076105a7bad464ac4ceb84e2e80e75d8ef93dfea",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -15000,7 +15001,7 @@
               "seed": 418935,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "1b9f8b6e24821b649af9156388b64199fa97d758",
+              "surfaceKey": "d5caf02cf6ec458ee53777c31748224f1a09877c",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -15394,7 +15395,7 @@
               "seed": 104753,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "2c023018bf784a867ac16787895f680022663892",
+              "surfaceKey": "076105a7bad464ac4ceb84e2e80e75d8ef93dfea",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -15987,7 +15988,7 @@
         "conceptDistinctMean": 4.3,
         "questionTypeDistinctMean": 3.6333333333333333,
         "constructedSelectedMix": 0.4866666666666667,
-        "manualReviewOnlyShare": 0.36666666666666664,
+        "manualReviewOnlyShare": 0.3333333333333333,
         "repeatedSurfaceCount": 3,
         "uniqueSurfaceCount": 147,
         "reasonHistogram": {
@@ -16071,7 +16072,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "d8af7633da232cefa84af41358c5e2b3b15fbe84",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -16080,7 +16081,7 @@
             "questionTypeDistinct": 5,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -16338,7 +16339,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "a52b758e0cc566ad49e056908449269f78909a8d",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -16347,7 +16348,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -16964,7 +16965,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "dd5e4fae22ee589fcdf7a51310dde81b6a3a243a",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -16973,7 +16974,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -17677,7 +17678,7 @@
               "seed": 418935,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "2b8428df08baf3fdc16940b2360b2e84450d1f3e",
+              "surfaceKey": "ddc479464e9595546ef2362ac80e5e41953f9dbd",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -17842,7 +17843,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "8f56d1f1eec517a94649b86871e632b3d4f7f8a6",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -17865,7 +17866,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -18081,7 +18082,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "44c30e3fb52fabc631f0675de3e34e96df251478",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -18132,7 +18133,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 4,
             "selectedItemCount": 1,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -18259,7 +18260,7 @@
               "seed": 104755,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "c5c67d8f124ea555080a0525806f9e54ed047232",
+              "surfaceKey": "113da1f012340dce9e0deffc30c97022f4424104",
               "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
@@ -18391,7 +18392,7 @@
               "seed": 418943,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "4b220d9f48a2c72c6500e1acffaccd7325debcda",
+              "surfaceKey": "ab66b11aa6283d231ec112896ddacc98432ab70c",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -18452,7 +18453,7 @@
               "seed": 209486,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "f4a37f055b4c65876fc29ea98a9570082badfd0c",
+              "surfaceKey": "266351789edf92052355b65e44747d9c1322901c",
               "manualReviewOnly": false,
               "reason": "fallback"
             },
@@ -18689,7 +18690,7 @@
         "conceptDistinctMean": 3.1333333333333333,
         "questionTypeDistinctMean": 3.466666666666667,
         "constructedSelectedMix": 0.4066666666666667,
-        "manualReviewOnlyShare": 0.25333333333333335,
+        "manualReviewOnlyShare": 0.23333333333333334,
         "repeatedSurfaceCount": 16,
         "uniqueSurfaceCount": 124,
         "reasonHistogram": {
@@ -18911,7 +18912,7 @@
               "seed": 104732,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "5784c32b27acc53d2ee5efd986f97d5deff1c2fe",
+              "surfaceKey": "cc7f65c23b6647df559305f3e38abb42650f916a",
               "manualReviewOnly": false,
               "reason": "similar-problem"
             },
@@ -19031,7 +19032,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "25d6bbc2707b436a4f5e3bca24c648328becbcd1",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -19054,7 +19055,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 1,
             "selectedItemCount": 4,
-            "manualReviewOnlyCount": 1,
+            "manualReviewOnlyCount": 0,
             "reasonCounts": {
               "retry": 1,
               "similar-problem": 1,
@@ -20463,7 +20464,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "81b5496e63c444a118f717d725838ed5bf3651fc",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -20500,7 +20501,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 4,
             "selectedItemCount": 1,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "retry": 1,
               "similar-problem": 1,
@@ -20899,7 +20900,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "bbb408c9884c535ddabf91146701ed3d8ab90087",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "similar-problem"
             },
             {
@@ -20951,7 +20952,7 @@
             "questionTypeDistinct": 5,
             "constructedItemCount": 4,
             "selectedItemCount": 1,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "retry": 1,
               "similar-problem": 1,
@@ -21183,7 +21184,7 @@
               "seed": 209486,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "150cca368bc220fb031a5e8fe56099943b3042ee",
+              "surfaceKey": "c2bc91de52d54b2c9cdaf53ccb709d7c05cdbeb5",
               "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
@@ -21424,7 +21425,7 @@
         "conceptDistinctMean": 3.8666666666666667,
         "questionTypeDistinctMean": 3.3666666666666667,
         "constructedSelectedMix": 0.46,
-        "manualReviewOnlyShare": 0.3333333333333333,
+        "manualReviewOnlyShare": 0.29333333333333333,
         "repeatedSurfaceCount": 4,
         "uniqueSurfaceCount": 146,
         "reasonHistogram": {
@@ -21540,7 +21541,7 @@
               "seed": 2,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "150cca368bc220fb031a5e8fe56099943b3042ee",
+              "surfaceKey": "c2bc91de52d54b2c9cdaf53ccb709d7c05cdbeb5",
               "manualReviewOnly": false,
               "reason": "similar-problem"
             },
@@ -21596,7 +21597,7 @@
               "seed": 418918,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "a5d20160d3cd8522b8095dcd17174d0ff5223fef",
+              "surfaceKey": "5fe15d8d35f8b395ae3ebeadd9246b6bef05cdba",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -21629,7 +21630,7 @@
               "seed": 3,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "222d24c5569408ef0c403eae5f1a2f3f1341aecb",
+              "surfaceKey": "2cfaaac929899621b59f8431f5f257308559e805",
               "manualReviewOnly": false,
               "reason": "similar-problem"
             },
@@ -22014,7 +22015,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "240099b169ebfa6201b478bfdd7ed6a8511d384f",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -22051,7 +22052,7 @@
             "questionTypeDistinct": 2,
             "constructedItemCount": 5,
             "selectedItemCount": 0,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -22402,7 +22403,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "dd5e4fae22ee589fcdf7a51310dde81b6a3a243a",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -22411,7 +22412,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -22984,7 +22985,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "3fa2182d24fea60761a92514972a318f2f6d752a",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -23035,7 +23036,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -23164,7 +23165,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "3629c946a69e9c98a450580c0f6db90d768281d0",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -23215,7 +23216,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -23596,7 +23597,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "bc2367b5d1c4e63f89ca9b7c7cc5e35ae1ce0949",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "similar-problem"
             },
             {
@@ -23662,7 +23663,7 @@
             "questionTypeDistinct": 2,
             "constructedItemCount": 5,
             "selectedItemCount": 0,
-            "manualReviewOnlyCount": 5,
+            "manualReviewOnlyCount": 4,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -23830,7 +23831,7 @@
               "seed": 418943,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "4b220d9f48a2c72c6500e1acffaccd7325debcda",
+              "surfaceKey": "ab66b11aa6283d231ec112896ddacc98432ab70c",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -23877,7 +23878,7 @@
               "seed": 104757,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "3a5fb18e5dd02d7aa39af88723209189b4e5a9cf",
+              "surfaceKey": "6efe50ef96229e0d070a6a999edb9c975e02ed22",
               "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
@@ -24073,7 +24074,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "3060d2747e592bc328e6dadf3c70ec9d0c67829d",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -24110,7 +24111,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "priority-urgent": 1,
@@ -24129,7 +24130,7 @@
         "conceptDistinctMean": 4.733333333333333,
         "questionTypeDistinctMean": 3.7333333333333334,
         "constructedSelectedMix": 0.4866666666666667,
-        "manualReviewOnlyShare": 0.32666666666666666,
+        "manualReviewOnlyShare": 0.31333333333333335,
         "repeatedSurfaceCount": 2,
         "uniqueSurfaceCount": 148,
         "reasonHistogram": {
@@ -24212,7 +24213,7 @@
               "seed": 418917,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "84f8e679cdf1746903e753816d4d7692e47b6eab",
+              "surfaceKey": "150c7e0092ab454f17400448cf335b67522f24ab",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -25331,7 +25332,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "b2999b6377d72f28bbdeff6e96bedc25f42c67b6",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "priority-urgent"
             },
             {
@@ -25382,7 +25383,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "spaced-retrieval": 1,
               "priority-urgent": 1,
@@ -26568,7 +26569,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "4b91305eb007872c4d4b69145f4b5a6337142ef9",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "spaced-retrieval"
             },
             {
@@ -26633,7 +26634,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "spaced-retrieval": 1,
               "priority-urgent": 1,
@@ -26832,7 +26833,7 @@
         "conceptDistinctMean": 3.7666666666666666,
         "questionTypeDistinctMean": 3.466666666666667,
         "constructedSelectedMix": 0.4266666666666667,
-        "manualReviewOnlyShare": 0.36666666666666664,
+        "manualReviewOnlyShare": 0.32,
         "repeatedSurfaceCount": 8,
         "uniqueSurfaceCount": 142,
         "reasonHistogram": {
@@ -26916,7 +26917,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "b6f99187b84f88b620210fbbc5b40255eb7b5783",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -26925,7 +26926,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "trouble-cluster": 1,
@@ -27944,7 +27945,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "073cc6f588f0cf2301b4cf10a5f2f322e0c4fefd",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "trouble-cluster"
             },
             {
@@ -27995,7 +27996,7 @@
             "questionTypeDistinct": 2,
             "constructedItemCount": 2,
             "selectedItemCount": 3,
-            "manualReviewOnlyCount": 1,
+            "manualReviewOnlyCount": 0,
             "reasonCounts": {
               "similar-problem": 1,
               "trouble-cluster": 1,
@@ -28061,7 +28062,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "60e3e6ae17ddf24bd91b7c53a27c1b65ce901d6e",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             },
             {
@@ -28084,7 +28085,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "similar-problem": 1,
               "trouble-cluster": 1,
@@ -28255,7 +28256,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "216d5182527a1919540a5aa2662c6d5f3b36c613",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -28264,7 +28265,7 @@
             "questionTypeDistinct": 3,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "trouble-cluster": 1,
@@ -28480,7 +28481,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "8f56d1f1eec517a94649b86871e632b3d4f7f8a6",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "trouble-cluster"
             },
             {
@@ -28532,7 +28533,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "similar-problem": 1,
               "trouble-cluster": 1,
@@ -28914,7 +28915,7 @@
               "inputType": "textarea",
               "isConstructed": true,
               "surfaceKey": "8f56d1f1eec517a94649b86871e632b3d4f7f8a6",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "similar-problem"
             },
             {
@@ -28980,7 +28981,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 2,
+            "manualReviewOnlyCount": 1,
             "reasonCounts": {
               "similar-problem": 1,
               "trouble-cluster": 1,
@@ -29149,7 +29150,7 @@
               "seed": 418942,
               "inputType": "table_choice",
               "isConstructed": true,
-              "surfaceKey": "20aff821bf94957d191f24d1cf19e447a1f205dd",
+              "surfaceKey": "76c5bede22eaf7cc73ff85d5c9961f9677824470",
               "manualReviewOnly": false,
               "reason": "fallback"
             }
@@ -29239,7 +29240,7 @@
               "inputType": "text",
               "isConstructed": true,
               "surfaceKey": "a75a2ef2600870a3a67fa7dde57d4020760eb1df",
-              "manualReviewOnly": true,
+              "manualReviewOnly": false,
               "reason": "fallback"
             }
           ],
@@ -29248,7 +29249,7 @@
             "questionTypeDistinct": 4,
             "constructedItemCount": 3,
             "selectedItemCount": 2,
-            "manualReviewOnlyCount": 3,
+            "manualReviewOnlyCount": 2,
             "reasonCounts": {
               "similar-problem": 1,
               "trouble-cluster": 1,

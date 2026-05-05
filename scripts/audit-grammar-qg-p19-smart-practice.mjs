@@ -37,6 +37,32 @@ const NOW_TS = Date.parse('2026-05-04T09:00:00.000Z');
 const SESSION_SIZE = 5;
 const SEED_RANGE = Array.from({ length: 30 }, (_, i) => i + 1);
 
+function parseSeedList(value = '') {
+  const text = String(value || '').trim();
+  if (!text) return SEED_RANGE.slice();
+  const seeds = [];
+  for (const token of text.split(',')) {
+    const part = token.trim();
+    if (!part) continue;
+    const range = part.match(/^(\d+)\.\.(\d+)$/);
+    if (range) {
+      const start = Number(range[1]);
+      const end = Number(range[2]);
+      if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start) {
+        throw new Error(`Invalid --seeds range: ${part}`);
+      }
+      for (let seed = start; seed <= end; seed += 1) seeds.push(seed);
+      continue;
+    }
+    const seed = Number(part);
+    if (!Number.isInteger(seed) || seed < 1) throw new Error(`Invalid --seeds value: ${part}`);
+    seeds.push(seed);
+  }
+  const unique = Array.from(new Set(seeds)).sort((a, b) => a - b);
+  if (unique.length === 0) throw new Error(`No valid seeds parsed from --seeds=${value}`);
+  return unique;
+}
+
 const CONSTRUCTED_INPUT_TYPES = new Set(['text', 'textarea', 'rewrite', 'multiField', 'table_choice']);
 // Contract D.4 — exceptions are explicit and explainable. The grammar
 // scheduler emits one of these reasons on every queue entry; only entries
@@ -456,7 +482,7 @@ function aggregateProfile(profileType, sessions) {
   };
 }
 
-export function buildSmartPracticeAudit() {
+export function buildSmartPracticeAudit({ seeds = SEED_RANGE } = {}) {
   const profileResults = [];
   let allFailures = [];
   let allAdvisories = [];
@@ -466,7 +492,7 @@ export function buildSmartPracticeAudit() {
     const profile = { type: profileSpec.type, label: profileSpec.label, ...profileSpec.build() };
     const eligibleCount = eligibleTemplateIds(profile);
     const sessions = [];
-    for (const seed of SEED_RANGE) {
+    for (const seed of seeds) {
       const items = runSession(profile, seed);
       const dup = detectSessionDuplicates(items, eligibleCount);
       const reasonFailures = detectReasonInvariants(items);
@@ -494,7 +520,7 @@ export function buildSmartPracticeAudit() {
       sessionCount: totalSessions,
       profileCount: PROFILES.length,
       sessionSize: SESSION_SIZE,
-      seedRange: { from: SEED_RANGE[0], to: SEED_RANGE[SEED_RANGE.length - 1] },
+      seedRange: { from: seeds[0], to: seeds[seeds.length - 1], count: seeds.length },
       pass: allFailures.length === 0,
     },
     summary: {
@@ -510,13 +536,13 @@ export function buildSmartPracticeAudit() {
   };
 }
 
-function renderMarkdown(audit) {
+function renderMarkdown(audit, seeds = SEED_RANGE) {
   const lines = [];
   lines.push(`# Grammar QG P19 — smart-practice surface audit`);
   lines.push('');
   lines.push(`Content release: \`${audit.metadata.contentReleaseId}\``);
   lines.push(`Generated: \`${audit.metadata.generatedAt}\``);
-  lines.push(`Sessions: ${audit.summary.sessionCount} (${audit.metadata.profileCount} profiles × ${SEED_RANGE.length} seeds, size=${audit.metadata.sessionSize})`);
+  lines.push(`Sessions: ${audit.summary.sessionCount} (${audit.metadata.profileCount} profiles × ${seeds.length} seeds, size=${audit.metadata.sessionSize})`);
   lines.push(`Status: **${audit.summary.pass ? 'PASS' : 'FAIL'}** — ${audit.summary.failureCount} failures, ${audit.summary.advisoryCount} advisories.`);
   lines.push('');
   lines.push(`## Per-profile spread`);
@@ -530,7 +556,7 @@ function renderMarkdown(audit) {
   lines.push('');
   lines.push(`## Selection lane reasons exercised`);
   lines.push('');
-  lines.push(`Contract D.4 — every queue entry carries an explicit lane reason. The table below shows how many entries each profile pulled from each lane across ${SEED_RANGE.length} seeds.`);
+  lines.push(`Contract D.4 — every queue entry carries an explicit lane reason. The table below shows how many entries each profile pulled from each lane across ${seeds.length} seeds.`);
   lines.push('');
   const allReasons = new Set();
   for (const profile of audit.profiles) {
@@ -584,11 +610,13 @@ async function main() {
     options: {
       'json-out': { type: 'string', default: '' },
       'md-out': { type: 'string', default: '' },
+      'seeds': { type: 'string', default: '' },
     },
     strict: false,
   });
 
-  const audit = buildSmartPracticeAudit();
+  const seeds = parseSeedList(values.seeds || '');
+  const audit = buildSmartPracticeAudit({ seeds });
   const jsonOut = values['json-out']
     ? path.resolve(values['json-out'])
     : path.join(REPORTS_DIR, 'grammar-qg-p19-smart-practice-audit.json');
@@ -598,10 +626,10 @@ async function main() {
 
   await fs.mkdir(path.dirname(jsonOut), { recursive: true });
   await fs.writeFile(jsonOut, JSON.stringify(audit, null, 2) + '\n', 'utf8');
-  await fs.writeFile(mdOut, renderMarkdown(audit), 'utf8');
+  await fs.writeFile(mdOut, renderMarkdown(audit, seeds), 'utf8');
 
   console.log(`Grammar QG P19 smart-practice audit: ${audit.summary.pass ? 'PASS' : 'FAIL'}`);
-  console.log(`  Sessions: ${audit.summary.sessionCount} (${audit.summary.profileCount} profiles × ${SEED_RANGE.length} seeds)`);
+  console.log(`  Sessions: ${audit.summary.sessionCount} (${audit.summary.profileCount} profiles × ${seeds.length} seeds)`);
   console.log(`  Failures: ${audit.summary.failureCount}`);
   console.log(`  Advisories: ${audit.summary.advisoryCount}`);
   console.log(`  JSON: ${jsonOut}`);

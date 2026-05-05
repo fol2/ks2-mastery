@@ -1,9 +1,9 @@
 # Grammar QG P10 — Quality Register
 
-**Content Release:** grammar-qg-p19-2026-05-04
-**Generated:** 2026-05-04T10:03:21.829Z
+**Content Release:** grammar-qg-p20-2026-05-05
+**Generated:** 2026-05-05T15:30:37.119Z
 **Templates:** 510
-**Approved:** 330 | **Blocked:** 0
+**Approved:** 353 | **Blocked:** 0
 **High-risk (1..15 seeds):** 199
 **Adult review decisions:** 103
 
@@ -128,14 +128,14 @@
 | 115 | `qg_p18_p15_active_passive_voice_transfer` | approved | - | 1..10 | ship |
 | 116 | `qg_p18_p15_adverbials_adverbial_transfer` | approved | - | 1..10 | ship |
 | 117 | `qg_p18_p15_adverbials_explain_fronted_adv` | approved | - | 1..10 | ship |
-| 118 | `qg_p18_p15_adverbials_fronted_adverbial_comma` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 118 | `qg_p18_p15_adverbials_fronted_adverbial_comma` | approved | - | 1..15 | ship |
 | 119 | `qg_p18_p15_adverbials_identify_fronted_adv` | approved | - | 1..10 | ship |
 | 120 | `qg_p18_p15_adverbials_move_adverbial` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 121 | `qg_p18_p15_apostrophes_possession_explain_possession` | approved | - | 1..10 | ship |
 | 122 | `qg_p18_p15_apostrophes_possession_possession_table` | approved | - | 1..10 | ship |
 | 123 | `qg_p18_p15_apostrophes_possession_possession_transfer` | approved | - | 1..10 | ship |
 | 124 | `qg_p18_p15_apostrophes_possession_possessive_choice` | approved | - | 1..10 | ship |
-| 125 | `qg_p18_p15_apostrophes_possession_possessive_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 125 | `qg_p18_p15_apostrophes_possession_possessive_rewrite` | approved | - | 1..15 | ship |
 | 126 | `qg_p18_p15_boundary_punctuation_boundary_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 127 | `qg_p18_p15_boundary_punctuation_boundary_label` | approved | - | 1..10 | ship |
 | 128 | `qg_p18_p15_boundary_punctuation_boundary_mark_choice` | approved | - | 1..10 | ship |
@@ -153,7 +153,7 @@
 | 140 | `qg_p18_p15_formality_formality_transfer` | approved | - | 1..10 | ship |
 | 141 | `qg_p18_p15_hyphen_ambiguity_explain_hyphen` | approved | - | 1..10 | ship |
 | 142 | `qg_p18_p15_hyphen_ambiguity_hyphen_choice` | approved | - | 1..10 | ship |
-| 143 | `qg_p18_p15_hyphen_ambiguity_hyphen_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 143 | `qg_p18_p15_hyphen_ambiguity_hyphen_fix` | approved | - | 1..15 | ship |
 | 144 | `qg_p18_p15_hyphen_ambiguity_hyphen_meaning` | approved | - | 1..10 | ship |
 | 145 | `qg_p18_p15_hyphen_ambiguity_hyphen_transfer` | approved | - | 1..10 | ship |
 | 146 | `qg_p18_p15_modal_verbs_explain_modal` | approved | - | 1..10 | ship |
@@ -184,16 +184,16 @@
 | 171 | `qg_p18_p15_sentence_functions_explain_function` | approved | - | 1..10 | ship |
 | 172 | `qg_p18_p15_sentence_functions_function_contrast` | approved | - | 1..15 | ship |
 | 173 | `qg_p18_p15_sentence_functions_identify_function` | approved | - | 1..10 | ship |
-| 174 | `qg_p18_p15_sentence_functions_punctuate_by_function` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 174 | `qg_p18_p15_sentence_functions_punctuate_by_function` | approved | - | 1..15 | ship |
 | 175 | `qg_p18_p15_sentence_functions_sat_style_function` | approved | - | 1..10 | ship |
 | 176 | `qg_p18_p15_speech_punctuation_explain_speech` | approved | - | 1..10 | ship |
 | 177 | `qg_p18_p15_speech_punctuation_speech_choice` | approved | - | 1..10 | ship |
-| 178 | `qg_p18_p15_speech_punctuation_speech_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 178 | `qg_p18_p15_speech_punctuation_speech_fix` | approved | - | 1..15 | ship |
 | 179 | `qg_p18_p15_speech_punctuation_speech_reporter_position` | approved | - | 1..10 | ship |
 | 180 | `qg_p18_p15_speech_punctuation_speech_transfer` | approved | - | 1..10 | ship |
 | 181 | `qg_p18_p15_standard_english_explain_standard` | approved | - | 1..10 | ship |
 | 182 | `qg_p18_p15_standard_english_standard_choice` | approved | - | 1..10 | ship |
-| 183 | `qg_p18_p15_standard_english_standard_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 183 | `qg_p18_p15_standard_english_standard_fix` | approved | - | 1..15 | ship |
 | 184 | `qg_p18_p15_standard_english_standard_pairs` | approved | - | 1..10 | ship |
 | 185 | `qg_p18_p15_standard_english_standard_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 186 | `qg_p18_p15_subject_object_explain_roles` | approved | - | 1..10 | ship |
@@ -203,7 +203,7 @@
 | 190 | `qg_p18_p15_subject_object_role_transfer` | approved | - | 1..10 | ship |
 | 191 | `qg_p18_p15_tense_aspect_choose_tense_form` | approved | - | 1..10 | ship |
 | 192 | `qg_p18_p15_tense_aspect_explain_tense` | approved | - | 1..10 | ship |
-| 193 | `qg_p18_p15_tense_aspect_tense_editing` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 193 | `qg_p18_p15_tense_aspect_tense_editing` | approved | - | 1..15 | ship |
 | 194 | `qg_p18_p15_tense_aspect_tense_near_miss` | approved | - | 1..10 | ship |
 | 195 | `qg_p18_p15_tense_aspect_tense_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 196 | `qg_p18_p15_word_classes_explain_word_class` | approved | - | 1..10 | ship |
@@ -221,11 +221,11 @@
 | 208 | `qg_p18_p16_adverbials_choose_best_opening_adverbial` | approved | - | 1..10 | ship |
 | 209 | `qg_p18_p16_adverbials_explain_fronted_comma` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 210 | `qg_p18_p16_adverbials_fronted_adverbial_type` | approved | - | 1..10 | ship |
-| 211 | `qg_p18_p16_adverbials_fronted_comma_fix` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 211 | `qg_p18_p16_adverbials_fronted_comma_fix` | approved | - | 1..15 | ship |
 | 212 | `qg_p18_p16_adverbials_move_adverbial_to_front` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 213 | `qg_p18_p16_apostrophes_possession_choose_possessive_phrase` | approved | - | 1..10 | ship |
 | 214 | `qg_p18_p16_apostrophes_possession_explain_position` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 215 | `qg_p18_p16_apostrophes_possession_fix_missing_apostrophe` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 215 | `qg_p18_p16_apostrophes_possession_fix_missing_apostrophe` | approved | - | 1..15 | ship |
 | 216 | `qg_p18_p16_apostrophes_possession_meaning_change_choice` | approved | - | 1..10 | ship |
 | 217 | `qg_p18_p16_apostrophes_possession_possession_not_contraction` | approved | - | 1..10 | ship |
 | 218 | `qg_p18_p16_apostrophes_possession_singular_plural_possession` | approved | - | 1..10 | ship |
@@ -250,7 +250,7 @@
 | 237 | `qg_p18_p16_formality_register_context_choice` | approved | - | 1..10 | ship |
 | 238 | `qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning` | approved | - | 1..10 | ship |
 | 239 | `qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 240 | `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 240 | `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase` | approved | - | 1..15 | ship |
 | 241 | `qg_p18_p16_hyphen_ambiguity_hyphen_function_choice` | approved | - | 1..10 | ship |
 | 242 | `qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table` | approved | - | 1..10 | ship |
 | 243 | `qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading` | approved | - | 1..10 | ship |
@@ -266,7 +266,7 @@
 | 253 | `qg_p18_p16_noun_phrases_explain_expansion` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 254 | `qg_p18_p16_noun_phrases_head_noun_identify` | approved | - | 1..10 | ship |
 | 255 | `qg_p18_p16_noun_phrases_noun_phrase_vs_clause` | approved | - | 1..10 | ship |
-| 256 | `qg_p18_p16_parenthesis_commas_add_parenthesis_commas` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 256 | `qg_p18_p16_parenthesis_commas_add_parenthesis_commas` | approved | - | 1..15 | ship |
 | 257 | `qg_p18_p16_parenthesis_commas_choose_parenthetical_part` | approved | - | 1..10 | ship |
 | 258 | `qg_p18_p16_parenthesis_commas_explain_parenthesis` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 259 | `qg_p18_p16_parenthesis_commas_parenthesis_or_not` | approved | - | 1..10 | ship |
@@ -437,18 +437,18 @@
 | 424 | `qg_p18_p18_apostrophes_possession_diagnostic_identify` | approved | - | 1..10 | ship |
 | 425 | `qg_p18_p18_apostrophes_possession_explain_reasoning` | approved | - | 1..10 | ship |
 | 426 | `qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 427 | `qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 427 | `qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 428 | `qg_p18_p18_apostrophes_possession_sat_table_classification` | approved | - | 1..10 | ship |
 | 429 | `qg_p18_p18_boundary_punctuation_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 430 | `qg_p18_p18_boundary_punctuation_diagnostic_identify` | approved | - | 1..10 | ship |
 | 431 | `qg_p18_p18_boundary_punctuation_explain_reasoning` | approved | - | 1..10 | ship |
-| 432 | `qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 432 | `qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 433 | `qg_p18_p18_boundary_punctuation_sat_table_classification` | approved | - | 1..10 | ship |
 | 434 | `qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 435 | `qg_p18_p18_clauses_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 436 | `qg_p18_p18_clauses_diagnostic_identify` | approved | - | 1..10 | ship |
 | 437 | `qg_p18_p18_clauses_explain_reasoning` | approved | - | 1..10 | ship |
-| 438 | `qg_p18_p18_clauses_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 438 | `qg_p18_p18_clauses_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 439 | `qg_p18_p18_clauses_sat_table_classification` | approved | - | 1..10 | ship |
 | 440 | `qg_p18_p18_formality_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 441 | `qg_p18_p18_formality_diagnostic_identify` | approved | - | 1..10 | ship |
@@ -458,13 +458,13 @@
 | 445 | `qg_p18_p18_hyphen_ambiguity_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 446 | `qg_p18_p18_hyphen_ambiguity_diagnostic_identify` | approved | - | 1..10 | ship |
 | 447 | `qg_p18_p18_hyphen_ambiguity_explain_reasoning` | approved | - | 1..10 | ship |
-| 448 | `qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 448 | `qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 449 | `qg_p18_p18_hyphen_ambiguity_sat_table_classification` | approved | - | 1..10 | ship |
 | 450 | `qg_p18_p18_modal_verbs_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 451 | `qg_p18_p18_modal_verbs_diagnostic_identify` | approved | - | 1..10 | ship |
 | 452 | `qg_p18_p18_modal_verbs_explain_reasoning` | approved | - | 1..10 | ship |
 | 453 | `qg_p18_p18_modal_verbs_formality_modal_formality_strength` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 454 | `qg_p18_p18_modal_verbs_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 454 | `qg_p18_p18_modal_verbs_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 455 | `qg_p18_p18_modal_verbs_sat_table_classification` | approved | - | 1..10 | ship |
 | 456 | `qg_p18_p18_noun_phrases_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 457 | `qg_p18_p18_noun_phrases_diagnostic_identify` | approved | - | 1..10 | ship |
@@ -474,7 +474,7 @@
 | 461 | `qg_p18_p18_parenthesis_commas_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 462 | `qg_p18_p18_parenthesis_commas_diagnostic_identify` | approved | - | 1..10 | ship |
 | 463 | `qg_p18_p18_parenthesis_commas_explain_reasoning` | approved | - | 1..10 | ship |
-| 464 | `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 464 | `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 465 | `qg_p18_p18_parenthesis_commas_sat_table_classification` | approved | - | 1..10 | ship |
 | 466 | `qg_p18_p18_pronouns_cohesion_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 467 | `qg_p18_p18_pronouns_cohesion_diagnostic_identify` | approved | - | 1..10 | ship |
@@ -486,28 +486,28 @@
 | 473 | `qg_p18_p18_relative_clauses_diagnostic_identify` | approved | - | 1..10 | ship |
 | 474 | `qg_p18_p18_relative_clauses_explain_reasoning` | approved | - | 1..10 | ship |
 | 475 | `qg_p18_p18_relative_clauses_parenthesis_commas_relative_parenthesis_punctuation` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 476 | `qg_p18_p18_relative_clauses_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 476 | `qg_p18_p18_relative_clauses_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 477 | `qg_p18_p18_relative_clauses_sat_table_classification` | approved | - | 1..10 | ship |
 | 478 | `qg_p18_p18_sentence_functions_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 479 | `qg_p18_p18_sentence_functions_diagnostic_identify` | approved | - | 1..10 | ship |
 | 480 | `qg_p18_p18_sentence_functions_explain_reasoning` | approved | - | 1..10 | ship |
-| 481 | `qg_p18_p18_sentence_functions_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 481 | `qg_p18_p18_sentence_functions_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 482 | `qg_p18_p18_sentence_functions_sat_table_classification` | approved | - | 1..10 | ship |
 | 483 | `qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 484 | `qg_p18_p18_speech_punctuation_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 485 | `qg_p18_p18_speech_punctuation_diagnostic_identify` | approved | - | 1..10 | ship |
 | 486 | `qg_p18_p18_speech_punctuation_explain_reasoning` | approved | - | 1..10 | ship |
-| 487 | `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 487 | `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 488 | `qg_p18_p18_speech_punctuation_sat_table_classification` | approved | - | 1..10 | ship |
 | 489 | `qg_p18_p18_standard_english_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 490 | `qg_p18_p18_standard_english_diagnostic_identify` | approved | - | 1..10 | ship |
 | 491 | `qg_p18_p18_standard_english_explain_reasoning` | approved | - | 1..10 | ship |
-| 492 | `qg_p18_p18_standard_english_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 492 | `qg_p18_p18_standard_english_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 493 | `qg_p18_p18_standard_english_sat_table_classification` | approved | - | 1..10 | ship |
 | 494 | `qg_p18_p18_subject_object_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 495 | `qg_p18_p18_subject_object_diagnostic_identify` | approved | - | 1..10 | ship |
 | 496 | `qg_p18_p18_subject_object_explain_reasoning` | approved | - | 1..10 | ship |
-| 497 | `qg_p18_p18_subject_object_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 497 | `qg_p18_p18_subject_object_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 498 | `qg_p18_p18_subject_object_sat_table_classification` | approved | - | 1..10 | ship |
 | 499 | `qg_p18_p18_tense_aspect_application_transfer` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 500 | `qg_p18_p18_tense_aspect_diagnostic_identify` | approved | - | 1..10 | ship |
@@ -519,7 +519,7 @@
 | 506 | `qg_p18_p18_word_classes_diagnostic_identify` | approved | - | 1..10 | ship |
 | 507 | `qg_p18_p18_word_classes_explain_reasoning` | approved | - | 1..10 | ship |
 | 508 | `qg_p18_p18_word_classes_noun_phrases_word_class_np_roles` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
-| 509 | `qg_p18_p18_word_classes_precision_repair_or_rewrite` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
+| 509 | `qg_p18_p18_word_classes_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 510 | `qg_p18_p18_word_classes_sat_table_classification` | approved | - | 1..10 | ship |
 
 ## Detailed Judgements
@@ -3636,30 +3636,30 @@
 
 ### `qg_p18_p15_adverbials_fronted_adverbial_comma`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'adverbials'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Copy the sentence and add the comma after the fronted adverbial. Before sunri..." → non-scored
+- Seed 1: "Copy the sentence and add the comma after the fronted adverbial. Before sunri..." → correct
   - Feedback: "Before sunrise" is fronted, so add a comma after it.
-- Seed 2: "Copy the sentence and add the comma after the fronted adverbial. After the co..." → non-scored
+- Seed 2: "Copy the sentence and add the comma after the fronted adverbial. After the co..." → correct
   - Feedback: "After the concert" is fronted, so add a comma after it.
-- Seed 3: "Copy the sentence and add the comma after the fronted adverbial. In the corne..." → non-scored
+- Seed 3: "Copy the sentence and add the comma after the fronted adverbial. In the corne..." → correct
   - Feedback: "In the corner of the hall" is fronted, so add a comma after it.
-- Seed 4: "Copy the sentence and add the comma after the fronted adverbial. With great c..." → non-scored
+- Seed 4: "Copy the sentence and add the comma after the fronted adverbial. With great c..." → correct
   - Feedback: "With great care" is fronted, so add a comma after it.
-- Seed 5: "Copy the sentence and add the comma after the fronted adverbial. During the t..." → non-scored
+- Seed 5: "Copy the sentence and add the comma after the fronted adverbial. During the t..." → correct
   - Feedback: "During the thunderstorm" is fronted, so add a comma after it.
 
 ### `qg_p18_p15_adverbials_identify_fronted_adv`
@@ -3817,30 +3817,30 @@
 
 ### `qg_p18_p15_apostrophes_possession_possessive_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'apostrophes_possession'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Write the possessive phrase for: one dog owns a bowl." → non-scored
+- Seed 1: "Write the possessive phrase for: one dog owns a bowl." → correct
   - Feedback: Singular and plural possession use different apostrophe positions.
-- Seed 2: "Write the possessive phrase for: several girls own boots." → non-scored
+- Seed 2: "Write the possessive phrase for: several girls own boots." → correct
   - Feedback: Singular and plural possession use different apostrophe positions.
-- Seed 3: "Write the possessive phrase for: one teacher owns a desk." → non-scored
+- Seed 3: "Write the possessive phrase for: one teacher owns a desk." → correct
   - Feedback: Singular and plural possession use different apostrophe positions.
-- Seed 4: "Write the possessive phrase for: several players own shirts." → non-scored
+- Seed 4: "Write the possessive phrase for: several players own shirts." → correct
   - Feedback: Singular and plural possession use different apostrophe positions.
-- Seed 5: "Write the possessive phrase for: one baby owns a blanket." → non-scored
+- Seed 5: "Write the possessive phrase for: one baby owns a blanket." → correct
   - Feedback: Singular and plural possession use different apostrophe positions.
 
 ### `qg_p18_p15_boundary_punctuation_boundary_fix`
@@ -4299,30 +4299,30 @@
 
 ### `qg_p18_p15_hyphen_ambiguity_hyphen_fix`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'hyphen_ambiguity'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Add a hyphen if needed to avoid ambiguity: man eating shark" → non-scored
+- Seed 1: "Add a hyphen if needed to avoid ambiguity: man eating shark" → correct
   - Feedback: The intended meaning is a shark that eats people.
-- Seed 2: "Add a hyphen if needed to avoid ambiguity: recover the chair" → non-scored
+- Seed 2: "Add a hyphen if needed to avoid ambiguity: recover the chair" → correct
   - Feedback: The intended meaning is cover the chair again.
-- Seed 3: "Add a hyphen if needed to avoid ambiguity: twenty odd children" → non-scored
+- Seed 3: "Add a hyphen if needed to avoid ambiguity: twenty odd children" → correct
   - Feedback: The intended meaning is about twenty children.
-- Seed 4: "Add a hyphen if needed to avoid ambiguity: small business owner" → non-scored
+- Seed 4: "Add a hyphen if needed to avoid ambiguity: small business owner" → correct
   - Feedback: The intended meaning is owner of a small business.
-- Seed 5: "Add a hyphen if needed to avoid ambiguity: little used path" → non-scored
+- Seed 5: "Add a hyphen if needed to avoid ambiguity: little used path" → correct
   - Feedback: The intended meaning is a path that is not used often.
 
 ### `qg_p18_p15_hyphen_ambiguity_hyphen_meaning`
@@ -5126,30 +5126,30 @@
 
 ### `qg_p18_p15_sentence_functions_punctuate_by_function`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Add the correct ending punctuation for the command: Close the library door qu..." → non-scored
+- Seed 1: "Add the correct ending punctuation for the command: Close the library door qu..." → correct
   - Feedback: A command needs the ending punctuation shown in the answer here.
-- Seed 2: "Add the correct ending punctuation for the exclamation: How bright the comet ..." → non-scored
-  - Feedback: an exclamation needs the ending punctuation shown in the answer here.
-- Seed 3: "Add the correct ending punctuation for the question: Did Maya remember her re..." → non-scored
+- Seed 2: "Add the correct ending punctuation for the exclamation: How bright the comet ..." → correct
+  - Feedback: An exclamation needs the ending punctuation shown in the answer here.
+- Seed 3: "Add the correct ending punctuation for the question: Did Maya remember her re..." → correct
   - Feedback: A question needs the ending punctuation shown in the answer here.
-- Seed 4: "Add the correct ending punctuation for the statement: The old clock chimed at..." → non-scored
+- Seed 4: "Add the correct ending punctuation for the statement: The old clock chimed at..." → correct
   - Feedback: A statement needs the ending punctuation shown in the answer here.
-- Seed 5: "Add the correct ending punctuation for the command: Please pass the glue stick" → non-scored
+- Seed 5: "Add the correct ending punctuation for the command: Please pass the glue stick" → correct
   - Feedback: A command needs the ending punctuation shown in the answer here.
 
 ### `qg_p18_p15_sentence_functions_sat_style_function`
@@ -5231,30 +5231,30 @@
 
 ### `qg_p18_p15_speech_punctuation_speech_fix`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'speech_punctuation'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Correct the direct speech punctuation: "Where are you going" asked Mum." → non-scored
+- Seed 1: "Correct the direct speech punctuation: "Where are you going" asked Mum." → correct
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
-- Seed 2: "Correct the direct speech punctuation: "Sit down" said the coach." → non-scored
+- Seed 2: "Correct the direct speech punctuation: "Sit down" said the coach." → correct
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
-- Seed 3: "Correct the direct speech punctuation: Dad asked "Have you packed your boots"" → non-scored
+- Seed 3: "Correct the direct speech punctuation: Dad asked "Have you packed your boots"" → correct
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
-- Seed 4: "Correct the direct speech punctuation: "I found the key" whispered Ana." → non-scored
+- Seed 4: "Correct the direct speech punctuation: "I found the key" whispered Ana." → correct
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
-- Seed 5: "Correct the direct speech punctuation: "Look at the sky" shouted Omar." → non-scored
+- Seed 5: "Correct the direct speech punctuation: "Look at the sky" shouted Omar." → correct
   - Feedback: Punctuation belonging to the spoken words goes inside the speech marks.
 
 ### `qg_p18_p15_speech_punctuation_speech_reporter_position`
@@ -5360,30 +5360,30 @@
 
 ### `qg_p18_p15_standard_english_standard_fix`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Rewrite this sentence using Standard English: We was late for assembly." → non-scored
+- Seed 1: "Rewrite this sentence using Standard English: We was late for assembly." → correct
   - Feedback: Use the accepted written form rather than a spoken non-standard form.
-- Seed 2: "Rewrite this sentence using Standard English: I done my project yesterday." → non-scored
+- Seed 2: "Rewrite this sentence using Standard English: I done my project yesterday." → correct
   - Feedback: Use the accepted written form rather than a spoken non-standard form.
-- Seed 3: "Rewrite this sentence using Standard English: She seen the poster in the libr..." → non-scored
+- Seed 3: "Rewrite this sentence using Standard English: She seen the poster in the libr..." → correct
   - Feedback: Use the accepted written form rather than a spoken non-standard form.
-- Seed 4: "Rewrite this sentence using Standard English: They was waiting by the gate." → non-scored
+- Seed 4: "Rewrite this sentence using Standard English: They was waiting by the gate." → correct
   - Feedback: Use the accepted written form rather than a spoken non-standard form.
-- Seed 5: "Rewrite this sentence using Standard English: He brung his lunch in a blue box." → non-scored
+- Seed 5: "Rewrite this sentence using Standard English: He brung his lunch in a blue box." → correct
   - Feedback: Use the accepted written form rather than a spoken non-standard form.
 
 ### `qg_p18_p15_standard_english_standard_pairs`
@@ -5628,30 +5628,30 @@
 
 ### `qg_p18_p15_tense_aspect_tense_editing`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'tense_aspect'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Fix the verb form so it matches "present perfect": I finish my homework." → non-scored
+- Seed 1: "Fix the verb form so it matches "present perfect": I finish my homework." → correct
   - Feedback: Change only what is needed to match the tense/aspect.
-- Seed 2: "Fix the verb form so it matches "past perfect": She packs her bag before the ..." → non-scored
+- Seed 2: "Fix the verb form so it matches "past perfect": She packs her bag before the ..." → correct
   - Feedback: Change only what is needed to match the tense/aspect.
-- Seed 3: "Fix the verb form so it matches "past progressive": The dog chases the cat." → non-scored
+- Seed 3: "Fix the verb form so it matches "past progressive": The dog chases the cat." → correct
   - Feedback: Change only what is needed to match the tense/aspect.
-- Seed 4: "Fix the verb form so it matches "present progressive": We eat lunch in the hall." → non-scored
+- Seed 4: "Fix the verb form so it matches "present progressive": We eat lunch in the hall." → correct
   - Feedback: Change only what is needed to match the tense/aspect.
-- Seed 5: "Fix the verb form so it matches "present perfect": He writes the report." → non-scored
+- Seed 5: "Fix the verb form so it matches "present perfect": He writes the report." → correct
   - Feedback: Change only what is needed to match the tense/aspect.
 
 ### `qg_p18_p15_tense_aspect_tense_near_miss`
@@ -6088,30 +6088,30 @@
 
 ### `qg_p18_p16_adverbials_fronted_comma_fix`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'adverbials'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Add the comma after the fronted adverbial: Before sunrise the campers packed ..." → non-scored
+- Seed 1: "Add the comma after the fronted adverbial: Before sunrise the campers packed ..." → correct
   - Feedback: The fronted adverbial is "Before sunrise", so add a comma after it.
-- Seed 2: "Add the comma after the fronted adverbial: After the concert the audience che..." → non-scored
+- Seed 2: "Add the comma after the fronted adverbial: After the concert the audience che..." → correct
   - Feedback: The fronted adverbial is "After the concert", so add a comma after it.
-- Seed 3: "Add the comma after the fronted adverbial: In the old library the pupils read..." → non-scored
+- Seed 3: "Add the comma after the fronted adverbial: In the old library the pupils read..." → correct
   - Feedback: The fronted adverbial is "In the old library", so add a comma after it.
-- Seed 4: "Add the comma after the fronted adverbial: With great care Maya lifted the gl..." → non-scored
+- Seed 4: "Add the comma after the fronted adverbial: With great care Maya lifted the gl..." → correct
   - Feedback: The fronted adverbial is "With great care", so add a comma after it.
-- Seed 5: "Add the comma after the fronted adverbial: During the storm the dog hid under..." → non-scored
+- Seed 5: "Add the comma after the fronted adverbial: During the storm the dog hid under..." → correct
   - Feedback: The fronted adverbial is "During the storm", so add a comma after it.
 
 ### `qg_p18_p16_adverbials_move_adverbial_to_front`
@@ -6196,30 +6196,30 @@
 
 ### `qg_p18_p16_apostrophes_possession_fix_missing_apostrophe`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'apostrophes_possession'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Add the apostrophe: the dogs bowl" → non-scored
+- Seed 1: "Add the apostrophe: the dogs bowl" → correct
   - Feedback: The correct form is the dog's bowl.
-- Seed 2: "Add the apostrophe: the girls boots" → non-scored
+- Seed 2: "Add the apostrophe: the girls boots" → correct
   - Feedback: The correct form is the girls' boots.
-- Seed 3: "Add the apostrophe: the teachers desk" → non-scored
+- Seed 3: "Add the apostrophe: the teachers desk" → correct
   - Feedback: The correct form is the teacher's desk.
-- Seed 4: "Add the apostrophe: the teachers mugs" → non-scored
+- Seed 4: "Add the apostrophe: the teachers mugs" → correct
   - Feedback: The correct form is the teachers' mugs.
-- Seed 5: "Add the apostrophe: the foxs den" → non-scored
+- Seed 5: "Add the apostrophe: the foxs den" → correct
   - Feedback: The correct form is the fox's den.
 
 ### `qg_p18_p16_apostrophes_possession_meaning_change_choice`
@@ -6867,30 +6867,30 @@
 
 ### `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'hyphen_ambiguity'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Add a hyphen if needed to show this meaning: a shark that eats people — man e..." → non-scored
+- Seed 1: "Add a hyphen if needed to show this meaning: a shark that eats people — man e..." → correct
   - Feedback: The clearer version is man-eating shark.
-- Seed 2: "Add a hyphen if needed to show this meaning: a man who eats shark — man-eatin..." → non-scored
+- Seed 2: "Add a hyphen if needed to show this meaning: a man who eats shark — man-eatin..." → correct
   - Feedback: The clearer version is man eating shark.
-- Seed 3: "Add a hyphen if needed to show this meaning: a machine that makes ice cream —..." → non-scored
+- Seed 3: "Add a hyphen if needed to show this meaning: a machine that makes ice cream —..." → correct
   - Feedback: The clearer version is ice-cream maker.
-- Seed 4: "Add a hyphen if needed to show this meaning: a maker made of ice cream — ice-..." → non-scored
+- Seed 4: "Add a hyphen if needed to show this meaning: a maker made of ice cream — ice-..." → correct
   - Feedback: The clearer version is ice cream maker.
-- Seed 5: "Add a hyphen if needed to show this meaning: a bird with a red breast — red b..." → non-scored
+- Seed 5: "Add a hyphen if needed to show this meaning: a bird with a red breast — red b..." → correct
   - Feedback: The clearer version is red-breasted bird.
 
 ### `qg_p18_p16_hyphen_ambiguity_hyphen_function_choice`
@@ -7300,30 +7300,30 @@
 
 ### `qg_p18_p16_parenthesis_commas_add_parenthesis_commas`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'parenthesis_commas'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Add commas for parenthesis if needed: Luca who was first in line opened the d..." → non-scored
+- Seed 1: "Add commas for parenthesis if needed: Luca who was first in line opened the d..." → correct
   - Feedback: A correct version is: Luca, who was first in line, opened the door.
-- Seed 2: "Add commas for parenthesis if needed: The guide who had visited before led us." → non-scored
+- Seed 2: "Add commas for parenthesis if needed: The guide who had visited before led us." → correct
   - Feedback: A correct version is: The guide, who had visited before, led us.
-- Seed 3: "Add commas for parenthesis if needed: Our class visited York the oldest city ..." → non-scored
+- Seed 3: "Add commas for parenthesis if needed: Our class visited York the oldest city ..." → correct
   - Feedback: A correct version is: Our class visited York, the oldest city on our route, first.
-- Seed 4: "Add commas for parenthesis if needed: The cake baked by Aisha tasted wonderful." → non-scored
+- Seed 4: "Add commas for parenthesis if needed: The cake baked by Aisha tasted wonderful." → correct
   - Feedback: A correct version is: The cake, baked by Aisha, tasted wonderful.
-- Seed 5: "Add commas for parenthesis if needed: Maya my neighbour won the race." → non-scored
+- Seed 5: "Add commas for parenthesis if needed: Maya my neighbour won the race." → correct
   - Feedback: A correct version is: Maya, my neighbour, won the race.
 
 ### `qg_p18_p16_parenthesis_commas_choose_parenthetical_part`
@@ -7928,7 +7928,7 @@
 - Seed 2: "Correct the punctuation so the sentence is a question: Where is the spare key." → non-scored
   - Feedback: The punctuation should match the sentence function. A question needs this ending: Where is the sp...
 - Seed 3: "Correct the punctuation so the sentence is an exclamation: What a tiny seed t..." → non-scored
-  - Feedback: The punctuation should match the sentence function. an exclamation needs this ending: What a tiny...
+  - Feedback: The punctuation should match the sentence function. An exclamation needs this ending: What a tiny...
 - Seed 4: "Correct the punctuation so the sentence is a statement: The picnic starts at ..." → non-scored
   - Feedback: The punctuation should match the sentence function. A statement needs this ending: The picnic sta...
 - Seed 5: "Correct the punctuation so the sentence is a command: Bring the register?" → non-scored
@@ -11552,11 +11552,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: The bread was baked by the chef." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: The roof was damaged by the s..." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: The park is maintained by the..." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_active_passive_subject_object_voice_subject_object_roles`
@@ -11736,11 +11736,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: Before the bell" → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: Beside the river" → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: With great care" → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_apostrophes_possession_application_transfer`
@@ -11849,30 +11849,30 @@
 
 ### `qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'apostrophes_possession'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Write the possessive phrase for one dog owns a bowl." → non-scored
+- Seed 1: "Write the possessive phrase for one dog owns a bowl." → correct
   - Feedback: One dog owns the bowl, so apostrophe before s.
-- Seed 2: "Write the possessive phrase for several girls own boots." → non-scored
+- Seed 2: "Write the possessive phrase for several girls own boots." → correct
   - Feedback: Girls is plural ending in s, so apostrophe after s.
-- Seed 3: "Write the possessive phrase for one teacher owns a desk." → non-scored
+- Seed 3: "Write the possessive phrase for one teacher owns a desk." → correct
   - Feedback: One teacher, apostrophe before s.
-- Seed 4: "Write the possessive phrase for several birds own nests." → non-scored
+- Seed 4: "Write the possessive phrase for several birds own nests." → correct
   - Feedback: Plural birds takes apostrophe after s.
-- Seed 5: "Write the possessive phrase for one child owns a coat." → non-scored
+- Seed 5: "Write the possessive phrase for one child owns a coat." → correct
   - Feedback: Child is singular, so child's.
 
 ### `qg_p18_p18_apostrophes_possession_sat_table_classification`
@@ -11892,11 +11892,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: the dog's bowl" → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: the girls' boots" → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: the teacher's desk" → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_boundary_punctuation_application_transfer`
@@ -11977,30 +11977,30 @@
 
 ### `qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'boundary_punctuation'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'boundary_punctuation'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Write the punctuation mark used in this sentence: The sky darkened; the gulls..." → non-scored
+- Seed 1: "Write the punctuation mark used in this sentence: The sky darkened; the gulls..." → correct
   - Feedback: A semi-colon links two related main clauses.
-- Seed 2: "Write the punctuation mark used in this sentence: I needed only one thing: a ..." → non-scored
+- Seed 2: "Write the punctuation mark used in this sentence: I needed only one thing: a ..." → correct
   - Feedback: The colon introduces an explanation of the one thing.
-- Seed 3: "Write the punctuation mark used in this sentence: The gate opened — nobody mo..." → non-scored
+- Seed 3: "Write the punctuation mark used in this sentence: The gate opened — nobody mo..." → correct
   - Feedback: The dash creates a dramatic break.
-- Seed 4: "Write the punctuation mark used in this sentence: The path was narrow; the ri..." → non-scored
+- Seed 4: "Write the punctuation mark used in this sentence: The path was narrow; the ri..." → correct
   - Feedback: Both sides are complete linked clauses.
-- Seed 5: "Write the punctuation mark used in this sentence: Bring these items: a pencil..." → non-scored
+- Seed 5: "Write the punctuation mark used in this sentence: Bring these items: a pencil..." → correct
   - Feedback: The colon introduces a list.
 
 ### `qg_p18_p18_boundary_punctuation_sat_table_classification`
@@ -12020,11 +12020,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: The sky darkened; the gulls f..." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: I needed only one thing: a to..." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: The gate opened — nobody moved." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation`
@@ -12143,30 +12143,30 @@
 
 ### `qg_p18_p18_clauses_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'clauses'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Write the subordinate clause from this sentence: Although the path was muddy,..." → non-scored
+- Seed 1: "Write the subordinate clause from this sentence: Although the path was muddy,..." → correct
   - Feedback: The although-clause depends on the main clause.
-- Seed 2: "Write the subordinate clause from this sentence: When the whistle blew, the p..." → non-scored
+- Seed 2: "Write the subordinate clause from this sentence: When the whistle blew, the p..." → correct
   - Feedback: The when-clause gives the time and depends on the main clause.
-- Seed 3: "Write the subordinate clause from this sentence: Because the lift was broken,..." → non-scored
+- Seed 3: "Write the subordinate clause from this sentence: Because the lift was broken,..." → correct
   - Feedback: The because-clause gives the reason.
-- Seed 4: "Write the subordinate clause from this sentence: If the library is open, I wi..." → non-scored
+- Seed 4: "Write the subordinate clause from this sentence: If the library is open, I wi..." → correct
   - Feedback: The if-clause gives a condition.
-- Seed 5: "Write the subordinate clause from this sentence: While the soup simmered, Dad..." → non-scored
+- Seed 5: "Write the subordinate clause from this sentence: While the soup simmered, Dad..." → correct
   - Feedback: The while-clause gives simultaneous time.
 
 ### `qg_p18_p18_clauses_sat_table_classification`
@@ -12186,11 +12186,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: Although the path was muddy" → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: When the whistle blew" → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: Because the lift was broken" → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_formality_application_transfer`
@@ -12324,11 +12324,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: The club was established last..." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: Please discover whether the h..." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: We need to request additional..." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_hyphen_ambiguity_application_transfer`
@@ -12409,30 +12409,30 @@
 
 ### `qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'hyphen_ambiguity'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Rewrite with a hyphen to make this meaning clear (a shark that eats people): ..." → non-scored
+- Seed 1: "Rewrite with a hyphen to make this meaning clear (a shark that eats people): ..." → correct
   - Feedback: The hyphen shows man-eating describes the shark.
-- Seed 2: "Rewrite with a hyphen to make this meaning clear (cover the chair again): rec..." → non-scored
+- Seed 2: "Rewrite with a hyphen to make this meaning clear (cover the chair again): rec..." → correct
   - Feedback: The hyphen separates re-cover from recover.
-- Seed 3: "Rewrite with a hyphen to make this meaning clear (about twenty pupils): twent..." → non-scored
+- Seed 3: "Rewrite with a hyphen to make this meaning clear (about twenty pupils): twent..." → correct
   - Feedback: The hyphen shows twenty-odd is one estimate.
-- Seed 4: "Rewrite with a hyphen to make this meaning clear (a keeper of small animals):..." → non-scored
+- Seed 4: "Rewrite with a hyphen to make this meaning clear (a keeper of small animals):..." → correct
   - Feedback: The hyphen shows small-animal describes the keeper's work.
-- Seed 5: "Rewrite with a hyphen to make this meaning clear (a club outside lessons): ex..." → non-scored
+- Seed 5: "Rewrite with a hyphen to make this meaning clear (a club outside lessons): ex..." → correct
   - Feedback: The hyphen joins the compound adjective.
 
 ### `qg_p18_p18_hyphen_ambiguity_sat_table_classification`
@@ -12452,11 +12452,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: man-eating shark" → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: re-cover the chair" → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: twenty-odd pupils" → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_modal_verbs_application_transfer`
@@ -12575,30 +12575,30 @@
 
 ### `qg_p18_p18_modal_verbs_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'modal_verbs'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'modal_verbs'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Complete the sentence with the best modal verb for strong advice: You ___ wea..." → non-scored
+- Seed 1: "Complete the sentence with the best modal verb for strong advice: You ___ wea..." → correct
   - Feedback: Should gives strong advice.
-- Seed 2: "Complete the sentence with the best modal verb for possibility: It ___ rain l..." → non-scored
+- Seed 2: "Complete the sentence with the best modal verb for possibility: It ___ rain l..." → correct
   - Feedback: Might shows possibility.
-- Seed 3: "Complete the sentence with the best modal verb for certainty: The train ___ a..." → non-scored
+- Seed 3: "Complete the sentence with the best modal verb for certainty: The train ___ a..." → correct
   - Feedback: Will shows expected certainty.
-- Seed 4: "Complete the sentence with the best modal verb for obligation/advice: You ___..." → non-scored
+- Seed 4: "Complete the sentence with the best modal verb for obligation/advice: You ___..." → correct
   - Feedback: Should gives advice about the right action.
-- Seed 5: "Complete the sentence with the best modal verb for strong certainty: The parc..." → non-scored
+- Seed 5: "Complete the sentence with the best modal verb for strong certainty: The parc..." → correct
   - Feedback: Must shows strong certainty.
 
 ### `qg_p18_p18_modal_verbs_sat_table_classification`
@@ -12618,11 +12618,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: You should wear a helmet on t..." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: It might rain later, but the ..." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: The train will arrive at six ..." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_noun_phrases_application_transfer`
@@ -12746,11 +12746,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: the small blue marble" → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: the patient guide with a red ..." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: the ancient coin from the chest" → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_parenthesis_commas_application_transfer`
@@ -12831,30 +12831,30 @@
 
 ### `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'parenthesis_commas'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Copy the sentence and add commas for parenthesis. Luca who was first in line ..." → non-scored
+- Seed 1: "Copy the sentence and add commas for parenthesis. Luca who was first in line ..." → correct
   - Feedback: Commas mark the parenthesis.
-- Seed 2: "Copy the sentence and add commas for parenthesis. The castle built in 1200 ov..." → non-scored
+- Seed 2: "Copy the sentence and add commas for parenthesis. The castle built in 1200 ov..." → correct
   - Feedback: The extra information can be lifted out.
-- Seed 3: "Copy the sentence and add commas for parenthesis. Our teacher a keen cyclist ..." → non-scored
+- Seed 3: "Copy the sentence and add commas for parenthesis. Our teacher a keen cyclist ..." → correct
   - Feedback: The appositive phrase is parenthetical.
-- Seed 4: "Copy the sentence and add commas for parenthesis. The match which lasted two ..." → non-scored
+- Seed 4: "Copy the sentence and add commas for parenthesis. The match which lasted two ..." → correct
   - Feedback: The relative clause is extra information.
-- Seed 5: "Copy the sentence and add commas for parenthesis. Mina wearing her red scarf ..." → non-scored
+- Seed 5: "Copy the sentence and add commas for parenthesis. Mina wearing her red scarf ..." → correct
   - Feedback: The phrase adds removable detail.
 
 ### `qg_p18_p18_parenthesis_commas_sat_table_classification`
@@ -12874,11 +12874,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: who was first in line" → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: built in 1200" → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: a keen cyclist" → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_pronouns_cohesion_application_transfer`
@@ -13030,11 +13030,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: Amira picked up the map. She ..." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: Ben showed the photo to Lucas..." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: The dog chased the ball. It r..." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_relative_clauses_application_transfer`
@@ -13153,30 +13153,30 @@
 
 ### `qg_p18_p18_relative_clauses_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'relative_clauses'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Write the relative clause from this sentence: The artist who painted the mura..." → non-scored
+- Seed 1: "Write the relative clause from this sentence: The artist who painted the mura..." → correct
   - Feedback: The clause begins with who and adds information about the artist.
-- Seed 2: "Write the relative clause from this sentence: The compass that we borrowed po..." → non-scored
+- Seed 2: "Write the relative clause from this sentence: The compass that we borrowed po..." → correct
   - Feedback: The relative clause adds information about the compass.
-- Seed 3: "Write the relative clause from this sentence: The village where my uncle live..." → non-scored
+- Seed 3: "Write the relative clause from this sentence: The village where my uncle live..." → correct
   - Feedback: Where introduces a relative clause linked to village.
-- Seed 4: "Write the relative clause from this sentence: The player whose boot was missi..." → non-scored
+- Seed 4: "Write the relative clause from this sentence: The player whose boot was missi..." → correct
   - Feedback: Whose links the extra information to player.
-- Seed 5: "Write the relative clause from this sentence: The cake which Grandma baked sm..." → non-scored
+- Seed 5: "Write the relative clause from this sentence: The cake which Grandma baked sm..." → correct
   - Feedback: Which introduces extra information about the cake.
 
 ### `qg_p18_p18_relative_clauses_sat_table_classification`
@@ -13196,11 +13196,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: who painted the mural" → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: that we borrowed" → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: where my uncle lives" → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_sentence_functions_application_transfer`
@@ -13281,30 +13281,30 @@
 
 ### `qg_p18_p18_sentence_functions_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Add the correct ending punctuation, then copy the sentence: Please return the..." → non-scored
+- Seed 1: "Add the correct ending punctuation, then copy the sentence: Please return the..." → correct
   - Feedback: It tells someone what to do. The ending punctuation must match the function.
-- Seed 2: "Add the correct ending punctuation, then copy the sentence: How bright the la..." → non-scored
+- Seed 2: "Add the correct ending punctuation, then copy the sentence: How bright the la..." → correct
   - Feedback: It begins with how and shows strong feeling. The ending punctuation must match the function.
-- Seed 3: "Add the correct ending punctuation, then copy the sentence: Did the choir pra..." → non-scored
+- Seed 3: "Add the correct ending punctuation, then copy the sentence: Did the choir pra..." → correct
   - Feedback: It asks for an answer. The ending punctuation must match the function.
-- Seed 4: "Add the correct ending punctuation, then copy the sentence: The fossils were ..." → non-scored
+- Seed 4: "Add the correct ending punctuation, then copy the sentence: The fossils were ..." → correct
   - Feedback: It gives information. The ending punctuation must match the function.
-- Seed 5: "Add the correct ending punctuation, then copy the sentence: Close the greenho..." → non-scored
+- Seed 5: "Add the correct ending punctuation, then copy the sentence: Close the greenho..." → correct
   - Feedback: It instructs someone to act. The ending punctuation must match the function.
 
 ### `qg_p18_p18_sentence_functions_sat_table_classification`
@@ -13324,11 +13324,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: Please return the atlas to th..." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: How bright the lanterns looke..." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: Did the choir practise before..." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary`
@@ -13437,30 +13437,30 @@
 
 ### `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'speech_punctuation'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Copy and correct the speech punctuation. "Where are you going" asked Mum." → non-scored
+- Seed 1: "Copy and correct the speech punctuation. "Where are you going" asked Mum." → correct
   - Feedback: The question mark belongs inside the speech marks.
-- Seed 2: "Copy and correct the speech punctuation. "Sit down" shouted the coach." → non-scored
+- Seed 2: "Copy and correct the speech punctuation. "Sit down" shouted the coach." → correct
   - Feedback: The exclamation mark belongs inside the speech marks.
-- Seed 3: "Copy and correct the speech punctuation. "I found the key" said Zara." → non-scored
+- Seed 3: "Copy and correct the speech punctuation. "I found the key" said Zara." → correct
   - Feedback: Use a comma before the reporting clause.
-- Seed 4: "Copy and correct the speech punctuation. Dad asked "Have you packed your bag"" → non-scored
+- Seed 4: "Copy and correct the speech punctuation. Dad asked "Have you packed your bag"" → correct
   - Feedback: Use a comma before speech and a question mark inside.
-- Seed 5: "Copy and correct the speech punctuation. "Please wait here" whispered the guide." → non-scored
+- Seed 5: "Copy and correct the speech punctuation. "Please wait here" whispered the guide." → correct
   - Feedback: Use a comma inside the closing speech mark.
 
 ### `qg_p18_p18_speech_punctuation_sat_table_classification`
@@ -13480,11 +13480,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: "Where are you going?" asked ..." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: "Sit down!" shouted the coach." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: "I found the key," said Zara." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_standard_english_application_transfer`
@@ -13565,30 +13565,30 @@
 
 ### `qg_p18_p18_standard_english_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'standard_english'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Rewrite this in Standard English: We was late for practice." → non-scored
+- Seed 1: "Rewrite this in Standard English: We was late for practice." → correct
   - Feedback: Were is the Standard English form with we.
-- Seed 2: "Rewrite this in Standard English: I done the washing-up." → non-scored
+- Seed 2: "Rewrite this in Standard English: I done the washing-up." → correct
   - Feedback: Did is the Standard English past form.
-- Seed 3: "Rewrite this in Standard English: She seen the poster yesterday." → non-scored
+- Seed 3: "Rewrite this in Standard English: She seen the poster yesterday." → correct
   - Feedback: Saw is the simple past form.
-- Seed 4: "Rewrite this in Standard English: They has finished already." → non-scored
+- Seed 4: "Rewrite this in Standard English: They has finished already." → correct
   - Feedback: Have agrees with they.
-- Seed 5: "Rewrite this in Standard English: There was three pencils on the desk." → non-scored
+- Seed 5: "Rewrite this in Standard English: There was three pencils on the desk." → correct
   - Feedback: Were agrees with three pencils.
 
 ### `qg_p18_p18_standard_english_sat_table_classification`
@@ -13608,11 +13608,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: We were late for practice." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: I did the washing-up." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: She saw the poster yesterday." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_subject_object_application_transfer`
@@ -13703,30 +13703,30 @@
 
 ### `qg_p18_p18_subject_object_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'subject_object'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Write the subject of this sentence: The noisy gull stole the sandwich from Max." → non-scored
+- Seed 1: "Write the subject of this sentence: The noisy gull stole the sandwich from Max." → correct
   - Feedback: The gull does the stealing; the sandwich receives the action.
-- Seed 2: "Write the subject of this sentence: After lunch, the goalkeeper caught the ball." → non-scored
+- Seed 2: "Write the subject of this sentence: After lunch, the goalkeeper caught the ball." → correct
   - Feedback: Ignore the opening adverbial.
-- Seed 3: "Write the subject of this sentence: The librarian stamped the new ticket." → non-scored
+- Seed 3: "Write the subject of this sentence: The librarian stamped the new ticket." → correct
   - Feedback: The librarian performs the action.
-- Seed 4: "Write the subject of this sentence: During the storm, the wind snapped the br..." → non-scored
+- Seed 4: "Write the subject of this sentence: During the storm, the wind snapped the br..." → correct
   - Feedback: The wind does the snapping.
-- Seed 5: "Write the subject of this sentence: The engineer tested the bridge carefully." → non-scored
+- Seed 5: "Write the subject of this sentence: The engineer tested the bridge carefully." → correct
   - Feedback: The bridge is tested.
 
 ### `qg_p18_p18_subject_object_sat_table_classification`
@@ -13746,11 +13746,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: the sandwich" → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: the ball" → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: the new ticket" → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_tense_aspect_application_transfer`
@@ -13879,11 +13879,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: She had packed her bag before..." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: I have finished my homework." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: The dog was chasing the cat." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_tense_aspect_standard_english_tense_standard_register`
@@ -14025,30 +14025,30 @@
 
 ### `qg_p18_p18_word_classes_precision_repair_or_rewrite`
 
-- **Decision:** approved_with_limitation
+- **Decision:** approved
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
 - **Seed window:** 1..15
-- **Answerability:** All 15 seeds produce a valid prompt for manual-review constructed response — non-scored by design
-- **Grammar logic:** Grammar logic partially valid for concept 'word_classes'; some seeds produce incorrect marking
+- **Answerability:** All 15 seeds accept the golden constructed answer
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes'
 - **Distractor quality:** Constructed-response: no distractors (free text input)
-- **Marking:** Non-scored template — all 15 seeds return { nonScored: true } by design; teacher/parent review required
-- **Feedback:** Manual-review template — non-scored by design; feedbackLong provides grammar explanation regardless of answer correctness
+- **Marking:** Golden answers mark correct across all 15 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship-with-monitoring
+- **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "Write the word class of 'carefully' in this sentence: Maya carefully folded t..." → non-scored
+- Seed 1: "Write the word class of 'carefully' in this sentence: Maya carefully folded t..." → correct
   - Feedback: It describes how Maya folded the map.
-- Seed 2: "Write the word class of 'Those' in this sentence: Those tiny shells glittered..." → non-scored
+- Seed 2: "Write the word class of 'Those' in this sentence: Those tiny shells glittered..." → correct
   - Feedback: It comes before the noun phrase and helps specify it.
-- Seed 3: "Write the word class of 'bounded' in this sentence: The puppy bounded across ..." → non-scored
+- Seed 3: "Write the word class of 'bounded' in this sentence: The puppy bounded across ..." → correct
   - Feedback: It is the action.
-- Seed 4: "Write the word class of 'After' in this sentence: After breakfast, the class ..." → non-scored
+- Seed 4: "Write the word class of 'After' in this sentence: After breakfast, the class ..." → correct
   - Feedback: It links breakfast to time in the sentence.
-- Seed 5: "Write the word class of 'curious' in this sentence: The curious otter watched..." → non-scored
+- Seed 5: "Write the word class of 'curious' in this sentence: The curious otter watched..." → correct
   - Feedback: It describes the otter.
 
 ### `qg_p18_p18_word_classes_sat_table_classification`
@@ -14068,9 +14068,9 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the grammar feature shown in this row: carefully in: Maya carefully ..." → correct
+- Seed 1: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the grammar feature shown in this row: Those in: Those tiny shells g..." → correct
+- Seed 2: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the grammar feature shown in this row: bounded in: The puppy bounded..." → correct
+- Seed 3: "Classify the target word or phrase by its grammar role." → correct
   - Feedback: Classify by the grammar role, not by surface length.

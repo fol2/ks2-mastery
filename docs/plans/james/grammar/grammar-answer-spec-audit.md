@@ -1,19 +1,19 @@
 ---
 title: "Grammar answer-spec migration audit"
 type: audit
-status: p19-updated
-date: 2026-05-04
-plan: docs/plans/james/grammar/questions-generator/grammar-qg-p18-completion-report.md
-unit: QG-P18
+status: p20-updated
+date: 2026-05-05
+plan: docs/plans/james/grammar/questions-generator/p20/grammar-qg-p20-answer-acceptance-template-quality-variety-expansion-contract.md
+unit: QG-P20
 ---
 
 # Grammar answer-spec migration audit
 
-This document is the per-template classification and shipped-state audit for the Grammar answer-spec migration. It inventories every one of the 510 Grammar templates (317 selected-response + 193 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. QG P18 promotes the combined P15-P18 manual expansion pack under `grammar-qg-p19-2026-05-04`; older QG baselines remain frozen for regression comparison.
+This document is the per-template classification and shipped-state audit for the Grammar answer-spec migration. It inventories every one of the 510 Grammar templates (321 selected-response + 189 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. QG P20 promotes answer-acceptance hardening and safe deterministic closed auto-mark recovery under `grammar-qg-p20-2026-05-05`; older QG baselines remain frozen for regression comparison.
 
 The authoritative answer-spec kind list lives at `worker/src/subjects/grammar/answer-spec.js` (`ANSWER_SPEC_KINDS`). The six kinds are: `exact`, `normalisedText`, `acceptedSet`, `punctuationPattern`, `multiField`, `manualReviewOnly`. Every row below proposes one of those kinds; the gate test asserts the set membership.
 
-QG P18 keeps legacy selected-response rows on the additive `exact` proposal where they do not yet emit hidden answer specs, while all newly generated P15-P18 families publish declarative specs from first runtime scheduling. Current live metadata: 484 generated templates, 26 fixed templates, 479 templates with declared answer specs (legacy-exact-proposed: 31, manualReviewOnly: 95, punctuationPattern: 9, acceptedSet: 2, normalisedText: 87, exact: 230, multiField: 56).
+QG P20 keeps selected-response rows on deterministic declarative answer specs and keeps genuinely open constructed responses as non-scored manual-review-only. Current live metadata: 484 generated templates, 26 fixed templates, 479 templates with declared answer specs (exact: 234, manualReviewOnly: 157, multiField: 56, normalisedText: 12, punctuationPattern: 20).
 ---
 
 ## 1. Scope and ground rules
@@ -158,14 +158,14 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p15_active_passive_voice_transfer` | `active_passive` | choose | answerSpec: exact | `exact` | The bread was baked by the chef. | wrong visible option value | high | NO |
 | `qg_p18_p15_adverbials_adverbial_transfer` | `adverbials` | choose | answerSpec: exact | `exact` | Before sunrise, the campers packed their bags. | wrong visible option value | low | NO |
 | `qg_p18_p15_adverbials_explain_fronted_adv` | `adverbials` | explain | answerSpec: exact | `exact` | It gives when, where or how information at the start of the sentence. | wrong visible option value | low | NO |
-| `qg_p18_p15_adverbials_fronted_adverbial_comma` | `adverbials` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
+| `qg_p18_p15_adverbials_fronted_adverbial_comma` | `adverbials` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
 | `qg_p18_p15_adverbials_identify_fronted_adv` | `adverbials` | identify | answerSpec: exact | `exact` | Before sunrise | wrong visible option value | low | NO |
 | `qg_p18_p15_adverbials_move_adverbial` | `adverbials` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
 | `qg_p18_p15_apostrophes_possession_explain_possession` | `apostrophes_possession` | explain | answerSpec: exact | `exact` | The apostrophe shows ownership, and its position shows whether the owner is singular or plural. | wrong visible option value | low | NO |
 | `qg_p18_p15_apostrophes_possession_possession_table` | `apostrophes_possession` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p15_apostrophes_possession_possession_transfer` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
 | `qg_p18_p15_apostrophes_possession_possessive_choice` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
-| `qg_p18_p15_apostrophes_possession_possessive_rewrite` | `apostrophes_possession` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | the dog's bowl | grammar target changed | medium | YES |
+| `qg_p18_p15_apostrophes_possession_possessive_rewrite` | `apostrophes_possession` | rewrite | answerSpec: normalisedText | `normalisedText` | the dog's bowl | grammar target changed | medium | YES |
 | `qg_p18_p15_boundary_punctuation_boundary_fix` | `boundary_punctuation` | fix | answerSpec: normalisedText | `manualReviewOnly` | The sky darkened; the gulls flew inland. | grammar target changed | medium | YES |
 | `qg_p18_p15_boundary_punctuation_boundary_label` | `boundary_punctuation` | identify | answerSpec: exact | `exact` | semi-colon | wrong visible option value | low | NO |
 | `qg_p18_p15_boundary_punctuation_boundary_mark_choice` | `boundary_punctuation` | choose | answerSpec: exact | `exact` | ; | wrong visible option value | low | NO |
@@ -183,7 +183,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p15_formality_formality_transfer` | `formality` | choose | answerSpec: exact | `exact` | Please discover whether the hall is open. | wrong visible option value | high | NO |
 | `qg_p18_p15_hyphen_ambiguity_explain_hyphen` | `hyphen_ambiguity` | explain | answerSpec: exact | `exact` | The hyphen links words so the reader sees the intended meaning clearly. | wrong visible option value | high | NO |
 | `qg_p18_p15_hyphen_ambiguity_hyphen_choice` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man-eating shark | wrong visible option value | high | NO |
-| `qg_p18_p15_hyphen_ambiguity_hyphen_fix` | `hyphen_ambiguity` | fix | answerSpec: normalisedText | `manualReviewOnly` | man-eating shark | grammar target changed | high | YES |
+| `qg_p18_p15_hyphen_ambiguity_hyphen_fix` | `hyphen_ambiguity` | fix | answerSpec: punctuationPattern | `punctuationPattern` | man-eating shark | grammar target changed | high | YES |
 | `qg_p18_p15_hyphen_ambiguity_hyphen_meaning` | `hyphen_ambiguity` | identify | answerSpec: exact | `exact` | a shark that eats people | wrong visible option value | high | NO |
 | `qg_p18_p15_hyphen_ambiguity_hyphen_transfer` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man-eating shark | wrong visible option value | high | NO |
 | `qg_p18_p15_modal_verbs_explain_modal` | `modal_verbs` | explain | answerSpec: exact | `exact` | It changes the force of the verb to show strong advice. | wrong visible option value | high | NO |
@@ -214,16 +214,16 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p15_sentence_functions_explain_function` | `sentence_functions` | explain | answerSpec: exact | `exact` | It tells someone to do something. | wrong visible option value | low | NO |
 | `qg_p18_p15_sentence_functions_function_contrast` | `sentence_functions` | choose | answerSpec: exact | `exact` | command | wrong visible option value | low | NO |
 | `qg_p18_p15_sentence_functions_identify_function` | `sentence_functions` | identify | answerSpec: exact | `exact` | command | wrong visible option value | low | NO |
-| `qg_p18_p15_sentence_functions_punctuate_by_function` | `sentence_functions` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | Close the library door quietly. | grammar target changed | medium | YES |
+| `qg_p18_p15_sentence_functions_punctuate_by_function` | `sentence_functions` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Close the library door quietly. | grammar target changed | medium | YES |
 | `qg_p18_p15_sentence_functions_sat_style_function` | `sentence_functions` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p15_speech_punctuation_explain_speech` | `speech_punctuation` | explain | answerSpec: exact | `exact` | The spoken words are enclosed in speech marks and their punctuation is inside the marks. | wrong visible option value | low | NO |
 | `qg_p18_p15_speech_punctuation_speech_choice` | `speech_punctuation` | choose | answerSpec: exact | `exact` | "Where are you going?" asked Mum. | wrong visible option value | low | NO |
-| `qg_p18_p15_speech_punctuation_speech_fix` | `speech_punctuation` | fix | answerSpec: normalisedText | `manualReviewOnly` | "Where are you going?" asked Mum. | grammar target changed | medium | YES |
+| `qg_p18_p15_speech_punctuation_speech_fix` | `speech_punctuation` | fix | answerSpec: punctuationPattern | `punctuationPattern` | "Where are you going?" asked Mum. | grammar target changed | medium | YES |
 | `qg_p18_p15_speech_punctuation_speech_reporter_position` | `speech_punctuation` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p15_speech_punctuation_speech_transfer` | `speech_punctuation` | choose | answerSpec: exact | `exact` | "Where are you going?" asked Mum. | wrong visible option value | low | NO |
 | `qg_p18_p15_standard_english_explain_standard` | `standard_english` | explain | answerSpec: exact | `exact` | It uses the accepted written grammar form expected in formal school writing. | wrong visible option value | low | NO |
 | `qg_p18_p15_standard_english_standard_choice` | `standard_english` | choose | answerSpec: exact | `exact` | We were late for assembly. | wrong visible option value | low | NO |
-| `qg_p18_p15_standard_english_standard_fix` | `standard_english` | fix | answerSpec: normalisedText | `manualReviewOnly` | We were late for assembly. | grammar target changed | medium | YES |
+| `qg_p18_p15_standard_english_standard_fix` | `standard_english` | fix | answerSpec: normalisedText | `normalisedText` | We were late for assembly. | grammar target changed | medium | YES |
 | `qg_p18_p15_standard_english_standard_pairs` | `standard_english` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p15_standard_english_standard_transfer` | `standard_english` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | We were late for assembly. | grammar target changed | medium | YES |
 | `qg_p18_p15_subject_object_explain_roles` | `subject_object` | explain | answerSpec: exact | `exact` | The subject does the action and the object receives it. | wrong visible option value | high | NO |
@@ -233,7 +233,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p15_subject_object_role_transfer` | `subject_object` | choose | answerSpec: exact | `exact` | The noisy gull stole the sandwich from Max. | wrong visible option value | high | NO |
 | `qg_p18_p15_tense_aspect_choose_tense_form` | `tense_aspect` | fill | answerSpec: exact | `exact` | I have finished my homework. | wrong visible option value | low | NO |
 | `qg_p18_p15_tense_aspect_explain_tense` | `tense_aspect` | explain | answerSpec: exact | `exact` | It uses the verb form needed for the present perfect. | wrong visible option value | low | NO |
-| `qg_p18_p15_tense_aspect_tense_editing` | `tense_aspect` | fix | answerSpec: normalisedText | `manualReviewOnly` | I have finished my homework. | grammar target changed | medium | YES |
+| `qg_p18_p15_tense_aspect_tense_editing` | `tense_aspect` | fix | answerSpec: normalisedText | `normalisedText` | I have finished my homework. | grammar target changed | medium | YES |
 | `qg_p18_p15_tense_aspect_tense_near_miss` | `tense_aspect` | choose | answerSpec: exact | `exact` | I have finished my homework. | wrong visible option value | low | NO |
 | `qg_p18_p15_tense_aspect_tense_rewrite` | `tense_aspect` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | I have finished my homework. | grammar target changed | medium | YES |
 | `qg_p18_p15_word_classes_explain_word_class` | `word_classes` | explain | answerSpec: exact | `exact` | It is a adverb because of the job it does in this sentence. | wrong visible option value | low | NO |
@@ -251,11 +251,11 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p16_adverbials_choose_best_opening_adverbial` | `adverbials` | choose | answerSpec: exact | `exact` | Before sunrise | wrong visible option value | low | NO |
 | `qg_p18_p16_adverbials_explain_fronted_comma` | `adverbials` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The comma separates the fronted adverbial "Before sunrise" from the main clause. | grammar target changed | medium | YES |
 | `qg_p18_p16_adverbials_fronted_adverbial_type` | `adverbials` | classify | answerSpec: exact | `exact` | when | wrong visible option value | low | NO |
-| `qg_p18_p16_adverbials_fronted_comma_fix` | `adverbials` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
+| `qg_p18_p16_adverbials_fronted_comma_fix` | `adverbials` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
 | `qg_p18_p16_adverbials_move_adverbial_to_front` | `adverbials` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | Before sunrise, the campers packed their bags. | grammar target changed | medium | YES |
 | `qg_p18_p16_apostrophes_possession_choose_possessive_phrase` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
 | `qg_p18_p16_apostrophes_possession_explain_position` | `apostrophes_possession` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The apostrophe position shows whether one owner or more than one owner possesses the noun. | grammar target changed | medium | YES |
-| `qg_p18_p16_apostrophes_possession_fix_missing_apostrophe` | `apostrophes_possession` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | the dog's bowl | grammar target changed | medium | YES |
+| `qg_p18_p16_apostrophes_possession_fix_missing_apostrophe` | `apostrophes_possession` | fix | answerSpec: normalisedText | `normalisedText` | the dog's bowl | grammar target changed | medium | YES |
 | `qg_p18_p16_apostrophes_possession_meaning_change_choice` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
 | `qg_p18_p16_apostrophes_possession_possession_not_contraction` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | possession | wrong visible option value | low | NO |
 | `qg_p18_p16_apostrophes_possession_singular_plural_possession` | `apostrophes_possession` | classify | answerSpec: exact | `exact` | singular | wrong visible option value | low | NO |
@@ -280,7 +280,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p16_formality_register_context_choice` | `formality` | choose | answerSpec: exact | `exact` | I would like to request. | wrong visible option value | high | NO |
 | `qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man-eating shark | wrong visible option value | high | NO |
 | `qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning` | `hyphen_ambiguity` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The hyphen links words so they work together to express "a shark that eats people". | grammar target changed | high | YES |
-| `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase` | `hyphen_ambiguity` | fix | answerSpec: normalisedText | `manualReviewOnly` | man-eating shark | grammar target changed | high | YES |
+| `qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase` | `hyphen_ambiguity` | fix | answerSpec: punctuationPattern | `punctuationPattern` | man-eating shark | grammar target changed | high | YES |
 | `qg_p18_p16_hyphen_ambiguity_hyphen_function_choice` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | It links words to make the intended meaning clear. | wrong visible option value | high | NO |
 | `qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table` | `hyphen_ambiguity` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | high | NO |
 | `qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man eating shark | wrong visible option value | high | NO |
@@ -296,7 +296,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p16_noun_phrases_explain_expansion` | `noun_phrases` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | It is centred on a noun and has extra words that describe or specify that noun. | grammar target changed | medium | YES |
 | `qg_p18_p16_noun_phrases_head_noun_identify` | `noun_phrases` | identify | answerSpec: exact | `exact` | explorer | wrong visible option value | low | NO |
 | `qg_p18_p16_noun_phrases_noun_phrase_vs_clause` | `noun_phrases` | classify | answerSpec: exact | `exact` | expanded noun phrase | wrong visible option value | low | NO |
-| `qg_p18_p16_parenthesis_commas_add_parenthesis_commas` | `parenthesis_commas` | fix | answerSpec: normalisedText | `manualReviewOnly` | Luca, who was first in line, opened the door. | grammar target changed | medium | YES |
+| `qg_p18_p16_parenthesis_commas_add_parenthesis_commas` | `parenthesis_commas` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Luca, who was first in line, opened the door. | grammar target changed | medium | YES |
 | `qg_p18_p16_parenthesis_commas_choose_parenthetical_part` | `parenthesis_commas` | identify | answerSpec: exact | `exact` | the extra information between commas | wrong visible option value | low | NO |
 | `qg_p18_p16_parenthesis_commas_explain_parenthesis` | `parenthesis_commas` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The commas mark extra information that could be lifted out without destroying the main sentence. | grammar target changed | medium | YES |
 | `qg_p18_p16_parenthesis_commas_parenthesis_or_not` | `parenthesis_commas` | choose | answerSpec: exact | `exact` | yes | wrong visible option value | low | NO |
@@ -467,18 +467,18 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p18_apostrophes_possession_diagnostic_identify` | `apostrophes_possession` | choose | answerSpec: exact | `exact` | the dog's bowl | wrong visible option value | low | NO |
 | `qg_p18_p18_apostrophes_possession_explain_reasoning` | `apostrophes_possession` | explain | answerSpec: exact | `exact` | One dog owns the bowl, so apostrophe before s. | wrong visible option value | low | NO |
 | `qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision` | `apostrophes_possession`, `hyphen_ambiguity` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | the dog's bowl; man-eating shark | grammar target changed | high | YES |
-| `qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite` | `apostrophes_possession` | fix | answerSpec: normalisedText | `manualReviewOnly` | the dog's bowl | grammar target changed | medium | YES |
+| `qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite` | `apostrophes_possession` | fix | answerSpec: normalisedText | `normalisedText` | the dog's bowl | grammar target changed | medium | YES |
 | `qg_p18_p18_apostrophes_possession_sat_table_classification` | `apostrophes_possession` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p18_boundary_punctuation_application_transfer` | `boundary_punctuation` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | A semi-colon links two related main clauses. | grammar target changed | medium | YES |
 | `qg_p18_p18_boundary_punctuation_diagnostic_identify` | `boundary_punctuation` | choose | answerSpec: exact | `exact` | semicolon | wrong visible option value | low | NO |
 | `qg_p18_p18_boundary_punctuation_explain_reasoning` | `boundary_punctuation` | explain | answerSpec: exact | `exact` | A semi-colon links two related main clauses. | wrong visible option value | low | NO |
-| `qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite` | `boundary_punctuation` | fix | answerSpec: normalisedText | `manualReviewOnly` | semicolon | grammar target changed | medium | YES |
+| `qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite` | `boundary_punctuation` | fix | answerSpec: normalisedText | `normalisedText` | semicolon | grammar target changed | medium | YES |
 | `qg_p18_p18_boundary_punctuation_sat_table_classification` | `boundary_punctuation` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation` | `boundary_punctuation`, `speech_punctuation` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | semicolon; "Where are you going?" asked Mum. | grammar target changed | medium | YES |
 | `qg_p18_p18_clauses_application_transfer` | `clauses` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Although the path was muddy, the hikers kept walking. | grammar target changed | medium | YES |
 | `qg_p18_p18_clauses_diagnostic_identify` | `clauses` | choose | answerSpec: exact | `exact` | Although the path was muddy | wrong visible option value | low | NO |
 | `qg_p18_p18_clauses_explain_reasoning` | `clauses` | explain | answerSpec: exact | `exact` | The although-clause depends on the main clause. | wrong visible option value | low | NO |
-| `qg_p18_p18_clauses_precision_repair_or_rewrite` | `clauses` | fix | answerSpec: normalisedText | `manualReviewOnly` | Although the path was muddy | grammar target changed | medium | YES |
+| `qg_p18_p18_clauses_precision_repair_or_rewrite` | `clauses` | fix | answerSpec: normalisedText | `normalisedText` | Although the path was muddy | grammar target changed | medium | YES |
 | `qg_p18_p18_clauses_sat_table_classification` | `clauses` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p18_formality_application_transfer` | `formality` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Established is more formal than got set up. | grammar target changed | high | YES |
 | `qg_p18_p18_formality_diagnostic_identify` | `formality` | choose | answerSpec: exact | `exact` | The club was established last year. | wrong visible option value | high | NO |
@@ -488,13 +488,13 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p18_hyphen_ambiguity_application_transfer` | `hyphen_ambiguity` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The hyphen shows man-eating describes the shark. | grammar target changed | high | YES |
 | `qg_p18_p18_hyphen_ambiguity_diagnostic_identify` | `hyphen_ambiguity` | choose | answerSpec: exact | `exact` | man-eating shark | wrong visible option value | high | NO |
 | `qg_p18_p18_hyphen_ambiguity_explain_reasoning` | `hyphen_ambiguity` | explain | answerSpec: exact | `exact` | The hyphen shows man-eating describes the shark. | wrong visible option value | high | NO |
-| `qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite` | `hyphen_ambiguity` | fix | answerSpec: normalisedText | `manualReviewOnly` | man-eating shark | grammar target changed | high | YES |
+| `qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite` | `hyphen_ambiguity` | fix | answerSpec: punctuationPattern | `punctuationPattern` | man-eating shark | grammar target changed | high | YES |
 | `qg_p18_p18_hyphen_ambiguity_sat_table_classification` | `hyphen_ambiguity` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | high | NO |
 | `qg_p18_p18_modal_verbs_application_transfer` | `modal_verbs` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Should gives strong advice. | grammar target changed | high | YES |
 | `qg_p18_p18_modal_verbs_diagnostic_identify` | `modal_verbs` | choose | answerSpec: exact | `exact` | should | wrong visible option value | high | NO |
 | `qg_p18_p18_modal_verbs_explain_reasoning` | `modal_verbs` | explain | answerSpec: exact | `exact` | Should gives strong advice. | wrong visible option value | high | NO |
 | `qg_p18_p18_modal_verbs_formality_modal_formality_strength` | `formality`, `modal_verbs` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | should; The club was established last year. | grammar target changed | high | YES |
-| `qg_p18_p18_modal_verbs_precision_repair_or_rewrite` | `modal_verbs` | fix | answerSpec: normalisedText | `manualReviewOnly` | You should wear a helmet on this trail. | grammar target changed | high | YES |
+| `qg_p18_p18_modal_verbs_precision_repair_or_rewrite` | `modal_verbs` | fix | answerSpec: normalisedText | `normalisedText` | You should wear a helmet on this trail. | grammar target changed | high | YES |
 | `qg_p18_p18_modal_verbs_sat_table_classification` | `modal_verbs` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | high | NO |
 | `qg_p18_p18_noun_phrases_application_transfer` | `noun_phrases` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | rolled beneath is not centred on a noun; the small blue marble is a noun phrase. | grammar target changed | medium | YES |
 | `qg_p18_p18_noun_phrases_diagnostic_identify` | `noun_phrases` | choose | answerSpec: exact | `exact` | the small blue marble | wrong visible option value | low | NO |
@@ -504,7 +504,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p18_parenthesis_commas_application_transfer` | `parenthesis_commas` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Commas mark the parenthesis. | grammar target changed | medium | YES |
 | `qg_p18_p18_parenthesis_commas_diagnostic_identify` | `parenthesis_commas` | choose | answerSpec: exact | `exact` | Luca, who was first in line, opened the door. | wrong visible option value | low | NO |
 | `qg_p18_p18_parenthesis_commas_explain_reasoning` | `parenthesis_commas` | explain | answerSpec: exact | `exact` | Commas mark the parenthesis. | wrong visible option value | low | NO |
-| `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite` | `parenthesis_commas` | fix | answerSpec: normalisedText | `manualReviewOnly` | Luca, who was first in line, opened the door. | grammar target changed | medium | YES |
+| `qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite` | `parenthesis_commas` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Luca, who was first in line, opened the door. | grammar target changed | medium | YES |
 | `qg_p18_p18_parenthesis_commas_sat_table_classification` | `parenthesis_commas` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p18_pronouns_cohesion_application_transfer` | `pronouns_cohesion` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The pronouns clearly refer back to Amira and the map. | grammar target changed | high | YES |
 | `qg_p18_p18_pronouns_cohesion_diagnostic_identify` | `pronouns_cohesion` | choose | answerSpec: exact | `exact` | Amira picked up the map. She folded it carefully. | wrong visible option value | high | NO |
@@ -516,28 +516,28 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p18_relative_clauses_diagnostic_identify` | `relative_clauses` | choose | answerSpec: exact | `exact` | who painted the mural | wrong visible option value | low | NO |
 | `qg_p18_p18_relative_clauses_explain_reasoning` | `relative_clauses` | explain | answerSpec: exact | `exact` | The clause begins with who and adds information about the artist. | wrong visible option value | low | NO |
 | `qg_p18_p18_relative_clauses_parenthesis_commas_relative_parenthesis_punctuation` | `parenthesis_commas`, `relative_clauses` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | who painted the mural; Commas mark the parenthesis. | grammar target changed | medium | YES |
-| `qg_p18_p18_relative_clauses_precision_repair_or_rewrite` | `relative_clauses` | fix | answerSpec: normalisedText | `manualReviewOnly` | who painted the mural | grammar target changed | medium | YES |
+| `qg_p18_p18_relative_clauses_precision_repair_or_rewrite` | `relative_clauses` | fix | answerSpec: normalisedText | `normalisedText` | who painted the mural | grammar target changed | medium | YES |
 | `qg_p18_p18_relative_clauses_sat_table_classification` | `relative_clauses` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p18_sentence_functions_application_transfer` | `sentence_functions` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | It is a command because it tells someone what to do. | grammar target changed | medium | YES |
 | `qg_p18_p18_sentence_functions_diagnostic_identify` | `sentence_functions` | identify | answerSpec: exact | `exact` | command | wrong visible option value | low | NO |
 | `qg_p18_p18_sentence_functions_explain_reasoning` | `sentence_functions` | explain | answerSpec: exact | `exact` | It tells someone what to do. | wrong visible option value | low | NO |
-| `qg_p18_p18_sentence_functions_precision_repair_or_rewrite` | `sentence_functions` | fix | answerSpec: manualReviewOnly | `manualReviewOnly` | Please return the atlas to the shelf. | grammar target changed | medium | YES |
+| `qg_p18_p18_sentence_functions_precision_repair_or_rewrite` | `sentence_functions` | fix | answerSpec: punctuationPattern | `punctuationPattern` | Please return the atlas to the shelf. | grammar target changed | medium | YES |
 | `qg_p18_p18_sentence_functions_sat_table_classification` | `sentence_functions` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary` | `sentence_functions`, `speech_punctuation` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | command; "Where are you going?" asked Mum. | grammar target changed | medium | YES |
 | `qg_p18_p18_speech_punctuation_application_transfer` | `speech_punctuation` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The question mark belongs inside the speech marks. | grammar target changed | medium | YES |
 | `qg_p18_p18_speech_punctuation_diagnostic_identify` | `speech_punctuation` | choose | answerSpec: exact | `exact` | "Where are you going?" asked Mum. | wrong visible option value | low | NO |
 | `qg_p18_p18_speech_punctuation_explain_reasoning` | `speech_punctuation` | explain | answerSpec: exact | `exact` | The question mark belongs inside the speech marks. | wrong visible option value | low | NO |
-| `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite` | `speech_punctuation` | fix | answerSpec: normalisedText | `manualReviewOnly` | "Where are you going?" asked Mum. | grammar target changed | medium | YES |
+| `qg_p18_p18_speech_punctuation_precision_repair_or_rewrite` | `speech_punctuation` | fix | answerSpec: punctuationPattern | `punctuationPattern` | "Where are you going?" asked Mum. | grammar target changed | medium | YES |
 | `qg_p18_p18_speech_punctuation_sat_table_classification` | `speech_punctuation` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p18_standard_english_application_transfer` | `standard_english` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Were is the Standard English form with we. | grammar target changed | medium | YES |
 | `qg_p18_p18_standard_english_diagnostic_identify` | `standard_english` | choose | answerSpec: exact | `exact` | We were late for practice. | wrong visible option value | low | NO |
 | `qg_p18_p18_standard_english_explain_reasoning` | `standard_english` | explain | answerSpec: exact | `exact` | Were is the Standard English form with we. | wrong visible option value | low | NO |
-| `qg_p18_p18_standard_english_precision_repair_or_rewrite` | `standard_english` | rewrite | answerSpec: normalisedText | `manualReviewOnly` | We were late for practice. | grammar target changed | medium | YES |
+| `qg_p18_p18_standard_english_precision_repair_or_rewrite` | `standard_english` | rewrite | answerSpec: normalisedText | `normalisedText` | We were late for practice. | grammar target changed | medium | YES |
 | `qg_p18_p18_standard_english_sat_table_classification` | `standard_english` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 | `qg_p18_p18_subject_object_application_transfer` | `subject_object` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | The noisy gull is the subject; the sandwich is the object. The gull does the stealing; the sandwich receives the action. | grammar target changed | high | YES |
 | `qg_p18_p18_subject_object_diagnostic_identify` | `subject_object` | identify | answerSpec: exact | `exact` | the sandwich | wrong visible option value | high | NO |
 | `qg_p18_p18_subject_object_explain_reasoning` | `subject_object` | explain | answerSpec: exact | `exact` | The gull does the stealing; the sandwich receives the action. | wrong visible option value | high | NO |
-| `qg_p18_p18_subject_object_precision_repair_or_rewrite` | `subject_object` | fix | answerSpec: normalisedText | `manualReviewOnly` | The noisy gull | grammar target changed | high | YES |
+| `qg_p18_p18_subject_object_precision_repair_or_rewrite` | `subject_object` | fix | answerSpec: normalisedText | `normalisedText` | The noisy gull | grammar target changed | high | YES |
 | `qg_p18_p18_subject_object_sat_table_classification` | `subject_object` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | high | NO |
 | `qg_p18_p18_tense_aspect_application_transfer` | `tense_aspect` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | Past perfect uses had plus past participle for an earlier past action. | grammar target changed | medium | YES |
 | `qg_p18_p18_tense_aspect_diagnostic_identify` | `tense_aspect` | choose | answerSpec: exact | `exact` | She had packed her bag before the trip. | wrong visible option value | low | NO |
@@ -549,7 +549,7 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p18_p18_word_classes_diagnostic_identify` | `word_classes` | identify | answerSpec: exact | `exact` | adverb | wrong visible option value | low | NO |
 | `qg_p18_p18_word_classes_explain_reasoning` | `word_classes` | explain | answerSpec: exact | `exact` | It describes how Maya folded the map. | wrong visible option value | low | NO |
 | `qg_p18_p18_word_classes_noun_phrases_word_class_np_roles` | `noun_phrases`, `word_classes` | explain | answerSpec: manualReviewOnly | `manualReviewOnly` | adverb; head noun marble | grammar target changed | medium | YES |
-| `qg_p18_p18_word_classes_precision_repair_or_rewrite` | `word_classes` | fix | answerSpec: normalisedText | `manualReviewOnly` | adverb | grammar target changed | medium | YES |
+| `qg_p18_p18_word_classes_precision_repair_or_rewrite` | `word_classes` | fix | answerSpec: normalisedText | `normalisedText` | adverb | grammar target changed | medium | YES |
 | `qg_p18_p18_word_classes_sat_table_classification` | `word_classes` | classify | answerSpec: multiField | `multiField` | per-field accepted value | wrong row value | low | NO |
 ---
 

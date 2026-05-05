@@ -31,12 +31,12 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
-// P19 supersedes P18: read live runtime authority artefacts (P11 status map +
-// P19 manifest). The committed runtime generated file is regenerated from the
+// P20 supersedes P19: read live runtime authority artefacts (P11 status map +
+// P20 manifest). The committed runtime generated file is regenerated from the
 // P11 status map; the P19 manifest references it via manifest.artefacts.
 const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p11-certification-status-map.json');
 const GENERATED_PATH = path.resolve(ROOT_DIR, 'worker', 'src', 'subjects', 'grammar', 'certification-status.generated.js');
-const MANIFEST_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p19-certification-manifest.json');
+const MANIFEST_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p20-certification-manifest.json');
 
 const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
@@ -53,8 +53,8 @@ function cloneStatusMap(overrides = {}) {
 }
 
 describe('P13 runtime certification source', () => {
-  it('uses the active P19 content release', () => {
-    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p19-2026-05-04');
+  it('uses the active P20 content release', () => {
+    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p20-2026-05-05');
     assert.equal(GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID, GRAMMAR_CONTENT_RELEASE_ID);
   });
 
@@ -67,19 +67,18 @@ describe('P13 runtime certification source', () => {
   });
 
   it('preserves approved_with_limitation diagnostics instead of flattening them', () => {
-    // P19a fairness predicate broadening promoted further manual-expansion
-    // families + 2 inline templates. The status map records all manualReview-
-    // Only-converted families as approved_with_limitation.
+    // P20 recovers deterministic closed manual-expansion families while
+    // preserving genuinely open writing as approved_with_limitation.
     assert.deepEqual(GRAMMAR_RUNTIME_CERTIFICATION_STATUS_COUNTS, {
-      approved: 330,
-      approved_with_limitation: 180,
+      approved: 353,
+      approved_with_limitation: 157,
     });
 
     const limitedIds = Object.entries(CERTIFICATION_STATUS_MAP)
       .filter(([, entry]) => entry.status === 'approved_with_limitation')
       .map(([templateId]) => templateId)
       .sort();
-    assert.equal(limitedIds.length, 180);
+    assert.equal(limitedIds.length, 157);
     for (const templateId of limitedIds) {
       assert.equal(getTemplateCertificationStatus(templateId).status, 'approved_with_limitation');
       assert.equal(isTemplateBlocked(templateId), false);
@@ -159,7 +158,7 @@ describe('P13 runtime certification generator', () => {
 });
 
 describe('P13 validator runtime authority gate', () => {
-  it('passes against the committed P19 manifest and runtime source', () => {
+  it('passes against the committed P20 manifest and runtime source', () => {
     const result = validateRuntimeCertificationAuthority(manifest, { rootDir: ROOT_DIR });
     assert.equal(result.pass, true, JSON.stringify(result.mismatches, null, 2));
   });

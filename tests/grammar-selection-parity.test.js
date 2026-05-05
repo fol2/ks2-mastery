@@ -54,6 +54,7 @@ const MODES = ['smart', 'satsset', 'surgery', 'builder'];
 const SIZE_VARIANTS = [1, 5];
 const FULL_SWEEP_SIZES = [1, 5, 10];
 const FULL_SWEEP_ENABLED = process.env.GRAMMAR_PARITY_FULL_SWEEP === '1';
+const UPDATE_SNAPSHOT = process.env.UPDATE_GRAMMAR_SELECTION_PARITY_SNAPSHOT === '1';
 
 // Mastery fixtures. Each shape exercises a distinct lane in
 // buildGrammarPracticeQueue:
@@ -262,6 +263,11 @@ test('R6 parity: every case is deterministic (identical output on re-run)', () =
 
 test('R6 parity: queue + miniPack outputs match committed snapshot (byte-identical)', () => {
   const cases = enumerateCases(FULL_SWEEP_ENABLED);
+  if (UPDATE_SNAPSHOT) {
+    writeSnapshot(buildSnapshot(cases));
+    return;
+  }
+
   const existing = loadSnapshot();
   if (!existing) {
     // First run. Generate the snapshot and write it to disk. Subsequent runs

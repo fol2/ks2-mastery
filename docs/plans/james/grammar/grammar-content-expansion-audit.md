@@ -1,19 +1,19 @@
 ---
 title: "Grammar content-expansion audit (Phase 5 backlog)"
 type: audit
-status: p19-updated
-date: 2026-05-04
-plan: docs/plans/james/grammar/questions-generator/grammar-qg-p18-completion-report.md
-unit: QG-P18
-contentReleaseId: grammar-qg-p19-2026-05-04
+status: p20-updated
+date: 2026-05-05
+plan: docs/plans/james/grammar/questions-generator/p20/grammar-qg-p20-answer-acceptance-template-quality-variety-expansion-contract.md
+unit: QG-P20
+contentReleaseId: grammar-qg-p20-2026-05-05
 contentReleaseBump: yes
 ---
 
 # Grammar content-expansion audit (Phase 5 backlog)
 
-This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the QG lineage through P18: P1 generator expansion, P2 declarative constructed-response marking, P3 explanation breadth, P4 mixed-transfer coverage, P5/P6 depth and stability hardening, P8-P11 production-certification content and delivery work, P12/P13 evidence/certification locks, P14 learner-variety expansion, and the P15-P18 manual expansion promoted in `grammar-qg-p19-2026-05-04`. Historical fixtures remain frozen for compatibility checks rather than being overwritten.
+This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the QG lineage through P20: P1 generator expansion, P2 declarative constructed-response marking, P3 explanation breadth, P4 mixed-transfer coverage, P5/P6 depth and stability hardening, P8-P11 production-certification content and delivery work, P12/P13 evidence/certification locks, P14 learner-variety expansion, the P15-P18 manual expansion promoted in `grammar-qg-p19-2026-05-04`, and the P20 answer-acceptance and safe closed auto-mark recovery promoted in `grammar-qg-p20-2026-05-05`. Historical fixtures remain frozen for compatibility checks rather than being overwritten.
 
-The audit is produced by reading `worker/src/subjects/grammar/content.js` at the current Grammar content release id and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 510 distinct templates in the audited pool: 317 selected-response, 193 constructed-response, 484 generated, and 26 fixed.
+The audit is produced by reading `worker/src/subjects/grammar/content.js` at the current Grammar content release id and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 510 distinct templates in the audited pool: 321 selected-response, 189 constructed-response, 484 generated, and 26 fixed.
 
 An executable generator audit backs this document:
 

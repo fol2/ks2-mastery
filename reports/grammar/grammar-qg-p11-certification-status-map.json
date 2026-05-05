@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "contentReleaseId": "grammar-qg-p19-2026-05-04",
-    "generatedAt": "2026-05-04T10:03:22.620Z",
+    "contentReleaseId": "grammar-qg-p20-2026-05-05",
+    "generatedAt": "2026-05-05T15:30:45.955Z",
     "templateCount": 510
   },
   "entries": [
@@ -1411,7 +1411,7 @@
     },
     {
       "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1495,7 +1495,7 @@
     },
     {
       "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -1711,7 +1711,7 @@
     },
     {
       "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2083,7 +2083,7 @@
     },
     {
       "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2131,7 +2131,7 @@
     },
     {
       "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2191,7 +2191,7 @@
     },
     {
       "templateId": "qg_p18_p15_standard_english_standard_fix",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2311,7 +2311,7 @@
     },
     {
       "templateId": "qg_p18_p15_tense_aspect_tense_editing",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2527,7 +2527,7 @@
     },
     {
       "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2575,7 +2575,7 @@
     },
     {
       "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -2875,7 +2875,7 @@
     },
     {
       "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -3067,7 +3067,7 @@
     },
     {
       "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5119,7 +5119,7 @@
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5179,7 +5179,7 @@
     },
     {
       "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5251,7 +5251,7 @@
     },
     {
       "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5371,7 +5371,7 @@
     },
     {
       "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5443,7 +5443,7 @@
     },
     {
       "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5563,7 +5563,7 @@
     },
     {
       "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5707,7 +5707,7 @@
     },
     {
       "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5767,7 +5767,7 @@
     },
     {
       "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5839,7 +5839,7 @@
     },
     {
       "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5899,7 +5899,7 @@
     },
     {
       "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -5959,7 +5959,7 @@
     },
     {
       "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",
@@ -6103,7 +6103,7 @@
     },
     {
       "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
-      "decision": "approved_with_limitation",
+      "decision": "approved",
       "severity": "none",
       "evidence": [
         "oracle",

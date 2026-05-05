@@ -2,7 +2,7 @@
  * Grammar QG P11 U6+U7 — Distractor Review Closure & Marking Matrix Truth
  *
  * Validates:
- * 1. Marking matrix metadata.totalEntries is exactly 80
+ * 1. Marking matrix metadata.totalEntries matches the active manifest
  * 2. Validator catches mismatch if metadata says a different number
  * 3. All ambiguous templates in distractor audit have review evidence in quality register
  * 4. Missing review decision for an ambiguous template fails validation
@@ -41,11 +41,11 @@ function createTempRoot() {
 
 describe('P11 U7: marking matrix totalEntries matches manifest expectation', () => {
   it('real marking matrix matches expected entries when manifest is supplied', () => {
-    // P19 supersedes the historical P10 80-entry pin. The validator now reads
+    // P20 supersedes the historical P10 80-entry pin. The validator now reads
     // expected entries from manifest.expectedMarkingMatrixEntryCount; when
     // called with no manifest the legacy 80 fallback applies. Test the
-    // manifest-driven path against the live P19 manifest.
-    const manifestPath = path.join(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p19-certification-manifest.json');
+    // manifest-driven path against the live P20 manifest.
+    const manifestPath = path.join(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p20-certification-manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const result = validateMarkingMatrixCounts(manifest, ROOT_DIR);
     assert.equal(result.pass, true, `Expected pass but got: expected=${result.expected}, actual=${result.actual}`);

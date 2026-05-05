@@ -58,8 +58,80 @@ function caseFold(text) {
   return safeString(text).toLowerCase();
 }
 
+const GRAMMAR_LABEL_ARTICLE_CANONICALS = new Set([
+  'active voice',
+  'adjective',
+  'adverb',
+  'apostrophe',
+  'bracket',
+  'colon',
+  'comma',
+  'command',
+  'conjunction',
+  'dash',
+  'determiner',
+  'exclamation',
+  'expanded noun phrase',
+  'fronted adverbial',
+  'hyphen',
+  'main clause',
+  'modal verb',
+  'noun',
+  'noun phrase',
+  'object',
+  'parenthesis',
+  'passive voice',
+  'preposition',
+  'pronoun',
+  'question',
+  'relative clause',
+  'semicolon',
+  'sentence',
+  'singular possession',
+  'plural possession',
+  'statement',
+  'subject',
+  'subordinate clause',
+  'verb',
+]);
+
+function stripWrappingQuotes(text) {
+  return safeString(text)
+    .replace(/^[\s"'`]+|[\s"'`]+$/g, '')
+    .trim();
+}
+
+function stripTerminalSentencePunctuation(text) {
+  const value = safeString(text).trim();
+  if (!value) return value;
+  // Normalised-text answers are not used for punctuation-placement tasks.
+  // Accept a learner's harmless final full stop/question/exclamation mark
+  // without accepting missing internal punctuation in punctuationPattern tasks.
+  return value.replace(/[.!?]+$/g, '').trim();
+}
+
+function stripGrammarLabelArticle(text) {
+  const value = safeString(text).trim();
+  const articleMatch = value.match(/^(?:a|an|the)\s+(.+)$/i);
+  if (!articleMatch) return value;
+  const candidate = articleMatch[1].trim();
+  return GRAMMAR_LABEL_ARTICLE_CANONICALS.has(candidate.toLowerCase()) ? candidate : value;
+}
+
+export function normaliseGrammarAnswerText(text, { stripTerminalPunctuation = true, stripLabelArticle = true } = {}) {
+  let value = normaliseWhitespace(normaliseSmartPunctuation(text));
+  value = stripWrappingQuotes(value);
+  if (stripTerminalPunctuation) value = stripTerminalSentencePunctuation(value);
+  if (stripLabelArticle) value = stripGrammarLabelArticle(value);
+  value = normaliseWhitespace(value);
+  return caseFold(value);
+}
+
 function stripPunctuationForSet(text) {
-  return normaliseWhitespace(safeString(text).replace(/[.,;:!?"'`]/g, ''));
+  return normaliseGrammarAnswerText(
+    safeString(text).replace(/[.,;:!?"'`]/g, ''),
+    { stripTerminalPunctuation: false },
+  );
 }
 
 function collapsePunctuationPattern(text) {
@@ -73,13 +145,17 @@ function compareExact(response, accepted) {
   return safeString(response) === safeString(accepted);
 }
 
+function compareLearnerEquivalentText(response, accepted, opts = {}) {
+  return normaliseGrammarAnswerText(response, opts) === normaliseGrammarAnswerText(accepted, opts);
+}
+
 function compareNormalisedText(response, accepted) {
-  return caseFold(normaliseWhitespace(response)) === caseFold(normaliseWhitespace(accepted));
+  return compareLearnerEquivalentText(response, accepted);
 }
 
 function compareAcceptedSet(response, acceptedList) {
-  const candidate = caseFold(normaliseWhitespace(response));
-  return acceptedList.some((accepted) => caseFold(normaliseWhitespace(accepted)) === candidate);
+  const candidate = normaliseGrammarAnswerText(response);
+  return acceptedList.some((accepted) => normaliseGrammarAnswerText(accepted) === candidate);
 }
 
 function comparePunctuationPattern(response, accepted, { optionalCommas = false } = {}) {
@@ -168,9 +244,13 @@ function markAcceptedSet(spec, response) {
     });
   }
   const fullMarks = spec.maxScore || 2;
-  // Exact match (case + punctuation + whitespace sensitive) for full marks
+  // Full marks for exact or learner-equivalent text: case differences and
+  // harmless outer quotes/articles around grammar labels and harmless terminal
+  // sentence punctuation should not turn a correct Grammar answer into a
+  // refusal. Grammar-critical punctuation remains covered by punctuationPattern.
   const candidate = safeString(response).trim();
-  const exactMatch = accepted.find((entry) => safeString(entry).trim() === candidate);
+  const exactMatch = accepted.find((entry) => safeString(entry).trim() === candidate)
+    || accepted.find((entry) => compareLearnerEquivalentText(response, entry));
   if (exactMatch) {
     return mkMarkResult({
       correct: true,

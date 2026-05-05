@@ -1,10 +1,10 @@
 # Grammar QG P10 Render Inventory (Redacted)
 
-Content Release: grammar-qg-p19-2026-05-04
+Content Release: grammar-qg-p20-2026-05-05
 Total Items: 15300
 Templates: 510
 Seed Range: 1..30
-Generated: 2026-05-04T10:03:21.003Z
+Generated: 2026-05-05T15:30:37.205Z
 
 _Answer internals stripped from this report._
 
@@ -12430,36 +12430,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_active_passive_precision_repair_or_rewrite | 28 | textarea | - | Rewrite in the passive voice: The team will collect the trop |
 | qg_p18_p18_active_passive_precision_repair_or_rewrite | 29 | textarea | - | Rewrite in the passive voice: The artist painted the mural. |
 | qg_p18_p18_active_passive_precision_repair_or_rewrite | 30 | textarea | - | Rewrite in the passive voice: The librarian sorted the books |
-| qg_p18_p18_active_passive_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: The bread wa |
-| qg_p18_p18_active_passive_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: The roof was |
-| qg_p18_p18_active_passive_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: The park is  |
-| qg_p18_p18_active_passive_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: The trophy w |
-| qg_p18_p18_active_passive_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: The mural wa |
-| qg_p18_p18_active_passive_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: The books we |
-| qg_p18_p18_active_passive_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: The mouse wa |
-| qg_p18_p18_active_passive_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: The seedling |
-| qg_p18_p18_active_passive_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: The engine w |
-| qg_p18_p18_active_passive_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: The posters  |
-| qg_p18_p18_active_passive_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: The missing  |
-| qg_p18_p18_active_passive_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: The fence wa |
-| qg_p18_p18_active_passive_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: The bread wa |
-| qg_p18_p18_active_passive_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: The roof was |
-| qg_p18_p18_active_passive_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: The park is  |
-| qg_p18_p18_active_passive_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: The trophy w |
-| qg_p18_p18_active_passive_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: The mural wa |
-| qg_p18_p18_active_passive_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: The books we |
-| qg_p18_p18_active_passive_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: The mouse wa |
-| qg_p18_p18_active_passive_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: The seedling |
-| qg_p18_p18_active_passive_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: The engine w |
-| qg_p18_p18_active_passive_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: The posters  |
-| qg_p18_p18_active_passive_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: The missing  |
-| qg_p18_p18_active_passive_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: The fence wa |
-| qg_p18_p18_active_passive_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: The bread wa |
-| qg_p18_p18_active_passive_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: The roof was |
-| qg_p18_p18_active_passive_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: The park is  |
-| qg_p18_p18_active_passive_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: The trophy w |
-| qg_p18_p18_active_passive_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: The mural wa |
-| qg_p18_p18_active_passive_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: The books we |
+| qg_p18_p18_active_passive_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_active_passive_subject_object_voice_subject_object_roles | 1 | textarea | - | Mixed check: passive rewrite and object identification. The  |
 | qg_p18_p18_active_passive_subject_object_voice_subject_object_roles | 2 | textarea | - | Mixed check: passive rewrite and object identification. The  |
 | qg_p18_p18_active_passive_subject_object_voice_subject_object_roles | 3 | textarea | - | Mixed check: passive rewrite and object identification. The  |
@@ -12640,36 +12640,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_adverbials_precision_repair_or_rewrite | 28 | textarea | - | Copy the sentence and add the missing comma after the fronte |
 | qg_p18_p18_adverbials_precision_repair_or_rewrite | 29 | textarea | - | Copy the sentence and add the missing comma after the fronte |
 | qg_p18_p18_adverbials_precision_repair_or_rewrite | 30 | textarea | - | Copy the sentence and add the missing comma after the fronte |
-| qg_p18_p18_adverbials_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: Before the b |
-| qg_p18_p18_adverbials_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: Beside the r |
-| qg_p18_p18_adverbials_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: With great c |
-| qg_p18_p18_adverbials_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: After the re |
-| qg_p18_p18_adverbials_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: Under the oa |
-| qg_p18_p18_adverbials_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: Without warn |
-| qg_p18_p18_adverbials_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: During the s |
-| qg_p18_p18_adverbials_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: At the end o |
-| qg_p18_p18_adverbials_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: In complete  |
-| qg_p18_p18_adverbials_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: Before sunri |
-| qg_p18_p18_adverbials_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: Near the ent |
-| qg_p18_p18_adverbials_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: With a sudde |
-| qg_p18_p18_adverbials_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: Before the b |
-| qg_p18_p18_adverbials_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: Beside the r |
-| qg_p18_p18_adverbials_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: With great c |
-| qg_p18_p18_adverbials_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: After the re |
-| qg_p18_p18_adverbials_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: Under the oa |
-| qg_p18_p18_adverbials_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: Without warn |
-| qg_p18_p18_adverbials_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: During the s |
-| qg_p18_p18_adverbials_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: At the end o |
-| qg_p18_p18_adverbials_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: In complete  |
-| qg_p18_p18_adverbials_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: Before sunri |
-| qg_p18_p18_adverbials_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: Near the ent |
-| qg_p18_p18_adverbials_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: With a sudde |
-| qg_p18_p18_adverbials_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: Before the b |
-| qg_p18_p18_adverbials_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: Beside the r |
-| qg_p18_p18_adverbials_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: With great c |
-| qg_p18_p18_adverbials_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: After the re |
-| qg_p18_p18_adverbials_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: Under the oa |
-| qg_p18_p18_adverbials_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: Without warn |
+| qg_p18_p18_adverbials_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_apostrophes_possession_application_transfer | 1 | textarea | - | Explain where the apostrophe goes in 'the dog's bowl'. |
 | qg_p18_p18_apostrophes_possession_application_transfer | 2 | textarea | - | Explain where the apostrophe goes in 'the girls' boots'. |
 | qg_p18_p18_apostrophes_possession_application_transfer | 3 | textarea | - | Explain where the apostrophe goes in 'the teacher's desk'. |
@@ -12820,36 +12820,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 28 | text | - | Write the possessive phrase for several birds own nests. |
 | qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 29 | text | - | Write the possessive phrase for one child owns a coat. |
 | qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 30 | text | - | Write the possessive phrase for several children own lunches |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: the dog's bo |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: the girls' b |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: the teacher' |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: the birds' n |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: the child's  |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: the children |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: the fox's de |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: the foxes' d |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: the team's f |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: the teams' f |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: the woman's  |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: the women's  |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: the dog's bo |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: the girls' b |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: the teacher' |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: the birds' n |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: the child's  |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: the children |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: the fox's de |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: the foxes' d |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: the team's f |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: the teams' f |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: the woman's  |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: the women's  |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: the dog's bo |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: the girls' b |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: the teacher' |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: the birds' n |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: the child's  |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: the children |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_boundary_punctuation_application_transfer | 1 | textarea | - | Explain how the boundary punctuation works in: The sky darke |
 | qg_p18_p18_boundary_punctuation_application_transfer | 2 | textarea | - | Explain how the boundary punctuation works in: I needed only |
 | qg_p18_p18_boundary_punctuation_application_transfer | 3 | textarea | - | Explain how the boundary punctuation works in: The gate open |
@@ -12970,36 +12970,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite | 28 | text | - | Write the punctuation mark used in this sentence: The path w |
 | qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite | 29 | text | - | Write the punctuation mark used in this sentence: Bring thes |
 | qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite | 30 | text | - | Write the punctuation mark used in this sentence: Then came  |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: The sky dark |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: I needed onl |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: The gate ope |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: The path was |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: Bring these  |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: Then came th |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: The alarm ra |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: There was on |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: The room was |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: The match en |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: We packed th |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: A shape move |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: The sky dark |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: I needed onl |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: The gate ope |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: The path was |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: Bring these  |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: Then came th |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: The alarm ra |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: There was on |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: The room was |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: The match en |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: We packed th |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: A shape move |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: The sky dark |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: I needed onl |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: The gate ope |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: The path was |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: Bring these  |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: Then came th |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation | 1 | textarea | - | Mixed check: explain the boundary mark and correct the speec |
 | qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation | 2 | textarea | - | Mixed check: explain the boundary mark and correct the speec |
 | qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation | 3 | textarea | - | Mixed check: explain the boundary mark and correct the speec |
@@ -13150,36 +13150,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_clauses_precision_repair_or_rewrite | 28 | text | - | Write the subordinate clause from this sentence: If the libr |
 | qg_p18_p18_clauses_precision_repair_or_rewrite | 29 | text | - | Write the subordinate clause from this sentence: While the s |
 | qg_p18_p18_clauses_precision_repair_or_rewrite | 30 | text | - | Write the subordinate clause from this sentence: Since the b |
-| qg_p18_p18_clauses_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: Although the |
-| qg_p18_p18_clauses_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: When the whi |
-| qg_p18_p18_clauses_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: Because the  |
-| qg_p18_p18_clauses_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: If the libra |
-| qg_p18_p18_clauses_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: While the so |
-| qg_p18_p18_clauses_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: Since the bu |
-| qg_p18_p18_clauses_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: Unless the r |
-| qg_p18_p18_clauses_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: After the ju |
-| qg_p18_p18_clauses_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: Before the t |
-| qg_p18_p18_clauses_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: Though the p |
-| qg_p18_p18_clauses_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: As the sun r |
-| qg_p18_p18_clauses_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: Whenever the |
-| qg_p18_p18_clauses_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: Although the |
-| qg_p18_p18_clauses_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: When the whi |
-| qg_p18_p18_clauses_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: Because the  |
-| qg_p18_p18_clauses_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: If the libra |
-| qg_p18_p18_clauses_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: While the so |
-| qg_p18_p18_clauses_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: Since the bu |
-| qg_p18_p18_clauses_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: Unless the r |
-| qg_p18_p18_clauses_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: After the ju |
-| qg_p18_p18_clauses_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: Before the t |
-| qg_p18_p18_clauses_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: Though the p |
-| qg_p18_p18_clauses_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: As the sun r |
-| qg_p18_p18_clauses_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: Whenever the |
-| qg_p18_p18_clauses_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: Although the |
-| qg_p18_p18_clauses_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: When the whi |
-| qg_p18_p18_clauses_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: Because the  |
-| qg_p18_p18_clauses_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: If the libra |
-| qg_p18_p18_clauses_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: While the so |
-| qg_p18_p18_clauses_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: Since the bu |
+| qg_p18_p18_clauses_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_formality_application_transfer | 1 | textarea | - | Explain why 'The club was established last year.' fits forma |
 | qg_p18_p18_formality_application_transfer | 2 | textarea | - | Explain why 'Please discover whether the hall is available.' |
 | qg_p18_p18_formality_application_transfer | 3 | textarea | - | Explain why 'We need to request additional equipment.' fits  |
@@ -13300,36 +13300,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_formality_precision_repair_or_rewrite | 28 | text | - | Rewrite this more formally: The visitor popped in at noon. |
 | qg_p18_p18_formality_precision_repair_or_rewrite | 29 | textarea | - | Rewrite this more formally: The council said no to the plan. |
 | qg_p18_p18_formality_precision_repair_or_rewrite | 30 | textarea | - | Rewrite this more formally: The team had a go at the challen |
-| qg_p18_p18_formality_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: The club was |
-| qg_p18_p18_formality_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: Please disco |
-| qg_p18_p18_formality_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: We need to r |
-| qg_p18_p18_formality_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: The visitor  |
-| qg_p18_p18_formality_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: The council  |
-| qg_p18_p18_formality_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: The team att |
-| qg_p18_p18_formality_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: The letter e |
-| qg_p18_p18_formality_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: The shop ref |
-| qg_p18_p18_formality_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: The problem  |
-| qg_p18_p18_formality_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: The headteac |
-| qg_p18_p18_formality_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: The pupils i |
-| qg_p18_p18_formality_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: The meeting  |
-| qg_p18_p18_formality_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: The club was |
-| qg_p18_p18_formality_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: Please disco |
-| qg_p18_p18_formality_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: We need to r |
-| qg_p18_p18_formality_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: The visitor  |
-| qg_p18_p18_formality_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: The council  |
-| qg_p18_p18_formality_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: The team att |
-| qg_p18_p18_formality_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: The letter e |
-| qg_p18_p18_formality_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: The shop ref |
-| qg_p18_p18_formality_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: The problem  |
-| qg_p18_p18_formality_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: The headteac |
-| qg_p18_p18_formality_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: The pupils i |
-| qg_p18_p18_formality_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: The meeting  |
-| qg_p18_p18_formality_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: The club was |
-| qg_p18_p18_formality_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: Please disco |
-| qg_p18_p18_formality_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: We need to r |
-| qg_p18_p18_formality_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: The visitor  |
-| qg_p18_p18_formality_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: The council  |
-| qg_p18_p18_formality_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: The team att |
+| qg_p18_p18_formality_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_hyphen_ambiguity_application_transfer | 1 | textarea | - | Explain the meaning difference between 'man eating shark' an |
 | qg_p18_p18_hyphen_ambiguity_application_transfer | 2 | textarea | - | Explain the meaning difference between 'recover the chair' a |
 | qg_p18_p18_hyphen_ambiguity_application_transfer | 3 | textarea | - | Explain the meaning difference between 'twenty odd pupils' a |
@@ -13450,36 +13450,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite | 28 | text | - | Rewrite with a hyphen to make this meaning clear (a keeper o |
 | qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite | 29 | text | - | Rewrite with a hyphen to make this meaning clear (a club out |
 | qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite | 30 | text | - | Rewrite with a hyphen to make this meaning clear (an author  |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: man-eating s |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: re-cover the |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: twenty-odd p |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: small-animal |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: extra-curric |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: well-known a |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: six-year-old |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: long-term pl |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: cold-blooded |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: fast-moving  |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: half-finishe |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: first-class  |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: man-eating s |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: re-cover the |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: twenty-odd p |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: small-animal |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: extra-curric |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: well-known a |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: six-year-old |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: long-term pl |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: cold-blooded |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: fast-moving  |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: half-finishe |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: first-class  |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: man-eating s |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: re-cover the |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: twenty-odd p |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: small-animal |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: extra-curric |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: well-known a |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_modal_verbs_application_transfer | 1 | textarea | - | Explain why another modal verb would change the meaning in:  |
 | qg_p18_p18_modal_verbs_application_transfer | 2 | textarea | - | Explain why another modal verb would change the meaning in:  |
 | qg_p18_p18_modal_verbs_application_transfer | 3 | textarea | - | Explain why another modal verb would change the meaning in:  |
@@ -13630,36 +13630,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_modal_verbs_precision_repair_or_rewrite | 28 | textarea | - | Complete the sentence with the best modal verb for obligatio |
 | qg_p18_p18_modal_verbs_precision_repair_or_rewrite | 29 | textarea | - | Complete the sentence with the best modal verb for strong ce |
 | qg_p18_p18_modal_verbs_precision_repair_or_rewrite | 30 | textarea | - | Complete the sentence with the best modal verb for possibili |
-| qg_p18_p18_modal_verbs_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: You should w |
-| qg_p18_p18_modal_verbs_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: It might rai |
-| qg_p18_p18_modal_verbs_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: The train wi |
-| qg_p18_p18_modal_verbs_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: You should a |
-| qg_p18_p18_modal_verbs_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: The parcel m |
-| qg_p18_p18_modal_verbs_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: We could vis |
-| qg_p18_p18_modal_verbs_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: You must not |
-| qg_p18_p18_modal_verbs_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: The answer m |
-| qg_p18_p18_modal_verbs_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: The team sho |
-| qg_p18_p18_modal_verbs_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: The lights w |
-| qg_p18_p18_modal_verbs_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: This key sho |
-| qg_p18_p18_modal_verbs_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: You may borr |
-| qg_p18_p18_modal_verbs_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: You should w |
-| qg_p18_p18_modal_verbs_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: It might rai |
-| qg_p18_p18_modal_verbs_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: The train wi |
-| qg_p18_p18_modal_verbs_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: You should a |
-| qg_p18_p18_modal_verbs_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: The parcel m |
-| qg_p18_p18_modal_verbs_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: We could vis |
-| qg_p18_p18_modal_verbs_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: You must not |
-| qg_p18_p18_modal_verbs_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: The answer m |
-| qg_p18_p18_modal_verbs_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: The team sho |
-| qg_p18_p18_modal_verbs_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: The lights w |
-| qg_p18_p18_modal_verbs_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: This key sho |
-| qg_p18_p18_modal_verbs_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: You may borr |
-| qg_p18_p18_modal_verbs_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: You should w |
-| qg_p18_p18_modal_verbs_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: It might rai |
-| qg_p18_p18_modal_verbs_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: The train wi |
-| qg_p18_p18_modal_verbs_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: You should a |
-| qg_p18_p18_modal_verbs_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: The parcel m |
-| qg_p18_p18_modal_verbs_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: We could vis |
+| qg_p18_p18_modal_verbs_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_noun_phrases_application_transfer | 1 | textarea | - | Explain why 'rolled beneath' is not a noun phrase, then give |
 | qg_p18_p18_noun_phrases_application_transfer | 2 | textarea | - | Explain why 'waited outside' is not a noun phrase, then give |
 | qg_p18_p18_noun_phrases_application_transfer | 3 | textarea | - | Explain why 'glittered brightly' is not a noun phrase, then  |
@@ -13780,36 +13780,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_noun_phrases_precision_repair_or_rewrite | 28 | textarea | - | Complete the sentence with this expanded noun phrase: a fall |
 | qg_p18_p18_noun_phrases_precision_repair_or_rewrite | 29 | textarea | - | Complete the sentence with this expanded noun phrase: the wh |
 | qg_p18_p18_noun_phrases_precision_repair_or_rewrite | 30 | textarea | - | Complete the sentence with this expanded noun phrase: the ne |
-| qg_p18_p18_noun_phrases_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: the small bl |
-| qg_p18_p18_noun_phrases_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: the patient  |
-| qg_p18_p18_noun_phrases_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: the ancient  |
-| qg_p18_p18_noun_phrases_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: a fallen bra |
-| qg_p18_p18_noun_phrases_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: the white bo |
-| qg_p18_p18_noun_phrases_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: the nervous  |
-| qg_p18_p18_noun_phrases_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: a sleepy cat |
-| qg_p18_p18_noun_phrases_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: the bright m |
-| qg_p18_p18_noun_phrases_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: three excite |
-| qg_p18_p18_noun_phrases_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: the heavy di |
-| qg_p18_p18_noun_phrases_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: a striped be |
-| qg_p18_p18_noun_phrases_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: the narrow p |
-| qg_p18_p18_noun_phrases_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: the small bl |
-| qg_p18_p18_noun_phrases_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: the patient  |
-| qg_p18_p18_noun_phrases_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: the ancient  |
-| qg_p18_p18_noun_phrases_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: a fallen bra |
-| qg_p18_p18_noun_phrases_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: the white bo |
-| qg_p18_p18_noun_phrases_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: the nervous  |
-| qg_p18_p18_noun_phrases_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: a sleepy cat |
-| qg_p18_p18_noun_phrases_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: the bright m |
-| qg_p18_p18_noun_phrases_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: three excite |
-| qg_p18_p18_noun_phrases_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: the heavy di |
-| qg_p18_p18_noun_phrases_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: a striped be |
-| qg_p18_p18_noun_phrases_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: the narrow p |
-| qg_p18_p18_noun_phrases_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: the small bl |
-| qg_p18_p18_noun_phrases_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: the patient  |
-| qg_p18_p18_noun_phrases_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: the ancient  |
-| qg_p18_p18_noun_phrases_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: a fallen bra |
-| qg_p18_p18_noun_phrases_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: the white bo |
-| qg_p18_p18_noun_phrases_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: the nervous  |
+| qg_p18_p18_noun_phrases_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_parenthesis_commas_application_transfer | 1 | textarea | - | Explain why the phrase 'who was first in line' can be marked |
 | qg_p18_p18_parenthesis_commas_application_transfer | 2 | textarea | - | Explain why the phrase 'built in 1200' can be marked as pare |
 | qg_p18_p18_parenthesis_commas_application_transfer | 3 | textarea | - | Explain why the phrase 'a keen cyclist' can be marked as par |
@@ -13930,36 +13930,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite | 28 | textarea | - | Copy the sentence and add commas for parenthesis. The match  |
 | qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite | 29 | textarea | - | Copy the sentence and add commas for parenthesis. Mina weari |
 | qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite | 30 | textarea | - | Copy the sentence and add commas for parenthesis. The book a |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: who was firs |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: built in 120 |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: a keen cycli |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: which lasted |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: wearing her  |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: a gift from  |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: narrow and s |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: delayed by f |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: who had forg |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: polished yes |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: usually quie |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: an excellent |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: who was firs |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: built in 120 |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: a keen cycli |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: which lasted |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: wearing her  |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: a gift from  |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: narrow and s |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: delayed by f |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: who had forg |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: polished yes |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: usually quie |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: an excellent |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: who was firs |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: built in 120 |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: a keen cycli |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: which lasted |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: wearing her  |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: a gift from  |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_pronouns_cohesion_application_transfer | 1 | textarea | - | Explain why this version is unclear: Amira picked up the map |
 | qg_p18_p18_pronouns_cohesion_application_transfer | 2 | textarea | - | Explain why this version is unclear: Ben showed the photo to |
 | qg_p18_p18_pronouns_cohesion_application_transfer | 3 | textarea | - | Explain why this version is unclear: The dog chased the ball |
@@ -14110,36 +14110,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite | 28 | textarea | - | Rewrite this so the pronouns are clear: Maya lent her pen to |
 | qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite | 29 | textarea | - | Rewrite this so the pronouns are clear: The class visited th |
 | qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite | 30 | textarea | - | Rewrite this so the pronouns are clear: Tom put the cake on  |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: Amira picked |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: Ben showed t |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: The dog chas |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: Maya lent he |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: The class vi |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: Tom put the  |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: Sara found t |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: The twins pa |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: Omar repaire |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: The birds fo |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: Nina placed  |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: Dad washed t |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: Amira picked |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: Ben showed t |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: The dog chas |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: Maya lent he |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: The class vi |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: Tom put the  |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: Sara found t |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: The twins pa |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: Omar repaire |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: The birds fo |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: Nina placed  |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: Dad washed t |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: Amira picked |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: Ben showed t |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: The dog chas |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: Maya lent he |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: The class vi |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: Tom put the  |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_relative_clauses_application_transfer | 1 | textarea | - | Add the relative clause 'who painted the mural' to the noun  |
 | qg_p18_p18_relative_clauses_application_transfer | 2 | textarea | - | Add the relative clause 'that we borrowed' to the noun 'comp |
 | qg_p18_p18_relative_clauses_application_transfer | 3 | textarea | - | Add the relative clause 'where my uncle lives' to the noun ' |
@@ -14290,36 +14290,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_relative_clauses_precision_repair_or_rewrite | 28 | text | - | Write the relative clause from this sentence: The player who |
 | qg_p18_p18_relative_clauses_precision_repair_or_rewrite | 29 | text | - | Write the relative clause from this sentence: The cake which |
 | qg_p18_p18_relative_clauses_precision_repair_or_rewrite | 30 | text | - | Write the relative clause from this sentence: The school tha |
-| qg_p18_p18_relative_clauses_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: who painted  |
-| qg_p18_p18_relative_clauses_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: that we borr |
-| qg_p18_p18_relative_clauses_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: where my unc |
-| qg_p18_p18_relative_clauses_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: whose boot w |
-| qg_p18_p18_relative_clauses_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: which Grandm |
-| qg_p18_p18_relative_clauses_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: that opened  |
-| qg_p18_p18_relative_clauses_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: who finished |
-| qg_p18_p18_relative_clauses_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: where the bo |
-| qg_p18_p18_relative_clauses_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: which fell f |
-| qg_p18_p18_relative_clauses_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: whose class  |
-| qg_p18_p18_relative_clauses_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: that leaked  |
-| qg_p18_p18_relative_clauses_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: who found th |
-| qg_p18_p18_relative_clauses_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: who painted  |
-| qg_p18_p18_relative_clauses_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: that we borr |
-| qg_p18_p18_relative_clauses_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: where my unc |
-| qg_p18_p18_relative_clauses_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: whose boot w |
-| qg_p18_p18_relative_clauses_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: which Grandm |
-| qg_p18_p18_relative_clauses_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: that opened  |
-| qg_p18_p18_relative_clauses_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: who finished |
-| qg_p18_p18_relative_clauses_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: where the bo |
-| qg_p18_p18_relative_clauses_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: which fell f |
-| qg_p18_p18_relative_clauses_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: whose class  |
-| qg_p18_p18_relative_clauses_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: that leaked  |
-| qg_p18_p18_relative_clauses_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: who found th |
-| qg_p18_p18_relative_clauses_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: who painted  |
-| qg_p18_p18_relative_clauses_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: that we borr |
-| qg_p18_p18_relative_clauses_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: where my unc |
-| qg_p18_p18_relative_clauses_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: whose boot w |
-| qg_p18_p18_relative_clauses_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: which Grandm |
-| qg_p18_p18_relative_clauses_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: that opened  |
+| qg_p18_p18_relative_clauses_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_sentence_functions_application_transfer | 1 | textarea | - | A pupil says this is a statement: Please return the atlas to |
 | qg_p18_p18_sentence_functions_application_transfer | 2 | textarea | - | A pupil says this is a statement: How bright the lanterns lo |
 | qg_p18_p18_sentence_functions_application_transfer | 3 | textarea | - | A pupil says this is a statement: Did the choir practise bef |
@@ -14440,36 +14440,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_sentence_functions_precision_repair_or_rewrite | 28 | textarea | - | Add the correct ending punctuation, then copy the sentence:  |
 | qg_p18_p18_sentence_functions_precision_repair_or_rewrite | 29 | textarea | - | Add the correct ending punctuation, then copy the sentence:  |
 | qg_p18_p18_sentence_functions_precision_repair_or_rewrite | 30 | textarea | - | Add the correct ending punctuation, then copy the sentence:  |
-| qg_p18_p18_sentence_functions_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: Please retur |
-| qg_p18_p18_sentence_functions_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: How bright t |
-| qg_p18_p18_sentence_functions_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: Did the choi |
-| qg_p18_p18_sentence_functions_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: The fossils  |
-| qg_p18_p18_sentence_functions_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: Close the gr |
-| qg_p18_p18_sentence_functions_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: What a narro |
-| qg_p18_p18_sentence_functions_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: Where did yo |
-| qg_p18_p18_sentence_functions_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: The goalkeep |
-| qg_p18_p18_sentence_functions_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: Pass the mes |
-| qg_p18_p18_sentence_functions_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: How quickly  |
-| qg_p18_p18_sentence_functions_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: Can the robo |
-| qg_p18_p18_sentence_functions_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: The coach ch |
-| qg_p18_p18_sentence_functions_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: Please retur |
-| qg_p18_p18_sentence_functions_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: How bright t |
-| qg_p18_p18_sentence_functions_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: Did the choi |
-| qg_p18_p18_sentence_functions_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: The fossils  |
-| qg_p18_p18_sentence_functions_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: Close the gr |
-| qg_p18_p18_sentence_functions_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: What a narro |
-| qg_p18_p18_sentence_functions_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: Where did yo |
-| qg_p18_p18_sentence_functions_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: The goalkeep |
-| qg_p18_p18_sentence_functions_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: Pass the mes |
-| qg_p18_p18_sentence_functions_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: How quickly  |
-| qg_p18_p18_sentence_functions_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: Can the robo |
-| qg_p18_p18_sentence_functions_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: The coach ch |
-| qg_p18_p18_sentence_functions_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: Please retur |
-| qg_p18_p18_sentence_functions_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: How bright t |
-| qg_p18_p18_sentence_functions_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: Did the choi |
-| qg_p18_p18_sentence_functions_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: The fossils  |
-| qg_p18_p18_sentence_functions_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: Close the gr |
-| qg_p18_p18_sentence_functions_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: What a narro |
+| qg_p18_p18_sentence_functions_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary | 1 | textarea | - | Mixed check: classify the function of 'Please return the atl |
 | qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary | 2 | textarea | - | Mixed check: classify the function of 'How bright the lanter |
 | qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary | 3 | textarea | - | Mixed check: classify the function of 'Did the choir practis |
@@ -14620,36 +14620,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_speech_punctuation_precision_repair_or_rewrite | 28 | textarea | - | Copy and correct the speech punctuation. Dad asked "Have you |
 | qg_p18_p18_speech_punctuation_precision_repair_or_rewrite | 29 | textarea | - | Copy and correct the speech punctuation. "Please wait here"  |
 | qg_p18_p18_speech_punctuation_precision_repair_or_rewrite | 30 | text | - | Copy and correct the speech punctuation. "Watch out" cried B |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: "Where are y |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: "Sit down!"  |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: "I found the |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: Dad asked, " |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: "Please wait |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: "Watch out!" |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: "Did you hea |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: The coach sa |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: "The bus is  |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: "How amazing |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: "Can I help? |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: Mina replied |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: "Where are y |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: "Sit down!"  |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: "I found the |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: Dad asked, " |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: "Please wait |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: "Watch out!" |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: "Did you hea |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: The coach sa |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: "The bus is  |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: "How amazing |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: "Can I help? |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: Mina replied |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: "Where are y |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: "Sit down!"  |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: "I found the |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: Dad asked, " |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: "Please wait |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: "Watch out!" |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_standard_english_application_transfer | 1 | textarea | - | Explain the Standard English correction from 'We was late fo |
 | qg_p18_p18_standard_english_application_transfer | 2 | textarea | - | Explain the Standard English correction from 'I done the was |
 | qg_p18_p18_standard_english_application_transfer | 3 | textarea | - | Explain the Standard English correction from 'She seen the p |
@@ -14770,36 +14770,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_standard_english_precision_repair_or_rewrite | 28 | text | - | Rewrite this in Standard English: They has finished already. |
 | qg_p18_p18_standard_english_precision_repair_or_rewrite | 29 | textarea | - | Rewrite this in Standard English: There was three pencils on |
 | qg_p18_p18_standard_english_precision_repair_or_rewrite | 30 | text | - | Rewrite this in Standard English: Me and Jack went first. |
-| qg_p18_p18_standard_english_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: We were late |
-| qg_p18_p18_standard_english_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: I did the wa |
-| qg_p18_p18_standard_english_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: She saw the  |
-| qg_p18_p18_standard_english_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: They have fi |
-| qg_p18_p18_standard_english_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: There were t |
-| qg_p18_p18_standard_english_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: Jack and I w |
-| qg_p18_p18_standard_english_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: The team won |
-| qg_p18_p18_standard_english_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: I have not g |
-| qg_p18_p18_standard_english_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: He does not  |
-| qg_p18_p18_standard_english_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: We did it ca |
-| qg_p18_p18_standard_english_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: She and Sam  |
-| qg_p18_p18_standard_english_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: The children |
-| qg_p18_p18_standard_english_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: We were late |
-| qg_p18_p18_standard_english_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: I did the wa |
-| qg_p18_p18_standard_english_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: She saw the  |
-| qg_p18_p18_standard_english_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: They have fi |
-| qg_p18_p18_standard_english_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: There were t |
-| qg_p18_p18_standard_english_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: Jack and I w |
-| qg_p18_p18_standard_english_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: The team won |
-| qg_p18_p18_standard_english_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: I have not g |
-| qg_p18_p18_standard_english_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: He does not  |
-| qg_p18_p18_standard_english_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: We did it ca |
-| qg_p18_p18_standard_english_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: She and Sam  |
-| qg_p18_p18_standard_english_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: The children |
-| qg_p18_p18_standard_english_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: We were late |
-| qg_p18_p18_standard_english_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: I did the wa |
-| qg_p18_p18_standard_english_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: She saw the  |
-| qg_p18_p18_standard_english_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: They have fi |
-| qg_p18_p18_standard_english_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: There were t |
-| qg_p18_p18_standard_english_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: Jack and I w |
+| qg_p18_p18_standard_english_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_subject_object_application_transfer | 1 | textarea | - | Explain the subject-object relationship in this sentence: Th |
 | qg_p18_p18_subject_object_application_transfer | 2 | textarea | - | Explain the subject-object relationship in this sentence: Af |
 | qg_p18_p18_subject_object_application_transfer | 3 | textarea | - | Explain the subject-object relationship in this sentence: Th |
@@ -14920,36 +14920,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_subject_object_precision_repair_or_rewrite | 28 | text | - | Write the subject of this sentence: During the storm, the wi |
 | qg_p18_p18_subject_object_precision_repair_or_rewrite | 29 | text | - | Write the subject of this sentence: The engineer tested the  |
 | qg_p18_p18_subject_object_precision_repair_or_rewrite | 30 | text | - | Write the subject of this sentence: Near the fountain, Priya |
-| qg_p18_p18_subject_object_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: the sandwich |
-| qg_p18_p18_subject_object_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: the ball |
-| qg_p18_p18_subject_object_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: the new tick |
-| qg_p18_p18_subject_object_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: the branch |
-| qg_p18_p18_subject_object_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: the bridge |
-| qg_p18_p18_subject_object_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: a coin |
-| qg_p18_p18_subject_object_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: the flag |
-| qg_p18_p18_subject_object_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: the gate |
-| qg_p18_p18_subject_object_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: the red slip |
-| qg_p18_p18_subject_object_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: the temperat |
-| qg_p18_p18_subject_object_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: the tickets |
-| qg_p18_p18_subject_object_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: a shelter |
-| qg_p18_p18_subject_object_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: the sandwich |
-| qg_p18_p18_subject_object_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: the ball |
-| qg_p18_p18_subject_object_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: the new tick |
-| qg_p18_p18_subject_object_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: the branch |
-| qg_p18_p18_subject_object_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: the bridge |
-| qg_p18_p18_subject_object_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: a coin |
-| qg_p18_p18_subject_object_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: the flag |
-| qg_p18_p18_subject_object_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: the gate |
-| qg_p18_p18_subject_object_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: the red slip |
-| qg_p18_p18_subject_object_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: the temperat |
-| qg_p18_p18_subject_object_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: the tickets |
-| qg_p18_p18_subject_object_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: a shelter |
-| qg_p18_p18_subject_object_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: the sandwich |
-| qg_p18_p18_subject_object_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: the ball |
-| qg_p18_p18_subject_object_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: the new tick |
-| qg_p18_p18_subject_object_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: the branch |
-| qg_p18_p18_subject_object_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: the bridge |
-| qg_p18_p18_subject_object_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: a coin |
+| qg_p18_p18_subject_object_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_tense_aspect_application_transfer | 1 | textarea | - | Explain the change from 'She packs her bag before the trip.' |
 | qg_p18_p18_tense_aspect_application_transfer | 2 | textarea | - | Explain the change from 'I finish my homework.' to 'I have f |
 | qg_p18_p18_tense_aspect_application_transfer | 3 | textarea | - | Explain the change from 'The dog chases the cat.' to 'The do |
@@ -15070,36 +15070,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_tense_aspect_precision_repair_or_rewrite | 28 | text | - | Rewrite in the present progressive: We walk to school. |
 | qg_p18_p18_tense_aspect_precision_repair_or_rewrite | 29 | text | - | Rewrite in the past perfect: They leave before noon. |
 | qg_p18_p18_tense_aspect_precision_repair_or_rewrite | 30 | text | - | Rewrite in the present perfect: Tom visits the castle. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: She had pack |
-| qg_p18_p18_tense_aspect_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: I have finis |
-| qg_p18_p18_tense_aspect_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: The dog was  |
-| qg_p18_p18_tense_aspect_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: We are walki |
-| qg_p18_p18_tense_aspect_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: They had lef |
-| qg_p18_p18_tense_aspect_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: Tom has visi |
-| qg_p18_p18_tense_aspect_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: The rain was |
-| qg_p18_p18_tense_aspect_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: Mina is writ |
-| qg_p18_p18_tense_aspect_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: The train ha |
-| qg_p18_p18_tense_aspect_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: I have read  |
-| qg_p18_p18_tense_aspect_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: The children |
-| qg_p18_p18_tense_aspect_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: Zara is chec |
-| qg_p18_p18_tense_aspect_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: She had pack |
-| qg_p18_p18_tense_aspect_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: I have finis |
-| qg_p18_p18_tense_aspect_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: The dog was  |
-| qg_p18_p18_tense_aspect_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: We are walki |
-| qg_p18_p18_tense_aspect_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: They had lef |
-| qg_p18_p18_tense_aspect_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: Tom has visi |
-| qg_p18_p18_tense_aspect_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: The rain was |
-| qg_p18_p18_tense_aspect_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: Mina is writ |
-| qg_p18_p18_tense_aspect_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: The train ha |
-| qg_p18_p18_tense_aspect_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: I have read  |
-| qg_p18_p18_tense_aspect_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: The children |
-| qg_p18_p18_tense_aspect_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: Zara is chec |
-| qg_p18_p18_tense_aspect_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: She had pack |
-| qg_p18_p18_tense_aspect_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: I have finis |
-| qg_p18_p18_tense_aspect_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: The dog was  |
-| qg_p18_p18_tense_aspect_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: We are walki |
-| qg_p18_p18_tense_aspect_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: They had lef |
-| qg_p18_p18_tense_aspect_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: Tom has visi |
+| qg_p18_p18_tense_aspect_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
 | qg_p18_p18_tense_aspect_standard_english_tense_standard_register | 1 | textarea | - | Mixed check: rewrite in the past perfect and correct the Sta |
 | qg_p18_p18_tense_aspect_standard_english_tense_standard_register | 2 | textarea | - | Mixed check: rewrite in the present perfect and correct the  |
 | qg_p18_p18_tense_aspect_standard_english_tense_standard_register | 3 | textarea | - | Mixed check: rewrite in the past progressive and correct the |
@@ -15280,33 +15280,33 @@ _Answer internals stripped from this report._
 | qg_p18_p18_word_classes_precision_repair_or_rewrite | 28 | text | - | Write the word class of 'After' in this sentence: After brea |
 | qg_p18_p18_word_classes_precision_repair_or_rewrite | 29 | text | - | Write the word class of 'curious' in this sentence: The curi |
 | qg_p18_p18_word_classes_precision_repair_or_rewrite | 30 | text | - | Write the word class of 'and' in this sentence: Luca and Pri |
-| qg_p18_p18_word_classes_sat_table_classification | 1 | table_choice | - | Classify the grammar feature shown in this row: carefully in |
-| qg_p18_p18_word_classes_sat_table_classification | 2 | table_choice | - | Classify the grammar feature shown in this row: Those in: Th |
-| qg_p18_p18_word_classes_sat_table_classification | 3 | table_choice | - | Classify the grammar feature shown in this row: bounded in:  |
-| qg_p18_p18_word_classes_sat_table_classification | 4 | table_choice | - | Classify the grammar feature shown in this row: After in: Af |
-| qg_p18_p18_word_classes_sat_table_classification | 5 | table_choice | - | Classify the grammar feature shown in this row: curious in:  |
-| qg_p18_p18_word_classes_sat_table_classification | 6 | table_choice | - | Classify the grammar feature shown in this row: and in: Luca |
-| qg_p18_p18_word_classes_sat_table_classification | 7 | table_choice | - | Classify the grammar feature shown in this row: She in: She  |
-| qg_p18_p18_word_classes_sat_table_classification | 8 | table_choice | - | Classify the grammar feature shown in this row: under in: A  |
-| qg_p18_p18_word_classes_sat_table_classification | 9 | table_choice | - | Classify the grammar feature shown in this row: vase in: The |
-| qg_p18_p18_word_classes_sat_table_classification | 10 | table_choice | - | Classify the grammar feature shown in this row: beautifully  |
-| qg_p18_p18_word_classes_sat_table_classification | 11 | table_choice | - | Classify the grammar feature shown in this row: Either in: E |
-| qg_p18_p18_word_classes_sat_table_classification | 12 | table_choice | - | Classify the grammar feature shown in this row: hammered in: |
-| qg_p18_p18_word_classes_sat_table_classification | 13 | table_choice | - | Classify the grammar feature shown in this row: carefully in |
-| qg_p18_p18_word_classes_sat_table_classification | 14 | table_choice | - | Classify the grammar feature shown in this row: Those in: Th |
-| qg_p18_p18_word_classes_sat_table_classification | 15 | table_choice | - | Classify the grammar feature shown in this row: bounded in:  |
-| qg_p18_p18_word_classes_sat_table_classification | 16 | table_choice | - | Classify the grammar feature shown in this row: After in: Af |
-| qg_p18_p18_word_classes_sat_table_classification | 17 | table_choice | - | Classify the grammar feature shown in this row: curious in:  |
-| qg_p18_p18_word_classes_sat_table_classification | 18 | table_choice | - | Classify the grammar feature shown in this row: and in: Luca |
-| qg_p18_p18_word_classes_sat_table_classification | 19 | table_choice | - | Classify the grammar feature shown in this row: She in: She  |
-| qg_p18_p18_word_classes_sat_table_classification | 20 | table_choice | - | Classify the grammar feature shown in this row: under in: A  |
-| qg_p18_p18_word_classes_sat_table_classification | 21 | table_choice | - | Classify the grammar feature shown in this row: vase in: The |
-| qg_p18_p18_word_classes_sat_table_classification | 22 | table_choice | - | Classify the grammar feature shown in this row: beautifully  |
-| qg_p18_p18_word_classes_sat_table_classification | 23 | table_choice | - | Classify the grammar feature shown in this row: Either in: E |
-| qg_p18_p18_word_classes_sat_table_classification | 24 | table_choice | - | Classify the grammar feature shown in this row: hammered in: |
-| qg_p18_p18_word_classes_sat_table_classification | 25 | table_choice | - | Classify the grammar feature shown in this row: carefully in |
-| qg_p18_p18_word_classes_sat_table_classification | 26 | table_choice | - | Classify the grammar feature shown in this row: Those in: Th |
-| qg_p18_p18_word_classes_sat_table_classification | 27 | table_choice | - | Classify the grammar feature shown in this row: bounded in:  |
-| qg_p18_p18_word_classes_sat_table_classification | 28 | table_choice | - | Classify the grammar feature shown in this row: After in: Af |
-| qg_p18_p18_word_classes_sat_table_classification | 29 | table_choice | - | Classify the grammar feature shown in this row: curious in:  |
-| qg_p18_p18_word_classes_sat_table_classification | 30 | table_choice | - | Classify the grammar feature shown in this row: and in: Luca |
+| qg_p18_p18_word_classes_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |

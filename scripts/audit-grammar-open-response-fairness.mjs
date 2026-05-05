@@ -22,7 +22,8 @@ function parseSeeds(arg = '1..30') {
 // surfaced 29 templates whose prompts started with Combine/Correct/Copy/
 // Insert/Edit/Fix/Punctuate/Expand/Change/Type and were silently exempted.
 // Bare add/move/join now match "Add a hyphen", "Add commas", etc.
-// Contract A.1 says "or similar open task".
+// Contract A.1 says "or similar open task". P20 closed deterministic
+// recoveries are skipped later by their explicit p20ClosedAutoMark runtime tag.
 function isOpenPrompt(prompt) {
   return /\b(explain|transfer|write\s+(?:the|an?|one|a\s+sentence)|rewrite|build|mixed\s+check|add|move|join|describe|complete\s+the\s+sentence|continue|extend|combine|correct|copy|insert|edit|fix|punctuate|expand|change|type|repair|reorder)\b/i.test(prompt || '');
 }
@@ -45,6 +46,8 @@ export function buildOpenResponseFairnessAudit(seeds = parseSeeds()) {
         && acceptedCount < 3
         && question.manualReviewOnly !== true
         && question.nonScored !== true
+        && question.p20ClosedAutoMark !== true
+        && question.answerSpec?.p20ClosedAutoMark !== true
       ) {
         findings.push({ templateId: template.id, seed, inputType, kind, acceptedCount, nearMissCount, prompt });
       }
