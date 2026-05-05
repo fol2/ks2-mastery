@@ -109,12 +109,16 @@ jobs:
             const fs = require('fs');
             const files = fs.readdirSync('.').filter(f => f.startsWith('shard-') && f.endsWith('-timings.json'));
             if (files.length < 2) { console.log('Not enough timing data'); process.exit(0); }
-            const durations = files.map(f => JSON.parse(fs.readFileSync(f)).wallMs);
+            const shards = files.map(f => JSON.parse(fs.readFileSync(f)));
+            const durations = shards.map(s => s.wallMs);
             const max = Math.max(...durations);
             const min = Math.min(...durations);
             const ratio = max / min;
             console.log('Shard balance: max=' + max + 'ms min=' + min + 'ms ratio=' + ratio.toFixed(2));
-            if (ratio > 2.5) console.log('::warning::Shard imbalance detected (ratio ' + ratio.toFixed(2) + ' > 2.5). Consider splitting heavy test files.');
+            if (max > 120000) { console.log('::error::Heaviest shard ' + max + 'ms exceeds 120s ceiling — seed sweep or file split required'); process.exit(1); }
+            if (ratio > 2.0) console.log('::warning::Shard imbalance detected (ratio ' + ratio.toFixed(2) + ' > 2.0). Consider re-sweeping seed.');
+            const allFiles = shards.flatMap(s => Object.entries(s.files || {}));
+            allFiles.filter(([,ms]) => ms > 90000).forEach(([f,ms]) => console.log('::warning::File ' + f.split('/').pop() + ' took ' + ms + 'ms — consider splitting if this recurs'));
           "
       - name: Evaluate results
         run: |
