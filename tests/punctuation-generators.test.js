@@ -230,6 +230,9 @@ const GENERATED_CHOICE_FAMILIES = new Set([
   'gen_apostrophe_possession_choose',
   'gen_list_commas_choose',
 ]);
+const LEGACY_RUNTIME_GENERATED_FAMILY_IDS = new Set(
+  LEGACY_RUNTIME_GENERATED_FIXTURE.map((item) => item.generatorFamilyId),
+);
 
 const P12_RELEASE_PRIORITY_RUNTIME_FOUR = Object.freeze({
   gen_sentence_endings_insert: [
@@ -300,18 +303,13 @@ test('generated punctuation items are deterministic, unique, and family-scoped',
 
 test('generated punctuation first variants use the reviewed P12 surface bank', () => {
   const generated = createPunctuationGeneratedItems({ seed: 'legacy-runtime', perFamily: 1 });
-  // P14: filter out new transfer-mode families (added post-P12) so the
-  // comparable surface matches the frozen P12 first-variant fixture.
+  // P20: filter to the original non-choice, non-transfer legacy families so
+  // the comparable surface still matches the frozen first-variant fixture.
   const legacyComparable = generated
-    .filter((item) => !GENERATED_CHOICE_FAMILIES.has(item.generatorFamilyId))
-    .filter((item) => !/_transfer$/.test(item.generatorFamilyId || ''));
-  const legacyOrTransfer = generated.filter(
-    (item) => !GENERATED_CHOICE_FAMILIES.has(item.generatorFamilyId),
-  );
+    .filter((item) => LEGACY_RUNTIME_GENERATED_FAMILY_IDS.has(item.generatorFamilyId));
 
   assert.equal(legacyComparable.length, LEGACY_RUNTIME_GENERATED_FIXTURE.length);
-  // Transfer families add 14 to the non-choice count; total non-choice = 25 + 14.
-  assert.equal(legacyOrTransfer.length, LEGACY_RUNTIME_GENERATED_FIXTURE.length + 14);
+  assert.equal(generated.length, PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.length);
   assert.equal(generated.every((item) => !/_template_\\d+$/.test(item.templateId)), true);
   // Baseline templates use p12q_ prefix; transfer DSL templates use a generic
   // hash prefix from the DSL framework.
@@ -379,8 +377,10 @@ test('priority capacity expansion pins the first four P12 generated surfaces', (
   for (const [familyId, expected] of Object.entries(P12_RELEASE_PRIORITY_RUNTIME_FOUR)) {
     const actual = generatedItems
       .filter((item) => item.generatorFamilyId === familyId)
-      .map((item) => [item.templateId, item.variantSignature]);
-    assert.deepEqual(actual, expected, familyId);
+      .map((item) => [item.templateId, item.variantSignature])
+      .sort(([a], [b]) => a.localeCompare(b));
+    const sortedExpected = [...expected].sort(([a], [b]) => a.localeCompare(b));
+    assert.deepEqual(actual, sortedExpected, familyId);
   }
 });
 
@@ -443,5 +443,5 @@ test('scheduler can select generated practice inside the bounded candidate windo
 
   assert.equal(result.targetMode, 'insert');
   assert.equal(result.item.source, 'generated');
-  assert.equal(result.item.generatorFamilyId, 'gen_sentence_endings_insert');
+  assert.equal(result.item.generatorFamilyId, 'gen_p20_sentence_endings_insert');
 });

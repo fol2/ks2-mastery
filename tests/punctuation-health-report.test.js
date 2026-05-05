@@ -142,6 +142,6 @@ test('depth values are correct constants', () => {
   });
   const report = JSON.parse(output);
 
-  assert.equal(report.depthValues.productionDepth, 100);
-  assert.equal(report.depthValues.capacityDepth, 100);
+  assert.equal(report.depthValues.productionDepth, 120);
+  assert.equal(report.depthValues.capacityDepth, 120);
 });

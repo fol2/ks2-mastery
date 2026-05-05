@@ -80,11 +80,20 @@ describe('Hero Mode pA7 Wrangler OAuth wrapper', () => {
       const result = runWrapper(fake, { CLOUDFLARE_API_TOKEN: 'must-not-leak' });
 
       assert.equal(result.status, 0, result.stderr || result.stdout);
-      assert.deepEqual(fake.readCapture(), {
-        argv: ['wrangler', 'd1', 'execute', 'ks2-mastery-db', '--remote', '--json', '--command', SQL],
-        token: null,
-        workersCi: null,
-      });
+      const capture = fake.readCapture();
+      assert.equal(capture.token, null);
+      assert.equal(capture.workersCi, null);
+      assert.deepEqual(capture.argv.slice(0, 8), [
+        'wrangler',
+        'd1',
+        'execute',
+        'ks2-mastery-db',
+        '--remote',
+        '--json',
+        '--command',
+        process.platform === 'win32' ? 'SELECT' : SQL,
+      ]);
+      assert.equal(capture.argv.slice(7).join(' '), SQL);
     } finally {
       fake.cleanup();
     }

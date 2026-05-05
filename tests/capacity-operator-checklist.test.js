@@ -20,7 +20,7 @@ const COMPLETION_REPORT_PATH = 'docs/plans/james/sys-hardening/A/sys-hardening-o
 const COMPLETION_REPORT = readFileSync(COMPLETION_REPORT_PATH, 'utf8');
 
 function shellBlocks(markdown) {
-  return [...markdown.matchAll(/```sh\n([\s\S]*?)```/g)].map((match) => match[1]);
+  return [...markdown.matchAll(/```sh\r?\n([\s\S]*?)```/g)].map((match) => match[1]);
 }
 
 function shellWords(command) {

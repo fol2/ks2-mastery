@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   buildCapacityStatementMap,
@@ -16,7 +17,7 @@ const OPAQUE_STATEMENT_ID_RE = /^stmt_[0-9a-f]{24}$/;
 const OPAQUE_QUERY_PLAN_NOTE_ID_RE = /^plan_[0-9a-f]{24}$/;
 
 function fixturePath(name) {
-  return new URL(name, FIXTURE_DIR).pathname;
+  return fileURLToPath(new URL(name, FIXTURE_DIR));
 }
 
 function readJsonFixture(name) {

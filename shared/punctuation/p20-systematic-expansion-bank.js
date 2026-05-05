@@ -235,9 +235,11 @@ function coreForSkill(skillId, index, familyId) {
       return {
         model,
         bad,
-        wrongOne: `The ${c.possessorBad}'s ${c.object} was beside the ${c.record}.`,
+        wrongOne: c.possessorGood.endsWith("'s")
+          ? `The ${c.possessorBad}s' ${c.object} was beside the ${c.record}.`
+          : `The ${c.possessorBad}'s ${c.object} was beside the ${c.record}.`,
         wrongTwo: `The ${c.possessorGood.replace(/'/g, '')} ${c.object} was beside the ${c.record}.`,
-        explanation: 'An apostrophe shows that the object belongs to the person or group named.',
+    explanation: 'An apostrophe shows that the thing belongs to the person or group named.',
         explanationRuleId: 'apostrophe.possession',
         misconceptionTags: ['apostrophe.possession_missing', 'apostrophe.plural_possession_confusion'],
       };

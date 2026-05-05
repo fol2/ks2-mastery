@@ -1,12 +1,12 @@
 /**
  * Grammar QG P19 — generated runtime certification status.
  *
- * Source artefact: reports/grammar/grammar-qg-p11-certification-status-map.json
+ * Source artefact: reports\grammar\grammar-qg-p11-certification-status-map.json
  * Content release: grammar-qg-p19-2026-05-04
  * Template entries: 510
  *
  * Do not edit manually. Regenerate with:
- * node scripts/generate-grammar-qg-runtime-certification-status.mjs --status-map=reports/grammar/grammar-qg-p11-certification-status-map.json --out=worker/src/subjects/grammar/certification-status.generated.js
+ * node scripts/generate-grammar-qg-runtime-certification-status.mjs --status-map=reports\grammar\grammar-qg-p11-certification-status-map.json --out=worker/src/subjects/grammar/certification-status.generated.js
  */
 
 const RAW_CERTIFICATION_STATUS_MAP = {
@@ -5623,7 +5623,7 @@ const RAW_CERTIFICATION_STATUS_MAP = {
 };
 
 export const GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID = "grammar-qg-p19-2026-05-04";
-export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE = "reports/grammar/grammar-qg-p11-certification-status-map.json";
+export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE = "reports\\grammar\\grammar-qg-p11-certification-status-map.json";
 export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE_GENERATED_AT = "2026-05-04T10:03:22.620Z";
 export const GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT = 510;
 export const GRAMMAR_RUNTIME_CERTIFICATION_STATUS_COUNTS = Object.freeze({

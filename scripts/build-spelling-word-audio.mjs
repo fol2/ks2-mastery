@@ -382,8 +382,11 @@ export function nowIso() {
   return new Date().toISOString();
 }
 
+let runIdCounter = 0;
 export function createRunId() {
-  return nowIso().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  runIdCounter += 1;
+  const timestamp = nowIso().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  return `${timestamp}-${process.pid}-${runIdCounter}`;
 }
 
 export function statePathFor(runId) {

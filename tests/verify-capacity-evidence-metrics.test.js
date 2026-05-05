@@ -359,7 +359,7 @@ test('dangling evidence commit present in local object database fails closed (p2
     );
     execSync('git add reports/capacity/configs/small-pilot.json');
     execSync('git commit -q -m "initial config"');
-    const danglingSha = execSync('git commit-tree HEAD^{tree} -m "dangling evidence"', {
+    const danglingSha = execSync('git commit-tree "HEAD^{tree}" -m "dangling evidence"', {
       encoding: 'utf8',
     }).trim();
     const evidencePath = join(tempDir, 'reports', 'capacity', 'latest.json');

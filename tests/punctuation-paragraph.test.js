@@ -164,6 +164,20 @@ test('generated paragraph items are deterministic, multi-skill aware, and markab
     'gen_colon_semicolon_paragraph',
     'gen_parenthesis_speech_paragraph',
     'gen_bullet_points_paragraph',
+    'gen_p20_sentence_endings_paragraph',
+    'gen_p20_list_commas_paragraph',
+    'gen_p20_apostrophe_contractions_paragraph',
+    'gen_p20_apostrophe_possession_paragraph',
+    'gen_p20_speech_paragraph',
+    'gen_p20_fronted_adverbial_paragraph',
+    'gen_p20_parenthesis_paragraph',
+    'gen_p20_comma_clarity_paragraph',
+    'gen_p20_colon_list_paragraph',
+    'gen_p20_semicolon_paragraph',
+    'gen_p20_dash_clause_paragraph',
+    'gen_p20_semicolon_list_paragraph',
+    'gen_p20_bullet_points_paragraph',
+    'gen_p20_hyphen_paragraph',
   ]);
   assert.equal(first.some((entry) => entry.skillIds.length > 1), true);
   for (const generated of first) {

@@ -10,26 +10,25 @@ import {
 } from '../scripts/review-punctuation-questions.mjs';
 import { PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 
-// P14 update: 28 baseline families × 100 templates + 14 transfer families ×
-// 18 templates (productionItemsLimit-capped) = 3,052 generated; +512 fixed =
-// 3,564 total. Depth-6 view also expands: 28 baseline × 6 + 14 transfer ×
-// min(6, 18) = 168 + 84 = 252 generated.
-const P12_PRODUCTION_COUNT = 3564;
-const P12_FIXED_COUNT = 512;
-const DEPTH_6_GENERATED_COUNT = 252;
-const DEPTH_6_COUNT = P12_FIXED_COUNT + DEPTH_6_GENERATED_COUNT;
-const CANDIDATE_DEPTH_101_DELTA_COUNT = 28;
+// P20 update: 126 generated families × 120 templates = 14,560 generated;
+// +512 fixed = 15,072 total. The historical depth-6 view now spans all 126
+// generated families, so it contains 756 generated items plus the fixed bank.
+const P20_PRODUCTION_COUNT = 15072;
+const P20_FIXED_COUNT = 512;
+const DEPTH_6_GENERATED_COUNT = 756;
+const DEPTH_6_COUNT = P20_FIXED_COUNT + DEPTH_6_GENERATED_COUNT;
+const CANDIDATE_DEPTH_121_DELTA_COUNT = 0;
 
 // ─── Pool size invariants ────────────────────────────────────────────────────
 
-test('default buildProductionPool() produces exactly 3564 items', () => {
+test('default buildProductionPool() produces exactly 15072 P20 items', () => {
   const pool = buildProductionPool();
-  assert.equal(pool.length, P12_PRODUCTION_COUNT);
+  assert.equal(pool.length, P20_PRODUCTION_COUNT);
 });
 
-test('buildPool() default produces exactly 3564 items (same as buildProductionPool)', () => {
+test('buildPool() default produces exactly 15072 P20 items (same as buildProductionPool)', () => {
   const { pool } = buildPool();
-  assert.equal(pool.length, P12_PRODUCTION_COUNT);
+  assert.equal(pool.length, P20_PRODUCTION_COUNT);
 });
 
 test('--include-depth-6 produces the historical generated depth-6 view over the expanded fixed bank', () => {
@@ -37,11 +36,11 @@ test('--include-depth-6 produces the historical generated depth-6 view over the 
   assert.equal(pool.length, DEPTH_6_COUNT);
   const fixed = pool.filter((i) => i._source === 'fixed').length;
   const generated = pool.filter((i) => i._source === 'generated').length;
-  assert.equal(fixed, P12_FIXED_COUNT);
+  assert.equal(fixed, P20_FIXED_COUNT);
   assert.equal(generated, DEPTH_6_GENERATED_COUNT);
 });
 
-test('--depth 6 produces exactly 252 items (42 families x 6, generated only)', () => {
+test('--depth 6 produces exactly 756 items (126 families x 6, generated only)', () => {
   const { pool } = buildPool({ depth: 6 });
   assert.equal(pool.length, DEPTH_6_GENERATED_COUNT);
   const fixed = pool.filter((i) => i._source === 'fixed').length;
@@ -57,9 +56,9 @@ test('--candidate-depth below production depth produces no delta items', () => {
   assert.equal(fixed, 0);
 });
 
-test('--candidate-depth 101 produces exactly 28 delta items beyond P12 production depth', () => {
-  const { pool } = buildPool({ candidateDepth: 101 });
-  assert.equal(pool.length, CANDIDATE_DEPTH_101_DELTA_COUNT);
+test('--candidate-depth 121 produces no delta items beyond capped P20 production depth', () => {
+  const { pool } = buildPool({ candidateDepth: 121 });
+  assert.equal(pool.length, CANDIDATE_DEPTH_121_DELTA_COUNT);
   const fixed = pool.filter((i) => i._source === 'fixed').length;
   assert.equal(fixed, 0);
 });
@@ -206,8 +205,8 @@ test('generated items have non-empty templateId and variantSignature', () => {
 
 // ─── PRODUCTION_DEPTH sanity ─────────────────────────────────────────────────
 
-test('PRODUCTION_DEPTH is 100 after P12 expansion', () => {
-  assert.equal(PRODUCTION_DEPTH, 100);
+test('PRODUCTION_DEPTH is 120 after P20 systematic expansion', () => {
+  assert.equal(PRODUCTION_DEPTH, 120);
 });
 
 // ─── Backward compatibility: buildProductionPool still works for existing tests ─

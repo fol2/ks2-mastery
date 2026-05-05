@@ -67,7 +67,7 @@ function correctAnswerFor(item) {
   return { typed: item.model };
 }
 
-test('punctuation service default runtime bank exposes the P12/P13 3000+ depth', () => {
+test('punctuation service default runtime bank exposes the P20 15000+ depth', () => {
   const service = createPunctuationService({
     repository: makeRepository(),
     now: () => 1_800_000_000_000,
@@ -80,23 +80,22 @@ test('punctuation service default runtime bank exposes the P12/P13 3000+ depth',
   const fixedItems = runtimeManifest.items.filter((item) => item.source === 'fixed');
   const generatedItems = runtimeManifest.items.filter((item) => item.source === 'generated');
 
-  // P14 Gate 1: runtime is 512 fixed + 2,800 baseline generated + 252
-  // transfer generated = 3,564 total.
+  // P20 Gate: runtime is 512 fixed + 14,560 generated = 15,072 total.
   assert.equal(fixedItems.length, 512);
-  assert.equal(generatedItems.length, 3052);
-  assert.equal(stats.total, 3564);
-  assert.equal(stats.fresh, 3564);
+  assert.equal(generatedItems.length, 14560);
+  assert.equal(stats.total, 15072);
+  assert.equal(stats.fresh, 15072);
   assert.equal(stats.publishedRewardUnits, 14);
 });
 
-test('punctuation service keeps the default P14 runtime manifest and indexes cached', () => {
+test('punctuation service keeps the default P20 runtime manifest and indexes cached', () => {
   const fixedItems = DEFAULT_PUNCTUATION_RUNTIME_MANIFEST.items.filter((item) => item.source === 'fixed');
   const generatedItems = DEFAULT_PUNCTUATION_RUNTIME_MANIFEST.items.filter((item) => item.source === 'generated');
 
   assert.equal(Object.isFrozen(DEFAULT_PUNCTUATION_RUNTIME_MANIFEST), true);
   assert.equal(fixedItems.length, 512);
-  assert.equal(generatedItems.length, 3052);
-  assert.equal(DEFAULT_PUNCTUATION_CONTENT_INDEXES.items.length, 3564);
+  assert.equal(generatedItems.length, 14560);
+  assert.equal(DEFAULT_PUNCTUATION_CONTENT_INDEXES.items.length, 15072);
   assert.equal(DEFAULT_PUNCTUATION_CONTENT_INDEXES.publishedRewardUnits.length, 14);
 });
 

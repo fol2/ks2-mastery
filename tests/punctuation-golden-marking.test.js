@@ -137,6 +137,7 @@ test('self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK'
     [
       ...FAMILIES.map(({ name }) => `gen_${name.replace(/-/g, '_')}`),
       ...CHOICE_FAMILIES.map(({ familyId }) => familyId),
+      ...bankFamilyIds.filter((id) => id.startsWith('gen_p20_')),
     ],
   );
 

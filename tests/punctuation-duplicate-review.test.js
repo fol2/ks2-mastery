@@ -30,7 +30,7 @@ function runAuditCli(args) {
 
 // ─── U7: Duplicate stem/model cluster review tests ──────────────────────────
 
-test('U7: audit with no depth-4 mode-scoped duplicate stems has no gate-blocking clusters', () => {
+test('U7: audit with depth-4 P20 model clusters has no gate block unless review is required', () => {
   const audit = runPunctuationContentAudit({
     seed: 'u7-no-dupes-depth4',
     generatedPerFamily: 4,
@@ -48,7 +48,8 @@ test('U7: audit with no depth-4 mode-scoped duplicate stems has no gate-blocking
   });
 
   const depth4Clusters = report.stemModelClusters.filter((cluster) => cluster.visibleAtDepths.includes(4));
-  assert.deepEqual(depth4Clusters, []);
+  assert.ok(depth4Clusters.length > 0);
+  assert.ok(depth4Clusters.every((cluster) => cluster.kind === 'models'));
   assert.equal(report.stemReviewValidation.ok, true);
 });
 
@@ -90,7 +91,7 @@ test('U7: duplicate stems at depth 6 are surfaced in reviewer report when artifi
   assert.match(text, /Duplicate Stem\/Model Clusters/);
 });
 
-test('U7: P12 reviewed bank has no mode-scoped duplicate stems or models', () => {
+test('U7: P20 reviewed bank has mode-scoped model clusters but no duplicate stems', () => {
   const { allClusters } = buildStemModelClusters({
     seed: 'u7-mode-scope-test',
     depths: [4, 6, 8],
@@ -105,17 +106,15 @@ test('U7: P12 reviewed bank has no mode-scoped duplicate stems or models', () =>
       `cluster key "${cluster.clusterKey}" must end with "::${cluster.mode}"`);
   }
 
-  // Verify the reviewed P12 bank stays clear for both non-mode-scoped and
-  // mode-scoped duplicate stems.
+  // Verify the reviewed P20 bank stays clear for duplicate stems while
+  // surfacing model clusters for the explicit review gate.
   const audit8 = runPunctuationContentAudit({
     seed: 'u7-mode-scope-test',
     generatedPerFamily: 8,
   });
   assert.deepEqual(audit8.duplicates.generated.stems, []);
-  assert.deepEqual(
-    allClusters,
-    [],
-  );
+  assert.ok(allClusters.length > 0);
+  assert.ok(allClusters.every((cluster) => cluster.kind === 'models'));
 });
 
 test('U7: --require-stem-review with unreviewed clusters at requested depth fails', () => {
@@ -251,7 +250,7 @@ test('U7: invalid decision value counts as unreviewed', () => {
   assert.deepEqual(result.unreviewed, ['some test stem::insert']);
 });
 
-test('U7: CLI --require-stem-review at depth 4 passes when no clusters exist', () => {
+test('U7: CLI --require-stem-review at depth 4 fails closed for unreviewed P20 clusters', () => {
   const result = runAuditCli([
     '--strict',
     '--generated-per-family', '4',
@@ -259,9 +258,9 @@ test('U7: CLI --require-stem-review at depth 4 passes when no clusters exist', (
     '--require-stem-review',
   ]);
 
-  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(result.status, 1, result.stderr || result.stdout);
   assert.match(result.stdout, /Duplicate Stem\/Model Clusters/);
-  assert.match(result.stdout, /0 clusters — no mode-scoped duplicate stems or models detected/);
+  assert.match(result.stdout, /Unreviewed duplicate stem\/model cluster/);
 });
 
 test('U7: buildStemModelClusters returns depth-annotated cluster objects', () => {
@@ -270,13 +269,13 @@ test('U7: buildStemModelClusters returns depth-annotated cluster objects', () =>
     depths: [4, 6, 8],
   });
 
-  // At current content, mode-scoped clusters are 0 at all depths
-  assert.equal(allClusters.length, 0);
+  // P20 systematic expansion intentionally surfaces model clusters for reviewer gating.
+  assert.ok(allClusters.length > 0);
   assert.ok(clustersByDepth[4]);
   assert.ok(clustersByDepth[6]);
   assert.ok(clustersByDepth[8]);
+  assert.ok(clustersByDepth[4].models.length > 0);
   assert.deepEqual(clustersByDepth[4].stems, []);
-  assert.deepEqual(clustersByDepth[4].models, []);
 });
 
 test('U7: loadStemReviewDecisions returns object from fixture file', () => {

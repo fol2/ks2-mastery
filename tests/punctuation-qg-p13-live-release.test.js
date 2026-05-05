@@ -180,11 +180,11 @@ test('P13 deploy identity guard refuses dirty trees and mismatched commit SHAs',
 test('P13 predeploy verifier can write deploy-wrapper evidence outside the worktree', () => {
   assert.match(
     resolvePredeployEvidenceOut(['node', 'script', '--out', '/tmp/ks2-p13-predeploy.json']),
-    /\/tmp\/ks2-p13-predeploy\.json$/,
+    /(?:\/tmp\/ks2-p13-predeploy\.json|[A-Z]:\\tmp\\ks2-p13-predeploy\.json)$/i,
   );
   assert.match(
     resolvePredeployEvidenceOut(['node', 'script']),
-    /reports\/punctuation\/punctuation-qg-p13-predeploy-evidence\.json$/,
+    /reports[\\/]punctuation[\\/]punctuation-qg-p13-predeploy-evidence\.json$/,
   );
 });
 

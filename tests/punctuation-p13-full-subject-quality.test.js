@@ -38,14 +38,12 @@ const HAVE_OR_WILL_PRONOUNS = ['I', 'you', 'we', 'they', 'he', 'she', 'it', 'tha
 const HAVE_PRONOUN_GROUP = HAVE_OR_WILL_PRONOUNS.flatMap((p) => [`${p}'ve`, `${p.toLowerCase()}ve`, `${p}'ll`, `${p.toLowerCase()}ll`]).join('|');
 const BAD_APOSTROPHE_GRAMMAR = new RegExp(`\\b(?:${HAVE_PRONOUN_GROUP})\\s+ready\\s+to\\b|\\b(?:it\\s+isn't|it\\s+isnt|we\\s+aren't|we\\s+arent)\\s+(?:move|forget)\\b`, 'i');
 
-test('P14 runtime serves the post-expansion production pool and model answers self-mark', () => {
-  // P13 baseline was 3,312 (512 fixed + 2,800 generated). P14 transfer
-  // expansion adds 14 transfer-mode generator families × 18 templates each =
-  // 252 transfer items, lifting the generated count to 3,052 and total to
-  // 3,564.
-  assert.equal(runtime.items.length, 3564);
+test('P20 runtime serves the systematic production pool and model answers self-mark', () => {
+  // P20 systematic expansion serves 512 fixed items plus 14,560 generated
+  // items, for 15,072 runtime items at production depth 120.
+  assert.equal(runtime.items.length, 15072);
   assert.equal(runtime.items.filter((item) => item.source !== 'generated').length, 512);
-  assert.equal(runtime.items.filter((item) => item.source === 'generated').length, 3052);
+  assert.equal(runtime.items.filter((item) => item.source === 'generated').length, 14560);
   for (const item of runtime.items) {
     const result = markPunctuationAnswer({ item, answer: answerForItem(item) });
     assert.equal(result.correct, true, `${item.id} model/correct answer should mark correct: ${result.note || ''}`);

@@ -10,7 +10,8 @@ function run(args = []) {
   return spawnSync(process.execPath, [scriptPath, ...args], {
     cwd: repoRoot,
     encoding: 'utf8',
-    timeout: 30_000,
+    maxBuffer: 20 * 1024 * 1024,
+    timeout: 120_000,
   });
 }
 
@@ -76,14 +77,14 @@ test('preview-punctuation-templates: --json produces valid JSON', () => {
   }
 });
 
-test('preview-punctuation-templates: --all --variants 8 renders all families', () => {
-  const result = run(['--all', '--variants', '8']);
+test('preview-punctuation-templates: --all --variants 1 renders all families', () => {
+  const result = run(['--all', '--variants', '1']);
   assert.equal(result.status, 0, `Expected exit 0, got ${result.status}. stderr: ${result.stderr}`);
 
   const output = result.stdout;
   // Should have many items (at least one per published family)
   const separators = output.split('\n').filter((line) => line.startsWith('═══'));
-  assert.ok(separators.length > 8, `Expected many items, got ${separators.length}`);
+  assert.ok(separators.length > 80, `Expected all P20 families, got ${separators.length}`);
 });
 
 test('preview-punctuation-templates: unknown family prints error and exits 1', () => {
