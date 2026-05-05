@@ -1,0 +1,23 @@
+{
+  "description": "R6 pre-optimisation baseline for buildGrammarPracticeQueue. See docs/contracts/ci-shard-balance-plan.md — U1.",
+  "contract": "docs/contracts/ci-shard-balance-plan.md — U1",
+  "config": {
+    "seed": 1,
+    "mode": "smart",
+    "mastery": "null",
+    "recentAttempts": "40-entry (see tests/grammar-selection-parity.test.js buildFortyEntryRecent)",
+    "size": 10,
+    "iterations": 100,
+    "warmup": 10,
+    "sampled": 90
+  },
+  "wallClockMs": {
+    "p50": 504.807,
+    "p95": 524.997,
+    "max": 573.774
+  },
+  "templateCount": 510,
+  "nodeVersion": "v25.7.0",
+  "measuredAt": "2026-05-05T08:52:26.225Z",
+  "notes": "Call-count ceiling will be instrumented by U3 (tests/grammar-selection-perf-tripwire.test.js) with a counting wrapper. U3 asserts post-opt count <= (pre-opt / 5) per R6.AC5."
+}
