@@ -4,6 +4,7 @@ import {
 } from '../../../../src/platform/core/repositories/helpers.js';
 import { parseChoiceIndex } from '../../../../shared/punctuation/choice-index.js';
 import {
+  DEFAULT_PUNCTUATION_CONTENT_INDEXES,
   createInitialPunctuationData,
   createPunctuationService,
   normalisePunctuationData,
@@ -98,6 +99,34 @@ function expectedSessionContextFromPayload(payload = {}) {
     expected.expectedReleaseId = payload.expectedReleaseId;
   }
   return expected;
+}
+
+function commandStatsFromData(data = {}) {
+  const progress = isPlainObject(data.progress) ? data.progress : {};
+  const attempts = Array.isArray(progress.attempts) ? progress.attempts : [];
+  const correct = attempts.filter((attempt) => attempt?.correct === true).length;
+  const rewardUnits = isPlainObject(progress.rewardUnits) ? progress.rewardUnits : {};
+  const publishedRewardUnitKeys = new Set(
+    DEFAULT_PUNCTUATION_CONTENT_INDEXES.publishedRewardUnits.map((unit) => unit.masteryKey),
+  );
+  let securedRewardUnits = 0;
+  let trackedRewardUnits = 0;
+  for (const [key, unit] of Object.entries(rewardUnits)) {
+    const masteryKey = typeof unit?.masteryKey === 'string' && unit.masteryKey ? unit.masteryKey : key;
+    if (!publishedRewardUnitKeys.has(masteryKey)) continue;
+    trackedRewardUnits += 1;
+    if (Number(unit?.securedAt) > 0) securedRewardUnits += 1;
+  }
+  return {
+    total: DEFAULT_PUNCTUATION_CONTENT_INDEXES.items.length,
+    attempts: attempts.length,
+    correct,
+    accuracy: attempts.length ? Math.round((correct / attempts.length) * 100) : 0,
+    publishedRewardUnits: DEFAULT_PUNCTUATION_CONTENT_INDEXES.publishedRewardUnits.length,
+    trackedRewardUnits,
+    securedRewardUnits,
+    sessionsCompleted: Math.max(0, Number(progress.sessionsCompleted) || 0),
+  };
 }
 
 function translatePunctuationError(error) {
@@ -195,15 +224,16 @@ export function createServerPunctuationEngine({ now = Date.now, random = Math.ra
       }
 
       const nextState = service.markServerOwnedState(transition.state);
+      const nextData = persistence.snapshot();
       return {
         ok: transition.ok !== false,
         changed: transition.changed !== false,
         state: nextState,
-        data: persistence.snapshot(),
+        data: nextData,
         practiceSession: persistence.practiceSession(),
         events: transition.events || [],
         prefs: transition.prefs || service.getPrefs(learnerId),
-        stats: service.getStats(learnerId),
+        stats: commandStatsFromData(nextData),
         // P20 command responses must stay inside the Worker CPU budget. The
         // full analytics projection scans the expanded runtime bank and remains
         // available through the dedicated analytics snapshot path.

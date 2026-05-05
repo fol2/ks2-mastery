@@ -2,6 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 import {
@@ -902,7 +903,15 @@ function readSafeGitCommitSha() {
 
 function parseArgValue(argv, name) {
   const index = argv.indexOf(name);
-  return index !== -1 && index + 1 < argv.length ? argv[index + 1] : '';
+  if (index !== -1 && index + 1 < argv.length) return argv[index + 1];
+  const prefix = `${name}=`;
+  const matched = argv.find((arg) => typeof arg === 'string' && arg.startsWith(prefix));
+  return matched ? matched.slice(prefix.length) : '';
+}
+
+function writeJsonOut(path, value) {
+  if (!path) return;
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 // ─── CLI argument parsing for attestation ───────────────────────────────────
@@ -928,6 +937,7 @@ function parseAttestationArgs(argv) {
   const authenticated = argv.includes('--authenticated');
   const adminHub = argv.includes('--admin-hub');
   const jsonOutput = argv.includes('--json');
+  const outPath = parseArgValue(argv, '--out') || null;
   return {
     environment,
     workerCommitSha,
@@ -936,6 +946,7 @@ function parseAttestationArgs(argv) {
     authenticated,
     adminHub,
     jsonOutput,
+    outPath,
   };
 }
 
@@ -1086,6 +1097,8 @@ async function main() {
       hasPromptToken: spelling.hasPromptToken,
     },
   };
+
+  writeJsonOut(attestationArgs.outPath, output);
 
   if (attestationArgs.jsonOutput) {
     console.log(JSON.stringify(output, null, 2));
