@@ -1,6 +1,6 @@
 // Seeded replay helper for Grammar U6 adaptive-selection simulation.
 //
-// Used by `tests/grammar-learning-integrity.test.js` to aggregate principle
+// Used by `tests/grammar-learning-integrity-{a,b,c}.test.js` to aggregate principle
 // assertions across 8 canonical seeds. The helper wraps:
 //   - buildGrammarPracticeQueue
 //   - buildGrammarMiniPack
@@ -41,7 +41,7 @@ import {
 export const CANONICAL_SEEDS = Object.freeze([1, 7, 13, 42, 100, 2025, 31415, 65535]);
 
 // Frozen "now" anchor used across the simulation. Matches the anchor used in
-// tests/grammar-selection.test.js so behavioural comparisons stay consistent.
+// tests/grammar-selection-core.test.js so behavioural comparisons stay consistent.
 export const SIM_NOW_MS = 1_777_000_000_000;
 
 // -----------------------------------------------------------------------------

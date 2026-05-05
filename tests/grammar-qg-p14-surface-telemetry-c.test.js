@@ -15,47 +15,7 @@ function readReport(filename) {
   return JSON.parse(fs.readFileSync(path.join(REPORTS_DIR, filename), 'utf8'));
 }
 
-describe('Grammar QG P14 learner surface and telemetry contract', () => {
-  it('keeps the click-path learner surface audit clean', () => {
-    const fresh = buildLearnerSurfaceAudit();
-    const committed = readReport('grammar-qg-p14-learner-surface-audit.json');
-    const committedP18 = readReport('grammar-qg-p18-learner-surface-audit.json');
-
-    assert.equal(fresh.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
-    assert.equal(fresh.pass, true);
-    assert.equal(committed.pass, true);
-    assert.equal(committed.pathCount, 8);
-    assert.deepEqual(committed.failures, []);
-    // committedP18 is a frozen historical artefact from the P18 cycle. It is
-    // pinned to its own release ID and should not track the live constant.
-    assert.equal(committedP18.contentReleaseId, 'grammar-qg-p18-2026-05-02');
-    assert.equal(committedP18.pass, true);
-    assert.equal(committedP18.pathCount, 8);
-    assert.deepEqual(committedP18.failures, []);
-  });
-
-  it('keeps the star-pacing simulation below mastery-inflation thresholds', () => {
-    const fresh = buildStarPacingSimulation();
-    const committed = readReport('grammar-qg-p14-star-pacing-simulation.json');
-    const committedP18 = readReport('grammar-qg-p18-star-pacing-simulation.json');
-
-    assert.equal(fresh.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
-    assert.equal(fresh.conclusion.pass, true);
-    assert.equal(committed.conclusion.pass, true);
-    assert.equal(committed.conclusion.thresholdChange, 'none');
-    assert.equal(committed.conclusion.migrationRequired, false);
-    assert.equal(
-      committed.profiles.some((profile) => profile.highStageViaRepeatedShallowItems),
-      false,
-    );
-    // committedP18 is a frozen historical artefact from the P18 cycle.
-    assert.equal(committedP18.contentReleaseId, 'grammar-qg-p18-2026-05-02');
-    assert.equal(committedP18.templateCount, 510);
-    assert.equal(committedP18.conclusion.pass, true);
-    assert.equal(committedP18.conclusion.thresholdChange, 'none');
-    assert.equal(committedP18.conclusion.migrationRequired, false);
-  });
-
+describe('Grammar QG P14 learner surface and telemetry contract (part C)', () => {
   it('projects session depth and variety telemetry without answer internals', () => {
     const nowTs = Date.parse('2026-05-01T09:30:00.000Z');
     const engine = createServerGrammarEngine({ now: () => nowTs });

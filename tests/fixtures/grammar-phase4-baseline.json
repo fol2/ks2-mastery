@@ -85,7 +85,9 @@
       "ownerUnit": "U6",
       "landedIn": "PR #267",
       "supportingTests": [
-        "tests/grammar-learning-integrity.test.js",
+        "tests/grammar-learning-integrity-a.test.js",
+        "tests/grammar-learning-integrity-b.test.js",
+        "tests/grammar-learning-integrity-c.test.js",
         "tests/helpers/grammar-simulation.js"
       ],
       "plannedReason": "Deterministic-seed simulation harness exercises selection.js across 1000+ adaptive rounds, asserting due-outranks-new, template-diversity floors, and mini-test-vs-normal divergence. Surfaces selection-engine regressions before they reach learners."
@@ -215,7 +217,9 @@
       "tests/grammar-functionality-completeness.test.js",
       "tests/grammar-concordium-invariant.test.js",
       "tests/grammar-learning-flow-matrix.test.js",
-      "tests/grammar-learning-integrity.test.js"
+      "tests/grammar-learning-integrity-a.test.js",
+      "tests/grammar-learning-integrity-b.test.js",
+      "tests/grammar-learning-integrity-c.test.js"
     ]
   }
 }
