@@ -25,7 +25,7 @@ The runtime change threads the command clock through Reading due-status projecti
 - `git apply --reverse --check docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/reading-clock-hotfix-v2.patch`: passed.
 - `npm test`: passed, `109145 pass / 0 fail / 12 skipped`.
 - `npm run check`: passed Wrangler dry-run, public build assertion, and client bundle audit.
-- `npm run deploy`: passed; deployed Worker version `4a5042ea-51c2-48a6-a7cb-2f9fb6a7edf9`.
+- `npm run deploy`: passed; final deployed Worker version `d143fe9e-2c98-438c-91e4-accdc450f95b`.
 - `npm run smoke:production:reading -- --smoke-type reading-clock-hotfix-v2-production --out docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/reading-clock-hotfix-v2-production-smoke.json`: passed against `https://ks2.eugnel.uk`.
 
 ## Production Smoke Summary
@@ -34,7 +34,7 @@ The runtime change threads the command clock through Reading due-status projecti
 - Origin: `https://ks2.eugnel.uk`.
 - Content release: `reading-poc-promoted-2026-05-05`.
 - Content version: `2`.
-- Immediate round: `gw_q1`, `greenhouse_window`, `score 1 / maxScore 1`.
+- Immediate round: `rg_q2`, `rain_gardeners`, `score 1 / maxScore 1`.
 - Delayed paper: `paper_i`, `26` questions, `maxScore 50`, stale error cleared.
 - Evidence file: `docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/reading-clock-hotfix-v2-production-smoke.json`.
 
