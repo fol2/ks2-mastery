@@ -117,6 +117,7 @@ function main() {
   const testResult = spawnSync(npmCmd, ['test'], {
     stdio: 'inherit',
     cwd: process.cwd(),
+    shell: isWindows,
   });
 
   if (testResult.error) {
