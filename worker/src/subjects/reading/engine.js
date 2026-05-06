@@ -454,13 +454,13 @@ function relevantQuestionsForMode(passage, mode, skillFilter, allowSkillFallback
   return questions;
 }
 
-function questionWeakness(data, question) {
+function questionWeakness(data, question, nowValue = Date.now()) {
   const qNode = data.questions[question.id] || defaultNode();
   const sNode = data.skills[question.skill] || defaultNode();
   const tNode = data.qtypes[question.type] || defaultNode();
   let score = (1 - qNode.strength) * 3 + (1 - sNode.strength) * 2 + (1 - tNode.strength);
   if (!qNode.attempts) score += 0.9;
-  if (qNode.dueAt && qNode.dueAt <= Date.now()) score += 2;
+  if (qNode.dueAt && qNode.dueAt <= nowValue) score += 2;
   return score;
 }
 
@@ -473,7 +473,7 @@ function hasStrictModeMatch(data, prefs) {
   });
 }
 
-function chooseWeightedPassage(data, prefs, random) {
+function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
   const strictSkillMatch = hasStrictModeMatch(data, prefs);
   const candidates = READING_PASSAGES.filter((passage) => {
     if (prefs.genre && passage.genre !== prefs.genre) return false;
@@ -489,7 +489,7 @@ function chooseWeightedPassage(data, prefs, random) {
     const questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
     let weight = 1 + (1 - pNode.strength) * 1.7 + (1 - gNode.strength);
     if (!pNode.attempts) weight += 0.7;
-    weight += average(questions.map((question) => questionWeakness(data, question)));
+    weight += average(questions.map((question) => questionWeakness(data, question, nowValue)));
     const recentCount = data.events.slice(-12).filter((event) => event.passageId === passage.id).length;
     weight *= Math.pow(0.58, recentCount);
     return [passage, Math.max(0.05, weight)];
@@ -502,13 +502,13 @@ function chooseWeightedPassage(data, prefs, random) {
   return weighted[weighted.length - 1][0];
 }
 
-function chooseQuestionIds(data, passage, prefs) {
+function chooseQuestionIds(data, passage, prefs, nowValue = Date.now()) {
   const strictSkillMatch = hasStrictModeMatch(data, prefs);
   let questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
   if (!questions.length) questions = (passage.questions || []).slice();
   if (prefs.mode === 'guided') return questions.slice(0, Math.min(4, questions.length)).map((question) => question.id);
   if (prefs.mode === 'stamina') return questions.map((question) => question.id);
-  questions.sort((a, b) => questionWeakness(data, b) - questionWeakness(data, a));
+  questions.sort((a, b) => questionWeakness(data, b, nowValue) - questionWeakness(data, a, nowValue));
   const limit = prefs.mode === 'smart' ? 4 : prefs.mode === 'punct' ? 3 : 5;
   const picked = [];
   const seenSkills = new Set();
@@ -570,9 +570,9 @@ function buildPracticeSession(data, prefs, { nowValue, random, heroContext } = {
       })),
     };
   }
-  const passage = chooseWeightedPassage(data, prefs, random);
+  const passage = chooseWeightedPassage(data, prefs, random, nowValue);
   if (!passage) return null;
-  const questionIds = chooseQuestionIds(data, passage, prefs);
+  const questionIds = chooseQuestionIds(data, passage, prefs, nowValue);
   return {
     id: uid('reading_session'),
     mode: prefs.mode,
@@ -849,7 +849,7 @@ function safeDataForReadModels(data) {
   };
 }
 
-function buildStats(data) {
+function buildStats(data, nowValue = Date.now()) {
   data = safeDataForReadModels(data);
   const skillRows = SKILL_IDS.map((skillId) => {
     const node = data.skills[skillId] || defaultNode();
@@ -869,7 +869,7 @@ function buildStats(data) {
   const total = events.length;
   const correct = events.filter((event) => event.correct).length;
   const independent = events.filter((event) => event.independent).length;
-  const due = skillRows.filter((row) => row.status === 'due').length + (data.retryQueue || []).filter((entry) => entry.dueAt <= Date.now()).length;
+  const due = skillRows.filter((row) => row.status === 'due').length + (data.retryQueue || []).filter((entry) => entry.dueAt <= nowValue).length;
   const weak = skillRows.filter((row) => row.status === 'weak').length;
   const secured = skillRows.filter((row) => row.status === 'secured').length;
   return {
@@ -888,7 +888,7 @@ function buildStats(data) {
   };
 }
 
-function buildAnalytics(data) {
+function buildAnalytics(data, nowValue = Date.now()) {
   data = safeDataForReadModels(data);
   const events = data.events || [];
   const byGenre = ['fiction', 'non-fiction', 'poetry'].map((genre) => {
@@ -913,13 +913,13 @@ function buildAnalytics(data) {
     .slice(0, 8);
   return {
     available: true,
-    generatedAt: Date.now(),
-    skills: buildStats(data).skills,
+    generatedAt: nowValue,
+    skills: buildStats(data, nowValue).skills,
     byGenre,
     byType,
     misconceptionPatterns,
     recentActivity: events.slice(-15).reverse(),
-    reviewQueue: (data.retryQueue || []).filter((entry) => entry.dueAt <= Date.now()).slice(0, 12),
+    reviewQueue: (data.retryQueue || []).filter((entry) => entry.dueAt <= nowValue).slice(0, 12),
   };
 }
 
@@ -994,7 +994,17 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
         if (payload.expectedSessionId && payload.expectedSessionId !== session.id) changed = false;
         else if (payload.expectedQuestionId && payload.expectedQuestionId !== qid) changed = false;
         else if (section.results?.[qid]) changed = false;
-        else {
+        else if (session.delayedFeedback) {
+          // Delayed-feedback sessions must not leak marking, model answers or
+          // evidence through the immediate submit command. Treat the submit as
+          // a safe draft save; whole-session marking owns feedback release.
+          section.responses[qid] = clone(payload.response || {});
+          if (payload.advance) moveQuestion(session, { delta: 1 });
+          state.feedback = null;
+          state.phase = 'question';
+          state.updatedAt = t;
+          practiceSession = buildPracticeSessionRow(session, 'active', t);
+        } else {
           section.responses[qid] = clone(payload.response || {});
           section.attempts[qid] = (Number(section.attempts[qid]) || 0) + 1;
           if (!section.startedAtByQuestion[qid]) section.startedAtByQuestion[qid] = t;
@@ -1008,7 +1018,13 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
     } else if (command === 'mark-section' || command === 'mark-session') {
       const session = state.session;
       if (!session) changed = false;
-      else {
+      else if (session.strict && command === 'mark-section') {
+        // SATs-style paper mode is all-or-nothing: section marking would expose
+        // answers before the paper has ended, so it is rejected at the engine boundary.
+        state.error = 'Paper mode feedback is only available after marking the whole paper.';
+        state.updatedAt = t;
+        practiceSession = buildPracticeSessionRow(session, 'active', t);
+      } else {
         const sections = command === 'mark-section' ? [currentSection(session)].filter(Boolean) : session.sections;
         for (const section of sections) {
           for (const qid of section.questionIds) {
@@ -1019,6 +1035,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
         session.marked = sessionComplete(session);
         events.push(...deriveSecuredSkillEvents({ data, learnerId, nowValue: t, requestId }));
         events.push(...finaliseSessionIfComplete({ data, state, learnerId, nowValue: t, requestId }));
+        state.error = '';
         state.updatedAt = t;
         practiceSession = buildPracticeSessionRow(state.session || { ...session, sections: session.sections }, state.session ? 'active' : 'completed', t);
       }
@@ -1059,8 +1076,8 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
       state.prefs = data.prefs;
       state.updatedAt = t;
     }
-    const stats = buildStats(data);
-    const analytics = buildAnalytics(data);
+    const stats = buildStats(data, t);
+    const analytics = buildAnalytics(data, t);
     return {
       changed,
       state,

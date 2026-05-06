@@ -171,3 +171,74 @@ test('reading secured skill events project into reading-owned monster rewards', 
   assert.equal(projection.rewardEvents[0].monsterId, 'inferane');
   assert.ok(projection.changedGameState['monster-codex'].inferane.caught);
 });
+
+test('reading delayed-feedback sessions do not expose answers through immediate submit or section mark', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'test', viewMode: 'one', paperId: 'paper_i' }, requestId: 'r1' });
+  const session = started.state.session;
+  const qid = session.sections[0].questionIds[0];
+
+  const submitted = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'blue folder' } },
+    requestId: 'r2',
+  });
+  assert.equal(submitted.state.phase, 'question');
+  assert.equal(submitted.state.feedback, null);
+  assert.equal(Object.keys(submitted.state.session.sections[0].results).length, 0);
+  assert.equal(submitted.events.length, 0);
+
+  const submittedReadModel = buildReadingReadModel({ learnerId: 'l1', state: submitted.state, data: submitted.data, stats: submitted.stats, analytics: submitted.analytics });
+  assert.equal(submittedReadModel.session.result, null);
+  assert.equal(submittedReadModel.session.currentQuestion.modelAnswer, undefined);
+
+  const sectionMarked = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: submitted.state, data: submitted.data },
+    command: 'mark-section',
+    payload: {},
+    requestId: 'r3',
+  });
+  assert.equal(Object.keys(sectionMarked.state.session.sections[0].results).length, 0);
+  assert.match(sectionMarked.state.error, /whole paper/i);
+
+  const sessionMarked = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: sectionMarked.state, data: sectionMarked.data },
+    command: 'mark-session',
+    payload: {},
+    requestId: 'r4',
+  });
+  assert.equal(sessionMarked.state.error, '');
+  assert.ok(Object.keys(sessionMarked.data.events).length > 0);
+});
+
+test('reading reward thresholds use direct clusters plus a full-domain aggregate monster', () => {
+  const skills = ['2a', '2g', '2b', '2c', '2d', '2e', '2f', '2h'];
+  let gameState = {};
+  const allEvents = [];
+  for (const skillId of skills) {
+    const projection = projectReadingRewards({
+      learnerId: 'l1',
+      domainEvents: [{
+        type: 'reading.skill-secured',
+        subjectId: 'reading',
+        learnerId: 'l1',
+        skillId,
+        contentReleaseId: 'reading-poc-promoted-2026-05-05',
+      }],
+      gameState,
+      random: () => 0,
+    });
+    gameState = projection.gameState;
+    allEvents.push(...projection.rewardEvents);
+  }
+
+  const codex = gameState['monster-codex'];
+  assert.equal(codex.readbloom.mastered.length, 2);
+  assert.equal(codex.lorequill.mastered.length, 8);
+  assert.ok(allEvents.some((event) => event.monsterId === 'lorequill' && event.kind === 'mega'));
+  assert.ok(allEvents.some((event) => event.monsterId === 'readbloom' && event.kind === 'mega'));
+});

@@ -190,7 +190,7 @@ export const MONSTERS = {
     secondary: '#E6A8C7',
     pale: '#F8E9F1',
     nameByStage: ['Readbloom Egg', 'Readbloom', 'Cluebloom', 'Lexileaf', 'Mega Lexileaf'],
-    masteredMax: 4,
+    masteredMax: 2,
   },
   readrill: {
     id: 'readrill',
@@ -201,7 +201,7 @@ export const MONSTERS = {
     secondary: '#9EC4E6',
     pale: '#E8F1FA',
     nameByStage: ['Readrill Egg', 'Readrill', 'Detailrill', 'Summaryloom', 'Mega Summaryloom'],
-    masteredMax: 4,
+    masteredMax: 2,
   },
   inferane: {
     id: 'inferane',
@@ -212,7 +212,7 @@ export const MONSTERS = {
     secondary: '#B8C7CF',
     pale: '#EDF2F4',
     nameByStage: ['Inferane Egg', 'Inferane', 'Evidenceglint', 'Proofglass', 'Mega Proofglass'],
-    masteredMax: 4,
+    masteredMax: 2,
   },
   structurillon: {
     id: 'structurillon',
@@ -223,7 +223,18 @@ export const MONSTERS = {
     secondary: '#E8C45A',
     pale: '#F6EED7',
     nameByStage: ['Structurillon Egg', 'Structurillon', 'Shapechord', 'Comparebell', 'Mega Comparebell'],
-    masteredMax: 4,
+    masteredMax: 2,
+  },
+  lorequill: {
+    id: 'lorequill',
+    assetId: 'phaeton',
+    name: 'Lorequill',
+    blurb: 'The Reading legendary that rises only when all core KS2 reading domains are secure.',
+    accent: '#2F70B8',
+    secondary: '#9FC7F2',
+    pale: '#E8F2FF',
+    nameByStage: ['Lorequill Egg', 'Lorequill', 'Pagewing', 'Storycrest', 'Grand Lorequill'],
+    masteredMax: 8,
   },
 };
 
@@ -246,7 +257,7 @@ export const MONSTERS_BY_SUBJECT = {
   grammarReserve: ['glossbloom', 'loomrill', 'mirrane'],
   // Reading owns separate state ids while reusing existing reserve art via
   // each monster's assetId. This avoids Grammar/Punctuation state collision.
-  reading: ['readbloom', 'readrill', 'inferane', 'structurillon'],
+  reading: ['readbloom', 'readrill', 'inferane', 'structurillon', 'lorequill'],
 };
 
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);

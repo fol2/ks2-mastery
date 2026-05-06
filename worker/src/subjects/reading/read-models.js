@@ -71,15 +71,15 @@ function markedCount(session) {
   return (session?.sections || []).reduce((sum, section) => sum + Object.keys(section.results || {}).length, 0);
 }
 
+
+function responseHasValue(value) {
+  if (Array.isArray(value)) return value.some(responseHasValue);
+  if (value && typeof value === 'object') return Object.values(value).some(responseHasValue);
+  return String(value == null ? '' : value).trim() !== '';
+}
+
 function answerCount(session) {
-  return (session?.sections || []).reduce((sum, section) => sum + section.questionIds.filter((qid) => {
-    const response = section.responses?.[qid];
-    return response && Object.values(response).some((value) => {
-      if (Array.isArray(value)) return value.length > 0;
-      if (value && typeof value === 'object') return Object.values(value).some((inner) => String(inner || '').trim());
-      return String(value || '').trim();
-    });
-  }).length, 0);
+  return (session?.sections || []).reduce((sum, section) => sum + section.questionIds.filter((qid) => responseHasValue(section.responses?.[qid])).length, 0);
 }
 
 function questionCount(session) {
@@ -102,7 +102,7 @@ function sectionNav(session) {
       title: session.mode === 'test' ? `Text ${index + 1}` : (passage?.title || `Text ${index + 1}`),
       passageId: section.passageId,
       current: index === session.currentSectionIndex,
-      answered: section.questionIds.filter((qid) => section.responses?.[qid]).length,
+      answered: section.questionIds.filter((qid) => responseHasValue(section.responses?.[qid])).length,
       marked: Object.keys(section.results || {}).length,
       total: section.questionIds.length,
     };
@@ -114,7 +114,7 @@ function questionNav(session) {
   if (!section) return [];
   return section.questionIds.map((qid, index) => {
     const result = section.results?.[qid] || null;
-    const hasResponse = Boolean(section.responses?.[qid]);
+    const hasResponse = responseHasValue(section.responses?.[qid]);
     return {
       id: qid,
       index,

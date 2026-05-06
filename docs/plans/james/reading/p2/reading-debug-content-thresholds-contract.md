@@ -164,6 +164,6 @@ node --test \
   tests/reading-subject-registry.test.js
 ```
 
-Expected result for this patch: 13 tests pass, 0 fail.
+Expected result for this patch on the current Reading suite: 17 tests pass, 0 fail.
 
 A final full CI run should still be performed after dependencies are installed, because the lean ZIP does not include `node_modules`.

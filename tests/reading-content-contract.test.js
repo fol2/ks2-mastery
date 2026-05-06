@@ -16,13 +16,14 @@ function norm(value) {
 
 test('reading content bank has varied original passages, papers and KS2 domains', () => {
   const summary = readingContentSummary();
-  assert.equal(summary.passageCount, 13);
-  assert.equal(summary.paperCount, 8);
-  assert.ok(summary.questionCount >= 100);
+  assert.equal(summary.passageCount, 21);
+  assert.equal(summary.paperCount, 12);
+  assert.ok(summary.questionCount >= 180);
   assert.ok(Object.keys(READING_SKILLS).includes('2d'));
-  assert.ok(summary.genres.fiction >= 4);
-  assert.ok(summary.genres['non-fiction'] >= 4);
-  assert.ok(summary.genres.poetry >= 3);
+  assert.ok(summary.genres.fiction >= 8);
+  assert.ok(summary.genres['non-fiction'] >= 8);
+  assert.ok(summary.genres.poetry >= 5);
+  assert.ok(summary.longPassageCount >= 7);
 });
 
 test('reading ids are unique and evidence quotes exist in their source passage', () => {
@@ -46,18 +47,24 @@ test('reading ids are unique and evidence quotes exist in their source passage',
   }
 });
 
-test('reading test papers only reference existing passages and questions', () => {
+test('reading test papers only reference existing passages and questions and sum to 50 marks', () => {
   const passageMap = new Map(READING_PASSAGES.map((passage) => [passage.id, passage]));
   for (const paper of READING_TEST_PAPERS) {
     assert.equal(paper.timeLimitMin, 60);
     assert.equal(paper.totalMarks, 50);
     assert.equal(paper.sections.length, 3);
+    let paperMarks = 0;
     for (const section of paper.sections) {
       const passage = passageMap.get(section.passageId);
       assert.ok(passage, `${paper.id} missing passage ${section.passageId}`);
-      const qids = new Set((passage.questions || []).map((question) => question.id));
-      for (const qid of section.questionIds) assert.ok(qids.has(qid), `${paper.id} missing question ${qid}`);
+      const questionMap = new Map((passage.questions || []).map((question) => [question.id, question]));
+      for (const qid of section.questionIds) {
+        const question = questionMap.get(qid);
+        assert.ok(question, `${paper.id} missing question ${qid}`);
+        paperMarks += Number(question.marks) || 0;
+      }
     }
+    assert.equal(paperMarks, paper.totalMarks, `${paper.id} mark total`);
   }
 });
 
