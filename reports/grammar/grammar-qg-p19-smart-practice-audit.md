@@ -1,7 +1,7 @@
 # Grammar QG P20 — smart-practice surface audit
 
 Content release: `grammar-qg-p20-2026-05-05`
-Generated: `2026-05-05T15:43:23.715Z`
+Generated: `2026-05-06T08:51:04.459Z`
 Sessions: 330 (11 profiles × 30 seeds, size=5)
 Status: **PASS** — 0 failures, 0 advisories.
 
