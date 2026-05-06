@@ -124,6 +124,33 @@ const GRAMMAR_LABEL_ALIASES = Object.freeze({
   'semi-colon': 'semicolon',
 });
 
+// P20b: Some deterministic Grammar prompts ask learners to "write the
+// punctuation mark used". A child may reasonably type the mark itself (`;`,
+// `:`, `—`) instead of the word label ("semicolon", "colon", "dash").
+// Keep this separate from the main label canonicaliser so a keyboard hyphen can
+// be accepted as either a dash or a hyphen only when the golden answer expects
+// that label, rather than globally rewriting one concept into the other.
+const GRAMMAR_PUNCTUATION_MARK_ALIASES = Object.freeze({
+  ',': ['comma'],
+  ':': ['colon'],
+  ';': ['semicolon'],
+  '-': ['dash', 'hyphen'],
+  '\u2013': ['dash'],
+  '\u2014': ['dash'],
+  "'": ['apostrophe'],
+  '\u2018': ['apostrophe'],
+  '\u2019': ['apostrophe'],
+});
+
+function punctuationMarkAliasSet(text) {
+  const rawValue = normaliseWhitespace(safeString(text));
+  const aliases = new Set();
+  for (const alias of GRAMMAR_PUNCTUATION_MARK_ALIASES[rawValue] || []) {
+    aliases.add(alias);
+  }
+  return aliases;
+}
+
 function normaliseGrammarLabelAlias(text) {
   const value = safeString(text).trim();
   return GRAMMAR_LABEL_ALIASES[value.toLowerCase()] || value;
@@ -165,7 +192,13 @@ function compareExact(response, accepted) {
 }
 
 function compareLearnerEquivalentText(response, accepted, opts = {}) {
-  return normaliseGrammarAnswerText(response, opts) === normaliseGrammarAnswerText(accepted, opts);
+  const responseAliases = punctuationMarkAliasSet(response);
+  const acceptedAliases = punctuationMarkAliasSet(accepted);
+  const normalisedResponse = normaliseGrammarAnswerText(response, opts);
+  const normalisedAccepted = normaliseGrammarAnswerText(accepted, opts);
+  return normalisedResponse === normalisedAccepted
+    || responseAliases.has(normalisedAccepted)
+    || acceptedAliases.has(normalisedResponse);
 }
 
 function compareNormalisedText(response, accepted) {
@@ -415,8 +448,8 @@ export function markByAnswerSpec(spec, response) {
   const responseText = normaliseSmartPunctuation(rawResponseText);
   switch (kind) {
     case 'exact': return markExact(spec, responseText);
-    case 'normalisedText': return markNormalisedText(spec, responseText);
-    case 'acceptedSet': return markAcceptedSet(spec, responseText);
+    case 'normalisedText': return markNormalisedText(spec, rawResponseText);
+    case 'acceptedSet': return markAcceptedSet(spec, rawResponseText);
     case 'punctuationPattern': return markPunctuationPattern(spec, responseText);
     case 'multiField': return markMultiField(spec, response);
     case 'manualReviewOnly': return markManualReviewOnly(spec);

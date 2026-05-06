@@ -134,10 +134,25 @@ function evaluate(question, answer) {
   return null;
 }
 
+function hasPossessiveScenarioCopyGlitch(text) {
+  return /\bfor\s+(?:one|several)\s+[^.?!]+?\s+own(?:s)?\s+[^.?!]+[.?!]/i.test(text || '')
+    && !/\bfor:\s+(?:one|several)\b/i.test(text || '');
+}
+
+function isInternalPunctuationRewritePrompt(prompt) {
+  const text = String(prompt || '');
+  if (/\b(ending\s+punctuation|direct\s+speech|speech\s+punctuation|punctuate\s+the\s+direct\s+speech)\b/i.test(text)) {
+    return false;
+  }
+  return /\b(add|insert|rewrite|copy|correct)\b/i.test(text)
+    && /\b(comma|commas|bracket|brackets|parenthesis|colon|dash|hyphen|fronted\s+adverbial)\b/i.test(text);
+}
+
 function buildTemplateQualityFindings(question, template, seed, serialised) {
   const findings = [];
+  const prompt = serialised?.promptText || stripHtml(question.stemHtml);
   const text = [
-    serialised?.promptText || stripHtml(question.stemHtml),
+    prompt,
     ...(serialised?.solutionLines || []),
     JSON.stringify(serialised?.inputSpec || question.inputSpec || {}),
   ].join(' ');
@@ -150,6 +165,25 @@ function buildTemplateQualityFindings(question, template, seed, serialised) {
   }
   if (/\bClassify the grammar feature shown in this row:\s*[^.?!:]+\s+in:\s*/i.test(text)) {
     findings.push({ rule: 'awkward-table-row-copy', templateId: template.id, seed, text: text.slice(0, 180) });
+  }
+  if (hasPossessiveScenarioCopyGlitch(prompt)) {
+    findings.push({ rule: 'possessive-scenario-copy', templateId: template.id, seed, text: prompt.slice(0, 180) });
+  }
+  if (question.answerSpec?.kind === 'punctuationPattern' && isInternalPunctuationRewritePrompt(prompt)) {
+    const accepted = Array.isArray(question.answerSpec.golden) ? question.answerSpec.golden[0] : '';
+    if (/\.$/.test(accepted)) {
+      const withoutTerminalFullStop = accepted.replace(/\.+$/g, '');
+      const result = evaluate(question, withoutTerminalFullStop);
+      if (!result?.correct) {
+        findings.push({
+          rule: 'incidental-terminal-full-stop-strictness',
+          templateId: template.id,
+          seed,
+          text: prompt.slice(0, 180),
+          accepted,
+        });
+      }
+    }
   }
   return findings;
 }

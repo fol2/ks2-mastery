@@ -1,7 +1,7 @@
 {
   "metadata": {
     "contentReleaseId": "grammar-qg-p20-2026-05-05",
-    "generatedAt": "2026-05-06T10:20:49.633Z",
+    "generatedAt": "2026-05-06T00:36:12.961Z",
     "seeds": [
       1,
       2,
@@ -2060,181 +2060,181 @@
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 1,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one dog owns a bowl."
+      "prompt": "Write the possessive phrase for one dog owns a bowl."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 2,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several girls own boots."
+      "prompt": "Write the possessive phrase for several girls own boots."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 3,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one teacher owns a desk."
+      "prompt": "Write the possessive phrase for one teacher owns a desk."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 4,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several birds own nests."
+      "prompt": "Write the possessive phrase for several birds own nests."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 5,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one child owns a coat."
+      "prompt": "Write the possessive phrase for one child owns a coat."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 6,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several children own lunches."
+      "prompt": "Write the possessive phrase for several children own lunches."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 7,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one fox owns a den."
+      "prompt": "Write the possessive phrase for one fox owns a den."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 8,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several foxes own dens."
+      "prompt": "Write the possessive phrase for several foxes own dens."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 9,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one team owns a flag."
+      "prompt": "Write the possessive phrase for one team owns a flag."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 10,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several teams own flags."
+      "prompt": "Write the possessive phrase for several teams own flags."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 11,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one woman owns a bicycle."
+      "prompt": "Write the possessive phrase for one woman owns a bicycle."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 12,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several women own bicycles."
+      "prompt": "Write the possessive phrase for several women own bicycles."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 13,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one dog owns a bowl."
+      "prompt": "Write the possessive phrase for one dog owns a bowl."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 14,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several girls own boots."
+      "prompt": "Write the possessive phrase for several girls own boots."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 15,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one teacher owns a desk."
+      "prompt": "Write the possessive phrase for one teacher owns a desk."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 16,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several birds own nests."
+      "prompt": "Write the possessive phrase for several birds own nests."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 17,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one child owns a coat."
+      "prompt": "Write the possessive phrase for one child owns a coat."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 18,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several children own lunches."
+      "prompt": "Write the possessive phrase for several children own lunches."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 19,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one fox owns a den."
+      "prompt": "Write the possessive phrase for one fox owns a den."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 20,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several foxes own dens."
+      "prompt": "Write the possessive phrase for several foxes own dens."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 21,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one team owns a flag."
+      "prompt": "Write the possessive phrase for one team owns a flag."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 22,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several teams own flags."
+      "prompt": "Write the possessive phrase for several teams own flags."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 23,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one woman owns a bicycle."
+      "prompt": "Write the possessive phrase for one woman owns a bicycle."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 24,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several women own bicycles."
+      "prompt": "Write the possessive phrase for several women own bicycles."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 25,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one dog owns a bowl."
+      "prompt": "Write the possessive phrase for one dog owns a bowl."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 26,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several girls own boots."
+      "prompt": "Write the possessive phrase for several girls own boots."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 27,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one teacher owns a desk."
+      "prompt": "Write the possessive phrase for one teacher owns a desk."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 28,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several birds own nests."
+      "prompt": "Write the possessive phrase for several birds own nests."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 29,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: one child owns a coat."
+      "prompt": "Write the possessive phrase for one child owns a coat."
     },
     {
       "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
       "seed": 30,
       "kind": "normalisedText",
-      "prompt": "Write the possessive phrase for: several children own lunches."
+      "prompt": "Write the possessive phrase for several children own lunches."
     },
     {
       "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
@@ -4220,7 +4220,7 @@
   "smartPractice": {
     "metadata": {
       "contentReleaseId": "grammar-qg-p20-2026-05-05",
-      "generatedAt": "2026-05-06T10:20:49.632Z",
+      "generatedAt": "2026-05-06T00:36:12.961Z",
       "sessionCount": 66,
       "profileCount": 11,
       "sessionSize": 5,

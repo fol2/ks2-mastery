@@ -4556,7 +4556,8 @@ const TEMPLATES = [
             maxScore:2,
             misconception:"fronted_adverbial_confusion",
             feedbackLong:`The correct sentence is: ${item.answer}`,
-            answerText:item.answer
+            answerText:item.answer,
+            params:{ optionalTerminalFullStop:true }
           });
           return makeBaseQuestion(this, seed, {
             marks:2,
@@ -5086,7 +5087,8 @@ const TEMPLATES = [
             maxScore:2,
             misconception:"parenthesis_confusion",
             feedbackLong:`A correct answer is: ${item.accepted[0]}`,
-            answerText:item.accepted[0]
+            answerText:item.accepted[0],
+            params:{ optionalTerminalFullStop:true }
           });
           return makeBaseQuestion(this, seed, {
             marks:2,
@@ -5263,7 +5265,8 @@ const TEMPLATES = [
             maxScore:2,
             misconception:"fronted_adverbial_confusion",
             feedbackLong:`A correct answer is: ${accepted[0]}`,
-            answerText:accepted[0]
+            answerText:accepted[0],
+            params:{ optionalTerminalFullStop:true }
           });
           return makeBaseQuestion(this, seed, {
             marks:2,
@@ -5354,7 +5357,8 @@ const TEMPLATES = [
             maxScore:2,
             misconception:"boundary_punctuation_confusion",
             feedbackLong:`A correct answer is: ${accepted[0]}`,
-            answerText:accepted[0]
+            answerText:accepted[0],
+            params:{ optionalTerminalFullStop:true }
           });
           return makeBaseQuestion(this, seed, {
             marks:2,
@@ -5401,7 +5405,8 @@ const TEMPLATES = [
             maxScore:2,
             misconception:"boundary_punctuation_confusion",
             feedbackLong:`A correct answer is: ${accepted[0]}`,
-            answerText:accepted[0]
+            answerText:accepted[0],
+            params:{ optionalTerminalFullStop:true }
           });
           return makeBaseQuestion(this, seed, {
             marks:2,
@@ -6342,7 +6347,8 @@ const TEMPLATES = [
               maxScore:2,
               misconception:"parenthesis_confusion",
               feedbackLong:`A correct answer is: ${item.accepted}`,
-              answerText:item.accepted
+              answerText:item.accepted,
+              params:{ optionalTerminalFullStop:true }
             });
             return makeBaseQuestion(this, seed, {
               marks:2,
@@ -6435,7 +6441,8 @@ const TEMPLATES = [
               maxScore:2,
               misconception:"punctuation_precision",
               feedbackLong:`A correct answer is: ${item.accepted}`,
-              answerText:item.accepted
+              answerText:item.accepted,
+              params:{ optionalTerminalFullStop:true }
             });
             return makeBaseQuestion(this, seed, {
               marks:2,
@@ -11809,7 +11816,10 @@ function manualExpansionReadablePromptText(caseItem, fallback = '') {
   if (caseItem?.inputType === 'table_choice' && /^Classify the grammar feature shown in this row:/i.test(raw)) {
     return 'Classify the target word or phrase by its grammar role.';
   }
-  return raw;
+  // P20b: Manual-expansion possessive prompts sometimes read like
+  // "Write the possessive phrase for one dog owns a bowl.". Add a colon
+  // before the scenario so the learner sees the mini-situation clearly.
+  return raw.replace(/\bfor\s+((?:one|several)\s+[^.?!]+?\s+own(?:s)?\s+[^.?!]+)([.?!])/gi, 'for: $1$2');
 }
 
 function classifySentenceFunctionSurface(label) {

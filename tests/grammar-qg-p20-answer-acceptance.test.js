@@ -166,3 +166,88 @@ test('P20 serialised learner prompts remove legacy tag spacing and awkward table
   assert.doesNotMatch(JSON.stringify(tableSerialised.inputSpec), /Classify the grammar feature shown in this row:/);
   assert.match(JSON.stringify(tableSerialised.inputSpec), /Target “carefully” in sentence:/);
 });
+
+
+test('P20b punctuation-mark label prompts accept the mark symbol as well as the word label', () => {
+  const semicolonQuestion = createGrammarQuestion({
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 1,
+  });
+  assert.equal(semicolonQuestion.answerSpec.golden[0], 'semicolon');
+  assert.equal(mark(semicolonQuestion, ';').correct, true);
+
+  const colonQuestion = createGrammarQuestion({
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 2,
+  });
+  assert.equal(colonQuestion.answerSpec.golden[0], 'colon');
+  assert.equal(mark(colonQuestion, ':').correct, true);
+
+  const dashQuestion = createGrammarQuestion({
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 3,
+  });
+  assert.equal(dashQuestion.answerSpec.golden[0], 'dash');
+  assert.equal(mark(dashQuestion, '—').correct, true);
+  assert.equal(mark(dashQuestion, '–').correct, true);
+  assert.equal(mark(dashQuestion, '-').correct, true);
+
+  assert.equal(mark(colonQuestion, ';').correct, false, 'a semicolon mark must not be accepted for colon');
+  assert.equal(markByAnswerSpec({ kind: 'normalisedText', golden: ['hyphen'] }, { answer: '-' }).correct, true);
+  assert.equal(markByAnswerSpec({ kind: 'normalisedText', golden: ['hyphen'] }, { answer: '—' }).correct, false);
+  assert.equal(markByAnswerSpec({ kind: 'normalisedText', golden: ['hyphen'] }, { answer: '–' }).correct, false);
+});
+
+test('P20b internal punctuation rewrites accept omission of only the incidental final full stop', () => {
+  for (const templateId of [
+    'fix_fronted_adverbial',
+    'parenthesis_fix_sentence',
+    'proc_fronted_adverbial_fix',
+    'proc_colon_list_fix',
+    'proc_dash_boundary_fix',
+    'proc3_parenthesis_commas_fix',
+    'proc3_hyphen_fix_meaning',
+  ]) {
+    const question = createGrammarQuestion({ templateId, seed: 1 });
+    const accepted = question.answerSpec.golden[0];
+    assert.match(accepted, /\.$/, `${templateId} fixture should end with a full stop`);
+    assert.equal(
+      mark(question, accepted.replace(/\.+$/g, '')).correct,
+      true,
+      `${templateId} should accept an answer with only the incidental final full stop omitted`,
+    );
+  }
+
+  const speechQuestion = createGrammarQuestion({
+    templateId: 'qg_p18_p18_speech_punctuation_precision_repair_or_rewrite',
+    seed: 1,
+  });
+  assert.equal(
+    mark(speechQuestion, speechQuestion.answerSpec.golden[0].replace(/\.+$/g, '')).correct,
+    false,
+    'direct-speech punctuation remains strict because the sentence punctuation is part of the target',
+  );
+
+  const endingQuestion = createGrammarQuestion({
+    templateId: 'qg_p18_p18_sentence_functions_precision_repair_or_rewrite',
+    seed: 1,
+  });
+  assert.equal(
+    mark(endingQuestion, endingQuestion.answerSpec.golden[0].replace(/\.+$/g, '')).correct,
+    false,
+    'ending-punctuation tasks remain strict because the final mark is the target',
+  );
+});
+
+test('P20b possessive scenario prompts show the scenario after a colon', () => {
+  for (const templateId of [
+    'qg_p18_p18_apostrophes_possession_diagnostic_identify',
+    'qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite',
+    'qg_p18_p18_apostrophes_possession_explain_reasoning',
+  ]) {
+    const question = createGrammarQuestion({ templateId, seed: 1 });
+    const serialised = serialiseGrammarQuestion(question);
+    assert.match(serialised.promptText, /for:\s+one dog owns a bowl/i);
+    assert.doesNotMatch(serialised.promptText, /for\s+one dog owns a bowl/i);
+  }
+});
