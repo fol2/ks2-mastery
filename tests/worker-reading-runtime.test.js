@@ -162,6 +162,39 @@ test('reading engine reloads persisted ui state for follow-up commands', () => {
   assert.equal(submitted.state.session.id, session.id);
 });
 
+test('reading due stats and review queue use the injected command clock', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const subjectRecord = {
+    state: {},
+    data: {
+      skills: {
+        '2a': {
+          attempts: 1,
+          correct: 1,
+          wrong: 0,
+          strength: 0.7,
+          intervalDays: 1,
+          dueAt: 1500,
+          lastSeenAt: 900,
+          lastWrongAt: null,
+          correctStreak: 1,
+        },
+      },
+      retryQueue: [{ questionId: 'future-review', passageId: 'red_tin_box', skillId: '2a', dueAt: 1500 }],
+    },
+  };
+  const result = engine.apply({
+    learnerId: 'l1',
+    subjectRecord,
+    command: 'save-prefs',
+    payload: { prefs: { mode: 'guided' } },
+    requestId: 'clock-regression',
+  });
+  assert.equal(result.stats.overview.due, 0);
+  assert.equal(result.analytics.reviewQueue.length, 0);
+  assert.equal(result.analytics.generatedAt, 1000);
+});
+
 test('worker subject runtime wires reading command handlers', async () => {
   const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
   const context = fakeContext();

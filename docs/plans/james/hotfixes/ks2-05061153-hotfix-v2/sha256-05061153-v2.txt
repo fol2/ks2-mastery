@@ -1,4 +1,4 @@
-766b6befedcef9b039c70800e17d74f9c8a6becc282365053c0e6eef53c607fe  /mnt/data/audit-05061153-v2.md
-50f225648736ebffb2691dce1e26f7a5e77ab4255a291a379969d097a075b113  /mnt/data/contract-05061153-v2.md
-c45266b800178a8c6d9ff8457ebab668d74fc24440a65231e6d83ce90b563ea4  /mnt/data/reading-clock-hotfix-v2.patch
-b58e0932056ef6d8bf2ad3e0660b93e43a4ab8900534c7624d2bd102dc7ac131  /mnt/data/apply-reading-clock-hotfix-v2.mjs
+a55af6e0d6f5a7025a48443f6681118d286dea06c842647ee6839280c3626e24  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/audit-05061153-v2.md
+49ea882986bb7ddd4891e3d5cdc963826ee349604243c308f186dc2d3e510991  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/contract-05061153-v2.md
+98b9f484b36a5939da85f7820402d8fa89b4d5ad84bbaa6855b2d2e8c60c6777  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/reading-clock-hotfix-v2.patch
+7aa54ec3a4057ae893fee0cccf541eec689fcbd049c2b615045ea75cea65669e  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/apply-reading-clock-hotfix-v2.mjs
