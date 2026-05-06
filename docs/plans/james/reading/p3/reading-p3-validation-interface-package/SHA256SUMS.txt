@@ -1,0 +1,4 @@
+7c878d90cd49b855c2122ea0d3bc6f2424cfe9dd2fdc5605f1990d6e45bcf15b  README.md
+b8c14088c636a2b7267a9df836274983a4b2f7d82e1138b9eb1a7812037aac80  reading-p3-validation-audit-report.md
+9c92243795e62124e30663fd224b6dba67aae084d05707715caea704b17c73ae  reading-p3-validation-interface-contract.md
+75d5a575fff38e9cecc3d042d1413a28c0f28434a430d70f7340722ec6ce4177  reading-p3-validation-interface-production-lf.patch

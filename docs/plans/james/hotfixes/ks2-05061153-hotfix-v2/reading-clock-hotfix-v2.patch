@@ -1,0 +1,197 @@
+diff --git a/worker/src/subjects/reading/engine.js b/worker/src/subjects/reading/engine.js
+--- a/worker/src/subjects/reading/engine.js
++++ b/worker/src/subjects/reading/engine.js
+@@ -251,8 +251,8 @@
+   return collection[key];
+ }
+ 
+-function nodeStatus(node) {
+-  const now = Date.now();
++function nodeStatus(node, nowValue = Date.now()) {
++  const now = Number.isFinite(Number(nowValue)) ? Number(nowValue) : Date.now();
+   if (!node || !node.attempts) return 'new';
+   if ((node.strength || 0) < 0.42 || (node.wrong || 0) > (node.correct || 0) + 1) return 'weak';
+   if ((node.dueAt || 0) <= now) return 'due';
+@@ -454,13 +454,14 @@
+   return questions;
+ }
+ 
+-function questionWeakness(data, question) {
++function questionWeakness(data, question, nowValue = Date.now()) {
+   const qNode = data.questions[question.id] || defaultNode();
+   const sNode = data.skills[question.skill] || defaultNode();
+   const tNode = data.qtypes[question.type] || defaultNode();
+   let score = (1 - qNode.strength) * 3 + (1 - sNode.strength) * 2 + (1 - tNode.strength);
+   if (!qNode.attempts) score += 0.9;
+-  if (qNode.dueAt && qNode.dueAt <= Date.now()) score += 2;
++  const now = Number.isFinite(Number(nowValue)) ? Number(nowValue) : Date.now();
++  if (qNode.dueAt && qNode.dueAt <= now) score += 2;
+   return score;
+ }
+ 
+@@ -473,7 +474,7 @@
+   });
+ }
+ 
+-function chooseWeightedPassage(data, prefs, random) {
++function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
+   const strictSkillMatch = hasStrictModeMatch(data, prefs);
+   const candidates = READING_PASSAGES.filter((passage) => {
+     if (prefs.genre && passage.genre !== prefs.genre) return false;
+@@ -489,7 +490,7 @@
+     const questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
+     let weight = 1 + (1 - pNode.strength) * 1.7 + (1 - gNode.strength);
+     if (!pNode.attempts) weight += 0.7;
+-    weight += average(questions.map((question) => questionWeakness(data, question)));
++    weight += average(questions.map((question) => questionWeakness(data, question, nowValue)));
+     const recentCount = data.events.slice(-12).filter((event) => event.passageId === passage.id).length;
+     weight *= Math.pow(0.58, recentCount);
+     return [passage, Math.max(0.05, weight)];
+@@ -502,13 +503,13 @@
+   return weighted[weighted.length - 1][0];
+ }
+ 
+-function chooseQuestionIds(data, passage, prefs) {
++function chooseQuestionIds(data, passage, prefs, nowValue = Date.now()) {
+   const strictSkillMatch = hasStrictModeMatch(data, prefs);
+   let questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
+   if (!questions.length) questions = (passage.questions || []).slice();
+   if (prefs.mode === 'guided') return questions.slice(0, Math.min(4, questions.length)).map((question) => question.id);
+   if (prefs.mode === 'stamina') return questions.map((question) => question.id);
+-  questions.sort((a, b) => questionWeakness(data, b) - questionWeakness(data, a));
++  questions.sort((a, b) => questionWeakness(data, b, nowValue) - questionWeakness(data, a, nowValue));
+   const limit = prefs.mode === 'smart' ? 4 : prefs.mode === 'punct' ? 3 : 5;
+   const picked = [];
+   const seenSkills = new Set();
+@@ -542,7 +543,7 @@
+   return weighted[0][0];
+ }
+ 
+-function buildPracticeSession(data, prefs, { nowValue, random, heroContext } = {}) {
++function buildPracticeSession(data, prefs, { nowValue = Date.now(), random, heroContext } = {}) {
+   if (prefs.mode === 'test') {
+     const paper = choosePaper(data, prefs.paperId, random);
+     return {
+@@ -570,9 +571,9 @@
+       })),
+     };
+   }
+-  const passage = chooseWeightedPassage(data, prefs, random);
++  const passage = chooseWeightedPassage(data, prefs, random, nowValue);
+   if (!passage) return null;
+-  const questionIds = chooseQuestionIds(data, passage, prefs);
++  const questionIds = chooseQuestionIds(data, passage, prefs, nowValue);
+   return {
+     id: uid('reading_session'),
+     mode: prefs.mode,
+@@ -849,8 +850,9 @@
+   };
+ }
+ 
+-function buildStats(data) {
++function buildStats(data, nowValue = Date.now()) {
+   data = safeDataForReadModels(data);
++  const now = Number.isFinite(Number(nowValue)) ? Number(nowValue) : Date.now();
+   const skillRows = SKILL_IDS.map((skillId) => {
+     const node = data.skills[skillId] || defaultNode();
+     return {
+@@ -861,7 +863,7 @@
+       correct: node.correct || 0,
+       wrong: node.wrong || 0,
+       strength: Math.round((node.strength || 0) * 100),
+-      status: nodeStatus(node),
++      status: nodeStatus(node, now),
+       dueAt: node.dueAt || 0,
+     };
+   });
+@@ -869,7 +871,7 @@
+   const total = events.length;
+   const correct = events.filter((event) => event.correct).length;
+   const independent = events.filter((event) => event.independent).length;
+-  const due = skillRows.filter((row) => row.status === 'due').length + (data.retryQueue || []).filter((entry) => entry.dueAt <= Date.now()).length;
++  const due = skillRows.filter((row) => row.status === 'due').length + (data.retryQueue || []).filter((entry) => entry.dueAt <= now).length;
+   const weak = skillRows.filter((row) => row.status === 'weak').length;
+   const secured = skillRows.filter((row) => row.status === 'secured').length;
+   return {
+@@ -888,8 +890,9 @@
+   };
+ }
+ 
+-function buildAnalytics(data) {
++function buildAnalytics(data, nowValue = Date.now()) {
+   data = safeDataForReadModels(data);
++  const now = Number.isFinite(Number(nowValue)) ? Number(nowValue) : Date.now();
+   const events = data.events || [];
+   const byGenre = ['fiction', 'non-fiction', 'poetry'].map((genre) => {
+     const rows = events.filter((event) => event.genre === genre);
+@@ -913,13 +916,13 @@
+     .slice(0, 8);
+   return {
+     available: true,
+-    generatedAt: Date.now(),
+-    skills: buildStats(data).skills,
++    generatedAt: now,
++    skills: buildStats(data, now).skills,
+     byGenre,
+     byType,
+     misconceptionPatterns,
+     recentActivity: events.slice(-15).reverse(),
+-    reviewQueue: (data.retryQueue || []).filter((entry) => entry.dueAt <= Date.now()).slice(0, 12),
++    reviewQueue: (data.retryQueue || []).filter((entry) => entry.dueAt <= now).slice(0, 12),
+   };
+ }
+ 
+@@ -1059,8 +1062,8 @@
+       state.prefs = data.prefs;
+       state.updatedAt = t;
+     }
+-    const stats = buildStats(data);
+-    const analytics = buildAnalytics(data);
++    const stats = buildStats(data, t);
++    const analytics = buildAnalytics(data, t);
+     return {
+       changed,
+       state,
+diff --git a/tests/worker-reading-runtime.test.js b/tests/worker-reading-runtime.test.js
+--- a/tests/worker-reading-runtime.test.js
++++ b/tests/worker-reading-runtime.test.js
+@@ -134,6 +134,39 @@
+   assert.deepEqual(staleSave.state.session.sections[0].responses[qid], originalResponse);
+ });
+ 
++test('reading due stats and review queue use the injected command clock', () => {
++  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
++  const subjectRecord = {
++    state: {},
++    data: {
++      skills: {
++        '2a': {
++          attempts: 1,
++          correct: 1,
++          wrong: 0,
++          strength: 0.7,
++          intervalDays: 1,
++          dueAt: 1500,
++          lastSeenAt: 900,
++          lastWrongAt: null,
++          correctStreak: 1,
++        },
++      },
++      retryQueue: [{ questionId: 'future-review', passageId: 'red_tin_box', skillId: '2a', dueAt: 1500 }],
++    },
++  };
++  const result = engine.apply({
++    learnerId: 'l1',
++    subjectRecord,
++    command: 'save-prefs',
++    payload: { prefs: { mode: 'guided' } },
++    requestId: 'clock-regression',
++  });
++  assert.equal(result.stats.overview.due, 0);
++  assert.equal(result.analytics.reviewQueue.length, 0);
++  assert.equal(result.analytics.generatedAt, 1000);
++});
++
+ test('worker subject runtime wires reading command handlers', async () => {
+   const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
+   const context = fakeContext();
