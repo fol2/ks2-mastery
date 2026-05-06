@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "smokeType": "reading-p2-production",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "https://ks2.eugnel.uk",
+  "contentReleaseId": "reading-poc-promoted-2026-05-05",
+  "contentVersion": 2,
+  "commitSha": "99983ad02bb208c17c0c89fc6c0f335e23710b8f",
+  "learnerFixtureType": "demo-session",
+  "accountId": "demo-UBLVwBjvYay3Zg",
+  "learnerId": "learner-demo-W0yfvd4RUuKqeQ",
+  "immediate": {
+    "revision": 2,
+    "questionId": "wbs_q1",
+    "passageId": "when_bridges_sing",
+    "content": {
+      "releaseId": "reading-poc-promoted-2026-05-05",
+      "version": 2,
+      "passageCount": 21,
+      "questionCount": 182,
+      "paperCount": 12,
+      "skillCount": 12,
+      "genres": {
+        "fiction": 8,
+        "non-fiction": 8,
+        "poetry": 5
+      },
+      "longPassageCount": 7
+    },
+    "score": 1,
+    "maxScore": 1
+  },
+  "delayedPaper": {
+    "revision": 6,
+    "paperId": "paper_i",
+    "questionCount": 26,
+    "maxScore": 50,
+    "staleErrorCleared": true
+  },
+  "finishedAt": "2026-05-06T11:48:48.627Z"
+}

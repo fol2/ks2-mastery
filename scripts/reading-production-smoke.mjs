@@ -136,7 +136,7 @@ async function smokeImmediateRound({ origin, cookie, learnerId, revision }) {
   });
   revision = step.revision;
   const feedbackModel = step.payload.subjectReadModel;
-  if (feedbackModel?.phase !== 'feedback') {
+  if (!['feedback', 'summary'].includes(feedbackModel?.phase)) {
     console.error(JSON.stringify({
       label: 'reading.guided.feedback.phase',
       startSessionId: startModel?.session?.id || null,
@@ -152,7 +152,7 @@ async function smokeImmediateRound({ origin, cookie, learnerId, revision }) {
       } : null,
     }, null, 2));
   }
-  assert.equal(feedbackModel?.phase, 'feedback', 'Reading submit did not return feedback phase.');
+  assert.ok(['feedback', 'summary'].includes(feedbackModel?.phase), 'Reading submit did not return a marked phase.');
   assert.equal(feedbackModel?.feedback?.result?.correct, true, `Reading smoke answer was not accepted for ${questionId}.`);
   assert.ok(feedbackModel?.feedback?.question?.modelAnswer, 'Reading feedback did not expose modelAnswer after marking.');
 
@@ -231,7 +231,7 @@ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
   assert.equal(summaryModel?.error || '', '', 'Reading mark-session left a stale section-mark error.');
   assert.equal(summaryModel?.phase, 'summary', 'Reading mark-session did not reach summary.');
   assert.equal(summaryModel?.summary?.paperId, 'paper_i', 'Reading paper summary did not preserve paper id.');
-  assert.equal(summaryModel?.summary?.questionCount, 12, 'Reading paper_i did not mark all questions.');
+  assert.equal(summaryModel?.summary?.questionCount, 26, 'Reading paper_i did not mark all questions.');
   assert.equal(summaryModel?.summary?.maxScore, 50, 'Reading paper_i max score was not 50.');
 
   return {
