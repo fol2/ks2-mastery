@@ -25,16 +25,38 @@ export function generateHeroSeed({
   return djb2Hash(parts.join('|'));
 }
 
-export function deriveDateKey(now, timezone = HERO_DEFAULT_TIMEZONE) {
-  const ts = typeof now === 'function' ? Number(now()) : Number(now);
-  const safeTs = Number.isFinite(ts) ? ts : Date.now();
-  const formatter = new Intl.DateTimeFormat('en-CA', {
+function formatDateKeyFromParts(timestamp, timezone) {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: timezone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   });
-  return formatter.format(new Date(safeTs));
+  const parts = Object.fromEntries(
+    formatter.formatToParts(new Date(timestamp))
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value]),
+  );
+  if (!/^\d{4}$/.test(parts.year || '')
+    || !/^\d{2}$/.test(parts.month || '')
+    || !/^\d{2}$/.test(parts.day || '')) {
+    throw new Error('hero_date_key_parts_invalid');
+  }
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+export function deriveDateKey(now, timezone = HERO_DEFAULT_TIMEZONE) {
+  const ts = typeof now === 'function' ? Number(now()) : Number(now);
+  const safeTs = Number.isFinite(ts) ? ts : Date.now();
+  const requestedTimezone = timezone || HERO_DEFAULT_TIMEZONE;
+  try {
+    return formatDateKeyFromParts(safeTs, requestedTimezone);
+  } catch (err) {
+    if (requestedTimezone !== HERO_DEFAULT_TIMEZONE) {
+      return formatDateKeyFromParts(safeTs, HERO_DEFAULT_TIMEZONE);
+    }
+    return formatDateKeyFromParts(safeTs, 'UTC');
+  }
 }
 
 export function createSeededRandom(seed) {

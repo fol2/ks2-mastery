@@ -254,6 +254,11 @@ test('deriveDateKey handles non-finite input gracefully', () => {
   assert.match(key, /^\d{4}-\d{2}-\d{2}$/);
 });
 
+test('deriveDateKey falls back safely when timezone is invalid', () => {
+  const ts = new Date('2026-04-27T12:00:00Z').getTime();
+  assert.equal(deriveDateKey(ts, 'Not/A_Timezone'), deriveDateKey(ts, HERO_DEFAULT_TIMEZONE));
+});
+
 test('createSeededRandom produces deterministic sequence', () => {
   const rng1 = createSeededRandom(42);
   const rng2 = createSeededRandom(42);

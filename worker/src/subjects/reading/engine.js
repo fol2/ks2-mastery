@@ -83,6 +83,11 @@ function groupMatches(tokens, group) {
     .every((part) => hasStem(tokens, part)));
 }
 
+function containsNormalisedPhrase(haystack, needle) {
+  if (!haystack || !needle) return false;
+  return ` ${haystack} `.includes(` ${needle} `);
+}
+
 export function checkMatches(text, check) {
   if (!check) return false;
   const norm = normaliseText(text);
@@ -90,9 +95,9 @@ export function checkMatches(text, check) {
   if (!norm) return false;
   if (check.exactAny && check.exactAny.some((answer) => {
     const candidate = normaliseText(answer);
-    return norm === candidate || norm.includes(candidate) || candidate.includes(norm);
+    return norm === candidate || containsNormalisedPhrase(norm, candidate);
   })) return true;
-  if (check.containsAny && check.containsAny.some((answer) => norm.includes(normaliseText(answer)))) return true;
+  if (check.containsAny && check.containsAny.some((answer) => containsNormalisedPhrase(norm, normaliseText(answer)))) return true;
   if (check.keywordAny && check.keywordAny.some((group) => groupMatches(tokens, group))) return true;
   return false;
 }
@@ -963,12 +968,20 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
         const question = currentQuestion(session);
         if (section && question) {
           const qid = question.id;
-          section.responses[qid] = clone(payload.response || {});
-          if (payload.advance) moveQuestion(session, { delta: 1 });
-          state.feedback = null;
-          state.phase = 'question';
-          state.updatedAt = t;
-          practiceSession = buildPracticeSessionRow(session, 'active', t);
+          if (payload.expectedSessionId && payload.expectedSessionId !== session.id) {
+            changed = false;
+          } else if (payload.expectedQuestionId && payload.expectedQuestionId !== qid) {
+            changed = false;
+          } else if (section.results?.[qid]) {
+            changed = false;
+          } else {
+            section.responses[qid] = clone(payload.response || {});
+            if (payload.advance) moveQuestion(session, { delta: 1 });
+            state.feedback = null;
+            state.phase = 'question';
+            state.updatedAt = t;
+            practiceSession = buildPracticeSessionRow(session, 'active', t);
+          }
         }
       }
     } else if (command === 'submit-answer') {
@@ -980,6 +993,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
         const qid = question.id;
         if (payload.expectedSessionId && payload.expectedSessionId !== session.id) changed = false;
         else if (payload.expectedQuestionId && payload.expectedQuestionId !== qid) changed = false;
+        else if (section.results?.[qid]) changed = false;
         else {
           section.responses[qid] = clone(payload.response || {});
           section.attempts[qid] = (Number(section.attempts[qid]) || 0) + 1;

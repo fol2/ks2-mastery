@@ -1,0 +1,226 @@
+diff --git a/shared/hero/seed.js b/shared/hero/seed.js
+index b217529b..87807111 100644
+--- a/shared/hero/seed.js
++++ b/shared/hero/seed.js
+@@ -25,16 +25,38 @@ export function generateHeroSeed({
+   return djb2Hash(parts.join('|'));
+ }
+
+-export function deriveDateKey(now, timezone = HERO_DEFAULT_TIMEZONE) {
+-  const ts = typeof now === 'function' ? Number(now()) : Number(now);
+-  const safeTs = Number.isFinite(ts) ? ts : Date.now();
+-  const formatter = new Intl.DateTimeFormat('en-CA', {
++function formatDateKeyFromParts(timestamp, timezone) {
++  const formatter = new Intl.DateTimeFormat('en-GB', {
+     timeZone: timezone,
+     year: 'numeric',
+     month: '2-digit',
+     day: '2-digit',
+   });
+-  return formatter.format(new Date(safeTs));
++  const parts = Object.fromEntries(
++    formatter.formatToParts(new Date(timestamp))
++      .filter((part) => part.type !== 'literal')
++      .map((part) => [part.type, part.value]),
++  );
++  if (!/^\d{4}$/.test(parts.year || '')
++    || !/^\d{2}$/.test(parts.month || '')
++    || !/^\d{2}$/.test(parts.day || '')) {
++    throw new Error('hero_date_key_parts_invalid');
++  }
++  return `${parts.year}-${parts.month}-${parts.day}`;
++}
++
++export function deriveDateKey(now, timezone = HERO_DEFAULT_TIMEZONE) {
++  const ts = typeof now === 'function' ? Number(now()) : Number(now);
++  const safeTs = Number.isFinite(ts) ? ts : Date.now();
++  const requestedTimezone = timezone || HERO_DEFAULT_TIMEZONE;
++  try {
++    return formatDateKeyFromParts(safeTs, requestedTimezone);
++  } catch (err) {
++    if (requestedTimezone !== HERO_DEFAULT_TIMEZONE) {
++      return formatDateKeyFromParts(safeTs, HERO_DEFAULT_TIMEZONE);
++    }
++    return formatDateKeyFromParts(safeTs, 'UTC');
++  }
+ }
+
+ export function createSeededRandom(seed) {
+diff --git a/tests/hero-contracts.test.js b/tests/hero-contracts.test.js
+index f5434c31..2c54b3d4 100644
+--- a/tests/hero-contracts.test.js
++++ b/tests/hero-contracts.test.js
+@@ -254,6 +254,11 @@ test('deriveDateKey handles non-finite input gracefully', () => {
+   assert.match(key, /^\d{4}-\d{2}-\d{2}$/);
+ });
+
++test('deriveDateKey falls back safely when timezone is invalid', () => {
++  const ts = new Date('2026-04-27T12:00:00Z').getTime();
++  assert.equal(deriveDateKey(ts, 'Not/A_Timezone'), deriveDateKey(ts, HERO_DEFAULT_TIMEZONE));
++});
++
+ test('createSeededRandom produces deterministic sequence', () => {
+   const rng1 = createSeededRandom(42);
+   const rng2 = createSeededRandom(42);
+diff --git a/tests/worker-reading-runtime.test.js b/tests/worker-reading-runtime.test.js
+index 5cd91a7f..4e37cff4 100644
+--- a/tests/worker-reading-runtime.test.js
++++ b/tests/worker-reading-runtime.test.js
+@@ -1,6 +1,6 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+-import { createServerReadingEngine } from '../worker/src/subjects/reading/engine.js';
++import { checkMatches, createServerReadingEngine } from '../worker/src/subjects/reading/engine.js';
+ import { buildReadingReadModel } from '../worker/src/subjects/reading/read-models.js';
+ import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
+
+@@ -54,6 +54,86 @@ test('reading engine marks deterministically and then exposes feedback safely',
+   assert.ok(readModel.session.currentQuestion.modelAnswer.includes('Folded'));
+ });
+
++
++test('reading exact match checks reject learner substrings of the correct answer', () => {
++  const check = { exactAny: ['Folded slips of paper with notes on them'] };
++  assert.equal(checkMatches('Folded slips of paper with notes on them', check), true);
++  assert.equal(checkMatches('The box held folded slips of paper with notes on them', check), true);
++  assert.equal(checkMatches('folded slips', check), false);
++  assert.equal(checkMatches('he', check), false);
++});
++
++test('reading contains checks use phrase boundaries rather than character substrings', () => {
++  const check = { containsAny: ['red tin box'] };
++  assert.equal(checkMatches('She opened the red tin box carefully.', check), true);
++  assert.equal(checkMatches('The red tin boxed set was on the shelf.', check), false);
++  assert.equal(checkMatches('red tin', check), false);
++});
++
++test('reading save-response rejects stale expected session or question ids', () => {
++  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
++  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
++  const session = started.state.session;
++  const qid = session.sections[0].questionIds[0];
++  const staleSession = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: { state: started.state, data: started.data },
++    command: 'save-response',
++    payload: { expectedSessionId: 'wrong-session', expectedQuestionId: qid, response: { answer: 'should not save' } },
++    requestId: 'r2',
++  });
++  assert.equal(staleSession.changed, false);
++  assert.equal(staleSession.state.session.sections[0].responses[qid], undefined);
++
++  const staleQuestion = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: { state: started.state, data: started.data },
++    command: 'save-response',
++    payload: { expectedSessionId: session.id, expectedQuestionId: 'wrong-question', response: { answer: 'should not save' } },
++    requestId: 'r3',
++  });
++  assert.equal(staleQuestion.changed, false);
++  assert.equal(staleQuestion.state.session.sections[0].responses[qid], undefined);
++});
++
++test('reading marked answers cannot be overwritten by duplicate or stale submissions', () => {
++  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
++  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
++  const session = started.state.session;
++  const qid = session.sections[0].questionIds[0];
++  const marked = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: { state: started.state, data: started.data },
++    command: 'submit-answer',
++    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'folded slips of paper' } },
++    requestId: 'r2',
++  });
++  const originalResponse = marked.state.session.sections[0].responses[qid];
++  const originalResult = marked.state.session.sections[0].results[qid];
++
++  const duplicate = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: { state: marked.state, data: marked.data },
++    command: 'submit-answer',
++    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'changed after marking' } },
++    requestId: 'r3',
++  });
++  assert.equal(duplicate.changed, false);
++  assert.deepEqual(duplicate.state.session.sections[0].responses[qid], originalResponse);
++  assert.deepEqual(duplicate.state.session.sections[0].results[qid], originalResult);
++  assert.equal(duplicate.events.length, 0);
++
++  const staleSave = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: { state: marked.state, data: marked.data },
++    command: 'save-response',
++    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'changed by stale save' } },
++    requestId: 'r4',
++  });
++  assert.equal(staleSave.changed, false);
++  assert.deepEqual(staleSave.state.session.sections[0].responses[qid], originalResponse);
++});
++
+ test('worker subject runtime wires reading command handlers', async () => {
+   const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
+   const context = fakeContext();
+diff --git a/worker/src/subjects/reading/engine.js b/worker/src/subjects/reading/engine.js
+index c40662b4..cc857cf7 100644
+--- a/worker/src/subjects/reading/engine.js
++++ b/worker/src/subjects/reading/engine.js
+@@ -83,6 +83,11 @@ function groupMatches(tokens, group) {
+     .every((part) => hasStem(tokens, part)));
+ }
+
++function containsNormalisedPhrase(haystack, needle) {
++  if (!haystack || !needle) return false;
++  return ` ${haystack} `.includes(` ${needle} `);
++}
++
+ export function checkMatches(text, check) {
+   if (!check) return false;
+   const norm = normaliseText(text);
+@@ -90,9 +95,9 @@ export function checkMatches(text, check) {
+   if (!norm) return false;
+   if (check.exactAny && check.exactAny.some((answer) => {
+     const candidate = normaliseText(answer);
+-    return norm === candidate || norm.includes(candidate) || candidate.includes(norm);
++    return norm === candidate || containsNormalisedPhrase(norm, candidate);
+   })) return true;
+-  if (check.containsAny && check.containsAny.some((answer) => norm.includes(normaliseText(answer)))) return true;
++  if (check.containsAny && check.containsAny.some((answer) => containsNormalisedPhrase(norm, normaliseText(answer)))) return true;
+   if (check.keywordAny && check.keywordAny.some((group) => groupMatches(tokens, group))) return true;
+   return false;
+ }
+@@ -963,12 +968,20 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
+         const question = currentQuestion(session);
+         if (section && question) {
+           const qid = question.id;
+-          section.responses[qid] = clone(payload.response || {});
+-          if (payload.advance) moveQuestion(session, { delta: 1 });
+-          state.feedback = null;
+-          state.phase = 'question';
+-          state.updatedAt = t;
+-          practiceSession = buildPracticeSessionRow(session, 'active', t);
++          if (payload.expectedSessionId && payload.expectedSessionId !== session.id) {
++            changed = false;
++          } else if (payload.expectedQuestionId && payload.expectedQuestionId !== qid) {
++            changed = false;
++          } else if (section.results?.[qid]) {
++            changed = false;
++          } else {
++            section.responses[qid] = clone(payload.response || {});
++            if (payload.advance) moveQuestion(session, { delta: 1 });
++            state.feedback = null;
++            state.phase = 'question';
++            state.updatedAt = t;
++            practiceSession = buildPracticeSessionRow(session, 'active', t);
++          }
+         }
+       }
+     } else if (command === 'submit-answer') {
+@@ -980,6 +993,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
+         const qid = question.id;
+         if (payload.expectedSessionId && payload.expectedSessionId !== session.id) changed = false;
+         else if (payload.expectedQuestionId && payload.expectedQuestionId !== qid) changed = false;
++        else if (section.results?.[qid]) changed = false;
+         else {
+           section.responses[qid] = clone(payload.response || {});
+           section.attempts[qid] = (Number(section.attempts[qid]) || 0) + 1;

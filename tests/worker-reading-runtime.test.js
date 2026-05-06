@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createServerReadingEngine } from '../worker/src/subjects/reading/engine.js';
+import { checkMatches, createServerReadingEngine } from '../worker/src/subjects/reading/engine.js';
 import { buildReadingReadModel } from '../worker/src/subjects/reading/read-models.js';
 import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 
@@ -52,6 +52,86 @@ test('reading engine marks deterministically and then exposes feedback safely', 
   const readModel = buildReadingReadModel({ learnerId: 'l1', state: marked.state, data: marked.data, stats: marked.stats, analytics: marked.analytics });
   assert.ok(readModel.feedback.result.modelAnswer.includes('Folded'));
   assert.ok(readModel.session.currentQuestion.modelAnswer.includes('Folded'));
+});
+
+
+test('reading exact match checks reject learner substrings of the correct answer', () => {
+  const check = { exactAny: ['Folded slips of paper with notes on them'] };
+  assert.equal(checkMatches('Folded slips of paper with notes on them', check), true);
+  assert.equal(checkMatches('The box held folded slips of paper with notes on them', check), true);
+  assert.equal(checkMatches('folded slips', check), false);
+  assert.equal(checkMatches('he', check), false);
+});
+
+test('reading contains checks use phrase boundaries rather than character substrings', () => {
+  const check = { containsAny: ['red tin box'] };
+  assert.equal(checkMatches('She opened the red tin box carefully.', check), true);
+  assert.equal(checkMatches('The red tin boxed set was on the shelf.', check), false);
+  assert.equal(checkMatches('red tin', check), false);
+});
+
+test('reading save-response rejects stale expected session or question ids', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
+  const session = started.state.session;
+  const qid = session.sections[0].questionIds[0];
+  const staleSession = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'save-response',
+    payload: { expectedSessionId: 'wrong-session', expectedQuestionId: qid, response: { answer: 'should not save' } },
+    requestId: 'r2',
+  });
+  assert.equal(staleSession.changed, false);
+  assert.equal(staleSession.state.session.sections[0].responses[qid], undefined);
+
+  const staleQuestion = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'save-response',
+    payload: { expectedSessionId: session.id, expectedQuestionId: 'wrong-question', response: { answer: 'should not save' } },
+    requestId: 'r3',
+  });
+  assert.equal(staleQuestion.changed, false);
+  assert.equal(staleQuestion.state.session.sections[0].responses[qid], undefined);
+});
+
+test('reading marked answers cannot be overwritten by duplicate or stale submissions', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
+  const session = started.state.session;
+  const qid = session.sections[0].questionIds[0];
+  const marked = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'folded slips of paper' } },
+    requestId: 'r2',
+  });
+  const originalResponse = marked.state.session.sections[0].responses[qid];
+  const originalResult = marked.state.session.sections[0].results[qid];
+
+  const duplicate = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: marked.state, data: marked.data },
+    command: 'submit-answer',
+    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'changed after marking' } },
+    requestId: 'r3',
+  });
+  assert.equal(duplicate.changed, false);
+  assert.deepEqual(duplicate.state.session.sections[0].responses[qid], originalResponse);
+  assert.deepEqual(duplicate.state.session.sections[0].results[qid], originalResult);
+  assert.equal(duplicate.events.length, 0);
+
+  const staleSave = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: marked.state, data: marked.data },
+    command: 'save-response',
+    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'changed by stale save' } },
+    requestId: 'r4',
+  });
+  assert.equal(staleSave.changed, false);
+  assert.deepEqual(staleSave.state.session.sections[0].responses[qid], originalResponse);
 });
 
 test('worker subject runtime wires reading command handlers', async () => {

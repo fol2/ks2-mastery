@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: ANSWER_SPEC_KINDS lists all six declarative types
+ok 1 - ANSWER_SPEC_KINDS lists all six declarative types
+  ---
+  duration_ms: 5.013576
+  ...
+# Subtest: exact: rejects near-miss punctuation, accepts byte-identical
+ok 2 - exact: rejects near-miss punctuation, accepts byte-identical
+  ---
+  duration_ms: 2.038511
+  ...
+# Subtest: normalisedText: accepts whitespace + case variants, preserves the golden
+ok 3 - normalisedText: accepts whitespace + case variants, preserves the golden
+  ---
+  duration_ms: 2.47213
+  ...
+# Subtest: normalisedText: preserves grammar-critical terminal apostrophes while stripping real wrapper quotes
+ok 4 - normalisedText: preserves grammar-critical terminal apostrophes while stripping real wrapper quotes
+  ---
+  duration_ms: 0.929721
+  ...
+# Subtest: normalisedText: accepts semicolon spelling aliases for punctuation mark labels
+ok 5 - normalisedText: accepts semicolon spelling aliases for punctuation mark labels
+  ---
+  duration_ms: 0.352767
+  ...
+# Subtest: acceptedSet: two equivalent clause-combine sentences both score full marks
+ok 6 - acceptedSet: two equivalent clause-combine sentences both score full marks
+  ---
+  duration_ms: 3.225709
+  ...
+# Subtest: acceptedSet: near-miss punctuation gets partial credit when maxScore > 1
+ok 7 - acceptedSet: near-miss punctuation gets partial credit when maxScore > 1
+  ---
+  duration_ms: 0.548519
+  ...
+# Subtest: punctuationPattern: optionalCommas accepts variant without surrounding commas
+ok 8 - punctuationPattern: optionalCommas accepts variant without surrounding commas
+  ---
+  duration_ms: 1.180396
+  ...
+# Subtest: punctuationPattern: optionalCommas=false rejects comma-free variant
+ok 9 - punctuationPattern: optionalCommas=false rejects comma-free variant
+  ---
+  duration_ms: 0.815031
+  ...
+# Subtest: punctuationPattern: optionalTerminalFullStop accepts only incidental final full-stop differences
+ok 10 - punctuationPattern: optionalTerminalFullStop accepts only incidental final full-stop differences
+  ---
+  duration_ms: 0.808301
+  ...
+# Subtest: multiField: scores each sub-field independently and aggregates
+ok 11 - multiField: scores each sub-field independently and aggregates
+  ---
+  duration_ms: 1.302636
+  ...
+# Subtest: manualReviewOnly: never auto-scores correct
+ok 12 - manualReviewOnly: never auto-scores correct
+  ---
+  duration_ms: 0.390045
+  ...
+# Subtest: markByAnswerSpec preserves spec-owned answer text and hint metadata
+ok 13 - markByAnswerSpec preserves spec-owned answer text and hint metadata
+  ---
+  duration_ms: 0.223648
+  ...
+# Subtest: markByAnswerSpec tolerates missing/malformed input gracefully
+ok 14 - markByAnswerSpec tolerates missing/malformed input gracefully
+  ---
+  duration_ms: 0.285011
+  ...
+# Subtest: validateAnswerSpec: all kinds with golden + nearMiss pass
+ok 15 - validateAnswerSpec: all kinds with golden + nearMiss pass
+  ---
+  duration_ms: 0.545939
+  ...
+# Subtest: validateAnswerSpec: rejects missing golden (except manualReviewOnly)
+ok 16 - validateAnswerSpec: rejects missing golden (except manualReviewOnly)
+  ---
+  duration_ms: 0.807282
+  ...
+# Subtest: validateAnswerSpec: multiField recursively validates subfields
+ok 17 - validateAnswerSpec: multiField recursively validates subfields
+  ---
+  duration_ms: 0.742441
+  ...
+# Subtest: Backcompat: acceptedSet answerSpec still scores correctly through markByAnswerSpec
+ok 18 - Backcompat: acceptedSet answerSpec still scores correctly through markByAnswerSpec
+  ---
+  duration_ms: 1.105448
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 356.306494
