@@ -120,6 +120,25 @@ test('punctuationPattern: optionalTerminalFullStop accepts only incidental final
   assert.equal(markByAnswerSpec(spec, { answer: 'Before sunrise the campers packed their bags.' }).correct, false);
 });
 
+test('punctuationPattern: keeps hyphen and dash distinct in punctuation-sensitive tasks', () => {
+  const spec = {
+    kind: 'punctuationPattern',
+    golden: ['The team needed a well-earned break after the match.'],
+    nearMiss: [
+      'The team needed a well earned break after the match.',
+      'The team needed a well—earned break after the match.',
+      'The team needed a well–earned break after the match.',
+    ],
+    params: { optionalTerminalFullStop: true },
+    maxScore: 2,
+  };
+
+  assert.equal(markByAnswerSpec(spec, { answer: 'The team needed a well-earned break after the match.' }).correct, true);
+  assert.equal(markByAnswerSpec(spec, { answer: 'The team needed a well-earned break after the match' }).correct, true);
+  assert.equal(markByAnswerSpec(spec, { answer: 'The team needed a well—earned break after the match.' }).correct, false);
+  assert.equal(markByAnswerSpec(spec, { answer: 'The team needed a well–earned break after the match.' }).correct, false);
+});
+
 test('multiField: scores each sub-field independently and aggregates', () => {
   const spec = {
     kind: 'multiField',

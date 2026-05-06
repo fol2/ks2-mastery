@@ -251,3 +251,16 @@ test('P20b possessive scenario prompts show the scenario after a colon', () => {
     assert.doesNotMatch(serialised.promptText, /for\s+one dog owns a bowl/i);
   }
 });
+
+test('P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking', () => {
+  const question = createGrammarQuestion({
+    templateId: 'proc3_hyphen_fix_meaning',
+    seed: 1,
+  });
+
+  const accepted = question.answerSpec.golden[0];
+  assert.equal(accepted, 'The team needed a well-earned break after the match.');
+  assert.equal(mark(question, accepted).correct, true);
+  assert.equal(mark(question, accepted.replace('-', '—')).correct, false);
+  assert.equal(mark(question, accepted.replace('-', '–')).correct, false);
+});

@@ -62,3 +62,23 @@ test('P20 does not hide learner-facing prompt defects behind HTML stripping', ()
     }
   }
 });
+
+test('P20c generated source compaction preserves manual-review fairness flags', async () => {
+  const module = await import('../scripts/generate-grammar-manual-expansion.mjs');
+  assert.equal(typeof module.compactCaseForTest, 'function');
+
+  const compacted = module.compactCaseForTest({
+    caseId: 'flagged-case',
+    sourcePack: 'test-pack',
+    seedCase: 1,
+    inputType: 'textarea',
+    questionType: 'constructed',
+    depthTier: 'transfer',
+    promptText: 'Write a short paragraph using a relative clause.',
+    manualReviewOnly: true,
+    nonScored: true,
+  });
+
+  assert.equal(compacted.manualReviewOnly, true);
+  assert.equal(compacted.nonScored, true);
+});

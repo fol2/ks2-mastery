@@ -169,6 +169,30 @@ const GRAMMAR_P20B_HOTFIX_SMOKE_ITEMS = Object.freeze([
   }),
 ]);
 
+const GRAMMAR_P20C_HOTFIX_SMOKE_ITEMS = Object.freeze([
+  Object.freeze({
+    id: 'hyphen-rewrite-correct-hyphen',
+    templateId: 'proc3_hyphen_fix_meaning',
+    seed: 1,
+    response: Object.freeze({ answer: 'The team needed a well-earned break after the match.' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'hyphen-rewrite-em-dash-rejected',
+    templateId: 'proc3_hyphen_fix_meaning',
+    seed: 1,
+    response: Object.freeze({ answer: 'The team needed a well—earned break after the match.' }),
+    expectedCorrect: false,
+  }),
+  Object.freeze({
+    id: 'hyphen-rewrite-en-dash-rejected',
+    templateId: 'proc3_hyphen_fix_meaning',
+    seed: 1,
+    response: Object.freeze({ answer: 'The team needed a well–earned break after the match.' }),
+    expectedCorrect: false,
+  }),
+]);
+
 export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
   Object.freeze({
     family: 'exact',
@@ -924,6 +948,76 @@ async function smokeGrammarP20bHotfixCases({ origin, cookie, learnerId, revision
   return { revision, cases };
 }
 
+async function smokeGrammarP20cHotfixCases({ origin, cookie, learnerId, revision }) {
+  const cases = [];
+  for (const fixture of GRAMMAR_P20C_HOTFIX_SMOKE_ITEMS) {
+    let step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'start-session',
+      payload: {
+        mode: 'smart',
+        roundLength: 1,
+        templateId: fixture.templateId,
+        seed: fixture.seed,
+      },
+    });
+    revision = step.revision;
+    const startModel = step.payload.subjectReadModel;
+    const item = startModel?.session?.currentItem;
+    assert.equal(startModel?.phase, 'session', `Grammar P20c ${fixture.id} did not start in session phase.`);
+    assert.equal(item?.templateId, fixture.templateId, `Grammar P20c ${fixture.id} served the wrong template.`);
+    assert.equal(Number(item?.seed), Number(fixture.seed), `Grammar P20c ${fixture.id} served the wrong seed.`);
+    assert.equal(
+      item?.contentReleaseId,
+      CONFIGURED_RELEASE_ID,
+      `Grammar P20c ${fixture.id} did not serve expected release ${CONFIGURED_RELEASE_ID}.`,
+    );
+    assertNoForbiddenGrammarReadModelKeys(startModel, `grammar.p20c.${fixture.id}.startModel`);
+
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'submit-answer',
+      payload: { response: fixture.response },
+    });
+    revision = step.revision;
+    const feedbackModel = step.payload.subjectReadModel;
+    const correct = Boolean(feedbackModel?.feedback?.result?.correct);
+    assert.equal(feedbackModel?.phase, 'feedback', `Grammar P20c ${fixture.id} did not return feedback.`);
+    assert.equal(correct, fixture.expectedCorrect, `Grammar P20c ${fixture.id} returned correct=${correct}.`);
+    assertNoForbiddenGrammarReadModelKeys(feedbackModel, `grammar.p20c.${fixture.id}.feedbackModel`);
+
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'continue-session',
+    });
+    revision = step.revision;
+    assert.equal(step.payload.subjectReadModel?.phase, 'summary', `Grammar P20c ${fixture.id} did not reach summary.`);
+    assertNoForbiddenGrammarReadModelKeys(step.payload.subjectReadModel, `grammar.p20c.${fixture.id}.summaryModel`);
+
+    cases.push({
+      id: fixture.id,
+      templateId: fixture.templateId,
+      seed: fixture.seed,
+      expectedCorrect: fixture.expectedCorrect,
+      observedCorrect: correct,
+    });
+  }
+
+  return { revision, cases };
+}
+
 async function smokeGrammar({ origin, cookie, learnerId, revision }) {
   const normal = await smokeGrammarNormalRound({ origin, cookie, learnerId, revision });
   const miniTest = await smokeGrammarMiniTest({
@@ -962,9 +1056,15 @@ async function smokeGrammar({ origin, cookie, learnerId, revision }) {
     learnerId,
     revision: p20aHotfix.revision,
   });
+  const p20cHotfix = await smokeGrammarP20cHotfixCases({
+    origin,
+    cookie,
+    learnerId,
+    revision: p20bHotfix.revision,
+  });
 
   return {
-    revision: p20bHotfix.revision,
+    revision: p20cHotfix.revision,
     normal,
     miniTest,
     repairAi,
@@ -972,6 +1072,7 @@ async function smokeGrammar({ origin, cookie, learnerId, revision }) {
     cueAssertions,
     p20aHotfix,
     p20bHotfix,
+    p20cHotfix,
   };
 }
 
@@ -1021,6 +1122,7 @@ async function main() {
   let cueAssertionResult = { ok: false, detail: '' };
   let p20aHotfixResult = { ok: false, detail: '' };
   let p20bHotfixResult = { ok: false, detail: '' };
+  let p20cHotfixResult = { ok: false, detail: '' };
   let forbiddenKeyScanResult = { ok: true, detail: 'checked via assertNoForbiddenGrammarReadModelKeys in each phase' };
   let testedTemplateIds = [];
   let overallOk = true;
@@ -1048,6 +1150,10 @@ async function main() {
       ok: grammar.p20bHotfix.cases.every((item) => item.expectedCorrect === item.observedCorrect),
       detail: `cases=${grammar.p20bHotfix.cases.length}`,
     };
+    p20cHotfixResult = {
+      ok: grammar.p20cHotfix.cases.every((item) => item.expectedCorrect === item.observedCorrect),
+      detail: `cases=${grammar.p20cHotfix.cases.length}`,
+    };
     testedTemplateIds = [
       GRAMMAR_SMOKE_ITEM.templateId,
       GRAMMAR_MINI_TEST_ITEM.templateId,
@@ -1056,6 +1162,7 @@ async function main() {
       GRAMMAR_NOUN_PHRASE_CUE_ITEM.templateId,
       ...GRAMMAR_P20A_HOTFIX_SMOKE_ITEMS.map((item) => item.templateId),
       ...GRAMMAR_P20B_HOTFIX_SMOKE_ITEMS.map((item) => item.templateId),
+      ...GRAMMAR_P20C_HOTFIX_SMOKE_ITEMS.map((item) => item.templateId),
     ];
   } catch (error) {
     overallOk = false;
@@ -1072,6 +1179,8 @@ async function main() {
       p20aHotfixResult = { ok: false, detail: msg };
     } else if (msg.includes('P20b')) {
       p20bHotfixResult = { ok: false, detail: msg };
+    } else if (msg.includes('P20c')) {
+      p20cHotfixResult = { ok: false, detail: msg };
     } else {
       normalRoundResult = { ok: false, detail: msg };
     }
@@ -1103,6 +1212,7 @@ async function main() {
           cueAssertions: grammar.cueAssertions,
           p20aHotfixCases: grammar.p20aHotfix.cases,
           p20bHotfixCases: grammar.p20bHotfix.cases,
+          p20cHotfixCases: grammar.p20cHotfix.cases,
         },
         spelling: {
           progressTotal: spelling.progressTotal,
@@ -1151,6 +1261,12 @@ async function main() {
             cases: grammar.p20bHotfix.cases,
           }
         : { ok: false, cases: [] },
+      p20cHotfix: grammar
+        ? {
+            ok: p20cHotfixResult.ok,
+            cases: grammar.p20cHotfix.cases,
+          }
+        : { ok: false, cases: [] },
       command,
       learnerFixtureType: 'demo-session',
       itemCreationResult: normalRoundResult,
@@ -1167,6 +1283,7 @@ async function main() {
       cueAssertionResult,
       p20aHotfixResult,
       p20bHotfixResult,
+      p20cHotfixResult,
       forbiddenKeyScanResult,
       failureDetails: overallOk ? null : {
         normalRoundResult,
@@ -1175,6 +1292,7 @@ async function main() {
         cueAssertionResult,
         p20aHotfixResult,
         p20bHotfixResult,
+        p20cHotfixResult,
       },
       timestamp: new Date().toISOString(),
       commitSha: getCommitSha(),

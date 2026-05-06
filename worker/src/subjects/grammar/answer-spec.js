@@ -54,6 +54,16 @@ export function normaliseSmartPunctuation(text) {
     .replace(/—/g, '-');          // em-dash → hyphen
 }
 
+function normaliseSmartPunctuationForPattern(text) {
+  // punctuationPattern tasks are deliberately punctuation-sensitive. Keep the
+  // learner-friendly smart quote/apostrophe normalisation, but do not fold
+  // en/em dashes into hyphens: in hyphen/dash Grammar questions, that changes
+  // the answer being tested.
+  return safeString(text)
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'");
+}
+
 function caseFold(text) {
   return safeString(text).toLowerCase();
 }
@@ -446,11 +456,12 @@ export function markByAnswerSpec(spec, response) {
   // P9 U8: normalise iOS smart punctuation before marking so curly
   // quotes/apostrophes/dashes do not cause false negatives on iPad.
   const responseText = normaliseSmartPunctuation(rawResponseText);
+  const punctuationPatternResponseText = normaliseSmartPunctuationForPattern(rawResponseText);
   switch (kind) {
     case 'exact': return markExact(spec, responseText);
     case 'normalisedText': return markNormalisedText(spec, rawResponseText);
     case 'acceptedSet': return markAcceptedSet(spec, rawResponseText);
-    case 'punctuationPattern': return markPunctuationPattern(spec, responseText);
+    case 'punctuationPattern': return markPunctuationPattern(spec, punctuationPatternResponseText);
     case 'multiField': return markMultiField(spec, response);
     case 'manualReviewOnly': return markManualReviewOnly(spec);
     default: return mkMarkResult({
