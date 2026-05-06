@@ -1,8 +1,7 @@
 fda6fc7d04b35c5dce9112544087fcbb5e5c300742c047a80d09dc797049e57c  ./README.md
-ea6067d703e27b6db238fb3b852def634e223fdc4d983e3b8364ed9bafeef347  ./SHA256SUMS.txt
 ee40fe4f94e90d9de8146df07870f62ec1c251d84bb297cbf02059b70ee86e71  ./contract/grammar-qg-p20b-validation-hotfix-contract.md
-d9f19eb623f8bb3a4327a5f3c8504de830038a446fb87f6093df9092221836d4  ./patches/001-grammar-qg-p20b-answer-acceptance-and-copy.patch
-b43961f7935244a3db2719d77c772ef8bca88c01246585b797e4007807180ed9  ./validation-summary.md
+efe9b90fa9c9a78176179f414b8453fe2dfeef8235aa08f1586c60b1f95844b2  ./patches/001-grammar-qg-p20b-answer-acceptance-and-copy.patch
+56945668e41cde469f633b3361c7beb2386b4d08ab700a3fe3f6517cfcd5ae4d  ./validation-summary.md
 d84a9de296edadc0a13286e3e90f886775c1c0d9e153b0727fe89c47f66a5d9d  ./validation/audit-status.txt
 06f243bb4a9a806aacd9a089077c7e310018c3080f2ffd012d4133ae3b3771dc  ./validation/baseline-grammar-qg-content-quality-1-30.json
 c60380c6c521edec33d34613acdb19537705388f3d8bd5c3d6c3685307dc31ec  ./validation/baseline-grammar-qg-p20-quality-hardening-1-30-smart-1-6.json

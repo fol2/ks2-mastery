@@ -1,142 +1,8 @@
---- ks2-mastery-lean-05060131-orig/worker/src/subjects/grammar/answer-spec.js	2026-05-05 19:29:28.000000000 +0000
-+++ ks2-mastery-lean-05060131-work/worker/src/subjects/grammar/answer-spec.js	2026-05-06 00:46:10.815344279 +0000
-@@ -124,6 +124,34 @@
-   'semi-colon': 'semicolon',
- });
- 
-+// P20b: Some deterministic Grammar prompts ask learners to "write the
-+// punctuation mark used". A child may reasonably type the mark itself (`;`,
-+// `:`, `—`) instead of the word label ("semicolon", "colon", "dash").
-+// Keep this separate from the main label canonicaliser so a keyboard hyphen can
-+// be accepted as either a dash or a hyphen only when the golden answer expects
-+// that label, rather than globally rewriting one concept into the other.
-+const GRAMMAR_PUNCTUATION_MARK_ALIASES = Object.freeze({
-+  ',': ['comma'],
-+  ':': ['colon'],
-+  ';': ['semicolon'],
-+  '-': ['dash', 'hyphen'],
-+  '\u2013': ['dash'],
-+  '\u2014': ['dash'],
-+  "'": ['apostrophe'],
-+});
-+
-+function punctuationMarkAliasSet(text) {
-+  const rawValue = normaliseWhitespace(safeString(text));
-+  const smartValue = normaliseWhitespace(normaliseSmartPunctuation(text));
-+  const aliases = new Set();
-+  for (const value of [rawValue, smartValue]) {
-+    for (const alias of GRAMMAR_PUNCTUATION_MARK_ALIASES[value] || []) {
-+      aliases.add(alias);
-+    }
-+  }
-+  return aliases;
-+}
-+
- function normaliseGrammarLabelAlias(text) {
-   const value = safeString(text).trim();
-   return GRAMMAR_LABEL_ALIASES[value.toLowerCase()] || value;
-@@ -165,7 +193,13 @@
- }
- 
- function compareLearnerEquivalentText(response, accepted, opts = {}) {
--  return normaliseGrammarAnswerText(response, opts) === normaliseGrammarAnswerText(accepted, opts);
-+  const responseAliases = punctuationMarkAliasSet(response);
-+  const acceptedAliases = punctuationMarkAliasSet(accepted);
-+  const normalisedResponse = normaliseGrammarAnswerText(response, opts);
-+  const normalisedAccepted = normaliseGrammarAnswerText(accepted, opts);
-+  return normalisedResponse === normalisedAccepted
-+    || responseAliases.has(normalisedAccepted)
-+    || acceptedAliases.has(normalisedResponse);
- }
- 
- function compareNormalisedText(response, accepted) {
---- ks2-mastery-lean-05060131-orig/worker/src/subjects/grammar/content.js	2026-05-05 19:29:28.000000000 +0000
-+++ ks2-mastery-lean-05060131-work/worker/src/subjects/grammar/content.js	2026-05-06 00:46:10.820620243 +0000
-@@ -4556,7 +4556,8 @@
-             maxScore:2,
-             misconception:"fronted_adverbial_confusion",
-             feedbackLong:`The correct sentence is: ${item.answer}`,
--            answerText:item.answer
-+            answerText:item.answer,
-+            params:{ optionalTerminalFullStop:true }
-           });
-           return makeBaseQuestion(this, seed, {
-             marks:2,
-@@ -5086,7 +5087,8 @@
-             maxScore:2,
-             misconception:"parenthesis_confusion",
-             feedbackLong:`A correct answer is: ${item.accepted[0]}`,
--            answerText:item.accepted[0]
-+            answerText:item.accepted[0],
-+            params:{ optionalTerminalFullStop:true }
-           });
-           return makeBaseQuestion(this, seed, {
-             marks:2,
-@@ -5263,7 +5265,8 @@
-             maxScore:2,
-             misconception:"fronted_adverbial_confusion",
-             feedbackLong:`A correct answer is: ${accepted[0]}`,
--            answerText:accepted[0]
-+            answerText:accepted[0],
-+            params:{ optionalTerminalFullStop:true }
-           });
-           return makeBaseQuestion(this, seed, {
-             marks:2,
-@@ -5354,7 +5357,8 @@
-             maxScore:2,
-             misconception:"boundary_punctuation_confusion",
-             feedbackLong:`A correct answer is: ${accepted[0]}`,
--            answerText:accepted[0]
-+            answerText:accepted[0],
-+            params:{ optionalTerminalFullStop:true }
-           });
-           return makeBaseQuestion(this, seed, {
-             marks:2,
-@@ -5401,7 +5405,8 @@
-             maxScore:2,
-             misconception:"boundary_punctuation_confusion",
-             feedbackLong:`A correct answer is: ${accepted[0]}`,
--            answerText:accepted[0]
-+            answerText:accepted[0],
-+            params:{ optionalTerminalFullStop:true }
-           });
-           return makeBaseQuestion(this, seed, {
-             marks:2,
-@@ -6342,7 +6347,8 @@
-               maxScore:2,
-               misconception:"parenthesis_confusion",
-               feedbackLong:`A correct answer is: ${item.accepted}`,
--              answerText:item.accepted
-+              answerText:item.accepted,
-+              params:{ optionalTerminalFullStop:true }
-             });
-             return makeBaseQuestion(this, seed, {
-               marks:2,
-@@ -6435,7 +6441,8 @@
-               maxScore:2,
-               misconception:"punctuation_precision",
-               feedbackLong:`A correct answer is: ${item.accepted}`,
--              answerText:item.accepted
-+              answerText:item.accepted,
-+              params:{ optionalTerminalFullStop:true }
-             });
-             return makeBaseQuestion(this, seed, {
-               marks:2,
-@@ -11809,7 +11816,10 @@
-   if (caseItem?.inputType === 'table_choice' && /^Classify the grammar feature shown in this row:/i.test(raw)) {
-     return 'Classify the target word or phrase by its grammar role.';
-   }
--  return raw;
-+  // P20b: Manual-expansion possessive prompts sometimes read like
-+  // "Write the possessive phrase for one dog owns a bowl.". Add a colon
-+  // before the scenario so the learner sees the mini-situation clearly.
-+  return raw.replace(/\bfor\s+((?:one|several)\s+[^.?!]+?\s+own(?:s)?\s+[^.?!]+)([.?!])/gi, 'for: $1$2');
- }
- 
- function classifySentenceFunctionSurface(label) {
---- ks2-mastery-lean-05060131-orig/scripts/audit-grammar-qg-p20-quality-hardening.mjs	2026-05-05 19:29:28.000000000 +0000
-+++ ks2-mastery-lean-05060131-work/scripts/audit-grammar-qg-p20-quality-hardening.mjs	2026-05-06 00:46:10.821254668 +0000
-@@ -134,10 +134,25 @@
+diff --git a/scripts/audit-grammar-qg-p20-quality-hardening.mjs b/scripts/audit-grammar-qg-p20-quality-hardening.mjs
+index 9f26b73e..a45a1a73 100644
+--- a/scripts/audit-grammar-qg-p20-quality-hardening.mjs
++++ b/scripts/audit-grammar-qg-p20-quality-hardening.mjs
+@@ -134,10 +134,25 @@ function evaluate(question, answer) {
    return null;
  }
  
@@ -163,7 +29,7 @@
      ...(serialised?.solutionLines || []),
      JSON.stringify(serialised?.inputSpec || question.inputSpec || {}),
    ].join(' ');
-@@ -151,6 +166,25 @@
+@@ -151,6 +166,25 @@ function buildTemplateQualityFindings(question, template, seed, serialised) {
    if (/\bClassify the grammar feature shown in this row:\s*[^.?!:]+\s+in:\s*/i.test(text)) {
      findings.push({ rule: 'awkward-table-row-copy', templateId: template.id, seed, text: text.slice(0, 180) });
    }
@@ -189,9 +55,11 @@
    return findings;
  }
  
---- ks2-mastery-lean-05060131-orig/tests/grammar-qg-p20-answer-acceptance.test.js	2026-05-05 19:29:28.000000000 +0000
-+++ ks2-mastery-lean-05060131-work/tests/grammar-qg-p20-answer-acceptance.test.js	2026-05-06 00:46:10.821730075 +0000
-@@ -166,3 +166,84 @@
+diff --git a/tests/grammar-qg-p20-answer-acceptance.test.js b/tests/grammar-qg-p20-answer-acceptance.test.js
+index 891f435b..f086739e 100644
+--- a/tests/grammar-qg-p20-answer-acceptance.test.js
++++ b/tests/grammar-qg-p20-answer-acceptance.test.js
+@@ -166,3 +166,88 @@ test('P20 serialised learner prompts remove legacy tag spacing and awkward table
    assert.doesNotMatch(JSON.stringify(tableSerialised.inputSpec), /Classify the grammar feature shown in this row:/);
    assert.match(JSON.stringify(tableSerialised.inputSpec), /Target “carefully” in sentence:/);
  });
@@ -218,9 +86,13 @@
 +  });
 +  assert.equal(dashQuestion.answerSpec.golden[0], 'dash');
 +  assert.equal(mark(dashQuestion, '—').correct, true);
++  assert.equal(mark(dashQuestion, '–').correct, true);
 +  assert.equal(mark(dashQuestion, '-').correct, true);
 +
 +  assert.equal(mark(colonQuestion, ';').correct, false, 'a semicolon mark must not be accepted for colon');
++  assert.equal(markByAnswerSpec({ kind: 'normalisedText', golden: ['hyphen'] }, { answer: '-' }).correct, true);
++  assert.equal(markByAnswerSpec({ kind: 'normalisedText', golden: ['hyphen'] }, { answer: '—' }).correct, false);
++  assert.equal(markByAnswerSpec({ kind: 'normalisedText', golden: ['hyphen'] }, { answer: '–' }).correct, false);
 +});
 +
 +test('P20b internal punctuation rewrites accept omission of only the incidental final full stop', () => {
@@ -276,3 +148,153 @@
 +    assert.doesNotMatch(serialised.promptText, /for\s+one dog owns a bowl/i);
 +  }
 +});
+diff --git a/worker/src/subjects/grammar/answer-spec.js b/worker/src/subjects/grammar/answer-spec.js
+index 6d76ec71..bdd17718 100644
+--- a/worker/src/subjects/grammar/answer-spec.js
++++ b/worker/src/subjects/grammar/answer-spec.js
+@@ -124,6 +124,33 @@ const GRAMMAR_LABEL_ALIASES = Object.freeze({
+   'semi-colon': 'semicolon',
+ });
+ 
++// P20b: Some deterministic Grammar prompts ask learners to "write the
++// punctuation mark used". A child may reasonably type the mark itself (`;`,
++// `:`, `—`) instead of the word label ("semicolon", "colon", "dash").
++// Keep this separate from the main label canonicaliser so a keyboard hyphen can
++// be accepted as either a dash or a hyphen only when the golden answer expects
++// that label, rather than globally rewriting one concept into the other.
++const GRAMMAR_PUNCTUATION_MARK_ALIASES = Object.freeze({
++  ',': ['comma'],
++  ':': ['colon'],
++  ';': ['semicolon'],
++  '-': ['dash', 'hyphen'],
++  '\u2013': ['dash'],
++  '\u2014': ['dash'],
++  "'": ['apostrophe'],
++  '\u2018': ['apostrophe'],
++  '\u2019': ['apostrophe'],
++});
++
++function punctuationMarkAliasSet(text) {
++  const rawValue = normaliseWhitespace(safeString(text));
++  const aliases = new Set();
++  for (const alias of GRAMMAR_PUNCTUATION_MARK_ALIASES[rawValue] || []) {
++    aliases.add(alias);
++  }
++  return aliases;
++}
++
+ function normaliseGrammarLabelAlias(text) {
+   const value = safeString(text).trim();
+   return GRAMMAR_LABEL_ALIASES[value.toLowerCase()] || value;
+@@ -165,7 +192,13 @@ function compareExact(response, accepted) {
+ }
+ 
+ function compareLearnerEquivalentText(response, accepted, opts = {}) {
+-  return normaliseGrammarAnswerText(response, opts) === normaliseGrammarAnswerText(accepted, opts);
++  const responseAliases = punctuationMarkAliasSet(response);
++  const acceptedAliases = punctuationMarkAliasSet(accepted);
++  const normalisedResponse = normaliseGrammarAnswerText(response, opts);
++  const normalisedAccepted = normaliseGrammarAnswerText(accepted, opts);
++  return normalisedResponse === normalisedAccepted
++    || responseAliases.has(normalisedAccepted)
++    || acceptedAliases.has(normalisedResponse);
+ }
+ 
+ function compareNormalisedText(response, accepted) {
+@@ -415,8 +448,8 @@ export function markByAnswerSpec(spec, response) {
+   const responseText = normaliseSmartPunctuation(rawResponseText);
+   switch (kind) {
+     case 'exact': return markExact(spec, responseText);
+-    case 'normalisedText': return markNormalisedText(spec, responseText);
+-    case 'acceptedSet': return markAcceptedSet(spec, responseText);
++    case 'normalisedText': return markNormalisedText(spec, rawResponseText);
++    case 'acceptedSet': return markAcceptedSet(spec, rawResponseText);
+     case 'punctuationPattern': return markPunctuationPattern(spec, responseText);
+     case 'multiField': return markMultiField(spec, response);
+     case 'manualReviewOnly': return markManualReviewOnly(spec);
+diff --git a/worker/src/subjects/grammar/content.js b/worker/src/subjects/grammar/content.js
+index 4c19a432..09c4aee5 100644
+--- a/worker/src/subjects/grammar/content.js
++++ b/worker/src/subjects/grammar/content.js
+@@ -4556,7 +4556,8 @@ const TEMPLATES = [
+             maxScore:2,
+             misconception:"fronted_adverbial_confusion",
+             feedbackLong:`The correct sentence is: ${item.answer}`,
+-            answerText:item.answer
++            answerText:item.answer,
++            params:{ optionalTerminalFullStop:true }
+           });
+           return makeBaseQuestion(this, seed, {
+             marks:2,
+@@ -5086,7 +5087,8 @@ const TEMPLATES = [
+             maxScore:2,
+             misconception:"parenthesis_confusion",
+             feedbackLong:`A correct answer is: ${item.accepted[0]}`,
+-            answerText:item.accepted[0]
++            answerText:item.accepted[0],
++            params:{ optionalTerminalFullStop:true }
+           });
+           return makeBaseQuestion(this, seed, {
+             marks:2,
+@@ -5263,7 +5265,8 @@ const TEMPLATES = [
+             maxScore:2,
+             misconception:"fronted_adverbial_confusion",
+             feedbackLong:`A correct answer is: ${accepted[0]}`,
+-            answerText:accepted[0]
++            answerText:accepted[0],
++            params:{ optionalTerminalFullStop:true }
+           });
+           return makeBaseQuestion(this, seed, {
+             marks:2,
+@@ -5354,7 +5357,8 @@ const TEMPLATES = [
+             maxScore:2,
+             misconception:"boundary_punctuation_confusion",
+             feedbackLong:`A correct answer is: ${accepted[0]}`,
+-            answerText:accepted[0]
++            answerText:accepted[0],
++            params:{ optionalTerminalFullStop:true }
+           });
+           return makeBaseQuestion(this, seed, {
+             marks:2,
+@@ -5401,7 +5405,8 @@ const TEMPLATES = [
+             maxScore:2,
+             misconception:"boundary_punctuation_confusion",
+             feedbackLong:`A correct answer is: ${accepted[0]}`,
+-            answerText:accepted[0]
++            answerText:accepted[0],
++            params:{ optionalTerminalFullStop:true }
+           });
+           return makeBaseQuestion(this, seed, {
+             marks:2,
+@@ -6342,7 +6347,8 @@ const TEMPLATES = [
+               maxScore:2,
+               misconception:"parenthesis_confusion",
+               feedbackLong:`A correct answer is: ${item.accepted}`,
+-              answerText:item.accepted
++              answerText:item.accepted,
++              params:{ optionalTerminalFullStop:true }
+             });
+             return makeBaseQuestion(this, seed, {
+               marks:2,
+@@ -6435,7 +6441,8 @@ const TEMPLATES = [
+               maxScore:2,
+               misconception:"punctuation_precision",
+               feedbackLong:`A correct answer is: ${item.accepted}`,
+-              answerText:item.accepted
++              answerText:item.accepted,
++              params:{ optionalTerminalFullStop:true }
+             });
+             return makeBaseQuestion(this, seed, {
+               marks:2,
+@@ -11809,7 +11816,10 @@ function manualExpansionReadablePromptText(caseItem, fallback = '') {
+   if (caseItem?.inputType === 'table_choice' && /^Classify the grammar feature shown in this row:/i.test(raw)) {
+     return 'Classify the target word or phrase by its grammar role.';
+   }
+-  return raw;
++  // P20b: Manual-expansion possessive prompts sometimes read like
++  // "Write the possessive phrase for one dog owns a bowl.". Add a colon
++  // before the scenario so the learner sees the mini-situation clearly.
++  return raw.replace(/\bfor\s+((?:one|several)\s+[^.?!]+?\s+own(?:s)?\s+[^.?!]+)([.?!])/gi, 'for: $1$2');
+ }
+ 
+ function classifySentenceFunctionSurface(label) {
