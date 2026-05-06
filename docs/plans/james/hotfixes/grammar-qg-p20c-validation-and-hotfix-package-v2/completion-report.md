@@ -22,7 +22,7 @@ No Punctuation, reward/mastery projection, Stars, Hero Mode, subject progression
 
 - Production code commit: `c5e04cb381e1a4f12277ed51c6b756e683d4b671`
 - Production evidence commit: `07b7cf80b797c167f4c6fa3baaad979255891d91`
-- Latest synced `origin/main`: `09038f9522a74dff3c59c06904b89e2b4ed3f81e`
+- Final `main`/`origin/main` sync is verified by the repository state after the report commit; do not treat this report as a self-referential commit-hash record.
 - Pre-push hook: `npm test` passed with 109148 passed, 0 failed, 12 skipped.
 - Deployment command: `npm run deploy`
 - Cloudflare Worker version: `dba62d31-46ab-4e0d-9616-e022d2c68072`

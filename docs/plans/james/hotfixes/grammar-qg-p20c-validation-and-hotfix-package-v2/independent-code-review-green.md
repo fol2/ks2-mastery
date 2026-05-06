@@ -6,7 +6,8 @@ Reviewer stream: independent code reviewer.
 
 Reviewed state:
 
-- `HEAD == origin/main == 09038f9522a74dff3c59c06904b89e2b4ed3f81e`
+- The independent reviewer checked the production code and evidence lineage through `09038f9522a74dff3c59c06904b89e2b4ed3f81e`.
+- Later commits in this folder only record reviewer closure or clean evidence/report whitespace; they do not change runtime code, tests, production smoke logic, deployment output, or live smoke JSON.
 - Worktree clean.
 - `git diff --check 60954af0..HEAD` passed.
 
