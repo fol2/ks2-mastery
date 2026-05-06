@@ -108,6 +108,67 @@ const GRAMMAR_P20A_HOTFIX_SMOKE_ITEMS = Object.freeze([
   }),
 ]);
 
+const GRAMMAR_P20B_HOTFIX_SMOKE_ITEMS = Object.freeze([
+  Object.freeze({
+    id: 'semicolon-mark-for-label',
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 1,
+    response: Object.freeze({ answer: ';' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'colon-mark-for-label',
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 2,
+    response: Object.freeze({ answer: ':' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'semicolon-mark-rejected-for-colon',
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 2,
+    response: Object.freeze({ answer: ';' }),
+    expectedCorrect: false,
+  }),
+  Object.freeze({
+    id: 'em-dash-mark-for-dash-label',
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 3,
+    response: Object.freeze({ answer: '—' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'en-dash-mark-for-dash-label',
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 3,
+    response: Object.freeze({ answer: '–' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'keyboard-hyphen-mark-for-dash-label',
+    templateId: 'qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite',
+    seed: 3,
+    response: Object.freeze({ answer: '-' }),
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'fronted-adverbial-incidental-final-full-stop-omission',
+    templateId: 'fix_fronted_adverbial',
+    seed: 1,
+    omitTerminalFullStop: true,
+    expectedCorrect: true,
+  }),
+  Object.freeze({
+    id: 'possessive-scenario-colon-copy',
+    templateId: 'qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite',
+    seed: 1,
+    responseFromQuestion: true,
+    expectedCorrect: true,
+    promptIncludes: 'for: one dog owns a bowl',
+    promptExcludes: 'for one dog owns a bowl',
+  }),
+]);
+
 export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
   Object.freeze({
     family: 'exact',
@@ -764,6 +825,105 @@ async function smokeGrammarP20aHotfixCases({ origin, cookie, learnerId, revision
   return { revision, cases };
 }
 
+function responseForP20bFixture(fixture, readItem) {
+  if (fixture.response) return fixture.response;
+
+  const question = createGrammarQuestion({
+    templateId: readItem?.templateId,
+    seed: readItem?.seed,
+  });
+  assert.ok(question, `Could not rebuild Grammar P20b smoke question for ${readItem?.templateId || 'unknown template'}.`);
+
+  if (fixture.omitTerminalFullStop) {
+    const accepted = String(question.answerSpec?.golden?.[0] || question.answerSpec?.answerText || '');
+    assert.match(accepted, /\.$/, `Grammar P20b ${fixture.id} fixture should end with a full stop.`);
+    return { answer: accepted.replace(/\.+$/g, '') };
+  }
+
+  if (fixture.responseFromQuestion) return responseFromVisibleInput(question);
+
+  return responseFromVisibleInput(question);
+}
+
+async function smokeGrammarP20bHotfixCases({ origin, cookie, learnerId, revision }) {
+  const cases = [];
+  for (const fixture of GRAMMAR_P20B_HOTFIX_SMOKE_ITEMS) {
+    let step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'start-session',
+      payload: {
+        mode: 'smart',
+        roundLength: 1,
+        templateId: fixture.templateId,
+        seed: fixture.seed,
+      },
+    });
+    revision = step.revision;
+    const startModel = step.payload.subjectReadModel;
+    const item = startModel?.session?.currentItem;
+    assert.equal(startModel?.phase, 'session', `Grammar P20b ${fixture.id} did not start in session phase.`);
+    assert.equal(item?.templateId, fixture.templateId, `Grammar P20b ${fixture.id} served the wrong template.`);
+    assert.equal(Number(item?.seed), Number(fixture.seed), `Grammar P20b ${fixture.id} served the wrong seed.`);
+    assert.equal(
+      item?.contentReleaseId,
+      CONFIGURED_RELEASE_ID,
+      `Grammar P20b ${fixture.id} did not serve expected release ${CONFIGURED_RELEASE_ID}.`,
+    );
+
+    const serialisedItem = JSON.stringify(item);
+    if (fixture.promptIncludes) {
+      assert.match(serialisedItem, new RegExp(fixture.promptIncludes.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+    }
+    if (fixture.promptExcludes) {
+      assert.doesNotMatch(serialisedItem, new RegExp(fixture.promptExcludes.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+    }
+    assertNoForbiddenGrammarReadModelKeys(startModel, `grammar.p20b.${fixture.id}.startModel`);
+
+    const response = responseForP20bFixture(fixture, item);
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'submit-answer',
+      payload: { response },
+    });
+    revision = step.revision;
+    const feedbackModel = step.payload.subjectReadModel;
+    const correct = Boolean(feedbackModel?.feedback?.result?.correct);
+    assert.equal(feedbackModel?.phase, 'feedback', `Grammar P20b ${fixture.id} did not return feedback.`);
+    assert.equal(correct, fixture.expectedCorrect, `Grammar P20b ${fixture.id} returned correct=${correct}.`);
+    assertNoForbiddenGrammarReadModelKeys(feedbackModel, `grammar.p20b.${fixture.id}.feedbackModel`);
+
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'continue-session',
+    });
+    revision = step.revision;
+    assert.equal(step.payload.subjectReadModel?.phase, 'summary', `Grammar P20b ${fixture.id} did not reach summary.`);
+    assertNoForbiddenGrammarReadModelKeys(step.payload.subjectReadModel, `grammar.p20b.${fixture.id}.summaryModel`);
+
+    cases.push({
+      id: fixture.id,
+      templateId: fixture.templateId,
+      seed: fixture.seed,
+      expectedCorrect: fixture.expectedCorrect,
+      observedCorrect: correct,
+    });
+  }
+
+  return { revision, cases };
+}
+
 async function smokeGrammar({ origin, cookie, learnerId, revision }) {
   const normal = await smokeGrammarNormalRound({ origin, cookie, learnerId, revision });
   const miniTest = await smokeGrammarMiniTest({
@@ -796,15 +956,22 @@ async function smokeGrammar({ origin, cookie, learnerId, revision }) {
     learnerId,
     revision: cueAssertions.revision,
   });
+  const p20bHotfix = await smokeGrammarP20bHotfixCases({
+    origin,
+    cookie,
+    learnerId,
+    revision: p20aHotfix.revision,
+  });
 
   return {
-    revision: p20aHotfix.revision,
+    revision: p20bHotfix.revision,
     normal,
     miniTest,
     repairAi,
     answerSpecFamilies,
     cueAssertions,
     p20aHotfix,
+    p20bHotfix,
   };
 }
 
@@ -853,6 +1020,7 @@ async function main() {
   let repairResult = { ok: false, detail: '' };
   let cueAssertionResult = { ok: false, detail: '' };
   let p20aHotfixResult = { ok: false, detail: '' };
+  let p20bHotfixResult = { ok: false, detail: '' };
   let forbiddenKeyScanResult = { ok: true, detail: 'checked via assertNoForbiddenGrammarReadModelKeys in each phase' };
   let testedTemplateIds = [];
   let overallOk = true;
@@ -876,6 +1044,10 @@ async function main() {
       ok: grammar.p20aHotfix.cases.every((item) => item.expectedCorrect === item.observedCorrect),
       detail: `cases=${grammar.p20aHotfix.cases.length}`,
     };
+    p20bHotfixResult = {
+      ok: grammar.p20bHotfix.cases.every((item) => item.expectedCorrect === item.observedCorrect),
+      detail: `cases=${grammar.p20bHotfix.cases.length}`,
+    };
     testedTemplateIds = [
       GRAMMAR_SMOKE_ITEM.templateId,
       GRAMMAR_MINI_TEST_ITEM.templateId,
@@ -883,6 +1055,7 @@ async function main() {
       GRAMMAR_TARGET_SENTENCE_CUE_ITEM.templateId,
       GRAMMAR_NOUN_PHRASE_CUE_ITEM.templateId,
       ...GRAMMAR_P20A_HOTFIX_SMOKE_ITEMS.map((item) => item.templateId),
+      ...GRAMMAR_P20B_HOTFIX_SMOKE_ITEMS.map((item) => item.templateId),
     ];
   } catch (error) {
     overallOk = false;
@@ -897,6 +1070,8 @@ async function main() {
       cueAssertionResult = { ok: false, detail: msg };
     } else if (msg.includes('P20a')) {
       p20aHotfixResult = { ok: false, detail: msg };
+    } else if (msg.includes('P20b')) {
+      p20bHotfixResult = { ok: false, detail: msg };
     } else {
       normalRoundResult = { ok: false, detail: msg };
     }
@@ -927,6 +1102,7 @@ async function main() {
           answerSpecFamilies: grammar.answerSpecFamilies.covered,
           cueAssertions: grammar.cueAssertions,
           p20aHotfixCases: grammar.p20aHotfix.cases,
+          p20bHotfixCases: grammar.p20bHotfix.cases,
         },
         spelling: {
           progressTotal: spelling.progressTotal,
@@ -969,6 +1145,12 @@ async function main() {
             cases: grammar.p20aHotfix.cases,
           }
         : { ok: false, cases: [] },
+      p20bHotfix: grammar
+        ? {
+            ok: p20bHotfixResult.ok,
+            cases: grammar.p20bHotfix.cases,
+          }
+        : { ok: false, cases: [] },
       command,
       learnerFixtureType: 'demo-session',
       itemCreationResult: normalRoundResult,
@@ -984,8 +1166,16 @@ async function main() {
       repairResult,
       cueAssertionResult,
       p20aHotfixResult,
+      p20bHotfixResult,
       forbiddenKeyScanResult,
-      failureDetails: overallOk ? null : { normalRoundResult, miniTestResult, repairResult, cueAssertionResult, p20aHotfixResult },
+      failureDetails: overallOk ? null : {
+        normalRoundResult,
+        miniTestResult,
+        repairResult,
+        cueAssertionResult,
+        p20aHotfixResult,
+        p20bHotfixResult,
+      },
       timestamp: new Date().toISOString(),
       commitSha: getCommitSha(),
     };

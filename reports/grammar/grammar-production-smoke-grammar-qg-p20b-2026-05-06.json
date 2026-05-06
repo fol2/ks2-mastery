@@ -1,0 +1,212 @@
+{
+  "ok": true,
+  "releaseId": "grammar-qg-p20-2026-05-05",
+  "evidenceOrigin": "post-deploy-grammar-qg-p20b",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "post-deploy-grammar-qg-p20b",
+  "contentReleaseId": "grammar-qg-p20-2026-05-05",
+  "testedTemplateIds": [
+    "qg_modal_verb_explain",
+    "fronted_adverbial_choose",
+    "qg_modal_verb_explain",
+    "qg_subject_object_classify_table",
+    "fix_fronted_adverbial",
+    "build_noun_phrase",
+    "identify_words_in_sentence",
+    "qg_p4_voice_roles_transfer",
+    "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+    "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+    "qg_p18_p15_tense_aspect_tense_editing",
+    "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+    "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+    "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+    "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+    "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+    "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+    "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+    "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+    "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+    "fix_fronted_adverbial",
+    "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite"
+  ],
+  "answerSpecFamiliesCovered": [
+    "exact",
+    "multiField",
+    "punctuationPattern",
+    "manualReviewOnly"
+  ],
+  "p20aHotfix": {
+    "ok": true,
+    "cases": [
+      {
+        "id": "modal-fill-only-should",
+        "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "modal-fill-only-must-not",
+        "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+        "seed": 7,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "tense-verb-phrase",
+        "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "semicolon-label-alias",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "parenthesis-final-full-stop-omission",
+        "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "possessive-terminal-apostrophe-required",
+        "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+        "seed": 11,
+        "expectedCorrect": false,
+        "observedCorrect": false
+      }
+    ]
+  },
+  "p20bHotfix": {
+    "ok": true,
+    "cases": [
+      {
+        "id": "semicolon-mark-for-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "colon-mark-for-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 2,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "semicolon-mark-rejected-for-colon",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 2,
+        "expectedCorrect": false,
+        "observedCorrect": false
+      },
+      {
+        "id": "em-dash-mark-for-dash-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 3,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "en-dash-mark-for-dash-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 3,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "keyboard-hyphen-mark-for-dash-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 3,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "fronted-adverbial-incidental-final-full-stop-omission",
+        "templateId": "fix_fronted_adverbial",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "possessive-scenario-colon-copy",
+        "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      }
+    ]
+  },
+  "command": "node scripts/grammar-production-smoke.mjs --json --evidence-origin=post-deploy-grammar-qg-p20b --expected-release=grammar-qg-p20-2026-05-05 --out=reports/grammar/grammar-production-smoke-grammar-qg-p20b-2026-05-06.json",
+  "learnerFixtureType": "demo-session",
+  "itemCreationResult": {
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
+  },
+  "answerSubmissionResult": {
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
+  },
+  "readModelUpdateResult": {
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
+  },
+  "noAnswerLeakAssertion": {
+    "ok": true,
+    "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
+  },
+  "semanticCueAssertion": {
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
+  },
+  "promptCueAssertion": {
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
+  },
+  "readAloudAssertion": {
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
+  },
+  "releaseIdAssertion": {
+    "ok": true,
+    "detail": "contentReleaseId=grammar-qg-p20-2026-05-05"
+  },
+  "normalRoundResult": {
+    "ok": true,
+    "detail": "templateId=qg_modal_verb_explain, answered=1"
+  },
+  "miniTestResult": {
+    "ok": true,
+    "detail": "answered=1, reviewSize=8"
+  },
+  "repairResult": {
+    "ok": true,
+    "detail": "supportKind=faded, aiKind=explanation"
+  },
+  "cueAssertionResult": {
+    "ok": true,
+    "detail": "targetSentence=identify_words_in_sentence, nounPhrase=qg_p4_voice_roles_transfer"
+  },
+  "p20aHotfixResult": {
+    "ok": true,
+    "detail": "cases=6"
+  },
+  "p20bHotfixResult": {
+    "ok": true,
+    "detail": "cases=8"
+  },
+  "forbiddenKeyScanResult": {
+    "ok": true,
+    "detail": "checked via assertNoForbiddenGrammarReadModelKeys in each phase"
+  },
+  "failureDetails": null,
+  "timestamp": "2026-05-06T10:41:26.076Z",
+  "commitSha": "a7ba918f323a899b0618620b1e86d3fb268568cd"
+}
