@@ -13,6 +13,7 @@ Implemented the Reading P2 debug-content and threshold contract from `docs/plans
 - Runtime answer-safety and delayed feedback: implemented in `worker/src/subjects/reading/engine.js`, including strict paper whole-session marking and stale-error clearing.
 - Production smoke coverage: implemented as `npm run smoke:production:reading` via `scripts/reading-production-smoke.mjs`.
 - Live evidence: `reports/reading/reading-p2-production-smoke.json`.
+- Independent code review evidence: reviewer Anscombe returned GREEN for HEAD `42c83314045acd58c7d32c8131491c7a9445d35c` with no blockers or advisories after reviewing the Reading P2 contract, stale strict-paper error fix, persisted `subjectRecord.ui` reload fix, local verification, production smoke, completion report and clean `main...origin/main` sync.
 
 ## Verification
 
@@ -20,11 +21,13 @@ Implemented the Reading P2 debug-content and threshold contract from `docs/plans
 - `npm test`: 109,134 tests pass, 0 fail, 12 skipped.
 - `npm run check`: passed Wrangler dry-run build, public build assertion and client bundle audit.
 - `git diff --check`: passed.
+- Independent code review: GREEN, no blockers or advisories.
 
 ## Deployment
 
 - Implementation commit: `17972ced13`.
 - Production persistence fix commit: `99983ad02bb208c17c0c89fc6c0f335e23710b8f`.
+- Evidence and completion commit: `42c83314045acd58c7d32c8131491c7a9445d35c`.
 - Pushed branch: `main` to `origin/main`.
 - Deployment command: `npm run deploy`.
 - Cloudflare version: `fd5cd870-fb0b-43d3-a1b3-2170c1c91f41`.
@@ -36,6 +39,10 @@ Implemented the Reading P2 debug-content and threshold contract from `docs/plans
 `npm run smoke:production:reading -- --out reports/reading/reading-p2-production-smoke.json`
 
 Result: pass.
+
+Smoke evidence commit SHA: `42c83314045acd58c7d32c8131491c7a9445d35c`.
+
+Note: any later commit that only updates this report or the committed smoke artefact is evidence-only. The deployed runtime code was last changed in `99983ad02bb208c17c0c89fc6c0f335e23710b8f`; `42c83314045acd58c7d32c8131491c7a9445d35c` refreshed the smoke runner and committed the production evidence.
 
 Observed live content summary:
 

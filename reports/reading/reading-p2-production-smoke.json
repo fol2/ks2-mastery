@@ -6,10 +6,10 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 2,
-  "commitSha": "99983ad02bb208c17c0c89fc6c0f335e23710b8f",
+  "commitSha": "42c83314045acd58c7d32c8131491c7a9445d35c",
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-UBLVwBjvYay3Zg",
-  "learnerId": "learner-demo-W0yfvd4RUuKqeQ",
+  "accountId": "demo-Hozi1jFzmvyjGQ",
+  "learnerId": "learner-demo-nfCHEp12PIuwbA",
   "immediate": {
     "revision": 2,
     "questionId": "wbs_q1",
@@ -38,5 +38,5 @@
     "maxScore": 50,
     "staleErrorCleared": true
   },
-  "finishedAt": "2026-05-06T11:48:48.627Z"
+  "finishedAt": "2026-05-06T11:53:07.258Z"
 }
