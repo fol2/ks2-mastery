@@ -32,4 +32,3 @@ Verified reviewer checks:
 - Production smoke evidence is adequate: `validation/production-grammar-qg-p20c-smoke-2026-05-06.json` records `p20cHotfix.ok: true`, with the correct hyphen accepted and em/en dash substitutions rejected.
 
 Reviewer note recorded as non-blocking and not an advisory: the production smoke `commitSha` is the production code commit `c5e04cb381e1a4f12277ed51c6b756e683d4b671`, while later commits are evidence/docs-only and did not change runtime code.
-
