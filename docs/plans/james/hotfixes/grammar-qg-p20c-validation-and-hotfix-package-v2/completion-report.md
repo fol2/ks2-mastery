@@ -20,8 +20,8 @@ No Punctuation, reward/mastery projection, Stars, Hero Mode, subject progression
 
 ## Git And Deployment
 
-- Implementation commit: `c5e04cb381e1a4f12277ed51c6b756e683d4b671`
-- `origin/main` after push: `c5e04cb381e1a4f12277ed51c6b756e683d4b671`
+- Production code commit: `c5e04cb381e1a4f12277ed51c6b756e683d4b671`
+- Production evidence commit: `07b7cf80b797c167f4c6fa3baaad979255891d91`
 - Pre-push hook: `npm test` passed with 109148 passed, 0 failed, 12 skipped.
 - Deployment command: `npm run deploy`
 - Cloudflare Worker version: `dba62d31-46ab-4e0d-9616-e022d2c68072`
@@ -68,4 +68,3 @@ The production smoke records:
 - Cloudflare production deployment: complete.
 - Live `ks2.eugnel.uk` Grammar evidence: complete.
 - Completion report in the originating folder: complete.
-
