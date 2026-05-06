@@ -1,0 +1,4798 @@
+diff --git a/docs/plans/james/reading/reading-production-contract.md b/docs/plans/james/reading/reading-production-contract.md
+index a1e6334..54b78d5 100644
+--- a/docs/plans/james/reading/reading-production-contract.md
++++ b/docs/plans/james/reading/reading-production-contract.md
+@@ -1,65 +1,169 @@
+-# Reading subject production contract
+-
+-Status: implemented as a Worker-owned production subject patch.
+-Source authority: uploaded lean ZIP snapshot plus `ks2_reading_mastery_structural_refactor.html` PoC content.
+-
+-## Boundary
+-
+-Reading is now a first-class subject module, not a browser-only PoC. The browser renders setup, passages, answer controls, feedback and analytics, but the question engine, marking, scheduling, progress mutation, session persistence, event emission and reward projection live behind `POST /api/subjects/reading/command`.
+-
+-This preserves the existing production rule for subject expansion: public subjects must not hide their production engine in the browser. Reading shares the same subject-command path as Spelling, Grammar and Punctuation while keeping its engine isolated in `worker/src/subjects/reading/`.
+-
+-## Content contract
+-
+-The promoted content bank contains:
+-
+-- 13 original passages across fiction, non-fiction and poetry.
+-- 107 questions across KS2 content domains 2a-2h plus a small punctuation-for-meaning support strand.
+-- 8 original 50-mark, 60-minute SATs-style papers.
+-- deterministic checks for selected-response, short answer, answer-plus-evidence, open rubric, multi-select, matching and ordering questions.
+-
+-The content release id is `reading-poc-promoted-2026-05-05`.
+-
+-## Learning loop
+-
+-The core loop is passage-first:
+-
+-1. choose a Reading mode;
+-2. read the full passage;
+-3. answer without model-answer or evidence leakage;
+-4. send the answer to the Worker command boundary;
+-5. receive marked feedback, model answer and evidence only after effort;
+-6. update Reading progress, review queues, analytics and rewards from domain events.
+-
+-SATs-style paper mode delays feedback. Smart review uses weak/due/under-practised signals and dampens recently repeated passages so repeated questions are not obvious to the learner.
+-
+-## Monster integration
+-
+-Reading emits `reading.skill-secured` events only when a KS2 Reading domain becomes secure. These events project into the shared monster codex through Reading-owned monster ids:
+-
+-- `readbloom` for vocabulary and author-word choice;
+-- `readrill` for retrieval and summarising;
+-- `inferane` for inference and prediction;
+-- `structurillon` for structure and comparison.
+-
+-The monsters reuse existing reserve art through an `assetId`, but their state ids are Reading-owned so they do not collide with Grammar or Punctuation historical reward state.
+-
+-## Hero Mode integration
+-
+-Reading is now in `HERO_READY_SUBJECT_IDS`. Its Hero provider emits task envelopes for:
+-
+-- starter growth;
+-- weak repair;
+-- due review;
+-- retention after secure;
+-- breadth maintenance / mini paper.
+-
+-Hero launches Reading through the existing subject task-envelope adapter. Hero remains an orchestrator; Reading remains the scheduler/marking authority for its own questions.
+-
+-## Acceptance checks added
+-
+-- `tests/reading-content-contract.test.js`
+-- `tests/worker-reading-runtime.test.js`
+-- `tests/reading-subject-registry.test.js`
+-
+-The tests validate content integrity, evidence quote anchoring, paper references, answer-leakage protection in the read model, deterministic marking, Worker runtime wiring, and Hero provider/adapter readiness.
++# Reading subject production contract
++
++Status: Reading v2 debug, content enrichment and monster-threshold hardening patch.
++Primary source authority: uploaded lean ZIP snapshot `ks2-mastery-lean-05060131.zip`.
++Supplementary learning-design source: `ks2_reading_mastery_structural_refactor.html` PoC.
++
++## 1. Production boundary
++
++Reading is a first-class Worker-owned subject, not a browser-only PoC. The browser may render the subject shell, passages, answer controls, navigation, feedback panels, analytics and Hero launch affordances, but the Reading question engine remains isolated in `worker/src/subjects/reading/`.
++
++The following Reading behaviours stay behind `POST /api/subjects/reading/command`:
++
++- session creation and scheduling;
++- response saving;
++- marking;
++- delayed-feedback paper marking;
++- retry queue mutation;
++- learner progress mutation;
++- event emission;
++- reward projection.
++
++Reading shares the same platform subject-command contract as Spelling, Grammar and Punctuation. It must not mutate other subjects and other subjects must not call into the Reading engine.
++
++## 2. Debug hardening contract
++
++This patch fixes the main production safety issues found after Reading was implemented.
++
++### 2.1 Delayed feedback cannot leak answers
++
++`submit-answer` is immediate-feedback only. If the active Reading session is strict paper mode or any delayed-feedback session, `submit-answer` saves the response as a draft but does not mark, does not emit progress events, and does not expose model answers, evidence snippets or explanations.
++
++`mark-section` is not allowed in strict paper mode. Strict paper sessions must be marked through whole-session marking so feedback appears only after the intended paper end.
++
++### 2.2 Stale clients cannot overwrite the active slot silently
++
++`save-response` now honours `expectedSessionId` and `expectedQuestionId` when supplied. This prevents stale browser tabs, delayed UI events or old form submissions from saving an answer into the wrong current Reading question.
++
++### 2.3 Worker scheduling is deterministic under injected time
++
++The Reading engine now uses the command clock for due/review calculations inside question weakness, passage selection, analytics and stats. That keeps Worker tests and idempotent replay behaviour stable.
++
++### 2.4 Read models only show saved status for real answers
++
++A response object such as `{}` no longer counts as answered or saved in the public read model. Empty draft records must not create misleading progress in question navigation, section navigation or paper answer counts.
++
++## 3. Content enrichment contract
++
++The Reading bank is expanded from the first promoted PoC bank to a larger production v2 bank.
++
++Current built-in bank:
++
++- 21 original passages;
++- 182 questions;
++- 12 original 50-mark, 60-minute SATs-style papers;
++- 8 fiction passages, 8 non-fiction passages and 5 poetry passages;
++- 7 long passages for stamina and paper-style practice;
++- coverage across KS2 content domains 2a-2h plus the punctuation-for-meaning support strand.
++
++The content release id remains `reading-poc-promoted-2026-05-05`, while `READING_CONTENT_VERSION` is bumped to `2`. Keeping the release id stable protects already-earned release-scoped Reading mastery keys; the version bump tells the product and tests that the bank has expanded.
++
++## 4. Content quality rules
++
++Every Reading passage must remain passage-first and original. The bank must not become a list of isolated quiz items.
++
++A passage is acceptable only when it supports several kinds of thinking:
++
++- precise retrieval;
++- vocabulary in context;
++- inference with evidence;
++- summary across more than one detail;
++- prediction rooted in textual clues;
++- structure and whole-text movement;
++- author word/phrase choice and effect;
++- comparison within the text;
++- selected-response and constructed-response practice.
++
++Question quality rules:
++
++- evidence snippets for evidence questions must appear verbatim in the source passage;
++- hints must not reveal the answer or quote the decisive evidence before effort;
++- model answers and explanations must be hidden until marking allows them;
++- distractors should represent realistic KS2 misreadings, not silly choices;
++- papers must sum to exactly 50 marks;
++- paper rotation must use the enlarged bank so children do not feel the same questions are reappearing.
++
++## 5. Scheduling and anti-repeat contract
++
++Reading scheduling remains Reading-owned. Hero Mode and the app shell may request a task envelope, but Reading chooses the passage and questions.
++
++The scheduler must continue to weight:
++
++- weak skills;
++- due review;
++- recent misses;
++- under-practised genres;
++- under-practised question types;
++- appropriate difficulty;
++- recent passage and question penalties.
++
++The larger bank is intended to make repetition unobvious. The product should prefer unseen or under-used passages when possible, and should dampen recently attempted passages/questions even when the same weak skill is due.
++
++## 6. Monster threshold contract
++
++Reading now follows the same product pattern as the more mature subjects: direct subject monsters represent smaller mastered clusters, while a grand/aggregate monster represents whole-subject breadth.
++
++Reading direct monsters:
++
++- `readbloom`: vocabulary in context (`2a`) and author word/phrase choice (`2g`);
++- `readrill`: retrieval (`2b`) and summarising (`2c`);
++- `inferane`: inference with evidence (`2d`) and prediction (`2e`);
++- `structurillon`: structure (`2f`) and comparison (`2h`).
++
++Each direct Reading monster has `masteredMax: 2` because each one owns two core KS2 Reading domains. Direct monsters use a 100-star display calculated from mastered domains in that cluster. This fixes the previous unreachable-stage bug where a two-skill Reading monster used a four-skill maximum.
++
++Reading grand monster:
++
++- `lorequill`: aggregate Reading mastery across all eight core KS2 Reading domains (`2a`-`2h`).
++
++`lorequill` has `masteredMax: 8`. It is the only Reading monster that should reach Mega from full-domain coverage. This preserves a meaningful long-term Reading goal without blocking smaller cluster monsters from evolving.
++
++Threshold display rules:
++
++- Direct Reading monsters: `0/2`, `1/2`, `2/2` are projected to the same 100-star display surface used elsewhere.
++- `lorequill`: `0/8` through `8/8` are projected to the same 100-star display surface, with staged growth before final Mega.
++- Reading monster state is Reading-owned and must not collide with Grammar, Punctuation or Hero Pool state.
++
++## 7. Hero Mode contract
++
++Reading can be a Hero-ready subject, but Hero remains an orchestrator. Hero must not mark Reading answers, grant Reading mastery, or directly alter Reading monster state.
++
++Hero may request Reading task envelopes such as:
++
++- starter growth;
++- weak repair;
++- due review;
++- retention after secure;
++- breadth maintenance;
++- mini paper / stamina work.
++
++Reading decides the specific passage/questions. Reading domain events decide Reading monster rewards.
++
++## 8. Acceptance checks
++
++The patch adds or updates acceptance tests for:
++
++- bank size, genre balance and domain coverage;
++- unique passage/question IDs;
++- evidence snippets existing in source passages;
++- all Reading papers referencing valid passages/questions;
++- every Reading paper summing to exactly 50 marks;
++- browser metadata matching the safe content summary;
++- Worker Reading runtime wiring;
++- immediate feedback after valid marked attempts;
++- no answer/model/evidence leakage through delayed-feedback submit;
++- no section-level marking leak in strict paper mode;
++- Reading reward projection into direct cluster monsters plus the full-domain `lorequill` aggregate monster.
++
++Required focused command:
++
++```bash
++node --test \
++  tests/reading-content-contract.test.js \
++  tests/worker-reading-runtime.test.js \
++  tests/reading-subject-registry.test.js
++```
++
++Expected result for this patch: 13 tests pass, 0 fail.
++
++A final full CI run should still be performed after dependencies are installed, because the lean ZIP does not include `node_modules`.
+diff --git a/shared/reading/content.js b/shared/reading/content.js
+index fe44d3f..15c97d5 100644
+--- a/shared/reading/content.js
++++ b/shared/reading/content.js
+@@ -3,7 +3,7 @@
+ // browser may render its safe metadata but never performs production marking.
+ 
+ export const READING_CONTENT_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
+-export const READING_CONTENT_VERSION = 1;
++export const READING_CONTENT_VERSION = 2;
+ 
+ export const READING_SKILLS = Object.freeze({
+   "2a": {
+@@ -5200,7 +5200,3678 @@ export const READING_PASSAGES = Object.freeze([
+         "hint": "Use at least one benefit and one limit from different parts of the passage."
+       }
+     ]
++  },
++
++  {
++    "id": "glass_roof_station",
++    "title": "The Glass-Roof Station",
++    "genre": "fiction",
++    "difficulty": 3,
++    "isLong": false,
++    "blocks": [
++      "The morning train had not arrived, and the station began to collect small worries. Coats steamed beside the ticket office. The glass roof, patched after last winter's hail, held a scatter of rain like coins balanced on a tray. Emma checked the folded timetable until the ink softened under her thumb.",
++      "She was meant to meet Dad in the next town and carry the blue folder he had forgotten before his interview. Mum had said there was plenty of time. Yet the platform clock had stopped at 8:14, and nobody seemed to agree whether that was funny or serious.",
++      "A porter in a green cap walked along the edge of the platform, tying a loose rope around a stack of newspapers. 'The signal box has lost power,' he told the waiting passengers. 'We are using the old hand bell until the lights come back.'",
++      "The bell hung beside the office door. When it rang once, conversations thinned. When it rang twice, people gathered their bags. Emma listened harder than anyone, not because she understood trains, but because every sound now felt like part of her responsibility.",
++      "At last the porter lifted the bell and gave two slow rings. The train slid in five minutes later, wet and silver, as if it had been hiding in the weather. Emma stepped aboard with the blue folder held flat against her coat. The timetable in her pocket was damp, but she no longer needed to keep reading it."
++    ],
++    "questions": [
++      {
++        "id": "gs_q1",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "What important item is Emma carrying?",
++        "check": {
++          "keywordAny": [
++            [
++              "blue",
++              "folder"
++            ],
++            [
++              "folder"
++            ]
++          ]
++        },
++        "modelAnswer": "She is carrying Dad's blue folder.",
++        "explanation": "Paragraph 2 says Emma has to carry the blue folder Dad forgot before his interview.",
++        "hint": "Look in paragraph 2 for the thing Dad forgot."
++      },
++      {
++        "id": "gs_q2",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "What does the word \"thinned\" suggest in paragraph 4?",
++        "options": [
++          "The conversations became quieter and fewer.",
++          "The bell became difficult to see.",
++          "The platform became hotter.",
++          "The newspapers were torn into strips."
++        ],
++        "correct": 0,
++        "modelAnswer": "The conversations became quieter and fewer.",
++        "explanation": "When the bell rings, people stop talking and listen, so the conversations thin out.",
++        "hint": "Use what people do when the bell rings."
++      },
++      {
++        "id": "gs_q3",
++        "type": "evidenceShort",
++        "skill": "2d",
++        "marks": 2,
++        "stem": "How can you tell Emma feels anxious and responsible? Use evidence from the text.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "anxious"
++            ],
++            [
++              "worried"
++            ],
++            [
++              "responsib"
++            ],
++            [
++              "nervous"
++            ],
++            [
++              "pressure"
++            ],
++            [
++              "listen",
++              "hard"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "checked the folded timetable until the ink softened under her thumb",
++            "Emma listened harder than anyone",
++            "every sound now felt like part of her responsibility",
++            "the blue folder held flat against her coat"
++          ]
++        },
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "modelAnswer": "Emma seems anxious and responsible because she keeps checking the timetable and listens closely for the bell. Evidence could include: \"every sound now felt like part of her responsibility\".",
++        "explanation": "The writer shows Emma's worry through repeated checking and through the way she treats the station sounds as something she must act on.",
++        "hint": "Find one action that shows worry and one phrase about responsibility.",
++        "reread": [
++          1,
++          4
++        ]
++      },
++      {
++        "id": "gs_q4",
++        "type": "mcq",
++        "skill": "2c",
++        "marks": 2,
++        "stem": "Which option best summarises paragraphs 3 and 4?",
++        "options": [
++          "The porter repairs the platform clock while Emma reads a newspaper.",
++          "The signal box has failed, so the station uses a hand bell and Emma listens carefully.",
++          "The train arrives early, but nobody is ready to leave the station.",
++          "Emma decides the interview folder is not important after all."
++        ],
++        "correct": 1,
++        "modelAnswer": "The signal box has failed, so the station uses a hand bell and Emma listens carefully.",
++        "explanation": "Those paragraphs explain the problem, the temporary signal and Emma's reaction to it.",
++        "hint": "Choose the answer that includes both the signal problem and Emma's response."
++      },
++      {
++        "id": "gs_q5",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "Why might the writer say the station began to \"collect small worries\"?",
++        "rubric": [
++          {
++            "label": "Explains personification or image",
++            "check": {
++              "keywordAny": [
++                [
++                  "personif"
++                ],
++                [
++                  "station",
++                  "like",
++                  "person"
++                ],
++                [
++                  "place",
++                  "collect"
++                ],
++                [
++                  "image"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Links to many passengers becoming uneasy",
++            "check": {
++              "keywordAny": [
++                [
++                  "worr"
++                ],
++                [
++                  "anxious"
++                ],
++                [
++                  "passenger"
++                ],
++                [
++                  "delay"
++                ],
++                [
++                  "small",
++                  "problem"
++                ],
++                [
++                  "waiting"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The writer makes the station sound as if it can gather feelings like objects. This shows that lots of little worries are building as passengers wait for the delayed train.",
++        "explanation": "The phrase turns a busy place into something that holds the mood of the people inside it.",
++        "hint": "Think about what is being collected: not objects, but feelings."
++      },
++      {
++        "id": "gs_q6",
++        "type": "short",
++        "skill": "2e",
++        "marks": 1,
++        "stem": "What is Emma most likely to do when she reaches the next town? Explain briefly.",
++        "check": {
++          "keywordAny": [
++            [
++              "give",
++              "folder"
++            ],
++            [
++              "take",
++              "folder"
++            ],
++            [
++              "meet",
++              "Dad"
++            ],
++            [
++              "interview",
++              "folder"
++            ],
++            [
++              "bring",
++              "folder"
++            ]
++          ]
++        },
++        "modelAnswer": "She is likely to meet Dad and give him the blue folder before his interview.",
++        "explanation": "The purpose of her journey is explained in paragraph 2 and she still has the folder at the end.",
++        "hint": "Use paragraph 2 and the final paragraph."
++      },
++      {
++        "id": "gs_q7",
++        "type": "mcq",
++        "skill": "P1",
++        "marks": 1,
++        "stem": "In the sentence beginning \"When it rang once,\" what do the commas help the reader track?",
++        "options": [
++          "The timing of each bell signal before the result that follows.",
++          "The exact words spoken by the porter.",
++          "A list of objects Emma is carrying.",
++          "A question the writer wants answered."
++        ],
++        "correct": 0,
++        "modelAnswer": "The timing of each bell signal before the result that follows.",
++        "explanation": "The commas help chunk the repeated time clauses from what people do afterwards.",
++        "hint": "Read each 'When...' part as a separate sense group."
++      },
++      {
++        "id": "gs_q8",
++        "type": "order",
++        "skill": "2f",
++        "marks": 2,
++        "stem": "Put these events in the order they happen.",
++        "items": [
++          "Emma hears that the signal box has lost power.",
++          "The porter rings the hand bell twice.",
++          "Emma checks the folded timetable again and again.",
++          "Emma steps onto the train with the folder."
++        ],
++        "correctPositions": [
++          2,
++          3,
++          1,
++          4
++        ],
++        "modelAnswer": "1 Emma checks the timetable; 2 she hears the signal box has lost power; 3 the porter rings twice; 4 Emma boards with the folder.",
++        "explanation": "The story moves from Emma's waiting and worry to the explanation, the bell signal and finally the train arriving.",
++        "hint": "Start with what Emma is doing before the porter speaks."
++      }
++    ]
++  },
++  {
++    "id": "rain_gardeners",
++    "title": "The Rain Gardeners",
++    "genre": "non-fiction",
++    "difficulty": 3,
++    "isLong": false,
++    "blocks": [
++      "After heavy rain, water that lands on roofs, roads and playgrounds can rush into drains in minutes. In some streets, that sudden flow overloads pipes and sends dirty water into rivers. A rain garden is a planted dip designed to slow that journey down.",
++      "The garden is not simply a flower bed. Its surface sits slightly lower than the surrounding pavement, so water can gather there for a short time. Beneath the plants, layers of sandy soil and gravel filter the water while roots hold the soil open.",
++      "Plants are chosen carefully. Deep-rooted grasses and flowers such as iris or sedge can survive both brief flooding and dry spells. Their stems also slow the water, giving it more time to soak down instead of sliding away.",
++      "Rain gardens cannot solve every flood problem. If they are too small, badly placed or filled with compacted soil, water will still escape. However, when several are built along the same street, they can turn a hard surface into something that behaves a little more like a meadow.",
++      "They bring other benefits too. Bees visit the flowers, birds search for insects among the stems and neighbours sometimes stop to talk while weeding. A useful drain has quietly become a small patch of habitat."
++    ],
++    "questions": [
++      {
++        "id": "rg_q1",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "What is a rain garden designed to slow down?",
++        "check": {
++          "keywordAny": [
++            [
++              "water",
++              "journey"
++            ],
++            [
++              "rain",
++              "water"
++            ],
++            [
++              "flow"
++            ],
++            [
++              "drain"
++            ]
++          ]
++        },
++        "modelAnswer": "It slows down the journey or flow of rainwater into drains.",
++        "explanation": "Paragraph 1 says a rain garden is designed to slow the water's journey down.",
++        "hint": "Use the final sentence of paragraph 1."
++      },
++      {
++        "id": "rg_q2",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "What does \"overloads\" mean in paragraph 1?",
++        "options": [
++          "puts too much pressure on",
++          "makes something cleaner",
++          "paints something a brighter colour",
++          "empties something completely"
++        ],
++        "correct": 0,
++        "modelAnswer": "puts too much pressure on",
++        "explanation": "A sudden flow can put too much pressure on pipes, so they cannot cope properly.",
++        "hint": "Think about what happens when too much water reaches pipes at once."
++      },
++      {
++        "id": "rg_q3",
++        "type": "evidenceShort",
++        "skill": "2d",
++        "marks": 2,
++        "stem": "Why do rain gardens need plants that are chosen carefully? Use evidence from the text.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "survive",
++              "flood"
++            ],
++            [
++              "survive",
++              "dry"
++            ],
++            [
++              "slow",
++              "water"
++            ],
++            [
++              "deep",
++              "root"
++            ],
++            [
++              "soak",
++              "down"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "can survive both brief flooding and dry spells",
++            "Their stems also slow the water",
++            "giving it more time to soak down",
++            "roots hold the soil open"
++          ]
++        },
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "modelAnswer": "The plants must cope with changing conditions and help the garden work. Evidence could include: \"can survive both brief flooding and dry spells\" or \"Their stems also slow the water\".",
++        "explanation": "The plants are not just decorative: they survive wet and dry conditions and help slow and filter the water.",
++        "hint": "Explain the job of the plants, then quote a phrase that proves it.",
++        "reread": [
++          2,
++          3
++        ]
++      },
++      {
++        "id": "rg_q4",
++        "type": "mcq",
++        "skill": "2c",
++        "marks": 2,
++        "stem": "Which statement best summarises paragraph 2?",
++        "options": [
++          "Rain gardens are ordinary flower beds that need no special design.",
++          "A rain garden sits lower than the pavement and uses soil, gravel and roots to hold and filter water.",
++          "All rain gardens must be built in school playgrounds.",
++          "Sandy soil and gravel are used only to make the garden look pretty."
++        ],
++        "correct": 1,
++        "modelAnswer": "A rain garden sits lower than the pavement and uses soil, gravel and roots to hold and filter water.",
++        "explanation": "Paragraph 2 explains the design of the garden and how each layer helps the water.",
++        "hint": "Choose the option that includes both the lowered surface and the underground layers."
++      },
++      {
++        "id": "rg_q5",
++        "type": "open",
++        "skill": "2f",
++        "marks": 2,
++        "stem": "How does paragraph 4 make the explanation more balanced?",
++        "rubric": [
++          {
++            "label": "Mentions limits or problems",
++            "check": {
++              "keywordAny": [
++                [
++                  "limit"
++                ],
++                [
++                  "cannot",
++                  "solve"
++                ],
++                [
++                  "too",
++                  "small"
++                ],
++                [
++                  "badly",
++                  "placed"
++                ],
++                [
++                  "compacted",
++                  "soil"
++                ],
++                [
++                  "water",
++                  "escape"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions wider benefit when several are used",
++            "check": {
++              "keywordAny": [
++                [
++                  "several"
++                ],
++                [
++                  "same",
++                  "street"
++                ],
++                [
++                  "hard",
++                  "surface"
++                ],
++                [
++                  "meadow"
++                ],
++                [
++                  "more",
++                  "useful"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Paragraph 4 balances the explanation by admitting rain gardens do not solve every flood problem, especially if they are badly designed, but showing that several together can still change how a street handles water.",
++        "explanation": "A balanced paragraph includes both limitations and the conditions that make the idea work well.",
++        "hint": "Find one sentence that gives a limit and one that shows when rain gardens help."
++      },
++      {
++        "id": "rg_q6",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "Why does the writer compare several rain gardens to \"something that behaves a little more like a meadow\"?",
++        "rubric": [
++          {
++            "label": "Explains softer/slower natural water behaviour",
++            "check": {
++              "keywordAny": [
++                [
++                  "slow"
++                ],
++                [
++                  "soak"
++                ],
++                [
++                  "natural"
++                ],
++                [
++                  "absorb"
++                ],
++                [
++                  "less",
++                  "hard"
++                ],
++                [
++                  "meadow"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Contrasts with hard street surfaces",
++            "check": {
++              "keywordAny": [
++                [
++                  "hard",
++                  "surface"
++                ],
++                [
++                  "pavement"
++                ],
++                [
++                  "road"
++                ],
++                [
++                  "street"
++                ],
++                [
++                  "drain"
++                ],
++                [
++                  "rush"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The comparison helps readers picture a hard street becoming more absorbent and natural, so water soaks and slows rather than rushing straight into drains.",
++        "explanation": "The meadow image makes the technical idea of slowing and soaking water easier to imagine.",
++        "hint": "Think about how a meadow deals with rain differently from pavement."
++      },
++      {
++        "id": "rg_q7",
++        "type": "multiSelect",
++        "skill": "2b",
++        "marks": 2,
++        "stem": "Which TWO extra benefits of rain gardens are named in paragraph 5?",
++        "options": [
++          "bees visit the flowers",
++          "birds search for insects among the stems",
++          "cars can drive faster along the street",
++          "pipes are removed from every house"
++        ],
++        "correctSet": [
++          0,
++          1
++        ],
++        "modelAnswer": "Bees visit the flowers and birds search for insects among the stems.",
++        "explanation": "Paragraph 5 gives wildlife benefits as well as the water-management purpose.",
++        "hint": "Choose the benefits linked to living things."
++      },
++      {
++        "id": "rg_q8",
++        "type": "match",
++        "skill": "2h",
++        "marks": 2,
++        "stem": "Match each feature to its job in the rain garden.",
++        "prompts": [
++          "lower surface",
++          "sandy soil and gravel",
++          "plant stems"
++        ],
++        "options": [
++          "filter the water",
++          "slow the moving water",
++          "let water gather briefly"
++        ],
++        "correctMap": {
++          "0": "2",
++          "1": "0",
++          "2": "1"
++        },
++        "modelAnswer": "Lower surface \u2192 lets water gather briefly; sandy soil and gravel \u2192 filter water; plant stems \u2192 slow moving water.",
++        "explanation": "The text links each design feature to a different job in slowing or cleaning the water.",
++        "hint": "Look back at paragraphs 2 and 3."
++      }
++    ]
++  },
++  {
++    "id": "under_bridge_song",
++    "title": "Under-Bridge Song",
++    "genre": "poetry",
++    "difficulty": 3,
++    "isLong": false,
++    "blocks": [
++      "Under the railway bridge\nthe river keeps its own small drum,\nbeating on stones the trains forgot\nwhen they thundered over and on.",
++      "Graffiti blooms where sunlight thins,\nred letters, green wings, a silver name.\nA shopping trolley leans in the reeds\nlike a tired knight after a game.",
++      "Above, the carriages flash and vanish;\nbelow, the minnows stitch the shade.\nThe city shouts along the girders,\nbut here the water will not be hurried away."
++    ],
++    "questions": [
++      {
++        "id": "ubs_q1",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "What does \"keeps its own small drum\" suggest about the river?",
++        "options": [
++          "It has a steady sound and rhythm.",
++          "It is completely silent.",
++          "It is carrying a real musical instrument.",
++          "It has stopped moving."
++        ],
++        "correct": 0,
++        "modelAnswer": "It has a steady sound and rhythm.",
++        "explanation": "The drum image suggests repeated sound as the river beats on stones.",
++        "hint": "Think about what a drum does."
++      },
++      {
++        "id": "ubs_q2",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "What object is leaning in the reeds?",
++        "check": {
++          "keywordAny": [
++            [
++              "shopping",
++              "trolley"
++            ],
++            [
++              "trolley"
++            ]
++          ]
++        },
++        "modelAnswer": "A shopping trolley is leaning in the reeds.",
++        "explanation": "The second stanza says a shopping trolley leans in the reeds.",
++        "hint": "Look in the second stanza."
++      },
++      {
++        "id": "ubs_q3",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "Why might the poet describe graffiti as something that \"blooms\"?",
++        "rubric": [
++          {
++            "label": "Explains flower/growth image",
++            "check": {
++              "keywordAny": [
++                [
++                  "flower"
++                ],
++                [
++                  "grow"
++                ],
++                [
++                  "bloom"
++                ],
++                [
++                  "plant"
++                ],
++                [
++                  "colour"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Links to brightness or life in a dull place",
++            "check": {
++              "keywordAny": [
++                [
++                  "colour"
++                ],
++                [
++                  "life"
++                ],
++                [
++                  "dark"
++                ],
++                [
++                  "sunlight",
++                  "thins"
++                ],
++                [
++                  "bright"
++                ],
++                [
++                  "dull"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The word \"blooms\" makes the graffiti seem like colourful growth on the wall, bringing brightness and life to a place where the sunlight is thin.",
++        "explanation": "The poet chooses a natural image for something urban, which makes the under-bridge scene feel unexpectedly alive.",
++        "hint": "Think about what usually blooms and what effect that creates here."
++      },
++      {
++        "id": "ubs_q4",
++        "type": "open",
++        "skill": "2h",
++        "marks": 2,
++        "stem": "How is the world above the bridge different from the world below it?",
++        "rubric": [
++          {
++            "label": "Above is noisy or fast",
++            "check": {
++              "keywordAny": [
++                [
++                  "train"
++                ],
++                [
++                  "carriage"
++                ],
++                [
++                  "flash"
++                ],
++                [
++                  "thunder"
++                ],
++                [
++                  "shout"
++                ],
++                [
++                  "fast"
++                ],
++                [
++                  "noisy"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Below is quieter, slower or more hidden",
++            "check": {
++              "keywordAny": [
++                [
++                  "river"
++                ],
++                [
++                  "minnow"
++                ],
++                [
++                  "shade"
++                ],
++                [
++                  "water"
++                ],
++                [
++                  "not",
++                  "hurried"
++                ],
++                [
++                  "slow"
++                ],
++                [
++                  "quiet"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Above the bridge is fast and noisy, with trains that thunder and carriages that flash past. Below it is slower and more hidden, with minnows and water that \"will not be hurried away\".",
++        "explanation": "The comparison depends on using details from both parts of the poem.",
++        "hint": "Use one detail from above and one from below."
++      },
++      {
++        "id": "ubs_q5",
++        "type": "open",
++        "skill": "2c",
++        "marks": 2,
++        "stem": "What is the best summary of the poem?",
++        "rubric": [
++          {
++            "label": "Mentions under-bridge river scene",
++            "check": {
++              "keywordAny": [
++                [
++                  "bridge"
++                ],
++                [
++                  "river"
++                ],
++                [
++                  "under"
++                ],
++                [
++                  "railway"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions contrast between city noise and hidden life",
++            "check": {
++              "keywordAny": [
++                [
++                  "city"
++                ],
++                [
++                  "noise"
++                ],
++                [
++                  "quiet"
++                ],
++                [
++                  "hidden"
++                ],
++                [
++                  "life"
++                ],
++                [
++                  "contrast"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The poem describes a river under a railway bridge, showing how a hidden place beneath the noisy city has its own rhythm, colour and life.",
++        "explanation": "A summary should capture the place and the main contrast without listing every image.",
++        "hint": "Keep the biggest ideas: setting, mood and contrast."
++      },
++      {
++        "id": "ubs_q6",
++        "type": "mcq",
++        "skill": "P3",
++        "marks": 1,
++        "stem": "In the line \"Above, the carriages flash and vanish; below, the minnows stitch the shade\", what does the semicolon help do?",
++        "options": [
++          "Link two contrasting but closely related pictures.",
++          "Show the exact words somebody says.",
++          "End the poem immediately.",
++          "Introduce a list of train times."
++        ],
++        "correct": 0,
++        "modelAnswer": "It links two contrasting but closely related pictures.",
++        "explanation": "The semicolon holds the above/below comparison together in one balanced line.",
++        "hint": "Look at how the line compares above and below."
++      }
++    ]
++  },
++  {
++    "id": "borrowed_compass",
++    "title": "The Borrowed Compass",
++    "genre": "fiction",
++    "difficulty": 4,
++    "isLong": false,
++    "blocks": [
++      "Jude borrowed the brass compass from the geography cupboard because it looked more serious than the plastic ones. Its lid clicked shut like a secret being kept. During the orienteering challenge, he planned to reach the oak marker before anyone else and return with the neat confidence of a map expert.",
++      "At first, everything went well. The needle settled towards north, the path bent where the map said it would, and Jude crossed the playing field with a stride that was almost a march. Then, near the old iron railings, the needle began to tremble. It swung east, shivered back and pointed towards the bins.",
++      "Jude frowned at the map. The quickest route was meant to lead past the pond, not behind the caretaker's shed. He almost followed the compass anyway, because a borrowed brass compass felt like something that deserved obedience. Instead, he looked up. The sun was bright on his left cheek, and the line of poplar trees stood exactly where the map showed them.",
++      "He stepped away from the railings. Slowly, the needle steadied. Jude laughed once, not loudly enough for the other teams to hear. The compass had not betrayed him; it had been confused by the metal. He had been the one confusing confidence with care.",
++      "When he reached the oak marker, he wrote down the code and took the longer path back. Mrs Mistry asked why he had changed route. Jude handed over the compass and said, 'It gives clues. It doesn't do the thinking.'"
++    ],
++    "questions": [
++      {
++        "id": "bc_q1",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "Why did Jude borrow the brass compass?",
++        "check": {
++          "keywordAny": [
++            [
++              "look",
++              "serious"
++            ],
++            [
++              "more",
++              "serious"
++            ],
++            [
++              "brass",
++              "compass"
++            ]
++          ]
++        },
++        "modelAnswer": "He borrowed it because it looked more serious than the plastic compasses.",
++        "explanation": "The opening sentence gives Jude's reason for choosing it.",
++        "hint": "Look at the first sentence."
++      },
++      {
++        "id": "bc_q2",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "What does \"obedience\" mean in paragraph 3?",
++        "options": [
++          "following or doing what something seems to tell you",
++          "laughing at a mistake",
++          "folding a map neatly",
++          "walking around a pond"
++        ],
++        "correct": 0,
++        "modelAnswer": "following or doing what something seems to tell you",
++        "explanation": "Jude feels the serious-looking compass deserves to be followed without question.",
++        "hint": "Use the sentence about almost following the compass anyway."
++      },
++      {
++        "id": "bc_q3",
++        "type": "evidenceShort",
++        "skill": "2d",
++        "marks": 2,
++        "stem": "How can you tell Jude is over-confident at the start? Use evidence from the text.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "confident"
++            ],
++            [
++              "overconfident"
++            ],
++            [
++              "expert"
++            ],
++            [
++              "march"
++            ],
++            [
++              "before",
++              "anyone"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "reach the oak marker before anyone else",
++            "return with the neat confidence of a map expert",
++            "a stride that was almost a march",
++            "because a borrowed brass compass felt like something that deserved obedience"
++          ]
++        },
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "modelAnswer": "Jude is over-confident because he expects to finish first and act like an expert. Evidence could include: \"return with the neat confidence of a map expert\".",
++        "explanation": "The writer shows his confidence through his plan, his stride and how much authority he gives the compass.",
++        "hint": "Find a phrase that shows how expert Jude wants to seem.",
++        "reread": [
++          1,
++          2
++        ]
++      },
++      {
++        "id": "bc_q4",
++        "type": "mcq",
++        "skill": "2c",
++        "marks": 2,
++        "stem": "Which option best summarises paragraphs 2 and 3?",
++        "options": [
++          "The compass points strangely near the railings, so Jude checks the map and other clues before deciding.",
++          "Jude reaches the oak marker and writes down the code immediately.",
++          "Mrs Mistry tells Jude never to use a compass again.",
++          "The poplar trees move to a different part of the field."
++        ],
++        "correct": 0,
++        "modelAnswer": "The compass points strangely near the railings, so Jude checks the map and other clues before deciding.",
++        "explanation": "Those paragraphs show the problem and Jude's decision to verify the compass with other evidence.",
++        "hint": "Pick the answer that includes both the strange compass and Jude's checking."
++      },
++      {
++        "id": "bc_q5",
++        "type": "open",
++        "skill": "2f",
++        "marks": 2,
++        "stem": "How does the sentence \"Instead, he looked up\" change the direction of the story?",
++        "rubric": [
++          {
++            "label": "Marks a turning point from blind following to checking",
++            "check": {
++              "keywordAny": [
++                [
++                  "turning",
++                  "point"
++                ],
++                [
++                  "change"
++                ],
++                [
++                  "instead"
++                ],
++                [
++                  "stop",
++                  "follow"
++                ],
++                [
++                  "check"
++                ],
++                [
++                  "look",
++                  "up"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Links to using other clues or better judgement",
++            "check": {
++              "keywordAny": [
++                [
++                  "map"
++                ],
++                [
++                  "sun"
++                ],
++                [
++                  "trees"
++                ],
++                [
++                  "clue"
++                ],
++                [
++                  "judge"
++                ],
++                [
++                  "thinking"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "It is a turning point because Jude stops blindly following the compass and starts checking the real surroundings, using the sun, trees and map to think for himself.",
++        "explanation": "A short sentence can shift the action from one kind of behaviour to another.",
++        "hint": "Compare what Jude almost does just before the sentence with what he does afterwards."
++      },
++      {
++        "id": "bc_q6",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "What is the effect of saying the compass lid \"clicked shut like a secret being kept\"?",
++        "rubric": [
++          {
++            "label": "Creates mystery or seriousness",
++            "check": {
++              "keywordAny": [
++                [
++                  "secret"
++                ],
++                [
++                  "myster"
++                ],
++                [
++                  "serious"
++                ],
++                [
++                  "important"
++                ],
++                [
++                  "special"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Links to Jude's attitude to the compass",
++            "check": {
++              "keywordAny": [
++                [
++                  "Jude"
++                ],
++                [
++                  "trust"
++                ],
++                [
++                  "impress"
++                ],
++                [
++                  "compass"
++                ],
++                [
++                  "authority"
++                ],
++                [
++                  "respect"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The simile makes the compass seem mysterious and important, which helps explain why Jude treats it as if it has special authority.",
++        "explanation": "The description builds Jude's early belief that the brass compass is more impressive than ordinary ones.",
++        "hint": "Think about how the sound changes the way the object feels."
++      },
++      {
++        "id": "bc_q7",
++        "type": "open",
++        "skill": "2e",
++        "marks": 2,
++        "stem": "What is Jude most likely to do the next time a tool gives him information? Give a reason.",
++        "rubric": [
++          {
++            "label": "Predicts he will check against other evidence",
++            "check": {
++              "keywordAny": [
++                [
++                  "check"
++                ],
++                [
++                  "map"
++                ],
++                [
++                  "look"
++                ],
++                [
++                  "other",
++                  "clue"
++                ],
++                [
++                  "not",
++                  "blind"
++                ],
++                [
++                  "think"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Roots reason in lesson from ending",
++            "check": {
++              "keywordAny": [
++                [
++                  "clue"
++                ],
++                [
++                  "doesnt",
++                  "do",
++                  "thinking"
++                ],
++                [
++                  "learn"
++                ],
++                [
++                  "because"
++                ],
++                [
++                  "metal"
++                ],
++                [
++                  "railings"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "He is likely to check the tool against other clues before trusting it completely, because he has learned that a compass gives clues but does not do the thinking for him.",
++        "explanation": "A good prediction uses Jude's final lesson and the problem caused by the railings.",
++        "hint": "Use Jude's final line to make your prediction."
++      },
++      {
++        "id": "bc_q8",
++        "type": "mcq",
++        "skill": "P4",
++        "marks": 1,
++        "stem": "What job does the semicolon do in \"The compass had not betrayed him; it had been confused by the metal\"?",
++        "options": [
++          "It links two closely connected ideas about the compass.",
++          "It introduces direct speech.",
++          "It shows a question is being asked.",
++          "It separates items in a shopping list."
++        ],
++        "correct": 0,
++        "modelAnswer": "It links two closely connected ideas about the compass.",
++        "explanation": "The second clause explains the first: the compass was not disloyal, just affected by metal.",
++        "hint": "Ask how the second part explains the first part."
++      }
++    ]
++  },
++  {
++    "id": "bats_map_night",
++    "title": "How Bats Map the Night",
++    "genre": "non-fiction",
++    "difficulty": 4,
++    "isLong": true,
++    "blocks": [
++      "A bat leaving its roost at dusk is not flying blindly into darkness. Many bats build a fast-changing picture of the world by using echolocation. They produce high-pitched calls and listen for the echoes that return from insects, leaves, walls and open air.",
++      "The process is extremely quick. A call may be too high for human ears, but the returning echo can tell the bat how far away an object is, whether it is moving and even something about its shape. In effect, the bat is reading a map made of returning sound.",
++      "Different situations need different calls. When a bat is searching over a field, it may use slower calls that travel farther. When it begins to chase a moth, the calls come closer together, giving the bat more frequent updates before the final catch.",
++      "Echolocation is powerful, but it is not the only sense a bat uses. Some species also rely on eyesight, smell or memory of familiar routes. A bat may remember a line of trees beside a river, then use echoes to track a sudden insect within that known space.",
++      "The sounds bats make can also create problems for their prey. Some moths have ears tuned to bat calls and dive when they detect danger. Others produce clicks of their own, confusing the bat's echo picture for a moment. This is not a silent world; it is a contest of signals.",
++      "Scientists study bat calls with ultrasonic detectors, which turn high frequencies into sounds or patterns people can examine. By comparing call shapes, researchers can often identify which species is nearby without seeing the animal at all.",
++      "Understanding bats matters beyond curiosity. Bats eat huge numbers of night-flying insects, including some that damage crops. They also tell scientists about the health of habitats because different species need different roosts, feeding places and flight routes. Protecting bats often means protecting the dark corridors of trees, water and quiet air that allow them to map the night."
++    ],
++    "questions": [
++      {
++        "id": "bat_q1",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "What do many bats use to build a picture of the world in darkness?",
++        "check": {
++          "keywordAny": [
++            [
++              "echolocation"
++            ],
++            [
++              "echo"
++            ],
++            [
++              "high",
++              "pitched",
++              "calls"
++            ],
++            [
++              "returning",
++              "sound"
++            ]
++          ]
++        },
++        "modelAnswer": "They use echolocation: high-pitched calls and returning echoes.",
++        "explanation": "Paragraph 1 introduces echolocation as the way many bats build a picture of their surroundings.",
++        "hint": "Look at paragraph 1 for the named process."
++      },
++      {
++        "id": "bat_q2",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "What does \"roost\" mean in paragraph 1?",
++        "options": [
++          "a place where a bat rests or shelters",
++          "a kind of insect caught at night",
++          "a machine used by scientists",
++          "a line of trees beside a river"
++        ],
++        "correct": 0,
++        "modelAnswer": "a place where a bat rests or shelters",
++        "explanation": "The bat is leaving its roost at dusk, so the word means its resting or sheltering place.",
++        "hint": "Use the idea that the bat is leaving it at dusk."
++      },
++      {
++        "id": "bat_q3",
++        "type": "evidenceShort",
++        "skill": "2d",
++        "marks": 2,
++        "stem": "Why is echolocation useful for judging moving prey? Use evidence from the text.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "moving"
++            ],
++            [
++              "frequent",
++              "updates"
++            ],
++            [
++              "chase"
++            ],
++            [
++              "moth"
++            ],
++            [
++              "distance"
++            ],
++            [
++              "shape"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "whether it is moving and even something about its shape",
++            "the calls come closer together, giving the bat more frequent updates",
++            "before the final catch",
++            "returning echo can tell the bat how far away an object is"
++          ]
++        },
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "modelAnswer": "It helps because echoes give information about distance, movement and shape, and faster calls give more updates during a chase. Evidence could include: \"the calls come closer together, giving the bat more frequent updates\".",
++        "explanation": "Paragraphs 2 and 3 show how echoes give information and how call rate changes during hunting.",
++        "hint": "Use one detail about what the echo tells the bat and one about chasing.",
++        "reread": [
++          2,
++          3
++        ]
++      },
++      {
++        "id": "bat_q4",
++        "type": "mcq",
++        "skill": "2c",
++        "marks": 2,
++        "stem": "Which statement best summarises paragraph 4?",
++        "options": [
++          "Bats use only echolocation and never any other sense.",
++          "Bats may combine echolocation with sight, smell and memory of familiar routes.",
++          "Bats cannot remember places they have flown before.",
++          "All bats hunt only above open fields."
++        ],
++        "correct": 1,
++        "modelAnswer": "Bats may combine echolocation with sight, smell and memory of familiar routes.",
++        "explanation": "Paragraph 4 broadens the explanation by showing that echolocation works alongside other senses.",
++        "hint": "Choose the option that includes more than one sense."
++      },
++      {
++        "id": "bat_q5",
++        "type": "open",
++        "skill": "2h",
++        "marks": 2,
++        "stem": "Give one difference between a bat searching over a field and a bat chasing a moth.",
++        "rubric": [
++          {
++            "label": "Searching calls are slower or travel farther",
++            "check": {
++              "keywordAny": [
++                [
++                  "search"
++                ],
++                [
++                  "slower"
++                ],
++                [
++                  "farther"
++                ],
++                [
++                  "field"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Chasing calls are closer together or more frequent",
++            "check": {
++              "keywordAny": [
++                [
++                  "chase"
++                ],
++                [
++                  "moth"
++                ],
++                [
++                  "closer",
++                  "together"
++                ],
++                [
++                  "frequent"
++                ],
++                [
++                  "updates"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "When searching over a field, a bat may use slower calls that travel farther. When chasing a moth, the calls come closer together to give more frequent updates.",
++        "explanation": "The comparison is in paragraph 3 and needs both sides.",
++        "hint": "Use the two situations named in paragraph 3."
++      },
++      {
++        "id": "bat_q6",
++        "type": "open",
++        "skill": "2f",
++        "marks": 2,
++        "stem": "How does paragraph 5 add a new layer to the explanation?",
++        "rubric": [
++          {
++            "label": "Moves from how bats hunt to how prey respond",
++            "check": {
++              "keywordAny": [
++                [
++                  "prey"
++                ],
++                [
++                  "moth"
++                ],
++                [
++                  "respond"
++                ],
++                [
++                  "detect"
++                ],
++                [
++                  "dive"
++                ],
++                [
++                  "confuse"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions contest of signals / problem for bats",
++            "check": {
++              "keywordAny": [
++                [
++                  "contest"
++                ],
++                [
++                  "signal"
++                ],
++                [
++                  "problem"
++                ],
++                [
++                  "click"
++                ],
++                [
++                  "confusing"
++                ],
++                [
++                  "not",
++                  "silent"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Paragraph 5 adds the prey's side of the story. It shows that moths can hear or confuse bat calls, turning hunting into a contest of signals rather than a simple one-way process.",
++        "explanation": "The text shifts from the bat's skill to the interaction between hunter and prey.",
++        "hint": "Ask whose point of view is added in paragraph 5."
++      },
++      {
++        "id": "bat_q7",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "Why does the writer call echolocation \"a map made of returning sound\"?",
++        "rubric": [
++          {
++            "label": "Explains sound creates information about surroundings",
++            "check": {
++              "keywordAny": [
++                [
++                  "sound"
++                ],
++                [
++                  "echo"
++                ],
++                [
++                  "surround"
++                ],
++                [
++                  "object"
++                ],
++                [
++                  "distance"
++                ],
++                [
++                  "shape"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains map image helps reader picture navigation",
++            "check": {
++              "keywordAny": [
++                [
++                  "map"
++                ],
++                [
++                  "navigate"
++                ],
++                [
++                  "picture"
++                ],
++                [
++                  "find",
++                  "way"
++                ],
++                [
++                  "reader"
++                ],
++                [
++                  "imagine"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The phrase helps readers imagine echoes as information that builds a map of objects, distance and movement around the bat, even in darkness.",
++        "explanation": "The writer uses a familiar idea, a map, to explain a process most humans cannot hear.",
++        "hint": "Think about what a map gives you and how echoes can do a similar job for bats."
++      },
++      {
++        "id": "bat_q8",
++        "type": "multiSelect",
++        "skill": "2b",
++        "marks": 2,
++        "stem": "Which TWO tools or methods are mentioned for studying or identifying bats?",
++        "options": [
++          "ultrasonic detectors",
++          "comparing call shapes",
++          "painting the bats' wings",
++          "counting nests in daylight only"
++        ],
++        "correctSet": [
++          0,
++          1
++        ],
++        "modelAnswer": "Scientists use ultrasonic detectors and compare call shapes.",
++        "explanation": "Paragraph 6 explains how high-frequency bat calls can be turned into patterns and compared.",
++        "hint": "Choose the options linked to bat calls."
++      },
++      {
++        "id": "bat_q9",
++        "type": "open",
++        "skill": "2d",
++        "marks": 3,
++        "stem": "Why does protecting bats often mean protecting \"dark corridors\"?",
++        "rubric": [
++          {
++            "label": "Explains bats need routes or connected spaces",
++            "check": {
++              "keywordAny": [
++                [
++                  "route"
++                ],
++                [
++                  "corridor"
++                ],
++                [
++                  "fly"
++                ],
++                [
++                  "travel"
++                ],
++                [
++                  "connected"
++                ],
++                [
++                  "line",
++                  "trees"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions trees, water or quiet air",
++            "check": {
++              "keywordAny": [
++                [
++                  "tree"
++                ],
++                [
++                  "water"
++                ],
++                [
++                  "quiet",
++                  "air"
++                ],
++                [
++                  "habitat"
++                ],
++                [
++                  "roost"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Links to feeding/roosting/mapping night",
++            "check": {
++              "keywordAny": [
++                [
++                  "feed"
++                ],
++                [
++                  "roost"
++                ],
++                [
++                  "map",
++                  "night"
++                ],
++                [
++                  "insect"
++                ],
++                [
++                  "habitat"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Bats need linked routes through suitable habitat, not just one resting place. Dark corridors of trees, water and quiet air help them move, feed and use their senses to map the night.",
++        "explanation": "The final paragraph shows that conservation is about the routes and habitats bats depend on.",
++        "hint": "Use the last two sentences of the passage."
++      },
++      {
++        "id": "bat_q10",
++        "type": "short",
++        "skill": "2e",
++        "marks": 1,
++        "stem": "What might happen if a line of riverside trees used by bats was removed?",
++        "check": {
++          "keywordAny": [
++            [
++              "harder",
++              "route"
++            ],
++            [
++              "lose",
++              "route"
++            ],
++            [
++              "flight",
++              "route"
++            ],
++            [
++              "less",
++              "habitat"
++            ],
++            [
++              "feed",
++              "place"
++            ],
++            [
++              "corridor"
++            ]
++          ]
++        },
++        "modelAnswer": "Bats might lose a familiar flight route or feeding corridor, making it harder for them to move and hunt.",
++        "explanation": "The text says bats may remember routes and need dark corridors of trees and water.",
++        "hint": "Base the prediction on paragraphs 4 and 7."
++      },
++      {
++        "id": "bat_q11",
++        "type": "match",
++        "skill": "2b",
++        "marks": 2,
++        "stem": "Match each detail to what it shows.",
++        "prompts": [
++          "calls closer together",
++          "moths produce clicks",
++          "ultrasonic detectors"
++        ],
++        "options": [
++          "scientists turning bat calls into examinable sounds or patterns",
++          "prey confusing the bat's echo picture",
++          "bats getting more frequent updates during a chase"
++        ],
++        "correctMap": {
++          "0": "2",
++          "1": "1",
++          "2": "0"
++        },
++        "modelAnswer": "Calls closer together \u2192 frequent updates; moth clicks \u2192 confuse the echo picture; ultrasonic detectors \u2192 make calls examinable.",
++        "explanation": "Each detail has a different role in the explanation of bat signals.",
++        "hint": "Find each detail in paragraphs 3, 5 and 6."
++      },
++      {
++        "id": "bat_q12",
++        "type": "open",
++        "skill": "2f",
++        "marks": 4,
++        "stem": "How does the whole text move from explaining a skill to explaining why bats matter?",
++        "rubric": [
++          {
++            "label": "Starts with echolocation/how bats navigate",
++            "check": {
++              "keywordAny": [
++                [
++                  "echolocation"
++                ],
++                [
++                  "navigate"
++                ],
++                [
++                  "sound"
++                ],
++                [
++                  "echo"
++                ],
++                [
++                  "skill"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Develops through hunting/prey/scientific study",
++            "check": {
++              "keywordAny": [
++                [
++                  "moth"
++                ],
++                [
++                  "prey"
++                ],
++                [
++                  "scientist"
++                ],
++                [
++                  "detector"
++                ],
++                [
++                  "study"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Ends with ecological or conservation importance",
++            "check": {
++              "keywordAny": [
++                [
++                  "insect"
++                ],
++                [
++                  "crop"
++                ],
++                [
++                  "habitat"
++                ],
++                [
++                  "protect"
++                ],
++                [
++                  "conservation"
++                ],
++                [
++                  "health"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains widening structure",
++            "check": {
++              "keywordAny": [
++                [
++                  "moves"
++                ],
++                [
++                  "broadens"
++                ],
++                [
++                  "widen"
++                ],
++                [
++                  "from",
++                  "to"
++                ],
++                [
++                  "whole",
++                  "text"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The text begins by explaining echolocation and how bats navigate in darkness. It then develops that skill through hunting, prey responses and scientific study. By the end, the focus widens to why bats matter for insects, crops and habitat health, so the reader sees them as ecologically important rather than only interesting.",
++        "explanation": "This is a whole-text structure question, so it rewards tracking how the focus widens.",
++        "hint": "Use the beginning, middle and final paragraph."
++      },
++      {
++        "id": "bat_q13",
++        "type": "open",
++        "skill": "2d",
++        "marks": 4,
++        "stem": "The passage suggests that the night is full of information. How far do you agree? Use evidence from different parts of the text.",
++        "rubric": [
++          {
++            "label": "States a clear view",
++            "check": {
++              "keywordAny": [
++                [
++                  "agree"
++                ],
++                [
++                  "information"
++                ],
++                [
++                  "night"
++                ],
++                [
++                  "far"
++                ],
++                [
++                  "suggest"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses evidence about echoes/calls",
++            "check": {
++              "keywordAny": [
++                [
++                  "echo"
++                ],
++                [
++                  "call"
++                ],
++                [
++                  "distance"
++                ],
++                [
++                  "shape"
++                ],
++                [
++                  "moving"
++                ],
++                [
++                  "map"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses evidence about other signals/routes/science",
++            "check": {
++              "keywordAny": [
++                [
++                  "moth"
++                ],
++                [
++                  "click"
++                ],
++                [
++                  "detector"
++                ],
++                [
++                  "route"
++                ],
++                [
++                  "corridor"
++                ],
++                [
++                  "trees"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains how evidence proves the idea",
++            "check": {
++              "keywordAny": [
++                [
++                  "show"
++                ],
++                [
++                  "because"
++                ],
++                [
++                  "therefore"
++                ],
++                [
++                  "means"
++                ],
++                [
++                  "prove"
++                ],
++                [
++                  "suggest"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "I agree. The passage shows that bats can read echoes for distance, movement and shape, making a \"map made of returning sound\". It also shows moths responding with ears or clicks, and scientists using detectors to interpret bat calls. Even routes such as trees and water become information bats use. The night is not empty; it is full of signals different creatures can read.",
++        "explanation": "A high-scoring answer draws evidence from more than one part and explains how it supports the judgement.",
++        "hint": "Use at least one detail from the echolocation section and one from later in the passage."
++      }
++    ]
++  },
++  {
++    "id": "copper_weathercock",
++    "title": "The Copper Weathercock",
++    "genre": "fiction",
++    "difficulty": 5,
++    "isLong": true,
++    "blocks": [
++      "The weathercock above the school hall had faced west for so long that most pupils thought west was simply what weathercocks preferred. Its copper feathers were green at the edges, and its beak had been bent by storms into an expression of permanent suspicion. Mr Vale, the caretaker, said it had once spun freely enough to warn the village before sea-fogs came crawling over the fields.",
++      "Tara heard that story on the morning the choir was due to sing at the harbour festival. The hall was full of folding chairs, nervous humming and cardboard boxes of programmes. Outside, flags snapped along the lane, but the weathercock did not move. It stared west, stubborn as a drawing pinned to the sky.",
++      "During rehearsal, the piano began to sound wrong. Notes that should have floated together arrived thin and sour. Miss Okoro blamed the damp, then the tuner, then the age of the instrument. Tara, who had been asked to open the high windows, noticed that the sea wind was pushing through the hall in sudden cold ribbons. The pages on the music stands flicked backwards as if something unseen were reading them too quickly.",
++      "At lunchtime Mr Vale climbed the roof ladder with a tin of oil while Tara held the bottom steady. The weathercock creaked when he touched it, but did not turn. A strand of fishing line, blown inland from some forgotten kite or net, had wrapped itself around the spindle and tightened under the copper body. Mr Vale cut it free. The bird swung once, twice, then snapped round to the south-east.",
++      "Mr Vale stopped smiling. 'That wind brings the fog across the lower road,' he said. 'If it thickens, the coach won't see the bend by Bracken Pool.' Tara looked towards the harbour, where the festival tents shone white in the distance. The choir had been told to leave at three.",
++      "The office phone was busy. The headteacher was outside judging the bunting competition with a clipboard and a face full of concentration. Tara ran to Miss Okoro, but the teacher had three parents asking about packed lunches and one child in tears because his bow tie had vanished. 'Tell Mr Vale to radio the harbour steward,' she said, and turned back to the bow tie emergency.",
++      "The fog did not arrive as a wall. It arrived like milk being poured into water. First the distant tents blurred, then the hedges softened, then the white line on the lower road disappeared in short pieces. The freed weathercock pointed south-east without wavering. Tara felt the old story rearrange itself in her mind: not magic, not village gossip, but a tool that had been ignored because it had been stuck.",
++      "Mr Vale's radio crackled and failed twice before the harbour steward answered. Tara heard only fragments: school coach, lower road, Bracken Pool, wait. At three o'clock, when the choir should have been climbing aboard, Miss Okoro kept everyone in the hall and made them practise the first verse again, very slowly. Nobody complained. Even the piano seemed to have decided that patience was musical.",
++      "By four, the fog had folded over the lane so completely that the coach lamps glowed like coins under a blanket. The harbour steward arrived in a van and said the lower road had been closed after two cars slid into the verge near Bracken Pool. He looked at the roof and asked who had noticed the weathercock. Mr Vale pointed his thumb at Tara.",
++      "The festival was delayed, not cancelled. The choir travelled by the upper road after sunset, wrapped in scarves and excitement. When they finally sang, their voices rose into a harbour still silvered with mist. Tara could not see the weathercock from the stage, but she imagined it above the school, no longer pretending that west was the only direction worth knowing.",
++      "On Monday, Mr Vale asked Tara to help polish the copper body. Close up, the weathercock looked less like a suspicious bird and more like a patient one. Tara turned it gently and watched it answer the wind without argument. She liked that: a warning did not need to be dramatic to be useful. It only needed someone willing to notice when it changed."
++    ],
++    "questions": [
++      {
++        "id": "wc_q1",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "Which direction had the weathercock faced for a long time?",
++        "check": {
++          "keywordAny": [
++            [
++              "west"
++            ]
++          ]
++        },
++        "modelAnswer": "It had faced west.",
++        "explanation": "The first sentence says it had faced west for so long that pupils thought west was simply what weathercocks preferred.",
++        "hint": "Look at the opening sentence."
++      },
++      {
++        "id": "wc_q2",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "What does \"stubborn\" suggest in paragraph 2?",
++        "options": [
++          "It seems fixed and unwilling to move.",
++          "It is singing very loudly.",
++          "It has become younger overnight.",
++          "It is painted in bright colours."
++        ],
++        "correct": 0,
++        "modelAnswer": "It seems fixed and unwilling to move.",
++        "explanation": "The weathercock is compared to a drawing pinned to the sky, so it seems fixed and unmoving.",
++        "hint": "Use the words around the comparison to a drawing."
++      },
++      {
++        "id": "wc_q3",
++        "type": "evidenceShort",
++        "skill": "2d",
++        "marks": 2,
++        "stem": "How can you tell the hall is being affected by the weather before anyone fully understands the danger? Use evidence.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "piano",
++              "wrong"
++            ],
++            [
++              "damp"
++            ],
++            [
++              "wind"
++            ],
++            [
++              "cold",
++              "ribbons"
++            ],
++            [
++              "pages",
++              "flick"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "the piano began to sound wrong",
++            "Notes that should have floated together arrived thin and sour",
++            "the sea wind was pushing through the hall in sudden cold ribbons",
++            "The pages on the music stands flicked backwards"
++          ]
++        },
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "modelAnswer": "The hall is being affected because the piano sounds wrong and cold sea wind pushes through the windows. Evidence could include: \"the sea wind was pushing through the hall in sudden cold ribbons\".",
++        "explanation": "The early clues show weather entering the hall before the later fog warning is understood.",
++        "hint": "Use details from the rehearsal scene.",
++        "reread": [
++          3
++        ]
++      },
++      {
++        "id": "wc_q4",
++        "type": "open",
++        "skill": "2b",
++        "marks": 2,
++        "stem": "Give two things Tara and Mr Vale discover when they inspect the weathercock.",
++        "rubric": [
++          {
++            "label": "Fishing line wrapped around spindle",
++            "check": {
++              "keywordAny": [
++                [
++                  "fishing",
++                  "line"
++                ],
++                [
++                  "line",
++                  "spindle"
++                ],
++                [
++                  "wrapped"
++                ],
++                [
++                  "tightened"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Weathercock turns to south-east after being freed",
++            "check": {
++              "keywordAny": [
++                [
++                  "south-east"
++                ],
++                [
++                  "turn"
++                ],
++                [
++                  "swung"
++                ],
++                [
++                  "pointed"
++                ],
++                [
++                  "freed"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "They discover that fishing line has wrapped around the spindle, and that once it is cut free the weathercock turns to the south-east.",
++        "explanation": "Both details matter: one explains why the weathercock was stuck, the other gives the warning.",
++        "hint": "Use paragraph 4."
++      },
++      {
++        "id": "wc_q5",
++        "type": "multiSelect",
++        "skill": "2b",
++        "marks": 2,
++        "stem": "Which TWO details show that fog is arriving gradually?",
++        "options": [
++          "distant tents blurred",
++          "hedges softened",
++          "the school roof collapsed",
++          "the weathercock turned into a real bird"
++        ],
++        "correctSet": [
++          0,
++          1
++        ],
++        "modelAnswer": "The distant tents blurred and the hedges softened.",
++        "explanation": "Paragraph 7 presents the fog building in stages rather than all at once.",
++        "hint": "Choose the details that describe what becomes harder to see."
++      },
++      {
++        "id": "wc_q6",
++        "type": "open",
++        "skill": "2f",
++        "marks": 2,
++        "stem": "How does paragraph 7 change the reader's understanding of the old story about the weathercock?",
++        "rubric": [
++          {
++            "label": "Moves from story/gossip/magic to practical tool",
++            "check": {
++              "keywordAny": [
++                [
++                  "not",
++                  "magic"
++                ],
++                [
++                  "not",
++                  "gossip"
++                ],
++                [
++                  "tool"
++                ],
++                [
++                  "practical"
++                ],
++                [
++                  "warning"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Shows Tara realises the meaning of the change",
++            "check": {
++              "keywordAny": [
++                [
++                  "Tara"
++                ],
++                [
++                  "realise"
++                ],
++                [
++                  "understand"
++                ],
++                [
++                  "rearrange"
++                ],
++                [
++                  "changed"
++                ],
++                [
++                  "notice"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Paragraph 7 turns the old story from village gossip into practical evidence. Tara realises the weathercock matters because its new direction warns about fog on the lower road.",
++        "explanation": "This is a structure question about how a detail introduced earlier becomes important later.",
++        "hint": "Compare Mr Vale's first story with Tara's thought in paragraph 7."
++      },
++      {
++        "id": "wc_q7",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "What is the effect of the phrase \"fog had folded over the lane\"?",
++        "rubric": [
++          {
++            "label": "Shows fog covering or wrapping the lane",
++            "check": {
++              "keywordAny": [
++                [
++                  "cover"
++                ],
++                [
++                  "wrap"
++                ],
++                [
++                  "fold"
++                ],
++                [
++                  "hide"
++                ],
++                [
++                  "blanket"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Creates a soft but dangerous image",
++            "check": {
++              "keywordAny": [
++                [
++                  "danger"
++                ],
++                [
++                  "hard",
++                  "see"
++                ],
++                [
++                  "soft"
++                ],
++                [
++                  "mist"
++                ],
++                [
++                  "road"
++                ],
++                [
++                  "lane"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The phrase makes the fog seem as if it is wrapping or covering the lane, a soft image that still shows danger because the road becomes hard to see.",
++        "explanation": "The image is quiet rather than violent, but it still builds concern about visibility.",
++        "hint": "Think about what folding something over does to what is underneath."
++      },
++      {
++        "id": "wc_q8",
++        "type": "match",
++        "skill": "2h",
++        "marks": 2,
++        "stem": "Match each detail to its role in the story.",
++        "prompts": [
++          "stuck weathercock",
++          "radio message",
++          "upper road"
++        ],
++        "options": [
++          "the safer route used later",
++          "the problem that hides an old warning system",
++          "the way the warning reaches the harbour steward"
++        ],
++        "correctMap": {
++          "0": "1",
++          "1": "2",
++          "2": "0"
++        },
++        "modelAnswer": "Stuck weathercock \u2192 hidden warning system; radio message \u2192 warning reaches steward; upper road \u2192 safer route later.",
++        "explanation": "Each detail contributes to the problem, warning or solution.",
++        "hint": "Ask whether each detail is a problem, a communication method or a safe choice."
++      },
++      {
++        "id": "wc_q9",
++        "type": "open",
++        "skill": "2c",
++        "marks": 3,
++        "stem": "Summarise how Tara's actions help prevent a dangerous journey.",
++        "rubric": [
++          {
++            "label": "Mentions noticing/freeing weathercock or wind direction",
++            "check": {
++              "keywordAny": [
++                [
++                  "weathercock"
++                ],
++                [
++                  "south-east"
++                ],
++                [
++                  "notice"
++                ],
++                [
++                  "free"
++                ],
++                [
++                  "wind"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions communicating or getting help",
++            "check": {
++              "keywordAny": [
++                [
++                  "Mr",
++                  "Vale"
++                ],
++                [
++                  "radio"
++                ],
++                [
++                  "harbour",
++                  "steward"
++                ],
++                [
++                  "tell"
++                ],
++                [
++                  "warn"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions coach/lower road danger avoided",
++            "check": {
++              "keywordAny": [
++                [
++                  "coach"
++                ],
++                [
++                  "lower",
++                  "road"
++                ],
++                [
++                  "Bracken",
++                  "Pool"
++                ],
++                [
++                  "danger"
++                ],
++                [
++                  "closed"
++                ],
++                [
++                  "safe"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Tara helps by noticing the weathercock problem, supporting Mr Vale while it is freed and understanding that the south-east wind could bring fog to the lower road. She helps get the warning passed to the harbour steward, so the choir waits and avoids the dangerous route near Bracken Pool.",
++        "explanation": "A strong summary links Tara's observations to the practical result.",
++        "hint": "Group the answer into noticing, warning and avoiding danger."
++      },
++      {
++        "id": "wc_q10",
++        "type": "open",
++        "skill": "2d",
++        "marks": 3,
++        "stem": "How does Tara's view of the weathercock change from the start to the end?",
++        "rubric": [
++          {
++            "label": "Start: old/stuck/ignored object",
++            "check": {
++              "keywordAny": [
++                [
++                  "stuck"
++                ],
++                [
++                  "old"
++                ],
++                [
++                  "ignored"
++                ],
++                [
++                  "west"
++                ],
++                [
++                  "drawing"
++                ],
++                [
++                  "sky"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "End: useful/patient/warning tool",
++            "check": {
++              "keywordAny": [
++                [
++                  "useful"
++                ],
++                [
++                  "warning"
++                ],
++                [
++                  "tool"
++                ],
++                [
++                  "patient"
++                ],
++                [
++                  "answer",
++                  "wind"
++                ],
++                [
++                  "notice"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Makes change explicit",
++            "check": {
++              "keywordAny": [
++                [
++                  "change"
++                ],
++                [
++                  "from"
++                ],
++                [
++                  "to"
++                ],
++                [
++                  "at",
++                  "first"
++                ],
++                [
++                  "by",
++                  "end"
++                ],
++                [
++                  "later"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "At first, the weathercock seems like a stuck old object that always points west. By the end, Tara sees it as a patient, useful warning tool that can answer the wind and help people notice danger.",
++        "explanation": "The story changes the weathercock from a decorative relic into something practical and respected.",
++        "hint": "Compare the opening description with the final paragraph."
++      },
++      {
++        "id": "wc_q11",
++        "type": "open",
++        "skill": "2g",
++        "marks": 4,
++        "stem": "How does the writer make the weathercock seem important even though it is an ordinary object?",
++        "rubric": [
++          {
++            "label": "Mentions vivid description/personification",
++            "check": {
++              "keywordAny": [
++                [
++                  "copper"
++                ],
++                [
++                  "feathers"
++                ],
++                [
++                  "suspicion"
++                ],
++                [
++                  "stubborn"
++                ],
++                [
++                  "patient"
++                ],
++                [
++                  "personif"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions old story or warning role",
++            "check": {
++              "keywordAny": [
++                [
++                  "story"
++                ],
++                [
++                  "warn"
++                ],
++                [
++                  "sea-fog"
++                ],
++                [
++                  "wind"
++                ],
++                [
++                  "village"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions plot consequences / safety",
++            "check": {
++              "keywordAny": [
++                [
++                  "coach"
++                ],
++                [
++                  "safe"
++                ],
++                [
++                  "road"
++                ],
++                [
++                  "harbour"
++                ],
++                [
++                  "danger"
++                ],
++                [
++                  "fog"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains effect on reader",
++            "check": {
++              "keywordAny": [
++                [
++                  "important"
++                ],
++                [
++                  "respect"
++                ],
++                [
++                  "useful"
++                ],
++                [
++                  "reader"
++                ],
++                [
++                  "notice"
++                ],
++                [
++                  "ordinary"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The writer gives the weathercock vivid, almost living details: copper feathers, a suspicious expression and later a patient quality. It also has an old story attached to it and then proves useful when its direction warns about fog and helps keep the coach off the lower road. These choices make an ordinary object feel significant and worth respecting.",
++        "explanation": "A high-quality answer links language, plot and reader effect.",
++        "hint": "Use both the description of the object and what it does in the story."
++      },
++      {
++        "id": "wc_q12",
++        "type": "open",
++        "skill": "2f",
++        "marks": 4,
++        "stem": "How does the writer build tension before the choir's journey is delayed? Use evidence from different parts of the story.",
++        "rubric": [
++          {
++            "label": "Uses early warning clues",
++            "check": {
++              "keywordAny": [
++                [
++                  "piano"
++                ],
++                [
++                  "wind"
++                ],
++                [
++                  "pages"
++                ],
++                [
++                  "weathercock"
++                ],
++                [
++                  "south-east"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses communication/urgency obstacles",
++            "check": {
++              "keywordAny": [
++                [
++                  "phone",
++                  "busy"
++                ],
++                [
++                  "radio",
++                  "failed"
++                ],
++                [
++                  "headteacher"
++                ],
++                [
++                  "parents"
++                ],
++                [
++                  "bow",
++                  "tie"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses fog/lower road danger",
++            "check": {
++              "keywordAny": [
++                [
++                  "fog"
++                ],
++                [
++                  "lower",
++                  "road"
++                ],
++                [
++                  "Bracken",
++                  "Pool"
++                ],
++                [
++                  "white",
++                  "line"
++                ],
++                [
++                  "bend"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains tension effect",
++            "check": {
++              "keywordAny": [
++                [
++                  "tension"
++                ],
++                [
++                  "worry"
++                ],
++                [
++                  "danger"
++                ],
++                [
++                  "before"
++                ],
++                [
++                  "reader"
++                ],
++                [
++                  "urgent"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The writer builds tension through small clues before the main danger is clear: the piano sounds wrong, cold wind pushes through the hall and the weathercock points south-east. The tension rises because the phone is busy, the radio crackles and adults are distracted. Then the fog gradually hides the lower road near Bracken Pool, making the reader worry the coach might leave too soon.",
++        "explanation": "Tension is built by warning signs, obstacles and a deadline.",
++        "hint": "Use one early clue, one communication problem and one fog detail."
++      },
++      {
++        "id": "wc_q13",
++        "type": "open",
++        "skill": "2d",
++        "marks": 4,
++        "stem": "The story suggests that useful warnings can be quiet rather than dramatic. How far do you agree? Use evidence from across the text.",
++        "rubric": [
++          {
++            "label": "States view clearly",
++            "check": {
++              "keywordAny": [
++                [
++                  "agree"
++                ],
++                [
++                  "warning"
++                ],
++                [
++                  "quiet"
++                ],
++                [
++                  "dramatic"
++                ],
++                [
++                  "far"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses evidence about weathercock/wind/fog",
++            "check": {
++              "keywordAny": [
++                [
++                  "weathercock"
++                ],
++                [
++                  "south-east"
++                ],
++                [
++                  "fog"
++                ],
++                [
++                  "wind"
++                ],
++                [
++                  "changed"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses evidence about final lesson",
++            "check": {
++              "keywordAny": [
++                [
++                  "not",
++                  "dramatic"
++                ],
++                [
++                  "useful"
++                ],
++                [
++                  "notice"
++                ],
++                [
++                  "answer",
++                  "wind"
++                ],
++                [
++                  "patient"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains link between evidence and theme",
++            "check": {
++              "keywordAny": [
++                [
++                  "show"
++                ],
++                [
++                  "because"
++                ],
++                [
++                  "suggest"
++                ],
++                [
++                  "means"
++                ],
++                [
++                  "therefore"
++                ],
++                [
++                  "lesson"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "I agree. The weathercock does not shout or make a dramatic alarm; it simply changes direction after being freed. Tara notices that quiet change and connects it to the fog on the lower road. The ending makes the idea explicit: a warning does not need to be dramatic to be useful, but it needs someone willing to notice when it changes.",
++        "explanation": "A strong answer uses the story's evidence and connects it to the larger theme.",
++        "hint": "Use the changed direction, the fog and the final sentence."
++      }
++    ]
++  },
++  {
++    "id": "soil_remembers",
++    "title": "What Soil Remembers",
++    "genre": "non-fiction",
++    "difficulty": 5,
++    "isLong": true,
++    "blocks": [
++      "Soil can look like the quietest part of a landscape. It sits under grass, paths and crops, usually noticed only when it sticks to a shoe. Yet soil is not simply ground-up rock. It is a living record of weather, roots, animals, dead leaves and human choices layered together over time.",
++      "A handful of healthy soil may contain mineral grains, air spaces, water, fungi, bacteria and tiny animals. Earthworms drag leaves underground and mix them with mineral particles. Fungal threads spread between roots, helping some plants take in nutrients. Even the gaps matter, because water and oxygen must move through them if roots are to survive.",
++      "Soil forms slowly. Rain breaks rock into smaller pieces, plants push roots into cracks and dead material rots into humus. In cool or dry places, this may take centuries. A few centimetres of rich topsoil can therefore represent a very long process, while careless erosion can remove it in a single storm.",
++      "Because soil records change, scientists can read it like an archive. Pollen grains preserved in layers can show which plants once grew nearby. Charcoal fragments may reveal past fires or farming. Chemical traces can point to pollution, while compacted layers can show where heavy machines or feet pressed the ground hard.",
++      "Farmers and gardeners have always known that soil condition changes what can grow. Soil that is compacted may shed rain instead of absorbing it. Soil with too little organic matter may dry out quickly. Adding compost, growing cover crops and avoiding unnecessary digging can help rebuild structure and feed the organisms that keep soil working.",
++      "There is also a climate link. Soil stores more carbon than many people realise, especially when plant roots and decayed material are left in place. Damaged soils can release some of that carbon back into the air. This does not mean soil alone can solve climate change, but it does mean caring for it is part of a wider response.",
++      "The next time a muddy footprint appears on a doorstep, it may be worth seeing more than mess. That dark print could contain ground rock, yesterday's rain, last autumn's leaves and the work of creatures too small to name. Soil remembers because it is still being written."
++    ],
++    "questions": [
++      {
++        "id": "soil_q1",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "Name one living thing or organism found in healthy soil according to paragraph 2.",
++        "check": {
++          "keywordAny": [
++            [
++              "fungi"
++            ],
++            [
++              "bacteria"
++            ],
++            [
++              "earthworm"
++            ],
++            [
++              "tiny",
++              "animal"
++            ],
++            [
++              "worm"
++            ]
++          ]
++        },
++        "modelAnswer": "Possible answers include fungi, bacteria, earthworms or tiny animals.",
++        "explanation": "Paragraph 2 lists several living parts of healthy soil.",
++        "hint": "Look for the list of things in a handful of healthy soil."
++      },
++      {
++        "id": "soil_q2",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "What does \"archive\" mean in paragraph 4?",
++        "options": [
++          "a record that stores evidence from the past",
++          "a tool for digging holes",
++          "a type of fast-growing crop",
++          "a storm that washes soil away"
++        ],
++        "correct": 0,
++        "modelAnswer": "a record that stores evidence from the past",
++        "explanation": "The paragraph explains that soil layers can preserve pollen, charcoal and chemical traces from earlier times.",
++        "hint": "Use the examples that come after the word."
++      },
++      {
++        "id": "soil_q3",
++        "type": "evidenceShort",
++        "skill": "2d",
++        "marks": 2,
++        "stem": "Why is losing topsoil serious? Use evidence from the text.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "slow",
++              "form"
++            ],
++            [
++              "centur"
++            ],
++            [
++              "storm",
++              "remove"
++            ],
++            [
++              "long",
++              "process"
++            ],
++            [
++              "erosion"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "Soil forms slowly",
++            "this may take centuries",
++            "A few centimetres of rich topsoil can therefore represent a very long process",
++            "careless erosion can remove it in a single storm"
++          ]
++        },
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "modelAnswer": "It is serious because topsoil takes a very long time to form but can be lost quickly. Evidence could include: \"careless erosion can remove it in a single storm\".",
++        "explanation": "The contrast between slow formation and rapid loss makes topsoil valuable.",
++        "hint": "Find the sentence that compares centuries with a single storm.",
++        "reread": [
++          3
++        ]
++      },
++      {
++        "id": "soil_q4",
++        "type": "mcq",
++        "skill": "2c",
++        "marks": 2,
++        "stem": "Which statement best summarises paragraph 2?",
++        "options": [
++          "Healthy soil is a mixture of minerals, spaces, water and living organisms that work together.",
++          "Soil is made only of tiny stones and nothing else.",
++          "Earthworms damage soil by removing all the leaves from it.",
++          "Roots survive best when soil contains no air or water."
++        ],
++        "correct": 0,
++        "modelAnswer": "Healthy soil is a mixture of minerals, spaces, water and living organisms that work together.",
++        "explanation": "The paragraph explains the different parts of healthy soil and how they support roots and organisms.",
++        "hint": "Choose the option that captures the whole mixture, not one detail."
++      },
++      {
++        "id": "soil_q5",
++        "type": "open",
++        "skill": "2f",
++        "marks": 2,
++        "stem": "How does paragraph 4 broaden the explanation of soil?",
++        "rubric": [
++          {
++            "label": "Moves from soil formation/life to evidence of the past",
++            "check": {
++              "keywordAny": [
++                [
++                  "past"
++                ],
++                [
++                  "archive"
++                ],
++                [
++                  "record"
++                ],
++                [
++                  "layer"
++                ],
++                [
++                  "evidence"
++                ],
++                [
++                  "read"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions examples such as pollen, charcoal, chemicals or compaction",
++            "check": {
++              "keywordAny": [
++                [
++                  "pollen"
++                ],
++                [
++                  "charcoal"
++                ],
++                [
++                  "chemical"
++                ],
++                [
++                  "compacted"
++                ],
++                [
++                  "pollution"
++                ],
++                [
++                  "fires"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Paragraph 4 broadens the explanation by showing that soil is not only a living system but also a record of the past, preserving clues such as pollen, charcoal, chemical traces and compacted layers.",
++        "explanation": "The paragraph shifts from how soil works to what soil can reveal.",
++        "hint": "Ask what new job soil is given in paragraph 4."
++      },
++      {
++        "id": "soil_q6",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "Why does the writer say soil is \"still being written\"?",
++        "rubric": [
++          {
++            "label": "Explains record/book metaphor",
++            "check": {
++              "keywordAny": [
++                [
++                  "record"
++                ],
++                [
++                  "book"
++                ],
++                [
++                  "story"
++                ],
++                [
++                  "written"
++                ],
++                [
++                  "archive"
++                ],
++                [
++                  "layer"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Links to continuing natural/human processes",
++            "check": {
++              "keywordAny": [
++                [
++                  "weather"
++                ],
++                [
++                  "roots"
++                ],
++                [
++                  "leaves"
++                ],
++                [
++                  "animals"
++                ],
++                [
++                  "human"
++                ],
++                [
++                  "change"
++                ],
++                [
++                  "continue"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The phrase treats soil like a record or story that keeps gaining new layers. Weather, roots, leaves, animals and human choices are still changing it, so its record is not finished.",
++        "explanation": "The metaphor ties the final paragraph back to the idea of soil remembering change over time.",
++        "hint": "Think about what keeps adding to soil's record."
++      },
++      {
++        "id": "soil_q7",
++        "type": "open",
++        "skill": "2h",
++        "marks": 2,
++        "stem": "Compare compacted soil with healthy soil as described in the passage.",
++        "rubric": [
++          {
++            "label": "Healthy soil has gaps/air/water/life",
++            "check": {
++              "keywordAny": [
++                [
++                  "gap"
++                ],
++                [
++                  "air"
++                ],
++                [
++                  "water"
++                ],
++                [
++                  "organism"
++                ],
++                [
++                  "roots"
++                ],
++                [
++                  "healthy"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Compacted soil sheds water or is pressed hard",
++            "check": {
++              "keywordAny": [
++                [
++                  "compacted"
++                ],
++                [
++                  "shed",
++                  "rain"
++                ],
++                [
++                  "pressed"
++                ],
++                [
++                  "hard"
++                ],
++                [
++                  "machines"
++                ],
++                [
++                  "feet"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Healthy soil has air spaces, water movement and living organisms that support roots. Compacted soil has been pressed hard, so it may shed rain instead of absorbing it and can make root growth harder.",
++        "explanation": "The comparison needs both conditions, not just one.",
++        "hint": "Use paragraphs 2, 4 and 5."
++      },
++      {
++        "id": "soil_q8",
++        "type": "open",
++        "skill": "2d",
++        "marks": 3,
++        "stem": "Why does the writer include both tiny organisms and climate in the same passage?",
++        "rubric": [
++          {
++            "label": "Shows soil works at small and large scales",
++            "check": {
++              "keywordAny": [
++                [
++                  "small"
++                ],
++                [
++                  "tiny"
++                ],
++                [
++                  "large"
++                ],
++                [
++                  "scale"
++                ],
++                [
++                  "bigger"
++                ],
++                [
++                  "whole"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions organisms/fungi/bacteria/earthworms",
++            "check": {
++              "keywordAny": [
++                [
++                  "organism"
++                ],
++                [
++                  "fungi"
++                ],
++                [
++                  "bacteria"
++                ],
++                [
++                  "earthworm"
++                ],
++                [
++                  "tiny"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions carbon/climate/wider response",
++            "check": {
++              "keywordAny": [
++                [
++                  "carbon"
++                ],
++                [
++                  "climate"
++                ],
++                [
++                  "store"
++                ],
++                [
++                  "release"
++                ],
++                [
++                  "wider",
++                  "response"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The writer includes both to show that soil matters at more than one scale. Tiny organisms help soil work day by day, while soil's ability to store or release carbon connects it to climate and wider environmental choices.",
++        "explanation": "The passage links hidden small processes to large consequences.",
++        "hint": "Use paragraph 2 and paragraph 6 together."
++      },
++      {
++        "id": "soil_q9",
++        "type": "match",
++        "skill": "2b",
++        "marks": 3,
++        "stem": "Match each soil clue to what it can show.",
++        "prompts": [
++          "pollen grains",
++          "charcoal fragments",
++          "compacted layers"
++        ],
++        "options": [
++          "where pressure from machines or feet hardened the ground",
++          "which plants once grew nearby",
++          "past fires or farming"
++        ],
++        "correctMap": {
++          "0": "1",
++          "1": "2",
++          "2": "0"
++        },
++        "modelAnswer": "Pollen grains \u2192 plants once nearby; charcoal fragments \u2192 past fires or farming; compacted layers \u2192 pressure from machines or feet.",
++        "explanation": "Paragraph 4 explains how different traces in soil reveal different kinds of past change.",
++        "hint": "Use the examples in paragraph 4."
++      },
++      {
++        "id": "soil_q10",
++        "type": "short",
++        "skill": "2e",
++        "marks": 1,
++        "stem": "What is likely to happen if soil has too little organic matter?",
++        "check": {
++          "keywordAny": [
++            [
++              "dry",
++              "quick"
++            ],
++            [
++              "dry",
++              "out"
++            ],
++            [
++              "less",
++              "hold",
++              "water"
++            ]
++          ]
++        },
++        "modelAnswer": "It may dry out quickly.",
++        "explanation": "Paragraph 5 says soil with too little organic matter may dry out quickly.",
++        "hint": "Look in paragraph 5."
++      },
++      {
++        "id": "soil_q11",
++        "type": "open",
++        "skill": "2f",
++        "marks": 4,
++        "stem": "How does the final paragraph change the way the reader might think about a muddy footprint?",
++        "rubric": [
++          {
++            "label": "Starts from ordinary mess/footprint",
++            "check": {
++              "keywordAny": [
++                [
++                  "muddy",
++                  "footprint"
++                ],
++                [
++                  "mess"
++                ],
++                [
++                  "doorstep"
++                ],
++                [
++                  "ordinary"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Shows hidden complexity/composition",
++            "check": {
++              "keywordAny": [
++                [
++                  "rock"
++                ],
++                [
++                  "rain"
++                ],
++                [
++                  "leaves"
++                ],
++                [
++                  "creatures"
++                ],
++                [
++                  "small"
++                ],
++                [
++                  "contain"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Links to soil as record/memory",
++            "check": {
++              "keywordAny": [
++                [
++                  "remember"
++                ],
++                [
++                  "record"
++                ],
++                [
++                  "written"
++                ],
++                [
++                  "past"
++                ],
++                [
++                  "layer"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains reader effect",
++            "check": {
++              "keywordAny": [
++                [
++                  "think"
++                ],
++                [
++                  "see"
++                ],
++                [
++                  "reader"
++                ],
++                [
++                  "value"
++                ],
++                [
++                  "more",
++                  "than"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The final paragraph turns a muddy footprint from ordinary mess into evidence of a complex living record. By listing rock, rain, leaves and tiny creatures, the writer makes the reader see soil as something valuable and layered rather than just dirt on a doorstep.",
++        "explanation": "The ending uses a familiar image to reshape the reader's attitude.",
++        "hint": "Compare 'mess' with the list of things the footprint could contain."
++      },
++      {
++        "id": "soil_q12",
++        "type": "open",
++        "skill": "2d",
++        "marks": 4,
++        "stem": "The passage suggests soil is both fragile and powerful. How far do you agree? Use evidence from different parts of the text.",
++        "rubric": [
++          {
++            "label": "States judgement",
++            "check": {
++              "keywordAny": [
++                [
++                  "agree"
++                ],
++                [
++                  "fragile"
++                ],
++                [
++                  "powerful"
++                ],
++                [
++                  "far"
++                ],
++                [
++                  "both"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses fragile evidence",
++            "check": {
++              "keywordAny": [
++                [
++                  "erosion"
++                ],
++                [
++                  "single",
++                  "storm"
++                ],
++                [
++                  "compacted"
++                ],
++                [
++                  "dry",
++                  "out"
++                ],
++                [
++                  "damage"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses powerful/useful evidence",
++            "check": {
++              "keywordAny": [
++                [
++                  "carbon"
++                ],
++                [
++                  "roots"
++                ],
++                [
++                  "organism"
++                ],
++                [
++                  "archive"
++                ],
++                [
++                  "grow"
++                ],
++                [
++                  "water"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains balance",
++            "check": {
++              "keywordAny": [
++                [
++                  "because"
++                ],
++                [
++                  "show"
++                ],
++                [
++                  "therefore"
++                ],
++                [
++                  "but"
++                ],
++                [
++                  "while"
++                ],
++                [
++                  "balance"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "I agree. Soil is fragile because rich topsoil can take centuries to form but be removed by erosion in a single storm, and compacted or low-organic soil can stop water and roots working well. It is powerful because it supports organisms and plants, records past environments and stores carbon. The passage shows that something quiet can still be essential.",
++        "explanation": "A strong answer balances both sides and uses evidence from several paragraphs.",
++        "hint": "Use one detail about damage and one about what soil does."
++      },
++      {
++        "id": "soil_q13",
++        "type": "open",
++        "skill": "2h",
++        "marks": 4,
++        "stem": "Compare how the writer presents soil in the first paragraph and the final paragraph.",
++        "rubric": [
++          {
++            "label": "First paragraph: quiet/unnoticed/simple-looking",
++            "check": {
++              "keywordAny": [
++                [
++                  "quiet"
++                ],
++                [
++                  "unnoticed"
++                ],
++                [
++                  "shoe"
++                ],
++                [
++                  "under"
++                ],
++                [
++                  "simple"
++                ],
++                [
++                  "landscape"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Final paragraph: complex/living record/still changing",
++            "check": {
++              "keywordAny": [
++                [
++                  "footprint"
++                ],
++                [
++                  "rock"
++                ],
++                [
++                  "rain"
++                ],
++                [
++                  "leaves"
++                ],
++                [
++                  "creature"
++                ],
++                [
++                  "remembers"
++                ],
++                [
++                  "written"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explicit comparison",
++            "check": {
++              "keywordAny": [
++                [
++                  "whereas"
++                ],
++                [
++                  "but"
++                ],
++                [
++                  "first"
++                ],
++                [
++                  "final"
++                ],
++                [
++                  "changes"
++                ],
++                [
++                  "from",
++                  "to"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains change in reader's view",
++            "check": {
++              "keywordAny": [
++                [
++                  "reader"
++                ],
++                [
++                  "see"
++                ],
++                [
++                  "think"
++                ],
++                [
++                  "value"
++                ],
++                [
++                  "more",
++                  "than"
++                ],
++                [
++                  "understand"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "In the first paragraph, soil is presented as quiet and usually unnoticed, something people may only think about when it sticks to a shoe. In the final paragraph, the muddy footprint becomes a sign of complexity, containing rock, rain, leaves and tiny creatures. The writer moves the reader from seeing soil as ordinary dirt to seeing it as a living record.",
++        "explanation": "Comparison questions need detail from both parts and a clear account of the change.",
++        "hint": "Use the opening image of soil on a shoe and the ending image of a footprint."
++      }
++    ]
++  },
++  {
++    "id": "old_observatory",
++    "title": "The Old Observatory",
++    "genre": "poetry",
++    "difficulty": 4,
++    "isLong": false,
++    "blocks": [
++      "At noon the old observatory sleeps,\nits telescope hooded, its brass wheel still.\nDust gathers stars on the window ledge;\nsunlight climbs the hill.",
++      "Night is folded in drawers of charts,\ninked moons, patient rings of Mars.\nA spider ties the afternoon\nto a shelf of bottled stars.",
++      "When evening loosens the first blue thread,\nthe dome will turn and the shutters part.\nFor now, the sky keeps all its secrets\nin the daylight of its heart."
++    ],
++    "questions": [
++      {
++        "id": "obs_q1",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "What does \"hooded\" suggest about the telescope?",
++        "options": [
++          "It is covered or closed for now.",
++          "It is running quickly down the hill.",
++          "It is brighter than the sun.",
++          "It has been turned into a bird."
++        ],
++        "correct": 0,
++        "modelAnswer": "It is covered or closed for now.",
++        "explanation": "A hood covers something, so the telescope is not yet in use.",
++        "hint": "Think about what a hood does."
++      },
++      {
++        "id": "obs_q2",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "What insect is mentioned in the poem?",
++        "check": {
++          "keywordAny": [
++            [
++              "spider"
++            ]
++          ]
++        },
++        "modelAnswer": "A spider is mentioned.",
++        "explanation": "The second stanza says a spider ties the afternoon to a shelf.",
++        "hint": "Look in the second stanza."
++      },
++      {
++        "id": "obs_q3",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "Why might the poet say \"Dust gathers stars on the window ledge\"?",
++        "rubric": [
++          {
++            "label": "Explains dust/star visual image",
++            "check": {
++              "keywordAny": [
++                [
++                  "dust"
++                ],
++                [
++                  "speck"
++                ],
++                [
++                  "sparkle"
++                ],
++                [
++                  "star"
++                ],
++                [
++                  "light"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Links to observatory theme/night sky",
++            "check": {
++              "keywordAny": [
++                [
++                  "observatory"
++                ],
++                [
++                  "sky"
++                ],
++                [
++                  "space"
++                ],
++                [
++                  "night"
++                ],
++                [
++                  "telescope"
++                ],
++                [
++                  "stars"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The poet makes specks of dust in the sunlight seem like tiny stars, linking even the daytime observatory to the night sky it studies.",
++        "explanation": "The image blends an ordinary indoor detail with the observatory's purpose.",
++        "hint": "Think about how dust can look in a shaft of light."
++      },
++      {
++        "id": "obs_q4",
++        "type": "open",
++        "skill": "2f",
++        "marks": 2,
++        "stem": "How does the poem move from noon to evening?",
++        "rubric": [
++          {
++            "label": "Noon/resting observatory at start",
++            "check": {
++              "keywordAny": [
++                [
++                  "noon"
++                ],
++                [
++                  "sleeps"
++                ],
++                [
++                  "still"
++                ],
++                [
++                  "daylight"
++                ],
++                [
++                  "sunlight"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Evening/coming action at end",
++            "check": {
++              "keywordAny": [
++                [
++                  "evening"
++                ],
++                [
++                  "blue",
++                  "thread"
++                ],
++                [
++                  "dome",
++                  "turn"
++                ],
++                [
++                  "shutters",
++                  "part"
++                ],
++                [
++                  "night"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The poem starts at noon with the observatory asleep and still, then looks ahead to evening when the dome will turn and the shutters will open for night viewing.",
++        "explanation": "The structure moves from present stillness to future activity.",
++        "hint": "Compare the first line with the final stanza."
++      },
++      {
++        "id": "obs_q5",
++        "type": "open",
++        "skill": "2d",
++        "marks": 2,
++        "stem": "What mood does the poem create around the observatory? Use two details.",
++        "rubric": [
++          {
++            "label": "Names calm/mysterious/patient mood",
++            "check": {
++              "keywordAny": [
++                [
++                  "calm"
++                ],
++                [
++                  "quiet"
++                ],
++                [
++                  "myster"
++                ],
++                [
++                  "patient"
++                ],
++                [
++                  "peaceful"
++                ],
++                [
++                  "secret"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses two textual details",
++            "check": {
++              "keywordAny": [
++                [
++                  "sleeps"
++                ],
++                [
++                  "still"
++                ],
++                [
++                  "patient"
++                ],
++                [
++                  "secrets"
++                ],
++                [
++                  "folded"
++                ],
++                [
++                  "hooded"
++                ],
++                [
++                  "shutters"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The mood is calm and mysterious. Details such as the observatory that \"sleeps\", the \"patient rings of Mars\" and the sky keeping \"secrets\" make it feel quiet but full of hidden knowledge.",
++        "explanation": "The mood comes from both stillness and the promise of secrets to be revealed later.",
++        "hint": "Choose one detail about stillness and one about mystery."
++      },
++      {
++        "id": "obs_q6",
++        "type": "mcq",
++        "skill": "P3",
++        "marks": 1,
++        "stem": "In the line \"For now, the sky keeps all its secrets\", what does the comma help do?",
++        "options": [
++          "It separates the opening phrase from the main idea.",
++          "It shows somebody is speaking.",
++          "It introduces a list of planets.",
++          "It marks the end of a question."
++        ],
++        "correct": 0,
++        "modelAnswer": "It separates the opening phrase from the main idea.",
++        "explanation": "The comma helps the reader pause after the time phrase 'For now'.",
++        "hint": "Read the line in two parts: the time phrase, then the main idea."
++      }
++    ]
+   }
++
++
+ ]);
+ 
+ export const READING_TEST_PAPERS = Object.freeze([
+@@ -5578,7 +9249,208 @@ export const READING_TEST_PAPERS = Object.freeze([
+         ]
+       }
+     ]
++  },
++
++  {
++    "id": "paper_i",
++    "title": "Original KS2-style Paper I",
++    "timeLimitMin": 60,
++    "totalMarks": 50,
++    "sections": [
++      {
++        "passageId": "glass_roof_station",
++        "questionIds": [
++          "gs_q1",
++          "gs_q2",
++          "gs_q3",
++          "gs_q4",
++          "gs_q5",
++          "gs_q6",
++          "gs_q7",
++          "gs_q8"
++        ]
++      },
++      {
++        "passageId": "under_bridge_song",
++        "questionIds": [
++          "ubs_q1",
++          "ubs_q2",
++          "ubs_q3",
++          "ubs_q4",
++          "ubs_q5",
++          "ubs_q6"
++        ]
++      },
++      {
++        "passageId": "copper_weathercock",
++        "questionIds": [
++          "wc_q1",
++          "wc_q2",
++          "wc_q3",
++          "wc_q4",
++          "wc_q5",
++          "wc_q6",
++          "wc_q7",
++          "wc_q8",
++          "wc_q10",
++          "wc_q11",
++          "wc_q12",
++          "wc_q13"
++        ]
++      }
++    ]
++  },
++  {
++    "id": "paper_j",
++    "title": "Original KS2-style Paper J",
++    "timeLimitMin": 60,
++    "totalMarks": 50,
++    "sections": [
++      {
++        "passageId": "rain_gardeners",
++        "questionIds": [
++          "rg_q1",
++          "rg_q2",
++          "rg_q3",
++          "rg_q4",
++          "rg_q5",
++          "rg_q6",
++          "rg_q7",
++          "rg_q8"
++        ]
++      },
++      {
++        "passageId": "old_observatory",
++        "questionIds": [
++          "obs_q1",
++          "obs_q2",
++          "obs_q3",
++          "obs_q4",
++          "obs_q5",
++          "obs_q6"
++        ]
++      },
++      {
++        "passageId": "soil_remembers",
++        "questionIds": [
++          "soil_q1",
++          "soil_q2",
++          "soil_q3",
++          "soil_q4",
++          "soil_q5",
++          "soil_q6",
++          "soil_q7",
++          "soil_q8",
++          "soil_q9",
++          "soil_q10",
++          "soil_q11",
++          "soil_q12"
++        ]
++      }
++    ]
++  },
++  {
++    "id": "paper_k",
++    "title": "Original KS2-style Paper K",
++    "timeLimitMin": 60,
++    "totalMarks": 50,
++    "sections": [
++      {
++        "passageId": "borrowed_compass",
++        "questionIds": [
++          "bc_q1",
++          "bc_q2",
++          "bc_q3",
++          "bc_q4",
++          "bc_q5",
++          "bc_q6",
++          "bc_q7",
++          "bc_q8"
++        ]
++      },
++      {
++        "passageId": "under_bridge_song",
++        "questionIds": [
++          "ubs_q1",
++          "ubs_q2",
++          "ubs_q3",
++          "ubs_q4",
++          "ubs_q5",
++          "ubs_q6"
++        ]
++      },
++      {
++        "passageId": "bats_map_night",
++        "questionIds": [
++          "bat_q1",
++          "bat_q2",
++          "bat_q3",
++          "bat_q4",
++          "bat_q5",
++          "bat_q6",
++          "bat_q7",
++          "bat_q8",
++          "bat_q9",
++          "bat_q10",
++          "bat_q11",
++          "bat_q12",
++          "bat_q13"
++        ]
++      }
++    ]
++  },
++  {
++    "id": "paper_l",
++    "title": "Original KS2-style Paper L",
++    "timeLimitMin": 60,
++    "totalMarks": 50,
++    "sections": [
++      {
++        "passageId": "glass_roof_station",
++        "questionIds": [
++          "gs_q1",
++          "gs_q2",
++          "gs_q3",
++          "gs_q4",
++          "gs_q5",
++          "gs_q6",
++          "gs_q7",
++          "gs_q8"
++        ]
++      },
++      {
++        "passageId": "rain_gardeners",
++        "questionIds": [
++          "rg_q1",
++          "rg_q2",
++          "rg_q3",
++          "rg_q4",
++          "rg_q5",
++          "rg_q6",
++          "rg_q7",
++          "rg_q8"
++        ]
++      },
++      {
++        "passageId": "soil_remembers",
++        "questionIds": [
++          "soil_q1",
++          "soil_q2",
++          "soil_q3",
++          "soil_q4",
++          "soil_q5",
++          "soil_q6",
++          "soil_q7",
++          "soil_q8",
++          "soil_q10",
++          "soil_q11",
++          "soil_q12"
++        ]
++      }
++    ]
+   }
++
++
+ ]);
+ 
+ export const READING_GENRES = Object.freeze(['fiction', 'non-fiction', 'poetry']);
+diff --git a/shared/reading/metadata.js b/shared/reading/metadata.js
+index 6bcea47..42cf31a 100644
+--- a/shared/reading/metadata.js
++++ b/shared/reading/metadata.js
+@@ -1,7 +1,7 @@
+ // Browser-safe Reading metadata. Do not import passage, question or marking
+ // content here; the production client may consume this module directly.
+ export const READING_CONTENT_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
+-export const READING_CONTENT_VERSION = 1;
++export const READING_CONTENT_VERSION = 2;
+ 
+ export const READING_SKILLS = Object.freeze({
+   '2a': {
+@@ -71,15 +71,15 @@ export function readingContentSummary() {
+   return {
+     releaseId: READING_CONTENT_RELEASE_ID,
+     version: READING_CONTENT_VERSION,
+-    passageCount: 13,
+-    questionCount: 107,
+-    paperCount: 8,
++    passageCount: 21,
++    questionCount: 182,
++    paperCount: 12,
+     skillCount: Object.keys(READING_SKILLS).length,
+     genres: {
+-      fiction: 5,
+-      'non-fiction': 5,
+-      poetry: 3,
++      fiction: 8,
++      'non-fiction': 8,
++      poetry: 5,
+     },
+-    longPassageCount: 4,
++    longPassageCount: 7,
+   };
+ }
+diff --git a/src/platform/game/mastery/reading.js b/src/platform/game/mastery/reading.js
+index dc1a291..af21dca 100644
+--- a/src/platform/game/mastery/reading.js
++++ b/src/platform/game/mastery/reading.js
+@@ -10,6 +10,7 @@ import {
+ } from './shared.js';
+ 
+ export const READING_REWARD_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
++export const READING_GRAND_MONSTER_ID = 'lorequill';
+ 
+ export const READING_SKILL_TO_MONSTER = Object.freeze({
+   '2a': 'readbloom',
+@@ -22,6 +23,18 @@ export const READING_SKILL_TO_MONSTER = Object.freeze({
+   '2h': 'structurillon',
+ });
+ 
++const READING_CORE_SKILL_IDS = Object.freeze(Object.keys(READING_SKILL_TO_MONSTER));
++const READING_DIRECT_STAR_THRESHOLDS = Object.freeze([1, 25, 50, 75, 100]);
++const READING_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
++
++const READING_MONSTER_SKILL_TOTALS = Object.freeze(
++  READING_CORE_SKILL_IDS.reduce((totals, skillId) => {
++    const monsterId = READING_SKILL_TO_MONSTER[skillId];
++    totals[monsterId] = (totals[monsterId] || 0) + 1;
++    return totals;
++  }, { [READING_GRAND_MONSTER_ID]: READING_CORE_SKILL_IDS.length }),
++);
++
+ export function readingMasteryKey(skillId, releaseId = READING_REWARD_RELEASE_ID) {
+   return `${releaseId}:reading-skill:${skillId}`;
+ }
+@@ -30,13 +43,36 @@ export function monsterIdForReadingSkill(skillId) {
+   return READING_SKILL_TO_MONSTER[skillId] || null;
+ }
+ 
++function readingMonsterTotal(monsterId) {
++  return READING_MONSTER_SKILL_TOTALS[monsterId] || MONSTERS[monsterId]?.masteredMax || 1;
++}
++
++function readingDisplayStars(mastered, total) {
++  const safeTotal = Math.max(1, Number(total) || 1);
++  const safeMastered = Math.max(0, Math.min(safeTotal, Number(mastered) || 0));
++  return Math.min(100, Math.round((safeMastered / safeTotal) * 100));
++}
++
++function thresholdsForReadingMonster(monsterId) {
++  return monsterId === READING_GRAND_MONSTER_ID
++    ? READING_GRAND_STAR_THRESHOLDS
++    : READING_DIRECT_STAR_THRESHOLDS;
++}
++
+ function progressForReadingMonsterFromState(state, monsterId) {
+   const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
+   const mastered = masteredList(entry).length;
++  const masteredMax = readingMonsterTotal(monsterId);
++  const displayStars = readingDisplayStars(mastered, masteredMax);
++  const stage = stageFor(displayStars, thresholdsForReadingMonster(monsterId));
+   return {
+     mastered,
+-    stage: stageFor(mastered, [1, 1, 2, 3, 4]),
+-    level: levelFor(mastered * 25),
++    masteredMax,
++    displayStars,
++    starMax: 100,
++    stage,
++    displayStage: stage,
++    level: levelFor(displayStars),
+     caught: mastered >= 1,
+     branch: branchForMonster(state, monsterId),
+     masteredList: masteredList(entry),
+@@ -47,15 +83,15 @@ export function progressForReadingMonster(state, monsterId) {
+   return progressForReadingMonsterFromState(state, monsterId);
+ }
+ 
+-export function activeReadingMonsterSummaryFromState(state = {}) {
+-  return READING_MONSTER_IDS
+-    .map((monsterId) => ({
+-      subjectId: 'reading',
+-      monster: MONSTERS[monsterId],
+-      progress: progressForReadingMonsterFromState(state, monsterId),
+-    }))
+-    .filter((entry) => entry.progress.caught || entry.progress.mastered > 0);
+-}
++export function activeReadingMonsterSummaryFromState(state = {}) {
++  return READING_MONSTER_IDS
++    .map((monsterId) => ({
++      subjectId: 'reading',
++      monster: MONSTERS[monsterId],
++      progress: progressForReadingMonsterFromState(state, monsterId),
++    }))
++    .filter((entry) => entry.progress.caught || entry.progress.mastered > 0);
++}
+ 
+ export function recordReadingSkillMastery({
+   learnerId,
+@@ -65,27 +101,36 @@ export function recordReadingSkillMastery({
+   gameStateRepository,
+   random = Math.random,
+ } = {}) {
+-  const monsterId = monsterIdForReadingSkill(skillId);
+-  if (!monsterId || !masteryKey || !MONSTERS[monsterId]) return [];
+-  const before = ensureMonsterBranches(learnerId, gameStateRepository, {
++  const directMonsterId = monsterIdForReadingSkill(skillId);
++  if (!directMonsterId || !masteryKey || !MONSTERS[directMonsterId]) return [];
++
++  let workingState = ensureMonsterBranches(learnerId, gameStateRepository, {
+     random,
+     monsterIds: READING_MONSTER_IDS,
+   });
+-  const entry = isPlainObject(before[monsterId]) ? before[monsterId] : { mastered: [], caught: false };
+-  const mastered = masteredList(entry);
+-  if (mastered.includes(masteryKey)) return [];
+-  const beforeProgress = progressForReadingMonsterFromState(before, monsterId);
+-  const after = {
+-    ...before,
+-    [monsterId]: {
+-      ...entry,
+-      caught: true,
+-      releaseId,
+-      mastered: [...mastered, masteryKey],
+-    },
+-  };
+-  const afterProgress = progressForReadingMonsterFromState(after, monsterId);
+-  saveMonsterState(learnerId, after, gameStateRepository);
+-  const event = eventFromTransition(learnerId, monsterId, beforeProgress, afterProgress);
+-  return event ? [{ ...event, subjectId: 'reading' }] : [];
++  const rewardEvents = [];
++
++  for (const monsterId of [directMonsterId, READING_GRAND_MONSTER_ID]) {
++    if (!MONSTERS[monsterId]) continue;
++    const previousProgress = progressForReadingMonsterFromState(workingState, monsterId);
++    const entry = isPlainObject(workingState[monsterId]) ? workingState[monsterId] : { mastered: [], caught: false };
++    const mastered = masteredList(entry);
++    if (mastered.includes(masteryKey)) continue;
++    const afterState = {
++      ...workingState,
++      [monsterId]: {
++        ...entry,
++        caught: true,
++        releaseId,
++        mastered: [...mastered, masteryKey],
++      },
++    };
++    const nextProgress = progressForReadingMonsterFromState(afterState, monsterId);
++    workingState = afterState;
++    const event = eventFromTransition(learnerId, monsterId, previousProgress, nextProgress);
++    if (event) rewardEvents.push({ ...event, subjectId: 'reading' });
++  }
++
++  if (rewardEvents.length) saveMonsterState(learnerId, workingState, gameStateRepository);
++  return rewardEvents;
+ }
+diff --git a/src/platform/game/monsters.js b/src/platform/game/monsters.js
+index be86f6b..918f0f8 100644
+--- a/src/platform/game/monsters.js
++++ b/src/platform/game/monsters.js
+@@ -190,7 +190,7 @@ export const MONSTERS = {
+     secondary: '#E6A8C7',
+     pale: '#F8E9F1',
+     nameByStage: ['Readbloom Egg', 'Readbloom', 'Cluebloom', 'Lexileaf', 'Mega Lexileaf'],
+-    masteredMax: 4,
++    masteredMax: 2,
+   },
+   readrill: {
+     id: 'readrill',
+@@ -201,7 +201,7 @@ export const MONSTERS = {
+     secondary: '#9EC4E6',
+     pale: '#E8F1FA',
+     nameByStage: ['Readrill Egg', 'Readrill', 'Detailrill', 'Summaryloom', 'Mega Summaryloom'],
+-    masteredMax: 4,
++    masteredMax: 2,
+   },
+   inferane: {
+     id: 'inferane',
+@@ -212,7 +212,7 @@ export const MONSTERS = {
+     secondary: '#B8C7CF',
+     pale: '#EDF2F4',
+     nameByStage: ['Inferane Egg', 'Inferane', 'Evidenceglint', 'Proofglass', 'Mega Proofglass'],
+-    masteredMax: 4,
++    masteredMax: 2,
+   },
+   structurillon: {
+     id: 'structurillon',
+@@ -223,7 +223,18 @@ export const MONSTERS = {
+     secondary: '#E8C45A',
+     pale: '#F6EED7',
+     nameByStage: ['Structurillon Egg', 'Structurillon', 'Shapechord', 'Comparebell', 'Mega Comparebell'],
+-    masteredMax: 4,
++    masteredMax: 2,
++  },
++  lorequill: {
++    id: 'lorequill',
++    assetId: 'phaeton',
++    name: 'Lorequill',
++    blurb: 'The Reading legendary that rises only when all core KS2 reading domains are secure.',
++    accent: '#2F70B8',
++    secondary: '#9FC7F2',
++    pale: '#E8F2FF',
++    nameByStage: ['Lorequill Egg', 'Lorequill', 'Pagewing', 'Storycrest', 'Grand Lorequill'],
++    masteredMax: 8,
+   },
+ };
+ 
+@@ -246,7 +257,7 @@ export const MONSTERS_BY_SUBJECT = {
+   grammarReserve: ['glossbloom', 'loomrill', 'mirrane'],
+   // Reading owns separate state ids while reusing existing reserve art via
+   // each monster's assetId. This avoids Grammar/Punctuation state collision.
+-  reading: ['readbloom', 'readrill', 'inferane', 'structurillon'],
++  reading: ['readbloom', 'readrill', 'inferane', 'structurillon', 'lorequill'],
+ };
+ 
+ export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);
+diff --git a/tests/reading-content-contract.test.js b/tests/reading-content-contract.test.js
+index 82f279b..2ac314b 100644
+--- a/tests/reading-content-contract.test.js
++++ b/tests/reading-content-contract.test.js
+@@ -9,55 +9,62 @@ import {
+ } from '../shared/reading/content.js';
+ import { readingContentSummary as readingPublicContentSummary } from '../shared/reading/metadata.js';
+ import { publicEventRowToRecord } from '../worker/src/row-transforms.js';
+-
+-function norm(value) {
+-  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+-}
+-
+-test('reading content bank has varied original passages, papers and KS2 domains', () => {
+-  const summary = readingContentSummary();
+-  assert.equal(summary.passageCount, 13);
+-  assert.equal(summary.paperCount, 8);
+-  assert.ok(summary.questionCount >= 100);
+-  assert.ok(Object.keys(READING_SKILLS).includes('2d'));
+-  assert.ok(summary.genres.fiction >= 4);
+-  assert.ok(summary.genres['non-fiction'] >= 4);
+-  assert.ok(summary.genres.poetry >= 3);
+-});
+-
+-test('reading ids are unique and evidence quotes exist in their source passage', () => {
+-  const passageIds = new Set();
+-  const questionIds = new Set();
+-  for (const passage of READING_PASSAGES) {
+-    assert.ok(!passageIds.has(passage.id), `duplicate passage ${passage.id}`);
+-    passageIds.add(passage.id);
+-    const passageText = norm((passage.blocks || []).join(' '));
+-    assert.ok(passageText.length > 100, `${passage.id} has too little text`);
+-    for (const question of passage.questions || []) {
+-      assert.ok(!questionIds.has(question.id), `duplicate question ${question.id}`);
+-      questionIds.add(question.id);
+-      assert.ok(READING_SKILLS[question.skill], `${question.id} has unknown skill`);
+-      if (question.evidenceCheck?.containsAny) {
+-        for (const snippet of question.evidenceCheck.containsAny) {
+-          assert.ok(passageText.includes(norm(snippet)), `${question.id} evidence quote is not in passage: ${snippet}`);
+-        }
+-      }
+-    }
+-  }
+-});
+-
+-test('reading test papers only reference existing passages and questions', () => {
+-  const passageMap = new Map(READING_PASSAGES.map((passage) => [passage.id, passage]));
+-  for (const paper of READING_TEST_PAPERS) {
+-    assert.equal(paper.timeLimitMin, 60);
+-    assert.equal(paper.totalMarks, 50);
+-    assert.equal(paper.sections.length, 3);
+-    for (const section of paper.sections) {
+-      const passage = passageMap.get(section.passageId);
+-      assert.ok(passage, `${paper.id} missing passage ${section.passageId}`);
+-      const qids = new Set((passage.questions || []).map((question) => question.id));
+-      for (const qid of section.questionIds) assert.ok(qids.has(qid), `${paper.id} missing question ${qid}`);
+-    }
++
++function norm(value) {
++  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
++}
++
++test('reading content bank has varied original passages, papers and KS2 domains', () => {
++  const summary = readingContentSummary();
++  assert.equal(summary.passageCount, 21);
++  assert.equal(summary.paperCount, 12);
++  assert.ok(summary.questionCount >= 180);
++  assert.ok(Object.keys(READING_SKILLS).includes('2d'));
++  assert.ok(summary.genres.fiction >= 8);
++  assert.ok(summary.genres['non-fiction'] >= 8);
++  assert.ok(summary.genres.poetry >= 5);
++  assert.ok(summary.longPassageCount >= 7);
++});
++
++test('reading ids are unique and evidence quotes exist in their source passage', () => {
++  const passageIds = new Set();
++  const questionIds = new Set();
++  for (const passage of READING_PASSAGES) {
++    assert.ok(!passageIds.has(passage.id), `duplicate passage ${passage.id}`);
++    passageIds.add(passage.id);
++    const passageText = norm((passage.blocks || []).join(' '));
++    assert.ok(passageText.length > 100, `${passage.id} has too little text`);
++    for (const question of passage.questions || []) {
++      assert.ok(!questionIds.has(question.id), `duplicate question ${question.id}`);
++      questionIds.add(question.id);
++      assert.ok(READING_SKILLS[question.skill], `${question.id} has unknown skill`);
++      if (question.evidenceCheck?.containsAny) {
++        for (const snippet of question.evidenceCheck.containsAny) {
++          assert.ok(passageText.includes(norm(snippet)), `${question.id} evidence quote is not in passage: ${snippet}`);
++        }
++      }
++    }
++  }
++});
++
++test('reading test papers only reference existing passages and questions and sum to 50 marks', () => {
++  const passageMap = new Map(READING_PASSAGES.map((passage) => [passage.id, passage]));
++  for (const paper of READING_TEST_PAPERS) {
++    assert.equal(paper.timeLimitMin, 60);
++    assert.equal(paper.totalMarks, 50);
++    assert.equal(paper.sections.length, 3);
++    let paperMarks = 0;
++    for (const section of paper.sections) {
++      const passage = passageMap.get(section.passageId);
++      assert.ok(passage, `${paper.id} missing passage ${section.passageId}`);
++      const questionMap = new Map((passage.questions || []).map((question) => [question.id, question]));
++      for (const qid of section.questionIds) {
++        const question = questionMap.get(qid);
++        assert.ok(question, `${paper.id} missing question ${qid}`);
++        paperMarks += Number(question.marks) || 0;
++      }
++    }
++    assert.equal(paperMarks, paper.totalMarks, `${paper.id} mark total`);
+   }
+ });
+ 
+diff --git a/tests/worker-reading-runtime.test.js b/tests/worker-reading-runtime.test.js
+index 0155c68..1560030 100644
+--- a/tests/worker-reading-runtime.test.js
++++ b/tests/worker-reading-runtime.test.js
+@@ -91,3 +91,64 @@ test('reading secured skill events project into reading-owned monster rewards',
+   assert.equal(projection.rewardEvents[0].monsterId, 'inferane');
+   assert.ok(projection.changedGameState['monster-codex'].inferane.caught);
+ });
++
++test('reading delayed-feedback sessions do not expose answers through immediate submit or section mark', () => {
++  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
++  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'test', viewMode: 'one', paperId: 'paper_i' }, requestId: 'r1' });
++  const session = started.state.session;
++  const qid = session.sections[0].questionIds[0];
++
++  const submitted = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: { state: started.state, data: started.data },
++    command: 'submit-answer',
++    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'blue folder' } },
++    requestId: 'r2',
++  });
++  assert.equal(submitted.state.phase, 'question');
++  assert.equal(submitted.state.feedback, null);
++  assert.equal(Object.keys(submitted.state.session.sections[0].results).length, 0);
++  assert.equal(submitted.events.length, 0);
++
++  const submittedReadModel = buildReadingReadModel({ learnerId: 'l1', state: submitted.state, data: submitted.data, stats: submitted.stats, analytics: submitted.analytics });
++  assert.equal(submittedReadModel.session.result, null);
++  assert.equal(submittedReadModel.session.currentQuestion.modelAnswer, undefined);
++
++  const sectionMarked = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: { state: submitted.state, data: submitted.data },
++    command: 'mark-section',
++    payload: {},
++    requestId: 'r3',
++  });
++  assert.equal(Object.keys(sectionMarked.state.session.sections[0].results).length, 0);
++  assert.match(sectionMarked.state.error, /whole paper/i);
++});
++
++test('reading reward thresholds use direct clusters plus a full-domain aggregate monster', () => {
++  const skills = ['2a', '2g', '2b', '2c', '2d', '2e', '2f', '2h'];
++  let gameState = {};
++  const allEvents = [];
++  for (const skillId of skills) {
++    const projection = projectReadingRewards({
++      learnerId: 'l1',
++      domainEvents: [{
++        type: 'reading.skill-secured',
++        subjectId: 'reading',
++        learnerId: 'l1',
++        skillId,
++        contentReleaseId: 'reading-poc-promoted-2026-05-05',
++      }],
++      gameState,
++      random: () => 0,
++    });
++    gameState = projection.gameState;
++    allEvents.push(...projection.rewardEvents);
++  }
++
++  const codex = gameState['monster-codex'];
++  assert.equal(codex.readbloom.mastered.length, 2);
++  assert.equal(codex.lorequill.mastered.length, 8);
++  assert.ok(allEvents.some((event) => event.monsterId === 'lorequill' && event.kind === 'mega'));
++  assert.ok(allEvents.some((event) => event.monsterId === 'readbloom' && event.kind === 'mega'));
++});
+diff --git a/worker/src/subjects/reading/engine.js b/worker/src/subjects/reading/engine.js
+index 418a3a8..788fdac 100644
+--- a/worker/src/subjects/reading/engine.js
++++ b/worker/src/subjects/reading/engine.js
+@@ -449,13 +449,13 @@ function relevantQuestionsForMode(passage, mode, skillFilter, allowSkillFallback
+   return questions;
+ }
+ 
+-function questionWeakness(data, question) {
++function questionWeakness(data, question, nowValue = Date.now()) {
+   const qNode = data.questions[question.id] || defaultNode();
+   const sNode = data.skills[question.skill] || defaultNode();
+   const tNode = data.qtypes[question.type] || defaultNode();
+   let score = (1 - qNode.strength) * 3 + (1 - sNode.strength) * 2 + (1 - tNode.strength);
+   if (!qNode.attempts) score += 0.9;
+-  if (qNode.dueAt && qNode.dueAt <= Date.now()) score += 2;
++  if (qNode.dueAt && qNode.dueAt <= nowValue) score += 2;
+   return score;
+ }
+ 
+@@ -468,7 +468,7 @@ function hasStrictModeMatch(data, prefs) {
+   });
+ }
+ 
+-function chooseWeightedPassage(data, prefs, random) {
++function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
+   const strictSkillMatch = hasStrictModeMatch(data, prefs);
+   const candidates = READING_PASSAGES.filter((passage) => {
+     if (prefs.genre && passage.genre !== prefs.genre) return false;
+@@ -484,7 +484,7 @@ function chooseWeightedPassage(data, prefs, random) {
+     const questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
+     let weight = 1 + (1 - pNode.strength) * 1.7 + (1 - gNode.strength);
+     if (!pNode.attempts) weight += 0.7;
+-    weight += average(questions.map((question) => questionWeakness(data, question)));
++    weight += average(questions.map((question) => questionWeakness(data, question, nowValue)));
+     const recentCount = data.events.slice(-12).filter((event) => event.passageId === passage.id).length;
+     weight *= Math.pow(0.58, recentCount);
+     return [passage, Math.max(0.05, weight)];
+@@ -497,13 +497,13 @@ function chooseWeightedPassage(data, prefs, random) {
+   return weighted[weighted.length - 1][0];
+ }
+ 
+-function chooseQuestionIds(data, passage, prefs) {
++function chooseQuestionIds(data, passage, prefs, nowValue = Date.now()) {
+   const strictSkillMatch = hasStrictModeMatch(data, prefs);
+   let questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
+   if (!questions.length) questions = (passage.questions || []).slice();
+   if (prefs.mode === 'guided') return questions.slice(0, Math.min(4, questions.length)).map((question) => question.id);
+   if (prefs.mode === 'stamina') return questions.map((question) => question.id);
+-  questions.sort((a, b) => questionWeakness(data, b) - questionWeakness(data, a));
++  questions.sort((a, b) => questionWeakness(data, b, nowValue) - questionWeakness(data, a, nowValue));
+   const limit = prefs.mode === 'smart' ? 4 : prefs.mode === 'punct' ? 3 : 5;
+   const picked = [];
+   const seenSkills = new Set();
+@@ -565,9 +565,9 @@ function buildPracticeSession(data, prefs, { nowValue, random, heroContext } = {
+       })),
+     };
+   }
+-  const passage = chooseWeightedPassage(data, prefs, random);
++  const passage = chooseWeightedPassage(data, prefs, random, nowValue);
+   if (!passage) return null;
+-  const questionIds = chooseQuestionIds(data, passage, prefs);
++  const questionIds = chooseQuestionIds(data, passage, prefs, nowValue);
+   return {
+     id: uid('reading_session'),
+     mode: prefs.mode,
+@@ -844,7 +844,7 @@ function safeDataForReadModels(data) {
+   };
+ }
+ 
+-function buildStats(data) {
++function buildStats(data, nowValue = Date.now()) {
+   data = safeDataForReadModels(data);
+   const skillRows = SKILL_IDS.map((skillId) => {
+     const node = data.skills[skillId] || defaultNode();
+@@ -864,7 +864,7 @@ function buildStats(data) {
+   const total = events.length;
+   const correct = events.filter((event) => event.correct).length;
+   const independent = events.filter((event) => event.independent).length;
+-  const due = skillRows.filter((row) => row.status === 'due').length + (data.retryQueue || []).filter((entry) => entry.dueAt <= Date.now()).length;
++  const due = skillRows.filter((row) => row.status === 'due').length + (data.retryQueue || []).filter((entry) => entry.dueAt <= nowValue).length;
+   const weak = skillRows.filter((row) => row.status === 'weak').length;
+   const secured = skillRows.filter((row) => row.status === 'secured').length;
+   return {
+@@ -883,7 +883,7 @@ function buildStats(data) {
+   };
+ }
+ 
+-function buildAnalytics(data) {
++function buildAnalytics(data, nowValue = Date.now()) {
+   data = safeDataForReadModels(data);
+   const events = data.events || [];
+   const byGenre = ['fiction', 'non-fiction', 'poetry'].map((genre) => {
+@@ -908,13 +908,13 @@ function buildAnalytics(data) {
+     .slice(0, 8);
+   return {
+     available: true,
+-    generatedAt: Date.now(),
+-    skills: buildStats(data).skills,
++    generatedAt: nowValue,
++    skills: buildStats(data, nowValue).skills,
+     byGenre,
+     byType,
+     misconceptionPatterns,
+     recentActivity: events.slice(-15).reverse(),
+-    reviewQueue: (data.retryQueue || []).filter((entry) => entry.dueAt <= Date.now()).slice(0, 12),
++    reviewQueue: (data.retryQueue || []).filter((entry) => entry.dueAt <= nowValue).slice(0, 12),
+   };
+ }
+ 
+@@ -963,12 +963,16 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
+         const question = currentQuestion(session);
+         if (section && question) {
+           const qid = question.id;
+-          section.responses[qid] = clone(payload.response || {});
+-          if (payload.advance) moveQuestion(session, { delta: 1 });
+-          state.feedback = null;
+-          state.phase = 'question';
+-          state.updatedAt = t;
+-          practiceSession = buildPracticeSessionRow(session, 'active', t);
++          if (payload.expectedSessionId && payload.expectedSessionId !== session.id) changed = false;
++          else if (payload.expectedQuestionId && payload.expectedQuestionId !== qid) changed = false;
++          else {
++            section.responses[qid] = clone(payload.response || {});
++            if (payload.advance) moveQuestion(session, { delta: 1 });
++            state.feedback = null;
++            state.phase = 'question';
++            state.updatedAt = t;
++            practiceSession = buildPracticeSessionRow(session, 'active', t);
++          }
+         }
+       }
+     } else if (command === 'submit-answer') {
+@@ -980,7 +984,18 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
+         const qid = question.id;
+         if (payload.expectedSessionId && payload.expectedSessionId !== session.id) changed = false;
+         else if (payload.expectedQuestionId && payload.expectedQuestionId !== qid) changed = false;
+-        else {
++        else if (session.delayedFeedback) {
++          // Delayed-feedback and strict paper sessions must not leak marking,
++          // model answers or evidence through the immediate submit command.
++          // Treat a stale/accidental submit as a safe draft save; marking is
++          // only performed by mark-section/mark-session below.
++          section.responses[qid] = clone(payload.response || {});
++          if (payload.advance) moveQuestion(session, { delta: 1 });
++          state.feedback = null;
++          state.phase = 'question';
++          state.updatedAt = t;
++          practiceSession = buildPracticeSessionRow(session, 'active', t);
++        } else {
+           section.responses[qid] = clone(payload.response || {});
+           section.attempts[qid] = (Number(section.attempts[qid]) || 0) + 1;
+           if (!section.startedAtByQuestion[qid]) section.startedAtByQuestion[qid] = t;
+@@ -994,7 +1009,13 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
+     } else if (command === 'mark-section' || command === 'mark-session') {
+       const session = state.session;
+       if (!session) changed = false;
+-      else {
++      else if (session.strict && command === 'mark-section') {
++        // SATs-style paper mode is all-or-nothing: section marking would expose
++        // answers before the paper has ended, so it is rejected at the engine boundary.
++        state.error = 'Paper mode feedback is only available after marking the whole paper.';
++        state.updatedAt = t;
++        practiceSession = buildPracticeSessionRow(session, 'active', t);
++      } else {
+         const sections = command === 'mark-section' ? [currentSection(session)].filter(Boolean) : session.sections;
+         for (const section of sections) {
+           for (const qid of section.questionIds) {
+@@ -1045,8 +1066,8 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
+       state.prefs = data.prefs;
+       state.updatedAt = t;
+     }
+-    const stats = buildStats(data);
+-    const analytics = buildAnalytics(data);
++    const stats = buildStats(data, t);
++    const analytics = buildAnalytics(data, t);
+     return {
+       changed,
+       state,
+diff --git a/worker/src/subjects/reading/read-models.js b/worker/src/subjects/reading/read-models.js
+index 21acc3b..b709ae6 100644
+--- a/worker/src/subjects/reading/read-models.js
++++ b/worker/src/subjects/reading/read-models.js
+@@ -71,15 +71,15 @@ function markedCount(session) {
+   return (session?.sections || []).reduce((sum, section) => sum + Object.keys(section.results || {}).length, 0);
+ }
+ 
++
++function responseHasValue(value) {
++  if (Array.isArray(value)) return value.some(responseHasValue);
++  if (value && typeof value === 'object') return Object.values(value).some(responseHasValue);
++  return String(value == null ? '' : value).trim() !== '';
++}
++
+ function answerCount(session) {
+-  return (session?.sections || []).reduce((sum, section) => sum + section.questionIds.filter((qid) => {
+-    const response = section.responses?.[qid];
+-    return response && Object.values(response).some((value) => {
+-      if (Array.isArray(value)) return value.length > 0;
+-      if (value && typeof value === 'object') return Object.values(value).some((inner) => String(inner || '').trim());
+-      return String(value || '').trim();
+-    });
+-  }).length, 0);
++  return (session?.sections || []).reduce((sum, section) => sum + section.questionIds.filter((qid) => responseHasValue(section.responses?.[qid])).length, 0);
+ }
+ 
+ function questionCount(session) {
+@@ -102,7 +102,7 @@ function sectionNav(session) {
+       title: session.mode === 'test' ? `Text ${index + 1}` : (passage?.title || `Text ${index + 1}`),
+       passageId: section.passageId,
+       current: index === session.currentSectionIndex,
+-      answered: section.questionIds.filter((qid) => section.responses?.[qid]).length,
++      answered: section.questionIds.filter((qid) => responseHasValue(section.responses?.[qid])).length,
+       marked: Object.keys(section.results || {}).length,
+       total: section.questionIds.length,
+     };
+@@ -114,7 +114,7 @@ function questionNav(session) {
+   if (!section) return [];
+   return section.questionIds.map((qid, index) => {
+     const result = section.results?.[qid] || null;
+-    const hasResponse = Boolean(section.responses?.[qid]);
++    const hasResponse = responseHasValue(section.responses?.[qid]);
+     return {
+       id: qid,
+       index,
