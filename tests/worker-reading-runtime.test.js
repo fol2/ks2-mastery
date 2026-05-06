@@ -134,6 +134,34 @@ test('reading marked answers cannot be overwritten by duplicate or stale submiss
   assert.deepEqual(staleSave.state.session.sections[0].responses[qid], originalResponse);
 });
 
+test('reading engine reloads persisted ui state for follow-up commands', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({
+    learnerId: 'l1',
+    command: 'start-session',
+    payload: { mode: 'guided', viewMode: 'one' },
+    requestId: 'r1',
+  });
+  const session = started.state.session;
+  const qid = session.sections[0].questionIds[0];
+
+  const submitted = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: session.id,
+      expectedQuestionId: qid,
+      response: { answer: 'folded slips of paper' },
+    },
+    requestId: 'r2',
+  });
+
+  assert.equal(submitted.changed, true);
+  assert.equal(submitted.state.phase, 'feedback');
+  assert.equal(submitted.state.session.id, session.id);
+});
+
 test('worker subject runtime wires reading command handlers', async () => {
   const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
   const context = fakeContext();

@@ -932,7 +932,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
   function apply({ learnerId, subjectRecord = null, latestSession = null, command, payload = {}, requestId = '' } = {}) {
     const t = nowValue();
     let data = normaliseData(subjectRecord?.data || subjectRecord?.snapshot?.data || subjectRecord?.state?.data || {});
-    let state = normaliseState(subjectRecord?.state || {}, data);
+    let state = normaliseState(subjectRecord?.state || subjectRecord?.ui || {}, data);
     const events = [];
     let changed = true;
     let previousActiveSessionId = latestSession?.status === 'active' ? latestSession.id : null;

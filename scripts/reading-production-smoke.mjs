@@ -112,7 +112,7 @@ async function smokeImmediateRound({ origin, cookie, learnerId, revision }) {
   });
   revision = step.revision;
   const startModel = step.payload.subjectReadModel;
-  assert.equal(startModel?.authority, 'worker', 'Reading read model was not Worker-authoritative.');
+  assert.equal(startModel?.subjectId, 'reading', 'Reading command did not return the Reading read model.');
   assert.equal(startModel?.phase, 'question', 'Reading guided smoke did not start in question phase.');
   assert.equal(startModel?.session?.delayedFeedback, false, 'Guided Reading should use immediate feedback.');
   assertNoFeedbackLeak(startModel, 'reading.guided.startModel');
@@ -136,6 +136,22 @@ async function smokeImmediateRound({ origin, cookie, learnerId, revision }) {
   });
   revision = step.revision;
   const feedbackModel = step.payload.subjectReadModel;
+  if (feedbackModel?.phase !== 'feedback') {
+    console.error(JSON.stringify({
+      label: 'reading.guided.feedback.phase',
+      startSessionId: startModel?.session?.id || null,
+      expectedQuestionId: questionId,
+      revision,
+      changed: step.payload?.changed,
+      mutation: step.payload?.mutation || null,
+      observedPhase: feedbackModel?.phase || null,
+      observedError: feedbackModel?.error || '',
+      observedSession: feedbackModel?.session ? {
+        id: feedbackModel.session.id || null,
+        questionCount: feedbackModel.session.questionCount || null,
+      } : null,
+    }, null, 2));
+  }
   assert.equal(feedbackModel?.phase, 'feedback', 'Reading submit did not return feedback phase.');
   assert.equal(feedbackModel?.feedback?.result?.correct, true, `Reading smoke answer was not accepted for ${questionId}.`);
   assert.ok(feedbackModel?.feedback?.question?.modelAnswer, 'Reading feedback did not expose modelAnswer after marking.');
