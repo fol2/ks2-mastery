@@ -54,7 +54,9 @@ node --test \
   tests/reading-session-interface.test.js
 ```
 
-Result: 24 tests passed, 0 failed.
+Original ZIP result: 24 tests passed, 0 failed.
+
+Repository result after implementation drift fixes: 32 tests passed, 0 failed. The repository gate also includes button-label consistency coverage, render-level proof that list mode emits prefixed full-section form controls without pre-marking feedback leakage, one-question draft preservation coverage, and explicit list-mode draft clearing coverage.
 
 Broader non-React subject/reward regression check:
 
@@ -73,14 +75,30 @@ node --test \
   tests/reading-session-interface.test.js
 ```
 
-Result: 170 tests passed, 0 failed.
+Original ZIP result: 170 tests passed, 0 failed.
 
-## Build limit
+Repository result after implementation drift fixes: 174 tests passed, 0 failed.
 
-`npm run build` was attempted in the lean ZIP environment. It failed because dependencies are not installed:
+## Dependency-complete repository certification
+
+The original lean ZIP environment could not certify `npm run build` because dependencies were absent:
 
 ```text
 Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'esbuild' imported from scripts/build-client.mjs
 ```
 
-That is an environment/dependency limitation of this ZIP workout folder, not a demonstrated Reading product failure. Final build certification should run in the dependency-installed repository or CI.
+That was an environment/dependency limitation of the ZIP workout folder, not a demonstrated Reading product failure.
+
+The dependency-complete repository certification now passes:
+
+```bash
+npm test
+npm run build
+npm run check
+```
+
+Results:
+
+- Full `npm test`: 109156 tests, 109144 passed, 12 skipped, 0 failed.
+- `npm run build`: passed.
+- `npm run check`: passed through the OAuth-safe Wrangler dry-run path, including build, public asset assertion and client bundle audit.

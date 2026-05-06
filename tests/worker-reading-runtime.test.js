@@ -270,3 +270,184 @@ test('reading reward thresholds use direct clusters plus a full-domain aggregate
   assert.ok(allEvents.some((event) => event.monsterId === 'lorequill' && event.kind === 'mega'));
   assert.ok(allEvents.some((event) => event.monsterId === 'readbloom' && event.kind === 'mega'));
 });
+
+test('reading list-view read model exposes a safe current-section question list', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'list' }, requestId: 'r1' });
+  const readModel = buildReadingReadModel({ learnerId: 'l1', state: started.state, data: started.data, stats: started.stats, analytics: started.analytics });
+  assert.equal(readModel.session.viewMode, 'list');
+  assert.equal(readModel.session.currentSection.index, 0);
+  assert.equal(readModel.session.questions.length, started.state.session.sections[0].questionIds.length);
+  assert.equal(readModel.session.questions[0].modelAnswer, undefined);
+  assert.equal(readModel.session.questions[0].explanation, undefined);
+  assert.equal(readModel.session.questions[0].response.answer, undefined);
+});
+
+test('reading save-response can persist visible section drafts and navigate without marking', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'list' }, requestId: 'r1' });
+  const session = started.state.session;
+  const [firstQid, secondQid] = session.sections[0].questionIds;
+  const saved = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'save-response',
+    payload: {
+      expectedSessionId: session.id,
+      expectedSectionIndex: 0,
+      responses: {
+        [firstQid]: { answer: 'folded slips of paper' },
+        [secondQid]: { answer: '1' },
+      },
+      move: { questionIndex: 1 },
+    },
+    requestId: 'r2',
+  });
+  assert.equal(saved.changed, true);
+  assert.equal(saved.state.session.currentQuestionIndex, 1);
+  assert.deepEqual(saved.state.session.sections[0].responses[firstQid], { answer: 'folded slips of paper' });
+  assert.equal(Object.keys(saved.state.session.sections[0].results).length, 0);
+});
+
+test('reading mark-section accepts current visible section drafts before deterministic marking', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'list' }, requestId: 'r1' });
+  const session = started.state.session;
+  const qid = session.sections[0].questionIds[0];
+  const marked = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'mark-section',
+    payload: {
+      expectedSessionId: session.id,
+      expectedSectionIndex: 0,
+      responses: { [qid]: { answer: 'folded slips of paper' } },
+    },
+    requestId: 'r2',
+  });
+  assert.equal(marked.changed, true);
+  assert.equal(marked.state.phase, 'summary');
+  const event = marked.events.find((entry) => entry.type === 'reading.answer-submitted' && entry.questionId === qid);
+  assert.equal(event?.score, 1);
+  assert.equal(event?.maxScore, 1);
+});
+
+test('reading section response merge does not blank previously saved one-question drafts', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
+  const session = started.state.session;
+  const [firstQid, secondQid] = session.sections[0].questionIds;
+  const savedFirst = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'save-response',
+    payload: {
+      expectedSessionId: session.id,
+      expectedSectionIndex: 0,
+      expectedQuestionId: firstQid,
+      response: { answer: 'folded slips of paper' },
+      move: { questionIndex: 1 },
+    },
+    requestId: 'r2',
+  });
+
+  const merged = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: savedFirst.state, data: savedFirst.data },
+    command: 'save-response',
+    payload: {
+      expectedSessionId: session.id,
+      expectedSectionIndex: 0,
+      responses: {
+        [firstQid]: {},
+        [secondQid]: { answer: '1' },
+      },
+      preserveExistingNonEmptyResponses: true,
+    },
+    requestId: 'r3',
+  });
+  assert.deepEqual(merged.state.session.sections[0].responses[firstQid], { answer: 'folded slips of paper' });
+
+  const marked = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: merged.state, data: merged.data },
+    command: 'mark-section',
+    payload: {
+      expectedSessionId: session.id,
+      expectedSectionIndex: 0,
+      responses: { [secondQid]: { answer: '1' } },
+    },
+    requestId: 'r4',
+  });
+
+  const firstEvent = marked.events.find((entry) => entry.type === 'reading.answer-submitted' && entry.questionId === firstQid);
+  assert.equal(firstEvent?.score, 1);
+});
+
+test('reading list-mode section save can explicitly clear a previously saved draft', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'list' }, requestId: 'r1' });
+  const session = started.state.session;
+  const [firstQid] = session.sections[0].questionIds;
+  const saved = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'save-response',
+    payload: {
+      expectedSessionId: session.id,
+      expectedSectionIndex: 0,
+      responses: { [firstQid]: { answer: 'folded slips of paper' } },
+    },
+    requestId: 'r2',
+  });
+  assert.deepEqual(saved.state.session.sections[0].responses[firstQid], { answer: 'folded slips of paper' });
+
+  const cleared = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: saved.state, data: saved.data },
+    command: 'save-response',
+    payload: {
+      expectedSessionId: session.id,
+      expectedSectionIndex: 0,
+      responses: { [firstQid]: { answer: '' } },
+    },
+    requestId: 'r3',
+  });
+  assert.deepEqual(cleared.state.session.sections[0].responses[firstQid], { answer: '' });
+});
+
+test('reading save and mark commands reject stale expected section indexes', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'list' }, requestId: 'r1' });
+  const session = started.state.session;
+  const qid = session.sections[0].questionIds[0];
+
+  const staleSave = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'save-response',
+    payload: {
+      expectedSessionId: session.id,
+      expectedSectionIndex: 1,
+      responses: { [qid]: { answer: 'folded slips of paper' } },
+    },
+    requestId: 'r2',
+  });
+  assert.equal(staleSave.changed, false);
+  assert.equal(staleSave.state.session.sections[0].responses[qid], undefined);
+
+  const staleMark = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'mark-section',
+    payload: {
+      expectedSessionId: session.id,
+      expectedSectionIndex: 1,
+      responses: { [qid]: { answer: 'folded slips of paper' } },
+    },
+    requestId: 'r3',
+  });
+  assert.equal(staleMark.changed, false);
+  assert.equal(Object.keys(staleMark.state.session.sections[0].results).length, 0);
+  assert.equal(staleMark.events.length, 0);
+});

@@ -94,19 +94,27 @@ function currentScore(session) {
   return (session?.sections || []).reduce((sum, section) => sum + Object.values(section.results || {}).reduce((inner, result) => inner + (result.score || 0), 0), 0);
 }
 
+function sectionTitle(session, section, index) {
+  const passage = PASSAGE_MAP[section?.passageId];
+  return session?.mode === 'test' ? `Text ${index + 1}` : (passage?.title || `Text ${index + 1}`);
+}
+
 function sectionNav(session) {
-  return (session?.sections || []).map((section, index) => {
-    const passage = PASSAGE_MAP[section.passageId];
-    return {
-      index,
-      title: session.mode === 'test' ? `Text ${index + 1}` : (passage?.title || `Text ${index + 1}`),
-      passageId: section.passageId,
-      current: index === session.currentSectionIndex,
-      answered: section.questionIds.filter((qid) => responseHasValue(section.responses?.[qid])).length,
-      marked: Object.keys(section.results || {}).length,
-      total: section.questionIds.length,
-    };
-  });
+  return (session?.sections || []).map((section, index) => ({
+    index,
+    title: sectionTitle(session, section, index),
+    passageId: section.passageId,
+    current: index === session.currentSectionIndex,
+    answered: section.questionIds.filter((qid) => responseHasValue(section.responses?.[qid])).length,
+    marked: Object.keys(section.results || {}).length,
+    total: section.questionIds.length,
+  }));
+}
+
+function questionStatusFor(section, qid) {
+  const result = section?.results?.[qid] || null;
+  const hasResponse = responseHasValue(section?.responses?.[qid]);
+  return result ? (result.correct ? 'correct' : result.score > 0 ? 'partial' : 'wrong') : hasResponse ? 'saved' : 'blank';
 }
 
 function questionNav(session) {
@@ -114,16 +122,30 @@ function questionNav(session) {
   if (!section) return [];
   return section.questionIds.map((qid, index) => {
     const result = section.results?.[qid] || null;
-    const hasResponse = responseHasValue(section.responses?.[qid]);
     return {
       id: qid,
       index,
       current: index === session.currentQuestionIndex,
-      status: result ? (result.correct ? 'correct' : result.score > 0 ? 'partial' : 'wrong') : hasResponse ? 'saved' : 'blank',
+      status: questionStatusFor(section, qid),
       score: result?.score ?? null,
       maxScore: QUESTION_REF_MAP[qid]?.question?.marks || 0,
     };
   });
+}
+
+function sectionQuestionList(session, section) {
+  if (!section) return [];
+  return section.questionIds.map((qid, index) => {
+    const question = QUESTION_REF_MAP[qid]?.question || null;
+    const result = section.results?.[qid] || null;
+    return {
+      ...safeQuestion(question, { includeSkill: Boolean(result), includeFeedback: Boolean(result) }),
+      index,
+      status: questionStatusFor(section, qid),
+      response: clone(section.responses?.[qid] || {}),
+      result: result ? clone(result) : null,
+    };
+  }).filter((entry) => entry && entry.id);
 }
 
 function activeSessionReadModel(session) {
@@ -134,6 +156,7 @@ function activeSessionReadModel(session) {
   const question = QUESTION_REF_MAP[qid]?.question || null;
   const result = section?.results?.[qid] || null;
   const response = section?.responses?.[qid] || null;
+  const sectionIndex = session.currentSectionIndex || 0;
   return {
     id: session.id,
     mode: session.mode,
@@ -154,6 +177,15 @@ function activeSessionReadModel(session) {
     maxScore: totalMarks(session),
     sectionNav: sectionNav(session),
     questionNav: questionNav(session),
+    currentSection: section ? {
+      index: sectionIndex,
+      title: sectionTitle(session, section, sectionIndex),
+      passageId: section.passageId,
+      answered: section.questionIds.filter((itemQid) => responseHasValue(section.responses?.[itemQid])).length,
+      marked: Object.keys(section.results || {}).length,
+      total: section.questionIds.length,
+    } : null,
+    questions: sectionQuestionList(session, section),
     passage: safePassage(passage),
     currentQuestion: safeQuestion(question, { includeSkill: Boolean(result), includeFeedback: Boolean(result) }),
     response,

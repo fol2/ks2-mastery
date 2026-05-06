@@ -262,7 +262,7 @@ async function main() {
 
   const evidence = {
     ok: true,
-    smokeType: 'reading-p2-production',
+    smokeType: argValue('--smoke-type', 'reading-production'),
     environment: origin === 'https://ks2.eugnel.uk' ? 'production' : 'non-production',
     deployedUrl: origin,
     origin,

@@ -5,40 +5,71 @@ function selectedReadingUi(state) {
   return normaliseReadingReadModel(state?.subjectUi?.reading, state?.learners?.selectedId || '');
 }
 
+function fieldName(name, prefix = '') {
+  return `${prefix || ''}${name}`;
+}
+
 function formDataValue(formData, name) {
   if (!formData || typeof formData.get !== 'function') return '';
   return formData.get(name) ?? '';
 }
 
-function responseFromFormData(formData, question) {
+function responseFromFormData(formData, question, prefix = '') {
   if (!question) return {};
-  if (question.type === 'mcq') return { answer: String(formDataValue(formData, 'answer')) };
+  if (question.type === 'mcq') return { answer: String(formDataValue(formData, fieldName('answer', prefix))) };
   if (question.type === 'multiSelect') {
-    return { answer: typeof formData?.getAll === 'function' ? formData.getAll('answer').map(String) : [] };
+    return { answer: typeof formData?.getAll === 'function' ? formData.getAll(fieldName('answer', prefix)).map(String) : [] };
   }
-  if (question.type === 'short') return { answer: String(formDataValue(formData, 'answer')) };
+  if (question.type === 'short') return { answer: String(formDataValue(formData, fieldName('answer', prefix))) };
   if (question.type === 'evidenceShort') {
     return {
-      answer: String(formDataValue(formData, 'answer')),
-      evidence: String(formDataValue(formData, 'evidence')),
+      answer: String(formDataValue(formData, fieldName('answer', prefix))),
+      evidence: String(formDataValue(formData, fieldName('evidence', prefix))),
     };
   }
-  if (question.type === 'open') return { answer: String(formDataValue(formData, 'answer')) };
+  if (question.type === 'open') return { answer: String(formDataValue(formData, fieldName('answer', prefix))) };
   if (question.type === 'match') {
     const map = {};
-    (question.prompts || []).forEach((_, index) => { map[index] = String(formDataValue(formData, `map_${index}`)); });
+    (question.prompts || []).forEach((_, index) => { map[index] = String(formDataValue(formData, fieldName(`map_${index}`, prefix))); });
     return { map };
   }
   if (question.type === 'order') {
     const order = {};
-    (question.items || []).forEach((_, index) => { order[index] = String(formDataValue(formData, `order_${index}`)); });
+    (question.items || []).forEach((_, index) => { order[index] = String(formDataValue(formData, fieldName(`order_${index}`, prefix))); });
     return { order };
   }
-  return { answer: String(formDataValue(formData, 'answer')) };
+  return { answer: String(formDataValue(formData, fieldName('answer', prefix))) };
+}
+
+function responsesFromFormData(formData, questions = []) {
+  const responses = {};
+  for (const question of questions || []) {
+    if (!question?.id) continue;
+    responses[question.id] = responseFromFormData(formData, question, `q_${question.id}_`);
+  }
+  return responses;
+}
+
+function hasSectionFormFields(formData) {
+  if (!formData || typeof formData.keys !== 'function') return false;
+  for (const key of formData.keys()) {
+    if (String(key || '').startsWith('q_')) return true;
+  }
+  return false;
+}
+
+function responseHasValue(value) {
+  if (Array.isArray(value)) return value.some(responseHasValue);
+  if (value && typeof value === 'object') return Object.values(value).some(responseHasValue);
+  return String(value == null ? '' : value).trim() !== '';
 }
 
 function currentQuestion(state) {
   return selectedReadingUi(state).session?.currentQuestion || null;
+}
+
+function currentSectionQuestions(state) {
+  return selectedReadingUi(state).session?.questions || [];
 }
 
 function currentSession(state) {
@@ -50,8 +81,27 @@ function responsePayload({ data, state }) {
   const question = currentQuestion(state);
   return {
     expectedSessionId: session?.id || '',
+    expectedSectionIndex: session?.currentSectionIndex ?? 0,
     expectedQuestionId: question?.id || '',
     response: responseFromFormData(data?.formData, question),
+  };
+}
+
+function sectionResponsesPayload({ data, state }) {
+  const session = currentSession(state);
+  const questions = currentSectionQuestions(state);
+  const hasSectionFields = hasSectionFormFields(data?.formData);
+  const responses = hasSectionFields ? responsesFromFormData(data?.formData, questions) : {};
+  const question = currentQuestion(state);
+  if (question?.id && (!hasSectionFields || !responseHasValue(responses[question.id]))) {
+    const singleResponse = responseFromFormData(data?.formData, question);
+    if (responseHasValue(singleResponse)) responses[question.id] = singleResponse;
+  }
+  return {
+    expectedSessionId: session?.id || '',
+    expectedSectionIndex: session?.currentSectionIndex ?? 0,
+    responses,
+    preserveExistingNonEmptyResponses: !hasSectionFields,
   };
 }
 
@@ -118,7 +168,16 @@ export const readingSubjectCommandActions = Object.freeze({
   },
   'reading-save-response': {
     command: 'save-response',
-    payload: ({ data, state }) => ({ ...responsePayload({ data, state }), advance: data?.advance !== false }),
+    payload: ({ data, state }) => ({
+      ...responsePayload({ data, state }),
+      advance: Boolean(data?.advance),
+      move: data?.move || null,
+    }),
+    dedupeKey: false,
+  },
+  'reading-save-section': {
+    command: 'save-response',
+    payload: ({ data, state }) => ({ ...sectionResponsesPayload({ data, state }), move: data?.move || null }),
     dedupeKey: false,
   },
   'reading-continue': {
@@ -137,12 +196,12 @@ export const readingSubjectCommandActions = Object.freeze({
   },
   'reading-mark-section': {
     command: 'mark-section',
-    payload: {},
+    payload: sectionResponsesPayload,
     dedupeKey: false,
   },
   'reading-mark-session': {
     command: 'mark-session',
-    payload: {},
+    payload: sectionResponsesPayload,
     dedupeKey: false,
   },
   'reading-end': {

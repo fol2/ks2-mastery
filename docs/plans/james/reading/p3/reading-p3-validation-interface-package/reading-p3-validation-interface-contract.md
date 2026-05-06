@@ -1,6 +1,6 @@
 # Reading P3 validation and delegated question-session UX contract
 
-Status: ready-to-apply patch contract
+Status: implemented in the dependency-complete repository
 Scope: Reading subject session UX, draft persistence, list-view correctness, safe read-model enrichment
 Source boundary: GitHub `main` is the source authority for the implementation the user says is live; the uploaded `ks2-mastery-lean-05061443.zip` is the local validation and patch-base snapshot.
 
@@ -85,14 +85,21 @@ node --test \
   tests/reading-session-interface.test.js
 ```
 
-Final CI still needs a dependency-complete install before build certification:
+The dependency-complete repository must pass:
 
 ```bash
-npm install
+npm test
 npm run build
+npm run check
 ```
 
-The lean ZIP used for this audit does not include `node_modules`, so build certification is not proven from this local environment.
+Repository certification after implementation drift fixes:
+
+- Focused Reading P3 gate: 32 tests passed, 0 failed.
+- Broader Reading/cross-subject regression gate: 174 tests passed, 0 failed.
+- Full `npm test`: 109156 tests, 109144 passed, 12 skipped, 0 failed.
+- `npm run build`: passed.
+- `npm run check`: passed through the OAuth-safe Wrangler dry-run path.
 
 ## 6. Non-goals
 

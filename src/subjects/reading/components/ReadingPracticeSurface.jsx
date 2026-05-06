@@ -34,6 +34,48 @@ function SetupField({ label, name, value, options }) {
   );
 }
 
+function inputName(name, prefix = '') {
+  return `${prefix || ''}${name}`;
+}
+
+function statusLabel(status) {
+  return ({
+    blank: 'Not answered',
+    saved: 'Saved',
+    correct: 'Correct',
+    partial: 'Partly right',
+    wrong: 'Review',
+  })[status] || 'Not answered';
+}
+
+function statusTone(status) {
+  return ({
+    saved: 'saved',
+    correct: 'good',
+    partial: 'warn',
+    wrong: 'bad',
+  })[status] || 'blank';
+}
+
+function isPending(ui) {
+  return Boolean(ui?.pendingCommand);
+}
+
+function canGoPrevious(session) {
+  return Boolean(session && (session.currentSectionIndex > 0 || session.currentQuestionIndex > 0));
+}
+
+function canGoNext(session) {
+  if (!session) return false;
+  const sectionTotal = session.questionNav?.length || session.currentSection?.total || session.questionCount || 0;
+  if (session.currentQuestionIndex < sectionTotal - 1) return true;
+  return session.currentSectionIndex < (session.sectionNav?.length || 1) - 1;
+}
+
+function hasMarkedQuestion(question) {
+  return Boolean(question?.result || question?.status === 'correct' || question?.status === 'partial' || question?.status === 'wrong');
+}
+
 function ReadingSetup({ ui, actions }) {
   const prefs = ui.prefs || {};
   function start(event) {
@@ -111,7 +153,7 @@ function PassagePanel({ passage, showParagraphNumbers = true }) {
   );
 }
 
-function QuestionInput({ question, response = {}, disabled = false }) {
+function QuestionInput({ question, response = {}, disabled = false, prefix = '' }) {
   if (!question) return null;
   if (question.type === 'mcq') {
     return (
@@ -119,7 +161,7 @@ function QuestionInput({ question, response = {}, disabled = false }) {
         <legend>Your answer</legend>
         {(question.options || []).map((option, index) => (
           <label key={index} className="option-row">
-            <input type="radio" name="answer" value={String(index)} defaultChecked={String(response.answer) === String(index)} />
+            <input type="radio" name={inputName('answer', prefix)} value={String(index)} defaultChecked={String(response.answer) === String(index)} />
             <span>{option}</span>
           </label>
         ))}
@@ -133,7 +175,7 @@ function QuestionInput({ question, response = {}, disabled = false }) {
         <legend>Choose all that apply</legend>
         {(question.options || []).map((option, index) => (
           <label key={index} className="option-row">
-            <input type="checkbox" name="answer" value={String(index)} defaultChecked={selected.has(String(index))} />
+            <input type="checkbox" name={inputName('answer', prefix)} value={String(index)} defaultChecked={selected.has(String(index))} />
             <span>{option}</span>
           </label>
         ))}
@@ -145,11 +187,11 @@ function QuestionInput({ question, response = {}, disabled = false }) {
       <div className="answer-grid">
         <label className="field">
           <span>Your answer</span>
-          <input name="answer" defaultValue={response.answer || ''} disabled={disabled} />
+          <input name={inputName('answer', prefix)} defaultValue={response.answer || ''} disabled={disabled} />
         </label>
         <label className="field">
           <span>Evidence from the text</span>
-          <textarea name="evidence" defaultValue={response.evidence || ''} disabled={disabled} />
+          <textarea name={inputName('evidence', prefix)} defaultValue={response.evidence || ''} disabled={disabled} />
         </label>
       </div>
     );
@@ -158,7 +200,7 @@ function QuestionInput({ question, response = {}, disabled = false }) {
     return (
       <label className="field">
         <span>Your written answer</span>
-        <textarea name="answer" defaultValue={response.answer || ''} disabled={disabled} />
+        <textarea name={inputName('answer', prefix)} defaultValue={response.answer || ''} disabled={disabled} />
       </label>
     );
   }
@@ -171,7 +213,7 @@ function QuestionInput({ question, response = {}, disabled = false }) {
             <tr key={index}>
               <td>{prompt}</td>
               <td>
-                <select name={`map_${index}`} defaultValue={response.map?.[index] || ''} disabled={disabled}>
+                <select name={inputName(`map_${index}`, prefix)} defaultValue={response.map?.[index] || ''} disabled={disabled}>
                   <option value="">Choose</option>
                   {(question.options || []).map((option, optionIndex) => <option key={optionIndex} value={String(optionIndex)}>{option}</option>)}
                 </select>
@@ -191,7 +233,7 @@ function QuestionInput({ question, response = {}, disabled = false }) {
             <tr key={index}>
               <td>{item}</td>
               <td>
-                <select name={`order_${index}`} defaultValue={response.order?.[index] || ''} disabled={disabled}>
+                <select name={inputName(`order_${index}`, prefix)} defaultValue={response.order?.[index] || ''} disabled={disabled}>
                   <option value="">Choose</option>
                   {(question.items || []).map((_, posIndex) => <option key={posIndex} value={String(posIndex + 1)}>{posIndex + 1}</option>)}
                 </select>
@@ -205,7 +247,7 @@ function QuestionInput({ question, response = {}, disabled = false }) {
   return (
     <label className="field">
       <span>Your answer</span>
-      <input name="answer" defaultValue={response.answer || ''} disabled={disabled} />
+      <input name={inputName('answer', prefix)} defaultValue={response.answer || ''} disabled={disabled} />
     </label>
   );
 }
@@ -230,6 +272,39 @@ function Feedback({ feedback }) {
   );
 }
 
+function QuestionNavBar({ session, actions, disabled = false, formId = '' }) {
+  const nav = session?.questionNav || [];
+  if (!nav.length) return null;
+  function jump(event, index) {
+    if (disabled || index === session.currentQuestionIndex) return;
+    const form = event.currentTarget.form;
+    if (!session.result && form) {
+      dispatch(actions, 'reading-save-response', { formData: new FormData(form), move: { questionIndex: index } });
+    } else {
+      dispatch(actions, 'reading-move', { questionIndex: index });
+    }
+  }
+  return (
+    <div className="reading-question-nav" aria-label="Reading question navigation">
+      {nav.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          form={formId || undefined}
+          className={`reading-nav-chip ${item.current ? 'current' : ''} ${statusTone(item.status)}`}
+          onClick={(event) => jump(event, item.index)}
+          disabled={disabled}
+          aria-current={item.current ? 'step' : undefined}
+          title={`Question ${item.index + 1}: ${statusLabel(item.status)}`}
+        >
+          <span>{item.index + 1}</span>
+          <small>{statusLabel(item.status)}</small>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function QuestionPanel({ ui, actions }) {
   const session = ui.session;
   const question = session?.currentQuestion;
@@ -237,6 +312,9 @@ function QuestionPanel({ ui, actions }) {
   if (!session || !question) return null;
   const response = session.response || {};
   const disabled = Boolean(result);
+  const pending = isPending(ui);
+  const formId = `reading-question-form-${session.id}`;
+  const feedback = ui.feedback || (result ? { result } : null);
   function submit(event) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -246,33 +324,150 @@ function QuestionPanel({ ui, actions }) {
     }
     dispatch(actions, 'reading-submit-form', { formData });
   }
+
+  function saveAndMove(event, move) {
+    const form = event.currentTarget.form;
+    if (!disabled && form) dispatch(actions, 'reading-save-response', { formData: new FormData(form), move });
+    else dispatch(actions, 'reading-move', move);
+  }
+
+  function finish(event) {
+    const form = event.currentTarget.form;
+    dispatch(actions, session.strict ? 'reading-mark-session' : 'reading-mark-section', { formData: form ? new FormData(form) : null });
+  }
+
   return (
-    <section className="card">
-      <div className="eyebrow">Question {session.currentQuestionIndex + 1} of {session.questionNav?.length || session.questionCount}</div>
+    <section className="card reading-question-card">
+      <div className="reading-active-step">
+        <div>
+          <div className="eyebrow">Question {session.currentQuestionIndex + 1} of {session.questionNav?.length || session.questionCount}</div>
+          <h2 className="section-title">Answer from the passage</h2>
+        </div>
+        <span className={`reading-status-badge ${statusTone(session.questionNav?.[session.currentQuestionIndex]?.status)}`}>
+          {statusLabel(session.questionNav?.[session.currentQuestionIndex]?.status)}
+        </span>
+      </div>
+      <QuestionNavBar session={session} actions={actions} disabled={pending} formId={formId} />
       <div className="chip-row reading-chip-row-before">
         <span className="chip">{question.marks} mark{question.marks === 1 ? '' : 's'}</span>
         <span className="chip">{questionTypeLabel(question.type)}</span>
         {question.skillName ? <span className="chip">{question.skillName}</span> : null}
       </div>
-      <form key={question.id} onSubmit={submit}>
+      <div className="callout reading-session-guidance">
+        {session.delayedFeedback && !result
+          ? 'Paper-style mode: save your answer, move on, and mark only when you are ready for feedback.'
+          : result
+            ? 'Review the model answer and evidence, then move to the next question.'
+            : 'Read the passage first, answer without clues, then submit for feedback.'}
+      </div>
+      <form id={formId} key={question.id} onSubmit={submit} data-reading-active-form="true">
         <p className="question-stem">{question.stem}</p>
         <QuestionInput question={question} response={response} disabled={disabled} />
         <div className="actions reading-actions-spaced">
-          {!disabled ? <button className="btn primary" type="submit" disabled={Boolean(ui.pendingCommand)}>{session.delayedFeedback ? 'Save and next' : 'Submit answer'}</button> : null}
-          <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-move', { delta: -1 })} disabled={Boolean(ui.pendingCommand)}>Previous</button>
-          <button className="btn secondary" type="button" onClick={() => dispatch(actions, 'reading-move', { delta: 1 })} disabled={Boolean(ui.pendingCommand)}>Next</button>
-          {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={() => dispatch(actions, session.strict ? 'reading-mark-session' : 'reading-mark-section')} disabled={Boolean(ui.pendingCommand)}>Finish now</button> : null}
-          <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={Boolean(ui.pendingCommand)}>End round</button>
+          {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{session.delayedFeedback ? 'Save and next' : 'Submit answer'}</button> : null}
+          <button className="btn ghost" type="button" onClick={(event) => saveAndMove(event, { delta: -1 })} disabled={pending || !canGoPrevious(session)}>Previous</button>
+          <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save and next'}</button>
+          {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={finish} disabled={pending}>Finish now</button> : null}
+          <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
         </div>
       </form>
-      <Feedback feedback={ui.feedback || (result ? { result } : null)} />
+      <Feedback feedback={feedback} />
     </section>
   );
+}
+
+function QuestionListPanel({ ui, actions }) {
+  const session = ui.session;
+  const questions = session?.questions || [];
+  if (!session || !questions.length) return null;
+  const pending = isPending(ui);
+
+  function saveSection(event) {
+    const form = event.currentTarget.form;
+    dispatch(actions, 'reading-save-section', { formData: form ? new FormData(form) : null });
+  }
+
+  function mark(event) {
+    event.preventDefault();
+    dispatch(actions, session.strict ? 'reading-mark-session' : 'reading-mark-section', { formData: new FormData(event.currentTarget) });
+  }
+
+  return (
+    <section className="card reading-question-card reading-question-list-card">
+      <div className="reading-active-step">
+        <div>
+          <div className="eyebrow">{session.currentSection?.title || 'Current text'}</div>
+          <h2 className="section-title">Answer the full question list</h2>
+        </div>
+        <span className="reading-status-badge saved">{session.currentSection?.answered || 0}/{session.currentSection?.total || questions.length} saved</span>
+      </div>
+      <div className="reading-question-nav" aria-label="Question list shortcuts">
+        {questions.map((questionItem) => (
+          <a key={questionItem.id} className={`reading-nav-chip ${statusTone(questionItem.status)}`} href={`#reading-q-${questionItem.id}`}>
+            <span>{questionItem.index + 1}</span>
+            <small>{statusLabel(questionItem.status)}</small>
+          </a>
+        ))}
+      </div>
+      <div className="callout reading-session-guidance">
+        {session.strict
+          ? 'SATs-style mode: answer each text, then mark the whole paper when you want feedback.'
+          : 'List mode saves the whole visible section together. Feedback stays hidden until you mark the section.'}
+      </div>
+      <form className="reading-list-form" onSubmit={mark} data-reading-active-form="true">
+        {questions.map((questionItem) => {
+          const marked = hasMarkedQuestion(questionItem);
+          return (
+            <article key={questionItem.id} id={`reading-q-${questionItem.id}`} className={`reading-list-question ${marked ? 'is-marked' : ''}`}>
+              <div className="reading-list-question-header">
+                <div>
+                  <strong>Question {questionItem.index + 1}</strong>
+                  <div className="chip-row reading-chip-row-before">
+                    <span className="chip">{questionItem.marks} mark{questionItem.marks === 1 ? '' : 's'}</span>
+                    <span className="chip">{questionTypeLabel(questionItem.type)}</span>
+                    {questionItem.skillName ? <span className="chip">{questionItem.skillName}</span> : null}
+                  </div>
+                </div>
+                <span className={`reading-status-badge ${statusTone(questionItem.status)}`}>{statusLabel(questionItem.status)}</span>
+              </div>
+              <p className="question-stem">{questionItem.stem}</p>
+              <QuestionInput question={questionItem} response={questionItem.response || {}} disabled={marked} prefix={`q_${questionItem.id}_`} />
+              <Feedback feedback={questionItem.result ? { result: questionItem.result } : null} />
+            </article>
+          );
+        })}
+        <div className="actions reading-actions-spaced">
+          <button className="btn secondary" type="button" onClick={saveSection} disabled={pending}>Save</button>
+          <button className="btn warn" type="submit" disabled={pending}>{session.strict ? 'Mark whole paper' : 'Mark this section'}</button>
+          <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function activeReadingFormData() {
+  if (typeof document === 'undefined') return null;
+  const form = document.querySelector('[data-reading-active-form="true"]');
+  return form ? new FormData(form) : null;
 }
 
 function SessionHud({ ui }) {
   const session = ui.session;
   if (!session) return null;
+  function moveToSection(section) {
+    const move = { sectionIndex: section.index, questionIndex: 0 };
+    const formData = activeReadingFormData();
+    if (formData && session.viewMode === 'list') {
+      dispatch(ui.actions, 'reading-save-section', { formData, move });
+      return;
+    }
+    if (formData && !session.result) {
+      dispatch(ui.actions, 'reading-save-response', { formData, move });
+      return;
+    }
+    dispatch(ui.actions, 'reading-move', move);
+  }
   return (
     <section className="card reading-session-hud">
       <div className="stats-row">
@@ -284,7 +479,7 @@ function SessionHud({ ui }) {
       {session.sectionNav?.length > 1 ? (
         <div className="chip-row reading-section-nav">
           {session.sectionNav.map((section) => (
-            <button key={section.index} className={`chip ${section.current ? 'good' : ''}`} type="button" onClick={() => dispatch(ui.actions, 'reading-move', { sectionIndex: section.index, questionIndex: 0 })}>{section.title}</button>
+            <button key={section.index} className={`chip ${section.current ? 'good' : ''}`} type="button" onClick={() => moveToSection(section)}>{section.title}</button>
           ))}
         </div>
       ) : null}
@@ -300,7 +495,7 @@ function ReadingSession({ ui, actions }) {
       <SessionHud ui={uiWithActions} />
       <div className="grid two subject-practice-grid">
         <PassagePanel passage={session.passage} showParagraphNumbers={ui.prefs?.showParagraphNumbers !== false} />
-        <QuestionPanel ui={uiWithActions} actions={actions} />
+        {session.viewMode === 'list' ? <QuestionListPanel ui={uiWithActions} actions={actions} /> : <QuestionPanel ui={uiWithActions} actions={actions} />}
       </div>
     </>
   );

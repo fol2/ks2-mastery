@@ -1,0 +1,114 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { build } from 'esbuild';
+
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+function source(path) {
+  return readFileSync(path, 'utf8');
+}
+
+function nodePaths() {
+  return [
+    path.join(rootDir, 'node_modules'),
+    ...String(process.env.NODE_PATH || '').split(path.delimiter),
+  ].filter((entry) => entry && existsSync(entry));
+}
+
+function absoluteSpecifier(relativePath) {
+  return JSON.stringify(path.join(rootDir, relativePath));
+}
+
+async function renderFixture(entrySource) {
+  const tmpDir = await mkdtemp(path.join(tmpdir(), 'ks2-reading-interface-'));
+  const entryPath = path.join(tmpDir, 'entry.jsx');
+  const bundlePath = path.join(tmpDir, 'entry.cjs');
+  try {
+    await writeFile(entryPath, entrySource);
+    await build({
+      absWorkingDir: rootDir,
+      entryPoints: [entryPath],
+      outfile: bundlePath,
+      bundle: true,
+      platform: 'node',
+      format: 'cjs',
+      target: ['node24'],
+      jsx: 'automatic',
+      jsxImportSource: 'react',
+      loader: { '.js': 'jsx' },
+      nodePaths: nodePaths(),
+      logLevel: 'silent',
+    });
+    return execFileSync(process.execPath, [bundlePath], {
+      cwd: rootDir,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true });
+  }
+}
+
+test('reading surface implements delegated full-list session UI inside the app frame', () => {
+  const ui = source('src/subjects/reading/components/ReadingPracticeSurface.jsx');
+  assert.match(ui, /function QuestionListPanel/);
+  assert.match(ui, /session\.viewMode === 'list'/);
+  assert.match(ui, /reading-save-section/);
+  assert.match(ui, /data-reading-active-form="true"/);
+});
+
+test('reading command actions serialise section responses and preserve stale guards', () => {
+  const commands = source('src/subjects/reading/command-actions.js');
+  assert.match(commands, /function responsesFromFormData/);
+  assert.match(commands, /function hasSectionFormFields/);
+  assert.match(commands, /expectedSectionIndex/);
+  assert.match(commands, /'reading-save-section'/);
+  assert.match(commands, /command: 'mark-section'/);
+});
+
+test('reading read model exposes section question lists without pre-attempt feedback fields', () => {
+  const models = source('worker/src/subjects/reading/read-models.js');
+  assert.match(models, /function sectionQuestionList/);
+  assert.match(models, /includeFeedback: Boolean\(result\)/);
+  assert.match(models, /questions: sectionQuestionList\(session, section\)/);
+});
+
+test('reading list-mode surface renders prefixed full-section form controls without feedback leakage', async () => {
+  const html = await renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { createServerReadingEngine } from ${absoluteSpecifier('worker/src/subjects/reading/engine.js')};
+    import { buildReadingReadModel } from ${absoluteSpecifier('worker/src/subjects/reading/read-models.js')};
+    import { ReadingPracticeSurface } from ${absoluteSpecifier('src/subjects/reading/components/ReadingPracticeSurface.jsx')};
+
+    const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+    const started = engine.apply({
+      learnerId: 'l1',
+      command: 'start-session',
+      payload: { mode: 'guided', viewMode: 'list' },
+      requestId: 'r1',
+    });
+    const subjectReadModel = buildReadingReadModel({
+      learnerId: 'l1',
+      state: started.state,
+      data: started.data,
+      stats: started.stats,
+      analytics: started.analytics,
+    });
+    const appState = { learners: { selectedId: 'l1' }, subjectUi: { reading: subjectReadModel } };
+    console.log(renderToStaticMarkup(<ReadingPracticeSurface appState={appState} actions={{ dispatch() {} }} />));
+  `);
+
+  assert.match(html, /Answer the full question list/);
+  assert.match(html, /data-reading-active-form="true"/);
+  assert.match(html, /name="q_[^"]+_answer"/);
+  assert.match(html, /Mark this section/);
+  assert.doesNotMatch(html, /Model answer/);
+});

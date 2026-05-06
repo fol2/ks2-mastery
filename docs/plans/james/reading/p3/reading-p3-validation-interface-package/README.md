@@ -25,6 +25,12 @@ node --test \
   tests/reading-session-interface.test.js
 ```
 
-Local ZIP workout result: focused set passed with 24 tests and 0 failures. Broader non-React subject/reward smoke set passed with 170 tests and 0 failures.
+Original lean ZIP workout result: focused set passed with 24 tests and 0 failures. Broader non-React subject/reward smoke set passed with 170 tests and 0 failures.
 
-`npm run build` was not certified in the lean ZIP because `node_modules` is absent and `esbuild` could not be resolved. Run final CI in the dependency-installed repo.
+Repository certification after implementation drift fixes:
+
+- Focused Reading P3 gate: 32 tests passed, 0 failed.
+- Broader Reading/cross-subject regression gate: 174 tests passed, 0 failed.
+- Full `npm test`: 109156 tests, 109144 passed, 12 skipped, 0 failed.
+- `npm run build`: passed.
+- `npm run check`: passed through the OAuth-safe Wrangler dry-run path.

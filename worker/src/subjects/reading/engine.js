@@ -251,8 +251,8 @@ function ensureNode(collection, key) {
   return collection[key];
 }
 
-function nodeStatus(node) {
-  const now = Date.now();
+function nodeStatus(node, nowValue = Date.now()) {
+  const now = Number.isFinite(Number(nowValue)) ? Number(nowValue) : Date.now();
   if (!node || !node.attempts) return 'new';
   if ((node.strength || 0) < 0.42 || (node.wrong || 0) > (node.correct || 0) + 1) return 'weak';
   if ((node.dueAt || 0) <= now) return 'due';
@@ -705,7 +705,7 @@ function deriveSecuredSkillEvents({ data, learnerId, nowValue, requestId }) {
   for (const skillId of SKILL_IDS.filter((id) => !PUNCTUATION_SKILL_IDS.has(id))) {
     const node = data.skills[skillId];
     if (!node) continue;
-    if (nodeStatus(node) !== 'secured') continue;
+    if (nodeStatus(node, nowValue) !== 'secured') continue;
     const key = `${READING_CONTENT_RELEASE_ID}:${skillId}`;
     if (known.has(key)) continue;
     known.add(key);
@@ -759,6 +759,18 @@ function finaliseSessionIfComplete({ data, state, learnerId, nowValue, requestId
     heroContext: session.heroContext || null,
     createdAt: nowValue,
   }];
+}
+
+function mergeSectionResponses(section, responses = {}, options = {}) {
+  if (!section || !responses || typeof responses !== 'object' || Array.isArray(responses)) return;
+  const preserveExistingNonEmptyResponses = Boolean(options.preserveExistingNonEmptyResponses);
+  for (const qid of section.questionIds || []) {
+    if (section.results?.[qid]) continue;
+    if (!Object.prototype.hasOwnProperty.call(responses, qid)) continue;
+    const nextResponse = clone(responses[qid] || {});
+    if (preserveExistingNonEmptyResponses && !isResponseNonEmpty(nextResponse) && isResponseNonEmpty(section.responses?.[qid])) continue;
+    section.responses[qid] = nextResponse;
+  }
 }
 
 function markQuestion({ data, state, learnerId, section, qid, response, nowValue, requestId }) {
@@ -861,7 +873,7 @@ function buildStats(data, nowValue = Date.now()) {
       correct: node.correct || 0,
       wrong: node.wrong || 0,
       strength: Math.round((node.strength || 0) * 100),
-      status: nodeStatus(node),
+      status: nodeStatus(node, nowValue),
       dueAt: node.dueAt || 0,
     };
   });
@@ -970,17 +982,31 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
           const qid = question.id;
           if (payload.expectedSessionId && payload.expectedSessionId !== session.id) {
             changed = false;
-          } else if (payload.expectedQuestionId && payload.expectedQuestionId !== qid) {
+          } else if (Number.isFinite(Number(payload.expectedSectionIndex)) && Number(payload.expectedSectionIndex) !== Number(session.currentSectionIndex || 0)) {
             changed = false;
-          } else if (section.results?.[qid]) {
+          } else if (payload.expectedQuestionId && payload.expectedQuestionId !== qid && !payload.responses) {
             changed = false;
           } else {
-            section.responses[qid] = clone(payload.response || {});
-            if (payload.advance) moveQuestion(session, { delta: 1 });
-            state.feedback = null;
-            state.phase = 'question';
-            state.updatedAt = t;
-            practiceSession = buildPracticeSessionRow(session, 'active', t);
+            const hasSectionResponses = payload.responses && typeof payload.responses === 'object' && !Array.isArray(payload.responses);
+            const hasMove = payload.move && typeof payload.move === 'object';
+            if (section.results?.[qid] && !hasSectionResponses && !hasMove && !payload.advance) {
+              changed = false;
+            } else {
+              if (hasSectionResponses) {
+                mergeSectionResponses(section, payload.responses, {
+                  preserveExistingNonEmptyResponses: payload.preserveExistingNonEmptyResponses,
+                });
+              } else if (!section.results?.[qid]) {
+                section.responses[qid] = clone(payload.response || {});
+              }
+              if (hasMove) moveQuestion(session, payload.move);
+              else if (payload.advance) moveQuestion(session, { delta: 1 });
+              state.feedback = null;
+              state.error = '';
+              state.phase = 'question';
+              state.updatedAt = t;
+              practiceSession = buildPracticeSessionRow(session, 'active', t);
+            }
           }
         }
       }
@@ -1001,6 +1027,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
           section.responses[qid] = clone(payload.response || {});
           if (payload.advance) moveQuestion(session, { delta: 1 });
           state.feedback = null;
+          state.error = '';
           state.phase = 'question';
           state.updatedAt = t;
           practiceSession = buildPracticeSessionRow(session, 'active', t);
@@ -1010,6 +1037,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
           if (!section.startedAtByQuestion[qid]) section.startedAtByQuestion[qid] = t;
           const resultEvents = markQuestion({ data, state, learnerId, section, qid, response: section.responses[qid], nowValue: t, requestId });
           events.push(...resultEvents, ...deriveSecuredSkillEvents({ data, learnerId, nowValue: t, requestId }));
+          state.error = '';
           state.updatedAt = t;
           events.push(...finaliseSessionIfComplete({ data, state, learnerId, nowValue: t, requestId }));
           practiceSession = buildPracticeSessionRow(state.session || { ...session, sections: session.sections }, state.session ? 'active' : 'completed', t);
@@ -1018,6 +1046,8 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
     } else if (command === 'mark-section' || command === 'mark-session') {
       const session = state.session;
       if (!session) changed = false;
+      else if (payload.expectedSessionId && payload.expectedSessionId !== session.id) changed = false;
+      else if (Number.isFinite(Number(payload.expectedSectionIndex)) && Number(payload.expectedSectionIndex) !== Number(session.currentSectionIndex || 0)) changed = false;
       else if (session.strict && command === 'mark-section') {
         // SATs-style paper mode is all-or-nothing: section marking would expose
         // answers before the paper has ended, so it is rejected at the engine boundary.
@@ -1025,7 +1055,13 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
         state.updatedAt = t;
         practiceSession = buildPracticeSessionRow(session, 'active', t);
       } else {
-        const sections = command === 'mark-section' ? [currentSection(session)].filter(Boolean) : session.sections;
+        const current = currentSection(session);
+        if (current && payload.responses) {
+          mergeSectionResponses(current, payload.responses, {
+            preserveExistingNonEmptyResponses: payload.preserveExistingNonEmptyResponses,
+          });
+        }
+        const sections = command === 'mark-section' ? [current].filter(Boolean) : session.sections;
         for (const section of sections) {
           for (const qid of section.questionIds) {
             if (section.results[qid]) continue;
@@ -1045,6 +1081,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
         moveQuestion(state.session, payload || {});
         state.phase = 'question';
         state.feedback = null;
+        state.error = '';
         state.updatedAt = t;
         practiceSession = buildPracticeSessionRow(state.session, 'active', t);
       }
@@ -1054,6 +1091,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
         moveQuestion(state.session, { delta: 1 });
         state.phase = 'question';
         state.feedback = null;
+        state.error = '';
         state.updatedAt = t;
         practiceSession = buildPracticeSessionRow(state.session, 'active', t);
       }
@@ -1063,6 +1101,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
         const abandoned = state.session;
         state.session = null;
         state.feedback = null;
+        state.error = '';
         state.phase = 'setup';
         state.updatedAt = t;
         practiceSession = buildPracticeSessionRow(abandoned, 'abandoned', t);
