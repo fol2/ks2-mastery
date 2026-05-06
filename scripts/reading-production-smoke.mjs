@@ -153,7 +153,17 @@ async function smokeImmediateRound({ origin, cookie, learnerId, revision }) {
     }, null, 2));
   }
   assert.ok(['feedback', 'summary'].includes(feedbackModel?.phase), 'Reading submit did not return a marked phase.');
-  assert.equal(feedbackModel?.feedback?.result?.correct, true, `Reading smoke answer was not accepted for ${questionId}.`);
+  const feedbackResult = feedbackModel?.feedback?.result || feedbackModel?.session?.result || {};
+  const feedbackScore = Number(feedbackResult.score);
+  const feedbackMaxScore = Number(feedbackResult.maxScore);
+  assert.ok(Number.isFinite(feedbackScore), `Reading smoke result score was not numeric for ${questionId}.`);
+  assert.ok(Number.isFinite(feedbackMaxScore), `Reading smoke result maxScore was not numeric for ${questionId}.`);
+  assert.ok(feedbackMaxScore > 0, `Reading smoke result maxScore was not positive for ${questionId}.`);
+  assert.equal(
+    feedbackScore,
+    feedbackMaxScore,
+    `Reading smoke answer was not accepted for ${questionId}.`,
+  );
   assert.ok(feedbackModel?.feedback?.question?.modelAnswer, 'Reading feedback did not expose modelAnswer after marking.');
 
   return {
@@ -161,8 +171,8 @@ async function smokeImmediateRound({ origin, cookie, learnerId, revision }) {
     questionId,
     passageId: startModel.session.passage?.id || startModel.session.passageId || null,
     content: observedContent,
-    score: feedbackModel.feedback.result.score,
-    maxScore: feedbackModel.feedback.result.maxScore,
+    score: feedbackResult.score,
+    maxScore: feedbackResult.maxScore,
   };
 }
 

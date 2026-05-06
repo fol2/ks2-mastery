@@ -1,4 +1,6 @@
 a55af6e0d6f5a7025a48443f6681118d286dea06c842647ee6839280c3626e24  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/audit-05061153-v2.md
 49ea882986bb7ddd4891e3d5cdc963826ee349604243c308f186dc2d3e510991  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/contract-05061153-v2.md
-98b9f484b36a5939da85f7820402d8fa89b4d5ad84bbaa6855b2d2e8c60c6777  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/reading-clock-hotfix-v2.patch
-7aa54ec3a4057ae893fee0cccf541eec689fcbd049c2b615045ea75cea65669e  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/apply-reading-clock-hotfix-v2.mjs
+3260fa960cbf4f87e499cab158cd57fcce0ee68e7f5bdab52c7d1ce3cf4624d8  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/reading-clock-hotfix-v2.patch
+e3a265e00ceb75051c9a3355532ce7adf487f3b515f615282211416751d5c5e7  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/apply-reading-clock-hotfix-v2.mjs
+6a6080c974f4856435e267170110c41cc08b3e8c1cc528765d05b6d4b0910c3a  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/ks2-05061153-hotfix-v2-completion-report.md
+2fbcaa09624a2cdebd946ba1b525ec52f55e02721dba62708ee363423cc4ec42  docs/plans/james/hotfixes/ks2-05061153-hotfix-v2/reading-clock-hotfix-v2-production-smoke.json

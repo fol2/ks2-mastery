@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "smokeType": "reading-clock-hotfix-v2-production",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "https://ks2.eugnel.uk",
+  "contentReleaseId": "reading-poc-promoted-2026-05-05",
+  "contentVersion": 2,
+  "commitSha": "0ba17d122739b36902c137124ae55a7488f8d28d",
+  "learnerFixtureType": "demo-session",
+  "accountId": "demo-3hcugYMrXx58ew",
+  "learnerId": "learner-demo-fhAPROJanJMniw",
+  "immediate": {
+    "revision": 2,
+    "questionId": "gw_q1",
+    "passageId": "greenhouse_window",
+    "content": {
+      "releaseId": "reading-poc-promoted-2026-05-05",
+      "version": 2,
+      "passageCount": 21,
+      "questionCount": 182,
+      "paperCount": 12,
+      "skillCount": 12,
+      "genres": {
+        "fiction": 8,
+        "non-fiction": 8,
+        "poetry": 5
+      },
+      "longPassageCount": 7
+    },
+    "score": 1,
+    "maxScore": 1
+  },
+  "delayedPaper": {
+    "revision": 6,
+    "paperId": "paper_i",
+    "questionCount": 26,
+    "maxScore": 50,
+    "staleErrorCleared": true
+  },
+  "finishedAt": "2026-05-06T20:38:20.390Z"
+}

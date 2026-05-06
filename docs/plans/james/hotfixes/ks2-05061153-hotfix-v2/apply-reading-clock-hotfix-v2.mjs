@@ -82,4 +82,43 @@ if (!testSource.includes('reading due stats and review queue use the injected co
   testSource = testSource.replace(needle, regression + needle);
   fs.writeFileSync(testPath, testSource, 'utf8');
 }
+
+const smokePath = 'scripts/reading-production-smoke.mjs';
+let smokeSource = fs.readFileSync(smokePath, 'utf8');
+const S = (text) => native(smokeSource, text);
+if (!smokeSource.includes('const feedbackScore = Number(feedbackResult.score);')) {
+  smokeSource = replaceOnce(
+    smokeSource,
+    S(`  assert.ok(['feedback', 'summary'].includes(feedbackModel?.phase), 'Reading submit did not return a marked phase.');
+  assert.equal(feedbackModel?.feedback?.result?.correct, true, \`Reading smoke answer was not accepted for \${questionId}.\`);
+  assert.ok(feedbackModel?.feedback?.question?.modelAnswer, 'Reading feedback did not expose modelAnswer after marking.');
+`),
+    S(`  assert.ok(['feedback', 'summary'].includes(feedbackModel?.phase), 'Reading submit did not return a marked phase.');
+  const feedbackResult = feedbackModel?.feedback?.result || feedbackModel?.session?.result || {};
+  const feedbackScore = Number(feedbackResult.score);
+  const feedbackMaxScore = Number(feedbackResult.maxScore);
+  assert.ok(Number.isFinite(feedbackScore), \`Reading smoke result score was not numeric for \${questionId}.\`);
+  assert.ok(Number.isFinite(feedbackMaxScore), \`Reading smoke result maxScore was not numeric for \${questionId}.\`);
+  assert.ok(feedbackMaxScore > 0, \`Reading smoke result maxScore was not positive for \${questionId}.\`);
+  assert.equal(
+    feedbackScore,
+    feedbackMaxScore,
+    \`Reading smoke answer was not accepted for \${questionId}.\`,
+  );
+  assert.ok(feedbackModel?.feedback?.question?.modelAnswer, 'Reading feedback did not expose modelAnswer after marking.');
+`),
+    'reading production smoke result guard',
+  );
+  smokeSource = replaceOnce(
+    smokeSource,
+    S(`    score: feedbackModel.feedback.result.score,
+    maxScore: feedbackModel.feedback.result.maxScore,
+`),
+    S(`    score: feedbackResult.score,
+    maxScore: feedbackResult.maxScore,
+`),
+    'reading production smoke evidence score source',
+  );
+  fs.writeFileSync(smokePath, smokeSource, 'utf8');
+}
 console.log('Reading injected-clock hotfix applied.');
