@@ -1,6 +1,0 @@
-checking file scripts/generate-grammar-manual-expansion.mjs
-checking file tests/grammar-answer-spec.test.js
-checking file tests/grammar-qg-p20-answer-acceptance.test.js
-checking file tests/grammar-qg-p20-quality-hardening.test.js
-checking file worker/src/subjects/grammar/answer-spec.js
-checking file worker/src/subjects/grammar/manual-expansion.generated.js

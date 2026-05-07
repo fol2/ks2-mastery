@@ -1,6 +1,0 @@
-patching file scripts/generate-grammar-manual-expansion.mjs
-patching file tests/grammar-answer-spec.test.js
-patching file tests/grammar-qg-p20-answer-acceptance.test.js
-patching file tests/grammar-qg-p20-quality-hardening.test.js
-patching file worker/src/subjects/grammar/answer-spec.js
-patching file worker/src/subjects/grammar/manual-expansion.generated.js
