@@ -1,8 +1,8 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "accountId": "demo-zJ9-GaFBtK2mfA",
-  "learnerId": "learner-demo-NHTMSfLs74O_9Q",
+  "accountId": "demo-kfZPntm7V99bVQ",
+  "learnerId": "learner-demo-g1Yfju9136E-Uw",
   "attestation": {
     "environment": "production",
     "releaseId": "punctuation-qg-p20-15072-2026-05-04",
@@ -136,10 +136,10 @@
       "gen_speech_insert": 100,
       "gen_speech_transfer": 120
     },
-    "workerCommitSha": "de41b6d3c4700bf0c53f39264073cc22ec141f75",
-    "workerVersionId": "b0ebaf57-4554-4b62-93ed-4545b21e49f4",
+    "workerCommitSha": "7d00d60c3fbda6ed38d8c9e9f49c7937f0f8f08c",
+    "workerVersionId": "cc529d99-0a3a-40f3-a790-989e04f893a6",
     "deploymentId": null,
-    "timestamp": "2026-05-07T19:30:39.873Z",
+    "timestamp": "2026-05-07T22:33:18.999Z",
     "authenticatedCoverage": true,
     "adminHubCoverage": true
   },
@@ -149,7 +149,7 @@
       "runtimeItems": 15072,
       "publishedRewardUnits": 14,
       "generatedItemCommandPathProbe": {
-        "itemId": "gen_p20_speech_fix_1vmffh_30",
+        "itemId": "gen_p20_speech_fix_1cbi54_94",
         "mode": "fix",
         "skillIds": [
           "speech"
@@ -168,7 +168,7 @@
       "runtimeItems": 15072,
       "publishedRewardUnits": 14
     },
-    "smartItemId": "gen_p20_dash_clause_insert_1vkb6a9_53",
+    "smartItemId": "gen_sentence_endings_insert_1ujoa6c_82",
     "smartSummaryTotal": 1,
     "smartSix": {
       "revision": 13,
@@ -181,7 +181,7 @@
       "uniqueItems": 6,
       "immediateRepeats": 0
     },
-    "generatedIncorrectItemId": "gen_p20_speech_fix_1vmffh_30",
+    "generatedIncorrectItemId": "gen_p20_speech_fix_1cbi54_94",
     "generatedIncorrectMisconceptionTags": [
       "speech.reporting_comma_missing",
       "speech.terminal_inside_quotes_missing"
@@ -189,38 +189,38 @@
     "dashAcceptance": [
       {
         "variant": "spaced-hyphen",
-        "itemId": "gen_p20_dash_clause_insert_1psitly_5",
+        "itemId": "gen_p20_dash_clause_insert_1qa99lv_62",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
         ],
         "feedbackKind": "success",
-        "acceptedAnswer": "Noah opened the notebook - the room fell silent - and read the note."
+        "acceptedAnswer": "Lina opened the compass - the room fell silent - and read the note."
       },
       {
         "variant": "en-dash",
-        "itemId": "gen_p20_dash_clause_insert_wvxd6g_38",
+        "itemId": "gen_p20_dash_clause_insert_1hcsm2s_111",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
         ],
         "feedbackKind": "success",
-        "acceptedAnswer": "Hana opened the guidebook – the room fell silent – and read the note."
+        "acceptedAnswer": "Kai opened the weather chart – the room fell silent – and read the note."
       },
       {
         "variant": "em-dash",
-        "itemId": "gen_p20_dash_clause_insert_1tct6c5_13",
+        "itemId": "gen_p20_dash_clause_insert_1i6rf5p_114",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
         ],
         "feedbackKind": "success",
-        "acceptedAnswer": "Jude opened the script — the room fell silent — and read the note."
+        "acceptedAnswer": "Hana opened the guidebook — the room fell silent — and read the note."
       }
     ],
-    "oxfordCommaItemId": "gen_list_commas_combine_eflpt8_40",
+    "oxfordCommaItemId": "gen_list_commas_combine_1bg1wr7_17",
     "oxfordCommaAcceptance": {
-      "itemId": "gen_list_commas_combine_eflpt8_40",
+      "itemId": "gen_list_commas_combine_1bg1wr7_17",
       "mode": "combine",
       "skillIds": [
         "list_commas"
@@ -228,13 +228,13 @@
       "feedbackKind": "success"
     },
     "advancedMode": "gps",
-    "advancedItemId": "gen_list_commas_choose_1n3v7i0_92",
+    "advancedItemId": "fx12_sentence_endings_018",
     "advancedReviewItems": 1,
-    "parentHubAttempts": 23,
+    "parentHubAttempts": 18,
     "parentHubEvidence": {
       "hasEvidence": true,
-      "attempts": 23,
-      "accuracyPercent": 96,
+      "attempts": 18,
+      "accuracyPercent": 94,
       "progressSnapshotsHasPunctuation": true,
       "redactionChecks": {
         "punctuationEvidence": true,
@@ -242,9 +242,9 @@
         "misconceptionPatterns": true
       },
       "sessionModes": [
-        "comma_flow",
         "smart",
         "guided",
+        "comma_flow",
         "gps",
         "speech"
       ]
