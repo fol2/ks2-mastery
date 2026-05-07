@@ -263,7 +263,11 @@ describe('P10 Scheduler Safety: characterisation — approved template engine pa
       payload: {},
     });
     assert.equal(similar.state.phase, 'session');
-    assert.equal(similar.state.session.currentItem.templateId, approvedId);
+    assert.notEqual(similar.state.session.currentItem.templateId, approvedId);
+    assert.ok(
+      similar.state.session.currentItem.skillIds.includes(approvedTemplate.skillIds[0]),
+      'similar problem should choose a fresh template for the same Grammar skill',
+    );
     assert.equal(similar.changed, true);
   });
 });

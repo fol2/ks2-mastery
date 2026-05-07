@@ -7,6 +7,7 @@ import {
   grammarResponseFormData,
 } from './helpers/grammar-subject-harness.js';
 import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
+import { createGrammarQuestion } from '../worker/src/subjects/grammar/content.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { scopeSummary } from './helpers/grammar-phase3-renders.js';
 import {
@@ -131,7 +132,8 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', () 
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'feedback');
   html = harness.render();
   assert.match(html, /Correct\./);
-  assert.match(html, /Finish round/);
+  assert.match(html, /<button[^>]*class="btn primary"[^>]*>Finish round<\/button>/);
+  assert.doesNotMatch(html, />Saved<\/button>/);
 
   harness.dispatch('grammar-continue');
   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
@@ -733,11 +735,37 @@ test('Grammar surface exposes post-answer repair actions without local scoring',
   assert.equal(grammar.session.repair.retryingCurrent, true);
   assert.match(harness.render(), /Worked example/);
 
+  const retryTemplateId = grammar.session.currentItem.templateId;
+  const retrySeed = grammar.session.currentItem.seed;
   harness.dispatch('grammar-start-similar-problem');
   grammar = harness.store.getState().subjectUi.grammar;
   assert.equal(grammar.phase, 'session');
-  assert.equal(grammar.session.currentItem.templateId, sample.id);
+  assert.equal(grammar.session.currentItem.templateId, retryTemplateId);
+  assert.equal(grammar.session.currentItem.seed, retrySeed);
+  assert.equal(grammar.session.repair.similarProblems, 0);
+
+  const similarHarness = createGrammarHarness({ storage: installMemoryStorage() });
+  similarHarness.dispatch('open-subject', { subjectId: 'grammar' });
+  similarHarness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  similarHarness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({ answer: wrongAnswer }),
+  });
+  similarHarness.dispatch('grammar-start-similar-problem');
+  grammar = similarHarness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'session');
+  assert.notEqual(grammar.session.currentItem.templateId, sample.id);
   assert.notEqual(grammar.session.currentItem.seed, sample.sample.seed);
+  const baseSkillIds = new Set(createGrammarQuestion({
+    templateId: sample.id,
+    seed: sample.sample.seed,
+  }).skillIds || []);
+  assert.ok(grammar.session.currentItem.skillIds.some((skillId) => baseSkillIds.has(skillId)));
   assert.equal(grammar.session.repair.similarProblems, 1);
 });
 

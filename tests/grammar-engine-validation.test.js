@@ -976,10 +976,99 @@ test('Grammar similar problem repair creates a deterministic built-in variant', 
   });
 
   assert.equal(similar.state.phase, 'session');
-  assert.equal(similar.state.session.currentItem.templateId, sample.id);
+  assert.notEqual(similar.state.session.currentItem.templateId, sample.id);
   assert.notEqual(similar.state.session.currentItem.seed, sample.sample.seed);
+  const baseSkillIds = new Set(question.skillIds || []);
+  assert.ok(
+    similar.state.session.currentItem.skillIds.some((skillId) => baseSkillIds.has(skillId)),
+    'similar problem should stay on the same Grammar skill without replaying the same template',
+  );
   assert.equal(similar.state.session.targetCount, 2);
   assert.equal(similar.state.session.repair.similarProblems, 1);
+});
+
+test('Grammar similar problem repair fails closed when the same-skill pool is exhausted', () => {
+  const oracle = readGrammarLegacyOracle();
+  const sample = oracle.templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const question = createGrammarQuestion({ templateId: sample.id, seed: sample.sample.seed });
+  const wrongAnswer = question.inputSpec.options.find((option) => !evaluateGrammarQuestion(question, { answer: option.value }).correct).value;
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-similar-repair-saturated',
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+  const wrong = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'submit-answer',
+    requestId: 'submit-similar-repair-saturated-wrong',
+    payload: { response: { answer: wrongAnswer } },
+  });
+
+  const saturatedUi = JSON.parse(JSON.stringify(wrong.state));
+  const baseSkillIds = new Set(question.skillIds || []);
+  for (const template of GRAMMAR_TEMPLATE_METADATA) {
+    if ((template.skillIds || []).some((skillId) => baseSkillIds.has(skillId))) {
+      saturatedUi.session.varietyTelemetry._templateCounts[template.id] = 1;
+    }
+  }
+  const beforeSession = JSON.parse(JSON.stringify(saturatedUi.session));
+
+  const similar = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: saturatedUi, data: wrong.data },
+    latestSession: wrong.practiceSession,
+    command: 'start-similar-problem',
+    requestId: 'start-similar-repair-saturated-next',
+    payload: {},
+  });
+
+  assert.equal(similar.changed, false);
+  assert.equal(similar.state.phase, 'feedback');
+  assert.deepEqual(similar.state.session, beforeSession);
+});
+
+test('Grammar similar problem repair is unavailable before an answer is marked', () => {
+  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'start-similar-repair-not-ready',
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: sample.id,
+      seed: sample.sample.seed,
+    },
+  });
+
+  const beforeSession = JSON.parse(JSON.stringify(start.state.session));
+  assert.throws(() => engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'start-similar-problem',
+    requestId: 'start-similar-repair-too-early',
+    payload: {},
+  }), (error) => error?.extra?.code === 'grammar_repair_not_ready');
+  assert.equal(start.state.phase, 'session');
+  assert.equal(start.state.session.answered, 0);
+  assert.equal(start.state.session.currentIndex, 0);
+  assert.equal(start.state.session.currentItem.templateId, sample.id);
+  assert.deepEqual(start.state.session, beforeSession);
 });
 
 test('Grammar repair actions fail closed during unfinished strict mini-tests', () => {

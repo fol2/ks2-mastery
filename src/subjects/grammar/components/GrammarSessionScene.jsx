@@ -13,6 +13,7 @@ import {
   grammarSessionInfoChips,
   grammarFeedbackTone,
 } from '../session-ui.js';
+import { dispatchGrammarAnswerFormSubmit } from '../form-submit.js';
 import { translateGrammarSessionError } from '../module.js';
 import { SessionHUD } from '../../../platform/ui/SessionHUD.jsx';
 import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
@@ -722,26 +723,12 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
           // regress the contract covered by
           // `tests/demo-expiry-banner.test.js::input-preservation`.
           key={`${session.id || 'grammar'}-${session.currentIndex || 0}`}
-          onSubmit={(event) => {
-            event.preventDefault();
-            const submitter = event.nativeEvent?.submitter;
-            const submitAction = submitter?.value || 'save';
-            const formData = new FormData(event.currentTarget);
-            if (isMiniTest) {
-              if (submitAction === 'finish') {
-                actions.dispatch('grammar-finish-mini-test', { formData });
-                return;
-              }
-              const payload = {
-                formData,
-                advance: submitAction === 'save-next',
-              };
-              if (submitAction === 'move') payload.index = submitter?.dataset?.index;
-              actions.dispatch('grammar-save-mini-test-response', payload);
-              return;
-            }
-            actions.dispatch('grammar-submit-form', { formData });
-          }}
+          onSubmit={(event) => dispatchGrammarAnswerFormSubmit({
+            event,
+            actions,
+            isMiniTest,
+            isFeedback,
+          })}
         >
           <GrammarInput
             inputSpec={item.inputSpec || { type: 'text' }}
@@ -787,20 +774,19 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
                   {pending && grammar.pendingCommand === 'finish-mini-test' ? 'Finishing...' : 'Finish mini-set'}
                 </Button>
               </>
-            ) : (
-              <Button variant="primary" type="submit" disabled={submitDisabled}>
-                {pending && grammar.pendingCommand === 'submit-answer' ? 'Checking...' : submitLabel}
-              </Button>
-            )}
-            {!isMiniTest && isFeedback ? (
+            ) : isFeedback ? (
               <Button
-                variant="secondary"
+                variant="primary"
                 disabled={runtimeReadOnly || pending || submitLock.locked}
                 onClick={() => submitLock.run(async () => actions.dispatch('grammar-continue'))}
               >
                 {progressDone >= progressTotal ? 'Finish round' : 'Next question'}
               </Button>
-            ) : null}
+            ) : (
+              <Button variant="primary" type="submit" disabled={submitDisabled}>
+                {pending && grammar.pendingCommand === 'submit-answer' ? 'Checking...' : submitLabel}
+              </Button>
+            )}
             {!isMiniTest ? (
               <Button
                 variant="ghost"

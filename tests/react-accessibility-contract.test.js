@@ -15,6 +15,7 @@ import {
 } from './helpers/grammar-subject-harness.js';
 import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
 import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
+import { dispatchGrammarAnswerFormSubmit } from '../src/subjects/grammar/form-submit.js';
 import { renderPunctuationSessionSceneStandalone } from './helpers/punctuation-scene-render.js';
 
 // ----------------------------------------------------------------------------
@@ -172,6 +173,34 @@ test('Grammar session answer input carries the autofocus shim and feedback live 
   html = harness.render();
   // Feedback panel carries role=status + aria-live=polite (good or warn).
   assert.match(html, /class="feedback (?:good|warn)" role="status" aria-live="polite"/);
+  const feedbackPrimary = (html.match(/class="btn primary[^"]*"/g) || []).length;
+  assert.equal(feedbackPrimary, 1, 'session feedback must render a single active .btn.primary');
+  assert.match(html, /<button[^>]*class="btn primary"[^>]*>Finish round<\/button>/);
+  assert.doesNotMatch(html, />Saved<\/button>/);
+});
+
+test('Grammar feedback form submit is ignored so stale submits cannot resubmit answers', async () => {
+  const dispatched = [];
+  let defaultPrevented = false;
+  dispatchGrammarAnswerFormSubmit({
+    event: {
+      preventDefault() {
+        defaultPrevented = true;
+      },
+      nativeEvent: {},
+      currentTarget: null,
+    },
+    actions: {
+      dispatch(action, payload) {
+        dispatched.push({ action, payload });
+      },
+    },
+    isMiniTest: false,
+    isFeedback: true,
+  });
+
+  assert.equal(defaultPrevented, true);
+  assert.deepEqual(dispatched, []);
 });
 
 test('Grammar session error banner carries role="alert" so assistive tech announces failures', () => {

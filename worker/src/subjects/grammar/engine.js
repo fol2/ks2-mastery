@@ -1721,6 +1721,12 @@ function showWorkedSolution(state) {
 
 function startSimilarProblem(state, nowTs) {
   const session = assertRepairableSession(state);
+  if (state.phase !== 'feedback' || !state.awaitingAdvance || !state.feedback?.result) {
+    throw new BadRequestError('Similar problem is available after an answer has been marked.', {
+      code: 'grammar_repair_not_ready',
+      subjectId: SUBJECT_ID,
+    });
+  }
   const repair = ensureRepairState(session);
   const baseItem = session.currentItem;
   // Blocklist gate: if the base template is now blocked, no similar problem
@@ -1728,14 +1734,20 @@ function startSimilarProblem(state, nowTs) {
   if (isTemplateBlocked(baseItem.templateId)) return null;
   const nextSimilarIndex = repair.similarProblems + 1;
   const seed = (Number(baseItem.seed) + nextSimilarIndex * 2654435761) >>> 0;
+  const baseConceptIds = Array.isArray(baseItem.skillIds) ? baseItem.skillIds.filter(isGrammarConceptId) : [];
   const item = nextItem(state, {
     mode: session.mode,
-    focusConceptId: session.focusConceptId,
+    focusConceptId: baseConceptIds[0] || session.focusConceptId,
     seed,
-    templateId: baseItem.templateId,
     nowTs,
     session,
   });
+  if (
+    baseConceptIds.length
+    && !item.skillIds?.some((skillId) => baseConceptIds.includes(skillId))
+  ) {
+    return null;
+  }
   repair.similarProblems = nextSimilarIndex;
   repair.retryingCurrent = false;
   session.currentIndex = Number(session.currentIndex) + 1;
