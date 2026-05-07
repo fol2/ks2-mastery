@@ -32,3 +32,4 @@ Key files:
 - `validation/npm-test-after-hotfix.log`
 - `validation/repo-check-after-hotfix.log`
 - `validation/grammar-qg-p20-verify-after-hotfix.log`
+
