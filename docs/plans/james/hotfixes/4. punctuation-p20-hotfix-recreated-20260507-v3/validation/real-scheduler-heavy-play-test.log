@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: P20 Smart real-service scheduler surfaces the expanded pool over heavy play
+ok 1 - P20 Smart real-service scheduler surfaces the expanded pool over heavy play
+  ---
+  duration_ms: 3815.72133
+  type: 'test'
+  ...
+# Subtest: P20 mixed-review reason can be derived from progress history at the start of a new session
+ok 2 - P20 mixed-review reason can be derived from progress history at the start of a new session
+  ---
+  duration_ms: 0.76723
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3832.621228

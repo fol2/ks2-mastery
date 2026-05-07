@@ -1,0 +1,326 @@
+diff --git a/shared/punctuation/scheduler.js b/shared/punctuation/scheduler.js
+index 7524cf4..1661d58 100644
+--- a/shared/punctuation/scheduler.js
++++ b/shared/punctuation/scheduler.js
+@@ -20,9 +20,10 @@ export const MIN_MS = 60 * 1000;
+ 
+ const SMART_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix', 'transfer', 'combine', 'paragraph']);
+ const GUIDED_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix']);
+-const RECENT_ITEM_AVOIDANCE_WINDOW = 6;
+-const SAME_ITEM_REPEAT_WINDOW = 20;
+-const MAX_SAME_ITEM_REPEAT_IN_WINDOW = 2;
++const RECENT_ITEM_AVOIDANCE_WINDOW = 100;
++const RECENT_SIGNATURE_AVOIDANCE_WINDOW = 100;
++const SAME_ITEM_REPEAT_WINDOW = 100;
++const MAX_SAME_ITEM_REPEAT_IN_WINDOW = 1;
+ const CLUSTER_MODE = Object.freeze({
+   endmarks: 'endmarks',
+   apostrophe: 'apostrophe',
+@@ -398,12 +399,22 @@ function itemEvidenceRows(progress, now, bucket) {
+ 
+ function recentSignatureSet(indexes, session = {}, progress = {}) {
+   const signatures = new Set();
+-  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-8) : [];
++  const sessionSignatures = Array.isArray(session?.selectedSignatures)
++    ? session.selectedSignatures.slice(-RECENT_SIGNATURE_AVOIDANCE_WINDOW)
++    : [];
++  for (const signature of sessionSignatures) {
++    if (typeof signature === 'string' && signature) signatures.add(signature);
++  }
++  const recentIds = Array.isArray(session?.recentItemIds)
++    ? session.recentItemIds.slice(-RECENT_SIGNATURE_AVOIDANCE_WINDOW)
++    : [];
+   for (const itemId of recentIds) {
+     const signature = indexes.itemById.get(itemId)?.variantSignature;
+     if (signature) signatures.add(signature);
+   }
+-  const attempts = Array.isArray(progress?.attempts) ? progress.attempts.slice(-8) : [];
++  const attempts = Array.isArray(progress?.attempts)
++    ? progress.attempts.slice(-RECENT_SIGNATURE_AVOIDANCE_WINDOW)
++    : [];
+   for (const attempt of attempts) {
+     if (typeof attempt?.variantSignature === 'string' && attempt.variantSignature) {
+       signatures.add(attempt.variantSignature);
+@@ -449,6 +460,11 @@ function avoidRecentSignatureItems(items, recentSignatures) {
+   return freshItems.length ? freshItems : items;
+ }
+ 
++function avoidRecentItems(items, recentItems) {
++  const freshItems = items.filter((item) => !recentItems.has(item?.id));
++  return freshItems.length ? freshItems : items;
++}
++
+ // --- Misconception retry helpers ---
+ 
+ function recentMisconceptionAttempt(progress, window) {
+@@ -717,8 +733,6 @@ export function deriveRecentModes(progress) {
+  */
+ function isMixedReview(item, session, progress) {
+   if (!item || !item.mode) return false;
+-  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds : [];
+-  if (recentIds.length < MIXED_REVIEW_MIN_RECENT_ATTEMPTS) return false;
+   // Use session.recentModes if explicitly provided
+   let recentModes = Array.isArray(session?.recentModes) && session.recentModes.length >= MIXED_REVIEW_MIN_RECENT_ATTEMPTS
+     ? session.recentModes
+@@ -741,7 +755,7 @@ export function selectPunctuationItem({
+   prefs = {},
+   now = Date.now,
+   random = Math.random,
+-  candidateWindow = 32,
++  candidateWindow = 128,
+ } = {}) {
+   const sessionMode = session?.mode || prefs.mode || 'smart';
+   const mode = sessionMode === 'weak' ? null : targetMode(session, prefs);
+@@ -752,7 +766,7 @@ export function selectPunctuationItem({
+   const maxWindow = Math.max(1, candidateWindow);
+ 
+   // --- Misconception retry (applies to all modes) ---
+-  const recentSignaturesForRetry = recentSignatureSet(indexes, session, progress);
++  const recentSignaturesForRetry = recentSignatureSet(indexes, { ...session, selectedSignatures: [] }, progress);
+   const recentItemsForRetry = recentItemSet(session, progress);
+   const misconceptionResult = selectMisconceptionRetry(indexes, progress, session, recentSignaturesForRetry, recentItemsForRetry);
+   if (misconceptionResult) {
+@@ -784,9 +798,11 @@ export function selectPunctuationItem({
+     };
+   }
+ 
+-  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : [];
+-  const recent = new Set(recentIds);
+-  const recentSignatures = recentSignaturesForRetry;
++  const recentIds = Array.isArray(session?.recentItemIds)
++    ? session.recentItemIds.slice(-RECENT_ITEM_AVOIDANCE_WINDOW)
++    : [];
++  const recent = recentItemSet(session, progress);
++  const recentSignatures = recentSignatureSet(indexes, session, progress);
+   const sessionSignatures = new Set(
+     Array.isArray(session?.selectedSignatures) ? session.selectedSignatures : []
+   );
+@@ -802,10 +818,14 @@ export function selectPunctuationItem({
+         ? []
+         : candidateItems(indexes, { mode: candidateMode, clusterId, skillId: guidedSkillId });
+       const nonRepeatCandidates = candidates.filter((item) => item.id !== previousItemId);
++      const freshItemCandidates = avoidRecentItems(nonRepeatCandidates, recent);
++      const freshSignatureCandidates = isMisconceptionRetry
++        ? freshItemCandidates
++        : avoidRecentSignatureItems(freshItemCandidates, recentSignatures);
+       return {
+         mode: candidateMode,
+         candidates,
+-        nonRepeatCandidates: avoidRecentSignatureItems(nonRepeatCandidates, recentSignatures),
++        nonRepeatCandidates: freshSignatureCandidates,
+       };
+     });
+   const selectedMode = modeRows.find((row) => row.nonRepeatCandidates.length)
+diff --git a/src/subjects/punctuation/components/PunctuationSessionScene.jsx b/src/subjects/punctuation/components/PunctuationSessionScene.jsx
+index 4de22b2..398ee39 100644
+--- a/src/subjects/punctuation/components/PunctuationSessionScene.jsx
++++ b/src/subjects/punctuation/components/PunctuationSessionScene.jsx
+@@ -187,6 +187,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
+   const showSource = shape?.prefill === 'blank' && shape.showSource === true;
+   const initialValue = prefillStem ? (item.stem || '') : '';
+   const [typed, setTyped] = useState(initialValue);
++  const hasTypedContent = String(typed || '').trim().length > 0;
+   const rows = mode === 'paragraph' ? 6 : 4;
+   const placeholder = punctuationSessionInputPlaceholder(mode);
+ 
+@@ -196,6 +197,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
+       style={{ display: 'grid', gap: 12 }}
+       onSubmit={(event) => {
+         event.preventDefault();
++        if (!hasTypedContent) return;
+         onSubmit({ typed });
+       }}
+     >
+@@ -234,7 +236,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
+         <Button
+           variant="primary"
+           type="submit"
+-          disabled={disabled}
++          disabled={disabled || !hasTypedContent}
+           data-punctuation-submit
+         >
+           {submitLabel}
+diff --git a/tests/punctuation-qg-p20-real-scheduler-heavy-play.test.js b/tests/punctuation-qg-p20-real-scheduler-heavy-play.test.js
+new file mode 100644
+index 0000000..044787c
+--- /dev/null
++++ b/tests/punctuation-qg-p20-real-scheduler-heavy-play.test.js
+@@ -0,0 +1,128 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import { createPunctuationService } from '../shared/punctuation/service.js';
++import { selectPunctuationItem } from '../shared/punctuation/scheduler.js';
++import { REASON_TAGS } from '../shared/punctuation/scheduler-manifest.js';
++
++function seededRandom(seed = 20260507) {
++  let state = seed >>> 0;
++  return () => {
++    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
++    return state / 0x100000000;
++  };
++}
++
++function answerFor(item) {
++  if (item?.inputKind === 'choice') {
++    const option = Array.isArray(item.options)
++      ? item.options.find((entry) => entry.text === item.model) || item.options[0]
++      : null;
++    return { choiceIndex: option?.index ?? 0 };
++  }
++  return { typed: item?.model || '' };
++}
++
++test('P20 Smart real-service scheduler surfaces the expanded pool over heavy play', () => {
++  let nowMs = Date.UTC(2026, 4, 7, 9, 0, 0);
++  const service = createPunctuationService({
++    now: () => {
++      nowMs += 60_000;
++      return nowMs;
++    },
++    random: seededRandom(),
++  });
++
++  const learnerId = 'learner-p20-real-scheduler-heavy-play';
++  const exposures = [];
++  const sessionSummaries = [];
++
++  for (let sessionIndex = 0; sessionIndex < 50; sessionIndex += 1) {
++    let state = service.startSession(learnerId, { mode: 'smart', roundLength: '6' }).state;
++    const idsThisSession = new Set();
++    const signaturesThisSession = new Set();
++    const modesThisSession = new Set();
++    let previousItemId = '';
++    let immediateRepeats = 0;
++
++    while (state.phase === 'active-item') {
++      const item = state.session.currentItem;
++      assert.ok(item?.id, 'active session must expose a current item id');
++      const signature = item.variantSignature || item.id;
++      if (previousItemId && previousItemId === item.id) immediateRepeats += 1;
++      idsThisSession.add(item.id);
++      signaturesThisSession.add(signature);
++      modesThisSession.add(item.mode || '');
++      exposures.push({ id: item.id, signature, mode: item.mode || '' });
++      previousItemId = item.id;
++
++      state = service.submitAnswer(learnerId, state, answerFor(item)).state;
++      if (state.phase === 'feedback') {
++        state = service.continueSession(learnerId, state).state;
++      }
++    }
++
++    sessionSummaries.push({
++      duplicateItems: idsThisSession.size !== 6,
++      duplicateSignatures: signaturesThisSession.size !== 6,
++      modes: modesThisSession.size,
++      immediateRepeats,
++    });
++    assert.equal(state.phase, 'summary');
++  }
++
++  const uniqueItems = new Set(exposures.map((entry) => entry.id));
++  const uniqueSignatures = new Set(exposures.map((entry) => entry.signature));
++
++  assert.equal(exposures.length, 300);
++  assert.ok(uniqueItems.size >= 220, `expected at least 220 unique items, got ${uniqueItems.size}`);
++  assert.ok(uniqueSignatures.size >= 220, `expected at least 220 unique signatures, got ${uniqueSignatures.size}`);
++  assert.equal(sessionSummaries.reduce((sum, row) => sum + row.immediateRepeats, 0), 0);
++  assert.equal(sessionSummaries.filter((row) => row.duplicateItems).length, 0);
++  assert.equal(sessionSummaries.filter((row) => row.duplicateSignatures).length, 0);
++  assert.equal(sessionSummaries.filter((row) => row.modes < 4).length, 0);
++});
++
++test('P20 mixed-review reason can be derived from progress history at the start of a new session', () => {
++  const items = [
++    {
++      id: 'choose_mixed_fixture',
++      mode: 'choose',
++      skillIds: ['sentence_endings'],
++      clusterId: 'endmarks',
++      rewardUnitId: 'sentence-endings-core',
++      prompt: 'Choose the correctly punctuated sentence.',
++      options: [{ text: 'A.', index: 0 }, { text: 'B.', index: 1 }],
++      correctIndex: 0,
++      model: 'A.',
++      source: 'generated',
++      variantSignature: 'sig_mixed_choose_fixture',
++    },
++  ];
++  const result = selectPunctuationItem({
++    indexes: {
++      items,
++      itemById: new Map(items.map((item) => [item.id, item])),
++      itemsByMode: new Map([['choose', items]]),
++      skillById: new Map([['sentence_endings', { id: 'sentence_endings', name: 'Sentence endings', published: true }]]),
++    },
++    progress: {
++      items: {},
++      facets: {},
++      rewardUnits: {},
++      attempts: [
++        { itemId: 'old_transfer_1', mode: 'transfer', itemMode: 'transfer', correct: true },
++        { itemId: 'old_transfer_2', mode: 'transfer', itemMode: 'transfer', correct: true },
++        { itemId: 'old_transfer_3', mode: 'transfer', itemMode: 'transfer', correct: true },
++      ],
++      sessionsCompleted: 4,
++    },
++    session: { mode: 'smart', answeredCount: 0, recentItemIds: [] },
++    prefs: { mode: 'smart' },
++    now: 1_800_000_000_000,
++    random: () => 0,
++  });
++
++  assert.equal(result.item.id, 'choose_mixed_fixture');
++  assert.equal(result.reason, REASON_TAGS.MIXED_REVIEW);
++});
+diff --git a/tests/punctuation-session-input-hardening.test.js b/tests/punctuation-session-input-hardening.test.js
+new file mode 100644
+index 0000000..aa40da8
+--- /dev/null
++++ b/tests/punctuation-session-input-hardening.test.js
+@@ -0,0 +1,44 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { readFile } from 'node:fs/promises';
++
++const SCENE_PATH = new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url);
++
++async function source() {
++  return readFile(SCENE_PATH, 'utf8');
++}
++
++test('Punctuation TextItem keeps transfer/combine answer boxes blank and derives a content gate from typed text', async () => {
++  const text = await source();
++
++  assert.match(text, /const initialValue = prefillStem \? \(item\.stem \|\| ''\) : '';/);
++  assert.match(text, /const hasTypedContent = String\(typed \|\| ''\)\.trim\(\)\.length > 0;/);
++  assert.match(text, /if \(!hasTypedContent\) return;/);
++  assert.match(text, /disabled=\{disabled \|\| !hasTypedContent\}/);
++});
++
++test('Punctuation TextItem disables primary submit when typed content is blank', async () => {
++  const text = await source();
++  const textItemStart = text.indexOf('function TextItem');
++  const textItemEnd = text.indexOf('// --- Collapsed guided teach box', textItemStart);
++  const textItemSource = text.slice(textItemStart, textItemEnd);
++
++  assert.ok(textItemSource.includes('const initialValue = prefillStem ? (item.stem || \'\') : \'\';'));
++  assert.ok(textItemSource.includes('const hasTypedContent = String(typed || \'\').trim().length > 0;'));
++  assert.ok(textItemSource.includes('if (!hasTypedContent) return;'));
++  assert.ok(textItemSource.includes('disabled={disabled || !hasTypedContent}'));
++});
++
++test('Punctuation TextItem still exposes Skip outside the text form as the deliberate escape route', async () => {
++  const text = await source();
++  const textItemStart = text.indexOf('function TextItem');
++  const textItemEnd = text.indexOf('// --- Collapsed guided teach box', textItemStart);
++  const activeBranchStart = text.indexOf('function ActiveItemBranch');
++  const activeBranchEnd = text.indexOf('// --- Feedback branch', activeBranchStart);
++  const textItemSource = text.slice(textItemStart, textItemEnd);
++  const activeBranchSource = text.slice(activeBranchStart, activeBranchEnd);
++
++  assert.doesNotMatch(textItemSource, /data-punctuation-skip/);
++  assert.match(activeBranchSource, /data-punctuation-skip/);
++  assert.match(activeBranchSource, /punctuation-skip/);
++});

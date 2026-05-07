@@ -1,0 +1,15 @@
+Package contents:
+- README.md
+- contract/punctuation-p20-real-scheduler-and-session-ui-hardening-contract.md
+- patches/001-punctuation-p20-real-scheduler-and-session-ui-hardening.patch
+- validation-summary.md
+- validation/source-zip-sha256.txt
+- validation/baseline-real-service-probe.json
+- validation/patched-real-service-probe.json
+- validation/real-scheduler-heavy-play-test.log
+- validation/session-input-and-scheduler-tests.log
+- validation/audit-punctuation-qg-p20-expansion.log
+- validation/validate-punctuation-qg-p20-live-evidence.log
+- validation/punctuation-qg-p20-production-evidence-test.log
+- validation/patch-git-apply-check.log
+- validation/patch-git-apply.log

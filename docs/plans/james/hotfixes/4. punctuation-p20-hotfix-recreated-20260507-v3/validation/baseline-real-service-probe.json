@@ -1,0 +1,9 @@
+{
+  "exposures": 300,
+  "uniqueItems": 157,
+  "uniqueSignatures": 157,
+  "immediateRepeats": 0,
+  "sessionsWithDuplicateItems": 0,
+  "sessionsWithDuplicateSignatures": 0,
+  "sessionsWithFewerThanFourModes": 0
+}

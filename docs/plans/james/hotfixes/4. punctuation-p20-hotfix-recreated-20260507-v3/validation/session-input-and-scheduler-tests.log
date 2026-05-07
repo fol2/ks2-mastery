@@ -1,0 +1,271 @@
+TAP version 13
+# Subtest: secure status requires repeated clean spaced evidence
+ok 1 - secure status requires repeated clean spaced evidence
+  ---
+  duration_ms: 3.018825
+  type: 'test'
+  ...
+# Subtest: secure status ignores epoch-zero firstCorrectAt sentinels
+ok 2 - secure status ignores epoch-zero firstCorrectAt sentinels
+  ---
+  duration_ms: 0.389414
+  type: 'test'
+  ...
+# Subtest: scheduler is deterministic under fixed state and random input
+ok 3 - scheduler is deterministic under fixed state and random input
+  ---
+  duration_ms: 6.559967
+  type: 'test'
+  ...
+# Subtest: weak mode prioritises weak skill-by-mode facets
+ok 4 - weak mode prioritises weak skill-by-mode facets
+  ---
+  duration_ms: 17.769417
+  type: 'test'
+  ...
+# Subtest: weak mode avoids repeating a recent item when another weak alternative exists
+ok 5 - weak mode avoids repeating a recent item when another weak alternative exists
+  ---
+  duration_ms: 2.531663
+  type: 'test'
+  ...
+# Subtest: weak mode avoids the last attempted item when a new session starts
+ok 6 - weak mode avoids the last attempted item when a new session starts
+  ---
+  duration_ms: 0.999465
+  type: 'test'
+  ...
+# Subtest: misconception retry avoids repeating the last fixed sibling across weak sessions
+ok 7 - misconception retry avoids repeating the last fixed sibling across weak sessions
+  ---
+  duration_ms: 0.939953
+  type: 'test'
+  ...
+# Subtest: scheduler avoids recently seen generated variant signatures when alternatives exist
+ok 8 - scheduler avoids recently seen generated variant signatures when alternatives exist
+  ---
+  duration_ms: 1.065
+  type: 'test'
+  ...
+# Subtest: weak mode falls back to mixed review when no weak evidence exists
+ok 9 - weak mode falls back to mixed review when no weak evidence exists
+  ---
+  duration_ms: 2.412827
+  type: 'test'
+  ...
+# Subtest: weak mode selects due skill-by-mode facets before fallback review
+ok 10 - weak mode selects due skill-by-mode facets before fallback review
+  ---
+  duration_ms: 2.23733
+  type: 'test'
+  ...
+# Subtest: weak mode keeps expanded-manifest candidate scoring bounded
+ok 11 - weak mode keeps expanded-manifest candidate scoring bounded
+  ---
+  duration_ms: 2.720664
+  type: 'test'
+  ...
+# Subtest: comma flow focus mode selects published comma cluster items only
+ok 12 - comma flow focus mode selects published comma cluster items only
+  ---
+  duration_ms: 0.83025
+  type: 'test'
+  ...
+# Subtest: boundary focus mode selects published boundary cluster items only
+ok 13 - boundary focus mode selects published boundary cluster items only
+  ---
+  duration_ms: 1.400943
+  type: 'test'
+  ...
+# Subtest: structure focus mode selects published structure cluster items only
+ok 14 - structure focus mode selects published structure cluster items only
+  ---
+  duration_ms: 0.989285
+  type: 'test'
+  ...
+# Subtest: scheduler keeps candidate windows bounded for expanded manifests
+ok 15 - scheduler keeps candidate windows bounded for expanded manifests
+  ---
+  duration_ms: 2.403876
+  type: 'test'
+  ...
+# Subtest: misconception retry
+    # Subtest: wrong answer with known misconception schedules sibling with different signature
+    ok 1 - wrong answer with known misconception schedules sibling with different signature
+      ---
+      duration_ms: 0.690031
+      type: 'test'
+      ...
+    # Subtest: retry does not reuse same variant signature if alternatives exist
+    ok 2 - retry does not reuse same variant signature if alternatives exist
+      ---
+      duration_ms: 0.581834
+      type: 'test'
+      ...
+    # Subtest: retry prefers different templateId over same templateId
+    ok 3 - retry prefers different templateId over same templateId
+      ---
+      duration_ms: 0.240873
+      type: 'test'
+      ...
+    # Subtest: retry falls back gracefully when family has only 1 template
+    ok 4 - retry falls back gracefully when family has only 1 template
+      ---
+      duration_ms: 0.34596
+      type: 'test'
+      ...
+    # Subtest: misconception tag not in any candidate falls back to standard selection
+    ok 5 - misconception tag not in any candidate falls back to standard selection
+      ---
+      duration_ms: 0.335767
+      type: 'test'
+      ...
+    # Subtest: misconception retry respects session anti-repeat (does not retry same misconception twice)
+    ok 6 - misconception retry respects session anti-repeat (does not retry same misconception twice)
+      ---
+      duration_ms: 0.313689
+      type: 'test'
+      ...
+    # Subtest: wrong fixed-item answer schedules generated sibling where appropriate
+    ok 7 - wrong fixed-item answer schedules generated sibling where appropriate
+      ---
+      duration_ms: 0.355453
+      type: 'test'
+      ...
+    1..7
+ok 16 - misconception retry
+  ---
+  duration_ms: 3.4798
+  type: 'suite'
+  ...
+# Subtest: per-signature exposure limits
+    # Subtest: same signature not selected twice in same session when alternatives exist
+    ok 1 - same signature not selected twice in same session when alternatives exist
+      ---
+      duration_ms: 0.764907
+      type: 'test'
+      ...
+    # Subtest: signature seen in last 3 attempts gets penalised weight (selects alternative)
+    ok 2 - signature seen in last 3 attempts gets penalised weight (selects alternative)
+      ---
+      duration_ms: 0.460318
+      type: 'test'
+      ...
+    # Subtest: signature seen within 7 days gets avoided when alternatives exist
+    ok 3 - signature seen within 7 days gets avoided when alternatives exist
+      ---
+      duration_ms: 0.664162
+      type: 'test'
+      ...
+    # Subtest: when ALL candidates seen within 7 days, least-recently-seen preferred (no deadlock)
+    ok 4 - when ALL candidates seen within 7 days, least-recently-seen preferred (no deadlock)
+      ---
+      duration_ms: 0.306306
+      type: 'test'
+      ...
+    # Subtest: misconception-retry overrides per-session block
+    ok 5 - misconception-retry overrides per-session block
+      ---
+      duration_ms: 0.284214
+      type: 'test'
+      ...
+    # Subtest: fixed items (no variantSignature) are never penalised by exposure limits
+    ok 6 - fixed items (no variantSignature) are never penalised by exposure limits
+      ---
+      duration_ms: 0.351625
+      type: 'test'
+      ...
+    # Subtest: exposure limits interact correctly with existing weak-mode priority weighting
+    ok 7 - exposure limits interact correctly with existing weak-mode priority weighting
+      ---
+      duration_ms: 0.36164
+      type: 'test'
+      ...
+    1..7
+ok 17 - per-signature exposure limits
+  ---
+  duration_ms: 3.492419
+  type: 'suite'
+  ...
+# Subtest: reason tags
+    # Subtest: due item returns reason: due-review
+    ok 1 - due item returns reason: due-review
+      ---
+      duration_ms: 0.579638
+      type: 'test'
+      ...
+    # Subtest: weak facet returns reason: weak-skill-repair
+    ok 2 - weak facet returns reason: weak-skill-repair
+      ---
+      duration_ms: 1.23606
+      type: 'test'
+      ...
+    # Subtest: item with different mode from last 3 returns reason: mixed-review
+    ok 3 - item with different mode from last 3 returns reason: mixed-review
+      ---
+      duration_ms: 0.378228
+      type: 'test'
+      ...
+    # Subtest: spaced-return classified when lastCorrectAt exceeds threshold
+    ok 4 - spaced-return classified when lastCorrectAt exceeds threshold
+      ---
+      duration_ms: 0.322046
+      type: 'test'
+      ...
+    # Subtest: retention-after-secure classified for secure items past threshold
+    ok 5 - retention-after-secure classified for secure items past threshold
+      ---
+      duration_ms: 0.268164
+      type: 'test'
+      ...
+    # Subtest: fallback reason when no specific policy matches
+    ok 6 - fallback reason when no specific policy matches
+      ---
+      duration_ms: 0.193521
+      type: 'test'
+      ...
+    # Subtest: weak mode due_facet source classified as due-review when within spaced threshold
+    ok 7 - weak mode due_facet source classified as due-review when within spaced threshold
+      ---
+      duration_ms: 1.490615
+      type: 'test'
+      ...
+    # Subtest: smart mode weak bucket item returns weak-skill-repair
+    ok 8 - smart mode weak bucket item returns weak-skill-repair
+      ---
+      duration_ms: 0.26874
+      type: 'test'
+      ...
+    1..8
+ok 18 - reason tags
+  ---
+  duration_ms: 5.070317
+  type: 'suite'
+  ...
+# Subtest: Punctuation TextItem keeps transfer/combine answer boxes blank and derives a content gate from typed text
+ok 19 - Punctuation TextItem keeps transfer/combine answer boxes blank and derives a content gate from typed text
+  ---
+  duration_ms: 8.258256
+  type: 'test'
+  ...
+# Subtest: Punctuation TextItem disables primary submit when typed content is blank
+ok 20 - Punctuation TextItem disables primary submit when typed content is blank
+  ---
+  duration_ms: 3.35336
+  type: 'test'
+  ...
+# Subtest: Punctuation TextItem still exposes Skip outside the text form as the deliberate escape route
+ok 21 - Punctuation TextItem still exposes Skip outside the text form as the deliberate escape route
+  ---
+  duration_ms: 4.708299
+  type: 'test'
+  ...
+1..21
+# tests 40
+# suites 3
+# pass 40
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 685.802238
