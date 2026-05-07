@@ -1,0 +1,8 @@
+{
+  "templateId": "proc3_hyphen_fix_meaning",
+  "kind": "punctuationPattern",
+  "accepted": "The team needed a well-earned break after the match.",
+  "acceptedCorrect": true,
+  "emDashAccepted": false,
+  "enDashAccepted": false
+}

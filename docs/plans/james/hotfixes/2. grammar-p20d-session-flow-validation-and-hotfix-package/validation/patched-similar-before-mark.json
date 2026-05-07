@@ -1,0 +1,8 @@
+{
+  "blocked": true,
+  "code": "grammar_repair_not_ready",
+  "message": "Similar problem is available after an answer has been marked.",
+  "phase": "session",
+  "answered": 0,
+  "currentIndex": 0
+}

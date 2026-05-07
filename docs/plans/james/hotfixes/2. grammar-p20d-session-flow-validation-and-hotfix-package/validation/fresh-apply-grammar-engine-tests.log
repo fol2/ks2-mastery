@@ -1,0 +1,208 @@
+TAP version 13
+# Subtest: Grammar live smart five-question session does not repeat templates when the pool allows
+ok 1 - Grammar live smart five-question session does not repeat templates when the pool allows
+  ---
+  duration_ms: 731.407655
+  type: 'test'
+  ...
+# Subtest: Grammar retry queue de-duplicates repeated misses for the same template and seed
+ok 2 - Grammar retry queue de-duplicates repeated misses for the same template and seed
+  ---
+  duration_ms: 1.203727
+  type: 'test'
+  ...
+# Subtest: Grammar attempt history stores bounded response fields only
+ok 3 - Grammar attempt history stores bounded response fields only
+  ---
+  duration_ms: 1.156579
+  type: 'test'
+  ...
+# Subtest: Grammar attempt history stores generated variant metadata but keeps read models redacted
+ok 4 - Grammar attempt history stores generated variant metadata but keeps read models redacted
+  ---
+  duration_ms: 3.808359
+  type: 'test'
+  ...
+# Subtest: Grammar engine rejects empty answers before mastery is mutated
+ok 5 - Grammar engine rejects empty answers before mastery is mutated
+  ---
+  duration_ms: 0.754279
+  type: 'test'
+  ...
+# Subtest: Grammar server engine creates a session, marks an answer, and records summary events
+ok 6 - Grammar server engine creates a session, marks an answer, and records summary events
+  ---
+  duration_ms: 3.951368
+  type: 'test'
+  ...
+# Subtest: Grammar trouble mode targets the weakest concept without pinning focus prefs
+ok 7 - Grammar trouble mode targets the weakest concept without pinning focus prefs
+  ---
+  duration_ms: 4.371662
+  type: 'test'
+  ...
+# Subtest: Grammar trouble mode honours explicit focus payloads separately from stored prefs
+ok 8 - Grammar trouble mode honours explicit focus payloads separately from stored prefs
+  ---
+  duration_ms: 3.49686
+  type: 'test'
+  ...
+# Subtest: Grammar save-prefs keeps trouble focus on automatic weakest selection
+ok 9 - Grammar save-prefs keeps trouble focus on automatic weakest selection
+  ---
+  duration_ms: 0.636897
+  type: 'test'
+  ...
+# Subtest: Grammar sentence surgery mode only picks surgery templates
+ok 10 - Grammar sentence surgery mode only picks surgery templates
+  ---
+  duration_ms: 1.866211
+  type: 'test'
+  ...
+# Subtest: Grammar sentence surgery rejects explicit non-surgery templates
+ok 11 - Grammar sentence surgery rejects explicit non-surgery templates
+  ---
+  duration_ms: 0.413124
+  type: 'test'
+  ...
+# Subtest: Grammar explicit template starts ignore inherited focus prefs
+ok 12 - Grammar explicit template starts ignore inherited focus prefs
+  ---
+  duration_ms: 0.512813
+  type: 'test'
+  ...
+# Subtest: Grammar sentence surgery clears stored focus and stays inside the surgery pool
+ok 13 - Grammar sentence surgery clears stored focus and stays inside the surgery pool
+  ---
+  duration_ms: 1.514426
+  type: 'test'
+  ...
+# Subtest: Grammar sentence builder mode only picks builder templates and clears stored focus
+ok 14 - Grammar sentence builder mode only picks builder templates and clears stored focus
+  ---
+  duration_ms: 0.933605
+  type: 'test'
+  ...
+# Subtest: Grammar sentence builder rejects explicit non-builder templates
+ok 15 - Grammar sentence builder rejects explicit non-builder templates
+  ---
+  duration_ms: 0.210876
+  type: 'test'
+  ...
+# Subtest: Grammar worked and faded modes apply supported scoring levels
+ok 16 - Grammar worked and faded modes apply supported scoring levels
+  ---
+  duration_ms: 2.713901
+  type: 'test'
+  ...
+# Subtest: Grammar strict mini-set rejects pre-answer support payloads
+ok 17 - Grammar strict mini-set rejects pre-answer support payloads
+  ---
+  duration_ms: 263.367062
+  type: 'test'
+  ...
+# Subtest: Grammar strict mini-set saves responses without feedback and marks only on finish
+ok 18 - Grammar strict mini-set saves responses without feedback and marks only on finish
+  ---
+  duration_ms: 261.830615
+  type: 'test'
+  ...
+# Subtest: Grammar strict mini-set rejects AI enrichment until review is complete
+ok 19 - Grammar strict mini-set rejects AI enrichment until review is complete
+  ---
+  duration_ms: 282.961356
+  type: 'test'
+  ...
+# Subtest: Grammar timed session goal completes on the Worker clock
+ok 20 - Grammar timed session goal completes on the Worker clock
+  ---
+  duration_ms: 3.281229
+  type: 'test'
+  ...
+# Subtest: Grammar clear-due goal uses due retry evidence before falling back
+ok 21 - Grammar clear-due goal uses due retry evidence before falling back
+  ---
+  duration_ms: 3.576302
+  type: 'test'
+  ...
+# Subtest: Grammar practice settings: Smart Review teaching items no longer demote independent correctness (U3 contract v2)
+ok 22 - Grammar practice settings: Smart Review teaching items no longer demote independent correctness (U3 contract v2)
+  ---
+  duration_ms: 2.774559
+  type: 'test'
+  ...
+# Subtest: Grammar faded support action marks the next answer as supported
+ok 23 - Grammar faded support action marks the next answer as supported
+  ---
+  duration_ms: 2.672813
+  type: 'test'
+  ...
+# Subtest: Grammar worked solution and retry repair do not double-count unsubmitted progress
+ok 24 - Grammar worked solution and retry repair do not double-count unsubmitted progress
+  ---
+  duration_ms: 4.567626
+  type: 'test'
+  ...
+# Subtest: Grammar similar problem repair creates a deterministic built-in variant
+ok 25 - Grammar similar problem repair creates a deterministic built-in variant
+  ---
+  duration_ms: 7.499262
+  type: 'test'
+  ...
+# Subtest: Grammar similar problem repair is unavailable before an answer is marked
+ok 26 - Grammar similar problem repair is unavailable before an answer is marked
+  ---
+  duration_ms: 2.537448
+  type: 'test'
+  ...
+# Subtest: Grammar repair actions fail closed during unfinished strict mini-tests
+ok 27 - Grammar repair actions fail closed during unfinished strict mini-tests
+  ---
+  duration_ms: 283.104031
+  type: 'test'
+  ...
+# Subtest: Grammar save-prefs clears completed summary state
+ok 28 - Grammar save-prefs clears completed summary state
+  ---
+  duration_ms: 3.850472
+  type: 'test'
+  ...
+# Subtest: P4 mixed-transfer template (choose/exact) correct answer scores correctly
+ok 29 - P4 mixed-transfer template (choose/exact) correct answer scores correctly
+  ---
+  duration_ms: 0.259608
+  type: 'test'
+  ...
+# Subtest: P4 mixed-transfer template wrong answer returns feedback
+ok 30 - P4 mixed-transfer template wrong answer returns feedback
+  ---
+  duration_ms: 0.236906
+  type: 'test'
+  ...
+# Subtest: P4 classify template multi-field marking works (voice_roles_transfer)
+ok 31 - P4 classify template multi-field marking works (voice_roles_transfer)
+  ---
+  duration_ms: 0.336761
+  type: 'test'
+  ...
+# Subtest: P4 classify template multi-field marking works (word_class_noun_phrase_transfer)
+ok 32 - P4 classify template multi-field marking works (word_class_noun_phrase_transfer)
+  ---
+  duration_ms: 0.24108
+  type: 'test'
+  ...
+# Subtest: P4 mixed-transfer template updates all concept nodes in mastery
+ok 33 - P4 mixed-transfer template updates all concept nodes in mastery
+  ---
+  duration_ms: 0.582642
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2260.067939

@@ -1,0 +1,7 @@
+0e88c53f9e22b9820f5dc233ddbfdd099c52051fc56b709185051aeb53069a0f  reading-validation-audit-and-hotfix-package/README.md
+dbbe6fe00f790d142cb51aa7ce36e07f5fe86f7f5b2826faae478351f45a2397  reading-validation-audit-and-hotfix-package/contract/reading-validation-hotfix-contract.md
+2a3439c807f82240a2c8126270db760f022081a5bf8c99c7bee725e5b49b42cb  reading-validation-audit-and-hotfix-package/patches/001-reading-validation-hotfix-repo-root.patch
+2977ae883a8e396ed1e459afa38f5bc27fddb7f46fa5cdc8c4de6004a71c9f4c  reading-validation-audit-and-hotfix-package/validation-summary.md
+11a312c1f345cab77a8b5799be2223008c9dc70108a97fcb79a3b270100fda08  reading-validation-audit-and-hotfix-package/validation/audits/reading-content-audit.json
+6f66c1a30801ef46e800e4d16fa53b7c32f145bf5c3fe8e60f3a92f62727bb52  reading-validation-audit-and-hotfix-package/validation/audits/reading-ui-static-audit.json
+644ee1b149a5302765ac613e1a9821179f06c268f506814a16aef0f094535b5e  reading-validation-audit-and-hotfix-package/validation/logs/node-reading-targeted-tests.log

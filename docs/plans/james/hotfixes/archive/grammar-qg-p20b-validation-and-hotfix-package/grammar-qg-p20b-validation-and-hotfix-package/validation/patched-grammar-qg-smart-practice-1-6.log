@@ -1,0 +1,6 @@
+Grammar QG P20 smart-practice audit: PASS
+  Sessions: 66 (11 profiles × 6 seeds)
+  Failures: 0
+  Advisories: 0
+  JSON: /mnt/data/ks2-05060131-validation/patched-grammar-qg-smart-practice-1-6.json
+  MD: /mnt/data/ks2-05060131-validation/patched-grammar-qg-smart-practice-1-6.md

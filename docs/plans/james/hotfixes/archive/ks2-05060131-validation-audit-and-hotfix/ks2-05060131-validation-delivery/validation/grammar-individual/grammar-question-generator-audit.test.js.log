@@ -1,0 +1,35 @@
+TAP version 13
+# Subtest: Grammar question-generator audit covers the current template inventory
+ok 1 - Grammar question-generator audit covers the current template inventory
+  ---
+  duration_ms: 434.801062
+  ...
+# Subtest: Grammar generated variants have stable answer-safe signatures
+ok 2 - Grammar generated variants have stable answer-safe signatures
+  ---
+  duration_ms: 318.575624
+  ...
+# Subtest: Grammar question-generator P20 quality-recovery denominator assertions
+ok 3 - Grammar question-generator P20 quality-recovery denominator assertions
+  ---
+  duration_ms: 1822.39561
+  ...
+# Subtest: Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+ok 4 - Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+  ---
+  duration_ms: 1729.048322
+  ...
+# Subtest: Grammar generated variant signatures ignore choice shuffle order only
+ok 5 - Grammar generated variant signatures ignore choice shuffle order only
+  ---
+  duration_ms: 0.623044
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4929.577847

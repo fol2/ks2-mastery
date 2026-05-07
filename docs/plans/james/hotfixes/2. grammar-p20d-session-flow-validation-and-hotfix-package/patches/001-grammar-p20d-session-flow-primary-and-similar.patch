@@ -1,0 +1,190 @@
+diff --git a/src/subjects/grammar/components/GrammarSessionScene.jsx b/src/subjects/grammar/components/GrammarSessionScene.jsx
+index 2f00553..9bded9a 100644
+--- a/src/subjects/grammar/components/GrammarSessionScene.jsx
++++ b/src/subjects/grammar/components/GrammarSessionScene.jsx
+@@ -740,6 +740,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
+               actions.dispatch('grammar-save-mini-test-response', payload);
+               return;
+             }
++            if (isFeedback) return;
+             actions.dispatch('grammar-submit-form', { formData });
+           }}
+         >
+@@ -787,20 +788,19 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
+                   {pending && grammar.pendingCommand === 'finish-mini-test' ? 'Finishing...' : 'Finish mini-set'}
+                 </Button>
+               </>
+-            ) : (
+-              <Button variant="primary" type="submit" disabled={submitDisabled}>
+-                {pending && grammar.pendingCommand === 'submit-answer' ? 'Checking...' : submitLabel}
+-              </Button>
+-            )}
+-            {!isMiniTest && isFeedback ? (
++            ) : isFeedback ? (
+               <Button
+-                variant="secondary"
++                variant="primary"
+                 disabled={runtimeReadOnly || pending || submitLock.locked}
+                 onClick={() => submitLock.run(async () => actions.dispatch('grammar-continue'))}
+               >
+                 {progressDone >= progressTotal ? 'Finish round' : 'Next question'}
+               </Button>
+-            ) : null}
++            ) : (
++              <Button variant="primary" type="submit" disabled={submitDisabled}>
++                {pending && grammar.pendingCommand === 'submit-answer' ? 'Checking...' : submitLabel}
++              </Button>
++            )}
+             {!isMiniTest ? (
+               <Button
+                 variant="ghost"
+diff --git a/tests/grammar-engine-validation.test.js b/tests/grammar-engine-validation.test.js
+index 71bd9e4..c3427ad 100644
+--- a/tests/grammar-engine-validation.test.js
++++ b/tests/grammar-engine-validation.test.js
+@@ -976,12 +976,44 @@ test('Grammar similar problem repair creates a deterministic built-in variant',
+   });
+ 
+   assert.equal(similar.state.phase, 'session');
+-  assert.equal(similar.state.session.currentItem.templateId, sample.id);
++  assert.notEqual(similar.state.session.currentItem.templateId, sample.id);
+   assert.notEqual(similar.state.session.currentItem.seed, sample.sample.seed);
++  const baseSkillIds = new Set(question.skillIds || []);
++  assert.ok(
++    similar.state.session.currentItem.skillIds.some((skillId) => baseSkillIds.has(skillId)),
++    'similar problem should stay on the same Grammar skill without replaying the same template',
++  );
+   assert.equal(similar.state.session.targetCount, 2);
+   assert.equal(similar.state.session.repair.similarProblems, 1);
+ });
+ 
++test('Grammar similar problem repair is unavailable before an answer is marked', () => {
++  const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'fronted_adverbial_choose');
++  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
++
++  const start = engine.apply({
++    learnerId: 'learner-a',
++    subjectRecord: {},
++    command: 'start-session',
++    requestId: 'start-similar-repair-not-ready',
++    payload: {
++      mode: 'smart',
++      roundLength: 1,
++      templateId: sample.id,
++      seed: sample.sample.seed,
++    },
++  });
++
++  assert.throws(() => engine.apply({
++    learnerId: 'learner-a',
++    subjectRecord: { ui: start.state, data: start.data },
++    latestSession: start.practiceSession,
++    command: 'start-similar-problem',
++    requestId: 'start-similar-repair-too-early',
++    payload: {},
++  }), (error) => error?.extra?.code === 'grammar_repair_not_ready');
++});
++
+ test('Grammar repair actions fail closed during unfinished strict mini-tests', () => {
+   const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+   const start = engine.apply({
+diff --git a/tests/grammar-qg-p10-scheduler-safety.test.js b/tests/grammar-qg-p10-scheduler-safety.test.js
+index 3071e7c..92f6796 100644
+--- a/tests/grammar-qg-p10-scheduler-safety.test.js
++++ b/tests/grammar-qg-p10-scheduler-safety.test.js
+@@ -263,7 +263,11 @@ describe('P10 Scheduler Safety: characterisation — approved template engine pa
+       payload: {},
+     });
+     assert.equal(similar.state.phase, 'session');
+-    assert.equal(similar.state.session.currentItem.templateId, approvedId);
++    assert.notEqual(similar.state.session.currentItem.templateId, approvedId);
++    assert.ok(
++      similar.state.session.currentItem.skillIds.includes(approvedTemplate.skillIds[0]),
++      'similar problem should choose a fresh template for the same Grammar skill',
++    );
+     assert.equal(similar.changed, true);
+   });
+ });
+diff --git a/tests/react-accessibility-contract.test.js b/tests/react-accessibility-contract.test.js
+index 4abcb7e..184c3ea 100644
+--- a/tests/react-accessibility-contract.test.js
++++ b/tests/react-accessibility-contract.test.js
+@@ -172,6 +172,10 @@ test('Grammar session answer input carries the autofocus shim and feedback live
+   html = harness.render();
+   // Feedback panel carries role=status + aria-live=polite (good or warn).
+   assert.match(html, /class="feedback (?:good|warn)" role="status" aria-live="polite"/);
++  const feedbackPrimary = (html.match(/class="btn primary[^"]*"/g) || []).length;
++  assert.equal(feedbackPrimary, 1, 'session feedback must render a single active .btn.primary');
++  assert.match(html, /<button[^>]*class="btn primary"[^>]*>Finish round<\/button>/);
++  assert.doesNotMatch(html, />Saved<\/button>/);
+ });
+ 
+ test('Grammar session error banner carries role="alert" so assistive tech announces failures', () => {
+diff --git a/tests/react-grammar-surface.test.js b/tests/react-grammar-surface.test.js
+index 820ffa5..e8ed1f2 100644
+--- a/tests/react-grammar-surface.test.js
++++ b/tests/react-grammar-surface.test.js
+@@ -7,6 +7,7 @@ import {
+   grammarResponseFormData,
+ } from './helpers/grammar-subject-harness.js';
+ import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
++import { createGrammarQuestion } from '../worker/src/subjects/grammar/content.js';
+ import { installMemoryStorage } from './helpers/memory-storage.js';
+ import { scopeSummary } from './helpers/grammar-phase3-renders.js';
+ import {
+@@ -131,7 +132,8 @@ test('Grammar surface runs from setup to Worker-style feedback and summary', ()
+   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'feedback');
+   html = harness.render();
+   assert.match(html, /Correct\./);
+-  assert.match(html, /Finish round/);
++  assert.match(html, /<button[^>]*class="btn primary"[^>]*>Finish round<\/button>/);
++  assert.doesNotMatch(html, />Saved<\/button>/);
+ 
+   harness.dispatch('grammar-continue');
+   assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
+@@ -736,8 +738,13 @@ test('Grammar surface exposes post-answer repair actions without local scoring',
+   harness.dispatch('grammar-start-similar-problem');
+   grammar = harness.store.getState().subjectUi.grammar;
+   assert.equal(grammar.phase, 'session');
+-  assert.equal(grammar.session.currentItem.templateId, sample.id);
++  assert.notEqual(grammar.session.currentItem.templateId, sample.id);
+   assert.notEqual(grammar.session.currentItem.seed, sample.sample.seed);
++  const baseSkillIds = new Set(createGrammarQuestion({
++    templateId: sample.id,
++    seed: sample.sample.seed,
++  }).skillIds || []);
++  assert.ok(grammar.session.currentItem.skillIds.some((skillId) => baseSkillIds.has(skillId)));
+   assert.equal(grammar.session.repair.similarProblems, 1);
+ });
+ 
+diff --git a/worker/src/subjects/grammar/engine.js b/worker/src/subjects/grammar/engine.js
+index fc4b49a..e8dc130 100644
+--- a/worker/src/subjects/grammar/engine.js
++++ b/worker/src/subjects/grammar/engine.js
+@@ -1721,6 +1721,12 @@ function showWorkedSolution(state) {
+ 
+ function startSimilarProblem(state, nowTs) {
+   const session = assertRepairableSession(state);
++  if (state.phase !== 'feedback' || !state.awaitingAdvance || !state.feedback?.result) {
++    throw new BadRequestError('Similar problem is available after an answer has been marked.', {
++      code: 'grammar_repair_not_ready',
++      subjectId: SUBJECT_ID,
++    });
++  }
+   const repair = ensureRepairState(session);
+   const baseItem = session.currentItem;
+   // Blocklist gate: if the base template is now blocked, no similar problem
+@@ -1728,11 +1734,11 @@ function startSimilarProblem(state, nowTs) {
+   if (isTemplateBlocked(baseItem.templateId)) return null;
+   const nextSimilarIndex = repair.similarProblems + 1;
+   const seed = (Number(baseItem.seed) + nextSimilarIndex * 2654435761) >>> 0;
++  const baseConceptIds = Array.isArray(baseItem.skillIds) ? baseItem.skillIds.filter(isGrammarConceptId) : [];
+   const item = nextItem(state, {
+     mode: session.mode,
+-    focusConceptId: session.focusConceptId,
++    focusConceptId: baseConceptIds[0] || session.focusConceptId,
+     seed,
+-    templateId: baseItem.templateId,
+     nowTs,
+     session,
+   });

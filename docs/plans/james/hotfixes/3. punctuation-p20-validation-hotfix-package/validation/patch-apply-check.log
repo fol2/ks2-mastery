@@ -1,0 +1,2 @@
+$ git apply --check --ignore-whitespace 001-punctuation-p20-real-scheduler-and-session-ui-hardening.patch
+PASS

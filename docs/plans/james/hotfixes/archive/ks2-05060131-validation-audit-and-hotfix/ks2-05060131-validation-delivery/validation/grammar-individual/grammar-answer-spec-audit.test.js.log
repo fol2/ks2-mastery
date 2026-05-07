@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: audit doc exists on disk
+ok 1 - audit doc exists on disk
+  ---
+  duration_ms: 3.454363
+  ...
+# Subtest: classification table has one row per template
+ok 2 - classification table has one row per template
+  ---
+  duration_ms: 6.606216
+  ...
+# Subtest: every proposed answerSpec.kind is in ANSWER_SPEC_KINDS
+ok 3 - every proposed answerSpec.kind is in ANSWER_SPEC_KINDS
+  ---
+  duration_ms: 5.31742
+  ...
+# Subtest: new opt-in generated templates must emit validated answerSpec data
+ok 4 - new opt-in generated templates must emit validated answerSpec data
+  ---
+  duration_ms: 225.700894
+  ...
+# Subtest: every template id in the audit doc exists in GRAMMAR_TEMPLATES
+ok 5 - every template id in the audit doc exists in GRAMMAR_TEMPLATES
+  ---
+  duration_ms: 7.110566
+  ...
+# Subtest: no duplicate template ids in the audit doc
+ok 6 - no duplicate template ids in the audit doc
+  ---
+  duration_ms: 3.359747
+  ...
+# Subtest: audit lists at least 5 manual-review-only candidates in section 3
+ok 7 - audit lists at least 5 manual-review-only candidates in section 3
+  ---
+  duration_ms: 3.257961
+  ...
+# Subtest: audit lists all 6 P1 focus concepts as high-priority in section 4
+ok 8 - audit lists all 6 P1 focus concepts as high-priority in section 4
+  ---
+  duration_ms: 3.135745
+  ...
+# Subtest: every template carrying a P1 focus concept is priority=high
+ok 9 - every template carrying a P1 focus concept is priority=high
+  ---
+  duration_ms: 7.318538
+  ...
+# Subtest: release-id bump is YES for every constructed-response row
+ok 10 - release-id bump is YES for every constructed-response row
+  ---
+  duration_ms: 6.419113
+  ...
+# Subtest: release-id bump is NO for every selected-response row
+ok 11 - release-id bump is NO for every selected-response row
+  ---
+  duration_ms: 7.517102
+  ...
+# Subtest: audit table proposes the expected current answer-spec distribution
+ok 12 - audit table proposes the expected current answer-spec distribution
+  ---
+  duration_ms: 4.451867
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 927.820597

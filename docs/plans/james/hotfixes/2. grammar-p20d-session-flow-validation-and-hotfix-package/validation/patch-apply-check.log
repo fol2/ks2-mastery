@@ -1,0 +1,18 @@
+Patch apply validation for 001-grammar-p20d-session-flow-primary-and-similar.patch
+timestamp_utc=2026-05-07T09:36:19Z
+zip_sha256=fb4bfc0fb0dc0ca92dd17513de33a9f2eb722d1edb9bce4cc664d29e6f19be9a
+
+$ git apply --check /tmp/001-grammar-p20d-session-flow-primary-and-similar.patch
+PASS: dry-run check succeeded
+
+$ git apply /tmp/001-grammar-p20d-session-flow-primary-and-similar.patch
+PASS: patch applied
+
+$ git diff --stat
+ .../grammar/components/GrammarSessionScene.jsx     | 16 +++++-----
+ tests/grammar-engine-validation.test.js            | 34 +++++++++++++++++++++-
+ tests/grammar-qg-p10-scheduler-safety.test.js      |  6 +++-
+ tests/react-accessibility-contract.test.js         |  4 +++
+ tests/react-grammar-surface.test.js                | 11 +++++--
+ worker/src/subjects/grammar/engine.js              | 10 +++++--
+ 6 files changed, 67 insertions(+), 14 deletions(-)

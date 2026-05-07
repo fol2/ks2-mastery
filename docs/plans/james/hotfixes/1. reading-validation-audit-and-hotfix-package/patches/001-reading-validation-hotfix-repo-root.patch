@@ -1,0 +1,818 @@
+diff --git a/shared/reading/content.js b/shared/reading/content.js
+index 15c97d5..efdcffd 100644
+--- a/shared/reading/content.js
++++ b/shared/reading/content.js
+@@ -194,7 +194,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which option best summarises paragraphs 3 and 4?",
++        "stem": "Which option best summarises Gran's noticing box and its effect on Nia?",
+         "options": [
+           "Grandad tells Nia to clean the loft, and she feels annoyed that she has to work.",
+           "Nia learns that Gran recorded small daily details, and this helps Nia notice the day differently.",
+@@ -1156,7 +1156,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which statement best summarises paragraph 3?",
++        "stem": "Which statement best summarises why salt marshes matter in paragraph 3?",
+         "options": [
+           "Salt marshes are always dry enough to build houses on.",
+           "Salt marshes matter because they protect coasts and support many living things.",
+@@ -1517,7 +1517,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "open",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "What is the best summary of the poem?",
++        "stem": "What is the best summary of Night Ferry?",
+         "rubric": [
+           {
+             "label": "Includes leaving harbour or town",
+@@ -2659,7 +2659,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which statement best summarises paragraph 4?",
++        "stem": "Which statement best summarises the deep-sea adaptations in paragraph 4?",
+         "options": [
+           "Deep-sea animals are all transparent and harmless.",
+           "Deep-sea animals use a range of special adaptations to survive.",
+@@ -3298,7 +3298,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which statement best summarises paragraph 3?",
++        "stem": "Which statement best summarises how bridge designers manage risky movement?",
+         "options": [
+           "Engineers avoid modern bridges because sensors are too expensive to use.",
+           "Designers can reduce risky movement and use sensors so unusual sound becomes useful information.",
+@@ -3766,7 +3766,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which option best summarises paragraphs 2 and 3?",
++        "stem": "Which option best summarises Aunt Caro's careful preparation and the narrator's changing view?",
+         "options": [
+           "Aunt Caro wastes time cleaning equipment while the narrator grows bored of waiting.",
+           "Aunt Caro prepares carefully and notices warning signs while the narrator starts to see the old system may matter.",
+@@ -3870,7 +3870,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "order",
+         "skill": "2f",
+         "marks": 2,
+-        "stem": "Put these events in the order they happen.",
++        "stem": "Put the lantern-keeper events in the order they happen.",
+         "items": [
+           "The radio breaks into crackle and dies.",
+           "The reserve lamp is lit on the gallery.",
+@@ -4405,7 +4405,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which statement best summarises paragraph 4?",
++        "stem": "Which statement best summarises the wildlife value of messy wet places?",
+         "options": [
+           "Messy-looking wet places can support many different kinds of life.",
+           "Wetlands are always less useful than straight drainage ditches.",
+@@ -5306,7 +5306,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which option best summarises paragraphs 3 and 4?",
++        "stem": "Which option best summarises the station problem and Emma's careful listening?",
+         "options": [
+           "The porter repairs the platform clock while Emma reads a newspaper.",
+           "The signal box has failed, so the station uses a hand bell and Emma listens carefully.",
+@@ -5434,7 +5434,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "order",
+         "skill": "2f",
+         "marks": 2,
+-        "stem": "Put these events in the order they happen.",
++        "stem": "Put Emma's station events in the order they happen.",
+         "items": [
+           "Emma hears that the signal box has lost power.",
+           "The porter rings the hand bell twice.",
+@@ -5565,7 +5565,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which statement best summarises paragraph 2?",
++        "stem": "Which statement best summarises how a rain garden works in paragraph 2?",
+         "options": [
+           "Rain gardens are ordinary flower beds that need no special design.",
+           "A rain garden sits lower than the pavement and uses soil, gravel and roots to hold and filter water.",
+@@ -5939,7 +5939,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "open",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "What is the best summary of the poem?",
++        "stem": "What is the best summary of Under-Bridge Song?",
+         "rubric": [
+           {
+             "label": "Mentions under-bridge river scene",
+@@ -6115,7 +6115,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which option best summarises paragraphs 2 and 3?",
++        "stem": "Which option best summarises Jude's compass problem and the clues he checks?",
+         "options": [
+           "The compass points strangely near the railings, so Jude checks the map and other clues before deciding.",
+           "Jude reaches the oak marker and writes down the code immediately.",
+@@ -6450,7 +6450,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which statement best summarises paragraph 4?",
++        "stem": "Which statement best summarises the different clues bats use to find their way?",
+         "options": [
+           "Bats use only echolocation and never any other sense.",
+           "Bats may combine echolocation with sight, smell and memory of familiar routes.",
+@@ -7957,7 +7957,7 @@ export const READING_PASSAGES = Object.freeze([
+         "type": "mcq",
+         "skill": "2c",
+         "marks": 2,
+-        "stem": "Which statement best summarises paragraph 2?",
++        "stem": "Which statement best summarises what healthy soil contains?",
+         "options": [
+           "Healthy soil is a mixture of minerals, spaces, water and living organisms that work together.",
+           "Soil is made only of tiny stones and nothing else.",
+diff --git a/src/platform/game/mastery/index.js b/src/platform/game/mastery/index.js
+index caebe06..878b084 100644
+--- a/src/platform/game/mastery/index.js
++++ b/src/platform/game/mastery/index.js
+@@ -44,6 +44,8 @@ export {
+   READING_MONSTER_IDS,
+ } from './shared.js';
+ export {
++  READING_DIRECT_STAR_THRESHOLDS,
++  READING_GRAND_STAR_THRESHOLDS,
+   READING_REWARD_RELEASE_ID,
+   READING_SKILL_TO_MONSTER,
+   activeReadingMonsterSummaryFromState,
+diff --git a/src/platform/game/mastery/reading.js b/src/platform/game/mastery/reading.js
+index af21dca..61c7189 100644
+--- a/src/platform/game/mastery/reading.js
++++ b/src/platform/game/mastery/reading.js
+@@ -5,6 +5,7 @@ import {
+   eventFromTransition,
+   isPlainObject,
+   masteredList,
++  releaseIdForEntry,
+   READING_MONSTER_IDS,
+   saveMonsterState,
+ } from './shared.js';
+@@ -24,8 +25,8 @@ export const READING_SKILL_TO_MONSTER = Object.freeze({
+ });
+ 
+ const READING_CORE_SKILL_IDS = Object.freeze(Object.keys(READING_SKILL_TO_MONSTER));
+-const READING_DIRECT_STAR_THRESHOLDS = Object.freeze([1, 25, 50, 75, 100]);
+-const READING_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
++export const READING_DIRECT_STAR_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
++export const READING_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 25, 50, 100]);
+ 
+ const READING_MONSTER_SKILL_TOTALS = Object.freeze(
+   READING_CORE_SKILL_IDS.reduce((totals, skillId) => {
+@@ -53,6 +54,25 @@ function readingDisplayStars(mastered, total) {
+   return Math.min(100, Math.round((safeMastered / safeTotal) * 100));
+ }
+ 
++function safeStarHighWater(value) {
++  const n = Number(value);
++  return Number.isFinite(n) && n > 0 ? Math.floor(n + 1e-9) : 0;
++}
++
++function readingMasteredList(entry, releaseId = READING_REWARD_RELEASE_ID) {
++  const mastered = masteredList(entry);
++  const scopedReleaseId = releaseIdForEntry(entry, releaseId) || READING_REWARD_RELEASE_ID;
++  const releasePrefix = `${scopedReleaseId}:reading-skill:`;
++  return mastered.filter((key) => key.startsWith(releasePrefix));
++}
++
++function readingMasteredCount(entry, releaseId = READING_REWARD_RELEASE_ID) {
++  const mastered = masteredList(entry);
++  if (mastered.length) return readingMasteredList(entry, releaseId).length;
++  const count = Number(entry?.masteredCount);
++  return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
++}
++
+ function thresholdsForReadingMonster(monsterId) {
+   return monsterId === READING_GRAND_MONSTER_ID
+     ? READING_GRAND_STAR_THRESHOLDS
+@@ -61,21 +81,29 @@ function thresholdsForReadingMonster(monsterId) {
+ 
+ function progressForReadingMonsterFromState(state, monsterId) {
+   const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
+-  const mastered = masteredList(entry).length;
++  const releaseId = releaseIdForEntry(entry, READING_REWARD_RELEASE_ID) || READING_REWARD_RELEASE_ID;
++  const mastered = readingMasteredCount(entry, releaseId);
+   const masteredMax = readingMonsterTotal(monsterId);
+-  const displayStars = readingDisplayStars(mastered, masteredMax);
++  const computedStars = readingDisplayStars(mastered, masteredMax);
++  const starHighWater = Math.max(safeStarHighWater(entry.starHighWater), computedStars);
++  const displayStars = Math.min(100, starHighWater);
+   const stage = stageFor(displayStars, thresholdsForReadingMonster(monsterId));
+   return {
+     mastered,
+     masteredMax,
++    computedStars,
+     displayStars,
++    stars: displayStars,
+     starMax: 100,
++    ...(monsterId === READING_GRAND_MONSTER_ID ? { grandStars: displayStars, grandStarMax: 100 } : {}),
+     stage,
+     displayStage: stage,
+     level: levelFor(displayStars),
+-    caught: mastered >= 1,
++    caught: entry.caught === true || mastered >= 1,
+     branch: branchForMonster(state, monsterId),
+-    masteredList: masteredList(entry),
++    masteredList: readingMasteredList(entry, releaseId),
++    starHighWater,
++    releaseId,
+   };
+ }
+ 
+@@ -116,13 +144,24 @@ export function recordReadingSkillMastery({
+     const entry = isPlainObject(workingState[monsterId]) ? workingState[monsterId] : { mastered: [], caught: false };
+     const mastered = masteredList(entry);
+     if (mastered.includes(masteryKey)) continue;
++    const masteredMax = readingMonsterTotal(monsterId);
++    const nextMastered = [...mastered, masteryKey];
++    const computedStars = readingDisplayStars(
++      readingMasteredCount({ ...entry, releaseId, mastered: nextMastered }, releaseId),
++      masteredMax,
++    );
++    const starHighWater = Math.min(100, Math.max(safeStarHighWater(entry.starHighWater), computedStars));
+     const afterState = {
+       ...workingState,
+       [monsterId]: {
+         ...entry,
+         caught: true,
+         releaseId,
+-        mastered: [...mastered, masteryKey],
++        mastered: nextMastered,
++        starHighWater,
++        displayStars: starHighWater,
++        starMax: 100,
++        ...(monsterId === READING_GRAND_MONSTER_ID ? { grandStars: starHighWater, grandStarMax: 100 } : {}),
+       },
+     };
+     const nextProgress = progressForReadingMonsterFromState(afterState, monsterId);
+diff --git a/src/subjects/reading/components/ReadingPracticeSurface.jsx b/src/subjects/reading/components/ReadingPracticeSurface.jsx
+index f85edde..e166bc4 100644
+--- a/src/subjects/reading/components/ReadingPracticeSurface.jsx
++++ b/src/subjects/reading/components/ReadingPracticeSurface.jsx
+@@ -315,6 +315,8 @@ function QuestionPanel({ ui, actions }) {
+   const pending = isPending(ui);
+   const formId = `reading-question-form-${session.id}`;
+   const feedback = ui.feedback || (result ? { result } : null);
++  const primarySubmitLabel = session.delayedFeedback ? 'Save and next' : 'Submit answer';
++  const showDraftNextButton = !session.delayedFeedback || disabled;
+   function submit(event) {
+     event.preventDefault();
+     const formData = new FormData(event.currentTarget);
+@@ -364,9 +366,9 @@ function QuestionPanel({ ui, actions }) {
+         <p className="question-stem">{question.stem}</p>
+         <QuestionInput question={question} response={response} disabled={disabled} />
+         <div className="actions reading-actions-spaced">
+-          {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{session.delayedFeedback ? 'Save and next' : 'Submit answer'}</button> : null}
++          {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{primarySubmitLabel}</button> : null}
+           <button className="btn ghost" type="button" onClick={(event) => saveAndMove(event, { delta: -1 })} disabled={pending || !canGoPrevious(session)}>Previous</button>
+-          <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save and next'}</button>
++          {showDraftNextButton ? <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save draft and next'}</button> : null}
+           {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={finish} disabled={pending}>Finish now</button> : null}
+           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
+         </div>
+@@ -397,7 +399,7 @@ function QuestionListPanel({ ui, actions }) {
+       <div className="reading-active-step">
+         <div>
+           <div className="eyebrow">{session.currentSection?.title || 'Current text'}</div>
+-          <h2 className="section-title">Answer the full question list</h2>
++          <h2 className="section-title">Answer this text's question list</h2>
+         </div>
+         <span className="reading-status-badge saved">{session.currentSection?.answered || 0}/{session.currentSection?.total || questions.length} saved</span>
+       </div>
+@@ -411,8 +413,8 @@ function QuestionListPanel({ ui, actions }) {
+       </div>
+       <div className="callout reading-session-guidance">
+         {session.strict
+-          ? 'SATs-style mode: answer each text, then mark the whole paper when you want feedback.'
+-          : 'List mode saves the whole visible section together. Feedback stays hidden until you mark the section.'}
++          ? 'SATs-style mode: answer each text inside this Reading frame, then mark the whole paper when you want feedback.'
++          : 'Use the passage beside this card, save the visible section as you go, and mark only when you are ready for feedback.'}
+       </div>
+       <form className="reading-list-form" onSubmit={mark} data-reading-active-form="true">
+         {questions.map((questionItem) => {
+@@ -437,7 +439,7 @@ function QuestionListPanel({ ui, actions }) {
+           );
+         })}
+         <div className="actions reading-actions-spaced">
+-          <button className="btn secondary" type="button" onClick={saveSection} disabled={pending}>Save</button>
++          <button className="btn secondary" type="button" onClick={saveSection} disabled={pending}>Save this section</button>
+           <button className="btn warn" type="submit" disabled={pending}>{session.strict ? 'Mark whole paper' : 'Mark this section'}</button>
+           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
+         </div>
+diff --git a/tests/reading-content-contract.test.js b/tests/reading-content-contract.test.js
+index 7cb389f..e385c03 100644
+--- a/tests/reading-content-contract.test.js
++++ b/tests/reading-content-contract.test.js
+@@ -47,6 +47,22 @@ test('reading ids are unique and evidence quotes exist in their source passage',
+   }
+ });
+ 
++
++
++test('reading question stems avoid noticeable repetition after normalisation', () => {
++  const seen = new Map();
++  for (const passage of READING_PASSAGES) {
++    for (const question of passage.questions || []) {
++      const key = norm(question.stem).replace(/paragraph [0-9]+/g, 'paragraph #').replace(/section [0-9]+/g, 'section #');
++      const rows = seen.get(key) || [];
++      rows.push(`${passage.id}:${question.id}`);
++      seen.set(key, rows);
++    }
++  }
++  const duplicates = [...seen.entries()].filter(([, rows]) => rows.length > 1);
++  assert.deepEqual(duplicates, []);
++});
++
+ test('reading test papers only reference existing passages and questions and sum to 50 marks', () => {
+   const passageMap = new Map(READING_PASSAGES.map((passage) => [passage.id, passage]));
+   for (const paper of READING_TEST_PAPERS) {
+diff --git a/tests/reading-session-interface.test.js b/tests/reading-session-interface.test.js
+index 279d155..22602cb 100644
+--- a/tests/reading-session-interface.test.js
++++ b/tests/reading-session-interface.test.js
+@@ -64,6 +64,16 @@ test('reading surface implements delegated full-list session UI inside the app f
+   assert.match(ui, /data-reading-active-form="true"/);
+ });
+ 
++
++
++test('reading one-question delayed-feedback surface has one save-and-next path', () => {
++  const ui = source('src/subjects/reading/components/ReadingPracticeSurface.jsx');
++  const saveAndNextCount = (ui.match(/Save and next/g) || []).length;
++  assert.equal(saveAndNextCount, 1);
++  assert.match(ui, /showDraftNextButton/);
++  assert.match(ui, /Save draft and next/);
++});
++
+ test('reading command actions serialise section responses and preserve stale guards', () => {
+   const commands = source('src/subjects/reading/command-actions.js');
+   assert.match(commands, /function responsesFromFormData/);
+@@ -106,7 +116,7 @@ test('reading list-mode surface renders prefixed full-section form controls with
+     console.log(renderToStaticMarkup(<ReadingPracticeSurface appState={appState} actions={{ dispatch() {} }} />));
+   `);
+ 
+-  assert.match(html, /Answer the full question list/);
++  assert.match(html, /Answer this text/);
+   assert.match(html, /data-reading-active-form="true"/);
+   assert.match(html, /name="q_[^"]+_answer"/);
+   assert.match(html, /Mark this section/);
+diff --git a/tests/worker-reading-runtime.test.js b/tests/worker-reading-runtime.test.js
+index e57434b..ef584ee 100644
+--- a/tests/worker-reading-runtime.test.js
++++ b/tests/worker-reading-runtime.test.js
+@@ -134,9 +134,9 @@ test('reading marked answers cannot be overwritten by duplicate or stale submiss
+   assert.deepEqual(staleSave.state.session.sections[0].responses[qid], originalResponse);
+ });
+ 
+-test('reading engine reloads persisted ui state for follow-up commands', () => {
+-  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+-  const started = engine.apply({
++test('reading engine reloads persisted ui state for follow-up commands', () => {
++  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
++  const started = engine.apply({
+     learnerId: 'l1',
+     command: 'start-session',
+     payload: { mode: 'guided', viewMode: 'one' },
+@@ -156,48 +156,118 @@ test('reading engine reloads persisted ui state for follow-up commands', () => {
+     },
+     requestId: 'r2',
+   });
+-
+-  assert.equal(submitted.changed, true);
+-  assert.equal(submitted.state.phase, 'feedback');
+-  assert.equal(submitted.state.session.id, session.id);
+-});
+-
+-test('reading due stats and review queue use the injected command clock', () => {
+-  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+-  const subjectRecord = {
+-    state: {},
+-    data: {
+-      skills: {
+-        '2a': {
+-          attempts: 1,
+-          correct: 1,
+-          wrong: 0,
+-          strength: 0.7,
+-          intervalDays: 1,
+-          dueAt: 1500,
+-          lastSeenAt: 900,
+-          lastWrongAt: null,
+-          correctStreak: 1,
+-        },
+-      },
+-      retryQueue: [{ questionId: 'future-review', passageId: 'red_tin_box', skillId: '2a', dueAt: 1500 }],
+-    },
+-  };
+-  const result = engine.apply({
+-    learnerId: 'l1',
+-    subjectRecord,
+-    command: 'save-prefs',
+-    payload: { prefs: { mode: 'guided' } },
+-    requestId: 'clock-regression',
+-  });
+-  assert.equal(result.stats.overview.due, 0);
+-  assert.equal(result.analytics.reviewQueue.length, 0);
+-  assert.equal(result.analytics.generatedAt, 1000);
+-});
+-
+-test('worker subject runtime wires reading command handlers', async () => {
+-  const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
+-  const context = fakeContext();
++
++  assert.equal(submitted.changed, true);
++  assert.equal(submitted.state.phase, 'feedback');
++  assert.equal(submitted.state.session.id, session.id);
++});
++
++test('reading due stats and review queue use the injected command clock', () => {
++  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
++  const subjectRecord = {
++    state: {},
++    data: {
++      skills: {
++        '2a': {
++          attempts: 1,
++          correct: 1,
++          wrong: 0,
++          strength: 0.7,
++          intervalDays: 1,
++          dueAt: 1500,
++          lastSeenAt: 900,
++          lastWrongAt: null,
++          correctStreak: 1,
++        },
++      },
++      retryQueue: [{ questionId: 'future-review', passageId: 'red_tin_box', skillId: '2a', dueAt: 1500 }],
++    },
++  };
++  const result = engine.apply({
++    learnerId: 'l1',
++    subjectRecord,
++    command: 'save-prefs',
++    payload: { prefs: { mode: 'guided' } },
++    requestId: 'clock-regression',
++  });
++  assert.equal(result.stats.overview.due, 0);
++  assert.equal(result.analytics.reviewQueue.length, 0);
++  assert.equal(result.analytics.generatedAt, 1000);
++});
++
++
++
++test('reading avoids immediate passage repeats after a started session is ended without answers', () => {
++  let clock = 1000;
++  const engine = createServerReadingEngine({ now: () => clock, random: () => 0 });
++  const first = engine.apply({
++    learnerId: 'l1',
++    command: 'start-session',
++    payload: { mode: 'guided', viewMode: 'one' },
++    requestId: 'r1',
++  });
++  assert.equal(first.state.session.sections[0].passageId, 'red_tin_box');
++
++  clock = 1500;
++  const ended = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: { state: first.state, data: first.data },
++    command: 'end-session',
++    payload: {},
++    requestId: 'r2',
++  });
++
++  clock = 2000;
++  const second = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: { state: ended.state, data: ended.data },
++    command: 'start-session',
++    payload: { mode: 'guided', viewMode: 'one' },
++    requestId: 'r3',
++  });
++
++  assert.equal(second.state.session.sections[0].passageId, 'city_swifts');
++  assert.notEqual(second.state.session.sections[0].passageId, first.state.session.sections[0].passageId);
++});
++
++test('reading guided mode uses weakness and variety rather than always taking the first four questions', () => {
++  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
++  const strongQuestion = {
++    attempts: 6,
++    correct: 6,
++    wrong: 0,
++    strength: 0.97,
++    intervalDays: 14,
++    dueAt: 1000 + 14 * 86400000,
++    lastSeenAt: 900,
++    correctStreak: 6,
++  };
++  const started = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: {
++      data: {
++        questions: {
++          rtb_q1: strongQuestion,
++          rtb_q2: strongQuestion,
++          rtb_q3: strongQuestion,
++          rtb_q4: strongQuestion,
++        },
++      },
++    },
++    command: 'start-session',
++    payload: { mode: 'guided', viewMode: 'one' },
++    requestId: 'guided-variety',
++  });
++
++  const questionIds = started.state.session.sections[0].questionIds;
++  assert.equal(started.state.session.sections[0].passageId, 'red_tin_box');
++  assert.notDeepEqual(questionIds, ['rtb_q1', 'rtb_q2', 'rtb_q3', 'rtb_q4']);
++  assert.ok(questionIds.includes('rtb_q5'));
++});
++
++test('worker subject runtime wires reading command handlers', async () => {
++  const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
++  const context = fakeContext();
+   const started = await runtime.dispatch({
+     subjectId: 'reading',
+     command: 'start-session',
+@@ -213,6 +283,7 @@ test('worker subject runtime wires reading command handlers', async () => {
+ });
+ 
+ import { projectReadingRewards } from '../worker/src/projections/rewards.js';
++import { progressForReadingMonster } from '../src/platform/game/monster-system.js';
+ 
+ test('reading secured skill events project into reading-owned monster rewards', () => {
+   const projection = projectReadingRewards({
+@@ -233,6 +304,49 @@ test('reading secured skill events project into reading-owned monster rewards',
+   assert.ok(projection.changedGameState['monster-codex'].inferane.caught);
+ });
+ 
++
++
++test('reading secured skill event carries deep secure evidence and mastery key', () => {
++  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
++  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
++  const session = started.state.session;
++  const qid = session.sections[0].questionIds[0];
++  const marked = engine.apply({
++    learnerId: 'l1',
++    subjectRecord: {
++      state: started.state,
++      data: {
++        ...started.data,
++        skills: {
++          ...started.data.skills,
++          '2a': {
++            attempts: 5,
++            correct: 5,
++            wrong: 0,
++            strength: 0.9,
++            intervalDays: 7,
++            dueAt: 1000 + 7 * 86400000,
++            lastSeenAt: 900,
++            correctStreak: 5,
++          },
++        },
++        securedSkillKeys: [],
++      },
++    },
++    command: 'submit-answer',
++    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'folded slips of paper' } },
++    requestId: 'secure-evidence',
++  });
++
++  const secureEvent = marked.events.find((event) => event.type === 'reading.skill-secured' && event.skillId === '2a');
++  assert.ok(secureEvent);
++  assert.equal(secureEvent.masteryKey, 'reading-poc-promoted-2026-05-05:reading-skill:2a');
++  assert.equal(secureEvent.secureEvidence.kind, 'deep-secure-reading-skill');
++  assert.equal(secureEvent.secureEvidence.status, 'secured');
++  assert.equal(secureEvent.secureEvidence.correctStreak, 5);
++  assert.equal(secureEvent.secureEvidence.intervalDays, 7);
++});
++
+ test('reading delayed-feedback sessions do not expose answers through immediate submit or section mark', () => {
+   const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+   const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'test', viewMode: 'one', paperId: 'paper_i' }, requestId: 'r1' });
+@@ -276,6 +390,59 @@ test('reading delayed-feedback sessions do not expose answers through immediate
+   assert.ok(Object.keys(sessionMarked.data.events).length > 0);
+ });
+ 
++
++
++test('reading reward state exposes release-scoped 100-star high-water progress', () => {
++  const projectionOne = projectReadingRewards({
++    learnerId: 'l1',
++    domainEvents: [{
++      type: 'reading.skill-secured',
++      subjectId: 'reading',
++      learnerId: 'l1',
++      skillId: '2a',
++      contentReleaseId: 'reading-poc-promoted-2026-05-05',
++    }],
++    gameState: {},
++    random: () => 0,
++  });
++  let codex = projectionOne.gameState['monster-codex'];
++  assert.equal(codex.readbloom.starHighWater, 50);
++  assert.equal(codex.readbloom.displayStars, 50);
++  assert.equal(codex.lorequill.grandStars, 13);
++
++  const projectionTwo = projectReadingRewards({
++    learnerId: 'l1',
++    domainEvents: [{
++      type: 'reading.skill-secured',
++      subjectId: 'reading',
++      learnerId: 'l1',
++      skillId: '2g',
++      contentReleaseId: 'reading-poc-promoted-2026-05-05',
++    }],
++    gameState: projectionOne.gameState,
++    random: () => 0,
++  });
++  codex = projectionTwo.gameState['monster-codex'];
++  assert.equal(codex.readbloom.starHighWater, 100);
++  assert.equal(codex.readbloom.displayStars, 100);
++
++  const progress = progressForReadingMonster({
++    readbloom: {
++      caught: true,
++      releaseId: 'reading-poc-promoted-2026-05-05',
++      mastered: [
++        'old-release:reading-skill:2a',
++        'reading-poc-promoted-2026-05-05:reading-skill:2g',
++      ],
++      starHighWater: 100,
++    },
++  }, 'readbloom');
++  assert.equal(progress.mastered, 1);
++  assert.equal(progress.computedStars, 50);
++  assert.equal(progress.displayStars, 100);
++  assert.equal(progress.starHighWater, 100);
++});
++
+ test('reading reward thresholds use direct clusters plus a full-domain aggregate monster', () => {
+   const skills = ['2a', '2g', '2b', '2c', '2d', '2e', '2f', '2h'];
+   let gameState = {};
+diff --git a/worker/src/subjects/reading/engine.js b/worker/src/subjects/reading/engine.js
+index 131f060..2795820 100644
+--- a/worker/src/subjects/reading/engine.js
++++ b/worker/src/subjects/reading/engine.js
+@@ -170,6 +170,7 @@ function defaultData() {
+     retryQueue: [],
+     events: [],
+     sessions: [],
++    recentPassageStarts: [],
+     lastPracticeDay: null,
+     streakDays: 0,
+     securedSkillKeys: [],
+@@ -231,6 +232,7 @@ function normaliseData(raw) {
+     retryQueue: Array.isArray(data.retryQueue) ? data.retryQueue.slice(0, 500) : [],
+     events: Array.isArray(data.events) ? data.events.slice(-1200) : [],
+     sessions: Array.isArray(data.sessions) ? data.sessions.slice(-180) : [],
++    recentPassageStarts: Array.isArray(data.recentPassageStarts) ? data.recentPassageStarts.slice(-180) : [],
+     securedSkillKeys: Array.isArray(data.securedSkillKeys) ? data.securedSkillKeys : [],
+   };
+ }
+@@ -475,7 +477,7 @@ function hasStrictModeMatch(data, prefs) {
+ 
+ function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
+   const strictSkillMatch = hasStrictModeMatch(data, prefs);
+-  const candidates = READING_PASSAGES.filter((passage) => {
++  let candidates = READING_PASSAGES.filter((passage) => {
+     if (prefs.genre && passage.genre !== prefs.genre) return false;
+     if (prefs.difficulty && Number(passage.difficulty) !== Number(prefs.difficulty)) return false;
+     if (prefs.mode === 'guided' && passage.difficulty > 3) return false;
+@@ -483,6 +485,21 @@ function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
+     return relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch).length > 0;
+   });
+   if (!candidates.length) return null;
++
++  // Avoid immediately resurfacing the same text after a learner starts and
++  // abandons/saves a session without producing answer events. Answer-event
++  // recency alone cannot catch that common UI path, so Reading keeps a tiny
++  // session-start memory and excludes very recent passages when alternatives
++  // exist. This is a selection guard only; it never hides the last valid text.
++  const recentStartedPassageIds = new Set((data.recentPassageStarts || [])
++    .slice(-4)
++    .map((entry) => entry?.passageId)
++    .filter(Boolean));
++  if (recentStartedPassageIds.size && candidates.length > 1) {
++    const notRecentlyStarted = candidates.filter((passage) => !recentStartedPassageIds.has(passage.id));
++    if (notRecentlyStarted.length) candidates = notRecentlyStarted;
++  }
++
+   const weighted = candidates.map((passage) => {
+     const pNode = data.passages[passage.id] || defaultNode();
+     const gNode = data.genres[passage.genre] || defaultNode();
+@@ -491,7 +508,9 @@ function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
+     if (!pNode.attempts) weight += 0.7;
+     weight += average(questions.map((question) => questionWeakness(data, question, nowValue)));
+     const recentCount = data.events.slice(-12).filter((event) => event.passageId === passage.id).length;
++    const recentStartCount = (data.recentPassageStarts || []).slice(-12).filter((entry) => entry?.passageId === passage.id).length;
+     weight *= Math.pow(0.58, recentCount);
++    weight *= Math.pow(0.72, recentStartCount);
+     return [passage, Math.max(0.05, weight)];
+   });
+   let roll = random() * weighted.reduce((sum, [, weight]) => sum + weight, 0);
+@@ -506,10 +525,9 @@ function chooseQuestionIds(data, passage, prefs, nowValue = Date.now()) {
+   const strictSkillMatch = hasStrictModeMatch(data, prefs);
+   let questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
+   if (!questions.length) questions = (passage.questions || []).slice();
+-  if (prefs.mode === 'guided') return questions.slice(0, Math.min(4, questions.length)).map((question) => question.id);
+   if (prefs.mode === 'stamina') return questions.map((question) => question.id);
+   questions.sort((a, b) => questionWeakness(data, b, nowValue) - questionWeakness(data, a, nowValue));
+-  const limit = prefs.mode === 'smart' ? 4 : prefs.mode === 'punct' ? 3 : 5;
++  const limit = (prefs.mode === 'smart' || prefs.mode === 'guided') ? 4 : prefs.mode === 'punct' ? 3 : 5;
+   const picked = [];
+   const seenSkills = new Set();
+   for (const question of questions) {
+@@ -646,6 +664,33 @@ function updateStreak(data, nowValue) {
+   data.lastPracticeDay = day;
+ }
+ 
++function recentPassageIdsForSession(session) {
++  const seen = new Set();
++  for (const section of session?.sections || []) {
++    const passageId = typeof section?.passageId === 'string' ? section.passageId : '';
++    if (passageId) seen.add(passageId);
++  }
++  return [...seen];
++}
++
++function recordRecentPassageStart(data, session, nowValue) {
++  const entries = recentPassageIdsForSession(session).map((passageId) => ({
++    passageId,
++    sessionId: session.id,
++    mode: session.mode,
++    startedAt: nowValue,
++  }));
++  if (!entries.length) return;
++  data.recentPassageStarts = [
++    ...(Array.isArray(data.recentPassageStarts) ? data.recentPassageStarts : []),
++    ...entries,
++  ].slice(-180);
++}
++
++function readingSkillMasteryKey(skillId) {
++  return `${READING_CONTENT_RELEASE_ID}:reading-skill:${skillId}`;
++}
++
+ function applyQuestionUpdate({ data, learnerId, session, section, qid, result, response, nowValue, requestId }) {
+   const ref = QUESTION_REF_MAP[qid];
+   if (!ref) return [];
+@@ -716,8 +761,26 @@ function deriveSecuredSkillEvents({ data, learnerId, nowValue, requestId }) {
+       learnerId,
+       contentReleaseId: READING_CONTENT_RELEASE_ID,
+       skillId,
++      masteryKey: readingSkillMasteryKey(skillId),
+       strength: node.strength,
+       attempts: node.attempts,
++      correctStreak: node.correctStreak || 0,
++      intervalDays: node.intervalDays || 0,
++      secureEvidence: {
++        kind: 'deep-secure-reading-skill',
++        status: 'secured',
++        releaseId: READING_CONTENT_RELEASE_ID,
++        skillId,
++        strength: node.strength,
++        attempts: node.attempts,
++        correct: node.correct || 0,
++        wrong: node.wrong || 0,
++        correctStreak: node.correctStreak || 0,
++        intervalDays: node.intervalDays || 0,
++        lastSeenAt: node.lastSeenAt || null,
++        dueAt: node.dueAt || 0,
++        securedAt: nowValue,
++      },
+       createdAt: nowValue,
+     });
+   }
+@@ -858,6 +921,7 @@ function safeDataForReadModels(data) {
+     misconceptions: source.misconceptions || {},
+     retryQueue: Array.isArray(source.retryQueue) ? source.retryQueue : [],
+     events: Array.isArray(source.events) ? source.events : [],
++    recentPassageStarts: Array.isArray(source.recentPassageStarts) ? source.recentPassageStarts : [],
+   };
+ }
+ 
+@@ -968,6 +1032,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
+       if (!session) {
+         state = { ...state, error: 'No reading passage matches that setup yet.', phase: 'setup', session: null, feedback: null, updatedAt: t };
+       } else {
++        recordRecentPassageStart(data, session, t);
+         state = { ...state, prefs, phase: 'question', session, feedback: null, summary: null, error: '', updatedAt: t };
+         practiceSession = buildPracticeSessionRow(session, 'active', t);
+         events.push({ id: `reading.session-started.${learnerId}.${session.id}`, type: 'reading.session-started', subjectId: 'reading', learnerId, contentReleaseId: READING_CONTENT_RELEASE_ID, sessionId: session.id, mode: session.mode, heroContext: session.heroContext || null, createdAt: t });

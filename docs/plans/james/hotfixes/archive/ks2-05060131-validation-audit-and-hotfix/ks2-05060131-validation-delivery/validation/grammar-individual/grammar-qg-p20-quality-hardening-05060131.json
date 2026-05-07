@@ -1,0 +1,4249 @@
+{
+  "metadata": {
+    "contentReleaseId": "grammar-qg-p20-2026-05-05",
+    "generatedAt": "2026-05-06T00:43:45.135Z",
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "smartSeeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
+  },
+  "passed": true,
+  "phaseStatus": {
+    "phase1AnswerAcceptance": true,
+    "phase2TemplateQuality": true,
+    "phase3PoolAuditAndQuarantine": true,
+    "phase4VarietyAndAntiRepetition": true,
+    "phase5ExpansionGate": true
+  },
+  "summary": {
+    "templateCount": 510,
+    "seedsChecked": 30,
+    "answerSpecKindCounts": {
+      "none": 31,
+      "manualReviewOnly": 157,
+      "punctuationPattern": 20,
+      "exact": 234,
+      "multiField": 56,
+      "normalisedText": 12
+    },
+    "p20ClosedAutoMarkTemplateCount": 23,
+    "p20ClosedAutoMarkCaseCount": 690,
+    "answerAcceptanceFailureCount": 0,
+    "fairnessFindingCount": 0,
+    "templateQualityFindingCount": 0,
+    "unsafeAutoMarkedOpenPromptCount": 0,
+    "smartPracticeFailureCount": 0,
+    "smartPracticeAdvisoryCount": 0
+  },
+  "answerAcceptanceFailures": [],
+  "fairnessFindings": [],
+  "templateQualityFindings": [],
+  "unsafeAutoMarkedOpenPrompts": [],
+  "p20ClosedAutoMark": [
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Before sunrise the campers packed their bags."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. After the concert the audience cheered loudly."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. In the corner of the hall the orchestra tuned up."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. With great care Lena carried the glass model."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. During the thunderstorm the lights flickered twice."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Beside the canal the cyclists stopped for lunch."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Later that afternoon our team finally scored."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Without a sound the cat slipped through the gate."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. At the end of the lane the postbox leaned sideways."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Before the final whistle the striker passed the ball."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. On the top shelf the trophy gathered dust."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. After a long pause the judge announced the winner."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Before sunrise the campers packed their bags."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. After the concert the audience cheered loudly."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. In the corner of the hall the orchestra tuned up."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. With great care Lena carried the glass model."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. During the thunderstorm the lights flickered twice."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Beside the canal the cyclists stopped for lunch."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Later that afternoon our team finally scored."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Without a sound the cat slipped through the gate."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. At the end of the lane the postbox leaned sideways."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Before the final whistle the striker passed the ball."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. On the top shelf the trophy gathered dust."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. After a long pause the judge announced the winner."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Before sunrise the campers packed their bags."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. After the concert the audience cheered loudly."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. In the corner of the hall the orchestra tuned up."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. With great care Lena carried the glass model."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. During the thunderstorm the lights flickered twice."
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_fronted_adverbial_comma",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Beside the canal the cyclists stopped for lunch."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one dog owns a bowl."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several girls own boots."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one teacher owns a desk."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several players own shirts."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one baby owns a blanket."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several horses own saddles."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one fox owns a den."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several birds own nests."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one child owns a lunchbox."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several children own coats."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one class owns a trophy."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several teams own flags."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one dog owns a bowl."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several girls own boots."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one teacher owns a desk."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several players own shirts."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one baby owns a blanket."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several horses own saddles."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one fox owns a den."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several birds own nests."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one child owns a lunchbox."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several children own coats."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one class owns a trophy."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several teams own flags."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one dog owns a bowl."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several girls own boots."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one teacher owns a desk."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several players own shirts."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: one baby owns a blanket."
+    },
+    {
+      "templateId": "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for: several horses own saddles."
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: man eating shark"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: recover the chair"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: twenty odd children"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: small business owner"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: little used path"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: fast moving train"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: three year old child"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: well known author"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: long term plan"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: sugar free drink"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: cold blooded animal"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: high quality paper"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: man eating shark"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: recover the chair"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: twenty odd children"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: small business owner"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: little used path"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: fast moving train"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: three year old child"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: well known author"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: long term plan"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: sugar free drink"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: cold blooded animal"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: high quality paper"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: man eating shark"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: recover the chair"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: twenty odd children"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: small business owner"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: little used path"
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to avoid ambiguity: fast moving train"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the command: Close the library door quietly"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the exclamation: How bright the comet looked"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the question: Did Maya remember her reading journal"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the statement: The old clock chimed at noon"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the command: Please pass the glue stick"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the exclamation: What a brave rescue that was"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the question: Can we check the timetable now"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the statement: A thin mist covered the playing field"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the command: Bring the science trays to the sink"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the exclamation: How quickly the storm arrived"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the question: Where did the caretaker leave the keys"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the statement: The chess club meets after lunch"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the command: Close the library door quietly"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the exclamation: How bright the comet looked"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the question: Did Maya remember her reading journal"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the statement: The old clock chimed at noon"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the command: Please pass the glue stick"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the exclamation: What a brave rescue that was"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the question: Can we check the timetable now"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the statement: A thin mist covered the playing field"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the command: Bring the science trays to the sink"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the exclamation: How quickly the storm arrived"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the question: Where did the caretaker leave the keys"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the statement: The chess club meets after lunch"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the command: Close the library door quietly"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the exclamation: How bright the comet looked"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the question: Did Maya remember her reading journal"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the statement: The old clock chimed at noon"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the command: Please pass the glue stick"
+    },
+    {
+      "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation for the exclamation: What a brave rescue that was"
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Where are you going\" asked Mum."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Sit down\" said the coach."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Dad asked \"Have you packed your boots\""
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"I found the key\" whispered Ana."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Look at the sky\" shouted Omar."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Maya said \"The bus is here\""
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Can I borrow a pencil\" asked Leo."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Close the window\" said the teacher."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Gran asked \"Who left the gate open\""
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"That was amazing\" cried Priya."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"We are nearly there\" said Ben."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Mr Khan asked \"Did everyone sign the form\""
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Where are you going\" asked Mum."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Sit down\" said the coach."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Dad asked \"Have you packed your boots\""
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"I found the key\" whispered Ana."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Look at the sky\" shouted Omar."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Maya said \"The bus is here\""
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Can I borrow a pencil\" asked Leo."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Close the window\" said the teacher."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Gran asked \"Who left the gate open\""
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"That was amazing\" cried Priya."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"We are nearly there\" said Ben."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Mr Khan asked \"Did everyone sign the form\""
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Where are you going\" asked Mum."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Sit down\" said the coach."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Dad asked \"Have you packed your boots\""
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"I found the key\" whispered Ana."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: \"Look at the sky\" shouted Omar."
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_fix",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Correct the direct speech punctuation: Maya said \"The bus is here\""
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: We was late for assembly."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: I done my project yesterday."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: She seen the poster in the library."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: They was waiting by the gate."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: He brung his lunch in a blue box."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: I should of checked the answer."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: There was three pencils on the desk."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: Me and Jack went to the office."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: She don't want another turn."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: We could of finished earlier."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: The team have won the match yesterday."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: I ain't got my ruler."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: We was late for assembly."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: I done my project yesterday."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: She seen the poster in the library."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: They was waiting by the gate."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: He brung his lunch in a blue box."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: I should of checked the answer."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: There was three pencils on the desk."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: Me and Jack went to the office."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: She don't want another turn."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: We could of finished earlier."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: The team have won the match yesterday."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: I ain't got my ruler."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: We was late for assembly."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: I done my project yesterday."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: She seen the poster in the library."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: They was waiting by the gate."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: He brung his lunch in a blue box."
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_fix",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this sentence using Standard English: I should of checked the answer."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": I finish my homework."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past perfect\": She packs her bag before the trip."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past progressive\": The dog chases the cat."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present progressive\": We eat lunch in the hall."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": He writes the report."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past perfect\": They leave before dawn."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past progressive\": Mina reads the final chapter."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": The builders repair the roof."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past progressive\": Our team practises after school."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present progressive\": The gardener waters the plants."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": The choir performs the song."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past perfect\": The guests arrive at seven."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": I finish my homework."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past perfect\": She packs her bag before the trip."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past progressive\": The dog chases the cat."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present progressive\": We eat lunch in the hall."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": He writes the report."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past perfect\": They leave before dawn."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past progressive\": Mina reads the final chapter."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": The builders repair the roof."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past progressive\": Our team practises after school."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present progressive\": The gardener waters the plants."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": The choir performs the song."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past perfect\": The guests arrive at seven."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": I finish my homework."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past perfect\": She packs her bag before the trip."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past progressive\": The dog chases the cat."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present progressive\": We eat lunch in the hall."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"present perfect\": He writes the report."
+    },
+    {
+      "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Fix the verb form so it matches \"past perfect\": They leave before dawn."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: Before sunrise the campers packed their bags."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: After the concert the audience cheered loudly."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: In the old library the pupils read quietly."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: With great care Maya lifted the glass bowl."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: During the storm the dog hid under the table."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: At the edge of the pond the frogs croaked."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: Without warning the lights flickered."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: On Tuesday morning the choir rehearsed."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: Beside the harbour the gulls circled."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: In silence the class entered the hall."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: After the final whistle the team celebrated."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: Under the bridge the river rushed past."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: Before sunrise the campers packed their bags."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: After the concert the audience cheered loudly."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: In the old library the pupils read quietly."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: With great care Maya lifted the glass bowl."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: During the storm the dog hid under the table."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: At the edge of the pond the frogs croaked."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: Without warning the lights flickered."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: On Tuesday morning the choir rehearsed."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: Beside the harbour the gulls circled."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: In silence the class entered the hall."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: After the final whistle the team celebrated."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: Under the bridge the river rushed past."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: Before sunrise the campers packed their bags."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: After the concert the audience cheered loudly."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: In the old library the pupils read quietly."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: With great care Maya lifted the glass bowl."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: During the storm the dog hid under the table."
+    },
+    {
+      "templateId": "qg_p18_p16_adverbials_fronted_comma_fix",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Add the comma after the fronted adverbial: At the edge of the pond the frogs croaked."
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the dogs bowl"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the girls boots"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the teachers desk"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the teachers mugs"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the foxs den"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the foxes dens"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the childs coat"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the childrens bags"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the buss route"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the buses stops"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the classs display"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the classes projects"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the dogs bowl"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the girls boots"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the teachers desk"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the teachers mugs"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the foxs den"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the foxes dens"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the childs coat"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the childrens bags"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the buss route"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the buses stops"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the classs display"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the classes projects"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the dogs bowl"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the girls boots"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the teachers desk"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the teachers mugs"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the foxs den"
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Add the apostrophe: the foxes dens"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a shark that eats people — man eating shark"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a man who eats shark — man-eating shark"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a machine that makes ice cream — ice cream maker"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a maker made of ice cream — ice-cream maker"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a bird with a red breast — red breasted bird"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a breast that is red — red-breast"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a well-known author — well known author"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a child who is well known — well known child"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a fast-moving train — fast moving train"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a train moving fast — fast-moving train"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a long-lost map — long lost map"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a map lost for a long time — long lost map"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a shark that eats people — man eating shark"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a man who eats shark — man-eating shark"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a machine that makes ice cream — ice cream maker"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a maker made of ice cream — ice-cream maker"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a bird with a red breast — red breasted bird"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a breast that is red — red-breast"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a well-known author — well known author"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a child who is well known — well known child"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a fast-moving train — fast moving train"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a train moving fast — fast-moving train"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a long-lost map — long lost map"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a map lost for a long time — long lost map"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a shark that eats people — man eating shark"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a man who eats shark — man-eating shark"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a machine that makes ice cream — ice cream maker"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a maker made of ice cream — ice-cream maker"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a bird with a red breast — red breasted bird"
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Add a hyphen if needed to show this meaning: a breast that is red — red-breast"
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Luca who was first in line opened the door."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The guide who had visited before led us."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Our class visited York the oldest city on our route first."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The cake baked by Aisha tasted wonderful."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Maya my neighbour won the race."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The book with the torn cover is mine."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Omar who loves chess joined the club."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The river wide and fast crossed the valley."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The museum built in 1890 reopened today."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Freya our captain lifted the trophy."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The old bridge dangerous after the storm was closed."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The puppy small and muddy slept by the fire."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Luca who was first in line opened the door."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The guide who had visited before led us."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Our class visited York the oldest city on our route first."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The cake baked by Aisha tasted wonderful."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Maya my neighbour won the race."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The book with the torn cover is mine."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Omar who loves chess joined the club."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The river wide and fast crossed the valley."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The museum built in 1890 reopened today."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Freya our captain lifted the trophy."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The old bridge dangerous after the storm was closed."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The puppy small and muddy slept by the fire."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Luca who was first in line opened the door."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The guide who had visited before led us."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Our class visited York the oldest city on our route first."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The cake baked by Aisha tasted wonderful."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: Maya my neighbour won the race."
+    },
+    {
+      "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Add commas for parenthesis if needed: The book with the torn cover is mine."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one dog owns a bowl."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several girls own boots."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one teacher owns a desk."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several birds own nests."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one child owns a coat."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several children own lunches."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one fox owns a den."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several foxes own dens."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one team owns a flag."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several teams own flags."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one woman owns a bicycle."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several women own bicycles."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one dog owns a bowl."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several girls own boots."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one teacher owns a desk."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several birds own nests."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one child owns a coat."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several children own lunches."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one fox owns a den."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several foxes own dens."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one team owns a flag."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several teams own flags."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one woman owns a bicycle."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several women own bicycles."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one dog owns a bowl."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several girls own boots."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one teacher owns a desk."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several birds own nests."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for one child owns a coat."
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Write the possessive phrase for several children own lunches."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The sky darkened; the gulls flew inland."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: I needed only one thing: a torch."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The gate opened — nobody moved."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The path was narrow; the river rushed below."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: Bring these items: a pencil, a ruler and a compass."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: Then came the sound — a low rumble from the hill."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The alarm rang; the pupils left calmly."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: There was one problem: the door was locked."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The room was silent — too silent."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The match ended; the crowd cheered."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: We packed three tools: a saw, a hammer and a drill."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: A shape moved in the fog — then vanished."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The sky darkened; the gulls flew inland."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: I needed only one thing: a torch."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The gate opened — nobody moved."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The path was narrow; the river rushed below."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: Bring these items: a pencil, a ruler and a compass."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: Then came the sound — a low rumble from the hill."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The alarm rang; the pupils left calmly."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: There was one problem: the door was locked."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The room was silent — too silent."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The match ended; the crowd cheered."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: We packed three tools: a saw, a hammer and a drill."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: A shape moved in the fog — then vanished."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The sky darkened; the gulls flew inland."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: I needed only one thing: a torch."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The gate opened — nobody moved."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: The path was narrow; the river rushed below."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: Bring these items: a pencil, a ruler and a compass."
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Write the punctuation mark used in this sentence: Then came the sound — a low rumble from the hill."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Although the path was muddy, the hikers kept walking."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: When the whistle blew, the players ran onto the pitch."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Because the lift was broken, we used the stairs."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: If the library is open, I will return the books."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: While the soup simmered, Dad chopped the carrots."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Since the bus was early, we arrived before nine."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Unless the rain stops, the match will be cancelled."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: After the judge announced the result, the hall fell silent."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Before the team left, the captain checked the kit."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Though the puzzle was difficult, Ava solved it."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: As the sun rose, the mist lifted from the field."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Whenever the dog barked, the baby woke up."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Although the path was muddy, the hikers kept walking."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: When the whistle blew, the players ran onto the pitch."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Because the lift was broken, we used the stairs."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: If the library is open, I will return the books."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: While the soup simmered, Dad chopped the carrots."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Since the bus was early, we arrived before nine."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Unless the rain stops, the match will be cancelled."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: After the judge announced the result, the hall fell silent."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Before the team left, the captain checked the kit."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Though the puzzle was difficult, Ava solved it."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: As the sun rose, the mist lifted from the field."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Whenever the dog barked, the baby woke up."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Although the path was muddy, the hikers kept walking."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: When the whistle blew, the players ran onto the pitch."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Because the lift was broken, we used the stairs."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: If the library is open, I will return the books."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: While the soup simmered, Dad chopped the carrots."
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Write the subordinate clause from this sentence: Since the bus was early, we arrived before nine."
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a shark that eats people): man eating shark"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (cover the chair again): recover the chair"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (about twenty pupils): twenty odd pupils"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a keeper of small animals): small animal keeper"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a club outside lessons): extra curricular club"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (an author many people know): well known author"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a child aged six): six year old child"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a plan for the future): long term plan"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (an animal with cold blood): cold blooded animal"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a train moving quickly): fast moving train"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a model not fully finished): half finished model"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a ticket in first class): first class ticket"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a shark that eats people): man eating shark"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (cover the chair again): recover the chair"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (about twenty pupils): twenty odd pupils"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a keeper of small animals): small animal keeper"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a club outside lessons): extra curricular club"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (an author many people know): well known author"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a child aged six): six year old child"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a plan for the future): long term plan"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (an animal with cold blood): cold blooded animal"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a train moving quickly): fast moving train"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a model not fully finished): half finished model"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a ticket in first class): first class ticket"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a shark that eats people): man eating shark"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (cover the chair again): recover the chair"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (about twenty pupils): twenty odd pupils"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a keeper of small animals): small animal keeper"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (a club outside lessons): extra curricular club"
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Rewrite with a hyphen to make this meaning clear (an author many people know): well known author"
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for strong advice: You ___ wear a helmet on this trail."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for possibility: It ___ rain later, but the sky is clear now."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for certainty: The train ___ arrive at six because it is on the timetable."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for obligation/advice: You ___ apologise if you broke the model."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for strong certainty: The parcel ___ be in the office; I saw it delivered."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for possibility: We ___ visit the castle if the coach arrives early."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for prohibition: You ___ not enter without a ticket."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for uncertainty: The answer ___ be correct, but check it again."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for recommendation: The team ___ practise every day before the final."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for future certainty: The lights ___ turn off automatically at nine."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for likely possibility: This key ___ open the side door; it did yesterday."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for permission: You ___ borrow my ruler if you return it."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for strong advice: You ___ wear a helmet on this trail."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for possibility: It ___ rain later, but the sky is clear now."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for certainty: The train ___ arrive at six because it is on the timetable."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for obligation/advice: You ___ apologise if you broke the model."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for strong certainty: The parcel ___ be in the office; I saw it delivered."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for possibility: We ___ visit the castle if the coach arrives early."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for prohibition: You ___ not enter without a ticket."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for uncertainty: The answer ___ be correct, but check it again."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for recommendation: The team ___ practise every day before the final."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for future certainty: The lights ___ turn off automatically at nine."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for likely possibility: This key ___ open the side door; it did yesterday."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for permission: You ___ borrow my ruler if you return it."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for strong advice: You ___ wear a helmet on this trail."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for possibility: It ___ rain later, but the sky is clear now."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for certainty: The train ___ arrive at six because it is on the timetable."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for obligation/advice: You ___ apologise if you broke the model."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for strong certainty: The parcel ___ be in the office; I saw it delivered."
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Complete the sentence with the best modal verb for possibility: We ___ visit the castle if the coach arrives early."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Luca who was first in line opened the door."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The castle built in 1200 overlooks the river."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Our teacher a keen cyclist arrived early."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The match which lasted two hours ended in a draw."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Mina wearing her red scarf waved from the bus."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The book a gift from Uncle Sam was on the table."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The path narrow and slippery led to the beach."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The train delayed by fog arrived at noon."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Sam who had forgotten his boots stayed inside."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The trophy polished yesterday shone brightly."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The hall usually quiet was full of music."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. My sister an excellent swimmer joined the club."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Luca who was first in line opened the door."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The castle built in 1200 overlooks the river."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Our teacher a keen cyclist arrived early."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The match which lasted two hours ended in a draw."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Mina wearing her red scarf waved from the bus."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The book a gift from Uncle Sam was on the table."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The path narrow and slippery led to the beach."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The train delayed by fog arrived at noon."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Sam who had forgotten his boots stayed inside."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The trophy polished yesterday shone brightly."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The hall usually quiet was full of music."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. My sister an excellent swimmer joined the club."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Luca who was first in line opened the door."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The castle built in 1200 overlooks the river."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Our teacher a keen cyclist arrived early."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The match which lasted two hours ended in a draw."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. Mina wearing her red scarf waved from the bus."
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Copy the sentence and add commas for parenthesis. The book a gift from Uncle Sam was on the table."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The artist who painted the mural visited our class."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The compass that we borrowed pointed north."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The village where my uncle lives has one shop."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The player whose boot was missing laughed."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The cake which Grandma baked smelled delicious."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The school that opened last year has a garden."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The runner who finished first raised her arms."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The river where the boats gather is shallow."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The book which fell from the shelf was dusty."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The teacher whose class won the quiz smiled."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The tent that leaked in the storm has been repaired."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The child who found the key waited by the gate."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The artist who painted the mural visited our class."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The compass that we borrowed pointed north."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The village where my uncle lives has one shop."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The player whose boot was missing laughed."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The cake which Grandma baked smelled delicious."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The school that opened last year has a garden."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The runner who finished first raised her arms."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The river where the boats gather is shallow."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The book which fell from the shelf was dusty."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The teacher whose class won the quiz smiled."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The tent that leaked in the storm has been repaired."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The child who found the key waited by the gate."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The artist who painted the mural visited our class."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The compass that we borrowed pointed north."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The village where my uncle lives has one shop."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The player whose boot was missing laughed."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The cake which Grandma baked smelled delicious."
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Write the relative clause from this sentence: The school that opened last year has a garden."
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Please return the atlas to the shelf"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: How bright the lanterns looked above the square"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Did the choir practise before assembly"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: The fossils were displayed beside the library window"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Close the greenhouse door before the wind gets stronger"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: What a narrow bridge this is"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Where did you leave the measuring jug"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: The goalkeeper waited calmly near the post"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Pass the message to the office before lunch"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: How quickly the tide covered the rocks"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Can the robotics club meet after school"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: The coach checked the timetable twice"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Please return the atlas to the shelf"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: How bright the lanterns looked above the square"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Did the choir practise before assembly"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: The fossils were displayed beside the library window"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Close the greenhouse door before the wind gets stronger"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: What a narrow bridge this is"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Where did you leave the measuring jug"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: The goalkeeper waited calmly near the post"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Pass the message to the office before lunch"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: How quickly the tide covered the rocks"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Can the robotics club meet after school"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: The coach checked the timetable twice"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Please return the atlas to the shelf"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: How bright the lanterns looked above the square"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Did the choir practise before assembly"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: The fossils were displayed beside the library window"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: Close the greenhouse door before the wind gets stronger"
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Add the correct ending punctuation, then copy the sentence: What a narrow bridge this is"
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Where are you going\" asked Mum."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Sit down\" shouted the coach."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"I found the key\" said Zara."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. Dad asked \"Have you packed your bag\""
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Please wait here\" whispered the guide."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Watch out\" cried Ben."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Did you hear that\" asked Priya."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. The coach said \"Run to the gate\""
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"The bus is here\" called Tom."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"How amazing this looks\" gasped Asha."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Can I help\" asked the librarian."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. Mina replied \"I will bring it tomorrow\""
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Where are you going\" asked Mum."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Sit down\" shouted the coach."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"I found the key\" said Zara."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. Dad asked \"Have you packed your bag\""
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Please wait here\" whispered the guide."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Watch out\" cried Ben."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Did you hear that\" asked Priya."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. The coach said \"Run to the gate\""
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"The bus is here\" called Tom."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"How amazing this looks\" gasped Asha."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Can I help\" asked the librarian."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. Mina replied \"I will bring it tomorrow\""
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Where are you going\" asked Mum."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Sit down\" shouted the coach."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"I found the key\" said Zara."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. Dad asked \"Have you packed your bag\""
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Please wait here\" whispered the guide."
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "punctuationPattern",
+      "prompt": "Copy and correct the speech punctuation. \"Watch out\" cried Ben."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: We was late for practice."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: I done the washing-up."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: She seen the poster yesterday."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: They has finished already."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: There was three pencils on the desk."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: Me and Jack went first."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: The team have won yesterday."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: I ain't got a ruler."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: He don't understand the rule."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: We done it carefully."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: Her and Sam carried the box."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: The children was excited."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: We was late for practice."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: I done the washing-up."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: She seen the poster yesterday."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: They has finished already."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: There was three pencils on the desk."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: Me and Jack went first."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: The team have won yesterday."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: I ain't got a ruler."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: He don't understand the rule."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: We done it carefully."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: Her and Sam carried the box."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: The children was excited."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: We was late for practice."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: I done the washing-up."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: She seen the poster yesterday."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: They has finished already."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: There was three pencils on the desk."
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Rewrite this in Standard English: Me and Jack went first."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The noisy gull stole the sandwich from Max."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: After lunch, the goalkeeper caught the ball."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The librarian stamped the new ticket."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: During the storm, the wind snapped the branch."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The engineer tested the bridge carefully."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: Near the fountain, Priya found a coin."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The captain carried the flag proudly."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: Before sunrise, the farmer opened the gate."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The puppy chewed the red slipper."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The scientist measured the temperature."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: At the station, Dad bought the tickets."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The children built a shelter from branches."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The noisy gull stole the sandwich from Max."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: After lunch, the goalkeeper caught the ball."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The librarian stamped the new ticket."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: During the storm, the wind snapped the branch."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The engineer tested the bridge carefully."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: Near the fountain, Priya found a coin."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The captain carried the flag proudly."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: Before sunrise, the farmer opened the gate."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The puppy chewed the red slipper."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The scientist measured the temperature."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: At the station, Dad bought the tickets."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The children built a shelter from branches."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The noisy gull stole the sandwich from Max."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: After lunch, the goalkeeper caught the ball."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The librarian stamped the new ticket."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: During the storm, the wind snapped the branch."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: The engineer tested the bridge carefully."
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Write the subject of this sentence: Near the fountain, Priya found a coin."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 1,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'carefully' in this sentence: Maya carefully folded the silver map."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 2,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'Those' in this sentence: Those tiny shells glittered near the pool."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 3,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'bounded' in this sentence: The puppy bounded across the grass."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 4,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'After' in this sentence: After breakfast, the class visited the museum."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 5,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'curious' in this sentence: The curious otter watched us from the bank."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 6,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'and' in this sentence: Luca and Priya shared the telescope."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 7,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'She' in this sentence: She passed the notebook to him quietly."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 8,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'under' in this sentence: A marble rolled under the cupboard."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 9,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'vase' in this sentence: The cracked vase stood beside the window."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 10,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'beautifully' in this sentence: The choir sang beautifully in the hall."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 11,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'Either' in this sentence: Either team could win the final match."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 12,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'hammered' in this sentence: Rain hammered against the classroom roof."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 13,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'carefully' in this sentence: Maya carefully folded the silver map."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 14,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'Those' in this sentence: Those tiny shells glittered near the pool."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 15,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'bounded' in this sentence: The puppy bounded across the grass."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 16,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'After' in this sentence: After breakfast, the class visited the museum."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 17,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'curious' in this sentence: The curious otter watched us from the bank."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 18,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'and' in this sentence: Luca and Priya shared the telescope."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 19,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'She' in this sentence: She passed the notebook to him quietly."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 20,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'under' in this sentence: A marble rolled under the cupboard."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 21,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'vase' in this sentence: The cracked vase stood beside the window."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 22,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'beautifully' in this sentence: The choir sang beautifully in the hall."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 23,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'Either' in this sentence: Either team could win the final match."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 24,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'hammered' in this sentence: Rain hammered against the classroom roof."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 25,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'carefully' in this sentence: Maya carefully folded the silver map."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 26,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'Those' in this sentence: Those tiny shells glittered near the pool."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 27,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'bounded' in this sentence: The puppy bounded across the grass."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 28,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'After' in this sentence: After breakfast, the class visited the museum."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 29,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'curious' in this sentence: The curious otter watched us from the bank."
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_precision_repair_or_rewrite",
+      "seed": 30,
+      "kind": "normalisedText",
+      "prompt": "Write the word class of 'and' in this sentence: Luca and Priya shared the telescope."
+    }
+  ],
+  "smartPractice": {
+    "metadata": {
+      "contentReleaseId": "grammar-qg-p20-2026-05-05",
+      "generatedAt": "2026-05-06T00:43:45.135Z",
+      "sessionCount": 66,
+      "profileCount": 11,
+      "sessionSize": 5,
+      "seedRange": {
+        "from": 1,
+        "to": 6,
+        "count": 6
+      },
+      "pass": true
+    },
+    "summary": {
+      "sessionCount": 66,
+      "profileCount": 11,
+      "pass": true,
+      "failureCount": 0,
+      "advisoryCount": 0
+    },
+    "failures": [],
+    "advisories": []
+  },
+  "expansionGate": {
+    "passed": true,
+    "stance": "Expansion is allowed only after the current pool stays clean under answer-acceptance, template-quality, fairness, and smart-practice gates.",
+    "newLearnerFacingFamiliesAdded": 0
+  }
+}

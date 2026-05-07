@@ -1,0 +1,158 @@
+diff --git a/shared/punctuation/scheduler.js b/shared/punctuation/scheduler.js
+index 7524cf4..b02a105 100644
+--- a/shared/punctuation/scheduler.js
++++ b/shared/punctuation/scheduler.js
+@@ -221,6 +221,13 @@ function deterministicRandom(random = Math.random) {
+   return Number.isFinite(value) ? Math.max(0, Math.min(0.999999, value)) : 0;
+ }
+ 
++function normaliseCandidateWindow(candidateWindow) {
++  if (candidateWindow === Number.POSITIVE_INFINITY || candidateWindow === Infinity) return Number.POSITIVE_INFINITY;
++  const numeric = Number(candidateWindow);
++  if (!Number.isFinite(numeric)) return Number.POSITIVE_INFINITY;
++  return Math.max(1, Math.floor(numeric));
++}
++
+ function weightedPick(rows, random = Math.random) {
+   if (!rows.length) return null;
+   const total = rows.reduce((sum, row) => sum + row.weight, 0);
+@@ -741,7 +748,7 @@ export function selectPunctuationItem({
+   prefs = {},
+   now = Date.now,
+   random = Math.random,
+-  candidateWindow = 32,
++  candidateWindow = Number.POSITIVE_INFINITY,
+ } = {}) {
+   const sessionMode = session?.mode || prefs.mode || 'smart';
+   const mode = sessionMode === 'weak' ? null : targetMode(session, prefs);
+@@ -749,7 +756,7 @@ export function selectPunctuationItem({
+   const guidedSkillId = (session?.mode || prefs.mode) === 'guided'
+     ? (session?.guidedSkillId || prefs.guidedSkillId || null)
+     : null;
+-  const maxWindow = Math.max(1, candidateWindow);
++  const maxWindow = normaliseCandidateWindow(candidateWindow);
+ 
+   // --- Misconception retry (applies to all modes) ---
+   const recentSignaturesForRetry = recentSignatureSet(indexes, session, progress);
+diff --git a/src/subjects/punctuation/components/PunctuationSessionScene.jsx b/src/subjects/punctuation/components/PunctuationSessionScene.jsx
+index 4de22b2..381e1c2 100644
+--- a/src/subjects/punctuation/components/PunctuationSessionScene.jsx
++++ b/src/subjects/punctuation/components/PunctuationSessionScene.jsx
+@@ -187,6 +187,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
+   const showSource = shape?.prefill === 'blank' && shape.showSource === true;
+   const initialValue = prefillStem ? (item.stem || '') : '';
+   const [typed, setTyped] = useState(initialValue);
++  const hasTextAnswer = typeof typed === 'string' && typed.trim().length > 0;
+   const rows = mode === 'paragraph' ? 6 : 4;
+   const placeholder = punctuationSessionInputPlaceholder(mode);
+ 
+@@ -196,6 +197,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
+       style={{ display: 'grid', gap: 12 }}
+       onSubmit={(event) => {
+         event.preventDefault();
++        if (!hasTextAnswer) return;
+         onSubmit({ typed });
+       }}
+     >
+@@ -234,7 +236,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
+         <Button
+           variant="primary"
+           type="submit"
+-          disabled={disabled}
++          disabled={disabled || !hasTextAnswer}
+           data-punctuation-submit
+         >
+           {submitLabel}
+diff --git a/tests/punctuation-qg-p20-real-scheduler-heavy-play.test.js b/tests/punctuation-qg-p20-real-scheduler-heavy-play.test.js
+new file mode 100644
+index 0000000..472934a
+--- /dev/null
++++ b/tests/punctuation-qg-p20-real-scheduler-heavy-play.test.js
+@@ -0,0 +1,44 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import { selectPunctuationItem } from '../shared/punctuation/scheduler.js';
++import { PUNCTUATION_CONTENT_INDEXES } from '../shared/punctuation/content.js';
++
++function modeCount(mode) {
++  return (PUNCTUATION_CONTENT_INDEXES.itemsByMode.get(mode) || []).length;
++}
++
++test('P20 real scheduler inspects the full production choose candidate set by default', () => {
++  const chooseCount = modeCount('choose');
++  assert.ok(chooseCount > 32, 'P20 production content should exceed the old 32-item window');
++
++  const selection = selectPunctuationItem({
++    indexes: PUNCTUATION_CONTENT_INDEXES,
++    progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [] },
++    session: { mode: 'smart', answeredCount: 0, recentItemIds: [] },
++    prefs: { mode: 'smart' },
++    now: Date.UTC(2026, 4, 7),
++    random: () => 0.999999,
++  });
++
++  assert.equal(selection.targetMode, 'choose');
++  assert.equal(selection.candidateCount, chooseCount);
++  assert.equal(selection.inspectedCount, chooseCount);
++  assert.ok(selection.item, 'scheduler should select a published item');
++});
++
++test('P20 real scheduler still honours an explicit small candidate window for deterministic probes', () => {
++  const selection = selectPunctuationItem({
++    indexes: PUNCTUATION_CONTENT_INDEXES,
++    progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [] },
++    session: { mode: 'smart', answeredCount: 0, recentItemIds: [] },
++    prefs: { mode: 'smart' },
++    candidateWindow: 7,
++    now: Date.UTC(2026, 4, 7),
++    random: () => 0.999999,
++  });
++
++  assert.equal(selection.targetMode, 'choose');
++  assert.equal(selection.inspectedCount, 7);
++  assert.equal(selection.candidateCount, modeCount('choose'));
++});
+diff --git a/tests/punctuation-session-input-hardening.test.js b/tests/punctuation-session-input-hardening.test.js
+new file mode 100644
+index 0000000..f50d160
+--- /dev/null
++++ b/tests/punctuation-session-input-hardening.test.js
+@@ -0,0 +1,37 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { readFileSync } from 'node:fs';
++import { fileURLToPath } from 'node:url';
++
++const sceneSourcePath = fileURLToPath(
++  new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url),
++);
++
++function sceneSource() {
++  return readFileSync(sceneSourcePath, 'utf8');
++}
++
++test('Punctuation text session disables submit for blank or whitespace-only answers', () => {
++  const source = sceneSource();
++
++  assert.match(
++    source,
++    /const hasTextAnswer = typeof typed === 'string' && typed\.trim\(\)\.length > 0;/,
++    'TextItem should derive a trimmed non-empty answer guard.',
++  );
++  assert.match(
++    source,
++    /disabled=\{disabled \|\| !hasTextAnswer\}/,
++    'Primary text submit should be disabled until a real text answer exists.',
++  );
++});
++
++test('Punctuation text session guards the submit handler against forged blank submits', () => {
++  const source = sceneSource();
++
++  assert.match(
++    source,
++    /event\.preventDefault\(\);\s*if \(!hasTextAnswer\) return;\s*onSubmit\(\{ typed \}\);/s,
++    'The form handler should reject blank submits even if the button state is bypassed.',
++  );
++});

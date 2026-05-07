@@ -1,0 +1,12 @@
+{
+  "changed": true,
+  "beforePhase": "session",
+  "beforeAnswered": 0,
+  "beforeCurrentIndex": 0,
+  "beforeTemplateId": "fronted_adverbial_choose",
+  "afterPhase": "session",
+  "afterAnswered": 0,
+  "afterCurrentIndex": 1,
+  "afterTemplateId": "fronted_adverbial_choose",
+  "afterTargetCount": 2
+}

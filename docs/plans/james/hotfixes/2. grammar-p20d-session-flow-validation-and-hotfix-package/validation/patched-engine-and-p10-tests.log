@@ -1,0 +1,384 @@
+TAP version 13
+# Subtest: Grammar live smart five-question session does not repeat templates when the pool allows
+ok 1 - Grammar live smart five-question session does not repeat templates when the pool allows
+  ---
+  duration_ms: 1165.58745
+  type: 'test'
+  ...
+# Subtest: Grammar retry queue de-duplicates repeated misses for the same template and seed
+ok 2 - Grammar retry queue de-duplicates repeated misses for the same template and seed
+  ---
+  duration_ms: 1.250443
+  type: 'test'
+  ...
+# Subtest: Grammar attempt history stores bounded response fields only
+ok 3 - Grammar attempt history stores bounded response fields only
+  ---
+  duration_ms: 1.173654
+  type: 'test'
+  ...
+# Subtest: Grammar attempt history stores generated variant metadata but keeps read models redacted
+ok 4 - Grammar attempt history stores generated variant metadata but keeps read models redacted
+  ---
+  duration_ms: 3.652546
+  type: 'test'
+  ...
+# Subtest: Grammar engine rejects empty answers before mastery is mutated
+ok 5 - Grammar engine rejects empty answers before mastery is mutated
+  ---
+  duration_ms: 0.677926
+  type: 'test'
+  ...
+# Subtest: Grammar server engine creates a session, marks an answer, and records summary events
+ok 6 - Grammar server engine creates a session, marks an answer, and records summary events
+  ---
+  duration_ms: 4.909125
+  type: 'test'
+  ...
+# Subtest: Grammar trouble mode targets the weakest concept without pinning focus prefs
+ok 7 - Grammar trouble mode targets the weakest concept without pinning focus prefs
+  ---
+  duration_ms: 5.632112
+  type: 'test'
+  ...
+# Subtest: Grammar trouble mode honours explicit focus payloads separately from stored prefs
+ok 8 - Grammar trouble mode honours explicit focus payloads separately from stored prefs
+  ---
+  duration_ms: 4.241966
+  type: 'test'
+  ...
+# Subtest: Grammar save-prefs keeps trouble focus on automatic weakest selection
+ok 9 - Grammar save-prefs keeps trouble focus on automatic weakest selection
+  ---
+  duration_ms: 1.110668
+  type: 'test'
+  ...
+# Subtest: Grammar sentence surgery mode only picks surgery templates
+ok 10 - Grammar sentence surgery mode only picks surgery templates
+  ---
+  duration_ms: 1.434867
+  type: 'test'
+  ...
+# Subtest: Grammar sentence surgery rejects explicit non-surgery templates
+ok 11 - Grammar sentence surgery rejects explicit non-surgery templates
+  ---
+  duration_ms: 0.35164
+  type: 'test'
+  ...
+# Subtest: Grammar explicit template starts ignore inherited focus prefs
+ok 12 - Grammar explicit template starts ignore inherited focus prefs
+  ---
+  duration_ms: 0.445698
+  type: 'test'
+  ...
+# Subtest: Grammar sentence surgery clears stored focus and stays inside the surgery pool
+ok 13 - Grammar sentence surgery clears stored focus and stays inside the surgery pool
+  ---
+  duration_ms: 1.072803
+  type: 'test'
+  ...
+# Subtest: Grammar sentence builder mode only picks builder templates and clears stored focus
+ok 14 - Grammar sentence builder mode only picks builder templates and clears stored focus
+  ---
+  duration_ms: 1.075966
+  type: 'test'
+  ...
+# Subtest: Grammar sentence builder rejects explicit non-builder templates
+ok 15 - Grammar sentence builder rejects explicit non-builder templates
+  ---
+  duration_ms: 0.295997
+  type: 'test'
+  ...
+# Subtest: Grammar worked and faded modes apply supported scoring levels
+ok 16 - Grammar worked and faded modes apply supported scoring levels
+  ---
+  duration_ms: 2.607785
+  type: 'test'
+  ...
+# Subtest: Grammar strict mini-set rejects pre-answer support payloads
+ok 17 - Grammar strict mini-set rejects pre-answer support payloads
+  ---
+  duration_ms: 307.064124
+  type: 'test'
+  ...
+# Subtest: Grammar strict mini-set saves responses without feedback and marks only on finish
+ok 18 - Grammar strict mini-set saves responses without feedback and marks only on finish
+  ---
+  duration_ms: 342.601528
+  type: 'test'
+  ...
+# Subtest: Grammar strict mini-set rejects AI enrichment until review is complete
+ok 19 - Grammar strict mini-set rejects AI enrichment until review is complete
+  ---
+  duration_ms: 269.222714
+  type: 'test'
+  ...
+# Subtest: Grammar timed session goal completes on the Worker clock
+ok 20 - Grammar timed session goal completes on the Worker clock
+  ---
+  duration_ms: 2.85011
+  type: 'test'
+  ...
+# Subtest: Grammar clear-due goal uses due retry evidence before falling back
+ok 21 - Grammar clear-due goal uses due retry evidence before falling back
+  ---
+  duration_ms: 3.319537
+  type: 'test'
+  ...
+# Subtest: Grammar practice settings: Smart Review teaching items no longer demote independent correctness (U3 contract v2)
+ok 22 - Grammar practice settings: Smart Review teaching items no longer demote independent correctness (U3 contract v2)
+  ---
+  duration_ms: 10.675778
+  type: 'test'
+  ...
+# Subtest: Grammar faded support action marks the next answer as supported
+ok 23 - Grammar faded support action marks the next answer as supported
+  ---
+  duration_ms: 2.678651
+  type: 'test'
+  ...
+# Subtest: Grammar worked solution and retry repair do not double-count unsubmitted progress
+ok 24 - Grammar worked solution and retry repair do not double-count unsubmitted progress
+  ---
+  duration_ms: 3.564035
+  type: 'test'
+  ...
+# Subtest: Grammar similar problem repair creates a deterministic built-in variant
+ok 25 - Grammar similar problem repair creates a deterministic built-in variant
+  ---
+  duration_ms: 6.278557
+  type: 'test'
+  ...
+# Subtest: Grammar similar problem repair is unavailable before an answer is marked
+ok 26 - Grammar similar problem repair is unavailable before an answer is marked
+  ---
+  duration_ms: 2.431761
+  type: 'test'
+  ...
+# Subtest: Grammar repair actions fail closed during unfinished strict mini-tests
+ok 27 - Grammar repair actions fail closed during unfinished strict mini-tests
+  ---
+  duration_ms: 302.61105
+  type: 'test'
+  ...
+# Subtest: Grammar save-prefs clears completed summary state
+ok 28 - Grammar save-prefs clears completed summary state
+  ---
+  duration_ms: 11.7372
+  type: 'test'
+  ...
+# Subtest: P4 mixed-transfer template (choose/exact) correct answer scores correctly
+ok 29 - P4 mixed-transfer template (choose/exact) correct answer scores correctly
+  ---
+  duration_ms: 0.258618
+  type: 'test'
+  ...
+# Subtest: P4 mixed-transfer template wrong answer returns feedback
+ok 30 - P4 mixed-transfer template wrong answer returns feedback
+  ---
+  duration_ms: 0.181397
+  type: 'test'
+  ...
+# Subtest: P4 classify template multi-field marking works (voice_roles_transfer)
+ok 31 - P4 classify template multi-field marking works (voice_roles_transfer)
+  ---
+  duration_ms: 0.290862
+  type: 'test'
+  ...
+# Subtest: P4 classify template multi-field marking works (word_class_noun_phrase_transfer)
+ok 32 - P4 classify template multi-field marking works (word_class_noun_phrase_transfer)
+  ---
+  duration_ms: 0.205945
+  type: 'test'
+  ...
+# Subtest: P4 mixed-transfer template updates all concept nodes in mastery
+ok 33 - P4 mixed-transfer template updates all concept nodes in mastery
+  ---
+  duration_ms: 0.44429
+  type: 'test'
+  ...
+# Subtest: P10 Scheduler Safety: status map structure
+    # Subtest: P10 certification-status-map.json exists
+    ok 1 - P10 certification-status-map.json exists
+      ---
+      duration_ms: 1.455097
+      type: 'test'
+      ...
+    # Subtest: has entries for every live template (P19 covers the whole 510-template inventory)
+    ok 2 - has entries for every live template (P19 covers the whole 510-template inventory)
+      ---
+      duration_ms: 0.22913
+      type: 'test'
+      ...
+    # Subtest: every quality-register template exists in the status map
+    ok 3 - every quality-register template exists in the status map
+      ---
+      duration_ms: 0.665118
+      type: 'test'
+      ...
+    # Subtest: every entry has a valid decision (approved | blocked | watchlist | approved_with_limitation)
+    ok 4 - every entry has a valid decision (approved | blocked | watchlist | approved_with_limitation)
+      ---
+      duration_ms: 0.473928
+      type: 'test'
+      ...
+    # Subtest: every entry has a non-empty evidence array
+    ok 5 - every entry has a non-empty evidence array
+      ---
+      duration_ms: 0.685249
+      type: 'test'
+      ...
+    1..5
+ok 34 - P10 Scheduler Safety: status map structure
+  ---
+  duration_ms: 36.678583
+  type: 'suite'
+  ...
+# Subtest: P10 Historical Scheduler Safety: active runtime coverage
+    # Subtest: active runtime map covers every live template ID
+    ok 1 - active runtime map covers every live template ID
+      ---
+      duration_ms: 0.513061
+      type: 'test'
+      ...
+    # Subtest: active runtime map still covers every status map template ID
+    ok 2 - active runtime map still covers every status map template ID
+      ---
+      duration_ms: 1.982505
+      type: 'test'
+      ...
+    # Subtest: historical P10 JSON is not treated as the active production runtime authority
+    ok 3 - historical P10 JSON is not treated as the active production runtime authority
+      ---
+      duration_ms: 0.554202
+      type: 'test'
+      ...
+    1..3
+ok 35 - P10 Historical Scheduler Safety: active runtime coverage
+  ---
+  duration_ms: 3.516379
+  type: 'suite'
+  ...
+# Subtest: P10 Scheduler Safety: blocked template exclusion
+    # Subtest: test-blocked template is excluded from mini-pack scheduling
+    ok 1 - test-blocked template is excluded from mini-pack scheduling
+      ---
+      duration_ms: 7644.895025
+      type: 'test'
+      ...
+    # Subtest: approved templates are NOT blocked by isTemplateBlocked
+    ok 2 - approved templates are NOT blocked by isTemplateBlocked
+      ---
+      duration_ms: 0.53517
+      type: 'test'
+      ...
+    1..2
+ok 36 - P10 Scheduler Safety: blocked template exclusion
+  ---
+  duration_ms: 7645.687317
+  type: 'suite'
+  ...
+# Subtest: P10 Scheduler Safety: quality register consistency
+    # Subtest: quality register exists
+    ok 1 - quality register exists
+      ---
+      duration_ms: 0.491073
+      type: 'test'
+      ...
+    # Subtest: status map reflects quality register decisions
+    ok 2 - status map reflects quality register decisions
+      ---
+      duration_ms: 14.370494
+      type: 'test'
+      ...
+    1..2
+ok 37 - P10 Scheduler Safety: quality register consistency
+  ---
+  duration_ms: 15.022073
+  type: 'suite'
+  ...
+# Subtest: P10 Scheduler Safety: characterisation — approved template engine paths
+    # Subtest: approved template starts a session via direct-launch
+    ok 1 - approved template starts a session via direct-launch
+      ---
+      duration_ms: 2.654661
+      type: 'test'
+      ...
+    # Subtest: approved template in retry queue is served via takeDueRetry
+    ok 2 - approved template in retry queue is served via takeDueRetry
+      ---
+      duration_ms: 0.669776
+      type: 'test'
+      ...
+    # Subtest: approved template starts a similar problem after wrong answer
+    ok 3 - approved template starts a similar problem after wrong answer
+      ---
+      duration_ms: 9.120412
+      type: 'test'
+      ...
+    1..3
+ok 38 - P10 Scheduler Safety: characterisation — approved template engine paths
+  ---
+  duration_ms: 12.610831
+  type: 'suite'
+  ...
+# Subtest: P10 Scheduler Safety R-U4: blocked template skipped in retry queue
+    # Subtest: blocked template in retry queue is skipped; next eligible item served
+    ok 1 - blocked template in retry queue is skipped; next eligible item served
+      ---
+      duration_ms: 0.616743
+      type: 'test'
+      ...
+    1..1
+ok 39 - P10 Scheduler Safety R-U4: blocked template skipped in retry queue
+  ---
+  duration_ms: 0.697701
+  type: 'suite'
+  ...
+# Subtest: P10 Scheduler Safety R-U4: blocked template direct-launch returns blocked
+    # Subtest: blocked template with direct-launch in normal mode throws grammar_template_blocked
+    ok 1 - blocked template with direct-launch in normal mode throws grammar_template_blocked
+      ---
+      duration_ms: 2.448665
+      type: 'test'
+      ...
+    # Subtest: blocked template with debugMode: true is allowed through direct-launch
+    ok 2 - blocked template with debugMode: true is allowed through direct-launch
+      ---
+      duration_ms: 0.851349
+      type: 'test'
+      ...
+    # Subtest: blocked template with reviewMode: true is allowed through direct-launch
+    ok 3 - blocked template with reviewMode: true is allowed through direct-launch
+      ---
+      duration_ms: 0.994137
+      type: 'test'
+      ...
+    1..3
+ok 40 - P10 Scheduler Safety R-U4: blocked template direct-launch returns blocked
+  ---
+  duration_ms: 4.446548
+  type: 'suite'
+  ...
+# Subtest: P10 Scheduler Safety R-U4: blocked template returns null from startSimilarProblem
+    # Subtest: startSimilarProblem with blocked base template returns no-change
+    ok 1 - startSimilarProblem with blocked base template returns no-change
+      ---
+      duration_ms: 1.772911
+      type: 'test'
+      ...
+    1..1
+ok 41 - P10 Scheduler Safety R-U4: blocked template returns null from startSimilarProblem
+  ---
+  duration_ms: 1.86488
+  type: 'suite'
+  ...
+1..41
+# tests 53
+# suites 8
+# pass 53
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8152.597052

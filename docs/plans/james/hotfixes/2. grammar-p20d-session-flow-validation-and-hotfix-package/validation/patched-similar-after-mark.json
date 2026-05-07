@@ -1,0 +1,17 @@
+{
+  "changed": true,
+  "baseTemplateId": "fronted_adverbial_choose",
+  "nextTemplateId": "qg_p18_p15_adverbials_adverbial_transfer",
+  "sameTemplate": false,
+  "baseSkillIds": [
+    "adverbials"
+  ],
+  "nextSkillIds": [
+    "adverbials"
+  ],
+  "phase": "session",
+  "answered": 1,
+  "currentIndex": 1,
+  "targetCount": 2,
+  "similarProblems": 1
+}

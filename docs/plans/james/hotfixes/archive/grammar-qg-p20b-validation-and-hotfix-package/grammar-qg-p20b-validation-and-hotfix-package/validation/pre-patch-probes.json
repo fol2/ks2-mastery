@@ -1,0 +1,89 @@
+{
+  "probes": [
+    {
+      "id": "punctuation-symbol-1",
+      "prompt": "Write the punctuation mark used in this sentence: The sky darkened; the gulls flew inland.",
+      "expectedLabel": "semicolon",
+      "learnerAnswer": ";",
+      "correct": false
+    },
+    {
+      "id": "punctuation-symbol-2",
+      "prompt": "Write the punctuation mark used in this sentence: I needed only one thing: a torch.",
+      "expectedLabel": "colon",
+      "learnerAnswer": ":",
+      "correct": false
+    },
+    {
+      "id": "punctuation-symbol-3",
+      "prompt": "Write the punctuation mark used in this sentence: The gate opened — nobody moved.",
+      "expectedLabel": "dash",
+      "learnerAnswer": "—",
+      "correct": false
+    },
+    {
+      "id": "incidental-terminal-full-stop-fix_fronted_adverbial",
+      "prompt": "Copy the sentence and add the comma after the fronted adverbial. Later that afternoon our team finally scored.",
+      "accepted": "Later that afternoon, our team finally scored.",
+      "learnerAnswer": "Later that afternoon, our team finally scored",
+      "correct": false
+    },
+    {
+      "id": "incidental-terminal-full-stop-parenthesis_fix_sentence",
+      "prompt": "Insert a pair of brackets in the correct place. The trophy made of silver stood in the cabinet.",
+      "accepted": "The trophy (made of silver) stood in the cabinet.",
+      "learnerAnswer": "The trophy (made of silver) stood in the cabinet",
+      "correct": false
+    },
+    {
+      "id": "incidental-terminal-full-stop-proc_fronted_adverbial_fix",
+      "prompt": "Rewrite the sentence with the punctuation corrected. With great care Ava locked the window.",
+      "accepted": "With great care, Ava locked the window.",
+      "learnerAnswer": "With great care, Ava locked the window",
+      "correct": false
+    },
+    {
+      "id": "incidental-terminal-full-stop-proc_colon_list_fix",
+      "prompt": "Rewrite the sentence with a colon in the correct place. The club offered three prizes a medal, a certificate, a book token.",
+      "accepted": "The club offered three prizes: a medal, a certificate, a book token.",
+      "learnerAnswer": "The club offered three prizes: a medal, a certificate, a book token",
+      "correct": false
+    },
+    {
+      "id": "incidental-terminal-full-stop-proc_dash_boundary_fix",
+      "prompt": "Rewrite the sentence with a dash in the correct place. The message was clear everyone must leave the building at once.",
+      "accepted": "The message was clear – everyone must leave the building at once.",
+      "learnerAnswer": "The message was clear – everyone must leave the building at once",
+      "correct": false
+    },
+    {
+      "id": "incidental-terminal-full-stop-proc3_parenthesis_commas_fix",
+      "prompt": "Add commas to show the parenthesis. Our new puppy to my surprise slept through the storm.",
+      "accepted": "Our new puppy, to my surprise, slept through the storm.",
+      "learnerAnswer": "Our new puppy, to my surprise, slept through the storm",
+      "correct": false
+    },
+    {
+      "id": "incidental-terminal-full-stop-proc3_hyphen_fix_meaning",
+      "prompt": "Rewrite the sentence with a hyphen to make the meaning clear. The team needed a well earned break after the match.",
+      "accepted": "The team needed a well-earned break after the match.",
+      "learnerAnswer": "The team needed a well-earned break after the match",
+      "correct": false
+    },
+    {
+      "id": "possessive-prompt-copy-qg_p18_p18_apostrophes_possession_diagnostic_identify",
+      "prompt": "Which phrase correctly shows possession for one dog owns a bowl?",
+      "hasReadableColon": false
+    },
+    {
+      "id": "possessive-prompt-copy-qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+      "prompt": "Write the possessive phrase for one dog owns a bowl.",
+      "hasReadableColon": false
+    },
+    {
+      "id": "possessive-prompt-copy-qg_p18_p18_apostrophes_possession_explain_reasoning",
+      "prompt": "Why is 'the dog's bowl' correct for one dog owns a bowl?",
+      "hasReadableColon": false
+    }
+  ]
+}
