@@ -1,5 +1,22 @@
+diff --git a/shared/punctuation/p20-systematic-expansion-bank.js b/shared/punctuation/p20-systematic-expansion-bank.js
+index 17b4434f..46f9807e 100644
+--- a/shared/punctuation/p20-systematic-expansion-bank.js
++++ b/shared/punctuation/p20-systematic-expansion-bank.js
+@@ -19,10 +19,10 @@ const SKILL_CONFIG = Object.freeze({
+   apostrophe_possession: Object.freeze({ rewardUnitId: 'apostrophe-possession-core', clusterId: 'apostrophe', name: 'Apostrophes for possession' }),
+   speech: Object.freeze({ rewardUnitId: 'speech-core', clusterId: 'speech', name: 'Inverted commas and speech punctuation' }),
+   fronted_adverbial: Object.freeze({ rewardUnitId: 'fronted-adverbials-core', clusterId: 'comma_flow', name: 'Commas after fronted adverbials' }),
+-  parenthesis: Object.freeze({ rewardUnitId: 'parenthesis-core', clusterId: 'boundary', name: 'Parenthesis' }),
++  parenthesis: Object.freeze({ rewardUnitId: 'parenthesis-core', clusterId: 'structure', name: 'Parenthesis' }),
+   comma_clarity: Object.freeze({ rewardUnitId: 'comma-clarity-core', clusterId: 'comma_flow', name: 'Commas for clarity' }),
+   colon_list: Object.freeze({ rewardUnitId: 'colons-core', clusterId: 'structure', name: 'Colons before lists' }),
+-  semicolon: Object.freeze({ rewardUnitId: 'semicolons-core', clusterId: 'structure', name: 'Semicolons between clauses' }),
++  semicolon: Object.freeze({ rewardUnitId: 'semicolons-core', clusterId: 'boundary', name: 'Semicolons between clauses' }),
+   dash_clause: Object.freeze({ rewardUnitId: 'dash-clauses-core', clusterId: 'boundary', name: 'Dashes for extra clauses' }),
+   semicolon_list: Object.freeze({ rewardUnitId: 'semicolon-lists-core', clusterId: 'structure', name: 'Semicolons in complex lists' }),
+   bullet_points: Object.freeze({ rewardUnitId: 'bullet-points-core', clusterId: 'structure', name: 'Bullet-point punctuation' }),
 diff --git a/shared/punctuation/scheduler.js b/shared/punctuation/scheduler.js
-index 7524cf4..b02a105 100644
+index 06e51700..31b03e1b 100644
 --- a/shared/punctuation/scheduler.js
 +++ b/shared/punctuation/scheduler.js
 @@ -221,6 +221,13 @@ function deterministicRandom(random = Math.random) {
@@ -35,7 +52,7 @@ index 7524cf4..b02a105 100644
    // --- Misconception retry (applies to all modes) ---
    const recentSignaturesForRetry = recentSignatureSet(indexes, session, progress);
 diff --git a/src/subjects/punctuation/components/PunctuationSessionScene.jsx b/src/subjects/punctuation/components/PunctuationSessionScene.jsx
-index 4de22b2..381e1c2 100644
+index a30134d6..41fbace0 100644
 --- a/src/subjects/punctuation/components/PunctuationSessionScene.jsx
 +++ b/src/subjects/punctuation/components/PunctuationSessionScene.jsx
 @@ -187,6 +187,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
@@ -65,15 +82,25 @@ index 4de22b2..381e1c2 100644
            {submitLabel}
 diff --git a/tests/punctuation-qg-p20-real-scheduler-heavy-play.test.js b/tests/punctuation-qg-p20-real-scheduler-heavy-play.test.js
 new file mode 100644
-index 0000000..472934a
+index 00000000..8d5ac603
 --- /dev/null
 +++ b/tests/punctuation-qg-p20-real-scheduler-heavy-play.test.js
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,86 @@
 +import test from 'node:test';
 +import assert from 'node:assert/strict';
 +
 +import { selectPunctuationItem } from '../shared/punctuation/scheduler.js';
 +import { PUNCTUATION_CONTENT_INDEXES } from '../shared/punctuation/content.js';
++import { DEFAULT_PUNCTUATION_CONTENT_INDEXES } from '../shared/punctuation/service.js';
++
++const CLUSTER_PRIMARY_SKILLS = Object.freeze({
++  endmarks: Object.freeze(['sentence_endings']),
++  apostrophe: Object.freeze(['apostrophe_contractions', 'apostrophe_possession']),
++  speech: Object.freeze(['speech']),
++  comma_flow: Object.freeze(['list_commas', 'fronted_adverbial', 'comma_clarity']),
++  boundary: Object.freeze(['semicolon', 'dash_clause', 'hyphen']),
++  structure: Object.freeze(['parenthesis', 'colon_list', 'semicolon_list', 'bullet_points']),
++});
 +
 +function modeCount(mode) {
 +  return (PUNCTUATION_CONTENT_INDEXES.itemsByMode.get(mode) || []).length;
@@ -113,9 +140,41 @@ index 0000000..472934a
 +  assert.equal(selection.inspectedCount, 7);
 +  assert.equal(selection.candidateCount, modeCount('choose'));
 +});
++
++test('P20 runtime generated items keep each primary skill in the correct cluster', () => {
++  const failures = DEFAULT_PUNCTUATION_CONTENT_INDEXES.items
++    .filter((item) => item.source === 'generated' && item.generatorFamilyId?.startsWith('gen_p20_'))
++    .filter((item) => !CLUSTER_PRIMARY_SKILLS[item.clusterId]?.includes(item.skillIds?.[0]))
++    .map((item) => `${item.id}:${item.skillIds?.[0]}:${item.clusterId}`);
++
++  assert.deepEqual(failures, []);
++});
++
++test('P20 real scheduler keeps focus-cluster starts inside the requested primary skill cluster', () => {
++  for (const [clusterId, skillIds] of Object.entries(CLUSTER_PRIMARY_SKILLS)) {
++    const samples = [0, 0.25, 0.5, 0.75, 0.999999];
++    for (const randomValue of samples) {
++      const selection = selectPunctuationItem({
++        indexes: DEFAULT_PUNCTUATION_CONTENT_INDEXES,
++        progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [] },
++        session: { mode: clusterId, answeredCount: 0, recentItemIds: [] },
++        prefs: { mode: clusterId },
++        now: Date.UTC(2026, 4, 7),
++        random: () => randomValue,
++      });
++
++      assert.equal(selection.targetClusterId, clusterId);
++      assert.ok(selection.item, `scheduler should select an item for ${clusterId}`);
++      assert.ok(
++        skillIds.includes(selection.item.skillIds?.[0]),
++        `${clusterId} selected ${selection.item.id} with primary skill ${selection.item.skillIds?.[0]}`,
++      );
++    }
++  }
++});
 diff --git a/tests/punctuation-session-input-hardening.test.js b/tests/punctuation-session-input-hardening.test.js
 new file mode 100644
-index 0000000..f50d160
+index 00000000..f50d160d
 --- /dev/null
 +++ b/tests/punctuation-session-input-hardening.test.js
 @@ -0,0 +1,37 @@

@@ -187,6 +187,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
   const showSource = shape?.prefill === 'blank' && shape.showSource === true;
   const initialValue = prefillStem ? (item.stem || '') : '';
   const [typed, setTyped] = useState(initialValue);
+  const hasTextAnswer = typeof typed === 'string' && typed.trim().length > 0;
   const rows = mode === 'paragraph' ? 6 : 4;
   const placeholder = punctuationSessionInputPlaceholder(mode);
 
@@ -196,6 +197,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
       style={{ display: 'grid', gap: 12 }}
       onSubmit={(event) => {
         event.preventDefault();
+        if (!hasTextAnswer) return;
         onSubmit({ typed });
       }}
     >
@@ -234,7 +236,7 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
         <Button
           variant="primary"
           type="submit"
-          disabled={disabled}
+          disabled={disabled || !hasTextAnswer}
           data-punctuation-submit
         >
           {submitLabel}

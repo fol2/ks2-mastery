@@ -2,9 +2,9 @@
 
 ## Scope
 
-This patch is Punctuation-only. It changes scheduler candidate coverage, text-session input guarding, and tests for those two behaviours.
+This patch is Punctuation-only. It changes scheduler candidate coverage, text-session input guarding, a related P20 generated-family cluster metadata correction, and tests for those behaviours.
 
-It must not change Grammar, Reading, Spelling, Arithmetic, Reasoning, Hero Mode, monster thresholds, star projection, release IDs, production smoke reports, reviewer registers, or generated punctuation content banks.
+It must not change Grammar, Reading, Spelling, Arithmetic, Reasoning, Hero Mode, monster thresholds, star projection, release IDs, production smoke reports, reviewer registers, punctuation item surfaces, model answers, generator templates, generated item counts, or generated punctuation content banks except for the two cluster metadata corrections listed in this contract.
 
 ## Contract: scheduler
 
@@ -18,6 +18,23 @@ Acceptance checks:
 - explicit small candidate windows still report the requested inspected count;
 - scheduler still returns a published item;
 - existing bounded-window scheduler tests remain valid when they explicitly pass a window.
+
+## Contract: P20 cluster metadata
+
+The full-window scheduler exposed an existing P20 systematic generated-family metadata defect. The `parenthesis` primary skill was mapped to the `boundary` cluster and the `semicolon` primary skill was mapped to the `structure` cluster in the generated family config, which allowed focus-cluster starts to select an item from the wrong primary skill family.
+
+The only generated content bank change allowed by this patch is:
+
+- `parenthesis`: cluster `boundary` -> `structure`;
+- `semicolon`: cluster `structure` -> `boundary`.
+
+This correction must not change the P20 release ID, generated item count, fixed item count, runtime item count, item surfaces, item signatures, model answers, or generator templates.
+
+Acceptance checks:
+
+- P20 generated runtime items from `gen_p20_*` families keep each primary skill in the expected cluster;
+- focus-cluster session starts stay within the requested primary skill cluster across deterministic random samples;
+- legacy mixed generated families are not reclassified by this patch.
 
 ## Contract: session input
 
@@ -40,6 +57,14 @@ Recommended additional local confidence run when time allows:
 
 ```bash
 node --test tests/punctuation-scheduler.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-production-evidence.test.js
+```
+
+Release-gate and deployment preflight commands required before production deployment:
+
+```bash
+npm run verify:punctuation-qg:p20
+npm test
+npm run check
 ```
 
 ## Production boundary

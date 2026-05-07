@@ -221,6 +221,13 @@ function deterministicRandom(random = Math.random) {
   return Number.isFinite(value) ? Math.max(0, Math.min(0.999999, value)) : 0;
 }
 
+function normaliseCandidateWindow(candidateWindow) {
+  if (candidateWindow === Number.POSITIVE_INFINITY || candidateWindow === Infinity) return Number.POSITIVE_INFINITY;
+  const numeric = Number(candidateWindow);
+  if (!Number.isFinite(numeric)) return Number.POSITIVE_INFINITY;
+  return Math.max(1, Math.floor(numeric));
+}
+
 function weightedPick(rows, random = Math.random) {
   if (!rows.length) return null;
   const total = rows.reduce((sum, row) => sum + row.weight, 0);
@@ -741,7 +748,7 @@ export function selectPunctuationItem({
   prefs = {},
   now = Date.now,
   random = Math.random,
-  candidateWindow = 32,
+  candidateWindow = Number.POSITIVE_INFINITY,
 } = {}) {
   const sessionMode = session?.mode || prefs.mode || 'smart';
   const mode = sessionMode === 'weak' ? null : targetMode(session, prefs);
@@ -749,7 +756,7 @@ export function selectPunctuationItem({
   const guidedSkillId = (session?.mode || prefs.mode) === 'guided'
     ? (session?.guidedSkillId || prefs.guidedSkillId || null)
     : null;
-  const maxWindow = Math.max(1, candidateWindow);
+  const maxWindow = normaliseCandidateWindow(candidateWindow);
 
   // --- Misconception retry (applies to all modes) ---
   const recentSignaturesForRetry = recentSignatureSet(indexes, session, progress);
