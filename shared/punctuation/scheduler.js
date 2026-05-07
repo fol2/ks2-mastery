@@ -20,9 +20,10 @@ export const MIN_MS = 60 * 1000;
 
 const SMART_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix', 'transfer', 'combine', 'paragraph']);
 const GUIDED_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix']);
-const RECENT_ITEM_AVOIDANCE_WINDOW = 6;
-const SAME_ITEM_REPEAT_WINDOW = 20;
-const MAX_SAME_ITEM_REPEAT_IN_WINDOW = 2;
+const RECENT_ITEM_AVOIDANCE_WINDOW = 100;
+const RECENT_SIGNATURE_AVOIDANCE_WINDOW = 100;
+const SAME_ITEM_REPEAT_WINDOW = 100;
+const MAX_SAME_ITEM_REPEAT_IN_WINDOW = 1;
 const CLUSTER_MODE = Object.freeze({
   endmarks: 'endmarks',
   apostrophe: 'apostrophe',
@@ -405,12 +406,22 @@ function itemEvidenceRows(progress, now, bucket) {
 
 function recentSignatureSet(indexes, session = {}, progress = {}) {
   const signatures = new Set();
-  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-8) : [];
+  const sessionSignatures = Array.isArray(session?.selectedSignatures)
+    ? session.selectedSignatures.slice(-RECENT_SIGNATURE_AVOIDANCE_WINDOW)
+    : [];
+  for (const signature of sessionSignatures) {
+    if (typeof signature === 'string' && signature) signatures.add(signature);
+  }
+  const recentIds = Array.isArray(session?.recentItemIds)
+    ? session.recentItemIds.slice(-RECENT_SIGNATURE_AVOIDANCE_WINDOW)
+    : [];
   for (const itemId of recentIds) {
     const signature = indexes.itemById.get(itemId)?.variantSignature;
     if (signature) signatures.add(signature);
   }
-  const attempts = Array.isArray(progress?.attempts) ? progress.attempts.slice(-8) : [];
+  const attempts = Array.isArray(progress?.attempts)
+    ? progress.attempts.slice(-RECENT_SIGNATURE_AVOIDANCE_WINDOW)
+    : [];
   for (const attempt of attempts) {
     if (typeof attempt?.variantSignature === 'string' && attempt.variantSignature) {
       signatures.add(attempt.variantSignature);
@@ -453,6 +464,11 @@ function avoidRecentSignatureItems(items, recentSignatures) {
     const signature = item?.variantSignature;
     return !signature || !recentSignatures.has(signature);
   });
+  return freshItems.length ? freshItems : items;
+}
+
+function avoidRecentItems(items, recentItems) {
+  const freshItems = items.filter((item) => !recentItems.has(item?.id));
   return freshItems.length ? freshItems : items;
 }
 
@@ -724,8 +740,6 @@ export function deriveRecentModes(progress) {
  */
 function isMixedReview(item, session, progress) {
   if (!item || !item.mode) return false;
-  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds : [];
-  if (recentIds.length < MIXED_REVIEW_MIN_RECENT_ATTEMPTS) return false;
   // Use session.recentModes if explicitly provided
   let recentModes = Array.isArray(session?.recentModes) && session.recentModes.length >= MIXED_REVIEW_MIN_RECENT_ATTEMPTS
     ? session.recentModes
@@ -748,7 +762,7 @@ export function selectPunctuationItem({
   prefs = {},
   now = Date.now,
   random = Math.random,
-  candidateWindow = Number.POSITIVE_INFINITY,
+  candidateWindow = 128,
 } = {}) {
   const sessionMode = session?.mode || prefs.mode || 'smart';
   const mode = sessionMode === 'weak' ? null : targetMode(session, prefs);
@@ -759,7 +773,7 @@ export function selectPunctuationItem({
   const maxWindow = normaliseCandidateWindow(candidateWindow);
 
   // --- Misconception retry (applies to all modes) ---
-  const recentSignaturesForRetry = recentSignatureSet(indexes, session, progress);
+  const recentSignaturesForRetry = recentSignatureSet(indexes, { ...session, selectedSignatures: [] }, progress);
   const recentItemsForRetry = recentItemSet(session, progress);
   const misconceptionResult = selectMisconceptionRetry(indexes, progress, session, recentSignaturesForRetry, recentItemsForRetry);
   if (misconceptionResult) {
@@ -791,9 +805,11 @@ export function selectPunctuationItem({
     };
   }
 
-  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : [];
-  const recent = new Set(recentIds);
-  const recentSignatures = recentSignaturesForRetry;
+  const recentIds = Array.isArray(session?.recentItemIds)
+    ? session.recentItemIds.slice(-RECENT_ITEM_AVOIDANCE_WINDOW)
+    : [];
+  const recent = recentItemSet(session, progress);
+  const recentSignatures = recentSignatureSet(indexes, session, progress);
   const sessionSignatures = new Set(
     Array.isArray(session?.selectedSignatures) ? session.selectedSignatures : []
   );
@@ -809,10 +825,14 @@ export function selectPunctuationItem({
         ? []
         : candidateItems(indexes, { mode: candidateMode, clusterId, skillId: guidedSkillId });
       const nonRepeatCandidates = candidates.filter((item) => item.id !== previousItemId);
+      const freshItemCandidates = avoidRecentItems(nonRepeatCandidates, recent);
+      const freshSignatureCandidates = isMisconceptionRetry
+        ? freshItemCandidates
+        : avoidRecentSignatureItems(freshItemCandidates, recentSignatures);
       return {
         mode: candidateMode,
         candidates,
-        nonRepeatCandidates: avoidRecentSignatureItems(nonRepeatCandidates, recentSignatures),
+        nonRepeatCandidates: freshSignatureCandidates,
       };
     });
   const selectedMode = modeRows.find((row) => row.nonRepeatCandidates.length)
