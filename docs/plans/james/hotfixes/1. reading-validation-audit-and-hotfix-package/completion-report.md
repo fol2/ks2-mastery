@@ -47,6 +47,8 @@ The post-deploy Reading smoke used a production demo session and hit `https://ks
 - Immediate guided Reading command path: passed with a correct marked response.
 - Strict delayed-paper Reading path: passed with hidden feedback before final marking and summary max score `50`.
 
+The smoke script records the local Git `HEAD` at the time the smoke is run. This artefact was generated immediately after deploying implementation commit `28de730c66c98c46dc9816907ad638b07213c44e`. Later evidence-only commits are descendants of that implementation commit and do not change the deployed Reading runtime.
+
 ## Reviewer Closure
 
 Initial independent code review and contract audit returned RED for evidence/package completeness, not for Reading runtime correctness. The blockers were closed by:
@@ -61,6 +63,6 @@ Initial independent code review and contract audit returned RED for evidence/pac
 
 ## Final Sync
 
-Local `main` and `origin/main` are expected to be synchronised after the final evidence commit is pushed.
+The final evidence commit is pushed to `origin/main`; local `main` and `origin/main` are synchronised in the working tree used for this report.
 
 Residual risk: none identified.
