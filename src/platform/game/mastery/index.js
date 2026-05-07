@@ -44,6 +44,8 @@ export {
   READING_MONSTER_IDS,
 } from './shared.js';
 export {
+  READING_DIRECT_STAR_THRESHOLDS,
+  READING_GRAND_STAR_THRESHOLDS,
   READING_REWARD_RELEASE_ID,
   READING_SKILL_TO_MONSTER,
   activeReadingMonsterSummaryFromState,

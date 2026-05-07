@@ -194,7 +194,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which option best summarises paragraphs 3 and 4?",
+        "stem": "Which option best summarises Gran's noticing box and its effect on Nia?",
         "options": [
           "Grandad tells Nia to clean the loft, and she feels annoyed that she has to work.",
           "Nia learns that Gran recorded small daily details, and this helps Nia notice the day differently.",
@@ -1156,7 +1156,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which statement best summarises paragraph 3?",
+        "stem": "Which statement best summarises why salt marshes matter in paragraph 3?",
         "options": [
           "Salt marshes are always dry enough to build houses on.",
           "Salt marshes matter because they protect coasts and support many living things.",
@@ -1517,7 +1517,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "open",
         "skill": "2c",
         "marks": 2,
-        "stem": "What is the best summary of the poem?",
+        "stem": "What is the best summary of Night Ferry?",
         "rubric": [
           {
             "label": "Includes leaving harbour or town",
@@ -2659,7 +2659,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which statement best summarises paragraph 4?",
+        "stem": "Which statement best summarises the deep-sea adaptations in paragraph 4?",
         "options": [
           "Deep-sea animals are all transparent and harmless.",
           "Deep-sea animals use a range of special adaptations to survive.",
@@ -3298,7 +3298,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which statement best summarises paragraph 3?",
+        "stem": "Which statement best summarises how bridge designers manage risky movement?",
         "options": [
           "Engineers avoid modern bridges because sensors are too expensive to use.",
           "Designers can reduce risky movement and use sensors so unusual sound becomes useful information.",
@@ -3766,7 +3766,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which option best summarises paragraphs 2 and 3?",
+        "stem": "Which option best summarises Aunt Caro's careful preparation and the narrator's changing view?",
         "options": [
           "Aunt Caro wastes time cleaning equipment while the narrator grows bored of waiting.",
           "Aunt Caro prepares carefully and notices warning signs while the narrator starts to see the old system may matter.",
@@ -3870,7 +3870,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "order",
         "skill": "2f",
         "marks": 2,
-        "stem": "Put these events in the order they happen.",
+        "stem": "Put the lantern-keeper events in the order they happen.",
         "items": [
           "The radio breaks into crackle and dies.",
           "The reserve lamp is lit on the gallery.",
@@ -4405,7 +4405,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which statement best summarises paragraph 4?",
+        "stem": "Which statement best summarises the wildlife value of messy wet places?",
         "options": [
           "Messy-looking wet places can support many different kinds of life.",
           "Wetlands are always less useful than straight drainage ditches.",
@@ -5306,7 +5306,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which option best summarises paragraphs 3 and 4?",
+        "stem": "Which option best summarises the station problem and Emma's careful listening?",
         "options": [
           "The porter repairs the platform clock while Emma reads a newspaper.",
           "The signal box has failed, so the station uses a hand bell and Emma listens carefully.",
@@ -5434,7 +5434,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "order",
         "skill": "2f",
         "marks": 2,
-        "stem": "Put these events in the order they happen.",
+        "stem": "Put Emma's station events in the order they happen.",
         "items": [
           "Emma hears that the signal box has lost power.",
           "The porter rings the hand bell twice.",
@@ -5565,7 +5565,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which statement best summarises paragraph 2?",
+        "stem": "Which statement best summarises how a rain garden works in paragraph 2?",
         "options": [
           "Rain gardens are ordinary flower beds that need no special design.",
           "A rain garden sits lower than the pavement and uses soil, gravel and roots to hold and filter water.",
@@ -5939,7 +5939,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "open",
         "skill": "2c",
         "marks": 2,
-        "stem": "What is the best summary of the poem?",
+        "stem": "What is the best summary of Under-Bridge Song?",
         "rubric": [
           {
             "label": "Mentions under-bridge river scene",
@@ -6115,7 +6115,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which option best summarises paragraphs 2 and 3?",
+        "stem": "Which option best summarises Jude's compass problem and the clues he checks?",
         "options": [
           "The compass points strangely near the railings, so Jude checks the map and other clues before deciding.",
           "Jude reaches the oak marker and writes down the code immediately.",
@@ -6450,7 +6450,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which statement best summarises paragraph 4?",
+        "stem": "Which statement best summarises the different clues bats use to find their way?",
         "options": [
           "Bats use only echolocation and never any other sense.",
           "Bats may combine echolocation with sight, smell and memory of familiar routes.",
@@ -7957,7 +7957,7 @@ export const READING_PASSAGES = Object.freeze([
         "type": "mcq",
         "skill": "2c",
         "marks": 2,
-        "stem": "Which statement best summarises paragraph 2?",
+        "stem": "Which statement best summarises what healthy soil contains?",
         "options": [
           "Healthy soil is a mixture of minerals, spaces, water and living organisms that work together.",
           "Soil is made only of tiny stones and nothing else.",

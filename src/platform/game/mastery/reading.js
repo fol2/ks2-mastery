@@ -5,6 +5,7 @@ import {
   eventFromTransition,
   isPlainObject,
   masteredList,
+  releaseIdForEntry,
   READING_MONSTER_IDS,
   saveMonsterState,
 } from './shared.js';
@@ -24,8 +25,8 @@ export const READING_SKILL_TO_MONSTER = Object.freeze({
 });
 
 const READING_CORE_SKILL_IDS = Object.freeze(Object.keys(READING_SKILL_TO_MONSTER));
-const READING_DIRECT_STAR_THRESHOLDS = Object.freeze([1, 25, 50, 75, 100]);
-const READING_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
+export const READING_DIRECT_STAR_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
+export const READING_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 25, 50, 100]);
 
 const READING_MONSTER_SKILL_TOTALS = Object.freeze(
   READING_CORE_SKILL_IDS.reduce((totals, skillId) => {
@@ -53,6 +54,25 @@ function readingDisplayStars(mastered, total) {
   return Math.min(100, Math.round((safeMastered / safeTotal) * 100));
 }
 
+function safeStarHighWater(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n + 1e-9) : 0;
+}
+
+function readingMasteredList(entry, releaseId = READING_REWARD_RELEASE_ID) {
+  const mastered = masteredList(entry);
+  const scopedReleaseId = releaseIdForEntry(entry, releaseId) || READING_REWARD_RELEASE_ID;
+  const releasePrefix = `${scopedReleaseId}:reading-skill:`;
+  return mastered.filter((key) => key.startsWith(releasePrefix));
+}
+
+function readingMasteredCount(entry, releaseId = READING_REWARD_RELEASE_ID) {
+  const mastered = masteredList(entry);
+  if (mastered.length) return readingMasteredList(entry, releaseId).length;
+  const count = Number(entry?.masteredCount);
+  return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+}
+
 function thresholdsForReadingMonster(monsterId) {
   return monsterId === READING_GRAND_MONSTER_ID
     ? READING_GRAND_STAR_THRESHOLDS
@@ -61,21 +81,29 @@ function thresholdsForReadingMonster(monsterId) {
 
 function progressForReadingMonsterFromState(state, monsterId) {
   const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
-  const mastered = masteredList(entry).length;
+  const releaseId = releaseIdForEntry(entry, READING_REWARD_RELEASE_ID) || READING_REWARD_RELEASE_ID;
+  const mastered = readingMasteredCount(entry, releaseId);
   const masteredMax = readingMonsterTotal(monsterId);
-  const displayStars = readingDisplayStars(mastered, masteredMax);
+  const computedStars = readingDisplayStars(mastered, masteredMax);
+  const starHighWater = Math.max(safeStarHighWater(entry.starHighWater), computedStars);
+  const displayStars = Math.min(100, starHighWater);
   const stage = stageFor(displayStars, thresholdsForReadingMonster(monsterId));
   return {
     mastered,
     masteredMax,
+    computedStars,
     displayStars,
+    stars: displayStars,
     starMax: 100,
+    ...(monsterId === READING_GRAND_MONSTER_ID ? { grandStars: displayStars, grandStarMax: 100 } : {}),
     stage,
     displayStage: stage,
     level: levelFor(displayStars),
-    caught: mastered >= 1,
+    caught: entry.caught === true || mastered >= 1,
     branch: branchForMonster(state, monsterId),
-    masteredList: masteredList(entry),
+    masteredList: readingMasteredList(entry, releaseId),
+    starHighWater,
+    releaseId,
   };
 }
 
@@ -116,13 +144,24 @@ export function recordReadingSkillMastery({
     const entry = isPlainObject(workingState[monsterId]) ? workingState[monsterId] : { mastered: [], caught: false };
     const mastered = masteredList(entry);
     if (mastered.includes(masteryKey)) continue;
+    const masteredMax = readingMonsterTotal(monsterId);
+    const nextMastered = [...mastered, masteryKey];
+    const computedStars = readingDisplayStars(
+      readingMasteredCount({ ...entry, releaseId, mastered: nextMastered }, releaseId),
+      masteredMax,
+    );
+    const starHighWater = Math.min(100, Math.max(safeStarHighWater(entry.starHighWater), computedStars));
     const afterState = {
       ...workingState,
       [monsterId]: {
         ...entry,
         caught: true,
         releaseId,
-        mastered: [...mastered, masteryKey],
+        mastered: nextMastered,
+        starHighWater,
+        displayStars: starHighWater,
+        starMax: 100,
+        ...(monsterId === READING_GRAND_MONSTER_ID ? { grandStars: starHighWater, grandStarMax: 100 } : {}),
       },
     };
     const nextProgress = progressForReadingMonsterFromState(afterState, monsterId);

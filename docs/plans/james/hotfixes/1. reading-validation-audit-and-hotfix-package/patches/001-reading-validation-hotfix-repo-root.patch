@@ -1,5 +1,5 @@
 diff --git a/shared/reading/content.js b/shared/reading/content.js
-index 15c97d5..efdcffd 100644
+index a259b6b2..a6d0757b 100644
 --- a/shared/reading/content.js
 +++ b/shared/reading/content.js
 @@ -194,7 +194,7 @@ export const READING_PASSAGES = Object.freeze([
@@ -138,7 +138,7 @@ index 15c97d5..efdcffd 100644
            "Healthy soil is a mixture of minerals, spaces, water and living organisms that work together.",
            "Soil is made only of tiny stones and nothing else.",
 diff --git a/src/platform/game/mastery/index.js b/src/platform/game/mastery/index.js
-index caebe06..878b084 100644
+index f9bf3960..04c6bcdf 100644
 --- a/src/platform/game/mastery/index.js
 +++ b/src/platform/game/mastery/index.js
 @@ -44,6 +44,8 @@ export {
@@ -151,7 +151,7 @@ index caebe06..878b084 100644
    READING_SKILL_TO_MONSTER,
    activeReadingMonsterSummaryFromState,
 diff --git a/src/platform/game/mastery/reading.js b/src/platform/game/mastery/reading.js
-index af21dca..61c7189 100644
+index 3518bee8..37051508 100644
 --- a/src/platform/game/mastery/reading.js
 +++ b/src/platform/game/mastery/reading.js
 @@ -5,6 +5,7 @@ import {
@@ -260,7 +260,7 @@ index af21dca..61c7189 100644
      };
      const nextProgress = progressForReadingMonsterFromState(afterState, monsterId);
 diff --git a/src/subjects/reading/components/ReadingPracticeSurface.jsx b/src/subjects/reading/components/ReadingPracticeSurface.jsx
-index f85edde..e166bc4 100644
+index d406b6fa..6f4c8ce9 100644
 --- a/src/subjects/reading/components/ReadingPracticeSurface.jsx
 +++ b/src/subjects/reading/components/ReadingPracticeSurface.jsx
 @@ -315,6 +315,8 @@ function QuestionPanel({ ui, actions }) {
@@ -313,8 +313,22 @@ index f85edde..e166bc4 100644
            <button className="btn warn" type="submit" disabled={pending}>{session.strict ? 'Mark whole paper' : 'Mark this section'}</button>
            <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
          </div>
+diff --git a/tests/button-label-consistency.test.js b/tests/button-label-consistency.test.js
+index 5de98c34..c196f57b 100644
+--- a/tests/button-label-consistency.test.js
++++ b/tests/button-label-consistency.test.js
+@@ -443,6 +443,9 @@ test('button labels: every statically extractable label is classified', () => {
+     'Delete',
+     'Revert',
+     'Save draft',
++    // Reading list-mode section save: bespoke to distinguish draft
++    // persistence from marking the section for feedback.
++    'Save this section',
+     'Publish',
+     'Recover into preview',
+     'Refresh',
 diff --git a/tests/reading-content-contract.test.js b/tests/reading-content-contract.test.js
-index 7cb389f..e385c03 100644
+index 2ac314b3..a875d096 100644
 --- a/tests/reading-content-contract.test.js
 +++ b/tests/reading-content-contract.test.js
 @@ -47,6 +47,22 @@ test('reading ids are unique and evidence quotes exist in their source passage',
@@ -341,7 +355,7 @@ index 7cb389f..e385c03 100644
    const passageMap = new Map(READING_PASSAGES.map((passage) => [passage.id, passage]));
    for (const paper of READING_TEST_PAPERS) {
 diff --git a/tests/reading-session-interface.test.js b/tests/reading-session-interface.test.js
-index 279d155..22602cb 100644
+index 7d46cc3b..fd731a10 100644
 --- a/tests/reading-session-interface.test.js
 +++ b/tests/reading-session-interface.test.js
 @@ -64,6 +64,16 @@ test('reading surface implements delegated full-list session UI inside the app f
@@ -371,107 +385,13 @@ index 279d155..22602cb 100644
    assert.match(html, /name="q_[^"]+_answer"/);
    assert.match(html, /Mark this section/);
 diff --git a/tests/worker-reading-runtime.test.js b/tests/worker-reading-runtime.test.js
-index e57434b..ef584ee 100644
+index 9177b6d3..4b952e29 100644
 --- a/tests/worker-reading-runtime.test.js
 +++ b/tests/worker-reading-runtime.test.js
-@@ -134,9 +134,9 @@ test('reading marked answers cannot be overwritten by duplicate or stale submiss
-   assert.deepEqual(staleSave.state.session.sections[0].responses[qid], originalResponse);
+@@ -195,6 +195,76 @@ test('reading due stats and review queue use the injected command clock', () =>
+   assert.equal(result.analytics.generatedAt, 1000);
  });
  
--test('reading engine reloads persisted ui state for follow-up commands', () => {
--  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
--  const started = engine.apply({
-+test('reading engine reloads persisted ui state for follow-up commands', () => {
-+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
-+  const started = engine.apply({
-     learnerId: 'l1',
-     command: 'start-session',
-     payload: { mode: 'guided', viewMode: 'one' },
-@@ -156,48 +156,118 @@ test('reading engine reloads persisted ui state for follow-up commands', () => {
-     },
-     requestId: 'r2',
-   });
--
--  assert.equal(submitted.changed, true);
--  assert.equal(submitted.state.phase, 'feedback');
--  assert.equal(submitted.state.session.id, session.id);
--});
--
--test('reading due stats and review queue use the injected command clock', () => {
--  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
--  const subjectRecord = {
--    state: {},
--    data: {
--      skills: {
--        '2a': {
--          attempts: 1,
--          correct: 1,
--          wrong: 0,
--          strength: 0.7,
--          intervalDays: 1,
--          dueAt: 1500,
--          lastSeenAt: 900,
--          lastWrongAt: null,
--          correctStreak: 1,
--        },
--      },
--      retryQueue: [{ questionId: 'future-review', passageId: 'red_tin_box', skillId: '2a', dueAt: 1500 }],
--    },
--  };
--  const result = engine.apply({
--    learnerId: 'l1',
--    subjectRecord,
--    command: 'save-prefs',
--    payload: { prefs: { mode: 'guided' } },
--    requestId: 'clock-regression',
--  });
--  assert.equal(result.stats.overview.due, 0);
--  assert.equal(result.analytics.reviewQueue.length, 0);
--  assert.equal(result.analytics.generatedAt, 1000);
--});
--
--test('worker subject runtime wires reading command handlers', async () => {
--  const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
--  const context = fakeContext();
-+
-+  assert.equal(submitted.changed, true);
-+  assert.equal(submitted.state.phase, 'feedback');
-+  assert.equal(submitted.state.session.id, session.id);
-+});
-+
-+test('reading due stats and review queue use the injected command clock', () => {
-+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
-+  const subjectRecord = {
-+    state: {},
-+    data: {
-+      skills: {
-+        '2a': {
-+          attempts: 1,
-+          correct: 1,
-+          wrong: 0,
-+          strength: 0.7,
-+          intervalDays: 1,
-+          dueAt: 1500,
-+          lastSeenAt: 900,
-+          lastWrongAt: null,
-+          correctStreak: 1,
-+        },
-+      },
-+      retryQueue: [{ questionId: 'future-review', passageId: 'red_tin_box', skillId: '2a', dueAt: 1500 }],
-+    },
-+  };
-+  const result = engine.apply({
-+    learnerId: 'l1',
-+    subjectRecord,
-+    command: 'save-prefs',
-+    payload: { prefs: { mode: 'guided' } },
-+    requestId: 'clock-regression',
-+  });
-+  assert.equal(result.stats.overview.due, 0);
-+  assert.equal(result.analytics.reviewQueue.length, 0);
-+  assert.equal(result.analytics.generatedAt, 1000);
-+});
-+
 +
 +
 +test('reading avoids immediate passage repeats after a started session is ended without answers', () => {
@@ -542,12 +462,9 @@ index e57434b..ef584ee 100644
 +  assert.ok(questionIds.includes('rtb_q5'));
 +});
 +
-+test('worker subject runtime wires reading command handlers', async () => {
-+  const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
-+  const context = fakeContext();
-   const started = await runtime.dispatch({
-     subjectId: 'reading',
-     command: 'start-session',
+ test('worker subject runtime wires reading command handlers', async () => {
+   const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
+   const context = fakeContext();
 @@ -213,6 +283,7 @@ test('worker subject runtime wires reading command handlers', async () => {
  });
  
@@ -667,7 +584,7 @@ index e57434b..ef584ee 100644
    const skills = ['2a', '2g', '2b', '2c', '2d', '2e', '2f', '2h'];
    let gameState = {};
 diff --git a/worker/src/subjects/reading/engine.js b/worker/src/subjects/reading/engine.js
-index 131f060..2795820 100644
+index 09ce4ae6..21d30121 100644
 --- a/worker/src/subjects/reading/engine.js
 +++ b/worker/src/subjects/reading/engine.js
 @@ -170,6 +170,7 @@ function defaultData() {

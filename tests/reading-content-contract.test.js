@@ -47,6 +47,22 @@ test('reading ids are unique and evidence quotes exist in their source passage',
   }
 });
 
+
+
+test('reading question stems avoid noticeable repetition after normalisation', () => {
+  const seen = new Map();
+  for (const passage of READING_PASSAGES) {
+    for (const question of passage.questions || []) {
+      const key = norm(question.stem).replace(/paragraph [0-9]+/g, 'paragraph #').replace(/section [0-9]+/g, 'section #');
+      const rows = seen.get(key) || [];
+      rows.push(`${passage.id}:${question.id}`);
+      seen.set(key, rows);
+    }
+  }
+  const duplicates = [...seen.entries()].filter(([, rows]) => rows.length > 1);
+  assert.deepEqual(duplicates, []);
+});
+
 test('reading test papers only reference existing passages and questions and sum to 50 marks', () => {
   const passageMap = new Map(READING_PASSAGES.map((passage) => [passage.id, passage]));
   for (const paper of READING_TEST_PAPERS) {

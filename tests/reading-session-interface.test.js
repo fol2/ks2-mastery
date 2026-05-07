@@ -64,6 +64,16 @@ test('reading surface implements delegated full-list session UI inside the app f
   assert.match(ui, /data-reading-active-form="true"/);
 });
 
+
+
+test('reading one-question delayed-feedback surface has one save-and-next path', () => {
+  const ui = source('src/subjects/reading/components/ReadingPracticeSurface.jsx');
+  const saveAndNextCount = (ui.match(/Save and next/g) || []).length;
+  assert.equal(saveAndNextCount, 1);
+  assert.match(ui, /showDraftNextButton/);
+  assert.match(ui, /Save draft and next/);
+});
+
 test('reading command actions serialise section responses and preserve stale guards', () => {
   const commands = source('src/subjects/reading/command-actions.js');
   assert.match(commands, /function responsesFromFormData/);
@@ -106,7 +116,7 @@ test('reading list-mode surface renders prefixed full-section form controls with
     console.log(renderToStaticMarkup(<ReadingPracticeSurface appState={appState} actions={{ dispatch() {} }} />));
   `);
 
-  assert.match(html, /Answer the full question list/);
+  assert.match(html, /Answer this text/);
   assert.match(html, /data-reading-active-form="true"/);
   assert.match(html, /name="q_[^"]+_answer"/);
   assert.match(html, /Mark this section/);

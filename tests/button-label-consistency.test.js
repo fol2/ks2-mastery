@@ -443,6 +443,9 @@ test('button labels: every statically extractable label is classified', () => {
     'Delete',
     'Revert',
     'Save draft',
+    // Reading list-mode section save: bespoke to distinguish draft
+    // persistence from marking the section for feedback.
+    'Save this section',
     'Publish',
     'Recover into preview',
     'Refresh',

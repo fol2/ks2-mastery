@@ -195,6 +195,76 @@ test('reading due stats and review queue use the injected command clock', () => 
   assert.equal(result.analytics.generatedAt, 1000);
 });
 
+
+
+test('reading avoids immediate passage repeats after a started session is ended without answers', () => {
+  let clock = 1000;
+  const engine = createServerReadingEngine({ now: () => clock, random: () => 0 });
+  const first = engine.apply({
+    learnerId: 'l1',
+    command: 'start-session',
+    payload: { mode: 'guided', viewMode: 'one' },
+    requestId: 'r1',
+  });
+  assert.equal(first.state.session.sections[0].passageId, 'red_tin_box');
+
+  clock = 1500;
+  const ended = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: first.state, data: first.data },
+    command: 'end-session',
+    payload: {},
+    requestId: 'r2',
+  });
+
+  clock = 2000;
+  const second = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: { state: ended.state, data: ended.data },
+    command: 'start-session',
+    payload: { mode: 'guided', viewMode: 'one' },
+    requestId: 'r3',
+  });
+
+  assert.equal(second.state.session.sections[0].passageId, 'city_swifts');
+  assert.notEqual(second.state.session.sections[0].passageId, first.state.session.sections[0].passageId);
+});
+
+test('reading guided mode uses weakness and variety rather than always taking the first four questions', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const strongQuestion = {
+    attempts: 6,
+    correct: 6,
+    wrong: 0,
+    strength: 0.97,
+    intervalDays: 14,
+    dueAt: 1000 + 14 * 86400000,
+    lastSeenAt: 900,
+    correctStreak: 6,
+  };
+  const started = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: {
+      data: {
+        questions: {
+          rtb_q1: strongQuestion,
+          rtb_q2: strongQuestion,
+          rtb_q3: strongQuestion,
+          rtb_q4: strongQuestion,
+        },
+      },
+    },
+    command: 'start-session',
+    payload: { mode: 'guided', viewMode: 'one' },
+    requestId: 'guided-variety',
+  });
+
+  const questionIds = started.state.session.sections[0].questionIds;
+  assert.equal(started.state.session.sections[0].passageId, 'red_tin_box');
+  assert.notDeepEqual(questionIds, ['rtb_q1', 'rtb_q2', 'rtb_q3', 'rtb_q4']);
+  assert.ok(questionIds.includes('rtb_q5'));
+});
+
 test('worker subject runtime wires reading command handlers', async () => {
   const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
   const context = fakeContext();
@@ -213,6 +283,7 @@ test('worker subject runtime wires reading command handlers', async () => {
 });
 
 import { projectReadingRewards } from '../worker/src/projections/rewards.js';
+import { progressForReadingMonster } from '../src/platform/game/monster-system.js';
 
 test('reading secured skill events project into reading-owned monster rewards', () => {
   const projection = projectReadingRewards({
@@ -231,6 +302,49 @@ test('reading secured skill events project into reading-owned monster rewards', 
   assert.equal(projection.rewardEvents[0].subjectId, 'reading');
   assert.equal(projection.rewardEvents[0].monsterId, 'inferane');
   assert.ok(projection.changedGameState['monster-codex'].inferane.caught);
+});
+
+
+
+test('reading secured skill event carries deep secure evidence and mastery key', () => {
+  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
+  const session = started.state.session;
+  const qid = session.sections[0].questionIds[0];
+  const marked = engine.apply({
+    learnerId: 'l1',
+    subjectRecord: {
+      state: started.state,
+      data: {
+        ...started.data,
+        skills: {
+          ...started.data.skills,
+          '2a': {
+            attempts: 5,
+            correct: 5,
+            wrong: 0,
+            strength: 0.9,
+            intervalDays: 7,
+            dueAt: 1000 + 7 * 86400000,
+            lastSeenAt: 900,
+            correctStreak: 5,
+          },
+        },
+        securedSkillKeys: [],
+      },
+    },
+    command: 'submit-answer',
+    payload: { expectedSessionId: session.id, expectedQuestionId: qid, response: { answer: 'folded slips of paper' } },
+    requestId: 'secure-evidence',
+  });
+
+  const secureEvent = marked.events.find((event) => event.type === 'reading.skill-secured' && event.skillId === '2a');
+  assert.ok(secureEvent);
+  assert.equal(secureEvent.masteryKey, 'reading-poc-promoted-2026-05-05:reading-skill:2a');
+  assert.equal(secureEvent.secureEvidence.kind, 'deep-secure-reading-skill');
+  assert.equal(secureEvent.secureEvidence.status, 'secured');
+  assert.equal(secureEvent.secureEvidence.correctStreak, 5);
+  assert.equal(secureEvent.secureEvidence.intervalDays, 7);
 });
 
 test('reading delayed-feedback sessions do not expose answers through immediate submit or section mark', () => {
@@ -274,6 +388,59 @@ test('reading delayed-feedback sessions do not expose answers through immediate 
   });
   assert.equal(sessionMarked.state.error, '');
   assert.ok(Object.keys(sessionMarked.data.events).length > 0);
+});
+
+
+
+test('reading reward state exposes release-scoped 100-star high-water progress', () => {
+  const projectionOne = projectReadingRewards({
+    learnerId: 'l1',
+    domainEvents: [{
+      type: 'reading.skill-secured',
+      subjectId: 'reading',
+      learnerId: 'l1',
+      skillId: '2a',
+      contentReleaseId: 'reading-poc-promoted-2026-05-05',
+    }],
+    gameState: {},
+    random: () => 0,
+  });
+  let codex = projectionOne.gameState['monster-codex'];
+  assert.equal(codex.readbloom.starHighWater, 50);
+  assert.equal(codex.readbloom.displayStars, 50);
+  assert.equal(codex.lorequill.grandStars, 13);
+
+  const projectionTwo = projectReadingRewards({
+    learnerId: 'l1',
+    domainEvents: [{
+      type: 'reading.skill-secured',
+      subjectId: 'reading',
+      learnerId: 'l1',
+      skillId: '2g',
+      contentReleaseId: 'reading-poc-promoted-2026-05-05',
+    }],
+    gameState: projectionOne.gameState,
+    random: () => 0,
+  });
+  codex = projectionTwo.gameState['monster-codex'];
+  assert.equal(codex.readbloom.starHighWater, 100);
+  assert.equal(codex.readbloom.displayStars, 100);
+
+  const progress = progressForReadingMonster({
+    readbloom: {
+      caught: true,
+      releaseId: 'reading-poc-promoted-2026-05-05',
+      mastered: [
+        'old-release:reading-skill:2a',
+        'reading-poc-promoted-2026-05-05:reading-skill:2g',
+      ],
+      starHighWater: 100,
+    },
+  }, 'readbloom');
+  assert.equal(progress.mastered, 1);
+  assert.equal(progress.computedStars, 50);
+  assert.equal(progress.displayStars, 100);
+  assert.equal(progress.starHighWater, 100);
 });
 
 test('reading reward thresholds use direct clusters plus a full-domain aggregate monster', () => {

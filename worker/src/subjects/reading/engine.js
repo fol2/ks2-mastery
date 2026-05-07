@@ -170,6 +170,7 @@ function defaultData() {
     retryQueue: [],
     events: [],
     sessions: [],
+    recentPassageStarts: [],
     lastPracticeDay: null,
     streakDays: 0,
     securedSkillKeys: [],
@@ -231,6 +232,7 @@ function normaliseData(raw) {
     retryQueue: Array.isArray(data.retryQueue) ? data.retryQueue.slice(0, 500) : [],
     events: Array.isArray(data.events) ? data.events.slice(-1200) : [],
     sessions: Array.isArray(data.sessions) ? data.sessions.slice(-180) : [],
+    recentPassageStarts: Array.isArray(data.recentPassageStarts) ? data.recentPassageStarts.slice(-180) : [],
     securedSkillKeys: Array.isArray(data.securedSkillKeys) ? data.securedSkillKeys : [],
   };
 }
@@ -475,7 +477,7 @@ function hasStrictModeMatch(data, prefs) {
 
 function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
   const strictSkillMatch = hasStrictModeMatch(data, prefs);
-  const candidates = READING_PASSAGES.filter((passage) => {
+  let candidates = READING_PASSAGES.filter((passage) => {
     if (prefs.genre && passage.genre !== prefs.genre) return false;
     if (prefs.difficulty && Number(passage.difficulty) !== Number(prefs.difficulty)) return false;
     if (prefs.mode === 'guided' && passage.difficulty > 3) return false;
@@ -483,6 +485,21 @@ function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
     return relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch).length > 0;
   });
   if (!candidates.length) return null;
+
+  // Avoid immediately resurfacing the same text after a learner starts and
+  // abandons/saves a session without producing answer events. Answer-event
+  // recency alone cannot catch that common UI path, so Reading keeps a tiny
+  // session-start memory and excludes very recent passages when alternatives
+  // exist. This is a selection guard only; it never hides the last valid text.
+  const recentStartedPassageIds = new Set((data.recentPassageStarts || [])
+    .slice(-4)
+    .map((entry) => entry?.passageId)
+    .filter(Boolean));
+  if (recentStartedPassageIds.size && candidates.length > 1) {
+    const notRecentlyStarted = candidates.filter((passage) => !recentStartedPassageIds.has(passage.id));
+    if (notRecentlyStarted.length) candidates = notRecentlyStarted;
+  }
+
   const weighted = candidates.map((passage) => {
     const pNode = data.passages[passage.id] || defaultNode();
     const gNode = data.genres[passage.genre] || defaultNode();
@@ -491,7 +508,9 @@ function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
     if (!pNode.attempts) weight += 0.7;
     weight += average(questions.map((question) => questionWeakness(data, question, nowValue)));
     const recentCount = data.events.slice(-12).filter((event) => event.passageId === passage.id).length;
+    const recentStartCount = (data.recentPassageStarts || []).slice(-12).filter((entry) => entry?.passageId === passage.id).length;
     weight *= Math.pow(0.58, recentCount);
+    weight *= Math.pow(0.72, recentStartCount);
     return [passage, Math.max(0.05, weight)];
   });
   let roll = random() * weighted.reduce((sum, [, weight]) => sum + weight, 0);
@@ -506,10 +525,9 @@ function chooseQuestionIds(data, passage, prefs, nowValue = Date.now()) {
   const strictSkillMatch = hasStrictModeMatch(data, prefs);
   let questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
   if (!questions.length) questions = (passage.questions || []).slice();
-  if (prefs.mode === 'guided') return questions.slice(0, Math.min(4, questions.length)).map((question) => question.id);
   if (prefs.mode === 'stamina') return questions.map((question) => question.id);
   questions.sort((a, b) => questionWeakness(data, b, nowValue) - questionWeakness(data, a, nowValue));
-  const limit = prefs.mode === 'smart' ? 4 : prefs.mode === 'punct' ? 3 : 5;
+  const limit = (prefs.mode === 'smart' || prefs.mode === 'guided') ? 4 : prefs.mode === 'punct' ? 3 : 5;
   const picked = [];
   const seenSkills = new Set();
   for (const question of questions) {
@@ -646,6 +664,33 @@ function updateStreak(data, nowValue) {
   data.lastPracticeDay = day;
 }
 
+function recentPassageIdsForSession(session) {
+  const seen = new Set();
+  for (const section of session?.sections || []) {
+    const passageId = typeof section?.passageId === 'string' ? section.passageId : '';
+    if (passageId) seen.add(passageId);
+  }
+  return [...seen];
+}
+
+function recordRecentPassageStart(data, session, nowValue) {
+  const entries = recentPassageIdsForSession(session).map((passageId) => ({
+    passageId,
+    sessionId: session.id,
+    mode: session.mode,
+    startedAt: nowValue,
+  }));
+  if (!entries.length) return;
+  data.recentPassageStarts = [
+    ...(Array.isArray(data.recentPassageStarts) ? data.recentPassageStarts : []),
+    ...entries,
+  ].slice(-180);
+}
+
+function readingSkillMasteryKey(skillId) {
+  return `${READING_CONTENT_RELEASE_ID}:reading-skill:${skillId}`;
+}
+
 function applyQuestionUpdate({ data, learnerId, session, section, qid, result, response, nowValue, requestId }) {
   const ref = QUESTION_REF_MAP[qid];
   if (!ref) return [];
@@ -716,8 +761,26 @@ function deriveSecuredSkillEvents({ data, learnerId, nowValue, requestId }) {
       learnerId,
       contentReleaseId: READING_CONTENT_RELEASE_ID,
       skillId,
+      masteryKey: readingSkillMasteryKey(skillId),
       strength: node.strength,
       attempts: node.attempts,
+      correctStreak: node.correctStreak || 0,
+      intervalDays: node.intervalDays || 0,
+      secureEvidence: {
+        kind: 'deep-secure-reading-skill',
+        status: 'secured',
+        releaseId: READING_CONTENT_RELEASE_ID,
+        skillId,
+        strength: node.strength,
+        attempts: node.attempts,
+        correct: node.correct || 0,
+        wrong: node.wrong || 0,
+        correctStreak: node.correctStreak || 0,
+        intervalDays: node.intervalDays || 0,
+        lastSeenAt: node.lastSeenAt || null,
+        dueAt: node.dueAt || 0,
+        securedAt: nowValue,
+      },
       createdAt: nowValue,
     });
   }
@@ -858,6 +921,7 @@ function safeDataForReadModels(data) {
     misconceptions: source.misconceptions || {},
     retryQueue: Array.isArray(source.retryQueue) ? source.retryQueue : [],
     events: Array.isArray(source.events) ? source.events : [],
+    recentPassageStarts: Array.isArray(source.recentPassageStarts) ? source.recentPassageStarts : [],
   };
 }
 
@@ -968,6 +1032,7 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
       if (!session) {
         state = { ...state, error: 'No reading passage matches that setup yet.', phase: 'setup', session: null, feedback: null, updatedAt: t };
       } else {
+        recordRecentPassageStart(data, session, t);
         state = { ...state, prefs, phase: 'question', session, feedback: null, summary: null, error: '', updatedAt: t };
         practiceSession = buildPracticeSessionRow(session, 'active', t);
         events.push({ id: `reading.session-started.${learnerId}.${session.id}`, type: 'reading.session-started', subjectId: 'reading', learnerId, contentReleaseId: READING_CONTENT_RELEASE_ID, sessionId: session.id, mode: session.mode, heroContext: session.heroContext || null, createdAt: t });

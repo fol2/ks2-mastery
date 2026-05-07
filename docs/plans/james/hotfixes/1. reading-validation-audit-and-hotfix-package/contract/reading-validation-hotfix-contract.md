@@ -15,11 +15,12 @@ The patch changes Reading-only runtime/content/UI/reward surfaces plus Reading t
 - `src/platform/game/mastery/index.js`
 - `shared/reading/content.js`
 - `src/subjects/reading/components/ReadingPracticeSurface.jsx`
+- `tests/button-label-consistency.test.js`
 - `tests/worker-reading-runtime.test.js`
 - `tests/reading-content-contract.test.js`
 - `tests/reading-session-interface.test.js`
 
-No Spelling, Grammar, Punctuation, Hero scheduler, database migration, or production smoke script is changed.
+No Spelling, Grammar, Punctuation, Hero scheduler, database migration, or production smoke script is changed. The button-label test update is test-only governance for the deliberate Reading list-mode label `Save this section`; it is included so the full repository gate remains reproducible.
 
 ## Defects fixed
 
@@ -91,10 +92,18 @@ git apply --ignore-whitespace patches/001-reading-validation-hotfix-repo-root.pa
 node --test \
   tests/worker-reading-runtime.test.js \
   tests/reading-content-contract.test.js \
-  tests/reading-subject-registry.test.js
+  tests/reading-subject-registry.test.js \
+  tests/reading-session-interface.test.js
 ```
 
-Expected result: all targeted Reading tests pass.
+Expected result: all targeted Reading/UI tests pass.
+
+Repository closure gates:
+
+```bash
+npm test
+npm run check
+```
 
 ## Local validation result
 
@@ -102,7 +111,11 @@ Patch dry-run: pass.
 
 Patch apply: pass.
 
-Targeted Reading tests: 30/30 pass.
+Targeted Reading/UI tests: 35/35 pass.
+
+Full repository `npm test`: 109154/109154 pass, 12 skipped.
+
+Full repository `npm run check`: pass.
 
 Content audit: 21 passages, 182 questions, 12 skills, 0 duplicate normalised stems, 0 duplicate model answers.
 

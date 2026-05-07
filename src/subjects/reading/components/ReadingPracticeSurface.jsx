@@ -315,6 +315,8 @@ function QuestionPanel({ ui, actions }) {
   const pending = isPending(ui);
   const formId = `reading-question-form-${session.id}`;
   const feedback = ui.feedback || (result ? { result } : null);
+  const primarySubmitLabel = session.delayedFeedback ? 'Save and next' : 'Submit answer';
+  const showDraftNextButton = !session.delayedFeedback || disabled;
   function submit(event) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -364,9 +366,9 @@ function QuestionPanel({ ui, actions }) {
         <p className="question-stem">{question.stem}</p>
         <QuestionInput question={question} response={response} disabled={disabled} />
         <div className="actions reading-actions-spaced">
-          {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{session.delayedFeedback ? 'Save and next' : 'Submit answer'}</button> : null}
+          {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{primarySubmitLabel}</button> : null}
           <button className="btn ghost" type="button" onClick={(event) => saveAndMove(event, { delta: -1 })} disabled={pending || !canGoPrevious(session)}>Previous</button>
-          <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save and next'}</button>
+          {showDraftNextButton ? <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save draft and next'}</button> : null}
           {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={finish} disabled={pending}>Finish now</button> : null}
           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
         </div>
@@ -397,7 +399,7 @@ function QuestionListPanel({ ui, actions }) {
       <div className="reading-active-step">
         <div>
           <div className="eyebrow">{session.currentSection?.title || 'Current text'}</div>
-          <h2 className="section-title">Answer the full question list</h2>
+          <h2 className="section-title">Answer this text's question list</h2>
         </div>
         <span className="reading-status-badge saved">{session.currentSection?.answered || 0}/{session.currentSection?.total || questions.length} saved</span>
       </div>
@@ -411,8 +413,8 @@ function QuestionListPanel({ ui, actions }) {
       </div>
       <div className="callout reading-session-guidance">
         {session.strict
-          ? 'SATs-style mode: answer each text, then mark the whole paper when you want feedback.'
-          : 'List mode saves the whole visible section together. Feedback stays hidden until you mark the section.'}
+          ? 'SATs-style mode: answer each text inside this Reading frame, then mark the whole paper when you want feedback.'
+          : 'Use the passage beside this card, save the visible section as you go, and mark only when you are ready for feedback.'}
       </div>
       <form className="reading-list-form" onSubmit={mark} data-reading-active-form="true">
         {questions.map((questionItem) => {
@@ -437,7 +439,7 @@ function QuestionListPanel({ ui, actions }) {
           );
         })}
         <div className="actions reading-actions-spaced">
-          <button className="btn secondary" type="button" onClick={saveSection} disabled={pending}>Save</button>
+          <button className="btn secondary" type="button" onClick={saveSection} disabled={pending}>Save this section</button>
           <button className="btn warn" type="submit" disabled={pending}>{session.strict ? 'Mark whole paper' : 'Mark this section'}</button>
           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
         </div>
