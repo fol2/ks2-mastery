@@ -4,7 +4,7 @@
 
 Primary local source snapshot: uploaded `ks2-mastery-lean-05070029.zip`.
 
-This rebuilt package was produced from that ZIP snapshot and validated by applying the patch to a fresh extraction. It does not claim a fresh live production smoke or visual asset certification.
+This rebuilt package was produced from that ZIP snapshot, validated by applying the patch to a fresh extraction, applied to repository `main`, deployed to production, and verified by a fresh live Reading smoke against `https://ks2.eugnel.uk`.
 
 ## Patch scope
 
@@ -105,6 +105,13 @@ npm test
 npm run check
 ```
 
+Production closure gates:
+
+```bash
+npm run deploy
+node scripts/reading-production-smoke.mjs --out docs/plans/james/hotfixes/1. reading-validation-audit-and-hotfix-package/validation/production/reading-production-smoke-2026-05-07.json
+```
+
 ## Local validation result
 
 Patch dry-run: pass.
@@ -117,12 +124,14 @@ Full repository `npm test`: 109154/109154 pass, 12 skipped.
 
 Full repository `npm run check`: pass.
 
+Production deploy: pass, Cloudflare Worker version `b52805a5-fad1-4231-96d8-9af7c4b51499`.
+
+Production Reading smoke: pass against `https://ks2.eugnel.uk` with origin, timestamp, release id, deployed commit SHA, immediate guided command-path evidence, and delayed-paper command-path evidence.
+
 Content audit: 21 passages, 182 questions, 12 skills, 0 duplicate normalised stems, 0 duplicate model answers.
 
 UI static audit: one save-and-next path, list-mode active form present, delegated Reading list panel present.
 
 ## Known limits
 
-This package does not prove live production readiness. A production claim still requires a live smoke with origin, timestamp, release id, and pass/fail result.
-
-The uploaded lean ZIP does not contain `node_modules`; therefore full React render testing that requires `esbuild` was not run in this rebuild. The package includes a static UI contract audit instead.
+The original fresh-ZIP rebuild did not contain `node_modules`, so that rebuild used a static UI contract audit. Repository `main` subsequently ran the React-backed Reading session interface test, full `npm test`, dry-run deployment check, production deployment, and fresh Reading production smoke.

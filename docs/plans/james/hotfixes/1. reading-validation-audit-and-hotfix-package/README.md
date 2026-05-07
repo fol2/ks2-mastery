@@ -12,6 +12,9 @@ It contains a repo-root patch plus the validation contract, local validation log
 - `validation/logs/repo-reading-targeted-tests-2026-05-07.log` — repository targeted Reading/UI test output after applying the patch to `main`.
 - `validation/logs/repo-npm-test-pass-2026-05-07.log` — full repository `npm test` output after applying the patch to `main`.
 - `validation/logs/repo-npm-check-2026-05-07.log` — full repository `npm run check` dry-run deployment output after applying the patch to `main`.
+- `validation/logs/repo-deploy-2026-05-07.log` — production deploy output for commit `28de730c66c98c46dc9816907ad638b07213c44e`.
+- `validation/logs/reading-production-smoke-json-2026-05-07.log` — console output from the post-deploy Reading production smoke.
+- `validation/production/reading-production-smoke-2026-05-07.json` — post-deploy Reading production smoke JSON for `https://ks2.eugnel.uk`.
 - `validation/audits/reading-content-audit.json` — content duplicate/shape audit after patch.
 - `validation/audits/reading-ui-static-audit.json` — static UI contract audit after patch.
 - `completion-report.md` — final production closure report, including deployment and live smoke evidence.
@@ -40,4 +43,11 @@ Full repository gates also passed:
 ```bash
 npm test
 npm run check
+```
+
+Production gates also passed:
+
+```bash
+npm run deploy
+node scripts/reading-production-smoke.mjs --out docs/plans/james/hotfixes/1. reading-validation-audit-and-hotfix-package/validation/production/reading-production-smoke-2026-05-07.json
 ```
