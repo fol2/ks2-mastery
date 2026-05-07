@@ -1,8 +1,0 @@
-review_started_utc=2026-05-06T00:35:11Z
-zip=/mnt/data/ks2-mastery-lean-05060131.zip
-zip_sha256=b62eec2f9a9c2b4ce41b0cff16200f940a3699af00ad281be83cc00837c05fc6
-work=/mnt/data/ks2-mastery-lean-05060131-work
-node=v22.16.0
-npm=10.9.2
-nvmrc=22
-prepatch_findings=punctuation-symbol-labels,incidental-terminal-full-stop-strictness,possessive-scenario-copy
