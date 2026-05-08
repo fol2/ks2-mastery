@@ -15,7 +15,7 @@ Deployed Worker version: `a94835b2-f3b4-41f9-a1b4-e8bf67f64d3d`
 | Keep the package self-describing. | `README.md`, `validation-summary.md`, and `contract/punctuation-p20-runtime-surface-uniqueness-hotfix-contract.md` now describe the actual `fx12_parenthesis_001` to `006` replacement side and the corrected patch SHA-256. |
 | Preserve production P20 gate behaviour. | `npm run verify:punctuation-qg:p20` passed after fresh evidence regeneration. |
 | Deploy and prove production, not only local verification. | `npm run deploy` passed and reported Worker version `a94835b2-f3b4-41f9-a1b4-e8bf67f64d3d`; fresh production smoke is stored at `reports/punctuation/punctuation-qg-p20-production-smoke.json`. |
-| Use reviewer-grade closure. | Independent code review found blockers; they were fixed and re-reviewed green. Contract audit required production certification; final re-audit is pending after this report/evidence commit. |
+| Use reviewer-grade closure. | Independent code review found blockers; they were fixed and re-reviewed green. Contract audit required production certification; after the production smoke and clean sync proof, the final contract re-audit was green. |
 
 ## Verification
 
@@ -50,4 +50,4 @@ Key attestation fields:
 
 ## Final status
 
-The P20 fixed-bank duplicate surface hotfix is implemented, locally verified, pushed to `origin/main`, deployed to production, and backed by fresh production smoke evidence.
+The P20 fixed-bank duplicate surface hotfix is implemented, locally verified, pushed to `origin/main`, deployed to production, backed by fresh production smoke evidence, and closed by independent code-review and contract-audit green verdicts.
