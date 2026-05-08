@@ -1,0 +1,99 @@
+
+> ks2-mastery@0.1.0 deploy
+> node ./scripts/wrangler-oauth.mjs deploy && npm run audit:production -- --skip-local --retries 30 --retry-delay-ms 5000
+
+
+ ⛅️ wrangler 4.84.0 (update available 4.90.0)
+─────────────────────────────────────────────
+[custom build] Running: npm run build && npm run assert:build-public && npm run audit:client
+[custom build]
+[custom build] > ks2-mastery@0.1.0 build
+[custom build] > node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs
+[custom build]
+[custom build]
+[custom build] Generated src\platform\game\monster-asset-manifest.js with 180 monster assets.
+[custom build]
+[custom build]
+[custom build]   src\bundles\app.bundle.js                 666.4kb
+[custom build]   src\bundles\chunk-SYVJUCF4.js             266.8kb
+[custom build]   src\bundles\AdminHubSurface-27T3QTDX.js   227.4kb
+[custom build]   src\bundles\ParentHubSurface-MRTSMHTL.js   22.9kb
+[custom build]   src\bundles\chunk-EE2UYWMZ.js              15.7kb
+[custom build]   ...and 3 more output files...
+[custom build]
+[custom build] Done in 65ms
+[custom build]
+[custom build]
+[custom build] > ks2-mastery@0.1.0 assert:build-public
+[custom build] > node ./scripts/assert-build-public.mjs
+[custom build]
+[custom build]
+[custom build]
+[custom build] > ks2-mastery@0.1.0 audit:client
+[custom build] > node ./scripts/audit-client-bundle.mjs
+[custom build]
+[custom build]
+[custom build] Allowlisted token present: /api/learners (platform learner-profile mutation route; not a subject engine/runtime route)
+[custom build]
+[custom build] Allowlisted token present: /api/content/spelling (operator content import/export endpoint; content datasets are fetched only on explicit admin action)
+[custom build] Allowlisted token present: /api/admin/monster-visual-config (admin-only monster visual draft/publish endpoint; production renderers receive only the published bootstrap payload)
+[custom build] Allowlisted token present: /api/subjects/spelling/word-bank (authorised server read model endpoint for Word Bank rows and detail)
+[custom build] Allowlisted token present: /api/subjects/ (server-authoritative subject command boundary)
+[custom build] Client bundle audit passed (805 public files, 6 chunks scanned, main bundle 194239 / 232000 bytes gzip).
+[custom build]
+🌀 Building list of assets...
+✨ Read 881 files from the assets directory D:\Coding\ks2-mastery\dist\public
+🌀 Starting asset upload...
+🌀 Found 2 new or modified static assets to upload. Proceeding with upload...
++ /index.html
++ /src/bundles/app.bundle.js
+Uploaded 1 of 2 assets
+Uploaded 2 of 2 assets
+✨ Success! Uploaded 2 files (802 already uploaded) (2.40 sec)
+
+Total Upload: 20750.02 KiB / gzip: 1901.94 KiB
+Your Worker has access to the following bindings:
+Binding                                                     Resource
+env.LEARNER_LOCK (LearnerLock)                              Durable Object
+env.DB (ks2-mastery-db)                                     D1 Database
+env.SPELLING_AUDIO_BUCKET (ks2-spelling-buffers)            R2 Bucket
+env.ASSETS                                                  Assets
+env.APP_NAME ("KS2 Mastery")                                Environment Variable
+env.APP_HOSTNAME ("ks2.eugnel.uk")                          Environment Variable
+env.AUTH_MODE ("production")                                Environment Variable
+env.ENVIRONMENT ("production")                              Environment Variable
+env.PUNCTUATION_SUBJECT_ENABLED ("true")                    Environment Variable
+env.SOCIAL_LOGIN_WIRE_ENABLED ("true")                      Environment Variable
+env.HERO_MODE_SHADOW_ENABLED ("false")                      Environment Variable
+env.HERO_MODE_LAUNCH_ENABLED ("false")                      Environment Variable
+env.HERO_MODE_CHILD_UI_ENABLED ("false")                    Environment Variable
+env.HERO_MODE_PROGRESS_ENABLED ("false")                    Environment Variable
+env.HERO_MODE_ECONOMY_ENABLED ("false")                     Environment Variable
+env.HERO_MODE_CAMP_ENABLED ("false")                        Environment Variable
+
+X [ERROR] Your Worker failed validation because it exceeded startup limits.
+
+
+  A request to the Cloudflare API (/accounts/6d00cb4a0396c17ad6ba617bcbcaa45d/workers/scripts/ks2-mastery/versions) failed.
+   - Error: Script startup exceeded CPU time limit.
+   [code: 10021]
+  To learn more about this error, visit: https://developers.cloudflare.com/workers/observability/errors/#validation-errors-10021
+
+  To ensure fast responses, there are constraints on Worker startup, such as how much CPU it can use, or how long it can take. Your Worker has hit one of these startup limits. Try reducing the amount of work done during startup (outside the event handler), either by removing code or relocating it inside the event handler.
+
+  Refer to https://developers.cloudflare.com/workers/platform/limits/#worker-startup-time for more details
+  A CPU Profile of your Worker's startup phase has been written to .wrangler\tmp\startup-profile-CtEpJ1\worker.cpuprofile - load it into the Chrome DevTools profiler (or directly in VSCode) to view a flamegraph.
+
+
+
+X [ERROR] A request to the Cloudflare API (/accounts/6d00cb4a0396c17ad6ba617bcbcaa45d/workers/scripts/ks2-mastery/versions) failed.
+
+  Error: Script startup exceeded CPU time limit.
+   [code: 10021]
+  To learn more about this error, visit: https://developers.cloudflare.com/workers/observability/errors/#validation-errors-10021
+
+
+  If you think this is a bug, please open an issue at: https://github.com/cloudflare/workers-sdk/issues/new/choose
+
+
+🪵  Logs were written to "C:\Users\fol2h\AppData\Roaming\xdg.config\.wrangler\logs\wrangler-2026-05-08_16-03-48_321.log"

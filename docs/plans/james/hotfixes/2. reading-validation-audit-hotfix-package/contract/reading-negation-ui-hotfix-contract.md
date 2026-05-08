@@ -8,7 +8,7 @@ Source ZIP SHA-256:
 
 `b8f30cefff6178f7db18bfc47e53387b4ebd680d3ae35eee5aeba0ee4b91fe50`
 
-This package proves a local ZIP-snapshot audit and a fresh local patch apply. It does not prove live production deployment. GitHub was used only as repository context in this rebuild; the patch and validation logs are ZIP-local evidence.
+This package began as a local ZIP-snapshot audit and fresh local patch apply. It has now also been applied to the live repository, pushed to `origin/main`, deployed through the repository Cloudflare script, and production-smoked on `https://ks2.eugnel.uk`.
 
 ## Patch scope
 
@@ -54,9 +54,14 @@ git apply patches/001-reading-negation-marking-and-session-ui.patch
 node --test \
   tests/reading-content-contract.test.js \
   tests/worker-reading-runtime.test.js \
-  tests/reading-subject-registry.test.js
+  tests/reading-subject-registry.test.js \
+  tests/reading-session-interface.test.js
 
 node validation/tools/reading-negation-audit.mjs
+npm test
+npm run check
+npm run deploy
+node scripts/reading-production-smoke.mjs --out "docs/plans/james/hotfixes/2. reading-validation-audit-hotfix-package/validation/production/reading-production-smoke-2026-05-08.json"
 ```
 
 Expected results:
@@ -66,6 +71,9 @@ Expected results:
 - Core Reading tests pass: `32/32` after patch.
 - Adversarial negation audit reports `0` negated matcher acceptances and `0` negated evaluation risks after patch.
 - Reading content quality remains stable: 21 passages, 182 questions, 12 papers, 12 skills/domains, 0 duplicate normalised stem groups, and 0 duplicate model answer groups.
+- Full repository tests pass.
+- Cloudflare deploy succeeds through `npm run deploy`.
+- Production Reading smoke passes on `https://ks2.eugnel.uk`.
 
 ## Local validation result
 
@@ -83,10 +91,20 @@ Expanded adversarial negation audit:
 
 The expanded audit intentionally probes four contradiction forms (`not`, `never`, `no`, `opposite of`) across phrase, keyword, evidence, and rubric checks, so its raw counts are broader than a single direct-smoke probe.
 
-## Known limits
+## Final repository and production result
+
+- Code commit: `c7716f57c2ed871978bc4d203737f3ca428fdc46`
+- Successful Cloudflare Worker Version ID: `0ae565fd-11e7-467e-9abf-a8f85227bc8b`
+- Final repo targeted Reading tests: `38/38` pass.
+- Final repo `npm test`: `109174` pass, `0` fail, `12` skipped.
+- Final repo `npm run check`: pass.
+- Production bundle audit: pass for `https://ks2.eugnel.uk/`.
+- Reading production smoke: pass for `https://ks2.eugnel.uk`, finished at `2026-05-08T16:05:39.832Z`.
+
+## Known limits from the original ZIP rebuild
 
 This environment has Node `v22.16.0`, matching `.nvmrc` major version `22`.
 
 The lean ZIP does not include `node_modules`, and `tests/reading-session-interface.test.js` imports `esbuild`. Therefore the React-backed session-interface test cannot be faithfully executed here. The failure is captured in `validation/logs/patched-reading-session-interface-node22-no-node-modules.log` and is an environment/dependency limitation, not a product failure.
 
-Production readiness still requires a fresh deploy/smoke artefact with origin, timestamp, release or commit ID, and pass result.
+That original ZIP limitation is superseded by the final repository validation, where the React-backed session-interface test passed.

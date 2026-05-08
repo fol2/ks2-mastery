@@ -10,7 +10,7 @@ Primary evidence layer: uploaded ZIP and local fresh-apply checks.
 
 ## Verdict
 
-The rebuilt package supplies a Reading-only patch for one real marking risk and one UI clarity improvement.
+The rebuilt package has been applied to the live repository, deployed, and production-smoked.
 
 The marking risk is that local negation of an otherwise correct phrase could still receive Reading credit. The patch makes phrase, keyword, and evidence-overlap matching contradiction-aware.
 
@@ -42,6 +42,7 @@ This rebuild uses an expanded audit that probes `not`, `never`, `no`, and `oppos
 | Baseline uploaded ZIP | 5100 | 1008 |
 | Patched working tree | 0 | 0 |
 | Fresh ZIP apply | 0 | 0 |
+| Final repo audit | 0 | 0 |
 
 ## Test results
 
@@ -50,11 +51,30 @@ This rebuild uses an expanded audit that probes `not`, `never`, `no`, and `oppos
 - Fresh ZIP apply core Reading tests: `32/32` pass.
 - Patch dry-run on fresh extraction: pass.
 - Patch apply on fresh extraction: pass.
+- Final repo targeted Reading tests: `38/38` pass.
+- Final repo `npm test`: `109174` pass, `0` fail, `12` skipped.
+- Final repo `npm run check`: pass.
+- Pre-push `npm test`: `109174` pass, `0` fail, `12` skipped.
+
+## Production validation
+
+- Deployment command: `npm run deploy`
+- First deployment attempt: Cloudflare validation rejected the Worker with startup CPU limit error `10021`; no successful Worker version was published on that attempt.
+- Retry deployment: pass.
+- Cloudflare Worker Version ID: `0ae565fd-11e7-467e-9abf-a8f85227bc8b`
+- Production bundle audit: pass for `https://ks2.eugnel.uk/`.
+- Reading production smoke: pass for `https://ks2.eugnel.uk`.
+- Production smoke commit: `c7716f57c2ed871978bc4d203737f3ca428fdc46`
+- Production smoke content release: `reading-poc-promoted-2026-05-05`
+- Production smoke content version: `2`
+- Production smoke finished at: `2026-05-08T16:05:39.832Z`
 
 ## Environment limitation
 
-The local Node runtime is `v22.16.0`, matching `.nvmrc` major version `22`, but the lean ZIP has no `node_modules` and the React-backed Reading session-interface test imports `esbuild`. That test cannot run faithfully here without dependency installation. The failure is included as an environment limitation.
+The local Node runtime is `v22.16.0`, matching `.nvmrc` major version `22`, but the lean ZIP has no `node_modules` and the React-backed Reading session-interface test imports `esbuild`. That test cannot run faithfully in the original lean ZIP rebuild context without dependency installation. The failure is included as an environment limitation.
 
-## Production limit
+This limitation does not apply to the final repository validation above, where the React-backed Reading session-interface test passed.
 
-No live production deploy or smoke was performed in this rebuild. Production certification still requires live evidence with origin, timestamp, release/commit ID, and pass result.
+## Completion evidence
+
+The completion report is `completion-report-2026-05-08.md`.
