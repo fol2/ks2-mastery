@@ -4,7 +4,7 @@
   "status": "PASS",
   "source": "p20-deterministic-cooldown-pool-simulation",
   "releaseId": "punctuation-qg-p20-15072-2026-05-04",
-  "generatedAt": "2026-05-08T18:20:46.708Z",
+  "generatedAt": "2026-05-08T18:34:38.705Z",
   "observed": {
     "learnerCount": 10,
     "sessionsPerLearner": 50,
