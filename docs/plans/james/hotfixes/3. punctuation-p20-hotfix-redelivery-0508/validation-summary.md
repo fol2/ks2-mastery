@@ -83,9 +83,9 @@ Baseline summary:
 
 Patch: `patches/001-punctuation-p20-fixed-duplicate-surface-and-gate.patch`
 
-Patch SHA-256: `b4ca9158a12466244f3b11a58dec6cc3bfa8e9ff6b56839216e6c36a90fedfda`
+Patch SHA-256: `51eea511f8bf2b6f8cbc2cbf9bd32220f76e38e03f6db9ba1d5c2cacdde6295d`
 
-The patch replaces the duplicated `fx12_parenthesis_021` to `fx12_parenthesis_026` surfaces and hardens the P20 audit/validator so full runtime duplicate surfaces are blocked, including fixed-bank duplicates.
+The patch resolves the duplicated parenthesis pairs by replacing the `fx12_parenthesis_001` to `fx12_parenthesis_006` side of each pair with new KS2-appropriate surfaces. The matching `fx12_parenthesis_021` to `fx12_parenthesis_026` items remain as the original approved surfaces. The patch also hardens the P20 audit/validator so full runtime duplicate surfaces are blocked, including fixed-bank duplicates.
 
 ## Fresh validation results
 

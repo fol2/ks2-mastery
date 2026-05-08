@@ -10,4 +10,4 @@ git apply --ignore-whitespace patches/001-punctuation-p20-fixed-duplicate-surfac
 
 Primary source ZIP SHA-256: `b8f30cefff6178f7db18bfc47e53387b4ebd680d3ae35eee5aeba0ee4b91fe50`.
 
-Patch SHA-256: `b4ca9158a12466244f3b11a58dec6cc3bfa8e9ff6b56839216e6c36a90fedfda`.
+Patch SHA-256: `51eea511f8bf2b6f8cbc2cbf9bd32220f76e38e03f6db9ba1d5c2cacdde6295d`.

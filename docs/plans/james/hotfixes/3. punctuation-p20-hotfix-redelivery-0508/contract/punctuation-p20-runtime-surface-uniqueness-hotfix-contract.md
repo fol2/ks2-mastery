@@ -40,7 +40,7 @@ Baseline counts:
 
 Patch file: `patches/001-punctuation-p20-fixed-duplicate-surface-and-gate.patch`.
 
-Patch SHA-256: `b4ca9158a12466244f3b11a58dec6cc3bfa8e9ff6b56839216e6c36a90fedfda`.
+Patch SHA-256: `51eea511f8bf2b6f8cbc2cbf9bd32220f76e38e03f6db9ba1d5c2cacdde6295d`.
 
 Files changed:
 
@@ -48,10 +48,11 @@ Files changed:
 - `scripts/audit-punctuation-qg-p20-expansion.mjs`
 - `scripts/validate-punctuation-qg-p20-expansion-report.mjs`
 - `tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js`
+- `tests/punctuation-qg-p20-expansion-report-validator.test.js`
 
 ## Intended changes
 
-The six duplicated `fx12_parenthesis_021` to `fx12_parenthesis_026` fixed-bank items are replaced with new KS2-appropriate parenthesis choice surfaces. The correct-answer index and parenthesis skill metadata are preserved.
+The six duplicate parenthesis fixed-bank pairs are resolved by replacing the `fx12_parenthesis_001` to `fx12_parenthesis_006` side of each pair with new KS2-appropriate parenthesis choice surfaces. The matching `fx12_parenthesis_021` to `fx12_parenthesis_026` items remain as the original approved surfaces. The correct-answer index and parenthesis skill metadata are preserved.
 
 The P20 expansion audit is hardened so `duplicateSurfaceGroups` checks the full runtime pool, not only generated items. The audit now also reports `generatedDuplicateSurfaceGroups` and `fixedDuplicateSurfaceGroups` for diagnosis.
 

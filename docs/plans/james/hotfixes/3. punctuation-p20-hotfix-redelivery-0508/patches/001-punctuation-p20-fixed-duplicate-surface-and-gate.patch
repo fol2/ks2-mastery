@@ -60,7 +60,7 @@ diff --git a/scripts/validate-punctuation-qg-p20-expansion-report.mjs b/scripts/
 index 3001ebc..72314c9 100644
 --- a/scripts/validate-punctuation-qg-p20-expansion-report.mjs
 +++ b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
-@@ -40,7 +40,9 @@ if (counts.generatedItems < thresholds.minGeneratedItems) fail('generated item f
+@@ -40,7 +40,10 @@ if (counts.generatedItems < thresholds.minGeneratedItems) fail('generated item f
  if (counts.fixedItems < thresholds.minFixedItems) fail('fixed item floor not met', counts);
  if (counts.uniqueLearnerSurfaces < thresholds.minUniqueLearnerSurfaces) fail('unique learner-facing surface floor not met', counts);
  if (counts.uniqueVariantSignatures < thresholds.minUniqueVariantSignatures) fail('unique variant signature floor not met', counts);
@@ -68,6 +68,7 @@ index 3001ebc..72314c9 100644
 +if (counts.duplicateSurfaceGroups !== 0) fail('runtime duplicate surface groups must be zero', counts);
 +if (counts.generatedDuplicateSurfaceGroups !== undefined && counts.generatedDuplicateSurfaceGroups !== 0) fail('generated duplicate surface groups must be zero', counts);
 +if (counts.fixedDuplicateSurfaceGroups !== undefined && counts.fixedDuplicateSurfaceGroups !== 0) fail('fixed-bank duplicate surface groups must be zero', counts);
++if (counts.legacyFixedDuplicateSurfaceGroups !== undefined && counts.legacyFixedDuplicateSurfaceGroups !== 0) fail('legacy fixed-bank duplicate surface groups must be zero', counts);
  if (counts.modelSelfMarkingFailures !== 0) fail('model self-marking failures must be zero', counts);
  
  const skillRows = Array.isArray(report.skillRows) ? report.skillRows : [];
@@ -258,4 +259,44 @@ index 0000000..7a4c533
 +    .sort((a, b) => a[0].localeCompare(b[0]));
 +
 +  assert.deepEqual(duplicates, []);
++});
+diff --git a/tests/punctuation-qg-p20-expansion-report-validator.test.js b/tests/punctuation-qg-p20-expansion-report-validator.test.js
+new file mode 100644
+index 0000000..f1f5c54
+--- /dev/null
++++ b/tests/punctuation-qg-p20-expansion-report-validator.test.js
+@@ -0,0 +1,37 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { spawnSync } from 'node:child_process';
++import { resolve } from 'node:path';
++
++const VALIDATOR = resolve(import.meta.dirname, '..', 'scripts/validate-punctuation-qg-p20-expansion-report.mjs');
++const CURRENT_REPORT = resolve(import.meta.dirname, '..', 'reports/punctuation/punctuation-qg-p20-expansion-audit.json');
++const BASELINE_DUPLICATE_REPORT = resolve(
++  import.meta.dirname,
++  '..',
++  'docs/plans/james/hotfixes/3. punctuation-p20-hotfix-redelivery-0508/validation/baseline-p20-expansion-audit.json',
++);
++
++function runValidator(reportPath) {
++  return spawnSync(process.execPath, [VALIDATOR, reportPath], {
++    cwd: resolve(import.meta.dirname, '..'),
++    encoding: 'utf8',
++  });
++}
++
++test('P20 expansion report validator accepts the current duplicate-free report', () => {
++  const result = runValidator(CURRENT_REPORT);
++
++  assert.equal(result.status, 0, result.stderr || result.stdout);
++  assert.match(result.stdout, /P20 expansion report validation: PASS/);
++});
++
++test('P20 expansion report validator rejects stale fixed-bank duplicate reports', () => {
++  const result = runValidator(BASELINE_DUPLICATE_REPORT);
++
++  assert.notEqual(result.status, 0, 'baseline duplicate report unexpectedly passed validation');
++  assert.match(result.stderr, /legacy fixed-bank duplicate surface groups must be zero/);
++  assert.match(result.stderr, /"legacyFixedDuplicateSurfaceGroups": 6/);
 +});

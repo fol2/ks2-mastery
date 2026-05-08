@@ -40,7 +40,10 @@ if (counts.generatedItems < thresholds.minGeneratedItems) fail('generated item f
 if (counts.fixedItems < thresholds.minFixedItems) fail('fixed item floor not met', counts);
 if (counts.uniqueLearnerSurfaces < thresholds.minUniqueLearnerSurfaces) fail('unique learner-facing surface floor not met', counts);
 if (counts.uniqueVariantSignatures < thresholds.minUniqueVariantSignatures) fail('unique variant signature floor not met', counts);
-if (counts.duplicateSurfaceGroups !== 0) fail('generated duplicate surface groups must be zero', counts);
+if (counts.duplicateSurfaceGroups !== 0) fail('runtime duplicate surface groups must be zero', counts);
+if (counts.generatedDuplicateSurfaceGroups !== undefined && counts.generatedDuplicateSurfaceGroups !== 0) fail('generated duplicate surface groups must be zero', counts);
+if (counts.fixedDuplicateSurfaceGroups !== undefined && counts.fixedDuplicateSurfaceGroups !== 0) fail('fixed-bank duplicate surface groups must be zero', counts);
+if (counts.legacyFixedDuplicateSurfaceGroups !== undefined && counts.legacyFixedDuplicateSurfaceGroups !== 0) fail('legacy fixed-bank duplicate surface groups must be zero', counts);
 if (counts.modelSelfMarkingFailures !== 0) fail('model self-marking failures must be zero', counts);
 
 const skillRows = Array.isArray(report.skillRows) ? report.skillRows : [];

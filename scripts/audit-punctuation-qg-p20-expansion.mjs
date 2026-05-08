@@ -626,8 +626,9 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
 
   const skillRows = buildSkillRows(items);
   const familyRows = buildFamilyRows(generatedItems);
-  const duplicateSurfaces = findSurfaceDuplicates(generatedItems);
-  const legacyFixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
+  const duplicateSurfaces = findSurfaceDuplicates(items);
+  const generatedDuplicateSurfaces = findSurfaceDuplicates(generatedItems);
+  const fixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
@@ -645,7 +646,9 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
     uniqueLearnerSurfaces: uniqueBy(items, learnerSurfaceSignature),
     uniqueVariantSignatures: uniqueBy(items, (item) => item.variantSignature || item.id),
     duplicateSurfaceGroups: duplicateSurfaces.length,
-    legacyFixedDuplicateSurfaceGroups: legacyFixedDuplicateSurfaces.length,
+    generatedDuplicateSurfaceGroups: generatedDuplicateSurfaces.length,
+    fixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
+    legacyFixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
     modelSelfMarkingFailures: modelFailures.length,
     byMode: groupCounts(items, (item) => item.mode),
     bySkill: groupCounts(items, (item) => item.skillIds || []),
@@ -679,7 +682,9 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
         uniqueLearnerSurfaces: counts.uniqueLearnerSurfaces,
         uniqueVariantSignatures: counts.uniqueVariantSignatures,
         duplicateSurfaceGroups: duplicateSurfaces.length,
-        legacyFixedDuplicateSurfaceGroups: legacyFixedDuplicateSurfaces.length,
+        generatedDuplicateSurfaceGroups: generatedDuplicateSurfaces.length,
+        fixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
+        legacyFixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
       },
       thresholds: {
         minUniqueLearnerSurfaces: P20_THRESHOLDS.minUniqueLearnerSurfaces,
@@ -687,7 +692,9 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
         duplicateSurfaceGroups: 0,
       },
       duplicateSurfaceSamples: duplicateSurfaces.slice(0, 10),
-      legacyFixedDuplicateSurfaceSamples: legacyFixedDuplicateSurfaces.slice(0, 10),
+      generatedDuplicateSurfaceSamples: generatedDuplicateSurfaces.slice(0, 10),
+      fixedDuplicateSurfaceSamples: fixedDuplicateSurfaces.slice(0, 10),
+      legacyFixedDuplicateSurfaceSamples: fixedDuplicateSurfaces.slice(0, 10),
     },
     generatedFamilyDepth: {
       ok: counts.generatedFamilies >= P20_THRESHOLDS.minGeneratedFamilyCount
@@ -745,7 +752,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
     familyRows,
     notes: [
       'This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.',
-      'Duplicate-surface blocking is applied to generated runtime items; legacy fixed-bank duplicates are reported separately and governed through the fixedBank review decision.',
+      'Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.',
       'Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage.',
     ],
   };

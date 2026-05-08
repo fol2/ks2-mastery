@@ -7812,14 +7812,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
     "rewardUnitId": "parenthesis-core",
     "prompt": "Choose the sentence with the parenthesis marked correctly.",
     "options": [
-      "The museum which opened last year welcomed the class.",
-      "The museum, which opened last year, welcomed the class.",
-      "The museum, which opened last year welcomed the class.",
-      "The museum which opened last year, welcomed the class."
+      "The science club which meets on Thursdays tested paper rockets.",
+      "The science club, which meets on Thursdays, tested paper rockets.",
+      "The science club, which meets on Thursdays tested paper rockets.",
+      "The science club which meets on Thursdays, tested paper rockets."
     ],
     "correctIndex": 1,
     "explanation": "Both sides of the parenthesis need punctuation.",
-    "model": "The museum, which opened last year, welcomed the class.",
+    "model": "The science club, which meets on Thursdays, tested paper rockets.",
     "misconceptionTags": [
       "manual.p12_choice_expansion",
       "structure.parenthesis_missing"
@@ -7842,14 +7842,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
     "rewardUnitId": "parenthesis-core",
     "prompt": "Choose the sentence with the parenthesis marked correctly.",
     "options": [
-      "The library our favourite place was full of visitors.",
-      "The library, our favourite place, was full of visitors.",
-      "The library, our favourite place was full of visitors.",
-      "The library our favourite place, was full of visitors."
+      "The river swollen after rain rushed past the old bridge.",
+      "The river, swollen after rain, rushed past the old bridge.",
+      "The river, swollen after rain rushed past the old bridge.",
+      "The river swollen after rain, rushed past the old bridge."
     ],
     "correctIndex": 1,
     "explanation": "Both sides of the parenthesis need punctuation.",
-    "model": "The library, our favourite place, was full of visitors.",
+    "model": "The river, swollen after rain, rushed past the old bridge.",
     "misconceptionTags": [
       "manual.p12_choice_expansion",
       "structure.parenthesis_missing"
@@ -7872,14 +7872,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
     "rewardUnitId": "parenthesis-core",
     "prompt": "Choose the sentence with the parenthesis marked correctly.",
     "options": [
-      "The robot a careful design won first prize.",
-      "The robot, a careful design, won first prize.",
-      "The robot, a careful design won first prize.",
-      "The robot a careful design, won first prize."
+      "The author a former teacher visited the book fair.",
+      "The author, a former teacher, visited the book fair.",
+      "The author, a former teacher visited the book fair.",
+      "The author a former teacher, visited the book fair."
     ],
     "correctIndex": 1,
     "explanation": "Both sides of the parenthesis need punctuation.",
-    "model": "The robot, a careful design, won first prize.",
+    "model": "The author, a former teacher, visited the book fair.",
     "misconceptionTags": [
       "manual.p12_choice_expansion",
       "structure.parenthesis_missing"
@@ -7902,14 +7902,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
     "rewardUnitId": "parenthesis-core",
     "prompt": "Choose the sentence with the parenthesis marked correctly.",
     "options": [
-      "The captain who led the rescue smiled at the team.",
-      "The captain, who led the rescue, smiled at the team.",
-      "The captain, who led the rescue smiled at the team.",
-      "The captain who led the rescue, smiled at the team."
+      "The fox which had a white-tipped tail slipped under the fence.",
+      "The fox, which had a white-tipped tail, slipped under the fence.",
+      "The fox, which had a white-tipped tail slipped under the fence.",
+      "The fox which had a white-tipped tail, slipped under the fence."
     ],
     "correctIndex": 1,
     "explanation": "Both sides of the parenthesis need punctuation.",
-    "model": "The captain, who led the rescue, smiled at the team.",
+    "model": "The fox, which had a white-tipped tail, slipped under the fence.",
     "misconceptionTags": [
       "manual.p12_choice_expansion",
       "structure.parenthesis_missing"
@@ -7932,14 +7932,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
     "rewardUnitId": "parenthesis-core",
     "prompt": "Choose the sentence with the parenthesis marked correctly.",
     "options": [
-      "The garden where bees gather looked colourful in spring.",
-      "The garden, where bees gather, looked colourful in spring.",
-      "The garden, where bees gather looked colourful in spring.",
-      "The garden where bees gather, looked colourful in spring."
+      "The orchestra practising in the hall paused for applause.",
+      "The orchestra, practising in the hall, paused for applause.",
+      "The orchestra, practising in the hall paused for applause.",
+      "The orchestra practising in the hall, paused for applause."
     ],
     "correctIndex": 1,
     "explanation": "Both sides of the parenthesis need punctuation.",
-    "model": "The garden, where bees gather, looked colourful in spring.",
+    "model": "The orchestra, practising in the hall, paused for applause.",
     "misconceptionTags": [
       "manual.p12_choice_expansion",
       "structure.parenthesis_missing"
@@ -7962,14 +7962,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
     "rewardUnitId": "parenthesis-core",
     "prompt": "Choose the sentence with the parenthesis marked correctly.",
     "options": [
-      "The gallery a former station was busy after lunch.",
-      "The gallery, a former station, was busy after lunch.",
-      "The gallery, a former station was busy after lunch.",
-      "The gallery a former station, was busy after lunch."
+      "The bakery famous for sourdough opened before sunrise.",
+      "The bakery, famous for sourdough, opened before sunrise.",
+      "The bakery, famous for sourdough opened before sunrise.",
+      "The bakery famous for sourdough, opened before sunrise."
     ],
     "correctIndex": 1,
     "explanation": "Both sides of the parenthesis need punctuation.",
-    "model": "The gallery, a former station, was busy after lunch.",
+    "model": "The bakery, famous for sourdough, opened before sunrise.",
     "misconceptionTags": [
       "manual.p12_choice_expansion",
       "structure.parenthesis_missing"

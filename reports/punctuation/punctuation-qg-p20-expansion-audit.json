@@ -3,7 +3,7 @@
   "phase": "punctuation-qg-p20-expansion-audit",
   "status": "PASS",
   "releaseId": "punctuation-qg-p20-15072-2026-05-04",
-  "generatedAt": "2026-05-07T22:20:45.669Z",
+  "generatedAt": "2026-05-08T18:20:51.720Z",
   "thresholds": {
     "phase": 20,
     "minRuntimeItems": 15000,
@@ -36,10 +36,12 @@
     "productionDepth": 120,
     "generatedFamilies": 126,
     "publishedSkills": 14,
-    "uniqueLearnerSurfaces": 15066,
+    "uniqueLearnerSurfaces": 15072,
     "uniqueVariantSignatures": 15072,
     "duplicateSurfaceGroups": 0,
-    "legacyFixedDuplicateSurfaceGroups": 6,
+    "generatedDuplicateSurfaceGroups": 0,
+    "fixedDuplicateSurfaceGroups": 0,
+    "legacyFixedDuplicateSurfaceGroups": 0,
     "modelSelfMarkingFailures": 0,
     "byMode": {
       "choose": 2420,
@@ -95,10 +97,12 @@
     "learnerSurfaceVariety": {
       "ok": true,
       "observed": {
-        "uniqueLearnerSurfaces": 15066,
+        "uniqueLearnerSurfaces": 15072,
         "uniqueVariantSignatures": 15072,
         "duplicateSurfaceGroups": 0,
-        "legacyFixedDuplicateSurfaceGroups": 6
+        "generatedDuplicateSurfaceGroups": 0,
+        "fixedDuplicateSurfaceGroups": 0,
+        "legacyFixedDuplicateSurfaceGroups": 0
       },
       "thresholds": {
         "minUniqueLearnerSurfaces": 14800,
@@ -106,50 +110,9 @@
         "duplicateSurfaceGroups": 0
       },
       "duplicateSurfaceSamples": [],
-      "legacyFixedDuplicateSurfaceSamples": [
-        {
-          "count": 2,
-          "itemIds": [
-            "fx12_parenthesis_001",
-            "fx12_parenthesis_021"
-          ]
-        },
-        {
-          "count": 2,
-          "itemIds": [
-            "fx12_parenthesis_002",
-            "fx12_parenthesis_022"
-          ]
-        },
-        {
-          "count": 2,
-          "itemIds": [
-            "fx12_parenthesis_003",
-            "fx12_parenthesis_023"
-          ]
-        },
-        {
-          "count": 2,
-          "itemIds": [
-            "fx12_parenthesis_004",
-            "fx12_parenthesis_024"
-          ]
-        },
-        {
-          "count": 2,
-          "itemIds": [
-            "fx12_parenthesis_005",
-            "fx12_parenthesis_025"
-          ]
-        },
-        {
-          "count": 2,
-          "itemIds": [
-            "fx12_parenthesis_006",
-            "fx12_parenthesis_026"
-          ]
-        }
-      ]
+      "generatedDuplicateSurfaceSamples": [],
+      "fixedDuplicateSurfaceSamples": [],
+      "legacyFixedDuplicateSurfaceSamples": []
     },
     "generatedFamilyDepth": {
       "ok": true,
@@ -278,7 +241,7 @@
         {
           "skillId": "parenthesis",
           "items": 1176,
-          "uniqueSurfaces": 1170,
+          "uniqueSurfaces": 1176,
           "openTypedItems": 1025,
           "transferOpenProductionItems": 683,
           "choiceItems": 151,
@@ -778,7 +741,7 @@
     {
       "skillId": "parenthesis",
       "items": 1176,
-      "uniqueSurfaces": 1170,
+      "uniqueSurfaces": 1176,
       "openTypedItems": 1025,
       "transferOpenProductionItems": 683,
       "choiceItems": 151,
@@ -2180,7 +2143,7 @@
   ],
   "notes": [
     "This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.",
-    "Duplicate-surface blocking is applied to generated runtime items; legacy fixed-bank duplicates are reported separately and governed through the fixedBank review decision.",
+    "Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.",
     "Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage."
   ]
 }
