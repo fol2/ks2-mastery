@@ -790,7 +790,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             {!isMiniTest ? (
               <Button
                 variant="ghost"
-                disabled={pending}
+                disabled={runtimeReadOnly || pending}
                 onClick={() => actions.dispatch('grammar-end-early')}
               >
                 End round

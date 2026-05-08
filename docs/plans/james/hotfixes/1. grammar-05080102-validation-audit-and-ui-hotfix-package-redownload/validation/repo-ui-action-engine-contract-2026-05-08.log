@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: ActionRow module exports the named export
+ok 1 - ActionRow module exports the named export
+  ---
+  duration_ms: 1.5593
+  type: 'test'
+  ...
+# Subtest: ActionRow renders role="group" for accessibility
+ok 2 - ActionRow renders role="group" for accessibility
+  ---
+  duration_ms: 0.3273
+  type: 'test'
+  ...
+# Subtest: ActionRow supports align="split" with margin-left: auto pattern
+ok 3 - ActionRow supports align="split" with margin-left: auto pattern
+  ---
+  duration_ms: 0.3014
+  type: 'test'
+  ...
+# Subtest: ActionRow renders data-action-row locator
+ok 4 - ActionRow renders data-action-row locator
+  ---
+  duration_ms: 0.2449
+  type: 'test'
+  ...
+# Subtest: ActionRow handles single-button case (no secondary/tertiary rendering when absent)
+ok 5 - ActionRow handles single-button case (no secondary/tertiary rendering when absent)
+  ---
+  duration_ms: 0.3658
+  type: 'test'
+  ...
+# Subtest: migrated learner surfaces have zero raw className="btn " patterns
+ok 6 - migrated learner surfaces have zero raw className="btn " patterns
+  ---
+  duration_ms: 1.8101
+  type: 'test'
+  ...
+# Subtest: raw .btn count across all learner session+summary surfaces is >= 20 fewer than 182 baseline
+ok 7 - raw .btn count across all learner session+summary surfaces is >= 20 fewer than 182 baseline
+  ---
+  duration_ms: 1.3221
+  type: 'test'
+  ...
+# Subtest: migrated session scenes preserve data-action selectors via Button dataAction prop
+ok 8 - migrated session scenes preserve data-action selectors via Button dataAction prop
+  ---
+  duration_ms: 0.5048
+  type: 'test'
+  ...
+# Subtest: spelling summary preserves data-action selectors
+ok 9 - spelling summary preserves data-action selectors
+  ---
+  duration_ms: 0.3622
+  type: 'test'
+  ...
+# Subtest: punctuation summary preserves data-action selectors
+ok 10 - punctuation summary preserves data-action selectors
+  ---
+  duration_ms: 0.7275
+  type: 'test'
+  ...
+# Subtest: all migrated surfaces import Button from platform/ui/Button
+ok 11 - all migrated surfaces import Button from platform/ui/Button
+  ---
+  duration_ms: 1.2849
+  type: 'test'
+  ...
+# Subtest: grammar session preserves type="submit" on form action buttons
+ok 12 - grammar session preserves type="submit" on form action buttons
+  ---
+  duration_ms: 0.2758
+  type: 'test'
+  ...
+# Subtest: punctuation session preserves type="submit" on form action buttons
+ok 13 - punctuation session preserves type="submit" on form action buttons
+  ---
+  duration_ms: 0.2118
+  type: 'test'
+  ...
+# Subtest: spelling session preserves busy state on replay buttons
+ok 14 - spelling session preserves busy state on replay buttons
+  ---
+  duration_ms: 0.1865
+  type: 'test'
+  ...
+# Subtest: grammar session preserves disabled state on action buttons
+ok 15 - grammar session preserves disabled state on action buttons
+  ---
+  duration_ms: 0.2044
+  type: 'test'
+  ...
+# Subtest: grammar session disables End round while runtime is read-only or pending
+ok 16 - grammar session disables End round while runtime is read-only or pending
+  ---
+  duration_ms: 0.3234
+  type: 'test'
+  ...
+# Subtest: ActionRow.jsx exists at src/platform/ui/ActionRow.jsx
+ok 17 - ActionRow.jsx exists at src/platform/ui/ActionRow.jsx
+  ---
+  duration_ms: 0.1687
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 77.6382

@@ -31,6 +31,11 @@ function hasActionSelector(source, action) {
     || source.includes(`dataAction: "${action}"`);
 }
 
+function findButtonBlockByAction(source, action) {
+  const blocks = source.match(/<Button\b[\s\S]*?<\/Button>/g) || [];
+  return blocks.find((block) => block.includes(`actions.dispatch('${action}')`)) || '';
+}
+
 // --- ActionRow structural tests (parser-level) ---
 
 test('ActionRow module exports the named export', () => {
@@ -215,6 +220,15 @@ test('grammar session preserves disabled state on action buttons', () => {
   const source = readFile('src/subjects/grammar/components/GrammarSessionScene.jsx');
   assert.match(source, /disabled=\{submitDisabled\}/, 'Submit buttons must wire disabled state');
   assert.match(source, /disabled=\{runtimeReadOnly \|\| pending \|\| submitLock\.locked\}/, 'Next question button must wire disabled state');
+});
+
+test('grammar session disables End round while runtime is read-only or pending', () => {
+  const source = readFile('src/subjects/grammar/components/GrammarSessionScene.jsx');
+  const endRoundButton = findButtonBlockByAction(source, 'grammar-end-early');
+  assert.ok(endRoundButton, 'Normal-session End round button must exist.');
+  assert.match(endRoundButton, /variant="ghost"/, 'Normal-session End round must stay a ghost button.');
+  assert.match(endRoundButton, /disabled=\{runtimeReadOnly \|\| pending\}/, 'Normal-session End round must be disabled in read-only runtime state and while pending.');
+  assert.match(endRoundButton, />\s*End round\s*<\/Button>/, 'Normal-session End round button label must stay stable.');
 });
 
 // --- ActionRow primitive exists at expected path ---

@@ -1,0 +1,3193 @@
+{
+  "metadata": {
+    "contentReleaseId": "grammar-qg-p20-2026-05-05",
+    "generatedAt": "2026-05-08T14:38:59.897Z",
+    "sessionCount": 33,
+    "profileCount": 11,
+    "sessionSize": 5,
+    "seedRange": {
+      "from": 1,
+      "to": 3,
+      "count": 3
+    },
+    "pass": true
+  },
+  "summary": {
+    "sessionCount": 33,
+    "profileCount": 11,
+    "pass": true,
+    "failureCount": 0,
+    "advisoryCount": 0
+  },
+  "profiles": [
+    {
+      "type": "firstTime",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 5,
+        "questionTypeDistinctMean": 3.3333333333333335,
+        "constructedSelectedMix": 0.5333333333333333,
+        "manualReviewOnlyShare": 0.26666666666666666,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "fallback": 15
+        }
+      },
+      "label": "First-time learner — empty mastery, no recent attempts",
+      "focusConceptId": "",
+      "mode": "smart",
+      "eligibleTemplateCount": 510,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_apostrophes_possession_examiner_trap_contrast",
+              "skillIds": [
+                "apostrophes_possession"
+              ],
+              "questionType": "choose",
+              "seed": 1,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "a4b4111a0a5fc06e3282470601e9e87aeb50d4e6",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 2,
+              "templateId": "question_mark_select",
+              "skillIds": [
+                "sentence_functions",
+                "speech_punctuation"
+              ],
+              "questionType": "identify",
+              "seed": 104730,
+              "inputType": "checkbox_list",
+              "isConstructed": false,
+              "surfaceKey": "df3f9c4b7e819aa138dde375bddde13ddc51e19d",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_relative_clauses_explain_relative_clause",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "explain",
+              "seed": 209459,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "22f3fe59ae81b2b8938b17d0b49fc6a8b0eaacb4",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_tense_aspect_explain_reasoning",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "explain",
+              "seed": 314188,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "603204e9e3581ce24e77b9a4117be55de49f5222",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_standard_english_sat_table_classification",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "classify",
+              "seed": 418917,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "150c7e0092ab454f17400448cf335b67522f24ab",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 6,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "fallback": 5
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_relative_clauses_written_reason",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "explain",
+              "seed": 2,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "8c11d682e0743ff7b51e3fe44a940566aa97be45",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_relative_clauses_identify_relative_clause",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 104731,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "e67715e52157cac20e38cd0dd30af08b364ea708",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_modal_verbs_modal_meaning",
+              "skillIds": [
+                "modal_verbs"
+              ],
+              "questionType": "identify",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "b02399c4792a8b8e12e883e9a65b3e92645bb15b",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_sentence_functions_explain_function_reasoning",
+              "skillIds": [
+                "sentence_functions"
+              ],
+              "questionType": "explain",
+              "seed": 314189,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "fc2f0ccbdc44e9de25fab3c65a347aa8c5a67ffa",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_hyphen_ambiguity_explain_reasoning",
+              "skillIds": [
+                "hyphen_ambiguity"
+              ],
+              "questionType": "explain",
+              "seed": 418918,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "0d5f380caf4c5affba3004b18f31d2b91926e892",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 2,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "fallback": 5
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_pronouns_cohesion_table_classify",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "classify",
+              "seed": 3,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "673fdfd93e1ae4c70ccd24e8a12f0863bdd88eab",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 2,
+              "templateId": "speech_punctuation_fix",
+              "skillIds": [
+                "speech_punctuation"
+              ],
+              "questionType": "fix",
+              "seed": 104732,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "605dc7734ceaf546589a021dc496fa4339cea05a",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_formality_informal_to_formal_pair_table",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "classify",
+              "seed": 209461,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "e9bf73ae27626619fc4dd7a618a59c42c19fa1ec",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "proc2_relative_clause_choice",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 314190,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "a141c04c01e1f215245a2fcc9e36c490342f47c8",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p17_standard_english_transfer_apply",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "build",
+              "seed": 418919,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "84243176a950a040ec108d69d66eaa888638d32d",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 5,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 4,
+            "selectedItemCount": 1,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "fallback": 5
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "returning",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 4.666666666666667,
+        "questionTypeDistinctMean": 3.6666666666666665,
+        "constructedSelectedMix": 0.26666666666666666,
+        "manualReviewOnlyShare": 0.06666666666666667,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "similar-problem": 3,
+          "priority-urgent": 3,
+          "fallback": 9
+        }
+      },
+      "label": "Returning learner — 4 mixed-result recent attempts",
+      "focusConceptId": "",
+      "mode": "smart",
+      "eligibleTemplateCount": 93,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p16_tense_aspect_timeline_order_choice",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "fill",
+              "seed": 1,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "88ab355cbf6841d0dcef13a6b883854910ae4b2a",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "fronted_adverbial_choose",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "choose",
+              "seed": 104730,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "3736f0681bad5f78ccfc05d5a2873261b1555bf3",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_relative_clauses_complete_with_relative_clause",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "choose",
+              "seed": 209459,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "779af8a84f7b08dc0a34a85730a1005894869e72",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_tense_aspect_explain_reasoning",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "explain",
+              "seed": 314188,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "603204e9e3581ce24e77b9a4117be55de49f5222",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_standard_english_sat_table_classification",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "classify",
+              "seed": 418917,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "150c7e0092ab454f17400448cf335b67522f24ab",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 1,
+            "selectedItemCount": 4,
+            "manualReviewOnlyCount": 0,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_tense_aspect_misconception_repair",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "fix",
+              "seed": 2,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "ad8118c8376c467a491ac955e832f32e2f449663",
+              "manualReviewOnly": true,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_adverbials_adverbial_transfer",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "choose",
+              "seed": 104731,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "2c9f48f5d15654fc78b8ffdfc082a8a40f9c934e",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_modal_verbs_modal_meaning",
+              "skillIds": [
+                "modal_verbs"
+              ],
+              "questionType": "identify",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "b02399c4792a8b8e12e883e9a65b3e92645bb15b",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_sentence_functions_direct_indirect_question_contrast",
+              "skillIds": [
+                "sentence_functions"
+              ],
+              "questionType": "identify",
+              "seed": 314189,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "41bf1432d67f5c8ba80f2f37ffa747c398aa77c6",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_hyphen_ambiguity_diagnostic_identify",
+              "skillIds": [
+                "hyphen_ambiguity"
+              ],
+              "questionType": "choose",
+              "seed": 418918,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "bc005036bd2dd66fccdf53d3792d230dbbc3c1d4",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 5,
+            "questionTypeDistinct": 3,
+            "constructedItemCount": 1,
+            "selectedItemCount": 4,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_tense_aspect_examiner_trap_contrast",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "choose",
+              "seed": 3,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "f156f46ed24fa35458b2f8c8ae28febb6996ad01",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "fix_fronted_adverbial",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "fix",
+              "seed": 104732,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "f0e729352defc304e7a431ef7d5223e06bd6cbb8",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_formality_informal_to_formal_pair_table",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "classify",
+              "seed": 209461,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "e9bf73ae27626619fc4dd7a618a59c42c19fa1ec",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "proc2_boundary_punctuation_explain",
+              "skillIds": [
+                "boundary_punctuation"
+              ],
+              "questionType": "explain",
+              "seed": 314190,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "2275725106e9b4b0eb674c038045efa1de030f40",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p17_standard_english_precision_choice",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "choose",
+              "seed": 418919,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "fea168bbc8a64ac6b45fd54e5c77006101e24bd9",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 5,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 0,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "weak",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 5,
+        "questionTypeDistinctMean": 3,
+        "constructedSelectedMix": 0.4666666666666667,
+        "manualReviewOnlyShare": 0.3333333333333333,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "priority-urgent": 3,
+          "fallback": 12
+        }
+      },
+      "label": "Weak learner — 8 concepts below 0.4 strength",
+      "focusConceptId": "",
+      "mode": "smart",
+      "eligibleTemplateCount": 243,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p16_word_classes_same_word_different_job",
+              "skillIds": [
+                "word_classes"
+              ],
+              "questionType": "explain",
+              "seed": 1,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "cdea74e3a45d4b2ecfcb83fb37bb2bc9fce083c6",
+              "manualReviewOnly": true,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 2,
+              "templateId": "question_mark_select",
+              "skillIds": [
+                "sentence_functions",
+                "speech_punctuation"
+              ],
+              "questionType": "identify",
+              "seed": 104730,
+              "inputType": "checkbox_list",
+              "isConstructed": false,
+              "surfaceKey": "df3f9c4b7e819aa138dde375bddde13ddc51e19d",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_relative_clauses_relative_clause_identify_span",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 209459,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "9de0c32c12b2c3edbafea93757fa3c52a01e0667",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_tense_aspect_precision_repair_or_rewrite",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "rewrite",
+              "seed": 314188,
+              "inputType": "text",
+              "isConstructed": true,
+              "surfaceKey": "31e8a50cd8e374fc3f690f0836822c9b3bc7ba44",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_subject_object_explain_reasoning",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "explain",
+              "seed": 418917,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "758bb8e8ca4f945acae183fbb8223f8b698472e5",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 6,
+            "questionTypeDistinct": 3,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "priority-urgent": 1,
+              "fallback": 4
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_subject_object_table_classify",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "classify",
+              "seed": 2,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "f3b41601ea73fe7a7d70e60b546be73cd58ee9d0",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_relative_clauses_punctuate_relative_clause",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "fix",
+              "seed": 104731,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "03b563bdb1dbdf8b5e3851d0f5025884f9ea79ba",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_modal_verbs_explain_modal",
+              "skillIds": [
+                "modal_verbs"
+              ],
+              "questionType": "explain",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "44aa5364a3951de4ef56f193bb664636623eef74",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_speech_punctuation_explain_speech_rule",
+              "skillIds": [
+                "speech_punctuation"
+              ],
+              "questionType": "explain",
+              "seed": 314189,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "3f0992aa371cdec0208738beb7e6e00ba2c1ce08",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_hyphen_ambiguity_explain_reasoning",
+              "skillIds": [
+                "hyphen_ambiguity"
+              ],
+              "questionType": "explain",
+              "seed": 418918,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "0d5f380caf4c5affba3004b18f31d2b91926e892",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 5,
+            "questionTypeDistinct": 3,
+            "constructedItemCount": 3,
+            "selectedItemCount": 2,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "priority-urgent": 1,
+              "fallback": 4
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_subject_object_examiner_trap_contrast",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "choose",
+              "seed": 3,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "362a5c20254bc70cba2493900aaa9b3ac58670b1",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 2,
+              "templateId": "speech_punctuation_fix",
+              "skillIds": [
+                "speech_punctuation"
+              ],
+              "questionType": "fix",
+              "seed": 104732,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "605dc7734ceaf546589a021dc496fa4339cea05a",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_formality_choose_formal_word",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "choose",
+              "seed": 209461,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "18945f2340cad3f343342a385a01237a720b27a0",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "proc2_relative_clause_choice",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 314190,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "a141c04c01e1f215245a2fcc9e36c490342f47c8",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p17_subject_object_misconception_repair",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "fix",
+              "seed": 418919,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "b46b94674c26ccca9b1c55a51be701a2e498961f",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 3,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "priority-urgent": 1,
+              "fallback": 4
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "dueHeavy",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 5.333333333333333,
+        "questionTypeDistinctMean": 4.333333333333333,
+        "constructedSelectedMix": 0.6666666666666666,
+        "manualReviewOnlyShare": 0.4,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "priority-urgent": 3,
+          "fallback": 12
+        }
+      },
+      "label": "Due-heavy learner — 12 concepts past due",
+      "focusConceptId": "",
+      "mode": "smart",
+      "eligibleTemplateCount": 358,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_adverbials_transfer_apply",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "build",
+              "seed": 1,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "186ef7c56fc4d088acffdc3db55937e331547fa0",
+              "manualReviewOnly": true,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 2,
+              "templateId": "question_mark_select",
+              "skillIds": [
+                "sentence_functions",
+                "speech_punctuation"
+              ],
+              "questionType": "identify",
+              "seed": 104730,
+              "inputType": "checkbox_list",
+              "isConstructed": false,
+              "surfaceKey": "df3f9c4b7e819aa138dde375bddde13ddc51e19d",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_relative_clauses_relative_clause_identify_span",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 209459,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "9de0c32c12b2c3edbafea93757fa3c52a01e0667",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_tense_aspect_precision_repair_or_rewrite",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "rewrite",
+              "seed": 314188,
+              "inputType": "text",
+              "isConstructed": true,
+              "surfaceKey": "31e8a50cd8e374fc3f690f0836822c9b3bc7ba44",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_subject_object_application_transfer",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "explain",
+              "seed": 418917,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "fd1ad138ffa398952bcd63979fb8715fb08f7106",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 6,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 3,
+            "selectedItemCount": 2,
+            "manualReviewOnlyCount": 3,
+            "reasonCounts": {
+              "priority-urgent": 1,
+              "fallback": 4
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_speech_punctuation_transfer_apply",
+              "skillIds": [
+                "speech_punctuation"
+              ],
+              "questionType": "build",
+              "seed": 2,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "5db1a3f6473909a798213249af746bdd0c5b7d9f",
+              "manualReviewOnly": true,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_relative_clauses_explain_relative_clause",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "explain",
+              "seed": 104731,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "d1e4302e6db72692445fda02aa61fe164d160df8",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_modal_verbs_modal_gap",
+              "skillIds": [
+                "modal_verbs"
+              ],
+              "questionType": "fill",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "e94ed771ccfab6c83bf1ae1d291477f039f8cd04",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_sentence_functions_punctuation_vs_function_table",
+              "skillIds": [
+                "sentence_functions"
+              ],
+              "questionType": "classify",
+              "seed": 314189,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "23d1beda2714a81ff369c9dc5f941f36caafa08b",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_hyphen_ambiguity_sat_table_classification",
+              "skillIds": [
+                "hyphen_ambiguity"
+              ],
+              "questionType": "classify",
+              "seed": 418918,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "ad64ebadf3e0a932063bc2852f0dece7277a654c",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 5,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 3,
+            "selectedItemCount": 2,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "priority-urgent": 1,
+              "fallback": 4
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_sentence_functions_written_reason",
+              "skillIds": [
+                "sentence_functions"
+              ],
+              "questionType": "explain",
+              "seed": 3,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "2779876f50e47a06c47bea6e67eb98b81bd710f4",
+              "manualReviewOnly": true,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 2,
+              "templateId": "speech_punctuation_fix",
+              "skillIds": [
+                "speech_punctuation"
+              ],
+              "questionType": "fix",
+              "seed": 104732,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "605dc7734ceaf546589a021dc496fa4339cea05a",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_formality_formal_sentence_rewrite",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "rewrite",
+              "seed": 209461,
+              "inputType": "text",
+              "isConstructed": true,
+              "surfaceKey": "a0aed464779799cc02b1cba934bbbd3327590ca8",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "proc2_fronted_adverbial_build",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "build",
+              "seed": 314190,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "e67b8cbc1e8f8a57474024e6629e91e7af49fc96",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p17_subject_object_examiner_trap_contrast",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "choose",
+              "seed": 418919,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "4cfa59131eb82238608e0e1d0b4af618dd2700f9",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 5,
+            "questionTypeDistinct": 5,
+            "constructedItemCount": 4,
+            "selectedItemCount": 1,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "priority-urgent": 1,
+              "fallback": 4
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "postMega",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 4.666666666666667,
+        "questionTypeDistinctMean": 4,
+        "constructedSelectedMix": 0.4,
+        "manualReviewOnlyShare": 0.2,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "fallback": 15
+        }
+      },
+      "label": "Post-Mega learner — 10 concepts secured",
+      "focusConceptId": "",
+      "mode": "smart",
+      "eligibleTemplateCount": 300,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_apostrophes_possession_written_reason",
+              "skillIds": [
+                "apostrophes_possession"
+              ],
+              "questionType": "explain",
+              "seed": 1,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "2cb6a2726b2d2fc228023267b6d19cf43920dd35",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 2,
+              "templateId": "word_class_underlined_choice",
+              "skillIds": [
+                "word_classes"
+              ],
+              "questionType": "identify",
+              "seed": 104730,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "e76241e74017db02b277f1c7c487b900d7a39e66",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_pronouns_cohesion_fix_pronoun_reference",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "fix",
+              "seed": 209459,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "9ed30fd2c13c369069a6bf8c5a6faf1016b499d0",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "rewrite",
+              "seed": 314188,
+              "inputType": "text",
+              "isConstructed": true,
+              "surfaceKey": "ba1e169bcae6374b49e03be6166aa010ba4dec72",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_sentence_functions_explain_reasoning",
+              "skillIds": [
+                "sentence_functions"
+              ],
+              "questionType": "explain",
+              "seed": 418917,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "9396ef9b5f060ce4188ce2b21cc95376ad78f972",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 5,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 3,
+            "selectedItemCount": 2,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "fallback": 5
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_pronouns_cohesion_precision_choice",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "choose",
+              "seed": 2,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "f69f2ed17b38ed525a3d5d620d1d77a9a8dcae0f",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_pronouns_cohesion_explain_cohesion",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "explain",
+              "seed": 104731,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "a66ab4b6001e7dce5b8575e8f4a7c59bc570608b",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_modal_verbs_modal_meaning",
+              "skillIds": [
+                "modal_verbs"
+              ],
+              "questionType": "identify",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "b02399c4792a8b8e12e883e9a65b3e92645bb15b",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_relative_clauses_add_commas_non_defining",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "fix",
+              "seed": 314189,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "df95a5cb8f9b3183975a856a07abd79d360b9120",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_hyphen_ambiguity_diagnostic_identify",
+              "skillIds": [
+                "hyphen_ambiguity"
+              ],
+              "questionType": "choose",
+              "seed": 418918,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "bc005036bd2dd66fccdf53d3792d230dbbc3c1d4",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 1,
+            "selectedItemCount": 4,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "fallback": 5
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_parenthesis_commas_table_classify",
+              "skillIds": [
+                "parenthesis_commas"
+              ],
+              "questionType": "classify",
+              "seed": 3,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "6a73dd9f88494c7600196828e9ef5403c1f2d946",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 2,
+              "templateId": "standard_fix_sentence",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "fix",
+              "seed": 104732,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "7c585655a289236a1e4e56d6ac63e2a015e6f7a8",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning",
+              "skillIds": [
+                "hyphen_ambiguity"
+              ],
+              "questionType": "choose",
+              "seed": 209461,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "2905cd87abb2dc1a9720d2b2c1c13c49b49bd303",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "proc2_relative_clause_choice",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 314190,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "a141c04c01e1f215245a2fcc9e36c490342f47c8",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p17_speech_punctuation_examiner_trap_contrast",
+              "skillIds": [
+                "speech_punctuation"
+              ],
+              "questionType": "choose",
+              "seed": 418919,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "659c7b8cf2471443dbc179ade01f35d53546c1a6",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 5,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 0,
+            "reasonCounts": {
+              "fallback": 5
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "focusConcept",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 1.3333333333333333,
+        "questionTypeDistinctMean": 4,
+        "constructedSelectedMix": 0.4666666666666667,
+        "manualReviewOnlyShare": 0.4,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "fallback": 15
+        }
+      },
+      "label": "Focus-concept practice — pronouns_cohesion",
+      "focusConceptId": "pronouns_cohesion",
+      "mode": "smart",
+      "eligibleTemplateCount": 27,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_pronouns_cohesion_precision_choice",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "choose",
+              "seed": 1,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "f62c80b20bb83d68dbc45c59606c4feecdf1d8b2",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 2,
+              "templateId": "pronoun_cohesion_choice",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "choose",
+              "seed": 104730,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "1123f9146687a669afc1b4be63b975280b039a11",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_pronouns_cohesion_referent_identify",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "identify",
+              "seed": 209459,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "6d63657590cee53dcb9ce168f3e7d5d0192e5474",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_pronouns_cohesion_sat_table_classification",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "classify",
+              "seed": 314188,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "4ac8308131fddf9db77a8b14d1f737ab092a4097",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "rewrite",
+              "seed": 418917,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "dbf3abb983dc0772465278ebed3ba5c5f0810553",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 1,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "fallback": 5
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_pronouns_cohesion_transfer_apply",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "build",
+              "seed": 2,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "70380155e32593fa2d659efaffcd1bcf3d677cb5",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_pronouns_cohesion_explain_cohesion",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "explain",
+              "seed": 104731,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "a66ab4b6001e7dce5b8575e8f4a7c59bc570608b",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_transfer",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "choose",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "c216dacceafd865d7ce0a8d8b82829b6acb29dbd",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_pronouns_cohesion_too_many_pronouns",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "choose",
+              "seed": 314189,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "1b3c02deaa9783e07b04133d72af0bbf1d6429f5",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_pronouns_cohesion_formality_cohesion_formality_choice",
+              "skillIds": [
+                "formality",
+                "pronouns_cohesion"
+              ],
+              "questionType": "explain",
+              "seed": 418918,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "05af367f69857fe80dd5ba47a0f9241d6b6d6c3b",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 2,
+            "questionTypeDistinct": 3,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "fallback": 5
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_pronouns_cohesion_transfer_apply",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "build",
+              "seed": 3,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "bf206f9f6cff89b3e73c1de6108c262279b88a50",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 2,
+              "templateId": "proc2_pronoun_cohesion_choice",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "choose",
+              "seed": 104732,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "ec50d9f03b22e855e2df6d5515b4df5f4444e367",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_pronouns_cohesion_fix_pronoun_reference",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "fix",
+              "seed": 209461,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "50a3647227ecfc49b9f5a7092c043360a5e943ff",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_pronoun_referent_identify",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "identify",
+              "seed": 314190,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "87f811ed951dd0c0cc3ee4bbbf4a145cf18253c0",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_pronouns_cohesion_application_transfer",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "explain",
+              "seed": 418919,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "526bec37b61d99c80dcb8f573c52ae8cfd13b89c",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 1,
+            "questionTypeDistinct": 5,
+            "constructedItemCount": 3,
+            "selectedItemCount": 2,
+            "manualReviewOnlyCount": 3,
+            "reasonCounts": {
+              "fallback": 5
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "recentMisses",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 3.3333333333333335,
+        "questionTypeDistinctMean": 4.666666666666667,
+        "constructedSelectedMix": 0.4666666666666667,
+        "manualReviewOnlyShare": 0.26666666666666666,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "similar-problem": 3,
+          "priority-urgent": 3,
+          "fallback": 9
+        }
+      },
+      "label": "Recent-miss learner — 6 misses over 3 templates in last hour",
+      "focusConceptId": "",
+      "mode": "smart",
+      "eligibleTemplateCount": 95,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p16_tense_aspect_spot_tense_shift_error",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "choose",
+              "seed": 1,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "0fc2418ca33d96386c953ddd8ded47196647cb95",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "subordinate_clause_choice",
+              "skillIds": [
+                "clauses"
+              ],
+              "questionType": "identify",
+              "seed": 104730,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "71102140f82c107f1991a559cd50389e9e71d6a4",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_pronouns_cohesion_fix_pronoun_reference",
+              "skillIds": [
+                "pronouns_cohesion"
+              ],
+              "questionType": "fix",
+              "seed": 209459,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "9ed30fd2c13c369069a6bf8c5a6faf1016b499d0",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_tense_aspect_explain_reasoning",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "explain",
+              "seed": 314188,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "603204e9e3581ce24e77b9a4117be55de49f5222",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_standard_english_precision_repair_or_rewrite",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "rewrite",
+              "seed": 418917,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "d8af7633da232cefa84af41358c5e2b3b15fbe84",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 5,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_clauses_precision_choice",
+              "skillIds": [
+                "clauses"
+              ],
+              "questionType": "choose",
+              "seed": 2,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "39fccba882b62055d05ab36fdeaedc6cf9fe65fb",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_clauses_combine_clause",
+              "skillIds": [
+                "clauses"
+              ],
+              "questionType": "rewrite",
+              "seed": 104731,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "23e75612f389c33f14510ae98b7da753a84c56bb",
+              "manualReviewOnly": true,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_formality_formality_transfer",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "choose",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "91b3c6770d673c5582da6a739109f3f50fa27b38",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_relative_clauses_noun_linked_by_relative",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 314189,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "31108990b0186904ad5015b4637e431f933bfb33",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_formality_application_transfer",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "explain",
+              "seed": 418918,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "3596dfc6d319ade6ef8b6a1e79232f5e2b647d57",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 3,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_clauses_misconception_repair",
+              "skillIds": [
+                "clauses"
+              ],
+              "questionType": "fix",
+              "seed": 3,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "46e057718f96c363461c2d2e48b38650d7326070",
+              "manualReviewOnly": true,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "combine_clauses_rewrite",
+              "skillIds": [
+                "clauses"
+              ],
+              "questionType": "rewrite",
+              "seed": 104732,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "8e3efdc9fac333cc701e97df580c7c27c9a15a3b",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_clauses_fragment_or_sentence",
+              "skillIds": [
+                "clauses"
+              ],
+              "questionType": "choose",
+              "seed": 209461,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "29d80abe20caafa0c3db837dc36d3fe4fb029c13",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "proc2_relative_clause_choice",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 314190,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "a141c04c01e1f215245a2fcc9e36c490342f47c8",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p17_standard_english_table_classify",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "classify",
+              "seed": 418919,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "e6e775a7048b7f86e5c41c5ce738dd62ff2d1ed0",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 3,
+            "questionTypeDistinct": 5,
+            "constructedItemCount": 3,
+            "selectedItemCount": 2,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "retryActive",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 3.3333333333333335,
+        "questionTypeDistinctMean": 3.6666666666666665,
+        "constructedSelectedMix": 0.4,
+        "manualReviewOnlyShare": 0.13333333333333333,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "retry": 3,
+          "similar-problem": 3,
+          "priority-urgent": 3,
+          "fallback": 6
+        }
+      },
+      "label": "Retry-eligible learner — last miss within 5 minutes (Contract D.4 retry lane)",
+      "focusConceptId": "",
+      "mode": "smart",
+      "eligibleTemplateCount": 63,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "fronted_adverbial_choose",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "choose",
+              "seed": 1,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "149ad9b663b258339387ca1d98caa33e44115c49",
+              "manualReviewOnly": false,
+              "reason": "retry"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p16_adverbials_move_adverbial_to_front",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "rewrite",
+              "seed": 104730,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "687f0800023c16f2968f857f1e88292557791755",
+              "manualReviewOnly": true,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 3,
+              "templateId": "fix_fronted_adverbial",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "fix",
+              "seed": 209459,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "3629c946a69e9c98a450580c0f6db90d768281d0",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_relative_clauses_noun_linked_by_relative",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 314188,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "ad3a8283f3ad7684b909f67244fa8f73640e5356",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_tense_aspect_explain_reasoning",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "explain",
+              "seed": 418917,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "75bde3d55fd7d1efc10b9c54aef44378dffa76e6",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 3,
+            "questionTypeDistinct": 5,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "retry": 1,
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 2
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "fronted_adverbial_choose",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "choose",
+              "seed": 2,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "76bb84de42e46fc611cb0e6e939d300e00ff482a",
+              "manualReviewOnly": false,
+              "reason": "retry"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p17_adverbials_transfer_apply",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "build",
+              "seed": 104731,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "0828c820aeb3fad3907c334d7d771c166e5defac",
+              "manualReviewOnly": true,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_adverbials_adverbial_transfer",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "choose",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "c03d55275d0c74dad69536df067ada9906b7bec9",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p15_modal_verbs_modal_strength_order",
+              "skillIds": [
+                "modal_verbs"
+              ],
+              "questionType": "classify",
+              "seed": 314189,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "c125b3cd328cc2ce8b7ad773690b232c45d5ee0a",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p16_sentence_functions_exclamation_not_excited_statement",
+              "skillIds": [
+                "sentence_functions"
+              ],
+              "questionType": "choose",
+              "seed": 418918,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "d708462a020c4559d79a7da7695eb6df04c67b20",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 3,
+            "questionTypeDistinct": 3,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "retry": 1,
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 2
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "fronted_adverbial_choose",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "choose",
+              "seed": 3,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "db57a56659a3c50f356dc8bf62db838e6922aa15",
+              "manualReviewOnly": false,
+              "reason": "retry"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p17_adverbials_table_classify",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "classify",
+              "seed": 104732,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "cc7f65c23b6647df559305f3e38abb42650f916a",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 3,
+              "templateId": "explain_reason_choice",
+              "skillIds": [
+                "adverbials",
+                "standard_english"
+              ],
+              "questionType": "explain",
+              "seed": 209461,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "1735d8dafc8357969eeac93a6f9bc668c0229ad1",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_formality_informal_to_formal_pair_table",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "classify",
+              "seed": 314190,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "2ae99ac116f669c01422065ff2135400496a2ff4",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "proc2_boundary_punctuation_explain",
+              "skillIds": [
+                "boundary_punctuation"
+              ],
+              "questionType": "explain",
+              "seed": 418919,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "46f313da38e47658e85d81cb38930c9c4cac8de5",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 3,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 0,
+            "reasonCounts": {
+              "retry": 1,
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 2
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "similarProblemEligible",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 4,
+        "questionTypeDistinctMean": 3,
+        "constructedSelectedMix": 0.4,
+        "manualReviewOnlyShare": 0.13333333333333333,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "similar-problem": 3,
+          "priority-urgent": 3,
+          "fallback": 9
+        }
+      },
+      "label": "Similar-problem learner — recent stale miss with multi-template concept (Contract D.4 similar-problem lane)",
+      "focusConceptId": "",
+      "mode": "smart",
+      "eligibleTemplateCount": 64,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p16_adverbials_move_adverbial_to_front",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "rewrite",
+              "seed": 1,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "5b9ff2af6d888a6c6c7cc8bd2f608114a1b765bb",
+              "manualReviewOnly": true,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "fronted_adverbial_choose",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "choose",
+              "seed": 104730,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "3736f0681bad5f78ccfc05d5a2873261b1555bf3",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_relative_clauses_complete_with_relative_clause",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "choose",
+              "seed": 209459,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "779af8a84f7b08dc0a34a85730a1005894869e72",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_tense_aspect_application_transfer",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "explain",
+              "seed": 314188,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "0a3030c000a879fcf24e9852616f9166e1335a80",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_standard_english_explain_reasoning",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "explain",
+              "seed": 418917,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "e0a0a7c8c9bf19190f8be734321f318f0f58f4f0",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 3,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_adverbials_table_classify",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "classify",
+              "seed": 2,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "c2bc91de52d54b2c9cdaf53ccb709d7c05cdbeb5",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_adverbials_adverbial_transfer",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "choose",
+              "seed": 104731,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "2c9f48f5d15654fc78b8ffdfc082a8a40f9c934e",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_transfer",
+              "skillIds": [
+                "hyphen_ambiguity"
+              ],
+              "questionType": "choose",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "194c79ac82fd4aa2d00a440eda49a2423e6583c2",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_relative_clauses_relative_or_time_clause",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "classify",
+              "seed": 314189,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "2c21e363803c5ef4233640084b2f433405833fc5",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_formality_sat_table_classification",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "classify",
+              "seed": 418918,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "5fe15d8d35f8b395ae3ebeadd9246b6bef05cdba",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 2,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 0,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_adverbials_table_classify",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "classify",
+              "seed": 3,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "2cfaaac929899621b59f8431f5f257308559e805",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "fix_fronted_adverbial",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "fix",
+              "seed": 104732,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "f0e729352defc304e7a431ef7d5223e06bd6cbb8",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_clauses_subordinate_clause_identify",
+              "skillIds": [
+                "clauses"
+              ],
+              "questionType": "identify",
+              "seed": 209461,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "786c7ba11e1809bbe97a20a59ceb49a50f6eb5c9",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "proc2_relative_clause_choice",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 314190,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "a141c04c01e1f215245a2fcc9e36c490342f47c8",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p17_standard_english_precision_choice",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "choose",
+              "seed": 418919,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "fea168bbc8a64ac6b45fd54e5c77006101e24bd9",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 0,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "spacedRetrievalDue",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 4.333333333333333,
+        "questionTypeDistinctMean": 4,
+        "constructedSelectedMix": 0.4,
+        "manualReviewOnlyShare": 0.06666666666666667,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "spaced-retrieval": 3,
+          "priority-urgent": 3,
+          "fallback": 9
+        }
+      },
+      "label": "Spaced-retrieval learner — secured concept overdue >24h (Contract D.4 spaced-retrieval lane)",
+      "focusConceptId": "",
+      "mode": "smart",
+      "eligibleTemplateCount": 125,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p16_tense_aspect_spot_tense_shift_error",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "choose",
+              "seed": 1,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "0fc2418ca33d96386c953ddd8ded47196647cb95",
+              "manualReviewOnly": false,
+              "reason": "spaced-retrieval"
+            },
+            {
+              "slot": 2,
+              "templateId": "fronted_adverbial_choose",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "choose",
+              "seed": 104730,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "3736f0681bad5f78ccfc05d5a2873261b1555bf3",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_relative_clauses_noun_linked_by_relative",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 209459,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "31caf54cdb428865c8ed078307b467da67671f8d",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_tense_aspect_explain_reasoning",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "explain",
+              "seed": 314188,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "603204e9e3581ce24e77b9a4117be55de49f5222",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_standard_english_sat_table_classification",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "classify",
+              "seed": 418917,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "150c7e0092ab454f17400448cf335b67522f24ab",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 1,
+            "selectedItemCount": 4,
+            "manualReviewOnlyCount": 0,
+            "reasonCounts": {
+              "spaced-retrieval": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_subject_object_precision_choice",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "choose",
+              "seed": 2,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "b89d9aae2611539bfa4dfa8a7251c755b30ddb75",
+              "manualReviewOnly": false,
+              "reason": "spaced-retrieval"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_adverbials_move_adverbial",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "rewrite",
+              "seed": 104731,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "f4e32ac021d9aeaf0507eacf9f79da1d81a0272a",
+              "manualReviewOnly": true,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_modal_verbs_modal_strength_order",
+              "skillIds": [
+                "modal_verbs"
+              ],
+              "questionType": "classify",
+              "seed": 209460,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "5bd971ce1252004ebeabfb6a766b1c81ce50c134",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_sentence_functions_exclamation_not_excited_statement",
+              "skillIds": [
+                "sentence_functions"
+              ],
+              "questionType": "choose",
+              "seed": 314189,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "c17e990603b653484571327cc94a6b147d10429d",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_hyphen_ambiguity_explain_reasoning",
+              "skillIds": [
+                "hyphen_ambiguity"
+              ],
+              "questionType": "explain",
+              "seed": 418918,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "0d5f380caf4c5affba3004b18f31d2b91926e892",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 5,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "spaced-retrieval": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_subject_object_examiner_trap_contrast",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "choose",
+              "seed": 3,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "362a5c20254bc70cba2493900aaa9b3ac58670b1",
+              "manualReviewOnly": false,
+              "reason": "spaced-retrieval"
+            },
+            {
+              "slot": 2,
+              "templateId": "subject_object_choice",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "identify",
+              "seed": 104732,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "1ed78c5afd97570e69b1d39ac49e93c27aedb5dd",
+              "manualReviewOnly": false,
+              "reason": "priority-urgent"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_formality_informal_to_formal_pair_table",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "classify",
+              "seed": 209461,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "e9bf73ae27626619fc4dd7a618a59c42c19fa1ec",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "proc2_fronted_adverbial_build",
+              "skillIds": [
+                "adverbials"
+              ],
+              "questionType": "build",
+              "seed": 314190,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "e67b8cbc1e8f8a57474024e6629e91e7af49fc96",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p17_standard_english_table_classify",
+              "skillIds": [
+                "standard_english"
+              ],
+              "questionType": "classify",
+              "seed": 418919,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "e6e775a7048b7f86e5c41c5ce738dd62ff2d1ed0",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 3,
+            "selectedItemCount": 2,
+            "manualReviewOnlyCount": 0,
+            "reasonCounts": {
+              "spaced-retrieval": 1,
+              "priority-urgent": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    },
+    {
+      "type": "troubleMode",
+      "sessionCount": 3,
+      "spread": {
+        "conceptDistinctMean": 3.3333333333333335,
+        "questionTypeDistinctMean": 4,
+        "constructedSelectedMix": 0.5333333333333333,
+        "manualReviewOnlyShare": 0.3333333333333333,
+        "repeatedSurfaceCount": 0,
+        "uniqueSurfaceCount": 15,
+        "reasonHistogram": {
+          "similar-problem": 3,
+          "trouble-cluster": 3,
+          "fallback": 9
+        }
+      },
+      "label": "Trouble-mode learner — explicit retry/trouble lane (Contract D.4)",
+      "focusConceptId": "",
+      "mode": "trouble",
+      "eligibleTemplateCount": 62,
+      "sessions": [
+        {
+          "seed": 1,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_tense_aspect_examiner_trap_contrast",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "choose",
+              "seed": 1,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "f292ddbaeb05e0f35d2c73cff006b00cc44a6f7a",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "tense_form_choice",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "fill",
+              "seed": 104730,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "50a464dd193aac5e7858022e93b57f9d4af181b0",
+              "manualReviewOnly": false,
+              "reason": "trouble-cluster"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_sentence_functions_choose_matching_function_for_context",
+              "skillIds": [
+                "sentence_functions"
+              ],
+              "questionType": "choose",
+              "seed": 209459,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "9f221a929d1866f04ed8d8d0c864d0c327d65a7f",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p18_tense_aspect_precision_repair_or_rewrite",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "rewrite",
+              "seed": 314188,
+              "inputType": "text",
+              "isConstructed": true,
+              "surfaceKey": "31e8a50cd8e374fc3f690f0836822c9b3bc7ba44",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_subject_object_precision_repair_or_rewrite",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "fix",
+              "seed": 418917,
+              "inputType": "text",
+              "isConstructed": true,
+              "surfaceKey": "b6f99187b84f88b620210fbbc5b40255eb7b5783",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 3,
+            "questionTypeDistinct": 4,
+            "constructedItemCount": 2,
+            "selectedItemCount": 3,
+            "manualReviewOnlyCount": 1,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "trouble-cluster": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 2,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_tense_aspect_table_classify",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "classify",
+              "seed": 2,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "21019262436440216462054f182ba5e9a2391175",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "qg_p18_p15_tense_aspect_explain_tense",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "explain",
+              "seed": 104731,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "daee68cf0ea5d30526437409f4eafe2e78f78c74",
+              "manualReviewOnly": false,
+              "reason": "trouble-cluster"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p15_modal_verbs_modal_meaning",
+              "skillIds": [
+                "modal_verbs"
+              ],
+              "questionType": "identify",
+              "seed": 209460,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "b02399c4792a8b8e12e883e9a65b3e92645bb15b",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "qg_p18_p16_speech_punctuation_explain_speech_rule",
+              "skillIds": [
+                "speech_punctuation"
+              ],
+              "questionType": "explain",
+              "seed": 314189,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "3f0992aa371cdec0208738beb7e6e00ba2c1ce08",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p18_modal_verbs_application_transfer",
+              "skillIds": [
+                "modal_verbs"
+              ],
+              "questionType": "explain",
+              "seed": 418918,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "87f506f25a72b077ccedb0e40d46fc7a3bdafec5",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 3,
+            "questionTypeDistinct": 3,
+            "constructedItemCount": 3,
+            "selectedItemCount": 2,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "trouble-cluster": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        },
+        {
+          "seed": 3,
+          "items": [
+            {
+              "slot": 1,
+              "templateId": "qg_p18_p17_tense_aspect_table_classify",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "classify",
+              "seed": 3,
+              "inputType": "table_choice",
+              "isConstructed": true,
+              "surfaceKey": "d1f24c9625a5e958a625e6eb18d873b541df3de3",
+              "manualReviewOnly": false,
+              "reason": "similar-problem"
+            },
+            {
+              "slot": 2,
+              "templateId": "tense_rewrite",
+              "skillIds": [
+                "tense_aspect"
+              ],
+              "questionType": "rewrite",
+              "seed": 104732,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "6bf2456afe10ff785f30d1be7b8e0f1626fdc7ab",
+              "manualReviewOnly": true,
+              "reason": "trouble-cluster"
+            },
+            {
+              "slot": 3,
+              "templateId": "qg_p18_p16_formality_least_formal_choice",
+              "skillIds": [
+                "formality"
+              ],
+              "questionType": "choose",
+              "seed": 209461,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "532e16d8457af911e42a0a37755af60fbb107863",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 4,
+              "templateId": "proc2_relative_clause_choice",
+              "skillIds": [
+                "relative_clauses"
+              ],
+              "questionType": "identify",
+              "seed": 314190,
+              "inputType": "single_choice",
+              "isConstructed": false,
+              "surfaceKey": "a141c04c01e1f215245a2fcc9e36c490342f47c8",
+              "manualReviewOnly": false,
+              "reason": "fallback"
+            },
+            {
+              "slot": 5,
+              "templateId": "qg_p18_p17_subject_object_misconception_repair",
+              "skillIds": [
+                "subject_object"
+              ],
+              "questionType": "fix",
+              "seed": 418919,
+              "inputType": "textarea",
+              "isConstructed": true,
+              "surfaceKey": "b46b94674c26ccca9b1c55a51be701a2e498961f",
+              "manualReviewOnly": true,
+              "reason": "fallback"
+            }
+          ],
+          "metrics": {
+            "conceptDistinct": 4,
+            "questionTypeDistinct": 5,
+            "constructedItemCount": 3,
+            "selectedItemCount": 2,
+            "manualReviewOnlyCount": 2,
+            "reasonCounts": {
+              "similar-problem": 1,
+              "trouble-cluster": 1,
+              "fallback": 3
+            }
+          },
+          "failures": [],
+          "advisories": []
+        }
+      ]
+    }
+  ],
+  "failures": [],
+  "advisories": []
+}
