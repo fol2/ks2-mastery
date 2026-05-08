@@ -1,5 +1,5 @@
 efab43732d15dc1dffd703df40b24517f231da15219b2bcbc9ea5579e4d23585  ./cleanup.txt
-98e34c12b303368b9ed66414994faed11c7f05a18f4c9125dac511485031fb8d  ./completion-report-2026-05-08.md
+696712ba0dc47581348ddc594687fd9196c83927dca579fd3f731843afa11a06  ./completion-report-2026-05-08.md
 d606fd8437fb59ff214a732334c0e678c533a862608b419a35d7fca17d7a46f7  ./contract/reading-negation-ui-hotfix-contract.md
 bb7bbe3d966bd68de84991897e25849539203c9fc62633e6c8f4eaf3892ca933  ./patches/001-reading-negation-marking-and-session-ui.patch
 d4e879502ff9eee9ace4175716554a55e073a6c00eb9e85722d5066e130f27e6  ./README.md

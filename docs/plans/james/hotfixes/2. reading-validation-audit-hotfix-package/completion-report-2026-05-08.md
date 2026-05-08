@@ -68,4 +68,4 @@ Production origin: `https://ks2.eugnel.uk`
 
 ## Final sync status
 
-At the time this report was finalised, the code commit had been pushed to `origin/main` and deployed. This evidence package is ready to be pushed as a follow-up documentation/evidence commit.
+At the time this report was finalised, the code commit had been pushed to `origin/main` and deployed. This evidence package is part of the follow-up documentation/evidence sync on `main`.
