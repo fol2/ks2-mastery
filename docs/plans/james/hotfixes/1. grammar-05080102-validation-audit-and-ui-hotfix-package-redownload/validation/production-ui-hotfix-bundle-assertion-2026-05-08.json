@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "timestamp": "2026-05-08T14:58:28.654Z",
+  "origin": "https://ks2.eugnel.uk",
+  "bundleUrl": "https://ks2.eugnel.uk/src/bundles/app.bundle.js?v=962dacfd18fe",
+  "htmlStatus": 200,
+  "bundleStatus": 200,
+  "bundleBytes": 681945,
+  "bundleSha256": "962dacfd18fe5851d84229a13170e61f67206035da6c654f60526436f93c4f81",
+  "assertion": "Live app bundle keeps Grammar normal-session End round disabled when runtimeReadOnly or pending.",
+  "expectedMinifiedSignal": "disabled:n||h,onClick:()=>t.dispatch(\"grammar-end-early\"),children:\"End round\"",
+  "observedSnippet": "children:h&&e.pendingCommand===\"submit-answer\"?\"Checking...\":k}),c?null:(0,I.jsx)(oe,{variant:\"ghost\",disabled:n||h,onClick:()=>t.dispatch(\"grammar-end-early\"),children:\"End round\"})]})]},`${a.id||\"grammar\"}-${a.currentIndex||0}`)]})]})})}var Dl=C(_(),1);funct"
+}
