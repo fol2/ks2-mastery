@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
-import { execSync, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { relative, resolve } from 'node:path';
@@ -450,9 +450,9 @@ function requireConfigAncestry(configRelativePath, evidenceCommit) {
   }
   let configCommit;
   try {
-    configCommit = execSync(`git log -n 1 --format=%H -- ${JSON.stringify(configRelativePath)}`, {
+    configCommit = execFileSync('git', ['log', '-n', '1', '--format=%H', '--', configRelativePath], {
       stdio: ['ignore', 'pipe', 'ignore'],
-      timeout: 2000,
+      timeout: 10000,
     }).toString().trim();
   } catch {
     return {
@@ -482,14 +482,14 @@ function requireConfigAncestry(configRelativePath, evidenceCommit) {
   }
   try {
     // --is-ancestor exits 0 if the first SHA is an ancestor of the second, 1
-    // otherwise. execSync throws on non-zero exit; we distinguish the
+    // otherwise. execFileSync throws on non-zero exit; we distinguish the
     // "definitely not an ancestor" outcome from the "git error" outcome by
     // checking the thrown `status` field. Commit existence has already been
     // resolved above, so status other than 0 or 1 only happens on real git
     // failures and is treated as a warning to preserve shallow-CI behaviour.
-    execSync(`git merge-base --is-ancestor ${configCommit} ${evidenceCommit}`, {
+    execFileSync('git', ['merge-base', '--is-ancestor', configCommit, evidenceCommit], {
       stdio: ['ignore', 'ignore', 'pipe'],
-      timeout: 2000,
+      timeout: 10000,
     });
     return { failures: [], warnings: [] };
   } catch (error) {

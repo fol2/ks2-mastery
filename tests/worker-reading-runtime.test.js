@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { checkMatches, createServerReadingEngine } from '../worker/src/subjects/reading/engine.js';
+import { checkMatches, createServerReadingEngine, evaluateReadingQuestion } from '../worker/src/subjects/reading/engine.js';
 import { buildReadingReadModel } from '../worker/src/subjects/reading/read-models.js';
 import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 
@@ -68,6 +68,70 @@ test('reading contains checks use phrase boundaries rather than character substr
   assert.equal(checkMatches('She opened the red tin box carefully.', check), true);
   assert.equal(checkMatches('The red tin boxed set was on the shelf.', check), false);
   assert.equal(checkMatches('red tin', check), false);
+});
+
+test('reading phrase checks reject locally negated correct phrases', () => {
+  assert.equal(checkMatches('speech marks', { containsAny: ['speech marks'] }), true);
+  assert.equal(checkMatches('The answer is speech marks.', { containsAny: ['speech marks'] }), true);
+  assert.equal(checkMatches('No. Speech marks.', { containsAny: ['speech marks'] }), true);
+  assert.equal(checkMatches('not speech marks', { containsAny: ['speech marks'] }), false);
+  assert.equal(checkMatches('It is not because of speech marks.', { containsAny: ['speech marks'] }), false);
+  assert.equal(checkMatches('not speech marks, but speech marks', { containsAny: ['speech marks'] }), true);
+  assert.equal(checkMatches('folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), true);
+  assert.equal(checkMatches('Folded. Slips of paper.', { keywordAny: [['fold', 'slip', 'paper']] }), true);
+  assert.equal(checkMatches('It was folded. They were slips of paper.', { keywordAny: [['fold', 'slip', 'paper']] }), true);
+  assert.equal(checkMatches('not folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), false);
+  assert.equal(checkMatches('It was folded, not slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), false);
+  assert.equal(checkMatches('It was folded; not slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), false);
+  assert.equal(checkMatches('not folded slips of paper, but folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), true);
+  assert.equal(checkMatches('not only speech marks', { containsAny: ['speech marks'] }), true);
+});
+
+test('reading evidence fallback does not award marks for negated evidence quotes', () => {
+  const question = {
+    id: 'negated_evidence_probe',
+    type: 'evidenceShort',
+    skill: '2d',
+    marks: 2,
+    answerMarks: 1,
+    evidenceMarks: 1,
+    answerCheck: { keywordAny: [['house', 'change']] },
+    evidenceCheck: { containsAny: ['the house around her seemed to change'] },
+    modelAnswer: 'The house seems different; evidence could include "the house around her seemed to change".',
+    explanation: '',
+  };
+
+  const valid = evaluateReadingQuestion(question, {
+    answer: 'the house changes',
+    evidence: 'the house around her seemed to change',
+  });
+  assert.equal(valid.score, 2);
+
+  const negated = evaluateReadingQuestion(question, {
+    answer: 'the house changes',
+    evidence: 'not the house around her seemed to change',
+  });
+  assert.equal(negated.score, 1);
+  assert.equal(negated.correct, false);
+
+  const negatedLaterToken = evaluateReadingQuestion(question, {
+    answer: 'the house changes',
+    evidence: 'the house did not change around her',
+  });
+  assert.equal(negatedLaterToken.score, 1);
+  assert.equal(negatedLaterToken.correct, false);
+
+  const corrected = evaluateReadingQuestion(question, {
+    answer: 'the house changes',
+    evidence: 'not the house around her seemed to change, but the house around her seemed to change',
+  });
+  assert.equal(corrected.score, 2);
+
+  const partialCorrected = evaluateReadingQuestion(question, {
+    answer: 'the house changes',
+    evidence: 'wrong: the house around her seemed. However, house around her seemed to change',
+  });
+  assert.equal(partialCorrected.score, 2);
 });
 
 test('reading save-response rejects stale expected session or question ids', () => {

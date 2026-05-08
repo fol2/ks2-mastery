@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-05-08T15:59:03.115Z",
+  "root": "D:\\Coding\\ks2-mastery",
+  "content": {
+    "passageCount": 21,
+    "questionCount": 182,
+    "paperCount": 12,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 8,
+      "non-fiction": 8,
+      "poetry": 5
+    },
+    "longPassageCount": 7,
+    "duplicateNormalisedStemGroups": 0,
+    "duplicateModelAnswerGroups": 0,
+    "duplicateStemExamples": [],
+    "duplicateModelAnswerExamples": []
+  },
+  "negationAudit": {
+    "negatedMatcherAcceptances": 0,
+    "negatedEvaluationRisks": 0,
+    "matcherExamples": [],
+    "evaluationExamples": []
+  }
+}

@@ -76,6 +76,18 @@ function hasMarkedQuestion(question) {
   return Boolean(question?.result || question?.status === 'correct' || question?.status === 'partial' || question?.status === 'wrong');
 }
 
+function markActionLabel(session) {
+  if (session?.strict) return 'Mark whole paper';
+  if (session?.viewMode === 'list') return 'Mark this section';
+  return 'Mark now';
+}
+
+function markActionHint(session) {
+  if (session?.strict) return 'Checks every saved answer in this paper and then shows feedback.';
+  if (session?.viewMode === 'list') return 'Checks the visible question list and then shows feedback for this text.';
+  return 'Checks your saved answer now and then shows feedback.';
+}
+
 function ReadingSetup({ ui, actions }) {
   const prefs = ui.prefs || {};
   function start(event) {
@@ -362,6 +374,7 @@ function QuestionPanel({ ui, actions }) {
             ? 'Review the model answer and evidence, then move to the next question.'
             : 'Read the passage first, answer without clues, then submit for feedback.'}
       </div>
+      {session.delayedFeedback || session.strict ? <p className="tiny reading-mark-action-hint">{markActionHint(session)}</p> : null}
       <form id={formId} key={question.id} onSubmit={submit} data-reading-active-form="true">
         <p className="question-stem">{question.stem}</p>
         <QuestionInput question={question} response={response} disabled={disabled} />
@@ -369,7 +382,7 @@ function QuestionPanel({ ui, actions }) {
           {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{primarySubmitLabel}</button> : null}
           <button className="btn ghost" type="button" onClick={(event) => saveAndMove(event, { delta: -1 })} disabled={pending || !canGoPrevious(session)}>Previous</button>
           {showDraftNextButton ? <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save draft and next'}</button> : null}
-          {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={finish} disabled={pending}>Finish now</button> : null}
+          {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={finish} disabled={pending}>{markActionLabel(session)}</button> : null}
           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
         </div>
       </form>
@@ -416,6 +429,7 @@ function QuestionListPanel({ ui, actions }) {
           ? 'SATs-style mode: answer each text inside this Reading frame, then mark the whole paper when you want feedback.'
           : 'Use the passage beside this card, save the visible section as you go, and mark only when you are ready for feedback.'}
       </div>
+      <p className="tiny reading-mark-action-hint">{markActionHint(session)}</p>
       <form className="reading-list-form" onSubmit={mark} data-reading-active-form="true">
         {questions.map((questionItem) => {
           const marked = hasMarkedQuestion(questionItem);
@@ -440,7 +454,7 @@ function QuestionListPanel({ ui, actions }) {
         })}
         <div className="actions reading-actions-spaced">
           <button className="btn secondary" type="button" onClick={saveSection} disabled={pending}>Save this section</button>
-          <button className="btn warn" type="submit" disabled={pending}>{session.strict ? 'Mark whole paper' : 'Mark this section'}</button>
+          <button className="btn warn" type="submit" disabled={pending}>{markActionLabel(session)}</button>
           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
         </div>
       </form>

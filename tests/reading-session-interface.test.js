@@ -64,6 +64,16 @@ test('reading surface implements delegated full-list session UI inside the app f
   assert.match(ui, /data-reading-active-form="true"/);
 });
 
+test('reading marking controls use mode-specific labels instead of a generic finish action', () => {
+  const ui = source('src/subjects/reading/components/ReadingPracticeSurface.jsx');
+  assert.match(ui, /function markActionLabel/);
+  assert.match(ui, /Mark now/);
+  assert.match(ui, /Mark this section/);
+  assert.match(ui, /Mark whole paper/);
+  assert.match(ui, /markActionHint/);
+  assert.doesNotMatch(ui, /Finish now/);
+});
+
 
 
 test('reading one-question delayed-feedback surface has one save-and-next path', () => {

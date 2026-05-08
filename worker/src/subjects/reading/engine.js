@@ -69,37 +69,159 @@ function tokenise(value) {
   return normaliseText(value).split(' ').filter(Boolean);
 }
 
+function tokeniseWithBoundaries(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[’']/g, '')
+    .replace(/[.!?;:]/g, ' zzbreakzz ')
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean);
+}
+
 function hasStem(tokens, stem) {
   const s = String(stem || '').toLowerCase();
   return tokens.some((token) => token === s || token.startsWith(s));
 }
 
-function groupMatches(tokens, group) {
-  return (group || []).every((stem) => String(stem || '')
-    .toLowerCase()
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((part) => hasStem(tokens, part)));
+const LOCAL_CONTRADICTION_CUES = new Set([
+  'not',
+  'never',
+  'no',
+  'none',
+  'neither',
+  'cannot',
+  'cant',
+  'wont',
+  'isnt',
+  'arent',
+  'wasnt',
+  'werent',
+  'doesnt',
+  'dont',
+  'didnt',
+  'hasnt',
+  'havent',
+  'hadnt',
+  'wouldnt',
+  'shouldnt',
+  'couldnt',
+  'opposite',
+  'false',
+  'wrong',
+  'incorrect',
+]);
+
+const CONTRADICTION_BREAK_TOKENS = new Set([
+  'zzbreakzz',
+  'but',
+  'however',
+  'although',
+  'though',
+  'instead',
+  'except',
+]);
+
+function cueIsSoftened(tokens, cueIndex) {
+  return tokens[cueIndex] === 'not' && tokens[cueIndex + 1] === 'only';
 }
 
-function containsNormalisedPhrase(haystack, needle) {
-  if (!haystack || !needle) return false;
-  return ` ${haystack} `.includes(` ${needle} `);
+function bridgeLooksLikeLocalNegation(tokens, cueIndex, startIndex) {
+  const bridge = tokens.slice(cueIndex + 1, startIndex);
+  return bridge.length <= 5 && !bridge.some((token) => CONTRADICTION_BREAK_TOKENS.has(token));
+}
+
+function spanIsLocallyContradicted(tokens, startIndex, phraseTokens = []) {
+  const lookBehindStart = Math.max(0, startIndex - 7);
+  for (let index = startIndex - 1; index >= lookBehindStart; index -= 1) {
+    if (!LOCAL_CONTRADICTION_CUES.has(tokens[index])) continue;
+    if (cueIsSoftened(tokens, index)) continue;
+    if (bridgeLooksLikeLocalNegation(tokens, index, startIndex)) return true;
+  }
+  return false;
+}
+
+function phraseSpans(tokens, phraseTokens) {
+  if (!tokens.length || !phraseTokens.length || phraseTokens.length > tokens.length) return [];
+  const spans = [];
+  for (let index = 0; index <= tokens.length - phraseTokens.length; index += 1) {
+    if (phraseTokens.every((token, offset) => tokens[index + offset] === token)) {
+      spans.push([index, index + phraseTokens.length]);
+    }
+  }
+  return spans;
+}
+
+function containsPhraseWithoutContradiction(text, phrase) {
+  const norm = normaliseText(text);
+  const candidate = normaliseText(phrase);
+  if (!norm || !candidate) return false;
+  if (norm === candidate) return true;
+  const tokens = tokeniseWithBoundaries(text);
+  const phraseTokens = tokenise(phrase);
+  return phraseSpans(tokens, phraseTokens).some(([start]) => !spanIsLocallyContradicted(tokens, start, phraseTokens));
+}
+
+function stemPositions(tokens, stem) {
+  const s = String(stem || '').toLowerCase();
+  return tokens
+    .map((token, index) => (token === s || token.startsWith(s) ? index : -1))
+    .filter((index) => index >= 0);
+}
+
+function clauseRanges(tokens) {
+  const ranges = [];
+  let start = 0;
+  for (let index = 0; index <= tokens.length; index += 1) {
+    if (index === tokens.length || CONTRADICTION_BREAK_TOKENS.has(tokens[index])) {
+      if (start < index) ranges.push([start, index]);
+      start = index + 1;
+    }
+  }
+  return ranges;
+}
+
+function groupMatchesWithoutContradiction(text, group) {
+  const tokens = tokeniseWithBoundaries(text);
+  const parts = (group || [])
+    .flatMap((stem) => String(stem || '').toLowerCase().trim().split(/\s+/))
+    .filter(Boolean);
+  if (!parts.length) return false;
+  return parts.every((part) => {
+    const positions = stemPositions(tokens, part);
+    return positions.some((position) => !spanIsLocallyContradicted(tokens, position, [part]));
+  });
 }
 
 export function checkMatches(text, check) {
   if (!check) return false;
   const norm = normaliseText(text);
-  const tokens = tokenise(text);
   if (!norm) return false;
   if (check.exactAny && check.exactAny.some((answer) => {
     const candidate = normaliseText(answer);
-    return norm === candidate || containsNormalisedPhrase(norm, candidate);
+    return norm === candidate || containsPhraseWithoutContradiction(text, answer);
   })) return true;
-  if (check.containsAny && check.containsAny.some((answer) => containsNormalisedPhrase(norm, normaliseText(answer)))) return true;
-  if (check.keywordAny && check.keywordAny.some((group) => groupMatches(tokens, group))) return true;
+  if (check.containsAny && check.containsAny.some((answer) => containsPhraseWithoutContradiction(text, answer))) return true;
+  if (check.keywordAny && check.keywordAny.some((group) => groupMatchesWithoutContradiction(text, group))) return true;
   return false;
+}
+
+function overlapIsLocallyContradicted(text, snippet) {
+  const textTokens = tokeniseWithBoundaries(text);
+  const snippetTokens = tokenise(snippet).filter((token) => token.length > 2);
+  if (!snippetTokens.length) return false;
+  return !clauseRanges(textTokens).some(([start, end]) => {
+    const clause = textTokens.slice(start, end);
+    const clauseOverlap = overlapRatio(clause.join(' '), snippet);
+    if (clauseOverlap < 0.55) return false;
+    const positions = snippetTokens
+      .flatMap((snippetToken) => stemPositions(textTokens, snippetToken))
+      .filter((position) => position >= start && position < end);
+    if (!positions.length) return false;
+    return !positions.some((position) => spanIsLocallyContradicted(textTokens, position, snippetTokens));
+  });
 }
 
 function overlapRatio(a, b) {
@@ -114,7 +236,7 @@ function overlapRatio(a, b) {
 function evidenceMatches(text, check) {
   if (!text || !check) return false;
   if (checkMatches(text, check)) return true;
-  if (check.containsAny && check.containsAny.some((snippet) => overlapRatio(text, snippet) >= 0.55)) return true;
+  if (check.containsAny && check.containsAny.some((snippet) => overlapRatio(text, snippet) >= 0.55 && !overlapIsLocallyContradicted(text, snippet))) return true;
   return false;
 }
 
