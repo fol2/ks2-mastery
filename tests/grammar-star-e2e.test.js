@@ -832,21 +832,21 @@ test('star e2e: full Chronalyx 0->100 Star journey (4 concepts)', () => {
 // 14. Stage threshold boundary assertions
 // =============================================================================
 
-test('star e2e: Star thresholds produce correct stage labels at boundary values', () => {
+test('star e2e: Star thresholds produce correct labels and Codex-aligned asset stages', () => {
   const thresholdTests = [
-    { stars: 0, expectedStage: 'Not found yet', expectedIndex: 0 },
-    { stars: 1, expectedStage: 'Egg found', expectedIndex: 1 },
-    { stars: 14, expectedStage: 'Egg found', expectedIndex: 1 },
-    { stars: 15, expectedStage: 'Hatched', expectedIndex: 2 },
-    { stars: 34, expectedStage: 'Hatched', expectedIndex: 2 },
-    { stars: 35, expectedStage: 'Growing', expectedIndex: 3 },
-    { stars: 64, expectedStage: 'Growing', expectedIndex: 3 },
-    { stars: 65, expectedStage: 'Nearly Mega', expectedIndex: 4 },
-    { stars: 99, expectedStage: 'Nearly Mega', expectedIndex: 4 },
-    { stars: 100, expectedStage: 'Mega', expectedIndex: 5 },
+    { stars: 0, expectedStage: 'Not found yet', expectedAssetStage: 0 },
+    { stars: 1, expectedStage: 'Egg found', expectedAssetStage: 0 },
+    { stars: 14, expectedStage: 'Egg found', expectedAssetStage: 0 },
+    { stars: 15, expectedStage: 'Hatched', expectedAssetStage: 1 },
+    { stars: 34, expectedStage: 'Hatched', expectedAssetStage: 1 },
+    { stars: 35, expectedStage: 'Growing', expectedAssetStage: 2 },
+    { stars: 64, expectedStage: 'Growing', expectedAssetStage: 2 },
+    { stars: 65, expectedStage: 'Nearly Mega', expectedAssetStage: 3 },
+    { stars: 99, expectedStage: 'Nearly Mega', expectedAssetStage: 3 },
+    { stars: 100, expectedStage: 'Mega', expectedAssetStage: 4 },
   ];
 
-  for (const { stars, expectedStage, expectedIndex } of thresholdTests) {
+  for (const { stars, expectedStage, expectedAssetStage } of thresholdTests) {
     const state = {
       bracehart: {
         mastered: [],
@@ -859,8 +859,8 @@ test('star e2e: Star thresholds produce correct stage labels at boundary values'
     assert.equal(bracehart.stars, stars, `stars=${stars}`);
     assert.equal(bracehart.stageName, expectedStage,
       `stars=${stars} -> stageName="${expectedStage}"`);
-    assert.equal(bracehart.stageIndex, expectedIndex,
-      `stars=${stars} -> stageIndex=${expectedIndex}`);
+    assert.equal(bracehart.stageIndex, expectedAssetStage,
+      `stars=${stars} -> asset stageIndex=${expectedAssetStage}`);
   }
 });
 

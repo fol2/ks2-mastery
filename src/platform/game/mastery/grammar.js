@@ -254,6 +254,7 @@ export function progressForGrammarMonster(state, monsterId, { conceptTotal = nul
     starMax: GRAMMAR_MONSTER_STAR_MAX,
     displayStage,
     displayState,
+    assetStage: grammarAssetStageForDisplay(displayState, displayStage, stage),
     stageName: grammarStarStageName(visibleDisplayStars),
     starHighWater: updatedHighWater,
     starStage: starDerivedStage,
@@ -301,6 +302,23 @@ function progressDisplayStage(progress) {
   const explicitStage = Number(progress?.displayStage);
   if (Number.isFinite(explicitStage)) return Math.max(0, Math.floor(explicitStage));
   return grammarStarDisplayStage(progressDisplayStars(progress));
+}
+
+function grammarAssetStageForDisplay(displayState, displayStage, fallbackStage) {
+  switch (displayState) {
+    case 'egg-found': return 0;
+    case 'hatch': return 1;
+    case 'evolve': return 2;
+    case 'strong': return 3;
+    case 'mega': return 4;
+    default: {
+      const numericDisplayStage = Math.floor(Number(displayStage));
+      if (Number.isFinite(numericDisplayStage) && numericDisplayStage > 0) {
+        return Math.max(0, Math.min(4, numericDisplayStage - 1));
+      }
+      return Math.max(0, Math.min(4, Math.floor(Number(fallbackStage) || 0)));
+    }
+  }
 }
 
 function grammarEventsFromStarDisplayTransition(payload, previous, next) {

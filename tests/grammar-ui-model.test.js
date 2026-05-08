@@ -47,6 +47,11 @@ import {
 import {
   GRAMMAR_GRAND_STAR_MODEL_VERSION,
 } from '../shared/grammar/grammar-stars.js';
+import {
+  progressForGrammarMonster,
+} from '../src/platform/game/mastery/grammar.js';
+import { MONSTERS } from '../src/platform/game/monsters.js';
+import { buildCodexEntries } from '../src/surfaces/home/data.js';
 
 // -----------------------------------------------------------------------------
 // grammarSessionSubmitLabel
@@ -1052,7 +1057,7 @@ test('P5-U7 view-model: monster with starHighWater=42 shows "Growing" (42 Stars)
   const bracehart = strip.find((e) => e.monsterId === 'bracehart');
   assert.equal(bracehart.stars, 42);
   assert.equal(bracehart.stageName, 'Growing');
-  assert.equal(bracehart.stageIndex, 3);
+  assert.equal(bracehart.stageIndex, 2);
 });
 
 test('P5-U7 view-model: monster with starHighWater=100 shows "Mega"', () => {
@@ -1063,7 +1068,60 @@ test('P5-U7 view-model: monster with starHighWater=100 shows "Mega"', () => {
   const couronnail = strip.find((e) => e.monsterId === 'couronnail');
   assert.equal(couronnail.stars, 100);
   assert.equal(couronnail.stageName, 'Mega');
-  assert.equal(couronnail.stageIndex, 5);
+  assert.equal(couronnail.stageIndex, 4);
+});
+
+test('P5-U7 view-model: monster strip asset stages align with Codex visual stages', () => {
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 1 },
+    chronalyx: { mastered: [], caught: true, starHighWater: 15 },
+    couronnail: { mastered: [], caught: true, starHighWater: 65 },
+    concordium: {
+      mastered: [],
+      caught: true,
+      starHighWater: 100,
+      starModelVersion: GRAMMAR_GRAND_STAR_MODEL_VERSION,
+    },
+  };
+  const strip = buildGrammarMonsterStripModel(rewardState, null, null);
+  const stageByMonster = Object.fromEntries(strip.map((entry) => [entry.monsterId, entry.stageIndex]));
+
+  assert.equal(stageByMonster.bracehart, 0, 'Egg found renders the egg asset');
+  assert.equal(stageByMonster.chronalyx, 1, 'Hatched renders the stage-1 asset');
+  assert.equal(stageByMonster.couronnail, 3, 'Nearly Mega renders the stage-3 asset');
+  assert.equal(stageByMonster.concordium, 4, 'Mega renders the final asset');
+});
+
+test('P5-U7 view-model: monster strip asset stages match Codex entries for the same Grammar progress', () => {
+  const cases = [
+    { stars: 1, expectedAssetStage: 0 },
+    { stars: 15, expectedAssetStage: 1 },
+    { stars: 35, expectedAssetStage: 2 },
+    { stars: 65, expectedAssetStage: 3 },
+    { stars: 100, expectedAssetStage: 4 },
+  ];
+
+  for (const { stars, expectedAssetStage } of cases) {
+    const rewardState = {
+      bracehart: { mastered: [], caught: true, starHighWater: stars },
+    };
+    const sidebarEntry = buildGrammarMonsterStripModel(rewardState, null, null)
+      .find((entry) => entry.monsterId === 'bracehart');
+    const codexProgress = progressForGrammarMonster(rewardState, 'bracehart');
+    const [codexEntry] = buildCodexEntries([{
+      subjectId: 'grammar',
+      monster: MONSTERS.bracehart,
+      progress: {
+        ...codexProgress,
+        subjectId: 'grammar',
+        branch: 'b1',
+      },
+    }]);
+
+    assert.equal(sidebarEntry.stageIndex, expectedAssetStage, `sidebar stage for ${stars} Stars`);
+    assert.equal(codexEntry.stage, expectedAssetStage, `Codex stage for ${stars} Stars`);
+    assert.equal(sidebarEntry.stageIndex, codexEntry.stage, `sidebar and Codex stage match for ${stars} Stars`);
+  }
 });
 
 test('P5-U7 view-model: reserved monsters never appear in strip', () => {

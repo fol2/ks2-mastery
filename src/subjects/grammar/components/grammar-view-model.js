@@ -782,7 +782,7 @@ export const GRAMMAR_MONSTER_STRIP_CHILD_COPY = Object.freeze(
  *     stageName:   string,   // child-facing label from grammarStarStageName
  *     stars:       number,   // 0–100
  *     starMax:     100,
- *     stageIndex:  number,   // display stage 0–5
+ *     stageIndex:  number,   // Codex-aligned asset stage 0–4
  *     accentColor: string,   // CSS hex colour from MONSTERS registry
  *   }
  *
@@ -816,13 +816,30 @@ export function buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, 
       stageName: progress.stageName || grammarStarStageName(stars),
       stars,
       starMax: GRAMMAR_MONSTER_STAR_MAX,
-      stageIndex: Number.isFinite(Number(progress.displayStage))
-        ? Math.max(0, Math.floor(Number(progress.displayStage)))
-        : grammarStarDisplayStage(stars),
+      stageIndex: grammarAssetStageIndex(progress, stars),
       displayState: progress.displayState || 'not-found',
       accentColor,
     });
   });
+}
+
+function grammarAssetStageIndex(progress, stars) {
+  const numericAssetStage = Math.floor(Number(progress?.assetStage));
+  if (Number.isFinite(numericAssetStage)) {
+    return Math.max(0, Math.min(4, numericAssetStage));
+  }
+
+  switch (progress?.displayState) {
+    case 'egg-found': return 0;
+    case 'hatch': return 1;
+    case 'evolve': return 2;
+    case 'strong': return 3;
+    case 'mega': return 4;
+    default: {
+      const displayStage = grammarStarDisplayStage(stars);
+      return displayStage > 0 ? Math.max(0, Math.min(4, displayStage - 1)) : 0;
+    }
+  }
 }
 
 // --- Summary cards builder --------------------------------------------------
