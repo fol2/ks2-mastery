@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "commitSha": "e40cc29ef65a02646c39487bb29744e689193f9f",
+  "workerVersionId": "4026c822-157a-427c-90f3-0362d393adea",
+  "learnerFixtureType": "browser-demo-session",
+  "learnerId": "learner-demo-FCkaxuUq07xWEQ",
+  "checks": {
+    "sidebarChronalyxStage0": true,
+    "codexChronalyxStage0": true,
+    "sidebarCodexBranchMatch": true,
+    "sidebarCodexStageMatch": true,
+    "codexClassStage0": true,
+    "codexEggAlt": true
+  },
+  "parsedAssets": {
+    "sidebarBranch": "b2",
+    "sidebarStage": "0",
+    "codexBranch": "b2",
+    "codexStage": "0"
+  },
+  "sidebar": [
+    {
+      "src": "./assets/monsters/chronalyx/b2/chronalyx-b2-0.320.webp?v=20260421-branches",
+      "srcset": "./assets/monsters/chronalyx/b2/chronalyx-b2-0.320.webp?v=20260421-branches 320w, ./assets/monsters/chronalyx/b2/chronalyx-b2-0.640.webp?v=20260421-branches 640w, ./assets/monsters/chronalyx/b2/chronalyx-b2-0.1280.webp?v=20260421-branches 1280w",
+      "cellClass": "ss-meadow-cell egg"
+    }
+  ],
+  "codex": [
+    {
+      "className": "codex-card is-egg stage-0",
+      "text": "1%Verb tense and modalChronalyx EggTurns time, aspect and modal meaning into secure Grammar evidence.EKTAMEgg FoundNo secure units yetPractise",
+      "img": "./assets/monsters/chronalyx/b2/chronalyx-b2-0.1280.webp?v=20260421-branches",
+      "imgAlt": "Chronalyx Egg"
+    }
+  ],
+  "screenshots": {
+    "sidebar": "reports/hotfixes/grammar-monster-status-codex-sidebar-alignment/grammar-sidebar-production-2026-05-08.png",
+    "codex": "reports/hotfixes/grammar-monster-status-codex-sidebar-alignment/codex-production-2026-05-08.png"
+  },
+  "timestamp": "2026-05-08T00:47:08.177Z"
+}
