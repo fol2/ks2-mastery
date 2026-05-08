@@ -4,7 +4,7 @@ Date: 2026-05-08
 
 ## Verdict
 
-Complete for production deployment pending final independent contract-auditor closure after this report is committed.
+Complete and production deployed.
 
 The Grammar normal-session `End round` action now becomes unavailable when the runtime is read-only or when a command is pending. The change is intentionally limited to the contract scope: Grammar session UI and the UI action-engine contract test.
 
@@ -35,7 +35,8 @@ No Grammar content, answer marking, question generation, smart-practice selectio
 | Deploy to production using package scripts | `validation/repo-deploy-2026-05-08.log` shows `npm run deploy`, Wrangler upload success, Worker version `30687105-8e70-4fcd-9663-142c2995bc16`, and production bundle audit pass for `https://ks2.eugnel.uk/`. |
 | Verify production Grammar behaviour on `ks2.eugnel.uk` | `validation/production-grammar-smoke-2026-05-08.json` has `ok: true`, `environment: production`, `deployedUrl: https://ks2.eugnel.uk`, `releaseId: grammar-qg-p20-2026-05-05`, and `commitSha: fd35b91650445419cefeddcc8aceabc16abd109e`. |
 | Verify this exact UI hotfix exists in the deployed bundle | `validation/production-ui-hotfix-bundle-assertion-2026-05-08.json` has `ok: true` and confirms the live `app.bundle.js` contains the `grammar-end-early` button with the minified `disabled:n||h` signal, where `n` is `runtimeReadOnly` and `h` is `pending` in the compiled component. |
-| Sync local `main` with GitHub `main` | Source/evidence commit `fd35b91650445419cefeddcc8aceabc16abd109e` was pushed to `origin/main`; the final docs/evidence commit will be pushed after final contract-auditor closure is recorded. |
+| Sync local `main` with GitHub `main` | Source/evidence commit `fd35b91650445419cefeddcc8aceabc16abd109e` and production evidence commit `b253a38dfcef1e8cf635acde05698eeab3cd1e27` were pushed to `origin/main`; final reviewer-status report update is documentation-only. |
+| Independent contract auditor green | Final contract auditor returned GREEN after verifying `HEAD == origin/main`, clean working tree, production deployment, production smoke, live bundle assertion, completion report, and code reviewer GREEN. |
 
 ## Verification commands
 
@@ -56,4 +57,4 @@ node docs\plans\james\hotfixes\1. grammar-05080102-validation-audit-and-ui-hotfi
 ## Independent review status
 
 - Code reviewer: GREEN.
-- Contract auditor: pending final rerun after this completion report and production evidence are committed.
+- Contract auditor: GREEN.
