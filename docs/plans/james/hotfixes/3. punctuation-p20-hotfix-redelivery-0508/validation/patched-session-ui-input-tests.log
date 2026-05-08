@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: Punctuation text session disables submit for blank or whitespace-only answers
+ok 1 - Punctuation text session disables submit for blank or whitespace-only answers
+  ---
+  duration_ms: 44.854543
+  type: 'test'
+  ...
+# Subtest: Punctuation text session guards the submit handler against forged blank submits
+ok 2 - Punctuation text session guards the submit handler against forged blank submits
+  ---
+  duration_ms: 1.264383
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionSubmitLabel returns Save answer in GPS mode
+ok 3 - U1 session-ui: punctuationSessionSubmitLabel returns Save answer in GPS mode
+  ---
+  duration_ms: 2.456783
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionSubmitLabel returns Check in every other mode
+ok 4 - U1 session-ui: punctuationSessionSubmitLabel returns Check in every other mode
+  ---
+  duration_ms: 0.421029
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionSubmitLabel defaults to Check on null/invalid session
+ok 5 - U1 session-ui: punctuationSessionSubmitLabel defaults to Check on null/invalid session
+  ---
+  duration_ms: 0.180297
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns stem-prefill for insert/fix/paragraph
+ok 6 - U1 session-ui: punctuationSessionInputShape returns stem-prefill for insert/fix/paragraph
+  ---
+  duration_ms: 2.509204
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns blank+source for combine/transfer
+ok 7 - U1 session-ui: punctuationSessionInputShape returns blank+source for combine/transfer
+  ---
+  duration_ms: 52.589232
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns none for choose (radio) mode
+ok 8 - U1 session-ui: punctuationSessionInputShape returns none for choose (radio) mode
+  ---
+  duration_ms: 0.385155
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns none on empty/unknown mode (safe default)
+ok 9 - U1 session-ui: punctuationSessionInputShape returns none on empty/unknown mode (safe default)
+  ---
+  duration_ms: 0.766497
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel renders Question X of N on a standard round
+ok 10 - U1 session-ui: punctuationSessionProgressLabel renders Question X of N on a standard round
+  ---
+  duration_ms: 0.414693
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel clamps answered past length to total
+ok 11 - U1 session-ui: punctuationSessionProgressLabel clamps answered past length to total
+  ---
+  duration_ms: 0.595613
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel handles length=0 fallback
+ok 12 - U1 session-ui: punctuationSessionProgressLabel handles length=0 fallback
+  ---
+  duration_ms: 0.745974
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel null/invalid returns Question 1
+ok 13 - U1 session-ui: punctuationSessionProgressLabel null/invalid returns Question 1
+  ---
+  duration_ms: 0.236963
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility GPS hides feedback until summary
+ok 14 - U1 session-ui: punctuationSessionHelpVisibility GPS hides feedback until summary
+  ---
+  duration_ms: 0.23611
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility guided shows teach box during active-item
+ok 15 - U1 session-ui: punctuationSessionHelpVisibility guided shows teach box during active-item
+  ---
+  duration_ms: 0.127009
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility smart/weak hide teach box, feedback follows phase
+ok 16 - U1 session-ui: punctuationSessionHelpVisibility smart/weak hide teach box, feedback follows phase
+  ---
+  duration_ms: 0.128699
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility null session is fully off
+ok 17 - U1 session-ui: punctuationSessionHelpVisibility null session is fully off
+  ---
+  duration_ms: 0.154987
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputPlaceholder maps every known mode to a child string
+ok 18 - U1 session-ui: punctuationSessionInputPlaceholder maps every known mode to a child string
+  ---
+  duration_ms: 0.188977
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputPlaceholder falls back to generic prompt on unknown mode
+ok 19 - U1 session-ui: punctuationSessionInputPlaceholder falls back to generic prompt on unknown mode
+  ---
+  duration_ms: 0.125797
+  type: 'test'
+  ...
+# Subtest: U1 safety: session-ui.js does not import react
+ok 20 - U1 safety: session-ui.js does not import react
+  ---
+  duration_ms: 6.362967
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 401.231627

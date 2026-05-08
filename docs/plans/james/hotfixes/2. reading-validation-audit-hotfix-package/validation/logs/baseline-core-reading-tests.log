@@ -1,0 +1,160 @@
+TAP version 13
+# Subtest: reading content bank has varied original passages, papers and KS2 domains
+ok 1 - reading content bank has varied original passages, papers and KS2 domains
+  ---
+  duration_ms: 2.604861
+  ...
+# Subtest: reading ids are unique and evidence quotes exist in their source passage
+ok 2 - reading ids are unique and evidence quotes exist in their source passage
+  ---
+  duration_ms: 6.227551
+  ...
+# Subtest: reading question stems avoid noticeable repetition after normalisation
+ok 3 - reading question stems avoid noticeable repetition after normalisation
+  ---
+  duration_ms: 5.232853
+  ...
+# Subtest: reading test papers only reference existing passages and questions and sum to 50 marks
+ok 4 - reading test papers only reference existing passages and questions and sum to 50 marks
+  ---
+  duration_ms: 1.401015
+  ...
+# Subtest: browser Reading metadata stays answer-safe and summary-compatible
+ok 5 - browser Reading metadata stays answer-safe and summary-compatible
+  ---
+  duration_ms: 26.260536
+  ...
+# Subtest: public Reading events preserve subject identity after redaction
+ok 6 - public Reading events preserve subject identity after redaction
+  ---
+  duration_ms: 0.989083
+  ...
+# Subtest: reading module is ready and not a placeholder
+ok 7 - reading module is ready and not a placeholder
+  ---
+  duration_ms: 2.848021
+  ...
+# Subtest: hero mode includes reading as a ready subject with provider and launch adapter
+ok 8 - hero mode includes reading as a ready subject with provider and launch adapter
+  ---
+  duration_ms: 0.653015
+  ...
+# Subtest: reading engine starts a passage-first session and hides answer metadata before attempt
+ok 9 - reading engine starts a passage-first session and hides answer metadata before attempt
+  ---
+  duration_ms: 12.910004
+  ...
+# Subtest: reading engine marks deterministically and then exposes feedback safely
+ok 10 - reading engine marks deterministically and then exposes feedback safely
+  ---
+  duration_ms: 6.101081
+  ...
+# Subtest: reading exact match checks reject learner substrings of the correct answer
+ok 11 - reading exact match checks reject learner substrings of the correct answer
+  ---
+  duration_ms: 1.040838
+  ...
+# Subtest: reading contains checks use phrase boundaries rather than character substrings
+ok 12 - reading contains checks use phrase boundaries rather than character substrings
+  ---
+  duration_ms: 0.345329
+  ...
+# Subtest: reading save-response rejects stale expected session or question ids
+ok 13 - reading save-response rejects stale expected session or question ids
+  ---
+  duration_ms: 2.719616
+  ...
+# Subtest: reading marked answers cannot be overwritten by duplicate or stale submissions
+ok 14 - reading marked answers cannot be overwritten by duplicate or stale submissions
+  ---
+  duration_ms: 3.905898
+  ...
+# Subtest: reading engine reloads persisted ui state for follow-up commands
+ok 15 - reading engine reloads persisted ui state for follow-up commands
+  ---
+  duration_ms: 1.775701
+  ...
+# Subtest: reading due stats and review queue use the injected command clock
+ok 16 - reading due stats and review queue use the injected command clock
+  ---
+  duration_ms: 1.189771
+  ...
+# Subtest: reading avoids immediate passage repeats after a started session is ended without answers
+ok 17 - reading avoids immediate passage repeats after a started session is ended without answers
+  ---
+  duration_ms: 2.252059
+  ...
+# Subtest: reading guided mode uses weakness and variety rather than always taking the first four questions
+ok 18 - reading guided mode uses weakness and variety rather than always taking the first four questions
+  ---
+  duration_ms: 1.898848
+  ...
+# Subtest: worker subject runtime wires reading command handlers
+ok 19 - worker subject runtime wires reading command handlers
+  ---
+  duration_ms: 4.703133
+  ...
+# Subtest: reading secured skill events project into reading-owned monster rewards
+ok 20 - reading secured skill events project into reading-owned monster rewards
+  ---
+  duration_ms: 3.520548
+  ...
+# Subtest: reading secured skill event carries deep secure evidence and mastery key
+ok 21 - reading secured skill event carries deep secure evidence and mastery key
+  ---
+  duration_ms: 1.431846
+  ...
+# Subtest: reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+ok 22 - reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+  ---
+  duration_ms: 8.631892
+  ...
+# Subtest: reading reward state exposes release-scoped 100-star high-water progress
+ok 23 - reading reward state exposes release-scoped 100-star high-water progress
+  ---
+  duration_ms: 2.550347
+  ...
+# Subtest: reading reward thresholds use direct clusters plus a full-domain aggregate monster
+ok 24 - reading reward thresholds use direct clusters plus a full-domain aggregate monster
+  ---
+  duration_ms: 5.952047
+  ...
+# Subtest: reading list-view read model exposes a safe current-section question list
+ok 25 - reading list-view read model exposes a safe current-section question list
+  ---
+  duration_ms: 1.969392
+  ...
+# Subtest: reading save-response can persist visible section drafts and navigate without marking
+ok 26 - reading save-response can persist visible section drafts and navigate without marking
+  ---
+  duration_ms: 3.13761
+  ...
+# Subtest: reading mark-section accepts current visible section drafts before deterministic marking
+ok 27 - reading mark-section accepts current visible section drafts before deterministic marking
+  ---
+  duration_ms: 1.584505
+  ...
+# Subtest: reading section response merge does not blank previously saved one-question drafts
+ok 28 - reading section response merge does not blank previously saved one-question drafts
+  ---
+  duration_ms: 2.971277
+  ...
+# Subtest: reading list-mode section save can explicitly clear a previously saved draft
+ok 29 - reading list-mode section save can explicitly clear a previously saved draft
+  ---
+  duration_ms: 2.07761
+  ...
+# Subtest: reading save and mark commands reject stale expected section indexes
+ok 30 - reading save and mark commands reject stale expected section indexes
+  ---
+  duration_ms: 1.232239
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2715.192961

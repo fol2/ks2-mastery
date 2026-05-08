@@ -1,0 +1,29 @@
+--- a/src/subjects/grammar/components/GrammarSessionScene.jsx
++++ b/src/subjects/grammar/components/GrammarSessionScene.jsx
+@@ -790,7 +790,7 @@
+             {!isMiniTest ? (
+               <Button
+                 variant="ghost"
+-                disabled={pending}
++                disabled={runtimeReadOnly || pending}
+                 onClick={() => actions.dispatch('grammar-end-early')}
+               >
+                 End round
+--- a/tests/ui-action-engine-contract.test.js
++++ b/tests/ui-action-engine-contract.test.js
+@@ -217,6 +217,15 @@
+   assert.match(source, /disabled=\{runtimeReadOnly \|\| pending \|\| submitLock\.locked\}/, 'Next question button must wire disabled state');
+ });
+ 
++test('grammar session disables End round while runtime is read-only or pending', () => {
++  const source = readFile('src/subjects/grammar/components/GrammarSessionScene.jsx');
++  assert.match(
++    source,
++    /<Button[\s\S]*variant="ghost"[\s\S]*disabled=\{runtimeReadOnly \|\| pending\}[\s\S]*actions\.dispatch\('grammar-end-early'\)[\s\S]*>\s*End round\s*<\/Button>/,
++    'Normal-session End round must be disabled in read-only runtime state and while pending.',
++  );
++});
++
+ // --- ActionRow primitive exists at expected path ---
+ 
+ test('ActionRow.jsx exists at src/platform/ui/ActionRow.jsx', () => {

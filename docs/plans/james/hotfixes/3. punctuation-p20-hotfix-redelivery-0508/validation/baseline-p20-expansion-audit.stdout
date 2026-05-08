@@ -1,0 +1,6 @@
+Punctuation QG P20 expansion audit: PASS
+  release: punctuation-qg-p20-15072-2026-05-04
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15066/15072
+  generated families: 126
+  failing gates: none

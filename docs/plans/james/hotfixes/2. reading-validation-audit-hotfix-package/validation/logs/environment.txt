@@ -1,0 +1,8 @@
+date_utc=2026-05-08T11:35:20Z
+node=v18.20.4
+npm=9.2.0
+.nvmrc=22
+source_zip=/mnt/data/ks2-mastery-lean-05080102.zip
+b8f30cefff6178f7db18bfc47e53387b4ebd680d3ae35eee5aeba0ee4b91fe50  /mnt/data/ks2-mastery-lean-05080102.zip
+node_modules_present=no
+esbuild_resolvable=no

@@ -1,0 +1,54 @@
+{
+  "source": "baseline uploaded ZIP",
+  "status": "PASS",
+  "counts": {
+    "runtimeItems": 15072,
+    "uniqueLearnerSurfaces": 15066,
+    "duplicateSurfaceGroups": 0,
+    "legacyFixedDuplicateSurfaceGroups": 6
+  },
+  "duplicateSamples": [
+    {
+      "count": 2,
+      "itemIds": [
+        "fx12_parenthesis_001",
+        "fx12_parenthesis_021"
+      ]
+    },
+    {
+      "count": 2,
+      "itemIds": [
+        "fx12_parenthesis_002",
+        "fx12_parenthesis_022"
+      ]
+    },
+    {
+      "count": 2,
+      "itemIds": [
+        "fx12_parenthesis_003",
+        "fx12_parenthesis_023"
+      ]
+    },
+    {
+      "count": 2,
+      "itemIds": [
+        "fx12_parenthesis_004",
+        "fx12_parenthesis_024"
+      ]
+    },
+    {
+      "count": 2,
+      "itemIds": [
+        "fx12_parenthesis_005",
+        "fx12_parenthesis_025"
+      ]
+    },
+    {
+      "count": 2,
+      "itemIds": [
+        "fx12_parenthesis_006",
+        "fx12_parenthesis_026"
+      ]
+    }
+  ]
+}

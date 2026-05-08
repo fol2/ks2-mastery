@@ -1,0 +1,16 @@
+eff68adee43fc3accaf6f44469a28eb4dd57ec52053b0c5613955624fbf7c915  ./README.md
+98544d15329aa03315893cb40eefdb5dba93e951cfa4ba86753e54e4d06ba2e7  ./contract/reading-negation-ui-hotfix-contract.md
+bb7bbe3d966bd68de84991897e25849539203c9fc62633e6c8f4eaf3892ca933  ./patches/001-reading-negation-marking-and-session-ui.patch
+4e559aa5c85f8dadb537db6676181437803c453d98cf9aa705dc1b41c7541b92  ./validation-summary.md
+d9bd9171b9b9cd65bce39da89dcdc9cb4c2974172e14ecba90330b1d7c58336f  ./validation/audits/baseline-reading-negation-audit.json
+d66d9afce160cce83db59b19db11cde5f041ec0936d98fd1f89e93ab77e78fc9  ./validation/audits/fresh-patched-reading-negation-audit.json
+5dc671924744703c864f0b93a9f923f1ad13428224fcef3047173cf74ae0def9  ./validation/audits/patched-reading-negation-audit.json
+12c024e39173f8a9603e18ef10d07eb0bc96eb2c6f8213d6a08c9cec4476557a  ./validation/logs/baseline-core-reading-tests.log
+7cb0c45e4a95246fab1e85ab4cf5f169b82bc34dc6b99ae572108ca197c4a349  ./validation/logs/baseline-reading-session-interface-node22-no-node-modules.log
+e8703043fd923ea38fc4b22a87a4e89d62272d7c8d8db90042b02bdc302d29a0  ./validation/logs/environment.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/logs/fresh-patch-apply.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/logs/fresh-patch-dry-run.log
+25c8524834fb4a6ed0f5cec198347278094219b03fefd076874289dc321b809d  ./validation/logs/fresh-patched-core-reading-tests.log
+5d15d75f6991e2c7abfcbbce6abb3b7a841b26a721ab6f19403f8aacb37bd186  ./validation/logs/patched-core-reading-tests.log
+2aaac3065f38b0f1b11d15bf1ccb50c8269775d0b6624c67c76f9668daa95728  ./validation/logs/patched-reading-session-interface-node22-no-node-modules.log
+6ce7841edd062c882e8a10351e3d3d230a3b1d41abd776b6fe291909185b7f9d  ./validation/tools/reading-negation-audit.mjs

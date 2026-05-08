@@ -1,0 +1,278 @@
+diff --git a/worker/src/subjects/reading/engine.js b/worker/src/subjects/reading/engine.js
+index 2795820..32c5859 100644
+--- a/worker/src/subjects/reading/engine.js
++++ b/worker/src/subjects/reading/engine.js
+@@ -83,9 +83,99 @@ function groupMatches(tokens, group) {
+     .every((part) => hasStem(tokens, part)));
+ }
+ 
++const LOCAL_CONTRADICTION_CUES = new Set([
++  'not',
++  'never',
++  'no',
++  'none',
++  'neither',
++  'cannot',
++  'cant',
++  'wont',
++  'isnt',
++  'arent',
++  'wasnt',
++  'werent',
++  'doesnt',
++  'dont',
++  'didnt',
++  'hasnt',
++  'havent',
++  'hadnt',
++  'wouldnt',
++  'shouldnt',
++  'couldnt',
++  'opposite',
++  'false',
++  'wrong',
++  'incorrect',
++]);
++
++const CONTRADICTION_BREAK_TOKENS = new Set([
++  'but',
++  'however',
++  'although',
++  'though',
++  'instead',
++  'rather',
++  'except',
++]);
++
++function cueIsSoftened(tokens, cueIndex) {
++  return tokens[cueIndex] === 'not' && tokens[cueIndex + 1] === 'only';
++}
++
++function bridgeLooksLikeLocalNegation(tokens, cueIndex, startIndex) {
++  const bridge = tokens.slice(cueIndex + 1, startIndex);
++  return bridge.length <= 5 && !bridge.some((token) => CONTRADICTION_BREAK_TOKENS.has(token));
++}
++
++function spanIsLocallyContradicted(tokens, startIndex, phraseTokens = []) {
++  const lookBehindStart = Math.max(0, startIndex - 7);
++  for (let index = startIndex - 1; index >= lookBehindStart; index -= 1) {
++    if (!LOCAL_CONTRADICTION_CUES.has(tokens[index])) continue;
++    if (cueIsSoftened(tokens, index)) continue;
++    if (bridgeLooksLikeLocalNegation(tokens, index, startIndex)) return true;
++  }
++  return false;
++}
++
++function phraseSpans(tokens, phraseTokens) {
++  if (!tokens.length || !phraseTokens.length || phraseTokens.length > tokens.length) return [];
++  const spans = [];
++  for (let index = 0; index <= tokens.length - phraseTokens.length; index += 1) {
++    if (phraseTokens.every((token, offset) => tokens[index + offset] === token)) {
++      spans.push([index, index + phraseTokens.length]);
++    }
++  }
++  return spans;
++}
++
+ function containsNormalisedPhrase(haystack, needle) {
+   if (!haystack || !needle) return false;
+-  return ` ${haystack} `.includes(` ${needle} `);
++  if (haystack === needle) return true;
++  const tokens = haystack.split(' ').filter(Boolean);
++  const phraseTokens = needle.split(' ').filter(Boolean);
++  return phraseSpans(tokens, phraseTokens).some(([start]) => !spanIsLocallyContradicted(tokens, start, phraseTokens));
++}
++
++function firstStemPosition(tokens, stem) {
++  const s = String(stem || '').toLowerCase();
++  return tokens.findIndex((token) => token === s || token.startsWith(s));
++}
++
++function groupHasLocallyContradictedMatch(tokens, group) {
++  const parts = (group || [])
++    .flatMap((stem) => String(stem || '').toLowerCase().trim().split(/\s+/))
++    .filter(Boolean);
++  if (!parts.length) return false;
++  const positions = parts.map((part) => firstStemPosition(tokens, part));
++  if (positions.some((position) => position < 0)) return false;
++  return spanIsLocallyContradicted(tokens, Math.min(...positions), parts);
++}
++
++function groupMatchesWithoutContradiction(tokens, group) {
++  return groupMatches(tokens, group) && !groupHasLocallyContradictedMatch(tokens, group);
+ }
+ 
+ export function checkMatches(text, check) {
+@@ -98,10 +188,27 @@ export function checkMatches(text, check) {
+     return norm === candidate || containsNormalisedPhrase(norm, candidate);
+   })) return true;
+   if (check.containsAny && check.containsAny.some((answer) => containsNormalisedPhrase(norm, normaliseText(answer)))) return true;
+-  if (check.keywordAny && check.keywordAny.some((group) => groupMatches(tokens, group))) return true;
++  if (check.keywordAny && check.keywordAny.some((group) => groupMatchesWithoutContradiction(tokens, group))) return true;
+   return false;
+ }
+ 
++function matchedOverlapPositions(text, snippet) {
++  const textTokens = tokenise(text);
++  const snippetTokens = tokenise(snippet).filter((token) => token.length > 2);
++  const positions = [];
++  for (const snippetToken of snippetTokens) {
++    const index = textTokens.findIndex((token, candidateIndex) => candidateIndex >= 0 && token === snippetToken);
++    if (index >= 0) positions.push(index);
++  }
++  return { textTokens, snippetTokens, positions };
++}
++
++function overlapIsLocallyContradicted(text, snippet) {
++  const { textTokens, snippetTokens, positions } = matchedOverlapPositions(text, snippet);
++  if (!positions.length) return false;
++  return spanIsLocallyContradicted(textTokens, Math.min(...positions), snippetTokens);
++}
++
+ function overlapRatio(a, b) {
+   const setA = new Set(tokenise(a).filter((token) => token.length > 2));
+   const setB = new Set(tokenise(b).filter((token) => token.length > 2));
+@@ -114,7 +221,7 @@ function overlapRatio(a, b) {
+ function evidenceMatches(text, check) {
+   if (!text || !check) return false;
+   if (checkMatches(text, check)) return true;
+-  if (check.containsAny && check.containsAny.some((snippet) => overlapRatio(text, snippet) >= 0.55)) return true;
++  if (check.containsAny && check.containsAny.some((snippet) => overlapRatio(text, snippet) >= 0.55 && !overlapIsLocallyContradicted(text, snippet))) return true;
+   return false;
+ }
+ 
+diff --git a/src/subjects/reading/components/ReadingPracticeSurface.jsx b/src/subjects/reading/components/ReadingPracticeSurface.jsx
+index e166bc4..dcd4099 100644
+--- a/src/subjects/reading/components/ReadingPracticeSurface.jsx
++++ b/src/subjects/reading/components/ReadingPracticeSurface.jsx
+@@ -76,6 +76,18 @@ function hasMarkedQuestion(question) {
+   return Boolean(question?.result || question?.status === 'correct' || question?.status === 'partial' || question?.status === 'wrong');
+ }
+ 
++function markActionLabel(session) {
++  if (session?.strict) return 'Mark whole paper';
++  if (session?.viewMode === 'list') return 'Mark this section';
++  return 'Mark now';
++}
++
++function markActionHint(session) {
++  if (session?.strict) return 'Checks every saved answer in this paper and then shows feedback.';
++  if (session?.viewMode === 'list') return 'Checks the visible question list and then shows feedback for this text.';
++  return 'Checks your saved answer now and then shows feedback.';
++}
++
+ function ReadingSetup({ ui, actions }) {
+   const prefs = ui.prefs || {};
+   function start(event) {
+@@ -362,6 +374,7 @@ function QuestionPanel({ ui, actions }) {
+             ? 'Review the model answer and evidence, then move to the next question.'
+             : 'Read the passage first, answer without clues, then submit for feedback.'}
+       </div>
++      {session.delayedFeedback || session.strict ? <p className="tiny reading-mark-action-hint">{markActionHint(session)}</p> : null}
+       <form id={formId} key={question.id} onSubmit={submit} data-reading-active-form="true">
+         <p className="question-stem">{question.stem}</p>
+         <QuestionInput question={question} response={response} disabled={disabled} />
+@@ -369,7 +382,7 @@ function QuestionPanel({ ui, actions }) {
+           {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{primarySubmitLabel}</button> : null}
+           <button className="btn ghost" type="button" onClick={(event) => saveAndMove(event, { delta: -1 })} disabled={pending || !canGoPrevious(session)}>Previous</button>
+           {showDraftNextButton ? <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save draft and next'}</button> : null}
+-          {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={finish} disabled={pending}>Finish now</button> : null}
++          {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={finish} disabled={pending}>{markActionLabel(session)}</button> : null}
+           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
+         </div>
+       </form>
+@@ -416,6 +429,7 @@ function QuestionListPanel({ ui, actions }) {
+           ? 'SATs-style mode: answer each text inside this Reading frame, then mark the whole paper when you want feedback.'
+           : 'Use the passage beside this card, save the visible section as you go, and mark only when you are ready for feedback.'}
+       </div>
++      <p className="tiny reading-mark-action-hint">{markActionHint(session)}</p>
+       <form className="reading-list-form" onSubmit={mark} data-reading-active-form="true">
+         {questions.map((questionItem) => {
+           const marked = hasMarkedQuestion(questionItem);
+@@ -440,7 +454,7 @@ function QuestionListPanel({ ui, actions }) {
+         })}
+         <div className="actions reading-actions-spaced">
+           <button className="btn secondary" type="button" onClick={saveSection} disabled={pending}>Save this section</button>
+-          <button className="btn warn" type="submit" disabled={pending}>{session.strict ? 'Mark whole paper' : 'Mark this section'}</button>
++          <button className="btn warn" type="submit" disabled={pending}>{markActionLabel(session)}</button>
+           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reading-end')} disabled={pending}>End round</button>
+         </div>
+       </form>
+diff --git a/tests/worker-reading-runtime.test.js b/tests/worker-reading-runtime.test.js
+index ef584ee..6b4396d 100644
+--- a/tests/worker-reading-runtime.test.js
++++ b/tests/worker-reading-runtime.test.js
+@@ -1,6 +1,6 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+-import { checkMatches, createServerReadingEngine } from '../worker/src/subjects/reading/engine.js';
++import { checkMatches, createServerReadingEngine, evaluateReadingQuestion } from '../worker/src/subjects/reading/engine.js';
+ import { buildReadingReadModel } from '../worker/src/subjects/reading/read-models.js';
+ import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
+ 
+@@ -70,6 +70,44 @@ test('reading contains checks use phrase boundaries rather than character substr
+   assert.equal(checkMatches('red tin', check), false);
+ });
+ 
++test('reading phrase checks reject locally negated correct phrases', () => {
++  assert.equal(checkMatches('speech marks', { containsAny: ['speech marks'] }), true);
++  assert.equal(checkMatches('The answer is speech marks.', { containsAny: ['speech marks'] }), true);
++  assert.equal(checkMatches('not speech marks', { containsAny: ['speech marks'] }), false);
++  assert.equal(checkMatches('It is not because of speech marks.', { containsAny: ['speech marks'] }), false);
++  assert.equal(checkMatches('folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), true);
++  assert.equal(checkMatches('not folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), false);
++  assert.equal(checkMatches('not only speech marks', { containsAny: ['speech marks'] }), true);
++});
++
++test('reading evidence fallback does not award marks for negated evidence quotes', () => {
++  const question = {
++    id: 'negated_evidence_probe',
++    type: 'evidenceShort',
++    skill: '2d',
++    marks: 2,
++    answerMarks: 1,
++    evidenceMarks: 1,
++    answerCheck: { keywordAny: [['house', 'change']] },
++    evidenceCheck: { containsAny: ['the house around her seemed to change'] },
++    modelAnswer: 'The house seems different; evidence could include "the house around her seemed to change".',
++    explanation: '',
++  };
++
++  const valid = evaluateReadingQuestion(question, {
++    answer: 'the house changes',
++    evidence: 'the house around her seemed to change',
++  });
++  assert.equal(valid.score, 2);
++
++  const negated = evaluateReadingQuestion(question, {
++    answer: 'the house changes',
++    evidence: 'not the house around her seemed to change',
++  });
++  assert.equal(negated.score, 1);
++  assert.equal(negated.correct, false);
++});
++
+ test('reading save-response rejects stale expected session or question ids', () => {
+   const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+   const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
+diff --git a/tests/reading-session-interface.test.js b/tests/reading-session-interface.test.js
+index 22602cb..dea066b 100644
+--- a/tests/reading-session-interface.test.js
++++ b/tests/reading-session-interface.test.js
+@@ -64,6 +64,16 @@ test('reading surface implements delegated full-list session UI inside the app f
+   assert.match(ui, /data-reading-active-form="true"/);
+ });
+ 
++test('reading marking controls use mode-specific labels instead of a generic finish action', () => {
++  const ui = source('src/subjects/reading/components/ReadingPracticeSurface.jsx');
++  assert.match(ui, /function markActionLabel/);
++  assert.match(ui, /Mark now/);
++  assert.match(ui, /Mark this section/);
++  assert.match(ui, /Mark whole paper/);
++  assert.match(ui, /markActionHint/);
++  assert.doesNotMatch(ui, /Finish now/);
++});
++
+ 
+ 
+ test('reading one-question delayed-feedback surface has one save-and-next path', () => {

@@ -1,0 +1,261 @@
+diff --git a/scripts/audit-punctuation-qg-p20-expansion.mjs b/scripts/audit-punctuation-qg-p20-expansion.mjs
+index 2e35346..47abb2f 100644
+--- a/scripts/audit-punctuation-qg-p20-expansion.mjs
++++ b/scripts/audit-punctuation-qg-p20-expansion.mjs
+@@ -626,8 +626,9 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+ 
+   const skillRows = buildSkillRows(items);
+   const familyRows = buildFamilyRows(generatedItems);
+-  const duplicateSurfaces = findSurfaceDuplicates(generatedItems);
+-  const legacyFixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
++  const duplicateSurfaces = findSurfaceDuplicates(items);
++  const generatedDuplicateSurfaces = findSurfaceDuplicates(generatedItems);
++  const fixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
+   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
+   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
+   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
+@@ -645,7 +646,9 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+     uniqueLearnerSurfaces: uniqueBy(items, learnerSurfaceSignature),
+     uniqueVariantSignatures: uniqueBy(items, (item) => item.variantSignature || item.id),
+     duplicateSurfaceGroups: duplicateSurfaces.length,
+-    legacyFixedDuplicateSurfaceGroups: legacyFixedDuplicateSurfaces.length,
++    generatedDuplicateSurfaceGroups: generatedDuplicateSurfaces.length,
++    fixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
++    legacyFixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
+     modelSelfMarkingFailures: modelFailures.length,
+     byMode: groupCounts(items, (item) => item.mode),
+     bySkill: groupCounts(items, (item) => item.skillIds || []),
+@@ -679,7 +682,9 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+         uniqueLearnerSurfaces: counts.uniqueLearnerSurfaces,
+         uniqueVariantSignatures: counts.uniqueVariantSignatures,
+         duplicateSurfaceGroups: duplicateSurfaces.length,
+-        legacyFixedDuplicateSurfaceGroups: legacyFixedDuplicateSurfaces.length,
++        generatedDuplicateSurfaceGroups: generatedDuplicateSurfaces.length,
++        fixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
++        legacyFixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
+       },
+       thresholds: {
+         minUniqueLearnerSurfaces: P20_THRESHOLDS.minUniqueLearnerSurfaces,
+@@ -687,7 +692,9 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+         duplicateSurfaceGroups: 0,
+       },
+       duplicateSurfaceSamples: duplicateSurfaces.slice(0, 10),
+-      legacyFixedDuplicateSurfaceSamples: legacyFixedDuplicateSurfaces.slice(0, 10),
++      generatedDuplicateSurfaceSamples: generatedDuplicateSurfaces.slice(0, 10),
++      fixedDuplicateSurfaceSamples: fixedDuplicateSurfaces.slice(0, 10),
++      legacyFixedDuplicateSurfaceSamples: fixedDuplicateSurfaces.slice(0, 10),
+     },
+     generatedFamilyDepth: {
+       ok: counts.generatedFamilies >= P20_THRESHOLDS.minGeneratedFamilyCount
+@@ -745,7 +752,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+     familyRows,
+     notes: [
+       'This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.',
+-      'Duplicate-surface blocking is applied to generated runtime items; legacy fixed-bank duplicates are reported separately and governed through the fixedBank review decision.',
++      'Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.',
+       'Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage.',
+     ],
+   };
+diff --git a/scripts/validate-punctuation-qg-p20-expansion-report.mjs b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
+index 3001ebc..72314c9 100644
+--- a/scripts/validate-punctuation-qg-p20-expansion-report.mjs
++++ b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
+@@ -40,7 +40,9 @@ if (counts.generatedItems < thresholds.minGeneratedItems) fail('generated item f
+ if (counts.fixedItems < thresholds.minFixedItems) fail('fixed item floor not met', counts);
+ if (counts.uniqueLearnerSurfaces < thresholds.minUniqueLearnerSurfaces) fail('unique learner-facing surface floor not met', counts);
+ if (counts.uniqueVariantSignatures < thresholds.minUniqueVariantSignatures) fail('unique variant signature floor not met', counts);
+-if (counts.duplicateSurfaceGroups !== 0) fail('generated duplicate surface groups must be zero', counts);
++if (counts.duplicateSurfaceGroups !== 0) fail('runtime duplicate surface groups must be zero', counts);
++if (counts.generatedDuplicateSurfaceGroups !== undefined && counts.generatedDuplicateSurfaceGroups !== 0) fail('generated duplicate surface groups must be zero', counts);
++if (counts.fixedDuplicateSurfaceGroups !== undefined && counts.fixedDuplicateSurfaceGroups !== 0) fail('fixed-bank duplicate surface groups must be zero', counts);
+ if (counts.modelSelfMarkingFailures !== 0) fail('model self-marking failures must be zero', counts);
+ 
+ const skillRows = Array.isArray(report.skillRows) ? report.skillRows : [];
+diff --git a/shared/punctuation/fixed-expansion-items-p12.js b/shared/punctuation/fixed-expansion-items-p12.js
+index 7e2fcde..7a8c9e3 100644
+--- a/shared/punctuation/fixed-expansion-items-p12.js
++++ b/shared/punctuation/fixed-expansion-items-p12.js
+@@ -7812,14 +7812,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
+     "rewardUnitId": "parenthesis-core",
+     "prompt": "Choose the sentence with the parenthesis marked correctly.",
+     "options": [
+-      "The museum which opened last year welcomed the class.",
+-      "The museum, which opened last year, welcomed the class.",
+-      "The museum, which opened last year welcomed the class.",
+-      "The museum which opened last year, welcomed the class."
++      "The science club which meets on Thursdays tested paper rockets.",
++      "The science club, which meets on Thursdays, tested paper rockets.",
++      "The science club, which meets on Thursdays tested paper rockets.",
++      "The science club which meets on Thursdays, tested paper rockets."
+     ],
+     "correctIndex": 1,
+     "explanation": "Both sides of the parenthesis need punctuation.",
+-    "model": "The museum, which opened last year, welcomed the class.",
++    "model": "The science club, which meets on Thursdays, tested paper rockets.",
+     "misconceptionTags": [
+       "manual.p12_choice_expansion",
+       "structure.parenthesis_missing"
+@@ -7842,14 +7842,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
+     "rewardUnitId": "parenthesis-core",
+     "prompt": "Choose the sentence with the parenthesis marked correctly.",
+     "options": [
+-      "The library our favourite place was full of visitors.",
+-      "The library, our favourite place, was full of visitors.",
+-      "The library, our favourite place was full of visitors.",
+-      "The library our favourite place, was full of visitors."
++      "The river swollen after rain rushed past the old bridge.",
++      "The river, swollen after rain, rushed past the old bridge.",
++      "The river, swollen after rain rushed past the old bridge.",
++      "The river swollen after rain, rushed past the old bridge."
+     ],
+     "correctIndex": 1,
+     "explanation": "Both sides of the parenthesis need punctuation.",
+-    "model": "The library, our favourite place, was full of visitors.",
++    "model": "The river, swollen after rain, rushed past the old bridge.",
+     "misconceptionTags": [
+       "manual.p12_choice_expansion",
+       "structure.parenthesis_missing"
+@@ -7872,14 +7872,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
+     "rewardUnitId": "parenthesis-core",
+     "prompt": "Choose the sentence with the parenthesis marked correctly.",
+     "options": [
+-      "The robot a careful design won first prize.",
+-      "The robot, a careful design, won first prize.",
+-      "The robot, a careful design won first prize.",
+-      "The robot a careful design, won first prize."
++      "The author a former teacher visited the book fair.",
++      "The author, a former teacher, visited the book fair.",
++      "The author, a former teacher visited the book fair.",
++      "The author a former teacher, visited the book fair."
+     ],
+     "correctIndex": 1,
+     "explanation": "Both sides of the parenthesis need punctuation.",
+-    "model": "The robot, a careful design, won first prize.",
++    "model": "The author, a former teacher, visited the book fair.",
+     "misconceptionTags": [
+       "manual.p12_choice_expansion",
+       "structure.parenthesis_missing"
+@@ -7902,14 +7902,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
+     "rewardUnitId": "parenthesis-core",
+     "prompt": "Choose the sentence with the parenthesis marked correctly.",
+     "options": [
+-      "The captain who led the rescue smiled at the team.",
+-      "The captain, who led the rescue, smiled at the team.",
+-      "The captain, who led the rescue smiled at the team.",
+-      "The captain who led the rescue, smiled at the team."
++      "The fox which had a white-tipped tail slipped under the fence.",
++      "The fox, which had a white-tipped tail, slipped under the fence.",
++      "The fox, which had a white-tipped tail slipped under the fence.",
++      "The fox which had a white-tipped tail, slipped under the fence."
+     ],
+     "correctIndex": 1,
+     "explanation": "Both sides of the parenthesis need punctuation.",
+-    "model": "The captain, who led the rescue, smiled at the team.",
++    "model": "The fox, which had a white-tipped tail, slipped under the fence.",
+     "misconceptionTags": [
+       "manual.p12_choice_expansion",
+       "structure.parenthesis_missing"
+@@ -7932,14 +7932,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
+     "rewardUnitId": "parenthesis-core",
+     "prompt": "Choose the sentence with the parenthesis marked correctly.",
+     "options": [
+-      "The garden where bees gather looked colourful in spring.",
+-      "The garden, where bees gather, looked colourful in spring.",
+-      "The garden, where bees gather looked colourful in spring.",
+-      "The garden where bees gather, looked colourful in spring."
++      "The orchestra practising in the hall paused for applause.",
++      "The orchestra, practising in the hall, paused for applause.",
++      "The orchestra, practising in the hall paused for applause.",
++      "The orchestra practising in the hall, paused for applause."
+     ],
+     "correctIndex": 1,
+     "explanation": "Both sides of the parenthesis need punctuation.",
+-    "model": "The garden, where bees gather, looked colourful in spring.",
++    "model": "The orchestra, practising in the hall, paused for applause.",
+     "misconceptionTags": [
+       "manual.p12_choice_expansion",
+       "structure.parenthesis_missing"
+@@ -7962,14 +7962,14 @@ export const PUNCTUATION_FIXED_EXPANSION_P12_ITEMS = Object.freeze([
+     "rewardUnitId": "parenthesis-core",
+     "prompt": "Choose the sentence with the parenthesis marked correctly.",
+     "options": [
+-      "The gallery a former station was busy after lunch.",
+-      "The gallery, a former station, was busy after lunch.",
+-      "The gallery, a former station was busy after lunch.",
+-      "The gallery a former station, was busy after lunch."
++      "The bakery famous for sourdough opened before sunrise.",
++      "The bakery, famous for sourdough, opened before sunrise.",
++      "The bakery, famous for sourdough opened before sunrise.",
++      "The bakery famous for sourdough, opened before sunrise."
+     ],
+     "correctIndex": 1,
+     "explanation": "Both sides of the parenthesis need punctuation.",
+-    "model": "The gallery, a former station, was busy after lunch.",
++    "model": "The bakery, famous for sourdough, opened before sunrise.",
+     "misconceptionTags": [
+       "manual.p12_choice_expansion",
+       "structure.parenthesis_missing"
+diff --git a/tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js b/tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js
+new file mode 100644
+index 0000000..7a4c533
+--- /dev/null
++++ b/tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js
+@@ -0,0 +1,58 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import { PUNCTUATION_CONTENT_MANIFEST } from '../shared/punctuation/content.js';
++import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
++
++function normaliseText(value) {
++  return String(value ?? '')
++    .replace(/\u00a0/g, ' ')
++    .replace(/[“”]/g, '"')
++    .replace(/[‘’]/g, "'")
++    .replace(/[–—]/g, '-')
++    .replace(/\s+/g, ' ')
++    .trim()
++    .toLowerCase();
++}
++
++function stableJson(value) {
++  if (Array.isArray(value)) return value.map(stableJson);
++  if (!value || typeof value !== 'object') return value;
++  return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableJson(value[key])]));
++}
++
++function learnerSurfaceSignature(item) {
++  const payload = {
++    mode: item.mode || '',
++    prompt: normaliseText(item.prompt),
++    stem: normaliseText(item.stem),
++    options: Array.isArray(item.options) ? item.options.map(normaliseText) : [],
++    model: normaliseText(item.model),
++    accepted: Array.isArray(item.accepted) ? item.accepted.map(normaliseText).sort() : [],
++    skillIds: Array.isArray(item.skillIds) ? [...item.skillIds].sort() : [],
++    validatorType: item.validator && typeof item.validator === 'object' ? item.validator.type || '' : '',
++    rubricType: item.rubric && typeof item.rubric === 'object' ? item.rubric.type || '' : '',
++  };
++  return JSON.stringify(stableJson(payload));
++}
++
++test('P20 runtime pool has no duplicate learner-facing surfaces in fixed or generated items', () => {
++  const manifest = createPunctuationRuntimeManifest(PUNCTUATION_CONTENT_MANIFEST, {
++    productionDepth: PRODUCTION_DEPTH,
++  });
++
++  const groups = new Map();
++  for (const item of manifest.items) {
++    const signature = learnerSurfaceSignature(item);
++    const group = groups.get(signature) || [];
++    group.push(item.id);
++    groups.set(signature, group);
++  }
++
++  const duplicates = [...groups.values()]
++    .filter((ids) => ids.length > 1)
++    .map((ids) => [...ids].sort())
++    .sort((a, b) => a[0].localeCompare(b[0]));
++
++  assert.deepEqual(duplicates, []);
++});

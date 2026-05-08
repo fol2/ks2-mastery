@@ -1,0 +1,13 @@
+{
+  "source": "patched fresh extraction",
+  "status": "PASS",
+  "counts": {
+    "runtimeItems": 15072,
+    "uniqueLearnerSurfaces": 15072,
+    "duplicateSurfaceGroups": 0,
+    "generatedDuplicateSurfaceGroups": 0,
+    "fixedDuplicateSurfaceGroups": 0,
+    "legacyFixedDuplicateSurfaceGroups": 0
+  },
+  "duplicateSamples": []
+}

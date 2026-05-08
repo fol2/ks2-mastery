@@ -1,0 +1,348 @@
+{
+  "generatedAt": "2026-05-08T11:35:07.134Z",
+  "root": "/mnt/data/reading-rebuild-work",
+  "content": {
+    "passageCount": 21,
+    "questionCount": 182,
+    "paperCount": 12,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 8,
+      "non-fiction": 8,
+      "poetry": 5
+    },
+    "longPassageCount": 7,
+    "duplicateNormalisedStemGroups": 0,
+    "duplicateModelAnswerGroups": 0,
+    "duplicateStemExamples": [],
+    "duplicateModelAnswerExamples": []
+  },
+  "negationAudit": {
+    "negatedMatcherAcceptances": 5100,
+    "negatedEvaluationRisks": 1008,
+    "matcherExamples": [
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "not fold slip paper"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "never fold slip paper"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "no fold slip paper"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "opposite of fold slip paper"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "not note"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "never note"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "no note"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "opposite of note"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "not paper thread"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "never paper thread"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "no paper thread"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "check",
+        "probe": "opposite of paper thread"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answerCheck",
+        "probe": "not house seem chang"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answerCheck",
+        "probe": "never house seem chang"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answerCheck",
+        "probe": "no house seem chang"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answerCheck",
+        "probe": "opposite of house seem chang"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answerCheck",
+        "probe": "not see day different"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answerCheck",
+        "probe": "never see day different"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answerCheck",
+        "probe": "no see day different"
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answerCheck",
+        "probe": "opposite of see day different"
+      }
+    ],
+    "evaluationExamples": [
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "answer",
+        "probe": "not fold slip paper",
+        "score": 1,
+        "maxScore": 1
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "answer",
+        "probe": "never fold slip paper",
+        "score": 1,
+        "maxScore": 1
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "answer",
+        "probe": "no fold slip paper",
+        "score": 1,
+        "maxScore": 1
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q1",
+        "type": "short",
+        "role": "answer",
+        "probe": "opposite of fold slip paper",
+        "score": 1,
+        "maxScore": 1
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answer",
+        "probe": "not house seem chang",
+        "score": 2,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "evidence",
+        "probe": "not opened a second version of the day",
+        "score": 2,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answer",
+        "probe": "never house seem chang",
+        "score": 2,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "evidence",
+        "probe": "never opened a second version of the day",
+        "score": 2,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answer",
+        "probe": "no house seem chang",
+        "score": 2,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "evidence",
+        "probe": "no opened a second version of the day",
+        "score": 2,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "answer",
+        "probe": "opposite of house seem chang",
+        "score": 2,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q3",
+        "type": "evidenceShort",
+        "role": "evidence",
+        "probe": "opposite of opened a second version of the day",
+        "score": 2,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q5",
+        "type": "open",
+        "role": "rubric:0:Explains personification",
+        "probe": "not tree sound like person",
+        "score": 1,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q5",
+        "type": "open",
+        "role": "rubric:0:Explains personification",
+        "probe": "never tree sound like person",
+        "score": 1,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q5",
+        "type": "open",
+        "role": "rubric:0:Explains personification",
+        "probe": "no tree sound like person",
+        "score": 1,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q5",
+        "type": "open",
+        "role": "rubric:0:Explains personification",
+        "probe": "opposite of tree sound like person",
+        "score": 1,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q5",
+        "type": "open",
+        "role": "rubric:1:Shows persistence or recovery",
+        "probe": "not recover",
+        "score": 1,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q5",
+        "type": "open",
+        "role": "rubric:1:Shows persistence or recovery",
+        "probe": "never recover",
+        "score": 1,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q5",
+        "type": "open",
+        "role": "rubric:1:Shows persistence or recovery",
+        "probe": "no recover",
+        "score": 1,
+        "maxScore": 2
+      },
+      {
+        "passageId": "red_tin_box",
+        "questionId": "rtb_q5",
+        "type": "open",
+        "role": "rubric:1:Shows persistence or recovery",
+        "probe": "opposite of recover",
+        "score": 1,
+        "maxScore": 2
+      }
+    ]
+  }
+}

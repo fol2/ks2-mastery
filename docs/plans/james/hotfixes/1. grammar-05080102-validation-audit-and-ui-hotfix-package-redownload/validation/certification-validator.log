@@ -1,0 +1,16 @@
+PASS: Manifest schema valid (6 oracle families)
+PASS: Manifest expected output paths are valid or absent
+PASS: Inventory release IDs consistent with manifest (grammar-qg-p20-2026-05-05)
+PASS: Release ID consistent (manifest ↔ code: grammar-qg-p20-2026-05-05)
+PASS: Runtime certification authority matches manifest status map and fails closed
+PASS: Marking matrix count and payload length match manifest (160 entries)
+PASS: Distractor review coverage has adult decisions for 103 template(s)
+
+Oracle test envelope (510 templates):
+  selected-response-oracle: seeds 1..15 → 15 seeds × 510 templates = 7650 max tests
+  constructed-response-oracle: seeds 1..10 → 10 seeds × 510 templates = 5100 max tests
+  manual-review-oracle: seeds 1..5 → 5 seeds × 510 templates = 2550 max tests
+  redaction-oracle: seeds 1..30 → 30 seeds × 510 templates = 15300 max tests
+  content-quality-audit: seeds 1..30 → 30 seeds × 510 templates = 15300 max tests
+  semantic-prompt-cue-audit: seeds 1..30 → 30 seeds × 510 templates = 15300 max tests
+  Total maximum envelope: 61200

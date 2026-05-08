@@ -1,0 +1,2149 @@
+{
+  "schemaVersion": 1,
+  "phase": "punctuation-qg-p20-expansion-audit",
+  "status": "PASS",
+  "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+  "generatedAt": "2026-05-08T11:34:59.671Z",
+  "thresholds": {
+    "phase": 20,
+    "minRuntimeItems": 15000,
+    "minGeneratedItems": 14000,
+    "minFixedItems": 512,
+    "minUniqueLearnerSurfaces": 14800,
+    "minUniqueVariantSignatures": 14800,
+    "minGeneratedFamilyCount": 126,
+    "minGeneratedFamilyUniqueSurfaces": 80,
+    "minSkillUniqueSurfaces": 500,
+    "minSkillOpenTypedItems": 300,
+    "minSkillTransferOpenProductionItems": 120,
+    "minSkillChoiceItems": 80,
+    "minFamilyNegativeVectors": 5,
+    "minSkillNegativeVectors": 40,
+    "oneLearnerSessions": 50,
+    "oneLearnerRoundLength": "6",
+    "minOneLearnerUniqueItems": 220,
+    "multiLearnerCount": 10,
+    "multiLearnerSessions": 50,
+    "minMultiLearnerUniqueItems": 1200,
+    "minAverageSmartModesPerSession": 4,
+    "minSmartOpenProductionRatio": 0.12,
+    "maxSmartOpenProductionRatio": 0.35
+  },
+  "counts": {
+    "runtimeItems": 15072,
+    "generatedItems": 14560,
+    "fixedItems": 512,
+    "productionDepth": 120,
+    "generatedFamilies": 126,
+    "publishedSkills": 14,
+    "uniqueLearnerSurfaces": 15072,
+    "uniqueVariantSignatures": 15072,
+    "duplicateSurfaceGroups": 0,
+    "generatedDuplicateSurfaceGroups": 0,
+    "fixedDuplicateSurfaceGroups": 0,
+    "legacyFixedDuplicateSurfaceGroups": 0,
+    "modelSelfMarkingFailures": 0,
+    "byMode": {
+      "choose": 2420,
+      "combine": 2286,
+      "fix": 2397,
+      "insert": 2400,
+      "paragraph": 2185,
+      "transfer": 3384
+    },
+    "bySkill": {
+      "apostrophe_contractions": 1078,
+      "apostrophe_possession": 1175,
+      "bullet_points": 1075,
+      "colon_list": 1177,
+      "comma_clarity": 978,
+      "dash_clause": 1078,
+      "fronted_adverbial": 1177,
+      "hyphen": 978,
+      "list_commas": 1177,
+      "parenthesis": 1176,
+      "semicolon": 1176,
+      "semicolon_list": 978,
+      "sentence_endings": 1078,
+      "speech": 1177
+    }
+  },
+  "gates": {
+    "releaseIdentity": {
+      "ok": true,
+      "release": {
+        "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+        "matchesPattern": true,
+        "phase": 20,
+        "embeddedRuntimeCount": 15072,
+        "releaseDate": "2026-05-04",
+        "runtimeCountMatches": true,
+        "isP20OrLater": true
+      }
+    },
+    "poolDepth": {
+      "ok": true,
+      "observed": {
+        "runtimeItems": 15072,
+        "generatedItems": 14560,
+        "fixedItems": 512
+      },
+      "thresholds": {
+        "minRuntimeItems": 15000,
+        "minGeneratedItems": 14000,
+        "minFixedItems": 512
+      }
+    },
+    "learnerSurfaceVariety": {
+      "ok": true,
+      "observed": {
+        "uniqueLearnerSurfaces": 15072,
+        "uniqueVariantSignatures": 15072,
+        "duplicateSurfaceGroups": 0,
+        "generatedDuplicateSurfaceGroups": 0,
+        "fixedDuplicateSurfaceGroups": 0,
+        "legacyFixedDuplicateSurfaceGroups": 0
+      },
+      "thresholds": {
+        "minUniqueLearnerSurfaces": 14800,
+        "minUniqueVariantSignatures": 14800,
+        "duplicateSurfaceGroups": 0
+      },
+      "duplicateSurfaceSamples": [],
+      "generatedDuplicateSurfaceSamples": [],
+      "fixedDuplicateSurfaceSamples": [],
+      "legacyFixedDuplicateSurfaceSamples": []
+    },
+    "generatedFamilyDepth": {
+      "ok": true,
+      "observed": {
+        "generatedFamilies": 126,
+        "minFamilyUniqueSurfaces": 100
+      },
+      "thresholds": {
+        "minGeneratedFamilyCount": 126,
+        "minGeneratedFamilyUniqueSurfaces": 80
+      },
+      "failingFamilies": []
+    },
+    "perSkillBalance": {
+      "ok": true,
+      "thresholds": {
+        "minSkillUniqueSurfaces": 500,
+        "minSkillOpenTypedItems": 300,
+        "minSkillTransferOpenProductionItems": 120,
+        "minSkillChoiceItems": 80
+      },
+      "failingSkills": [],
+      "rows": [
+        {
+          "skillId": "sentence_endings",
+          "items": 1078,
+          "uniqueSurfaces": 1078,
+          "openTypedItems": 826,
+          "transferOpenProductionItems": 482,
+          "choiceItems": 252,
+          "modes": {
+            "choose": 252,
+            "combine": 120,
+            "fix": 122,
+            "insert": 222,
+            "paragraph": 120,
+            "transfer": 242
+          },
+          "ok": true
+        },
+        {
+          "skillId": "list_commas",
+          "items": 1177,
+          "uniqueSurfaces": 1177,
+          "openTypedItems": 926,
+          "transferOpenProductionItems": 584,
+          "choiceItems": 251,
+          "modes": {
+            "choose": 251,
+            "combine": 221,
+            "fix": 121,
+            "insert": 221,
+            "paragraph": 120,
+            "transfer": 243
+          },
+          "ok": true
+        },
+        {
+          "skillId": "apostrophe_contractions",
+          "items": 1078,
+          "uniqueSurfaces": 1078,
+          "openTypedItems": 926,
+          "transferOpenProductionItems": 583,
+          "choiceItems": 152,
+          "modes": {
+            "choose": 152,
+            "combine": 120,
+            "fix": 221,
+            "insert": 122,
+            "paragraph": 221,
+            "transfer": 242
+          },
+          "ok": true
+        },
+        {
+          "skillId": "apostrophe_possession",
+          "items": 1175,
+          "uniqueSurfaces": 1175,
+          "openTypedItems": 924,
+          "transferOpenProductionItems": 582,
+          "choiceItems": 251,
+          "modes": {
+            "choose": 251,
+            "combine": 120,
+            "fix": 121,
+            "insert": 221,
+            "paragraph": 221,
+            "transfer": 241
+          },
+          "ok": true
+        },
+        {
+          "skillId": "speech",
+          "items": 1177,
+          "uniqueSurfaces": 1177,
+          "openTypedItems": 1026,
+          "transferOpenProductionItems": 684,
+          "choiceItems": 151,
+          "modes": {
+            "choose": 151,
+            "combine": 120,
+            "fix": 121,
+            "insert": 221,
+            "paragraph": 322,
+            "transfer": 242
+          },
+          "ok": true
+        },
+        {
+          "skillId": "fronted_adverbial",
+          "items": 1177,
+          "uniqueSurfaces": 1177,
+          "openTypedItems": 1026,
+          "transferOpenProductionItems": 684,
+          "choiceItems": 151,
+          "modes": {
+            "choose": 151,
+            "combine": 221,
+            "fix": 221,
+            "insert": 121,
+            "paragraph": 221,
+            "transfer": 242
+          },
+          "ok": true
+        },
+        {
+          "skillId": "parenthesis",
+          "items": 1176,
+          "uniqueSurfaces": 1176,
+          "openTypedItems": 1025,
+          "transferOpenProductionItems": 683,
+          "choiceItems": 151,
+          "modes": {
+            "choose": 151,
+            "combine": 221,
+            "fix": 221,
+            "insert": 121,
+            "paragraph": 221,
+            "transfer": 241
+          },
+          "ok": true
+        },
+        {
+          "skillId": "comma_clarity",
+          "items": 978,
+          "uniqueSurfaces": 978,
+          "openTypedItems": 826,
+          "transferOpenProductionItems": 482,
+          "choiceItems": 152,
+          "modes": {
+            "choose": 152,
+            "combine": 120,
+            "fix": 122,
+            "insert": 222,
+            "paragraph": 120,
+            "transfer": 242
+          },
+          "ok": true
+        },
+        {
+          "skillId": "colon_list",
+          "items": 1177,
+          "uniqueSurfaces": 1177,
+          "openTypedItems": 1026,
+          "transferOpenProductionItems": 684,
+          "choiceItems": 151,
+          "modes": {
+            "choose": 151,
+            "combine": 221,
+            "fix": 121,
+            "insert": 221,
+            "paragraph": 221,
+            "transfer": 242
+          },
+          "ok": true
+        },
+        {
+          "skillId": "semicolon",
+          "items": 1176,
+          "uniqueSurfaces": 1176,
+          "openTypedItems": 1025,
+          "transferOpenProductionItems": 683,
+          "choiceItems": 151,
+          "modes": {
+            "choose": 151,
+            "combine": 221,
+            "fix": 221,
+            "insert": 121,
+            "paragraph": 221,
+            "transfer": 241
+          },
+          "ok": true
+        },
+        {
+          "skillId": "dash_clause",
+          "items": 1078,
+          "uniqueSurfaces": 1078,
+          "openTypedItems": 926,
+          "transferOpenProductionItems": 583,
+          "choiceItems": 152,
+          "modes": {
+            "choose": 152,
+            "combine": 221,
+            "fix": 221,
+            "insert": 122,
+            "paragraph": 120,
+            "transfer": 242
+          },
+          "ok": true
+        },
+        {
+          "skillId": "semicolon_list",
+          "items": 978,
+          "uniqueSurfaces": 978,
+          "openTypedItems": 826,
+          "transferOpenProductionItems": 482,
+          "choiceItems": 152,
+          "modes": {
+            "choose": 152,
+            "combine": 120,
+            "fix": 222,
+            "insert": 122,
+            "paragraph": 120,
+            "transfer": 242
+          },
+          "ok": true
+        },
+        {
+          "skillId": "bullet_points",
+          "items": 1075,
+          "uniqueSurfaces": 1075,
+          "openTypedItems": 924,
+          "transferOpenProductionItems": 582,
+          "choiceItems": 151,
+          "modes": {
+            "choose": 151,
+            "combine": 120,
+            "fix": 221,
+            "insert": 121,
+            "paragraph": 221,
+            "transfer": 241
+          },
+          "ok": true
+        },
+        {
+          "skillId": "hyphen",
+          "items": 978,
+          "uniqueSurfaces": 978,
+          "openTypedItems": 826,
+          "transferOpenProductionItems": 483,
+          "choiceItems": 152,
+          "modes": {
+            "choose": 152,
+            "combine": 120,
+            "fix": 121,
+            "insert": 222,
+            "paragraph": 120,
+            "transfer": 243
+          },
+          "ok": true
+        }
+      ]
+    },
+    "modelSelfMarking": {
+      "ok": true,
+      "failureCount": 0,
+      "failures": []
+    },
+    "reviewGovernance": {
+      "registerPath": "reports/punctuation/punctuation-qg-p20-review-register.json",
+      "registerExists": true,
+      "registerParseError": null,
+      "approved": 15072,
+      "missing": 0,
+      "blocked": 0,
+      "unapproved": 0,
+      "total": 15072,
+      "ok": true,
+      "sampleProblems": []
+    },
+    "negativeVectorCoverage": {
+      "registerPath": "reports/punctuation/punctuation-qg-p20-negative-vector-register.json",
+      "registerExists": true,
+      "registerParseError": null,
+      "totalVectors": 630,
+      "bySkill": {
+        "sentence_endings": 45,
+        "list_commas": 50,
+        "apostrophe_contractions": 40,
+        "apostrophe_possession": 50,
+        "speech": 45,
+        "fronted_adverbial": 45,
+        "parenthesis": 50,
+        "comma_clarity": 40,
+        "colon_list": 45,
+        "semicolon": 50,
+        "dash_clause": 45,
+        "semicolon_list": 40,
+        "bullet_points": 45,
+        "hyphen": 40
+      },
+      "byFamily": {
+        "gen_sentence_endings_choose": 5,
+        "gen_sentence_endings_insert": 5,
+        "gen_apostrophe_possession_choose": 5,
+        "gen_apostrophe_contractions_fix": 5,
+        "gen_apostrophe_possession_insert": 5,
+        "gen_apostrophe_mix_paragraph": 5,
+        "gen_speech_insert": 5,
+        "gen_list_commas_choose": 5,
+        "gen_list_commas_insert": 5,
+        "gen_list_commas_combine": 5,
+        "gen_fronted_adverbial_fix": 5,
+        "gen_fronted_adverbial_combine": 5,
+        "gen_fronted_speech_paragraph": 5,
+        "gen_comma_clarity_insert": 5,
+        "gen_semicolon_fix": 5,
+        "gen_semicolon_combine": 5,
+        "gen_colon_semicolon_paragraph": 5,
+        "gen_dash_clause_fix": 5,
+        "gen_dash_clause_combine": 5,
+        "gen_hyphen_insert": 5,
+        "gen_parenthesis_fix": 5,
+        "gen_parenthesis_combine": 5,
+        "gen_parenthesis_speech_paragraph": 5,
+        "gen_colon_list_insert": 5,
+        "gen_colon_list_combine": 5,
+        "gen_semicolon_list_fix": 5,
+        "gen_bullet_points_fix": 5,
+        "gen_bullet_points_paragraph": 5,
+        "gen_sentence_endings_transfer": 5,
+        "gen_list_commas_transfer": 5,
+        "gen_apostrophe_contractions_transfer": 5,
+        "gen_apostrophe_possession_transfer": 5,
+        "gen_speech_transfer": 5,
+        "gen_fronted_adverbial_transfer": 5,
+        "gen_parenthesis_transfer": 5,
+        "gen_comma_clarity_transfer": 5,
+        "gen_colon_list_transfer": 5,
+        "gen_semicolon_transfer": 5,
+        "gen_dash_clause_transfer": 5,
+        "gen_semicolon_list_transfer": 5,
+        "gen_bullet_points_transfer": 5,
+        "gen_hyphen_transfer": 5,
+        "gen_p20_sentence_endings_choose": 5,
+        "gen_p20_sentence_endings_insert": 5,
+        "gen_p20_sentence_endings_fix": 5,
+        "gen_p20_sentence_endings_combine": 5,
+        "gen_p20_sentence_endings_paragraph": 5,
+        "gen_p20_sentence_endings_transfer": 5,
+        "gen_p20_list_commas_choose": 5,
+        "gen_p20_list_commas_insert": 5,
+        "gen_p20_list_commas_fix": 5,
+        "gen_p20_list_commas_combine": 5,
+        "gen_p20_list_commas_paragraph": 5,
+        "gen_p20_list_commas_transfer": 5,
+        "gen_p20_apostrophe_contractions_choose": 5,
+        "gen_p20_apostrophe_contractions_insert": 5,
+        "gen_p20_apostrophe_contractions_fix": 5,
+        "gen_p20_apostrophe_contractions_combine": 5,
+        "gen_p20_apostrophe_contractions_paragraph": 5,
+        "gen_p20_apostrophe_contractions_transfer": 5,
+        "gen_p20_apostrophe_possession_choose": 5,
+        "gen_p20_apostrophe_possession_insert": 5,
+        "gen_p20_apostrophe_possession_fix": 5,
+        "gen_p20_apostrophe_possession_combine": 5,
+        "gen_p20_apostrophe_possession_paragraph": 5,
+        "gen_p20_apostrophe_possession_transfer": 5,
+        "gen_p20_speech_choose": 5,
+        "gen_p20_speech_insert": 5,
+        "gen_p20_speech_fix": 5,
+        "gen_p20_speech_combine": 5,
+        "gen_p20_speech_paragraph": 5,
+        "gen_p20_speech_transfer": 5,
+        "gen_p20_fronted_adverbial_choose": 5,
+        "gen_p20_fronted_adverbial_insert": 5,
+        "gen_p20_fronted_adverbial_fix": 5,
+        "gen_p20_fronted_adverbial_combine": 5,
+        "gen_p20_fronted_adverbial_paragraph": 5,
+        "gen_p20_fronted_adverbial_transfer": 5,
+        "gen_p20_parenthesis_choose": 5,
+        "gen_p20_parenthesis_insert": 5,
+        "gen_p20_parenthesis_fix": 5,
+        "gen_p20_parenthesis_combine": 5,
+        "gen_p20_parenthesis_paragraph": 5,
+        "gen_p20_parenthesis_transfer": 5,
+        "gen_p20_comma_clarity_choose": 5,
+        "gen_p20_comma_clarity_insert": 5,
+        "gen_p20_comma_clarity_fix": 5,
+        "gen_p20_comma_clarity_combine": 5,
+        "gen_p20_comma_clarity_paragraph": 5,
+        "gen_p20_comma_clarity_transfer": 5,
+        "gen_p20_colon_list_choose": 5,
+        "gen_p20_colon_list_insert": 5,
+        "gen_p20_colon_list_fix": 5,
+        "gen_p20_colon_list_combine": 5,
+        "gen_p20_colon_list_paragraph": 5,
+        "gen_p20_colon_list_transfer": 5,
+        "gen_p20_semicolon_choose": 5,
+        "gen_p20_semicolon_insert": 5,
+        "gen_p20_semicolon_fix": 5,
+        "gen_p20_semicolon_combine": 5,
+        "gen_p20_semicolon_paragraph": 5,
+        "gen_p20_semicolon_transfer": 5,
+        "gen_p20_dash_clause_choose": 5,
+        "gen_p20_dash_clause_insert": 5,
+        "gen_p20_dash_clause_fix": 5,
+        "gen_p20_dash_clause_combine": 5,
+        "gen_p20_dash_clause_paragraph": 5,
+        "gen_p20_dash_clause_transfer": 5,
+        "gen_p20_semicolon_list_choose": 5,
+        "gen_p20_semicolon_list_insert": 5,
+        "gen_p20_semicolon_list_fix": 5,
+        "gen_p20_semicolon_list_combine": 5,
+        "gen_p20_semicolon_list_paragraph": 5,
+        "gen_p20_semicolon_list_transfer": 5,
+        "gen_p20_bullet_points_choose": 5,
+        "gen_p20_bullet_points_insert": 5,
+        "gen_p20_bullet_points_fix": 5,
+        "gen_p20_bullet_points_combine": 5,
+        "gen_p20_bullet_points_paragraph": 5,
+        "gen_p20_bullet_points_transfer": 5,
+        "gen_p20_hyphen_choose": 5,
+        "gen_p20_hyphen_insert": 5,
+        "gen_p20_hyphen_fix": 5,
+        "gen_p20_hyphen_combine": 5,
+        "gen_p20_hyphen_paragraph": 5,
+        "gen_p20_hyphen_transfer": 5
+      },
+      "missingSkillCoverage": [],
+      "missingFamilyCoverage": [],
+      "ok": true
+    },
+    "heavyPlayVariety": {
+      "reportPath": "reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json",
+      "reportExists": true,
+      "reportParseError": null,
+      "source": "report",
+      "status": "PASS",
+      "ok": true,
+      "observed": {
+        "status": "PASS",
+        "learnerCount": 10,
+        "sessionsPerLearner": 50,
+        "roundLength": 6,
+        "surfaced": 3000,
+        "oneLearnerUniqueItems": 300,
+        "oneLearnerUniqueSurfaces": 300,
+        "oneLearnerImmediateItemRepeats": 0,
+        "oneLearnerImmediateSignatureRepeats": 0,
+        "multiLearnerUniqueItems": 2525,
+        "multiLearnerUniqueSurfaces": 2525,
+        "immediateItemRepeats": 0,
+        "immediateSignatureRepeats": 0,
+        "averageModesPerSession": 5,
+        "openProductionRatio": 0.333,
+        "perLearnerUniqueItems": [
+          {
+            "learnerIndex": 0,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          },
+          {
+            "learnerIndex": 1,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          },
+          {
+            "learnerIndex": 2,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          },
+          {
+            "learnerIndex": 3,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          },
+          {
+            "learnerIndex": 4,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          },
+          {
+            "learnerIndex": 5,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          },
+          {
+            "learnerIndex": 6,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          },
+          {
+            "learnerIndex": 7,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          },
+          {
+            "learnerIndex": 8,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          },
+          {
+            "learnerIndex": 9,
+            "uniqueItems": 300,
+            "uniqueSurfaces": 300
+          }
+        ]
+      },
+      "thresholds": {
+        "minOneLearnerUniqueItems": 220,
+        "minMultiLearnerUniqueItems": 1200,
+        "immediateItemRepeats": 0,
+        "immediateSignatureRepeats": 0,
+        "minAverageSmartModesPerSession": 4,
+        "minSmartOpenProductionRatio": 0.12,
+        "maxSmartOpenProductionRatio": 0.35
+      },
+      "failures": []
+    }
+  },
+  "failingGates": [],
+  "skillRows": [
+    {
+      "skillId": "sentence_endings",
+      "items": 1078,
+      "uniqueSurfaces": 1078,
+      "openTypedItems": 826,
+      "transferOpenProductionItems": 482,
+      "choiceItems": 252,
+      "modes": {
+        "choose": 252,
+        "combine": 120,
+        "fix": 122,
+        "insert": 222,
+        "paragraph": 120,
+        "transfer": 242
+      },
+      "ok": true
+    },
+    {
+      "skillId": "list_commas",
+      "items": 1177,
+      "uniqueSurfaces": 1177,
+      "openTypedItems": 926,
+      "transferOpenProductionItems": 584,
+      "choiceItems": 251,
+      "modes": {
+        "choose": 251,
+        "combine": 221,
+        "fix": 121,
+        "insert": 221,
+        "paragraph": 120,
+        "transfer": 243
+      },
+      "ok": true
+    },
+    {
+      "skillId": "apostrophe_contractions",
+      "items": 1078,
+      "uniqueSurfaces": 1078,
+      "openTypedItems": 926,
+      "transferOpenProductionItems": 583,
+      "choiceItems": 152,
+      "modes": {
+        "choose": 152,
+        "combine": 120,
+        "fix": 221,
+        "insert": 122,
+        "paragraph": 221,
+        "transfer": 242
+      },
+      "ok": true
+    },
+    {
+      "skillId": "apostrophe_possession",
+      "items": 1175,
+      "uniqueSurfaces": 1175,
+      "openTypedItems": 924,
+      "transferOpenProductionItems": 582,
+      "choiceItems": 251,
+      "modes": {
+        "choose": 251,
+        "combine": 120,
+        "fix": 121,
+        "insert": 221,
+        "paragraph": 221,
+        "transfer": 241
+      },
+      "ok": true
+    },
+    {
+      "skillId": "speech",
+      "items": 1177,
+      "uniqueSurfaces": 1177,
+      "openTypedItems": 1026,
+      "transferOpenProductionItems": 684,
+      "choiceItems": 151,
+      "modes": {
+        "choose": 151,
+        "combine": 120,
+        "fix": 121,
+        "insert": 221,
+        "paragraph": 322,
+        "transfer": 242
+      },
+      "ok": true
+    },
+    {
+      "skillId": "fronted_adverbial",
+      "items": 1177,
+      "uniqueSurfaces": 1177,
+      "openTypedItems": 1026,
+      "transferOpenProductionItems": 684,
+      "choiceItems": 151,
+      "modes": {
+        "choose": 151,
+        "combine": 221,
+        "fix": 221,
+        "insert": 121,
+        "paragraph": 221,
+        "transfer": 242
+      },
+      "ok": true
+    },
+    {
+      "skillId": "parenthesis",
+      "items": 1176,
+      "uniqueSurfaces": 1176,
+      "openTypedItems": 1025,
+      "transferOpenProductionItems": 683,
+      "choiceItems": 151,
+      "modes": {
+        "choose": 151,
+        "combine": 221,
+        "fix": 221,
+        "insert": 121,
+        "paragraph": 221,
+        "transfer": 241
+      },
+      "ok": true
+    },
+    {
+      "skillId": "comma_clarity",
+      "items": 978,
+      "uniqueSurfaces": 978,
+      "openTypedItems": 826,
+      "transferOpenProductionItems": 482,
+      "choiceItems": 152,
+      "modes": {
+        "choose": 152,
+        "combine": 120,
+        "fix": 122,
+        "insert": 222,
+        "paragraph": 120,
+        "transfer": 242
+      },
+      "ok": true
+    },
+    {
+      "skillId": "colon_list",
+      "items": 1177,
+      "uniqueSurfaces": 1177,
+      "openTypedItems": 1026,
+      "transferOpenProductionItems": 684,
+      "choiceItems": 151,
+      "modes": {
+        "choose": 151,
+        "combine": 221,
+        "fix": 121,
+        "insert": 221,
+        "paragraph": 221,
+        "transfer": 242
+      },
+      "ok": true
+    },
+    {
+      "skillId": "semicolon",
+      "items": 1176,
+      "uniqueSurfaces": 1176,
+      "openTypedItems": 1025,
+      "transferOpenProductionItems": 683,
+      "choiceItems": 151,
+      "modes": {
+        "choose": 151,
+        "combine": 221,
+        "fix": 221,
+        "insert": 121,
+        "paragraph": 221,
+        "transfer": 241
+      },
+      "ok": true
+    },
+    {
+      "skillId": "dash_clause",
+      "items": 1078,
+      "uniqueSurfaces": 1078,
+      "openTypedItems": 926,
+      "transferOpenProductionItems": 583,
+      "choiceItems": 152,
+      "modes": {
+        "choose": 152,
+        "combine": 221,
+        "fix": 221,
+        "insert": 122,
+        "paragraph": 120,
+        "transfer": 242
+      },
+      "ok": true
+    },
+    {
+      "skillId": "semicolon_list",
+      "items": 978,
+      "uniqueSurfaces": 978,
+      "openTypedItems": 826,
+      "transferOpenProductionItems": 482,
+      "choiceItems": 152,
+      "modes": {
+        "choose": 152,
+        "combine": 120,
+        "fix": 222,
+        "insert": 122,
+        "paragraph": 120,
+        "transfer": 242
+      },
+      "ok": true
+    },
+    {
+      "skillId": "bullet_points",
+      "items": 1075,
+      "uniqueSurfaces": 1075,
+      "openTypedItems": 924,
+      "transferOpenProductionItems": 582,
+      "choiceItems": 151,
+      "modes": {
+        "choose": 151,
+        "combine": 120,
+        "fix": 221,
+        "insert": 121,
+        "paragraph": 221,
+        "transfer": 241
+      },
+      "ok": true
+    },
+    {
+      "skillId": "hyphen",
+      "items": 978,
+      "uniqueSurfaces": 978,
+      "openTypedItems": 826,
+      "transferOpenProductionItems": 483,
+      "choiceItems": 152,
+      "modes": {
+        "choose": 152,
+        "combine": 120,
+        "fix": 121,
+        "insert": 222,
+        "paragraph": 120,
+        "transfer": 243
+      },
+      "ok": true
+    }
+  ],
+  "familyRows": [
+    {
+      "familyId": "gen_apostrophe_contractions_fix",
+      "items": 100,
+      "mode": "fix",
+      "skills": [
+        "apostrophe_contractions"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "apostrophe_contractions"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_apostrophe_mix_paragraph",
+      "items": 100,
+      "mode": "paragraph",
+      "skills": [
+        "apostrophe_contractions",
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_apostrophe_possession_choose",
+      "items": 100,
+      "mode": "choose",
+      "skills": [
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_apostrophe_possession_insert",
+      "items": 100,
+      "mode": "insert",
+      "skills": [
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_apostrophe_possession_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_bullet_points_fix",
+      "items": 100,
+      "mode": "fix",
+      "skills": [
+        "bullet_points"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_bullet_points_paragraph",
+      "items": 100,
+      "mode": "paragraph",
+      "skills": [
+        "bullet_points"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_bullet_points_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "bullet_points"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_colon_list_combine",
+      "items": 100,
+      "mode": "combine",
+      "skills": [
+        "colon_list"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_colon_list_insert",
+      "items": 100,
+      "mode": "insert",
+      "skills": [
+        "colon_list"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_colon_list_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "colon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_colon_semicolon_paragraph",
+      "items": 100,
+      "mode": "paragraph",
+      "skills": [
+        "colon_list",
+        "semicolon"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_comma_clarity_insert",
+      "items": 100,
+      "mode": "insert",
+      "skills": [
+        "comma_clarity"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_comma_clarity_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "comma_clarity"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_dash_clause_combine",
+      "items": 100,
+      "mode": "combine",
+      "skills": [
+        "dash_clause"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_dash_clause_fix",
+      "items": 100,
+      "mode": "fix",
+      "skills": [
+        "dash_clause"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_dash_clause_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "dash_clause"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_fronted_adverbial_combine",
+      "items": 100,
+      "mode": "combine",
+      "skills": [
+        "fronted_adverbial"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_fronted_adverbial_fix",
+      "items": 100,
+      "mode": "fix",
+      "skills": [
+        "fronted_adverbial"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_fronted_adverbial_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "fronted_adverbial"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_fronted_speech_paragraph",
+      "items": 100,
+      "mode": "paragraph",
+      "skills": [
+        "fronted_adverbial",
+        "speech"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_hyphen_insert",
+      "items": 100,
+      "mode": "insert",
+      "skills": [
+        "hyphen"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_hyphen_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "hyphen"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_list_commas_choose",
+      "items": 100,
+      "mode": "choose",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_list_commas_combine",
+      "items": 100,
+      "mode": "combine",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_list_commas_insert",
+      "items": 100,
+      "mode": "insert",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_list_commas_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_contractions_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "apostrophe_contractions"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_contractions_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "apostrophe_contractions"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_contractions_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "apostrophe_contractions"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_contractions_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "apostrophe_contractions"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_contractions_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "apostrophe_contractions"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_contractions_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "apostrophe_contractions"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_possession_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_possession_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_possession_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_possession_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_possession_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_apostrophe_possession_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "apostrophe_possession"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_bullet_points_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "bullet_points"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_bullet_points_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "bullet_points"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_bullet_points_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "bullet_points"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_bullet_points_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "bullet_points"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_bullet_points_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "bullet_points"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_bullet_points_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "bullet_points"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_colon_list_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "colon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_colon_list_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "colon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_colon_list_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "colon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_colon_list_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "colon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_colon_list_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "colon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_colon_list_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "colon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_comma_clarity_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "comma_clarity"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_comma_clarity_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "comma_clarity"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_comma_clarity_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "comma_clarity"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_comma_clarity_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "comma_clarity"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_comma_clarity_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "comma_clarity"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_comma_clarity_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "comma_clarity"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_dash_clause_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "dash_clause"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_dash_clause_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "dash_clause"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_dash_clause_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "dash_clause"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_dash_clause_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "dash_clause"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_dash_clause_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "dash_clause"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_dash_clause_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "dash_clause"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_fronted_adverbial_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "fronted_adverbial"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_fronted_adverbial_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "fronted_adverbial"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_fronted_adverbial_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "fronted_adverbial"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_fronted_adverbial_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "fronted_adverbial"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_fronted_adverbial_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "fronted_adverbial"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_fronted_adverbial_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "fronted_adverbial"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_hyphen_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "hyphen"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_hyphen_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "hyphen"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_hyphen_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "hyphen"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_hyphen_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "hyphen"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_hyphen_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "hyphen"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_hyphen_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "hyphen"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_list_commas_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_list_commas_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_list_commas_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_list_commas_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_list_commas_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_list_commas_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "list_commas"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_parenthesis_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "parenthesis"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_parenthesis_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "parenthesis"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_parenthesis_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "parenthesis"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_parenthesis_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "parenthesis"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_parenthesis_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "parenthesis"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_parenthesis_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "parenthesis"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "semicolon"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "semicolon"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "semicolon"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "semicolon"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_list_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "semicolon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_list_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "semicolon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_list_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "semicolon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_list_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "semicolon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_list_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "semicolon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_list_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "semicolon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "semicolon"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_semicolon_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "semicolon"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_sentence_endings_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "sentence_endings"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_sentence_endings_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "sentence_endings"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_sentence_endings_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "sentence_endings"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_sentence_endings_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "sentence_endings"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_sentence_endings_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "sentence_endings"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_sentence_endings_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "sentence_endings"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_speech_choose",
+      "items": 120,
+      "mode": "choose",
+      "skills": [
+        "speech"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_speech_combine",
+      "items": 120,
+      "mode": "combine",
+      "skills": [
+        "speech"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_speech_fix",
+      "items": 120,
+      "mode": "fix",
+      "skills": [
+        "speech"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_speech_insert",
+      "items": 120,
+      "mode": "insert",
+      "skills": [
+        "speech"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_speech_paragraph",
+      "items": 120,
+      "mode": "paragraph",
+      "skills": [
+        "speech"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_p20_speech_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "speech"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_parenthesis_combine",
+      "items": 100,
+      "mode": "combine",
+      "skills": [
+        "parenthesis"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_parenthesis_fix",
+      "items": 100,
+      "mode": "fix",
+      "skills": [
+        "parenthesis"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_parenthesis_speech_paragraph",
+      "items": 100,
+      "mode": "paragraph",
+      "skills": [
+        "parenthesis",
+        "speech"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_parenthesis_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "parenthesis"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_semicolon_combine",
+      "items": 100,
+      "mode": "combine",
+      "skills": [
+        "semicolon"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_semicolon_fix",
+      "items": 100,
+      "mode": "fix",
+      "skills": [
+        "semicolon"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_semicolon_list_fix",
+      "items": 100,
+      "mode": "fix",
+      "skills": [
+        "semicolon_list"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_semicolon_list_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "semicolon_list"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_semicolon_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "semicolon"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_sentence_endings_choose",
+      "items": 100,
+      "mode": "choose",
+      "skills": [
+        "sentence_endings"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_sentence_endings_insert",
+      "items": 100,
+      "mode": "insert",
+      "skills": [
+        "sentence_endings"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_sentence_endings_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "sentence_endings"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    },
+    {
+      "familyId": "gen_speech_insert",
+      "items": 100,
+      "mode": "insert",
+      "skills": [
+        "speech"
+      ],
+      "uniqueSurfaces": 100,
+      "ok": true
+    },
+    {
+      "familyId": "gen_speech_transfer",
+      "items": 120,
+      "mode": "transfer",
+      "skills": [
+        "speech"
+      ],
+      "uniqueSurfaces": 120,
+      "ok": true
+    }
+  ],
+  "notes": [
+    "This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.",
+    "Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.",
+    "Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage."
+  ]
+}
