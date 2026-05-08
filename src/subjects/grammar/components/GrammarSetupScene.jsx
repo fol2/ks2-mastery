@@ -254,7 +254,12 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
     .slice(0, 4)
     .map((entry) => ({
       id: entry.monsterId,
-      visual: grammarMonsterImageVisual(entry.monsterId, entry.stageIndex, monsterVisualConfig?.config),
+      visual: grammarMonsterImageVisual(
+        entry.monsterId,
+        entry.stageIndex,
+        monsterVisualConfig?.config,
+        entry.branch,
+      ),
       isEgg: entry.stageIndex === 0,
     }));
 

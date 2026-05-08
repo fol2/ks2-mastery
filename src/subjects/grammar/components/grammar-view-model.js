@@ -562,10 +562,10 @@ export function buildGrammarDashboardModel(grammar, _learner, rewardState, maste
 
 // --- Monster image visual helper (companion panel meadow) -------------------
 
-export function grammarMonsterImageVisual(monsterId, stage, visualConfig = null) {
+export function grammarMonsterImageVisual(monsterId, stage, visualConfig = null, branch = 'b1') {
   const visual = resolveMonsterVisual({
     monsterId,
-    branch: 'b1',
+    branch: typeof branch === 'string' && branch ? branch : 'b1',
     stage,
     context: 'codexCard',
     config: visualConfig,
@@ -783,6 +783,7 @@ export const GRAMMAR_MONSTER_STRIP_CHILD_COPY = Object.freeze(
  *     stars:       number,   // 0–100
  *     starMax:     100,
  *     stageIndex:  number,   // Codex-aligned asset stage 0–4
+ *     branch:      string,   // Codex-aligned asset branch
  *     accentColor: string,   // CSS hex colour from MONSTERS registry
  *   }
  *
@@ -817,6 +818,7 @@ export function buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, 
       stars,
       starMax: GRAMMAR_MONSTER_STAR_MAX,
       stageIndex: grammarAssetStageIndex(progress, stars),
+      branch: progress.branch || 'b1',
       displayState: progress.displayState || 'not-found',
       accentColor,
     });

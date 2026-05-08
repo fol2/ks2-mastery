@@ -1121,6 +1121,7 @@ test('P5-U7 view-model: monster strip asset stages match Codex entries for the s
     assert.equal(sidebarEntry.stageIndex, expectedAssetStage, `sidebar stage for ${stars} Stars`);
     assert.equal(codexEntry.stage, expectedAssetStage, `Codex stage for ${stars} Stars`);
     assert.equal(sidebarEntry.stageIndex, codexEntry.stage, `sidebar and Codex stage match for ${stars} Stars`);
+    assert.equal(sidebarEntry.branch, codexEntry.branch, `sidebar and Codex branch match for ${stars} Stars`);
   }
 });
 
