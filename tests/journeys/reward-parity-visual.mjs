@@ -41,7 +41,7 @@ export default async function run({ driver, artifacts, log, assert }) {
   log('enter Punctuation and drive a Smart Review to Summary');
   await driver.click('[data-action="open-subject"][data-subject-id="punctuation"]');
   await driver.waitForSelector('[data-punctuation-phase="setup"]', 10_000);
-  await driver.click('[data-action="punctuation-start"][data-mode-id="smart"]');
+  await driver.click('[data-punctuation-cta]');
   await driver.waitForSelector('[data-punctuation-submit]', 15_000);
 
   // Answer items until we reach Summary OR hit a 20s ceiling. We click
@@ -147,7 +147,7 @@ export default async function run({ driver, artifacts, log, assert }) {
 
   // Navigate back into Summary to verify star meter there too.
   log('re-enter Smart Review to drive to Summary for star parity check');
-  await driver.click('[data-action="punctuation-start"][data-mode-id="smart"]');
+  await driver.click('[data-punctuation-cta]');
   await driver.waitForSelector('[data-punctuation-submit]', 15_000);
 
   // Drive round again to reach Summary.

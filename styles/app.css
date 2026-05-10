@@ -10845,26 +10845,81 @@ html { scroll-behavior: smooth; }
 }
 
 /* --- Setup — mission dashboard (Phase 5 U7) ------------------------------ */
-/* The mission dashboard replaces the three-card button wall with a hero +
-   progress row + monster star meters + map link + secondary drawer. Layout
-   mirrors the Spelling Setup's hero pattern, adapted for Bellstorm Coast. */
+/* The mission dashboard uses the same shared setup pattern as Grammar and
+   Spelling: hero copy, mode-card row, tweak rows, begin row, and sidebar. */
 
 .punctuation-mission-dashboard {
   display: block;
 }
 
 /* --- U4 (refactor ui-consolidation): platform hero engine adoption ------- */
-/* `.setup-main` carries `min-height: 610px; overflow: hidden;
-   view-transition-name: spelling-hero-card` (app.css:4588-4608) to fit
-   Spelling's single-screen hero card. Punctuation's mission dashboard is
-   ~1000-1200px (hero + progress + monster row + map link + secondary
-   drawer) and must not inherit that 610px floor nor share the Spelling
-   view-transition name (collision risk). `overflow: visible` keeps
-   focus-ring rendering intact at the monster-meter edges. */
+/* Punctuation now follows the shared Grammar / Spelling setup rhythm:
+   mode cards, setup controls, and a right-aligned begin row all live
+   inside the inherited `.setup-main` shell. Keep the subject-specific
+   view-transition name and accent remap without overriding the shared
+   card sizing, clipping, or minimum height. */
 .punctuation-setup-main {
-  min-height: auto;
-  overflow: visible;
+  --accent: var(--punctuation-accent, var(--brand));
+  --btn-accent: var(--punctuation-accent, var(--brand));
   view-transition-name: punctuation-hero-card;
+}
+
+.punctuation-setup-main .punctuation-hero-welcome {
+  margin: 4px 0 0;
+  color: var(--mode-card-copy, var(--ink-2));
+  font-weight: 600;
+  font-size: 0.94rem;
+}
+
+.punctuation-mode-row {
+  margin-top: 18px;
+}
+
+.punctuation-setup-main .mode-card .mc-icon-glyph {
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--punctuation-accent) 34%, var(--panel-soft)),
+    color-mix(in oklab, var(--brand) 18%, var(--panel-soft)));
+  color: var(--punctuation-accent-ink, #ffe2a8);
+  font-family: var(--font-display, "Fraunces", Georgia, serif);
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.punctuation-setup-main .mode-card .mc-glyph {
+  display: block;
+}
+
+.punctuation-setup-main .mode-card .mc-badge {
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 800;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
+  color: var(--punctuation-accent-ink, #ffe2a8);
+  border: 1px solid color-mix(in oklab, var(--punctuation-accent) 24%, transparent);
+}
+
+.punctuation-setup-main .mode-card .mc-badge.recommended {
+  background: var(--punctuation-accent);
+  color: #fff;
+  border-color: var(--punctuation-accent);
+}
+
+.punctuation-setup-main .mode-card .mc-badge-spacer {
+  display: inline-block;
+  width: 1px;
+  height: 1px;
+}
+
+.punctuation-control-stack {
+  min-height: 128px;
+}
+
+.punctuation-start-row {
+  margin-top: 18px;
 }
 
 /* Punctuation sidebar — mirrors Grammar's sidebar structure. */
@@ -11043,45 +11098,6 @@ html { scroll-behavior: smooth; }
 }
 
 /* Punctuation sidebar map-link (inside SetupSidePanel footer) */
-
-/* Secondary practice drawer */
-.punctuation-secondary-drawer {
-  display: grid;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--panel-soft);
-}
-.punctuation-secondary-modes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.punctuation-secondary-action {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--panel);
-  color: var(--ink);
-  font-weight: 700;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-.punctuation-secondary-action:hover:not(:disabled),
-.punctuation-secondary-action:focus-visible {
-  border-color: var(--punctuation-accent);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
-}
-.punctuation-secondary-action.is-disabled,
-.punctuation-secondary-action:disabled {
-  cursor: not-allowed;
-  opacity: 0.64;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .punctuation-monster-meter-fill {

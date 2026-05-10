@@ -2,9 +2,10 @@
 //
 // R9 journey 3: Home -> Punctuation -> GPS Check -> Q1 with test-mode banner.
 //
-// GPS Check is the `gps` mode, entered via the mission-dashboard CTA. The child-visible contract is
-// that the Session scene exposes a "test mode" banner — answers at the
-// end, not after each item. We assert both:
+// GPS Check is the `gps` mode, selected via the mode-card row and started
+// from the shared primary CTA. The child-visible contract is that the
+// Session scene exposes a "test mode" banner — answers at the end, not
+// after each item. We assert both:
 //   - The submit button mounts (Q1 rendered)
 //   - A test-mode banner is present (class / text hint)
 //
@@ -28,8 +29,16 @@ export default async function run({ driver, artifacts, log, assert }) {
   await driver.waitForSelector('[data-punctuation-phase="setup"]', 10_000);
   await driver.screenshot(artifacts.path('02-setup'));
 
-  log('click GPS Check CTA');
-  await driver.click('[data-action="punctuation-start"][data-mode-id="gps"]');
+  log('select GPS Check mode');
+  await driver.click('[data-action="punctuation-set-mode"][data-mode-id="gps"]');
+  await driver.waitForSelector(
+    '[data-action="punctuation-set-mode"][data-mode-id="gps"][aria-pressed="true"]',
+    10_000,
+  );
+  await driver.waitForSelector('button[data-punctuation-cta]:not([disabled])', 10_000);
+
+  log('click primary start CTA');
+  await driver.click('[data-punctuation-cta]');
 
   log('wait for Session submit + test-mode banner');
   await driver.waitForSelector('[data-punctuation-submit]', 15_000);

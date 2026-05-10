@@ -57,12 +57,9 @@ const CONTRAST_DARK = 'dark';
  * per-variant table — the regex match below already extracts the
  * variant letter so the upgrade is a drop-in.
  *
- * The `cards` array length is 1 because Punctuation's Setup scene has
- * a single primary CTA button (not a mode-card row like Grammar's
- * three-card layout). The shared `useSetupHeroContrast` hook treats
- * missing card indices as falling back to `shell` tone, so this is
- * safe if future Punctuation scenes add more cards — but the mission
- * dashboard's one-CTA shape is the authored default.
+ * The `cards` array length is 3 because Punctuation's Setup scene now
+ * renders the same Smart Review / Wobbly Spots / GPS Check mode-card row
+ * contract as Grammar and Spelling.
  *
  * `tone` is empty because Punctuation has no tone axis — see the
  * module-level comment. */
@@ -70,7 +67,7 @@ const PUNCTUATION_HERO_CONTRAST_STATIC = Object.freeze({
   tone: '',
   shell: CONTRAST_DARK,
   controls: CONTRAST_DARK,
-  cards: Object.freeze([CONTRAST_DARK]),
+  cards: Object.freeze([CONTRAST_DARK, CONTRAST_DARK, CONTRAST_DARK]),
 });
 
 /* Short-circuit the luminance probe for recognised Bellstorm URLs.

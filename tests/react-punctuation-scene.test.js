@@ -52,8 +52,8 @@ function answerCurrentItemCorrectly(harness) {
 
 test('punctuation React surface renders setup, active item, feedback and summary states', () => {
   // Phase 5 U7 replaces the three-card button wall with a mission
-  // dashboard: hero + primary CTA + progress row + monster star meters
-  // + map link + secondary drawer with Wobbly / GPS / round length.
+  // dashboard: hero + shared mode-card row + primary CTA + progress row
+  // + map link + shared tweak rows for Wobbly / GPS / round length.
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
 
@@ -62,11 +62,12 @@ test('punctuation React surface renders setup, active item, feedback and summary
   assert.match(setupHtml, /punctuation mission/);
   // Primary CTA
   assert.match(setupHtml, /data-punctuation-cta/);
-  // Secondary drawer still carries Wobbly Spots and GPS Check
+  // Mode cards carry Wobbly Spots and GPS Check.
   assert.match(setupHtml, />Wobbly Spots</);
   assert.match(setupHtml, />GPS Check</);
-  // Secondary buttons dispatch punctuation-start
-  assert.match(setupHtml, /data-action="punctuation-start"/);
+  // Mode cards select the mode; the bottom CTA starts the round.
+  assert.match(setupHtml, /data-action="punctuation-set-mode"/);
+  assert.match(setupHtml, /data-punctuation-cta/);
 
   startOneItemPunctuationSession(harness);
   const activeHtml = harness.render();
@@ -2829,19 +2830,19 @@ function forbiddenTermsInSetupHtml(html) {
   return leaks;
 }
 
-test('punctuation Setup scene renders mission dashboard with primary CTA + secondary drawer + map link', () => {
+test('punctuation Setup scene renders mission dashboard with aligned mode cards + primary CTA + map link', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   const html = harness.render();
 
   // R7: Single primary CTA above the fold.
   assert.match(html, /data-punctuation-cta/, 'missing primary CTA');
-  // Secondary drawer carries Wobbly Spots and GPS Check.
+  // Shared mode-card row carries Wobbly Spots and GPS Check.
   for (const modeId of ['weak', 'gps']) {
     assert.match(
       html,
-      new RegExp(`data-action="punctuation-start"[^>]*data-value="${modeId}"`),
-      `missing secondary mode button for ${modeId}`,
+      new RegExp(`data-action="punctuation-set-mode"[^>]*data-value="${modeId}"`),
+      `missing mode card for ${modeId}`,
     );
   }
   assert.match(html, />Wobbly Spots</);
@@ -2879,11 +2880,11 @@ test('punctuation Setup scene does not render the 6 cluster focus buttons (plan 
   assert.doesNotMatch(html, /data-punctuation-gps-start/);
 });
 
-// Phase 5 U7: mission dashboard — a single primary CTA with a secondary
-// drawer. The CTA label adapts to the learner's state (fresh / returning
-// with wobbly / post-session continue). Mode-dispatch tests below verify
-// that `punctuation-set-mode` still updates stored prefs, which feeds the
-// CTA resolution logic.
+// Phase 5 U7: mission dashboard — a single primary CTA with an aligned
+// mode-card row. The CTA label adapts to the selected mode / active
+// session state. Mode-dispatch tests below verify that
+// `punctuation-set-mode` updates stored prefs, which feeds the CTA
+// start payload.
 
 test('punctuation Setup scene: fresh learner single CTA reads "Find your first punctuation egg" with meadow empty state', () => {
   const harness = createPunctuationHarness();
@@ -2932,8 +2933,8 @@ test('punctuation Setup scene: post-session render — same layout with updated 
   // U2 companion panel migration: monster meadow via SubjectCompanionPanel
   assert.match(html, /companion-panel/, 'companion panel renders post-session');
   assert.match(html, /ss-meadow/, 'monster meadow visuals render post-session');
-  // R7: CTA adapts — weak > 0, so CTA reads "Tackle wobbly spots"
-  assert.match(html, /Tackle wobbly spots/, 'post-session CTA with wobbly spots');
+  // R7: CTA adapts to the selected mode.
+  assert.match(html, /Start today&#x27;s round/, 'post-session CTA with Smart Review');
   // No "Stage X of 4" anywhere
   assert.doesNotMatch(html, /Stage \d+ of \d+/, 'no "Stage X of Y" in rendered output');
 });
@@ -2968,12 +2969,12 @@ test('punctuation Setup scene: active session triggers "Continue your round" CTA
   );
 });
 
-test('punctuation Setup scene: round-length preference accessible via secondary drawer', () => {
+test('punctuation Setup scene: round-length preference accessible via shared control stack', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   const html = harness.render();
-  // Round length toggle lives inside the secondary drawer
-  assert.match(html, /data-section="secondary"[^]*role="radiogroup"/, 'round length radiogroup inside secondary');
+  // Round length toggle lives after the shared mode-card row.
+  assert.match(html, /data-section="secondary"[^]*role="radiogroup"/, 'round length radiogroup follows mode cards');
   assert.match(html, /Round length/, 'round length label present');
 });
 
@@ -3085,7 +3086,7 @@ test('punctuation Setup scene: Open Map dispatch transitions phase setup → map
   assert.equal(harness.store.getState().subjectUi.punctuation.phase, 'map');
 });
 
-test('punctuation Setup scene: degraded availability disables primary CTA + secondary buttons + map link', () => {
+test('punctuation Setup scene: degraded availability disables primary CTA + mode cards + map link', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.store.updateSubjectUi('punctuation', {
@@ -3099,12 +3100,14 @@ test('punctuation Setup scene: degraded availability disables primary CTA + seco
     /<button[^>]*disabled[^>]*data-punctuation-cta|<button[^>]*data-punctuation-cta[^>]*disabled/,
     'primary CTA should be disabled under degraded availability',
   );
-  // Secondary drawer mode buttons disabled.
+  const degradedSmartCard = (html.match(/<button\b(?=[^>]*data-action="punctuation-set-mode")(?=[^>]*data-value="smart")[^>]*>/) || [])[0] || '';
+  assert.doesNotMatch(degradedSmartCard, /\bselected\b/, 'disabled selected mode card must not keep selected styling');
+  // Mode cards disabled.
   for (const modeId of ['weak', 'gps']) {
     assert.match(
       html,
-      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"[^>]*disabled`),
-      `secondary button ${modeId} should be disabled under degraded availability`,
+      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"[^>]*disabled`),
+      `mode card ${modeId} should be disabled under degraded availability`,
     );
   }
   // Map link disabled.
@@ -3115,7 +3118,7 @@ test('punctuation Setup scene: degraded availability disables primary CTA + seco
   );
 });
 
-test('punctuation Setup scene: pendingCommand disables primary CTA + secondary buttons + map link', () => {
+test('punctuation Setup scene: pendingCommand disables primary CTA + mode cards + map link', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.store.updateSubjectUi('punctuation', {
@@ -3129,12 +3132,14 @@ test('punctuation Setup scene: pendingCommand disables primary CTA + secondary b
     /<button[^>]*disabled[^>]*data-punctuation-cta|<button[^>]*data-punctuation-cta[^>]*disabled/,
     'primary CTA should be disabled while pendingCommand is set',
   );
-  // Secondary drawer mode buttons disabled.
+  const pendingSmartCard = (html.match(/<button\b(?=[^>]*data-action="punctuation-set-mode")(?=[^>]*data-value="smart")[^>]*>/) || [])[0] || '';
+  assert.doesNotMatch(pendingSmartCard, /\bselected\b/, 'pending selected mode card must not keep selected styling');
+  // Mode cards disabled.
   for (const modeId of ['weak', 'gps']) {
     assert.match(
       html,
-      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"[^>]*disabled`),
-      `secondary button ${modeId} should be disabled while pendingCommand is set`,
+      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"[^>]*disabled`),
+      `mode card ${modeId} should be disabled while pendingCommand is set`,
     );
   }
   assert.match(
@@ -3904,13 +3909,12 @@ for (const entry of PUNCTUATION_CLUSTER_MODE_MATRIX) {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 4 U1 — mission-dashboard CTA click-through (R1, R14).
+// Phase 4 U1 — mission-dashboard mode-card selection (R1, R14).
 //
 // The Phase 3 SSR harness could only grep the rendered HTML — it could not
-// fire an onClick handler, so a regression that swapped the mission-dashboard
-// CTA's dispatch target from `punctuation-start` to `punctuation-set-mode`
-// slipped through.  The fix: tapping a mission-dashboard CTA must start a
-// session immediately with `{ mode: <ctaId>, roundLength: <prefs.roundLength> }`.
+// fire an onClick handler. The aligned contract now matches Grammar and
+// Spelling: tapping a mode card updates the selected mode, and the bottom
+// begin button is the only Setup affordance that starts a session.
 //
 // These tests exercise the REAL onClick closure (via
 // `renderMissionDashboardCTAElement`, which returns the React element straight
@@ -3918,13 +3922,13 @@ for (const entry of PUNCTUATION_CLUSTER_MODE_MATRIX) {
 // same code path the browser would run — no SSR blind spot.
 //
 // Coverage matrix:
-//   - Each of the three mission-dashboard CTA ids (smart / weak / gps) must
-//     dispatch `punctuation-start` with `{ mode: <id>, roundLength: '4' }`.
-//   - Non-default round lengths ('8', '12') flow through to the payload.
+//   - Each of the three mode-card ids (smart / weak / gps) must dispatch
+//     `punctuation-set-mode` with `{ value: <id> }`.
+//   - Round length still flows to the data attribute for the bottom CTA's
+//     parent-threading guard.
 //   - `disabled=true` short-circuits the dispatch entirely.
-//   - The button MUST NOT carry `aria-pressed` — mission-dashboard CTAs are
-//     action buttons, not radio buttons.
-//   - `data-action` must be `"punctuation-start"` (not `"punctuation-set-mode"`).
+//   - The button carries `aria-pressed` like Grammar and Spelling mode cards.
+//   - `data-action` must be `"punctuation-set-mode"`.
 // ---------------------------------------------------------------------------
 
 function createDispatchSpy() {
@@ -3936,7 +3940,7 @@ function createDispatchSpy() {
 }
 
 for (const card of PUNCTUATION_PRIMARY_MODE_CARDS) {
-  test(`U1 primary card ${card.id} onClick dispatches punctuation-start with {mode, roundLength}`, async () => {
+  test(`U1 primary card ${card.id} onClick dispatches punctuation-set-mode with {value}`, async () => {
     const { renderPrimaryModeCardElement } = await import(
       './helpers/punctuation-scene-render.js'
     );
@@ -3955,14 +3959,14 @@ for (const card of PUNCTUATION_PRIMARY_MODE_CARDS) {
     assert.equal(spy.calls.length, 1, 'expected exactly one dispatch call');
     assert.equal(
       spy.calls[0].action,
-      'punctuation-start',
-      `card click must dispatch 'punctuation-start' (got '${spy.calls[0].action}' — Phase 3 regression used 'punctuation-set-mode')`,
+      'punctuation-set-mode',
+      `card click must dispatch 'punctuation-set-mode' (got '${spy.calls[0].action}')`,
     );
-    assert.deepEqual(spy.calls[0].data, { mode: card.id, roundLength: '4' });
+    assert.deepEqual(spy.calls[0].data, { value: card.id });
   });
 }
 
-test('U1 primary card onClick carries prefs.roundLength=8 through to the start dispatch', async () => {
+test('U1 primary card carries prefs.roundLength=8 as data for the parent-threading guard', async () => {
   const { renderPrimaryModeCardElement } = await import(
     './helpers/punctuation-scene-render.js'
   );
@@ -3974,12 +3978,13 @@ test('U1 primary card onClick carries prefs.roundLength=8 through to the start d
     roundLength: '8',
     actions: { dispatch: spy.dispatch },
   });
+  assert.equal(element.props['data-round-length'], '8');
   element.props.onClick();
   assert.equal(spy.calls.length, 1);
-  assert.deepEqual(spy.calls[0].data, { mode: 'smart', roundLength: '8' });
+  assert.deepEqual(spy.calls[0].data, { value: 'smart' });
 });
 
-test('U1 primary card onClick carries prefs.roundLength=12 through to the start dispatch', async () => {
+test('U1 primary card carries prefs.roundLength=12 as data for the parent-threading guard', async () => {
   const { renderPrimaryModeCardElement } = await import(
     './helpers/punctuation-scene-render.js'
   );
@@ -3991,9 +3996,10 @@ test('U1 primary card onClick carries prefs.roundLength=12 through to the start 
     roundLength: '12',
     actions: { dispatch: spy.dispatch },
   });
+  assert.equal(element.props['data-round-length'], '12');
   element.props.onClick();
   assert.equal(spy.calls.length, 1);
-  assert.deepEqual(spy.calls[0].data, { mode: 'gps', roundLength: '12' });
+  assert.deepEqual(spy.calls[0].data, { value: 'gps' });
 });
 
 test('U1 primary card onClick is a no-op when disabled=true (pending-command guard)', async () => {
@@ -4012,27 +4018,27 @@ test('U1 primary card onClick is a no-op when disabled=true (pending-command gua
   assert.equal(spy.calls.length, 0, 'disabled card must not dispatch on click');
 });
 
-test('U1 primary card data-action is "punctuation-start" and does NOT carry aria-pressed', async () => {
+test('U1 primary card data-action is "punctuation-set-mode" and carries aria-pressed', async () => {
   const { renderPrimaryModeCardElement } = await import(
     './helpers/punctuation-scene-render.js'
   );
   const spy = createDispatchSpy();
   const element = renderPrimaryModeCardElement({
     card: PUNCTUATION_PRIMARY_MODE_CARDS[0],
-    selected: true, // even when visually "selected", no aria-pressed — action buttons, not radios
+    selected: true,
     disabled: false,
     roundLength: '4',
     actions: { dispatch: spy.dispatch },
   });
   assert.equal(
     element.props['data-action'],
-    'punctuation-start',
-    `data-action must be 'punctuation-start' (got '${element.props['data-action']}' — preference-save leaked through from Phase 3)`,
+    'punctuation-set-mode',
+    `data-action must be 'punctuation-set-mode' (got '${element.props['data-action']}')`,
   );
   assert.equal(
     element.props['aria-pressed'],
-    undefined,
-    'primary cards are action buttons, not radio buttons — aria-pressed must be absent',
+    'true',
+    'selected mode cards must expose aria-pressed like Grammar and Spelling',
   );
 });
 
@@ -4054,7 +4060,7 @@ test('U1 primary card data-action is "punctuation-start" and does NOT carry aria
 // serialised markup — these assertions fail.
 //
 // Coverage:
-//   - prefs.roundLength = '4' (quick rescue) → each secondary action's
+//   - prefs.roundLength = '4' (quick rescue) → each mode-card selector's
 //     data-round-length is "4".
 //   - prefs.roundLength = '8' → each primary card's data-round-length is
 //     "8".
@@ -4062,12 +4068,12 @@ test('U1 primary card data-action is "punctuation-start" and does NOT carry aria
 //     selectedRoundLength().
 // ---------------------------------------------------------------------------
 
-// Phase 5 U7: the mission dashboard moves Wobbly Spots and GPS Check into
-// the secondary drawer. The `extractSecondaryButtonRoundLengths` helper
-// extracts the `data-round-length` attribute from each secondary button so
-// prop-threading tests still verify the parent → button contract.
-function extractSecondaryButtonRoundLengths(html) {
-  const regex = /<button\b[^>]*\bdata-action="punctuation-start"[^>]*?>/g;
+// The mission dashboard renders Wobbly Spots and GPS Check as shared
+// mode-card buttons. The helper extracts each card's `data-round-length`
+// attribute so prop-threading tests still verify the parent → button
+// contract.
+function extractModeCardRoundLengths(html) {
+  const regex = /<button\b[^>]*\bdata-action="punctuation-set-mode"[^>]*?>/g;
   const cards = [];
   let match;
   while ((match = regex.exec(html)) !== null) {
@@ -4082,7 +4088,7 @@ function extractSecondaryButtonRoundLengths(html) {
   return cards;
 }
 
-test('U7 follow-on: round-length toggle threads value to secondary drawer buttons', () => {
+test('U7 follow-on: round-length toggle threads value to punctuation mode cards', () => {
   const harness = createPunctuationHarness();
   const learnerId = harness.store.getState().learners.selectedId;
   harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '8' });
@@ -4090,17 +4096,16 @@ test('U7 follow-on: round-length toggle threads value to secondary drawer button
   harness.dispatch('punctuation-set-round-length', { value: '8' });
   const html = harness.render();
 
-  // The secondary drawer carries 2 buttons: weak and gps.
   // Filter to buttons with a data-value (excludes the primary CTA which
-  // also renders data-action="punctuation-start" but without data-value).
-  const allButtons = extractSecondaryButtonRoundLengths(html);
+  // starts with data-action="punctuation-start" but without data-value).
+  const allButtons = extractModeCardRoundLengths(html);
   const buttons = allButtons.filter((b) => b.mode !== null);
-  assert.ok(buttons.length >= 2, 'expected at least two secondary buttons');
-  // Every secondary button must carry the threaded round-length value.
+  assert.ok(buttons.length >= 2, 'expected at least two mode cards');
+  // Every mode card must carry the threaded round-length value.
   for (const btn of buttons) {
-    assert.equal(btn.roundLength, '8', `secondary button ${btn.mode} must carry data-round-length="8"`);
+    assert.equal(btn.roundLength, '8', `mode card ${btn.mode} must carry data-round-length="8"`);
   }
-  // Round length radiogroup present inside the secondary drawer.
+  // Round length radiogroup present inside the shared control stack.
   assert.match(html, /role="radiogroup"/, 'round length toggle present');
 });
 
@@ -4115,11 +4120,44 @@ test('P11 default Smart Practice uses six-question setup payloads with no saved 
     'fresh setup primary CTA must carry the P11 six-question default',
   );
 
-  const secondaryButtons = extractSecondaryButtonRoundLengths(html).filter((button) => button.mode !== null);
-  assert.ok(secondaryButtons.length >= 2, 'expected Wobbly and GPS secondary actions');
-  for (const button of secondaryButtons) {
-    assert.equal(button.roundLength, '6', `secondary action ${button.mode} must inherit the P11 default length`);
+  const modeCards = extractModeCardRoundLengths(html).filter((button) => button.mode !== null);
+  assert.ok(modeCards.length >= 2, 'expected Wobbly and GPS mode-card selectors');
+  for (const button of modeCards) {
+    assert.equal(button.roundLength, '6', `mode-card selector ${button.mode} must inherit the P11 default length`);
   }
+});
+
+test('U7 follow-on: bottom CTA start payload follows the selected weak or GPS mode', async () => {
+  const { resolvePunctuationSetupBeginCommandForTest } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+
+  assert.deepEqual(
+    resolvePunctuationSetupBeginCommandForTest({
+      ctaMode: 'smart',
+      selectedMode: 'weak',
+      roundLength: '8',
+    }),
+    { action: 'punctuation-start', data: { mode: 'weak', roundLength: '8' } },
+  );
+
+  assert.deepEqual(
+    resolvePunctuationSetupBeginCommandForTest({
+      ctaMode: 'smart',
+      selectedMode: 'gps',
+      roundLength: '12',
+    }),
+    { action: 'punctuation-start', data: { mode: 'gps', roundLength: '12' } },
+  );
+
+  assert.deepEqual(
+    resolvePunctuationSetupBeginCommandForTest({
+      ctaMode: 'continue',
+      selectedMode: 'gps',
+      roundLength: '12',
+    }),
+    { action: 'punctuation-continue', data: undefined },
+  );
 });
 
 // ---------------------------------------------------------------------------

@@ -14,8 +14,8 @@
 // `element.props.onClick` and invoke it directly to exercise the real click
 // closure without needing jsdom. This is the coverage gap the Phase 3 SSR
 // harness had: `renderToStaticMarkup` discards event-handler props, so a
-// regression in the click target (e.g. dispatching `punctuation-set-mode`
-// instead of `punctuation-start`) was invisible.
+// regression in the click target or data contract would otherwise be
+// invisible.
 
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -46,7 +46,11 @@ function loadRenderer() {
   writeFileSync(entryPath, `
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
-    import { PrimaryModeCard, PunctuationSetupScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'))};
+    import {
+      PrimaryModeCard,
+      PunctuationSetupScene,
+      resolvePunctuationSetupBeginCommand,
+    } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'))};
     import { PunctuationSummaryScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSummaryScene.jsx'))};
     import { PunctuationMapScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationMapScene.jsx'))};
     import { PunctuationSessionScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSessionScene.jsx'))};
@@ -87,6 +91,10 @@ function loadRenderer() {
     export function renderPrimaryModeCardElement(props) {
       return PrimaryModeCard(props);
     }
+
+    export function resolvePunctuationSetupBeginCommandForTest(args) {
+      return resolvePunctuationSetupBeginCommand(args);
+    }
   `);
   buildSync({
     absWorkingDir: rootDir,
@@ -124,6 +132,10 @@ export function renderPunctuationSessionSceneStandalone(props) {
 
 export function renderPrimaryModeCardElement(props) {
   return loadRenderer().renderPrimaryModeCardElement(props);
+}
+
+export function resolvePunctuationSetupBeginCommandForTest(args) {
+  return loadRenderer().resolvePunctuationSetupBeginCommandForTest(args);
 }
 
 export function cleanupPunctuationSceneRenderer() {

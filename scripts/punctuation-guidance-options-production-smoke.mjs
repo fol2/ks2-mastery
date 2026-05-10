@@ -105,7 +105,12 @@ async function runGpsProbe(browser, origin, screenshotDir) {
     Object.assign(result, await disableGuidanceOptions(page));
     await mkdir(screenshotDir, { recursive: true });
     await page.screenshot({ path: result.setupScreenshot, fullPage: true });
-    await page.locator('[data-action="punctuation-start"][data-value="gps"]').first().click();
+    const gpsCard = page.locator('[data-action="punctuation-set-mode"][data-value="gps"]').first();
+    await gpsCard.click();
+    await waitForCondition(page, async () => {
+      return await gpsCard.getAttribute('aria-pressed') === 'true';
+    }, { label: 'GPS Check mode selected' });
+    await page.locator('[data-punctuation-cta]').first().click();
     await page.locator('[data-punctuation-session-scene]').waitFor({ state: 'visible', timeout: 20_000 });
     result.gpsBannerVisible = await page.locator('[data-gps-banner]').isVisible().catch(() => false);
     result.ok = result.showNonScoredBannerPressed === 'false'

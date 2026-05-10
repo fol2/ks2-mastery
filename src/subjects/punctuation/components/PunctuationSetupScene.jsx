@@ -4,15 +4,14 @@
 // modelled on the Spelling Setup's hero + side-panel pattern, adapted for
 // Bellstorm Coast. Layout:
 //
-//   Hero: Bellstorm Coast backdrop + headline + primary CTA
+//   Hero: Bellstorm Coast backdrop + headline + shared mode-card row
 //   Progress row: Due today | Wobbly | Grand Stars (compact)
-//   Monster row: 4 active monsters with star meters (X / 100 Stars)
-//     and stage labels (Not caught / Egg Found / Hatch / Evolve / Strong / Mega)
+//   Controls: Round length + display options in the shared tweak-row rhythm
+//   Primary CTA: Right-aligned begin button using the shared setup-begin row
 //   Map link: "Open Punctuation Map"
-//   Secondary drawer: Wobbly Spots | GPS Check | Round length toggle
 //
-// R7: Single primary CTA above the fold — Smart Review default, Wobbly if
-//     weaknesses exist, Continue if active session.
+// R7: Single primary CTA — mode cards choose Smart Review, Wobbly Spots, or
+//     GPS Check; the bottom begin button is the only Setup start action.
 // R8: Invariant skeleton — fresh learner and post-session render the SAME
 //     layout with different content only (no structural divergence).
 // R9: Star meters per monster from starView (U4 wired).
@@ -34,9 +33,11 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
+  PUNCTUATION_PRIMARY_MODE_CARDS,
   PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS,
   buildPunctuationDashboardModel,
   composeIsDisabled,
+  punctuationPrimaryModeFromPrefs,
   punctuationMonsterDisplayName,
   punctuationMonsterImageVisual,
   punctuationStageLabel,
@@ -112,35 +113,57 @@ function selectedRoundLength(prefs) {
   return PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(defaultLength) ? defaultLength : '4';
 }
 
+export function resolvePunctuationSetupBeginCommand({ ctaMode, selectedMode, roundLength }) {
+  if (ctaMode === 'continue') {
+    return { action: 'punctuation-continue', data: undefined };
+  }
+  return {
+    action: 'punctuation-start',
+    data: {
+      mode: selectedMode || 'smart',
+      roundLength,
+    },
+  };
+}
+
 // --- Legacy PrimaryModeCard export (backward compat) -----------------------
-// Phase 5 U7 replaces the three primary mode cards with a single CTA +
-// secondary drawer. The `PrimaryModeCard` component is no longer rendered
-// in the mission dashboard, but it is exported so the U1 click-through
-// tests in `tests/react-punctuation-scene.test.js` and the standalone
-// renderer in `tests/helpers/punctuation-scene-render.js` keep working.
-// These tests exercise the component's onClick closure in isolation and
-// are structurally valid even though the component is off the render tree.
-export function PrimaryModeCard({ card, selected, disabled: isDisabled, roundLength, actions }) {
-  const classes = ['punctuation-primary-mode'];
-  if (selected) classes.push('selected');
+// The card is exported so the U1 click-through tests in
+// `tests/react-punctuation-scene.test.js` and the standalone renderer in
+// `tests/helpers/punctuation-scene-render.js` can exercise the mode-selection
+// closure independently from the full setup scene.
+export function PrimaryModeCard({ card, selected, disabled: isDisabled, roundLength, actions, textTone = 'light' }) {
+  const classes = ['punctuation-primary-mode', 'mode-card'];
+  if (selected && !isDisabled) classes.push('selected');
   if (isDisabled) classes.push('is-disabled');
   if (card.badge) classes.push('is-recommended');
+  const glyph = card.id === 'gps' ? '?' : card.id === 'weak' ? '!' : '.';
   return (
     <button
       type="button"
       className={classes.join(' ')}
       data-mode-id={card.id}
-      data-action="punctuation-start"
+      data-action="punctuation-set-mode"
       data-value={card.id}
       data-round-length={roundLength}
+      data-text-tone={textTone}
+      aria-pressed={selected && !isDisabled ? 'true' : 'false'}
       disabled={isDisabled}
       aria-disabled={isDisabled ? 'true' : undefined}
       onClick={() => {
         if (isDisabled) return;
-        actions.dispatch('punctuation-start', { mode: card.id, roundLength });
+        actions.dispatch('punctuation-set-mode', { value: card.id });
       }}
     >
-      {card.badge ? <span className="punctuation-primary-mode-eyebrow">{card.badge}</span> : null}
+      <div className="mc-top">
+        <span className="mc-icon mc-icon-glyph" aria-hidden="true">
+          <span className="mc-glyph">{glyph}</span>
+        </span>
+        {card.badge ? (
+          <span className="mc-badge recommended">{card.badge}</span>
+        ) : (
+          <span className="mc-badge-spacer" aria-hidden="true" />
+        )}
+      </div>
       <h4 className="punctuation-primary-mode-title">{card.label}</h4>
       <p className="punctuation-primary-mode-desc">{card.description}</p>
     </button>
@@ -180,27 +203,6 @@ function MonsterStarMeter({ monster }) {
         {`${stars} / ${cap} ${starsLabel}`}
       </div>
     </div>
-  );
-}
-
-function SecondaryModeButton({ label, mode, roundLength, disabled, actions }) {
-  const classes = ['punctuation-secondary-action'];
-  if (disabled) classes.push('is-disabled');
-  return (
-    <button
-      type="button"
-      className={classes.join(' ')}
-      data-action="punctuation-start"
-      data-value={mode}
-      data-round-length={roundLength}
-      disabled={disabled}
-      onClick={() => {
-        if (disabled) return;
-        actions.dispatch('punctuation-start', { mode, roundLength });
-      }}
-    >
-      {label}
-    </button>
   );
 }
 
@@ -254,18 +256,18 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   // argument is the constant string `'setup'` because Punctuation has no
   // tone / mode axis affecting the backdrop palette — the hook's mode-keyed
   // memo reduces to a no-op by design. We pass it as a literal so the
-  // dependency array stays stable across renders. Card selector is the
-  // single primary CTA button (there is no mode-card row in the Punctuation
-  // dashboard); control selectors cover the round-length label and the
-  // secondary mode buttons so their tone adapts alongside the CTA.
+  // dependency array stays stable across renders. Card selectors cover the
+  // shared mode-card row; control selectors cover the round-length row and
+  // display options so their tone adapts alongside the cards.
   const heroContrast = useSetupHeroContrast(scene.src, 'setup', {
     staticContrastForBg: heroContrastProfileForPunctuationBg,
-    cardSelector: '.punctuation-dashboard-cta-row .btn',
-    controlSelectors: ['.punctuation-round-label', '.punctuation-secondary-action', '.toggle-chip'],
+    cardSelector: '.punctuation-primary-mode',
+    controlSelectors: ['.tool-label', '.length-unit', '.toggle-chip'],
     observeSelectors: [
-      '.punctuation-round-label',
-      '.punctuation-secondary-action',
+      '.tool-label',
+      '.length-unit',
       '.toggle-chip',
+      '.punctuation-primary-mode',
       '.punctuation-monster-meter-name',
     ],
   });
@@ -305,8 +307,18 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
 
   // CTA resolution
   const cta = resolvePrimaryCta(stats, ui);
+  const selectedMode = punctuationPrimaryModeFromPrefs(prefs);
   const freshLabel = freshLearnerCtaLabel(dashboard.isEmpty);
-  const ctaLabel = freshLabel || cta.label;
+  const selectedCardLabel = PUNCTUATION_PRIMARY_MODE_CARDS.find((card) => card.id === selectedMode)?.label
+    || 'Smart Review';
+  const startLabel = selectedMode === 'weak'
+    ? 'Tackle wobbly spots'
+    : selectedMode === 'gps'
+      ? 'Start GPS Check'
+      : "Start today's round";
+  const ctaLabel = cta.mode === 'continue'
+    ? cta.label
+    : freshLabel || startLabel || `Start ${selectedCardLabel}`;
   const ctaMode = cta.mode;
 
   // Progress row values
@@ -337,11 +349,12 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
 
   function handlePrimaryCta() {
     if (disabled) return;
-    if (ctaMode === 'continue') {
-      actions.dispatch('punctuation-continue');
-      return;
-    }
-    actions.dispatch('punctuation-start', { mode: ctaMode, roundLength: selectedLengthValue });
+    const command = resolvePunctuationSetupBeginCommand({
+      ctaMode,
+      selectedMode,
+      roundLength: selectedLengthValue,
+    });
+    actions.dispatch(command.action, command.data);
   }
 
   // U4: `.setup-main` needs a `.hero-dark` class when the shell probe
@@ -370,26 +383,26 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
           {/* Content stacks vertically inside the setup-main shell. The
            * `data-section="hero"` landmark moves ONTO the content wrapper
            * because `HeroBackdrop` now paints the background and carries
-           * no semantics of its own. The rest of the dashboard (progress
-           * row, monster row, map link, secondary drawer) stays in the
-           * same stacked order inside `.setup-content`. */}
+           * no semantics of its own. The rest of the dashboard (mode
+           * cards, progress row, controls, begin row, map link) stays in
+           * the same stacked order inside `.setup-content`. */}
           <div className="setup-content" data-section="hero">
             <div className="eyebrow">Bellstorm Coast</div>
             <h2 className="section-title">Today's punctuation mission</h2>
             <HeroWelcome name={learnerName} className="punctuation-hero-welcome" />
-            <div className="punctuation-dashboard-cta-row">
-              {/* --btn-accent inherits via the .punctuation-surface accent
-               * remap in styles/app.css — no inline override needed. */}
-              <Button
-                size="xl"
-                data-punctuation-cta=""
-                data-round-length={ctaMode === 'continue' ? undefined : selectedLengthValue}
-                dataAction={ctaMode === 'continue' ? 'punctuation-continue' : 'punctuation-start'}
-                disabled={disabled}
-                onClick={handlePrimaryCta}
-              >
-                {ctaLabel}
-              </Button>
+
+            <div className="mode-row punctuation-mode-row" data-section="secondary" aria-label="Practice options">
+              {PUNCTUATION_PRIMARY_MODE_CARDS.map((card, index) => (
+                <PrimaryModeCard
+                  card={card}
+                  selected={card.id === selectedMode}
+                  disabled={disabled}
+                  roundLength={selectedLengthValue}
+                  actions={actions}
+                  textTone={heroContrast.contrast.cards?.[index] || heroContrast.contrast.shell}
+                  key={card.id}
+                />
+              ))}
             </div>
 
             {/* Progress row — compact stats strip. Each metric renders as a
@@ -421,26 +434,9 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
               </div>
             </section>
 
-            {/* Secondary practice drawer */}
-            <section className="punctuation-secondary-drawer" data-section="secondary" aria-label="More practice options">
-              <div className="punctuation-secondary-modes">
-                <SecondaryModeButton
-                  label="Wobbly Spots"
-                  mode="weak"
-                  roundLength={selectedLengthValue}
-                  disabled={disabled}
-                  actions={actions}
-                />
-                <SecondaryModeButton
-                  label="GPS Check"
-                  mode="gps"
-                  roundLength={selectedLengthValue}
-                  disabled={disabled}
-                  actions={actions}
-                />
-              </div>
-              <div className="punctuation-round-controls">
-                <span className="punctuation-round-label">Round length</span>
+            <div className="setup-control-stack punctuation-control-stack">
+              <div className="tweak-row punctuation-round-controls">
+                <span className="tool-label punctuation-round-label">Round length</span>
                 <LengthPicker
                   options={PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS}
                   selectedValue={selectedLengthValue}
@@ -450,13 +446,14 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
                   actionName="punctuation-set-round-length"
                   includeDataValue={true}
                 />
+                <span className="length-unit">questions</span>
               </div>
               <div
-                className="punctuation-round-controls punctuation-display-options"
+                className="tweak-row punctuation-round-controls punctuation-display-options"
                 role="group"
                 aria-labelledby="punctuation-display-options-label"
               >
-                <span id="punctuation-display-options-label" className="punctuation-round-label">Options</span>
+                <span id="punctuation-display-options-label" className="tool-label punctuation-round-label">Options</span>
                 <ToggleChip
                   pref="showFadedGuidance"
                   checked={prefs?.showFadedGuidance !== false}
@@ -472,7 +469,21 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
                   disabled={disabled}
                 />
               </div>
-            </section>
+            </div>
+
+            <div className="setup-begin-row punctuation-start-row">
+              {/* Stable journey-spec selector: Button emits data-action="punctuation-start" for fresh mode starts. */}
+              <Button
+                size="xl"
+                data-punctuation-cta=""
+                data-round-length={ctaMode === 'continue' ? undefined : selectedLengthValue}
+                dataAction={ctaMode === 'continue' ? 'punctuation-continue' : 'punctuation-start'}
+                disabled={disabled}
+                onClick={handlePrimaryCta}
+              >
+                {ctaLabel}
+              </Button>
+            </div>
           </div>
         </section>
 

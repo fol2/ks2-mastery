@@ -74,9 +74,8 @@ test('punctuation-hero-bg: heroContrastProfileForPunctuationBg returns a static 
     assert.equal(profile.shell, 'dark');
     assert.equal(profile.controls, 'dark');
     assert.equal(profile.tone, '');
-    // Single-element cards array because Punctuation's Setup has one
-    // primary CTA, not a three-card mode row.
-    assert.deepEqual(profile.cards, ['dark']);
+    // Three card tones cover Smart Review, Wobbly Spots, and GPS Check.
+    assert.deepEqual(profile.cards, ['dark', 'dark', 'dark']);
   }
 });
 
@@ -205,7 +204,7 @@ test('punctuation Setup scene preserves every data-section landmark', () => {
   assert.match(html, /data-testid="companion-panel"/);
   // Map link (in sidebar footer).
   assert.match(html, /data-section="map-link"/);
-  // Secondary drawer (in main column).
+  // Mode-card row and control stack (in main column).
   assert.match(html, /data-section="secondary"/);
 
   // Structural containment: companion-panel and map-link live inside the sidebar.
