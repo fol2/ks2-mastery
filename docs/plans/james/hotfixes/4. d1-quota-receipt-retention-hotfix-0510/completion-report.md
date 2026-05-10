@@ -2,8 +2,9 @@
 
 Date: 2026-05-10
 Production URL: `https://ks2.eugnel.uk`
-Runtime commit: `fe819a44e653347ef91d6daee3908db3d6e5868f`
-Cloudflare Worker version: `8cd79ced-aa8a-4dcb-ac9e-7c4a868da505`
+Runtime/evidence commit: `993c5756ddd1fa9e4f024b79ad9a1073adf0b93b`
+Code hotfix commit: `fe819a44e653347ef91d6daee3908db3d6e5868f`
+Cloudflare Worker version: `c53be54e-4ddd-4e42-bf43-e23d03d404a8`
 
 ## Status
 
@@ -49,7 +50,7 @@ Final production D1 evidence:
 - `mutation_receipts`: `1,722` rows, `23,434,344` response bytes.
 - D1 `size_after`: `44,929,024` bytes.
 - Non-admin receipts older than 24 hours: `0` rows, `0` response bytes.
-- Evidence refreshed at `2026-05-10T17:02:04.538Z`.
+- Evidence refreshed at `2026-05-10T17:06:35.236Z`.
 
 ## Verification
 
@@ -61,7 +62,10 @@ Final production D1 evidence:
 - `npm run check` passed.
 - `npm run deploy` passed.
 - Production bundle audit passed for `https://ks2.eugnel.uk/`: 1 HTML-referenced bundle, 6 chunks scanned transitively, 19 direct paths, matrix demo check ok, 5/5 security-header checks, 15/15 cache-split checks.
-- Direct production GET `https://ks2.eugnel.uk/` returned HTTP 200.
+- Direct production GET `https://ks2.eugnel.uk/` returned HTTP 200 with content length `5,088`.
+- Active Cloudflare deployment status after the `origin/main` evidence commit:
+  deployment `c2fbf1ec-8b36-48af-ae26-cdb5a26263be`, version `c53be54e-4ddd-4e42-bf43-e23d03d404a8`, 100% traffic, created `2026-05-10T17:03:47.771104Z`.
+- The earlier manual deploy version `8cd79ced-aa8a-4dcb-ac9e-7c4a868da505` was superseded by the GitHub main-branch deployment hook after the report/evidence commit. The active deployment has been re-audited.
 - Chrome was opened to `https://ks2.eugnel.uk`; Cloudflare tail captured Chrome 147 requests returning HTTP 200 for the live app bundle.
 
 ## Independent review
@@ -69,4 +73,4 @@ Final production D1 evidence:
 Independent reviewer close-out:
 
 - Code reviewer: GREEN. Zero blockers/advisories. Reviewer independently ran `node --test tests/worker-cron-retention-sweep.test.js tests/worker-cron-trigger-reconcile.test.js tests/pre-push-hook.test.js`, parsed the evidence JSON, and checked `https://ks2.eugnel.uk/` returned HTTP 200.
-- Contract auditor: initial NOT GREEN on report/push/final D1 freshness/workspace cleanliness. All blockers were addressed: report and evidence were refreshed, stale non-admin receipts were swept to zero, generated-file status was restored, and this hotfix folder is included for commit/push.
+- Contract auditor: initial NOT GREEN on report/push/final D1 freshness/workspace cleanliness; second rerun NOT GREEN on stale Worker version after the GitHub deployment hook superseded the manual deploy. All listed blockers were addressed: report and evidence were refreshed, stale non-admin receipts were swept to zero, generated-file status was restored, this hotfix folder was committed and pushed, and the active Worker version was refreshed and re-audited. Final rerun pending after this active-version refresh.
