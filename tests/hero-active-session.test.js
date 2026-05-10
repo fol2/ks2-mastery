@@ -366,6 +366,123 @@ test('POST same taskId with active session → safe already-started response (no
   server.close();
 });
 
+test('POST same taskId with launched active session → already-started even when active seed changes quest identity', async () => {
+  const server = createServer();
+  await seedLearner(server, 'adult-a', 'learner-a');
+
+  const readModelPayload = await getReadModel(server);
+  const launchable = findFirstLaunchableTask(readModelPayload);
+  assert.ok(launchable, 'Fixture must produce at least one launchable task');
+
+  const heroContext = {
+    source: 'hero-mode',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    intent: launchable.task.intent || 'due-review',
+    launcher: launchable.task.launcher || 'smart-practice',
+    effortTarget: launchable.task.effortTarget,
+    dateKey: readModelPayload.hero.dateKey,
+    timezone: readModelPayload.hero.timezone,
+    schedulerVersion: readModelPayload.hero.schedulerVersion,
+    launchRequestId: 'hero-start-task-real-launch-1',
+    phase: 'p2-child-launch',
+  };
+  seedHeroSession(server, 'learner-a', 'spelling', heroContext);
+
+  const refreshedPayload = await getReadModel(server);
+  assert.notEqual(
+    refreshedPayload.hero.dailyQuest.questId,
+    launchable.questId,
+    'Fixture must prove the active-session launchRequestId can rotate the scheduled quest identity',
+  );
+
+  const revision = getLearnerRevision(server);
+  const response = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-a',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'hero-active-same-rotated-1',
+    expectedLearnerRevision: revision,
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200, `Expected 200, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.heroLaunch.status, 'already-started');
+  assert.equal(payload.heroLaunch.activeSession.subjectId, 'spelling');
+  assert.equal(payload.heroLaunch.activeSession.taskId, launchable.taskId);
+  assert.equal(payload.heroLaunch.questFingerprint, launchable.questFingerprint);
+  assert.equal(payload.heroLaunch.effortTarget, launchable.task.effortTarget);
+  assert.ok(payload.heroLaunch.effortTarget > 0, 'already-started must preserve non-zero effort target');
+
+  server.close();
+});
+
+test('POST same taskId with rotated active seed → already-started repairs progress with active effort target', async () => {
+  const server = createServer({ HERO_MODE_PROGRESS_ENABLED: 'true' });
+  await seedLearner(server, 'adult-a', 'learner-a');
+
+  const readModelPayload = await getReadModel(server);
+  const launchable = findFirstLaunchableTask(readModelPayload);
+  assert.ok(launchable, 'Fixture must produce at least one launchable task');
+
+  const heroContext = {
+    source: 'hero-mode',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    dateKey: readModelPayload.hero.dateKey,
+    timezone: readModelPayload.hero.timezone,
+    schedulerVersion: readModelPayload.hero.schedulerVersion,
+    subjectId: launchable.task.subjectId,
+    intent: launchable.task.intent || 'due-review',
+    launcher: launchable.task.launcher || 'smart-practice',
+    effortTarget: launchable.task.effortTarget,
+    launchRequestId: 'hero-start-task-real-launch-2',
+    phase: 'p2-child-launch',
+  };
+  seedHeroSession(server, 'learner-a', 'spelling', heroContext);
+
+  const revision = getLearnerRevision(server);
+  const response = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-a',
+    questId: launchable.questId,
+    questFingerprint: 'client-stale-wrong-fingerprint',
+    taskId: launchable.taskId,
+    requestId: 'hero-active-same-rotated-progress-1',
+    expectedLearnerRevision: revision,
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200, `Expected 200, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.heroLaunch.status, 'already-started');
+  assert.equal(payload.heroLaunch.questFingerprint, launchable.questFingerprint);
+  assert.equal(payload.heroLaunch.effortTarget, launchable.task.effortTarget);
+
+  const progressRow = server.DB.db.prepare(`
+    SELECT state_json FROM child_game_state
+    WHERE learner_id = ? AND system_id = 'hero-mode'
+  `).get('learner-a');
+  assert.ok(progressRow, 'already-started repair path must write hero progress row');
+  const progress = JSON.parse(progressRow.state_json);
+  assert.equal(progress.daily.questId, launchable.questId);
+  assert.equal(progress.daily.questFingerprint, launchable.questFingerprint);
+  assert.equal(progress.daily.effortPlanned, launchable.task.effortTarget);
+  const taskEntry = progress.daily.tasks[launchable.taskId];
+  assert.ok(taskEntry, 'Progress row must include the active task');
+  assert.equal(taskEntry.status, 'started');
+  assert.equal(taskEntry.questFingerprint, launchable.questFingerprint);
+  assert.equal(taskEntry.effortTarget, launchable.task.effortTarget);
+  assert.ok(taskEntry.effortTarget > 0, 'Progress marker must not be initialised with zero effort');
+
+  server.close();
+});
+
 // ── POST: different Hero taskId with active session → 409 ────────────
 
 test('POST different Hero taskId with active session → 409 hero_active_session_conflict', async () => {

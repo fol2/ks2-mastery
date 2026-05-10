@@ -133,39 +133,41 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
   });
 
   const quest = heroReadModel.dailyQuest;
-  if (!quest || quest.questId !== questId) {
-    throw new ConflictError('Hero quest is stale — the daily quest has changed.', {
-      code: 'hero_quest_stale',
-      clientQuestId: questId,
-    });
-  }
 
-  // Quest fingerprint mismatch check (child UI mode only)
-  if (childUiEnabled && clientQuestFingerprint) {
-    if (clientQuestFingerprint.trim() !== heroReadModel.questFingerprint) {
-      throw new ConflictError('Quest fingerprint mismatch — the quest has changed since the client read it.', {
-        code: 'hero_quest_fingerprint_mismatch',
-        clientFingerprint: clientQuestFingerprint.trim(),
-      });
-    }
-  }
-
-  // Active session detection (P2 U2)
+  // Active session detection (P2 U2). This must run before stale quest
+  // validation: a real Hero-launched subject session carries launchRequestId,
+  // which intentionally rotates the scheduled quest identity while the active
+  // session remains the authoritative next action.
   const activeSession = heroReadModel.activeHeroSession;
 
   if (activeSession) {
     // Same taskId → safe idempotent-style response
     if (activeSession.taskId === taskId) {
+      const matchingTask = quest?.tasks?.find((t) => t.taskId === taskId) || null;
+      const activeQuestId = activeSession.questId || questId;
+      const activeSessionEffortTarget = Number(activeSession.effortTarget);
+      const activeEffortTarget = Number.isFinite(activeSessionEffortTarget) && activeSessionEffortTarget > 0
+        ? activeSessionEffortTarget
+        : (Number(matchingTask?.effortTarget) || 0);
+      const activeQuestFingerprint = activeSession.questFingerprint
+        || (matchingTask ? heroReadModel.questFingerprint : null)
+        || null;
+      const activeDateKey = activeSession.dateKey || heroReadModel.dateKey;
+      const activeTimezone = activeSession.timezone || heroReadModel.timezone || HERO_DEFAULT_TIMEZONE;
+      const activeSchedulerVersion = activeSession.schedulerVersion
+        || heroReadModel.schedulerVersion
+        || HERO_P2_SCHEDULER_VERSION;
       const heroLaunch = {
         version: HERO_LAUNCH_CONTRACT_VERSION,
         status: 'already-started',
-        questId,
+        questId: activeQuestId,
+        questFingerprint: activeQuestFingerprint,
         taskId,
-        dateKey: heroReadModel.dateKey,
+        dateKey: activeDateKey,
         subjectId: activeSession.subjectId,
-        intent: activeSession.intent || '',
-        launcher: activeSession.launcher || '',
-        effortTarget: 0,
+        intent: activeSession.intent || matchingTask?.intent || '',
+        launcher: activeSession.launcher || matchingTask?.launcher || '',
+        effortTarget: activeEffortTarget,
         subjectCommand: 'start-session',
         coinsEnabled: false,
         claimEnabled: false,
@@ -173,24 +175,31 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
         activeSession: {
           subjectId: activeSession.subjectId,
           taskId: activeSession.taskId,
-          questId: activeSession.questId,
+          questId: activeQuestId,
+          questFingerprint: activeQuestFingerprint,
         },
       };
       // P3 U4: expose quest metadata for progress marker (already-started path)
       const questContext = {
-        questId: quest.questId,
-        questFingerprint: heroReadModel.questFingerprint,
-        schedulerVersion: heroReadModel.schedulerVersion || HERO_P2_SCHEDULER_VERSION,
-        effortTarget: quest.effortTarget || 0,
-        tasks: (quest.tasks || []).map(t => ({
+        questId: activeQuestId,
+        questFingerprint: activeQuestFingerprint,
+        schedulerVersion: activeSchedulerVersion,
+        effortTarget: quest?.effortTarget || activeEffortTarget,
+        tasks: matchingTask ? (quest.tasks || []).map(t => ({
           taskId: t.taskId,
           subjectId: t.subjectId,
           intent: t.intent || null,
           launcher: t.launcher || null,
           effortTarget: t.effortTarget || 0,
-        })),
-        dateKey: heroReadModel.dateKey,
-        timezone: heroReadModel.timezone || HERO_DEFAULT_TIMEZONE,
+        })) : [{
+          taskId,
+          subjectId: activeSession.subjectId,
+          intent: activeSession.intent || null,
+          launcher: activeSession.launcher || null,
+          effortTarget: activeEffortTarget,
+        }],
+        dateKey: activeDateKey,
+        timezone: activeTimezone,
         copyVersion: heroReadModel.ui?.copyVersion || null,
       };
       return { heroLaunch, subjectCommand: null, questContext };
@@ -217,7 +226,9 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     });
   }
 
-  // Non-Hero active session detection
+  // Non-Hero active session detection also wins over stale quest validation:
+  // the contract asks the child to continue/finish existing subject work
+  // instead of receiving another generic refresh loop.
   const nonHeroSession = detectNonHeroActiveSession(subjectReadModels);
   if (nonHeroSession) {
     throw new ConflictError('A subject session is already active.', {
@@ -226,6 +237,23 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
         subjectId: nonHeroSession.subjectId,
       },
     });
+  }
+
+  if (!quest || quest.questId !== questId) {
+    throw new ConflictError('Hero quest is stale — the daily quest has changed.', {
+      code: 'hero_quest_stale',
+      clientQuestId: questId,
+    });
+  }
+
+  // Quest fingerprint mismatch check (child UI mode only)
+  if (childUiEnabled && clientQuestFingerprint) {
+    if (clientQuestFingerprint.trim() !== heroReadModel.questFingerprint) {
+      throw new ConflictError('Quest fingerprint mismatch — the quest has changed since the client read it.', {
+        code: 'hero_quest_fingerprint_mismatch',
+        clientFingerprint: clientQuestFingerprint.trim(),
+      });
+    }
   }
 
   const task = quest.tasks.find((t) => t.taskId === taskId);

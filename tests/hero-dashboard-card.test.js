@@ -4,7 +4,7 @@ import {
   renderHeroQuestCardFixture,
   renderHomeSurfaceWithHeroFixture,
 } from './helpers/react-render.js';
-import { HERO_FORBIDDEN_VOCABULARY } from '../shared/hero/hero-copy.js';
+import { HERO_FORBIDDEN_VOCABULARY, HERO_PROGRESS_COPY } from '../shared/hero/hero-copy.js';
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
@@ -238,6 +238,45 @@ describe('HeroQuestCard — stale quest error message with aria-live', () => {
     assert.ok(
       html.includes('Quest updated'),
       'conflict message present',
+    );
+  });
+
+  it('shows finish-current-session message for non-Hero active session conflict error', async () => {
+    const html = await renderHeroQuestCardFixture({
+      hero: heroModel({
+        error: 'subject_active_session_conflict',
+      }),
+    });
+    assert.ok(
+      html.includes('A subject session is already active. Finish it first, then try your Hero Quest.'),
+      'non-Hero active session conflict message present',
+    );
+    assert.ok(
+      !html.includes('Start Hero Quest'),
+      'non-Hero active session conflict must block the start CTA even if the stale model is otherwise launchable',
+    );
+  });
+
+  it('blocks the start CTA for non-Hero active session conflict even with stale claim state', async () => {
+    const html = await renderHeroQuestCardFixture({
+      hero: heroModel({
+        error: 'subject_active_session_conflict',
+        lastClaim: { status: 'claimed' },
+        completedTaskIds: ['hero-task-1'],
+        effortPlanned: 18,
+      }),
+    });
+    assert.ok(
+      html.includes('A subject session is already active. Finish it first, then try your Hero Quest.'),
+      'non-Hero active session conflict message present',
+    );
+    assert.ok(
+      !html.includes('Start Hero Quest'),
+      'non-Hero active session conflict must override stale claimed-state start CTA',
+    );
+    assert.ok(
+      !html.includes(HERO_PROGRESS_COPY.taskComplete),
+      'stale claimed-state copy must not override the blocking conflict',
     );
   });
 

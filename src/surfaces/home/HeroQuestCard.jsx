@@ -27,6 +27,24 @@ export function HeroQuestCard({ hero, actions }) {
 
   const isLaunching = hero.status === 'launching';
   const hasError = Boolean(hero.error);
+  const hasBlockingSubjectSessionConflict = hero.error === 'subject_active_session_conflict';
+
+  // A non-Hero active subject session blocks Hero launch regardless of any
+  // stale ready or claim state still present in the client model.
+  if (hasBlockingSubjectSessionConflict) {
+    return (
+      <div className="hero-quest-card" data-hero-card>
+        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
+        <ErrorCard
+          body={heroQuestErrorMessage(hero.error)}
+          code="hero-quest-load"
+          onRetry={() => actions.refreshHeroQuest()}
+          retryLabel={HERO_CTA_TEXT.refresh}
+        />
+        <HeroCampLink hero={hero} actions={actions} />
+      </div>
+    );
+  }
 
   // (p3-a) Daily complete — with optional economy acknowledgement
   if (hero.dailyStatus === 'completed') {
@@ -120,9 +138,7 @@ export function HeroQuestCard({ hero, actions }) {
       <div className="hero-quest-card" data-hero-card>
         <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
         <ErrorCard
-          body={hero.error === 'hero_active_session_conflict'
-            ? 'Quest updated. Try again.'
-            : 'Your Hero Quest refreshed. Try the next task now.'}
+          body={heroQuestErrorMessage(hero.error)}
           code="hero-quest-load"
           onRetry={() => actions.refreshHeroQuest()}
           retryLabel={HERO_CTA_TEXT.refresh}
@@ -219,9 +235,7 @@ export function HeroQuestCard({ hero, actions }) {
 
         {hasError && (
           <div className="hero-quest-card__error" aria-live="polite">
-            <p>{hero.error === 'hero_active_session_conflict'
-              ? 'Quest updated. Try again.'
-              : 'Your Hero Quest refreshed. Try the next task now.'}</p>
+            <p>{heroQuestErrorMessage(hero.error)}</p>
           </div>
         )}
 
@@ -282,4 +296,14 @@ function HeroCampLink({ hero, actions }) {
 
 function canOpenHeroCamp(hero, actions) {
   return hero?.campEnabled === true && typeof actions.openHeroCamp === 'function';
+}
+
+function heroQuestErrorMessage(error) {
+  if (error === 'subject_active_session_conflict') {
+    return 'A subject session is already active. Finish it first, then try your Hero Quest.';
+  }
+  if (error === 'hero_active_session_conflict') {
+    return 'Quest updated. Try again.';
+  }
+  return 'Your Hero Quest refreshed. Try the next task now.';
 }

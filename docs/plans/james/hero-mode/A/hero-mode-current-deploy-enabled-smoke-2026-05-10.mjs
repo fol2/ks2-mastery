@@ -534,6 +534,35 @@ async function main() {
       taskId: startPayload.heroLaunch?.taskId || null,
     });
 
+    const duplicateStartRequestId = createRequestId('hero-enabled-smoke-duplicate-start');
+    const duplicateStartPayload = await postHeroCommand(origin, demo.cookie, {
+      command: 'start-task',
+      learnerId: demo.learnerId,
+      questId: readModel.dailyQuest.questId,
+      questFingerprint: readModel.questFingerprint,
+      taskId: task.taskId,
+      requestId: duplicateStartRequestId,
+      correlationId: duplicateStartRequestId,
+      expectedLearnerRevision: revision,
+    });
+    assert.equal(
+      duplicateStartPayload.heroLaunch?.status,
+      'already-started',
+      'Duplicate Hero start-task after active-session quest refresh did not return already-started.',
+    );
+    assert.equal(
+      duplicateStartPayload.heroLaunch?.taskId,
+      task.taskId,
+      'Duplicate Hero start-task did not preserve the active task id.',
+    );
+    report.steps.push({
+      name: 'hero-duplicate-start-same-active-task-already-started',
+      pass: true,
+      status: duplicateStartPayload.heroLaunch.status,
+      taskId: duplicateStartPayload.heroLaunch.taskId,
+      subjectId: duplicateStartPayload.heroLaunch.subjectId,
+    });
+
     const completed = await completePunctuationHeroSession({
       origin,
       cookie: demo.cookie,

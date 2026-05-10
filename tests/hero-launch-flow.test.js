@@ -216,15 +216,14 @@ test('E2E launch: active session carries heroContext with matching questId and t
   server.close();
 });
 
-// ── Idempotent replay ───────────────────────────────────────────────
+// ── Active-session replay ───────────────────────────────────────────
 // The launch route recomputes the quest on every call (R5). After a
-// successful launch the subject state changes, which shifts the quest
-// hash and produces a new questId. A replay of the original questId
-// therefore hits the hero_quest_stale guard before the repository-layer
-// idempotency check is reached. This is the correct safety behaviour:
-// stale quests are rejected rather than silently replayed.
+// successful Hero launch, the active subject session becomes the
+// authoritative next action for the same task even if the scheduled quest
+// identity rotates. A replay of the original same-task request therefore
+// returns already-started instead of surfacing a stale-quest loop to the child.
 
-test('E2E launch: replay with stale questId after state change → hero_quest_stale', async () => {
+test('E2E launch: replay with stale questId after state change → already-started for same active task', async () => {
   const server = createServer();
   await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
 
@@ -257,9 +256,11 @@ test('E2E launch: replay with stale questId after state change → hero_quest_st
   });
   const replayPayload = await replayResp.json();
 
-  assert.equal(replayResp.status, 409);
-  assert.equal(replayPayload.code, 'hero_quest_stale',
-    'Replay after state change must be rejected as stale quest');
+  assert.equal(replayResp.status, 200);
+  assert.equal(replayPayload.ok, true);
+  assert.equal(replayPayload.heroLaunch.status, 'already-started');
+  assert.equal(replayPayload.heroLaunch.taskId, launchable.taskId);
+  assert.equal(replayPayload.heroLaunch.activeSession.taskId, launchable.taskId);
 
   server.close();
 });
@@ -294,15 +295,14 @@ test('E2E launch: same requestId with different task payloads → idempotency_re
 
   // Re-read the model after the launch changed subject state.
   // The new quest has a different questId and potentially different tasks.
-  // Re-read the model after the launch changed subject state.
-  // The new quest has a different questId and potentially different tasks.
   // If no second launchable task exists, the fixture cannot exercise this path.
   const rm2 = await getReadModel(server);
   const launchable2 = findFirstLaunchableTask(rm2);
   if (!launchable2) {
     server.close();
     // This is a legitimate skip — the fixture only produced one launchable task.
-    // The idempotency contract is still tested by the stale-quest test above.
+    // Same-task replay is covered by the active-session replay test above;
+    // stale wrong-quest coverage lives in the P2 launch E2E suite.
     return;
   }
 

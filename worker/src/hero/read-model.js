@@ -98,13 +98,18 @@ function detectActiveHeroSession(subjectReadModels) {
     const heroCtx = session.heroContext;
     if (!heroCtx || typeof heroCtx !== 'object') continue;
     if (heroCtx.source !== 'hero-mode') continue;
+    const effortTarget = Number(heroCtx.effortTarget);
     return {
       subjectId,
       questId: heroCtx.questId || null,
       questFingerprint: heroCtx.questFingerprint || null,
       taskId: heroCtx.taskId || null,
+      dateKey: heroCtx.dateKey || null,
+      timezone: heroCtx.timezone || null,
+      schedulerVersion: heroCtx.schedulerVersion || null,
       intent: heroCtx.intent || null,
       launcher: heroCtx.launcher || null,
+      effortTarget: Number.isFinite(effortTarget) ? effortTarget : 0,
       launchRequestId: heroCtx.launchRequestId || null,
       status: 'in-progress',
     };

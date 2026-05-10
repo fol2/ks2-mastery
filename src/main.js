@@ -991,6 +991,15 @@ async function startHeroTask({ questId, questFingerprint, taskId } = {}) {
   } catch (error) {
     const code = error?.code || '';
 
+    if (code === 'subject_active_session_conflict') {
+      patchHeroUi({
+        status: 'ready',
+        pendingTaskKey: '',
+        error: 'subject_active_session_conflict',
+      });
+      return;
+    }
+
     if (HERO_STALE_ERROR_CODES.has(code)) {
       // Stale quest / fingerprint mismatch / active session conflict:
       // clear pending, refetch read model, show gentle message.
