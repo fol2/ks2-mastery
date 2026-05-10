@@ -1,20 +1,20 @@
 {
   "ok": true,
   "phase": "hero-mode-final-production-readiness",
-  "generatedAt": "2026-05-10T10:51:00Z",
+  "generatedAt": "2026-05-10T12:53:20Z",
   "productionOrigin": "https://ks2.eugnel.uk",
-  "deployedCommitSha": "6dd02cdb73c60df5154b8018789c9cd33acb9ad5",
-  "workerVersionId": "6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0",
+  "deployedCommitSha": "8214e9b12b1478f6f845c7c83455ffabd3af2620",
+  "workerVersionId": "e06ec59e-0ea9-4ee9-bd38-28466d10fd99",
   "commands": [
     {
-      "command": "node --test tests/app-controller.test.js tests/worker-auth.test.js tests/worker-hero-read-model.test.js tests/hero-pA4-external-cohort-resolver.test.js tests/hero-pA5-rollout-resolver.test.js tests/hero-pA7-wrangler-oauth.test.js",
+      "command": "node --test tests/hero-p6-dashboard-wiring.test.js tests/punctuation-setup-hero-backdrop.test.js tests/app-controller.test.js tests/worker-auth.test.js tests/worker-hero-read-model.test.js tests/hero-pA4-external-cohort-resolver.test.js tests/hero-pA5-rollout-resolver.test.js tests/hero-pA7-wrangler-oauth.test.js",
       "result": "pass",
-      "summary": "111 tests passed, 0 failed"
+      "summary": "172 tests passed, 0 failed"
     },
     {
       "command": "npm test",
       "result": "pass",
-      "summary": "109191 tests total, 109179 passed, 0 failed, 12 skipped"
+      "summary": "109193 tests total, 109181 passed, 0 failed, 12 skipped"
     },
     {
       "command": "npm run check",
@@ -27,7 +27,7 @@
       "summary": "Worker deployed and production bundle audit passed"
     },
     {
-      "command": "node ./scripts/punctuation-round-length-production-smoke.mjs --commit-sha 6dd02cdb73c60df5154b8018789c9cd33acb9ad5 --worker-version-id 6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0 --out docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-smoke-2026-05-10.json --screenshot-dir docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-screenshots-2026-05-10",
+      "command": "node ./scripts/punctuation-round-length-production-smoke.mjs --commit-sha 8214e9b1 --worker-version-id e06ec59e-0ea9-4ee9-bd38-28466d10fd99 --out docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-smoke-2026-05-10.json --screenshot-dir docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-screenshots-2026-05-10",
       "result": "pass",
       "summary": "Production UI smoke passed on desktop and mobile with no console errors, request failures, or HTTP failures"
     },
@@ -39,7 +39,7 @@
     {
       "command": "node docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-smoke-2026-05-10.mjs",
       "result": "pass",
-      "summary": "Production Hero enabled path passed on the deployed worker using a temporary demo external allowlist: read model, start-task, six-question Worker-owned punctuation session, claim +100 coins, duplicate claim 0 coins, Camp insufficient-coins, external allowlist restore, demo hidden, and demo runtime cleanup"
+      "summary": "Production Hero enabled path passed on the deployed worker using a temporary demo external allowlist: read model, enabled 390px browser UI with Hero Quest card and Hero Camp panel, home-subject-Codex-home navigation, start-task, six-question Worker-owned punctuation session, claim +100 coins, duplicate claim 0 coins, Camp insufficient-coins, subject and monster Codex hashes unchanged by Hero commands, external allowlist restore, demo hidden, and demo runtime cleanup"
     }
   ],
   "secretCustody": {

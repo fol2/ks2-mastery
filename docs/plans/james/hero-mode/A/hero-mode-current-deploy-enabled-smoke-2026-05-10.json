@@ -1,7 +1,7 @@
 {
   "ok": true,
-  "startedAt": "2026-05-10T10:49:52.401Z",
-  "completedAt": "2026-05-10T10:50:52.584Z",
+  "startedAt": "2026-05-10T12:51:14.727Z",
+  "completedAt": "2026-05-10T12:52:34.436Z",
   "origin": "https://ks2.eugnel.uk",
   "database": "ks2-mastery-db",
   "internalBoundary": {
@@ -49,8 +49,8 @@
   ],
   "demo": {
     "accountType": "demo",
-    "accountProof": "sha256-16:4b923ad8467f0016",
-    "learnerProof": "sha256-16:682d310a83fadda2"
+    "accountProof": "sha256-16:aac33b4ac9fc0ded",
+    "learnerProof": "sha256-16:98170d0544a2f906"
   },
   "steps": [
     {
@@ -71,16 +71,10 @@
       "pass": true,
       "taskCount": 1,
       "selectedSubject": "punctuation",
-      "selectedTaskId": "hero-task-6664d8bf",
+      "selectedTaskId": "hero-task-d87a47c9",
       "initialBalance": 0,
-      "waitedMs": 12645,
+      "waitedMs": 6801,
       "observations": [
-        {
-          "status": 404,
-          "visible": false,
-          "hidden": true,
-          "code": "hero_shadow_disabled"
-        },
         {
           "status": 404,
           "visible": false,
@@ -99,7 +93,7 @@
       "name": "hero-start-task",
       "pass": true,
       "subjectId": "punctuation",
-      "taskId": "hero-task-6664d8bf"
+      "taskId": "hero-task-d87a47c9"
     },
     {
       "name": "hero-subject-session-completed",
@@ -135,6 +129,26 @@
       "monsterId": "glossbloom",
       "inviteCost": 150,
       "balance": 100
+    },
+    {
+      "name": "hero-commands-did-not-mutate-subject-stars-mastery-or-monsters",
+      "pass": true,
+      "comparedCommands": [
+        "claim-task",
+        "duplicate-claim-task",
+        "blocked-unlock-monster"
+      ],
+      "snapshot": {
+        "subjectDataHashes": [
+          {
+            "subjectId": "punctuation",
+            "hash": "sha256-16:611bf5ed12c1156a",
+            "bytes": 7894
+          }
+        ],
+        "monsterCodexHash": "sha256-16:8a2e2bedfc39f61b",
+        "monsterCodexBytes": 210
+      }
     }
   ],
   "cleanup": [
@@ -147,8 +161,14 @@
       "pass": true,
       "status": 404,
       "code": "hero_shadow_disabled",
-      "waitedMs": 1792,
+      "waitedMs": 8240,
       "observations": [
+        {
+          "status": 200,
+          "visible": true,
+          "hidden": false,
+          "code": null
+        },
         {
           "status": 404,
           "visible": false,
@@ -170,5 +190,48 @@
         "mutation_receipts"
       ]
     }
-  ]
+  ],
+  "browserUi": {
+    "name": "enabled-browser-ui-mobile-390",
+    "pass": true,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "checks": {
+      "heroQuestCardVisible": true,
+      "heroCampPanelVisible": true,
+      "homeToSubject": true,
+      "subjectToCodex": true,
+      "codexToHome": true,
+      "overflow": {
+        "home": {
+          "selector": "html",
+          "clientWidth": 390,
+          "scrollWidth": 390,
+          "ok": true
+        },
+        "subject": {
+          "selector": "html",
+          "clientWidth": 390,
+          "scrollWidth": 390,
+          "ok": true
+        },
+        "codex": {
+          "selector": "html",
+          "clientWidth": 390,
+          "scrollWidth": 390,
+          "ok": true
+        }
+      }
+    },
+    "consoleErrors": [],
+    "requestFailures": [],
+    "httpFailures": [],
+    "screenshots": {
+      "home": "docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10/mobile-home-hero-camp.png",
+      "subject": "docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10/mobile-subject-punctuation.png",
+      "codex": "docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10/mobile-codex.png"
+    }
+  }
 }

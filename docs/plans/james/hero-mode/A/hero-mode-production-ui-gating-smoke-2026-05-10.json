@@ -1,10 +1,10 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "workerCommitSha": "6dd02cdb73c60df5154b8018789c9cd33acb9ad5",
-  "workerVersionId": "6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0",
-  "startedAt": "2026-05-10T10:49:31.617Z",
-  "completedAt": "2026-05-10T10:49:45.949Z",
+  "workerCommitSha": "8214e9b1",
+  "workerVersionId": "e06ec59e-0ea9-4ee9-bd38-28466d10fd99",
+  "startedAt": "2026-05-10T12:52:50.364Z",
+  "completedAt": "2026-05-10T12:53:06.627Z",
   "probes": [
     {
       "name": "desktop-1024",
