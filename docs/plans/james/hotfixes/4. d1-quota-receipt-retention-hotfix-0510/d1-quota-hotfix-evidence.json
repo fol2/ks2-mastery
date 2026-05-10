@@ -116,7 +116,16 @@
         "Active Worker version refreshed after the GitHub main-branch deployment hook superseded the manual deploy.",
         "Deployment evidence reframed as a post-commit checkpoint because the evidence commit itself triggers the next deployment."
       ],
-      "finalVerdict": "pending final rerun"
+      "finalVerdict": "GREEN",
+      "finalRerunSummary": {
+        "head": "3d7720dfc40d1a08b58a7b8456cc3f19c80959fc",
+        "worktreeClean": true,
+        "originMainSynced": true,
+        "productionAudit": "passed",
+        "productionHttpStatus": 200,
+        "oldNonAdminRows": 0,
+        "oldNonAdminResponseBytes": 0
+      }
     }
   }
 }
