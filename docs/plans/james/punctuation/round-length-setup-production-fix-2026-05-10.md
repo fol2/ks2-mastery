@@ -56,5 +56,5 @@ The round-length browser smoke confirms:
 
 All advisory feedback is treated as a blocker. The task is not closed until both reviewers return green:
 
-- Code Reviewer: re-review requested after blocker fix.
-- Contract Auditor: re-review requested after blocker fix.
+- Code Reviewer: GREEN. No blockers or advisory items remain after reviewing the round-length command action, regression coverage, Hero read-model gating, strict browser smoke, and deployed-runtime evidence.
+- Contract Auditor: GREEN. No blockers or advisory items remain after auditing tracked evidence, production binding, documentation consistency, and final `HEAD` / `origin/main` sync.
