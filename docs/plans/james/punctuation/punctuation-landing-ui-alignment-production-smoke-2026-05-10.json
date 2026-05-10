@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "workerCommitSha": "410d630986e5f38d544c900df05e3f828895df15",
+  "workerVersionId": "9760a762-99af-42b2-a00b-7afdce81e9ac",
+  "startedAt": "2026-05-10T23:13:19.185Z",
+  "completedAt": "2026-05-10T23:13:24.680Z",
+  "checks": {
+    "setupHeading": "Today's punctuation mission",
+    "welcomeText": "Hi Demo Learner — ready for a short round?",
+    "backgroundVisible": true,
+    "modeLabels": [
+      ".RecommendedSmart ReviewA short mix of today's best practice.",
+      "!Wobbly SpotsPractise the things that needed another go.",
+      "?GPS CheckA quick check-up — answers come at the end."
+    ],
+    "modeCardCount": 3,
+    "sharedModeRow": true,
+    "sharedControlStack": true,
+    "sharedBeginRow": true,
+    "removedOldDrawer": true,
+    "layoutOrder": true,
+    "gpsSelected": true,
+    "gpsCtaText": "Start GPS Check",
+    "gpsCtaEnabled": true,
+    "gpsSessionVisible": true
+  },
+  "consoleErrors": [],
+  "requestFailures": [],
+  "httpFailures": [],
+  "screenshots": {
+    "setup": "docs/plans/james/punctuation/punctuation-landing-ui-alignment-production-setup-2026-05-10.png",
+    "gpsSession": "docs/plans/james/punctuation/punctuation-landing-ui-alignment-production-gps-session-2026-05-10.png"
+  }
+}
