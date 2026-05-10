@@ -259,10 +259,23 @@ async function runEnabledBrowserUiSmoke({ origin, cookie }) {
     await mkdir(SCREENSHOT_DIR, { recursive: true });
     await page.goto(origin, { waitUntil: 'domcontentloaded' });
     await page.locator('[data-hero-card]').waitFor({ state: 'visible', timeout: 30_000 });
-    await page.locator('[data-hero-camp-panel]').waitFor({ state: 'visible', timeout: 30_000 });
+    const homeCampPanelCount = await page.locator('[data-hero-camp-panel]').count();
+    assert.equal(homeCampPanelCount, 0, 'Hero Camp panel must not render on the dashboard hero.');
+    await page.locator('[data-action="open-hero-camp"]').waitFor({ state: 'visible', timeout: 30_000 });
     const homeOverflow = await assertNoHorizontalOverflow(page);
-    screenshots.home = path.join(SCREENSHOT_DIR, 'mobile-home-hero-camp.png').replace(/\\/g, '/');
+    screenshots.home = path.join(SCREENSHOT_DIR, 'mobile-home-hero-quest.png').replace(/\\/g, '/');
     await page.screenshot({ path: screenshots.home, fullPage: true });
+
+    await page.locator('[data-action="open-hero-camp"]').first().click();
+    await page.locator('[data-hero-camp-page]').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('[data-hero-camp-panel]').waitFor({ state: 'visible', timeout: 30_000 });
+    const campMonsterCount = await page.locator('[data-monster-id]').count();
+    const campOverflow = await assertNoHorizontalOverflow(page);
+    screenshots.camp = path.join(SCREENSHOT_DIR, 'mobile-hero-camp-page.png').replace(/\\/g, '/');
+    await page.screenshot({ path: screenshots.camp, fullPage: true });
+
+    await page.locator('[data-action="hero-camp-back-dashboard"]').first().click();
+    await page.locator('[data-hero-card]').waitFor({ state: 'visible', timeout: 30_000 });
 
     await page.locator('[data-action="open-subject"][data-subject-id="punctuation"]').first().click();
     await page.locator('[data-punctuation-phase="setup"]').waitFor({ state: 'visible', timeout: 30_000 });
@@ -282,19 +295,26 @@ async function runEnabledBrowserUiSmoke({ origin, cookie }) {
 
     return {
       name: 'enabled-browser-ui-mobile-390',
-      pass: homeOverflow.ok && subjectOverflow.ok && codexOverflow.ok
+      pass: homeOverflow.ok && campOverflow.ok && subjectOverflow.ok && codexOverflow.ok
+        && campMonsterCount >= 6
         && consoleErrors.length === 0
         && requestFailures.length === 0
         && httpFailures.length === 0,
       viewport: { width: 390, height: 844 },
       checks: {
         heroQuestCardVisible: true,
-        heroCampPanelVisible: true,
+        heroCampPanelAbsentOnHome: homeCampPanelCount === 0,
+        heroCampEntryVisible: true,
+        heroCampPanelVisibleOnCampPage: true,
+        heroCampMonsterCount: campMonsterCount,
         homeToSubject: true,
+        homeToHeroCamp: true,
+        heroCampToHome: true,
         subjectToCodex: true,
         codexToHome: true,
         overflow: {
           home: homeOverflow,
+          camp: campOverflow,
           subject: subjectOverflow,
           codex: codexOverflow,
         },

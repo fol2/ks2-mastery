@@ -15,8 +15,8 @@ import { ErrorCard } from '../../platform/ui/ErrorCard.jsx';
  * fallback for each UI state, and zero economy vocabulary.
  *
  * Props:
- *   hero    — normalised model from buildHeroHomeModel
- *   actions — { startHeroQuestTask, continueHeroTask, refreshHeroQuest }
+ *   hero    - normalised model from buildHeroHomeModel
+ *   actions - { startHeroQuestTask, continueHeroTask, refreshHeroQuest, openHeroCamp }
  */
 export function HeroQuestCard({ hero, actions }) {
   // (a) Disabled / unavailable — return null; HomeSurface shows fallback.
@@ -51,6 +51,7 @@ export function HeroQuestCard({ hero, actions }) {
             {HERO_PROGRESS_COPY.dailyCompleteDetail}
           </p>
         )}
+        <HeroCampLink hero={hero} actions={actions} />
       </div>
     );
   }
@@ -67,6 +68,7 @@ export function HeroQuestCard({ hero, actions }) {
           <Button size="xl" busy>
             {HERO_PROGRESS_COPY.claiming}
           </Button>
+          <HeroCampButton hero={hero} actions={actions} />
         </div>
       </div>
     );
@@ -99,8 +101,10 @@ export function HeroQuestCard({ hero, actions }) {
             >
               {HERO_CTA_TEXT.start}
             </Button>
+            <HeroCampButton hero={hero} actions={actions} />
           </div>
         )}
+        {!hasMore && <HeroCampLink hero={hero} actions={actions} />}
       </div>
     );
   }
@@ -123,6 +127,7 @@ export function HeroQuestCard({ hero, actions }) {
           onRetry={() => actions.refreshHeroQuest()}
           retryLabel={HERO_CTA_TEXT.refresh}
         />
+        <HeroCampLink hero={hero} actions={actions} />
       </div>
     );
   }
@@ -152,6 +157,7 @@ export function HeroQuestCard({ hero, actions }) {
           >
             {HERO_CTA_TEXT.continue}
           </Button>
+          <HeroCampButton hero={hero} actions={actions} />
         </div>
       </div>
     );
@@ -227,6 +233,7 @@ export function HeroQuestCard({ hero, actions }) {
           >
             {isLaunching ? HERO_CTA_TEXT.starting : HERO_CTA_TEXT.start}
           </Button>
+          <HeroCampButton hero={hero} actions={actions} />
         </div>
       </div>
     );
@@ -245,6 +252,34 @@ export function HeroQuestCard({ hero, actions }) {
         title="No Hero task is ready yet"
         body="Your Hero progress is safe — your subjects are still available below."
       />
+      <HeroCampLink hero={hero} actions={actions} />
     </div>
   );
+}
+
+function HeroCampButton({ hero, actions }) {
+  if (!canOpenHeroCamp(hero, actions)) return null;
+  return (
+    <Button
+      variant="ghost"
+      size="xl"
+      dataAction="open-hero-camp"
+      onClick={actions.openHeroCamp}
+    >
+      Hero Camp
+    </Button>
+  );
+}
+
+function HeroCampLink({ hero, actions }) {
+  if (!canOpenHeroCamp(hero, actions)) return null;
+  return (
+    <div className="hero-quest-card__cta-row">
+      <HeroCampButton hero={hero} actions={actions} />
+    </div>
+  );
+}
+
+function canOpenHeroCamp(hero, actions) {
+  return hero?.campEnabled === true && typeof actions.openHeroCamp === 'function';
 }

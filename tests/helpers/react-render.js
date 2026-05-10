@@ -1363,6 +1363,26 @@ export function renderHeroCampConfirmationFixture({ visible = true, heading, bal
   `);
 }
 
+export function renderHeroCampSurfaceFixture({ heroReadModel = null } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HeroCampSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/HeroCampSurface.jsx'))};
+
+    const model = {
+      learner: { id: 'learner-a', name: 'Ava', yearGroup: 'Y5' },
+      heroReadModel: ${JSON.stringify(heroReadModel)},
+      heroClient: { unlockMonster: async () => {}, evolveMonster: async () => {} },
+    };
+    const actions = {
+      navigateHome() {},
+      refreshHeroQuest() {},
+    };
+    const html = renderToStaticMarkup(<HeroCampSurface model={model} actions={actions} />);
+    console.log(html);
+  `);
+}
+
 export function renderHomeSurfaceWithCampFixture({ hero = null, heroCamp = null, heroReadModel = null } = {}) {
   // If heroCamp is provided with campEnabled, auto-build a heroReadModel
   // that produces the expected camp model when no explicit heroReadModel given.

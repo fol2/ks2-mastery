@@ -15,6 +15,7 @@ import {
   renderHeroCampPanelFixture,
   renderHeroCampMonsterCardFixture,
   renderHeroCampConfirmationFixture,
+  renderHeroCampSurfaceFixture,
   renderHomeSurfaceWithCampFixture,
 } from './helpers/react-render.js';
 import { HERO_FORBIDDEN_VOCABULARY } from '../shared/hero/hero-copy.js';
@@ -119,6 +120,7 @@ function heroModel(overrides = {}) {
     coinsEnabled: true,
     coinBalance: 500,
     dailyStatus: 'none',
+    campEnabled: true,
     ...overrides,
   };
 }
@@ -138,45 +140,56 @@ function heroReadModelWithCamp(monsters = sixMonsters(), balance = 500) {
 }
 
 // ---------------------------------------------------------------------------
-// Camp panel integration on HomeSurface
+// Camp page routing from HomeSurface
 // ---------------------------------------------------------------------------
 
-describe('Hero Camp panel on HomeSurface', () => {
-  it('camp panel appears when hero is active and camp is enabled', async () => {
+describe('Hero Camp routing from HomeSurface', () => {
+  it('camp panel does NOT render on HomeSurface when camp is enabled', async () => {
     const html = await renderHomeSurfaceWithCampFixture({
       hero: heroModel(),
       heroCamp: { campEnabled: true },
     });
-    assert.ok(html.includes('data-hero-camp-panel'), 'camp panel is rendered');
-    assert.ok(html.includes('Hero Camp'), 'camp title is rendered');
+    assert.ok(!html.includes('data-hero-camp-panel'), 'camp panel is not rendered on home');
+    assert.ok(html.includes('data-action="open-hero-camp"'), 'home renders a Hero Camp route entry');
   });
 
-  it('camp panel does NOT appear when camp is disabled', async () => {
+  it('camp entry does NOT appear when camp is disabled', async () => {
     const html = await renderHomeSurfaceWithCampFixture({
-      hero: heroModel(),
+      hero: heroModel({ campEnabled: false }),
       heroCamp: { campEnabled: false },
     });
     assert.ok(!html.includes('data-hero-camp-panel'), 'camp panel is not rendered');
+    assert.ok(!html.includes('data-action="open-hero-camp"'), 'camp route entry is not rendered');
   });
 
-  it('camp panel does NOT appear when hero is not active', async () => {
+  it('camp entry does NOT appear when hero is not active', async () => {
     const html = await renderHomeSurfaceWithCampFixture({
       hero: { enabled: false, status: 'idle' },
       heroCamp: { campEnabled: true },
     });
     assert.ok(!html.includes('data-hero-camp-panel'), 'camp panel not rendered without hero');
+    assert.ok(!html.includes('data-action="open-hero-camp"'), 'camp route entry not rendered without hero');
   });
 
-  it('Hero Quest remains primary action — camp panel is secondary', async () => {
+  it('Hero Quest remains the dashboard hero action before the Camp entry', async () => {
     const html = await renderHomeSurfaceWithCampFixture({
       hero: heroModel(),
       heroCamp: { campEnabled: true },
     });
     const heroCardPos = html.indexOf('data-hero-card');
-    const campPanelPos = html.indexOf('data-hero-camp-panel');
+    const campEntryPos = html.indexOf('data-action="open-hero-camp"');
     assert.ok(heroCardPos >= 0, 'hero card is present');
-    assert.ok(campPanelPos >= 0, 'camp panel is present');
-    assert.ok(heroCardPos < campPanelPos, 'hero card appears before camp panel');
+    assert.ok(campEntryPos >= 0, 'camp entry is present');
+    assert.ok(heroCardPos < campEntryPos, 'hero card appears before camp entry');
+  });
+
+  it('Hero Camp page renders the camp panel when camp is enabled', async () => {
+    const html = await renderHeroCampSurfaceFixture({
+      heroReadModel: heroReadModelWithCamp(sixMonsters(), 500),
+    });
+    assert.ok(html.includes('data-hero-camp-page'), 'camp page renders');
+    assert.ok(html.includes('data-hero-camp-panel'), 'camp panel is rendered on the Camp page');
+    assert.ok(html.includes('data-action="hero-camp-back-dashboard"'), 'back action is rendered');
   });
 });
 
@@ -409,7 +422,7 @@ describe('Hero Camp vocabulary boundary', () => {
     }
   });
 
-  it('home surface with camp output contains no forbidden vocabulary', async () => {
+  it('home surface with Hero Camp route entry contains no forbidden vocabulary', async () => {
     const html = await renderHomeSurfaceWithCampFixture({
       hero: heroModel(),
       heroCamp: { campEnabled: true },

@@ -30,7 +30,7 @@ const VALID_ADMIN_SECTIONS = new Set([
   'visual-engine',
 ]);
 
-const VALID_ROUTE_SCREENS = new Set(['dashboard', 'subject', 'codex', 'profile-settings', 'parent-hub', 'admin-hub']);
+const VALID_ROUTE_SCREENS = new Set(['dashboard', 'subject', 'codex', 'hero-camp', 'profile-settings', 'parent-hub', 'admin-hub']);
 const VALID_ROUTE_TABS = new Set(['practice', 'analytics', 'profiles', 'settings', 'method']);
 
 const DEFAULT_SUBJECT_UI = {
@@ -138,7 +138,7 @@ function normaliseRoute(rawRoute, subjects) {
     return { screen, subjectId: null, tab: DEFAULT_ROUTE.tab, adminSection };
   }
 
-  if (screen === 'codex' || screen === 'profile-settings' || screen === 'parent-hub') {
+  if (screen === 'codex' || screen === 'hero-camp' || screen === 'profile-settings' || screen === 'parent-hub') {
     return { screen, subjectId: null, tab: DEFAULT_ROUTE.tab, adminSection: null };
   }
 
@@ -540,6 +540,12 @@ export function createStore(
       setState((current) => ({
         ...current,
         route: normaliseRoute({ screen: 'codex' }, registry),
+      }));
+    },
+    openHeroCamp() {
+      setState((current) => ({
+        ...current,
+        route: normaliseRoute({ screen: 'hero-camp' }, registry),
       }));
     },
     openParentHub() {

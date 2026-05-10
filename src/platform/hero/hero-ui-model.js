@@ -57,6 +57,7 @@ export function buildHeroHomeModel(heroUi) {
   const dailyAwardStatus = economyBlock?.today?.awardStatus || 'not-eligible';
   const showCoinsAwarded = coinsEnabled && dailyAwardStatus === 'awarded' && coinsAwardedToday > 0;
   const showCoinBalance = coinsEnabled;
+  const campEnabled = readModel?.camp?.enabled === true;
 
   return {
     status,
@@ -86,5 +87,6 @@ export function buildHeroHomeModel(heroUi) {
     dailyAwardStatus,
     showCoinsAwarded,
     showCoinBalance,
+    campEnabled,
   };
 }

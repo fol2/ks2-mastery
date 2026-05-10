@@ -3,7 +3,6 @@ import { TopNav } from '../shell/TopNav.jsx';
 import { MonsterMeadow } from './MonsterMeadow.jsx';
 import { SubjectCard } from './SubjectCard.jsx';
 import { HeroQuestCard } from './HeroQuestCard.jsx';
-import { HeroCampPanel } from './HeroCampPanel.jsx';
 import { IconArrowRight } from './icons.jsx';
 import { Button } from '../../platform/ui/Button.jsx';
 import { HomeHeroScene } from '../../platform/ui/HomeHeroScene.jsx';
@@ -97,15 +96,7 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
                 {companionName ? `${companionName} is ready for round ${model.roundNumber || 1}.` : 'A fresh round is waiting.'}
               </div>
               {heroActive ? (
-                <>
-                  <HeroQuestCard hero={hero} actions={actions} />
-                  <HeroCampPanel
-                    readModel={model.heroReadModel}
-                    heroClient={model.heroClient}
-                    learnerId={model.learner?.id}
-                    onRefresh={actions.refreshHeroQuest}
-                  />
-                </>
+                <HeroQuestCard hero={hero} actions={actions} />
               ) : (
                 <>
                   {recommendation ? (

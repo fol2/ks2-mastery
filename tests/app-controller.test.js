@@ -527,3 +527,13 @@ test('controller subscribers receive a controller snapshot per logical state cha
   assert.equal(snapshots[0].appState.route.screen, 'codex');
   assert.equal(snapshots[0].ui.tts.playingKind, null);
 });
+
+test('controller opens Hero Camp as a standalone route', () => {
+  installMemoryStorage();
+  const controller = createLocalAppController();
+
+  controller.dispatch('open-hero-camp');
+
+  assert.equal(controller.store.getState().route.screen, 'hero-camp');
+  assert.equal(controller.store.getState().route.subjectId, null);
+});

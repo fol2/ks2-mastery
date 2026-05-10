@@ -8,7 +8,7 @@
 //  - createHeroModeClient without fetch throws TypeError
 //  - When camp flag is off (camp block missing from read model), camp model shows disabled
 //  - buildHeroHomeModel produces hero home model that gates on dual-check flags
-//  - Full data flow: readModel → buildHeroCampModel + createHeroModeClient = all props HeroCampPanel needs
+//  - Full data flow: readModel -> buildHeroCampModel + createHeroModeClient = all props HeroCampPanel needs
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -133,6 +133,14 @@ function heroUiState(readModelOverrides = {}) {
       claim: { enabled: false },
       coinsEnabled: true,
       economy: { balance: 500, today: { coinsAwarded: 100, awardStatus: 'awarded' } },
+      camp: {
+        enabled: true,
+        balance: 500,
+        monsters: [],
+        selectedMonsterId: null,
+        rosterVersion: 'hero-pool-v1',
+        recentActions: [],
+      },
       ...readModelOverrides,
     },
     error: '',
@@ -446,6 +454,11 @@ describe('buildHeroHomeModel produces hero home model for dashboard', () => {
     assert.equal(model.coinBalance, 500);
   });
 
+  it('returns campEnabled from the camp block', () => {
+    const model = buildHeroHomeModel(heroUiState());
+    assert.equal(model.campEnabled, true);
+  });
+
   it('coinsEnabled=false when readModel.coinsEnabled is absent', () => {
     const model = buildHeroHomeModel(heroUiState({ coinsEnabled: false }));
     assert.equal(model.coinsEnabled, false);
@@ -462,17 +475,23 @@ describe('buildHeroHomeModel produces hero home model for dashboard', () => {
 // Full data flow — readModel feeds both camp model and client props
 // ---------------------------------------------------------------------------
 
-describe('full data flow: readModel → camp model + client = HeroCampPanel props', () => {
-  it('main home model threads Hero Camp read model and client into HomeSurface', () => {
+describe('full data flow: readModel -> camp model + client = HeroCampPanel props', () => {
+  it('main home model keeps Hero Camp out of HomeSurface while the Camp page receives it', () => {
     const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
     const buildHomeModelBlock = source.slice(
       source.indexOf('function buildHomeModel'),
+      source.indexOf('function buildHeroCampPageModel'),
+    );
+    const buildHeroCampPageModelBlock = source.slice(
+      source.indexOf('function buildHeroCampPageModel'),
       source.indexOf('function buildCodexModel'),
     );
 
     assert.match(buildHomeModelBlock, /hero:\s*buildHeroHomeModel\(heroUi\s*\|\|\s*\{\}\)/);
-    assert.match(buildHomeModelBlock, /heroReadModel:\s*heroUi\?\.readModel\s*\|\|\s*null/);
-    assert.match(buildHomeModelBlock, /heroClient,?/);
+    assert.doesNotMatch(buildHomeModelBlock, /heroReadModel:\s*heroUi\?\.readModel\s*\|\|\s*null/);
+    assert.doesNotMatch(buildHomeModelBlock, /heroClient,?/);
+    assert.match(buildHeroCampPageModelBlock, /heroReadModel:\s*heroUi\?\.readModel\s*\|\|\s*null/);
+    assert.match(buildHeroCampPageModelBlock, /heroClient,?/);
   });
 
   it('v6 readModel produces all props HeroCampPanel needs', () => {

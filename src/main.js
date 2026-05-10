@@ -2625,6 +2625,17 @@ function buildHomeModel(appState, context) {
     now: new Date(),
     permissions: { canOpenParentHub },
     hero: buildHeroHomeModel(heroUi || {}),
+  };
+}
+
+function buildHeroCampPageModel(appState) {
+  const learnerId = appState.learners.selectedId;
+  const learner = appState.learners.byId[learnerId];
+
+  return {
+    learner: learner
+      ? { id: learner.id, name: learner.name, yearGroup: learner.yearGroup }
+      : null,
     heroReadModel: heroUi?.readModel || null,
     heroClient,
   };
@@ -2650,6 +2661,7 @@ function buildSurfaceActions() {
     openProfileSettings: () => dispatchAction('open-profile-settings'),
     openSubject: (subjectId) => dispatchAction('open-subject', { subjectId }),
     openCodex: () => dispatchAction('open-codex'),
+    openHeroCamp: () => dispatchAction('open-hero-camp'),
     openParentHub: () => dispatchAction('open-parent-hub'),
     openAdminHub: () => dispatchAction('open-admin-hub'),
     logout: () => dispatchAction('platform-logout'),
@@ -2855,6 +2867,7 @@ const appRuntime = {
   // `[monsterEffectConfig?.catalog]` useEffect dep stable across renders.
   monsterEffectConfig: createMonsterEffectConfigGetter(repositories),
   buildHomeModel,
+  buildHeroCampPageModel,
   buildCodexModel,
   buildSurfaceChromeModel,
   buildSurfaceActions,
@@ -3082,6 +3095,25 @@ function handleGlobalAction(action, data) {
       );
     }
     store.openCodex();
+    return true;
+  }
+
+  if (action === 'open-hero-camp') {
+    clearAdultSurfaceNotice();
+    tts.stop();
+    tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null,
+        '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
+    store.openHeroCamp();
+    if (boot.session.signedIn && canLoadHeroReadModel() && learnerId) {
+      queueMicrotask(() => loadHeroReadModel({ learnerId, force: true }));
+    }
     return true;
   }
 

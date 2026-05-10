@@ -3170,6 +3170,279 @@ button.chip,
   backdrop-filter: blur(3px);
 }
 
+.hero-quest-card__cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.hero-camp-shell {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, #eef7f2 76%, var(--bg)) 0%, var(--bg) 42%),
+    var(--bg);
+}
+
+.hero-camp-page {
+  display: grid;
+  gap: 20px;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 28px clamp(16px, 4vw, 44px) 48px;
+  width: 100%;
+}
+
+.hero-camp-page__masthead {
+  align-items: end;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding-bottom: 18px;
+}
+
+.hero-camp-page__title {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1;
+  margin: 4px 0 0;
+}
+
+.hero-camp-page__empty {
+  max-width: 680px;
+}
+
+.hero-camp-panel {
+  background:
+    linear-gradient(135deg, color-mix(in oklab, #fff7df 58%, var(--panel)) 0%, var(--panel) 54%),
+    var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  gap: 18px;
+  padding: clamp(16px, 3vw, 28px);
+}
+
+.hero-camp-panel__header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.hero-camp-panel__title {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: clamp(1.45rem, 2.6vw, 2rem);
+  font-weight: 500;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.hero-camp-panel__balance {
+  align-items: baseline;
+  background: color-mix(in oklab, #dff3ff 70%, var(--panel));
+  border: 1px solid color-mix(in oklab, #3e6fa8 28%, var(--line));
+  border-radius: 12px;
+  color: var(--ink);
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 9px 12px;
+}
+
+.hero-camp-panel__balance-value {
+  font-size: 1.18rem;
+  font-weight: 800;
+}
+
+.hero-camp-panel__balance-label {
+  color: var(--ink-2);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.hero-camp-panel__success,
+.hero-camp-panel__insufficient,
+.hero-camp-panel__all-grown,
+.hero-camp-panel__invite-prompt,
+.hero-camp-panel__error,
+.hero-camp-panel__loading {
+  background: color-mix(in oklab, var(--panel-soft) 72%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink-2);
+  margin: 0;
+  padding: 12px 14px;
+}
+
+.hero-camp-panel__success,
+.hero-camp-panel__insufficient {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.hero-camp-panel__success-message,
+.hero-camp-panel__insufficient-message,
+.hero-camp-panel__insufficient-help {
+  margin: 0;
+}
+
+.hero-camp-panel__grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.hero-camp-monster-card {
+  background: color-mix(in oklab, var(--panel) 92%, #f0f7ea);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  min-height: 100%;
+  padding: 14px;
+}
+
+.hero-camp-monster-card__image-container {
+  aspect-ratio: 1 / 1;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in oklab, #fff1b8 58%, transparent), transparent 56%),
+    color-mix(in oklab, #e7f4f0 68%, var(--panel-soft));
+  border: 1px solid color-mix(in oklab, var(--line) 76%, transparent);
+  border-radius: 14px;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+}
+
+.hero-camp-monster-card__image {
+  height: 86%;
+  object-fit: contain;
+  width: 86%;
+}
+
+.hero-camp-monster-card__name {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 1.18rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.hero-camp-monster-card__blurb,
+.hero-camp-monster-card__insufficient {
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.hero-camp-monster-card__stage {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hero-camp-monster-card__stage-dot {
+  background: color-mix(in oklab, var(--line-strong) 38%, transparent);
+  border-radius: 999px;
+  height: 8px;
+  width: 8px;
+}
+
+.hero-camp-monster-card__stage-dot--filled {
+  background: #3e8f6a;
+}
+
+.hero-camp-monster-card__stage-label,
+.hero-camp-monster-card__fully-grown {
+  color: var(--ink-2);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.hero-camp-monster-card__cta {
+  align-self: end;
+  display: grid;
+  gap: 8px;
+}
+
+.hero-camp-monster-card__action {
+  justify-content: center;
+  width: 100%;
+}
+
+.hero-camp-confirmation {
+  align-items: center;
+  display: grid;
+  inset: 0;
+  justify-items: center;
+  position: fixed;
+  z-index: 1000;
+}
+
+.hero-camp-confirmation__backdrop {
+  background: color-mix(in oklab, #0f172a 42%, transparent);
+  inset: 0;
+  position: absolute;
+}
+
+.hero-camp-confirmation__panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-warm);
+  display: grid;
+  gap: 12px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 20px;
+  position: relative;
+}
+
+.hero-camp-confirmation__heading {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.hero-camp-confirmation__balance-after {
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.hero-camp-confirmation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .hero-camp-page__masthead,
+  .hero-camp-panel__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hero-camp-panel__balance {
+    justify-content: center;
+  }
+}
+
 /* ---------- Monster meadow ---------- */
 .monster-meadow {
   position: absolute;

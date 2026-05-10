@@ -284,6 +284,13 @@ export function createAppController({
       return true;
     }
 
+    if (action === 'open-hero-camp') {
+      tts.stop();
+      tts.abortPending?.();
+      store.openHeroCamp();
+      return true;
+    }
+
     if (action === 'open-parent-hub') {
       tts.stop();
       tts.abortPending?.();

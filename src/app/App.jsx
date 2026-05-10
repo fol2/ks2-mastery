@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { HomeSurface } from '../surfaces/home/HomeSurface.jsx';
 import { CodexSurface } from '../surfaces/home/CodexSurface.jsx';
+import { HeroCampSurface } from '../surfaces/home/HeroCampSurface.jsx';
 import { TopNav } from '../surfaces/shell/TopNav.jsx';
 import { PersistenceBanner } from '../surfaces/shell/PersistenceBanner.jsx';
 import { ToastShelf } from '../surfaces/shell/ToastShelf.jsx';
@@ -58,6 +59,7 @@ runtimeRegistration();
 const REACT_ROUTES = new Set([
   'dashboard',
   'codex',
+  'hero-camp',
   'subject',
   'profile-settings',
   'parent-hub',
@@ -230,6 +232,15 @@ export function App({ controller, runtime }) {
           <CodexSurface model={runtime.buildCodexModel(appState, context)} actions={actions} />
           <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </>
+      )}
+
+      {screen === 'hero-camp' && (
+        <div className="app-shell hero-camp-shell">
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
+          <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
+          <HeroCampSurface model={runtime.buildHeroCampPageModel(appState, context)} actions={actions} />
+          <SharedOverlays appState={appState} actions={actions} controller={controller} />
+        </div>
       )}
 
       {screen === 'subject' && (() => {

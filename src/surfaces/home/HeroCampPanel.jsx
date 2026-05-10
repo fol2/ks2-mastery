@@ -13,9 +13,9 @@ import {
 /**
  * HeroCampPanel — calm child-led spending surface for Hero Camp.
  *
- * Renders as a secondary section below the Hero Quest card. Shows the
- * Hero Coins balance (prominent but not pressure-y), a grid of monster
- * cards, and a confirmation dialog on action. Calm, welcoming tone.
+ * Renders the Hero Camp page body. Shows the Hero Coins balance
+ * (prominent but not pressure-y), a grid of monster cards, and a
+ * confirmation dialog on action. Calm, welcoming tone.
  *
  * States:
  *   1. Camp disabled → null
