@@ -1,0 +1,67 @@
+{
+  "ok": true,
+  "generatedAt": "2026-05-10T10:39:35.825Z",
+  "database": "ks2-mastery-db",
+  "heroStateRows": 3,
+  "heroEventRows": [
+    {
+      "event_type": "hero.coins.awarded",
+      "count": 1
+    },
+    {
+      "event_type": "hero.daily.completed",
+      "count": 1
+    },
+    {
+      "event_type": "hero.task.completed",
+      "count": 2
+    }
+  ],
+  "heroStateRowsByAccountType": [
+    {
+      "account_type": "real",
+      "learner_count": 3,
+      "state_rows": 3
+    }
+  ],
+  "heroEventRowsByActorType": [
+    {
+      "actor_account_type": "real",
+      "event_type": "hero.coins.awarded",
+      "count": 1
+    },
+    {
+      "actor_account_type": "real",
+      "event_type": "hero.daily.completed",
+      "count": 1
+    },
+    {
+      "actor_account_type": "real",
+      "event_type": "hero.task.completed",
+      "count": 2
+    }
+  ],
+  "heroEventRowsByLearnerAccountType": [
+    {
+      "learner_account_type": "real",
+      "event_type": "hero.coins.awarded",
+      "count": 1
+    },
+    {
+      "learner_account_type": "real",
+      "event_type": "hero.daily.completed",
+      "count": 1
+    },
+    {
+      "learner_account_type": "real",
+      "event_type": "hero.task.completed",
+      "count": 2
+    }
+  ],
+  "heroBoundaryCardinality": {
+    "state_account_count": 1,
+    "state_learner_count": 3,
+    "event_actor_account_count": 1,
+    "event_learner_count": 2
+  }
+}

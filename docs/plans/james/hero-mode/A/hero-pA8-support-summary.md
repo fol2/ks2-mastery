@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-05-10 Supersession Note
+
+This file is historical A8 dormant-boundary evidence. It is superseded for the current production boundary by `hero-pA8-final-decision.md`, `hero-pA8-known-account-smoke-evidence.md`, `hero-mode-current-deploy-enabled-smoke-2026-05-10.json`, and `hero-mode-final-completion-report-2026-05-10.md`.
+
+The current boundary is no longer zero Hero rows. It is a James-only named internal rollout with one real account boundary, three learner Hero state rows, two learners with Hero event rows, empty external and excluded account lists, emergency-off set to `false`, and rollout percent 0. This does not widen to global normalisation.
+
+---
+
 ## Support Ownership
 
 | Role | Name | Status |

@@ -1,0 +1,174 @@
+{
+  "ok": true,
+  "startedAt": "2026-05-10T10:38:29.051Z",
+  "completedAt": "2026-05-10T10:39:28.078Z",
+  "origin": "https://ks2.eugnel.uk",
+  "database": "ks2-mastery-db",
+  "internalBoundary": {
+    "realAccountCount": 1,
+    "learnerCount": 3,
+    "accountProof": "sha256-16:b709571a7f45edfc",
+    "source": "remote D1 child_game_state joined through account_learner_memberships"
+  },
+  "secretReassertions": [
+    {
+      "name": "HERO_INTERNAL_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EXTERNAL_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EXCLUDED_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EMERGENCY_DISABLED",
+      "valueKind": "scalar",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_ROLLOUT_PERCENT",
+      "valueKind": "scalar",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EXTERNAL_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EXTERNAL_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    }
+  ],
+  "demo": {
+    "accountType": "demo",
+    "accountProof": "sha256-16:5dd2b19f30450362",
+    "learnerProof": "sha256-16:d339f581e05d0ad1"
+  },
+  "steps": [
+    {
+      "name": "boundary-secrets-reasserted",
+      "pass": true
+    },
+    {
+      "name": "demo-punctuation-primed",
+      "pass": true,
+      "summaryTotal": 1
+    },
+    {
+      "name": "temporary-demo-external-allowlist-enabled",
+      "pass": true
+    },
+    {
+      "name": "hero-read-model-enabled",
+      "pass": true,
+      "taskCount": 1,
+      "selectedSubject": "punctuation",
+      "selectedTaskId": "hero-task-a174c606",
+      "initialBalance": 0,
+      "waitedMs": 6599,
+      "observations": [
+        {
+          "status": 404,
+          "visible": false,
+          "hidden": true,
+          "code": "hero_shadow_disabled"
+        },
+        {
+          "status": 200,
+          "visible": true,
+          "hidden": false,
+          "code": null
+        }
+      ]
+    },
+    {
+      "name": "hero-start-task",
+      "pass": true,
+      "subjectId": "punctuation",
+      "taskId": "hero-task-a174c606"
+    },
+    {
+      "name": "hero-subject-session-completed",
+      "pass": true,
+      "summaryTotal": 6,
+      "answeredCount": 6
+    },
+    {
+      "name": "hero-pending-completed-session",
+      "pass": true,
+      "practiceSessionPresent": true
+    },
+    {
+      "name": "hero-claim-task",
+      "pass": true,
+      "status": "claimed",
+      "coinsAwarded": 100,
+      "dailyStatus": "completed",
+      "coinBalance": 100
+    },
+    {
+      "name": "hero-duplicate-claim-idempotent",
+      "pass": true,
+      "status": "already-completed",
+      "coinsAwarded": 0,
+      "dailyCoinsAlreadyAwarded": true
+    },
+    {
+      "name": "hero-camp-insufficient-coins",
+      "pass": true,
+      "status": 409,
+      "code": "hero_insufficient_coins",
+      "monsterId": "glossbloom",
+      "inviteCost": 150,
+      "balance": 100
+    }
+  ],
+  "cleanup": [
+    {
+      "name": "external-allowlist-restored-empty",
+      "pass": true
+    },
+    {
+      "name": "demo-non-cohort-hidden-after-restore",
+      "pass": true,
+      "status": 404,
+      "code": "hero_shadow_disabled",
+      "waitedMs": 7438,
+      "observations": [
+        {
+          "status": 200,
+          "visible": true,
+          "hidden": false,
+          "code": null
+        },
+        {
+          "status": 404,
+          "visible": false,
+          "hidden": true,
+          "code": "hero_shadow_disabled"
+        }
+      ]
+    },
+    {
+      "name": "demo-runtime-rows-cleaned",
+      "pass": true,
+      "tables": [
+        "event_log",
+        "child_game_state",
+        "practice_sessions",
+        "child_subject_state",
+        "learner_activity_feed",
+        "learner_read_models",
+        "mutation_receipts"
+      ]
+    }
+  ]
+}

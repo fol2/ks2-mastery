@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-05-10 Supersession Note
+
+This file remains valid as historical emergency-off rehearsal evidence for the earlier dormant boundary. Its zero-row statements are superseded for the current production boundary by `hero-pA8-final-decision.md`, `hero-pA8-known-account-smoke-evidence.md`, `hero-mode-current-deploy-enabled-smoke-2026-05-10.json`, and `hero-mode-final-completion-report-2026-05-10.md`.
+
+The current boundary is a James-only named internal rollout, not a dormant zero-row state. On 2026-05-10 the closure reasserted empty external and excluded account lists, emergency-off `false`, rollout percent 0, and one real internal boundary account. A temporary demo external allowlist was used only for current deployed enabled-path smoke, then restored empty; the demo account was verified hidden and its scoped runtime rows were cleaned.
+
+---
+
 ## Evidence Collected
 
 | Check | Evidence | Result |

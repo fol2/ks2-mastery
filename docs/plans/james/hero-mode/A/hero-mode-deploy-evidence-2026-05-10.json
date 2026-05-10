@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "phase": "hero-mode-final-production-readiness",
+  "generatedAt": "2026-05-10T10:39:40Z",
+  "productionOrigin": "https://ks2.eugnel.uk",
+  "deployedCommitSha": "58fae19b9ecb8a134bbcd13048dea6ccb1f863a6",
+  "workerVersionId": "2f62c849-4a22-4c21-80f6-88250b01cb71",
+  "commands": [
+    {
+      "command": "node --test tests/app-controller.test.js tests/worker-auth.test.js tests/worker-hero-read-model.test.js tests/hero-pA4-external-cohort-resolver.test.js tests/hero-pA5-rollout-resolver.test.js",
+      "result": "pass",
+      "summary": "109 tests passed, 0 failed"
+    },
+    {
+      "command": "npm test",
+      "result": "pass",
+      "summary": "109191 tests total, 109179 passed, 0 failed, 12 skipped"
+    },
+    {
+      "command": "npm run check",
+      "result": "pass",
+      "summary": "Wrangler dry-run build passed; client bundle audit passed"
+    },
+    {
+      "command": "npm run deploy",
+      "result": "pass",
+      "summary": "Worker deployed and production bundle audit passed"
+    },
+    {
+      "command": "node ./scripts/punctuation-round-length-production-smoke.mjs --commit-sha 58fae19b9ecb8a134bbcd13048dea6ccb1f863a6 --worker-version-id 2f62c849-4a22-4c21-80f6-88250b01cb71 --out docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-smoke-2026-05-10.json --screenshot-dir docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-screenshots-2026-05-10",
+      "result": "pass",
+      "summary": "Production UI smoke passed on desktop and mobile with no console errors, request failures, or HTTP failures"
+    },
+    {
+      "command": "node docs/plans/james/hero-mode/A/hero-mode-production-counts-2026-05-10.mjs",
+      "result": "pass",
+      "summary": "Remote D1 read-only counts returned one real account boundary: 3 learner state rows, 2 event learners, and no demo/external Hero rows after cleanup"
+    },
+    {
+      "command": "node docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-smoke-2026-05-10.mjs",
+      "result": "pass",
+      "summary": "Production Hero enabled path passed on the deployed worker using a temporary demo external allowlist: read model, start-task, six-question Worker-owned punctuation session, claim +100 coins, duplicate claim 0 coins, Camp insufficient-coins, external allowlist restore, demo hidden, and demo runtime cleanup"
+    }
+  ],
+  "secretCustody": {
+    "result": "pass",
+    "summary": "Hero boundary secrets were reasserted through scripts/wrangler-oauth.mjs: HERO_INTERNAL_ACCOUNTS from the single real D1 boundary account, HERO_EXTERNAL_ACCOUNTS [], HERO_EXCLUDED_ACCOUNTS [], HERO_EMERGENCY_DISABLED false, HERO_ROLLOUT_PERCENT 0. Evidence records only PII-safe proofs."
+  },
+  "productionAudit": {
+    "result": "pass",
+    "summary": "Production bundle audit passed for https://ks2.eugnel.uk/ with 1 HTML-referenced bundle, 6 transitively scanned chunks, 19 direct paths, matrix demo check ok, 5/5 security-header checks, and 15/15 cache-split checks"
+  }
+}

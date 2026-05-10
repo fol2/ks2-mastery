@@ -1,4 +1,6 @@
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 
 const wranglerArgs = process.argv.slice(2);
 
@@ -20,13 +22,24 @@ if (!isWorkersBuild) {
   delete env.CLOUDFLARE_API_TOKEN;
 }
 
-const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-const result = spawnSync(npxBin, ['wrangler', ...wranglerArgs], {
+const configuredWranglerBin = env.WRANGLER_OAUTH_WRANGLER_JS
+  ? path.resolve(env.WRANGLER_OAUTH_WRANGLER_JS)
+  : '';
+const localWranglerBin = configuredWranglerBin || path.resolve('node_modules', 'wrangler', 'bin', 'wrangler.js');
+const hasLocalWrangler = existsSync(localWranglerBin);
+const command = hasLocalWrangler
+  ? process.execPath
+  : (process.platform === 'win32' ? 'npx.cmd' : 'npx');
+const args = hasLocalWrangler
+  ? [localWranglerBin, ...wranglerArgs]
+  : ['wrangler', ...wranglerArgs];
+
+const result = spawnSync(command, args, {
   stdio: 'inherit',
   env,
-  // Windows needs shell mode to launch npx.cmd. POSIX must keep argv intact
-  // so wrangler flags such as `--command "SELECT ..."` are not split by /bin/sh.
-  shell: process.platform === 'win32',
+  // Prefer the local Wrangler JS entrypoint so Windows preserves argv for
+  // flags such as `--command "SELECT ..."` instead of shell-splitting SQL.
+  shell: !hasLocalWrangler && process.platform === 'win32',
 });
 
 if (result.error) {
