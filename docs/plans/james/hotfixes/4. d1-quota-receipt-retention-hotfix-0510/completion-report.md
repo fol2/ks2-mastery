@@ -4,7 +4,7 @@ Date: 2026-05-10
 Production URL: `https://ks2.eugnel.uk`
 Runtime/evidence commit: `993c5756ddd1fa9e4f024b79ad9a1073adf0b93b`
 Code hotfix commit: `fe819a44e653347ef91d6daee3908db3d6e5868f`
-Cloudflare Worker version: `c53be54e-4ddd-4e42-bf43-e23d03d404a8`
+Cloudflare deployment checkpoint: version `704551a8-8bdf-495f-95b3-01cea37b4abb`, deployment `52302c69-00b7-4da6-8991-08467a637c25`
 
 ## Status
 
@@ -48,9 +48,9 @@ Cleanup batch evidence:
 Final production D1 evidence:
 
 - `mutation_receipts`: `1,722` rows, `23,434,344` response bytes.
-- D1 `size_after`: `44,929,024` bytes.
+- D1 `size_after`: `44,937,216` bytes.
 - Non-admin receipts older than 24 hours: `0` rows, `0` response bytes.
-- Evidence refreshed at `2026-05-10T17:06:35.236Z`.
+- Evidence refreshed at `2026-05-10T17:11:05.868Z`.
 
 ## Verification
 
@@ -63,9 +63,10 @@ Final production D1 evidence:
 - `npm run deploy` passed.
 - Production bundle audit passed for `https://ks2.eugnel.uk/`: 1 HTML-referenced bundle, 6 chunks scanned transitively, 19 direct paths, matrix demo check ok, 5/5 security-header checks, 15/15 cache-split checks.
 - Direct production GET `https://ks2.eugnel.uk/` returned HTTP 200 with content length `5,088`.
-- Active Cloudflare deployment status after the `origin/main` evidence commit:
-  deployment `c2fbf1ec-8b36-48af-ae26-cdb5a26263be`, version `c53be54e-4ddd-4e42-bf43-e23d03d404a8`, 100% traffic, created `2026-05-10T17:03:47.771104Z`.
-- The earlier manual deploy version `8cd79ced-aa8a-4dcb-ac9e-7c4a868da505` was superseded by the GitHub main-branch deployment hook after the report/evidence commit. The active deployment has been re-audited.
+- Cloudflare deployment checkpoint after the `origin/main` evidence commit:
+  deployment `52302c69-00b7-4da6-8991-08467a637c25`, version `704551a8-8bdf-495f-95b3-01cea37b4abb`, 100% traffic, created `2026-05-10T17:08:39.514279Z`.
+- The earlier manual deploy version `8cd79ced-aa8a-4dcb-ac9e-7c4a868da505` and evidence deploy version `c53be54e-4ddd-4e42-bf43-e23d03d404a8` were superseded by the GitHub main-branch deployment hook after report/evidence commits.
+- Because every `origin/main` evidence commit can trigger another Cloudflare deployment, this committed report records a deployment checkpoint and the exact commands used for post-commit live verification. The final handoff must include a fresh `wrangler deployments status`, production audit, HTTP GET, and D1 proof after the last evidence commit.
 - Chrome was opened to `https://ks2.eugnel.uk`; Cloudflare tail captured Chrome 147 requests returning HTTP 200 for the live app bundle.
 
 ## Independent review
@@ -73,4 +74,4 @@ Final production D1 evidence:
 Independent reviewer close-out:
 
 - Code reviewer: GREEN. Zero blockers/advisories. Reviewer independently ran `node --test tests/worker-cron-retention-sweep.test.js tests/worker-cron-trigger-reconcile.test.js tests/pre-push-hook.test.js`, parsed the evidence JSON, and checked `https://ks2.eugnel.uk/` returned HTTP 200.
-- Contract auditor: initial NOT GREEN on report/push/final D1 freshness/workspace cleanliness; second rerun NOT GREEN on stale Worker version after the GitHub deployment hook superseded the manual deploy. All listed blockers were addressed: report and evidence were refreshed, stale non-admin receipts were swept to zero, generated-file status was restored, this hotfix folder was committed and pushed, and the active Worker version was refreshed and re-audited. Final rerun pending after this active-version refresh.
+- Contract auditor: initial NOT GREEN on report/push/final D1 freshness/workspace cleanliness; second rerun NOT GREEN on stale Worker version after the GitHub deployment hook superseded the manual deploy; third rerun NOT GREEN because the evidence refresh commit triggered another deployment. The report now records deployment-checkpoint semantics instead of claiming that a committed report can predict the deployment created by its own commit. Final auditor rerun pending after this correction.

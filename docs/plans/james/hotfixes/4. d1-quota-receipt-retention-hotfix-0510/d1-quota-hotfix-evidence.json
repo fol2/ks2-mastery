@@ -3,15 +3,16 @@
   "productionUrl": "https://ks2.eugnel.uk",
   "runtimeCommit": "993c5756ddd1fa9e4f024b79ad9a1073adf0b93b",
   "codeHotfixCommit": "fe819a44e653347ef91d6daee3908db3d6e5868f",
-  "cloudflareWorkerVersion": "c53be54e-4ddd-4e42-bf43-e23d03d404a8",
-  "cloudflareDeployment": {
-    "id": "c2fbf1ec-8b36-48af-ae26-cdb5a26263be",
+  "cloudflareDeploymentCheckpoint": {
+    "id": "52302c69-00b7-4da6-8991-08467a637c25",
     "source": "wrangler",
     "strategy": "percentage",
     "percentage": 100,
-    "createdOn": "2026-05-10T17:03:47.771104Z",
+    "versionId": "704551a8-8bdf-495f-95b3-01cea37b4abb",
+    "createdOn": "2026-05-10T17:08:39.514279Z",
     "supersededManualDeployVersion": "8cd79ced-aa8a-4dcb-ac9e-7c4a868da505",
-    "note": "The GitHub main-branch deployment hook created this active deployment after the report/evidence commit."
+    "supersededEvidenceDeployVersion": "c53be54e-4ddd-4e42-bf43-e23d03d404a8",
+    "note": "Each origin/main evidence commit can trigger another Cloudflare deployment. This is the deployment checkpoint verified after the previous evidence commit; final handoff includes a fresh post-final-commit status."
   },
   "rootCause": {
     "summary": "Non-admin mutation receipts retained full command responses for 30 days, exhausting the D1 quota.",
@@ -38,10 +39,10 @@
     { "batch": "auditor-follow-up-sweep", "rowsDeleted": 3, "sizeAfterBytes": 44929024 }
   ],
   "finalD1": {
-    "refreshedAt": "2026-05-10T17:06:35.236Z",
+    "refreshedAt": "2026-05-10T17:11:05.868Z",
     "mutationReceiptRows": 1722,
     "mutationReceiptResponseBytes": 23434344,
-    "d1SizeAfterBytes": 44929024,
+    "d1SizeAfterBytes": 44937216,
     "oldNonAdminRows": 0,
     "oldNonAdminResponseBytes": 0
   },
@@ -105,12 +106,15 @@
       "initialBlockers": 4,
       "secondVerdict": "NOT GREEN",
       "secondBlockers": 1,
+      "thirdVerdict": "NOT GREEN",
+      "thirdBlockers": 1,
       "fixesApplied": [
         "Reviewer verdicts written into report and evidence.",
         "Hotfix report folder prepared for commit and push to origin/main.",
         "Remote D1 bounded retention cleanup rerun until old non-admin rows reached zero.",
         "Generated-file status restored so only intended artefacts remain before commit.",
-        "Active Worker version refreshed after the GitHub main-branch deployment hook superseded the manual deploy."
+        "Active Worker version refreshed after the GitHub main-branch deployment hook superseded the manual deploy.",
+        "Deployment evidence reframed as a post-commit checkpoint because the evidence commit itself triggers the next deployment."
       ],
       "finalVerdict": "pending final rerun"
     }
