@@ -33,8 +33,8 @@ Observed and changed with live production Cloudflare OAuth-safe commands on 2026
 | `HERO_EXCLUDED_ACCOUNTS` | Created as a reviewed empty JSON array; opt-out/exclusion path present, known count 0 |
 | `HERO_EMERGENCY_DISABLED` | Created and restored to `false` after rehearsal |
 | Checked-in global Hero flags | All six `HERO_MODE_*_ENABLED` flags are `false` in `wrangler.jsonc` |
-| Production Hero state rows | 1 row in `child_game_state` where `system_id='hero-mode'` |
-| Production Hero event rows | 3 Hero rows in `event_log`: task completed, daily completed, coins awarded |
+| Production Hero state rows | 3 learner rows in `child_game_state` where `system_id='hero-mode'`, all under the one real boundary account |
+| Production Hero event rows | 4 Hero rows in `event_log`: two task-completed rows, one daily-completed row, and one coins-awarded row |
 | Exposed production accounts | 1 known account: James's adult account |
 
 A8 closes the pA7 blocker by replacing the write-only unknown internal allowlist with a known reviewed allowlist. After James approved rollout, the intended boundary is James-only named internal exposure. This is not a global rollout.
@@ -49,4 +49,4 @@ The known-account smoke now passed on James's learner. The contract still blocks
 HOLD WITH KNOWN BOUNDARY - JAMES-ONLY NAMED INTERNAL ROLLOUT
 ```
 
-Reason: James supplied product-owner approval and a known account. Stage 1 production smoke passed, including read model, start-task, Worker-owned subject completion, claim, duplicate-claim no-double-award, Camp insufficient-coins block, non-cohort hidden, explicit exclusion hidden, emergency-off rollback, and re-enable state preservation. The next contract step is Stage 2 named-account exposure, not global default-on.
+Reason: James supplied product-owner approval and a known account. Stage 1 production smoke passed, including read model, start-task, Worker-owned subject completion, claim, duplicate-claim no-double-award, Camp insufficient-coins block, non-cohort hidden, explicit exclusion hidden, emergency-off rollback, and re-enable state preservation. The 2026-05-10 current-deploy smoke also replayed the enabled path with a temporary demo external allowlist, restored the external list empty, verified the demo account hidden, and cleaned scoped demo runtime rows. The next contract step is Stage 2 named-account exposure, not global default-on.

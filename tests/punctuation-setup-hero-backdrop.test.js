@@ -27,6 +27,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { createAppHarness } from './helpers/app-harness.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -172,6 +173,22 @@ test('punctuation Setup scene wraps the mission dashboard in .setup-grid / .setu
   // because the background is now painted by `HeroBackdrop` (which
   // carries no landmarks).
   assert.match(html, /<div class="setup-content" data-section="hero">/);
+});
+
+test('setup-grid mobile placement override stays after explicit desktop placement', () => {
+  const css = readFileSync(new URL('../styles/app.css', import.meta.url), 'utf8');
+  const desktopPlacementMatch = /\.setup-grid > \.setup-side\s*\{\s*grid-column:\s*2;/.exec(css);
+  const desktopPlacement = desktopPlacementMatch?.index ?? -1;
+  assert.notEqual(desktopPlacement, -1, 'desktop setup-side placement must exist');
+
+  const mobileOverride = css.indexOf('@media (max-width: 900px)', desktopPlacement);
+  assert.notEqual(mobileOverride, -1, 'mobile setup-grid override must appear after desktop placement');
+
+  const overrideAfterPlacement = css.slice(mobileOverride);
+  assert.match(
+    overrideAfterPlacement,
+    /@media \(max-width: 900px\)\s*\{\s*\.setup-grid > \.setup-main,\s*\.setup-grid > \.setup-side,\s*\.setup-grid > \.setup-more-practice\s*\{\s*grid-column:\s*auto;\s*grid-row:\s*auto;/,
+  );
 });
 
 test('punctuation Setup scene preserves every data-section landmark', () => {

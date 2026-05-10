@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { chromium } from 'playwright';
 
 import {
   assertOkResponse,
@@ -22,6 +23,7 @@ import {
 } from '../../../../../scripts/punctuation-production-smoke.mjs';
 
 const OUT = 'docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-smoke-2026-05-10.json';
+const SCREENSHOT_DIR = 'docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10';
 const DATABASE = 'ks2-mastery-db';
 
 function hashId(value) {
@@ -201,6 +203,112 @@ function visibleHero(payload) {
   return hero?.ui?.enabled === true || hero?.heroEnabled === true;
 }
 
+function sessionCookieForBrowser(origin, cookieHeader) {
+  const url = new URL(origin);
+  const [pair] = String(cookieHeader || '').split(';');
+  const separator = pair.indexOf('=');
+  if (separator === -1) throw new Error('Demo session cookie did not contain a name/value pair.');
+  return {
+    name: pair.slice(0, separator).trim(),
+    value: pair.slice(separator + 1).trim(),
+    domain: url.hostname,
+    path: '/',
+    httpOnly: true,
+    secure: url.protocol === 'https:',
+    sameSite: 'Lax',
+  };
+}
+
+async function assertNoHorizontalOverflow(page, selector = 'html') {
+  return page.evaluate((targetSelector) => {
+    const target = document.querySelector(targetSelector) || document.documentElement;
+    return {
+      selector: targetSelector,
+      clientWidth: target.clientWidth,
+      scrollWidth: target.scrollWidth,
+      ok: target.scrollWidth <= target.clientWidth + 1,
+    };
+  }, selector);
+}
+
+async function runEnabledBrowserUiSmoke({ origin, cookie }) {
+  const browser = await chromium.launch();
+  const consoleErrors = [];
+  const requestFailures = [];
+  const httpFailures = [];
+  const screenshots = {};
+  try {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+    });
+    await context.addCookies([sessionCookieForBrowser(origin, cookie)]);
+    const page = await context.newPage();
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+    page.on('requestfailed', (request) => {
+      requestFailures.push({ url: request.url(), failure: request.failure()?.errorText || '' });
+    });
+    page.on('response', (response) => {
+      if (response.status() >= 400 && !response.url().endsWith('/favicon.ico')) {
+        httpFailures.push({ url: response.url(), status: response.status() });
+      }
+    });
+
+    await mkdir(SCREENSHOT_DIR, { recursive: true });
+    await page.goto(origin, { waitUntil: 'domcontentloaded' });
+    await page.locator('[data-hero-card]').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('[data-hero-camp-panel]').waitFor({ state: 'visible', timeout: 30_000 });
+    const homeOverflow = await assertNoHorizontalOverflow(page);
+    screenshots.home = path.join(SCREENSHOT_DIR, 'mobile-home-hero-camp.png').replace(/\\/g, '/');
+    await page.screenshot({ path: screenshots.home, fullPage: true });
+
+    await page.locator('[data-action="open-subject"][data-subject-id="punctuation"]').first().click();
+    await page.locator('[data-punctuation-phase="setup"]').waitFor({ state: 'visible', timeout: 30_000 });
+    const subjectOverflow = await assertNoHorizontalOverflow(page);
+    screenshots.subject = path.join(SCREENSHOT_DIR, 'mobile-subject-punctuation.png').replace(/\\/g, '/');
+    await page.screenshot({ path: screenshots.subject, fullPage: true });
+
+    await page.locator('[data-action="open-codex"]').first().click();
+    await page.locator('.codex-page').waitFor({ state: 'visible', timeout: 30_000 });
+    const codexOverflow = await assertNoHorizontalOverflow(page);
+    screenshots.codex = path.join(SCREENSHOT_DIR, 'mobile-codex.png').replace(/\\/g, '/');
+    await page.screenshot({ path: screenshots.codex, fullPage: true });
+
+    await page.locator('[data-action="navigate-home"]').first().click();
+    await page.locator('[data-hero-card]').waitFor({ state: 'visible', timeout: 30_000 });
+    await context.close();
+
+    return {
+      name: 'enabled-browser-ui-mobile-390',
+      pass: homeOverflow.ok && subjectOverflow.ok && codexOverflow.ok
+        && consoleErrors.length === 0
+        && requestFailures.length === 0
+        && httpFailures.length === 0,
+      viewport: { width: 390, height: 844 },
+      checks: {
+        heroQuestCardVisible: true,
+        heroCampPanelVisible: true,
+        homeToSubject: true,
+        subjectToCodex: true,
+        codexToHome: true,
+        overflow: {
+          home: homeOverflow,
+          subject: subjectOverflow,
+          codex: codexOverflow,
+        },
+      },
+      consoleErrors,
+      requestFailures,
+      httpFailures,
+      screenshots,
+    };
+  } finally {
+    await browser.close();
+  }
+}
+
 async function waitForHeroVisibility({ origin, cookie, learnerId, expectedVisible, label, timeoutMs = 180_000 }) {
   const started = Date.now();
   const observations = [];
@@ -258,6 +366,35 @@ function cleanupDemoRuntimeRows({ accountId, learnerId }) {
   }));
 }
 
+function readSubjectIntegritySnapshot(learnerId) {
+  const learner = sqlString(learnerId);
+  const subjectRows = runD1Query(`
+    SELECT subject_id, COALESCE(data_json, '') AS data_json
+    FROM child_subject_state
+    WHERE learner_id = ${learner}
+      AND subject_id IN ('spelling', 'grammar', 'punctuation')
+    ORDER BY subject_id
+  `);
+  const codexRows = runD1Query(`
+    SELECT COALESCE(state_json, '') AS state_json
+    FROM child_game_state
+    WHERE learner_id = ${learner}
+      AND system_id = 'monster-codex'
+    LIMIT 1
+  `);
+  return {
+    subjectDataHashes: subjectRows.map((row) => ({
+      subjectId: row.subject_id,
+      hash: `sha256-16:${hashId(row.data_json || '')}`,
+      bytes: String(row.data_json || '').length,
+    })),
+    monsterCodexHash: codexRows.length
+      ? `sha256-16:${hashId(codexRows[0].state_json || '')}`
+      : null,
+    monsterCodexBytes: codexRows.length ? String(codexRows[0].state_json || '').length : 0,
+  };
+}
+
 async function main() {
   const origin = configuredOrigin();
   const startedAt = new Date().toISOString();
@@ -272,6 +409,7 @@ async function main() {
     demo: null,
     steps: [],
     cleanup: [],
+    browserUi: null,
   };
 
   let demo = null;
@@ -353,6 +491,9 @@ async function main() {
       observations: visibleWait.observations,
     });
 
+    report.browserUi = await runEnabledBrowserUiSmoke({ origin, cookie: demo.cookie });
+    assert.equal(report.browserUi.pass, true, 'Enabled Hero browser UI smoke failed.');
+
     const startRequestId = createRequestId('hero-enabled-smoke-start');
     const startPayload = await postHeroCommand(origin, demo.cookie, {
       command: 'start-task',
@@ -397,6 +538,8 @@ async function main() {
     assert.equal(pending.taskId, task.taskId, 'Pending completed task did not match selected task.');
     report.steps.push({ name: 'hero-pending-completed-session', pass: true, practiceSessionPresent: Boolean(pending.practiceSessionId) });
 
+    const subjectIntegrityBeforeHeroClaims = readSubjectIntegritySnapshot(demo.learnerId);
+
     const claimRequestId = createRequestId('hero-enabled-smoke-claim');
     const claimPayload = await postHeroCommand(origin, demo.cookie, {
       command: 'claim-task',
@@ -420,6 +563,12 @@ async function main() {
       dailyStatus: claimPayload.heroClaim.dailyStatus,
       coinBalance: claimPayload.heroClaim.coinBalance,
     });
+    const subjectIntegrityAfterClaim = readSubjectIntegritySnapshot(demo.learnerId);
+    assert.deepEqual(
+      subjectIntegrityAfterClaim,
+      subjectIntegrityBeforeHeroClaims,
+      'Hero claim-task mutated subject data or monster-codex state.',
+    );
 
     const duplicateRequestId = createRequestId('hero-enabled-smoke-duplicate-claim');
     const duplicatePayload = await postHeroCommand(origin, demo.cookie, {
@@ -442,6 +591,12 @@ async function main() {
       coinsAwarded: duplicatePayload.heroClaim.coinsAwarded,
       dailyCoinsAlreadyAwarded: duplicatePayload.heroClaim.dailyCoinsAlreadyAwarded,
     });
+    const subjectIntegrityAfterDuplicateClaim = readSubjectIntegritySnapshot(demo.learnerId);
+    assert.deepEqual(
+      subjectIntegrityAfterDuplicateClaim,
+      subjectIntegrityBeforeHeroClaims,
+      'Duplicate Hero claim mutated subject data or monster-codex state.',
+    );
 
     const afterClaimResult = await getJson(origin, `/api/hero/read-model?learnerId=${encodeURIComponent(demo.learnerId)}`, { cookie: demo.cookie });
     assertOkResponse('Hero after-claim read model', afterClaimResult);
@@ -468,6 +623,18 @@ async function main() {
       monsterId: unaffordable.monsterId,
       inviteCost: unaffordable.inviteCost,
       balance: afterClaimHero.camp.balance,
+    });
+    const subjectIntegrityAfterCampBlock = readSubjectIntegritySnapshot(demo.learnerId);
+    assert.deepEqual(
+      subjectIntegrityAfterCampBlock,
+      subjectIntegrityBeforeHeroClaims,
+      'Hero Camp blocked command mutated subject data or monster-codex state.',
+    );
+    report.steps.push({
+      name: 'hero-commands-did-not-mutate-subject-stars-mastery-or-monsters',
+      pass: true,
+      comparedCommands: ['claim-task', 'duplicate-claim-task', 'blocked-unlock-monster'],
+      snapshot: subjectIntegrityBeforeHeroClaims,
     });
   } finally {
     try {
@@ -510,7 +677,8 @@ async function main() {
     report.completedAt = new Date().toISOString();
     report.ok = externalSecretRestored
       && report.steps.every((step) => step.pass)
-      && report.cleanup.every((step) => step.pass);
+      && report.cleanup.every((step) => step.pass)
+      && report.browserUi?.pass === true;
     await writeEvidence(report);
   }
 

@@ -1,8 +1,8 @@
 {
   "phase": "hero-mode-pA8",
   "status": "live-production-james-only-named-internal-rollout",
-  "generatedAt": "2026-05-02T22:27:00Z",
-  "evidenceCodeBaseline": "9a91db991d0dfacff834cbf4c4a7bf20683e0883",
+  "generatedAt": "2026-05-10T12:17:02.627Z",
+  "evidenceCodeBaseline": "6dd02cdb73c60df5154b8018789c9cd33acb9ad5",
   "productionOrigin": "https://ks2.eugnel.uk",
   "contract": "docs/plans/james/hero-mode/A/hero-mode-pA8.md",
   "sourceCommandDetail": "Exact secret names, D1 read-only queries, and package-script commands are listed. Inline production probe scripts are summarised rather than replayable because they carried short-lived session cookies and demo account identifiers.",
@@ -70,12 +70,18 @@
     "adultAccounts": 176,
     "realAccounts": 5,
     "demoAccounts": 171,
-    "heroStateRows": 1,
-    "heroEventRows": 3,
+    "heroStateRows": 3,
+    "heroEventRows": 4,
     "heroEventTypes": {
-      "hero.task.completed": 1,
+      "hero.task.completed": 2,
       "hero.daily.completed": 1,
       "hero.coins.awarded": 1
+    },
+    "heroBoundaryCardinality": {
+      "stateAccountCount": 1,
+      "stateLearnerCount": 3,
+      "eventActorAccountCount": 1,
+      "eventLearnerCount": 2
     }
   },
   "emergencyOffRehearsal": {

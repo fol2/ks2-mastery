@@ -36,12 +36,13 @@ The pA8 contract asked for one known enabled account to prove the production pat
 | Excluded account hidden | PASS | With James temporarily in `HERO_EXCLUDED_ACCOUNTS`, read model returned hidden Hero shape and command returned controlled 403 `hero-unavailable` |
 | Start task through `/api/hero/command` | PASS | `start-task` returned `heroLaunch.status=started` for punctuation |
 | Subject command path | PASS | Hero launched the normal Worker punctuation `start-session` path |
-| Subject session completion | PASS | Completed the four-item punctuation round under Worker authority; final subject phase `summary`, session `null` |
+| Subject session completion | PASS | Known-account smoke completed the punctuation round under Worker authority; current-deploy enabled smoke completed a six-question punctuation session with six answered items |
 | Worker-verified claim | PASS | `claim-task` returned `heroClaim.status=claimed`, `effortCompleted=2`, `dailyStatus=completed` |
 | Single daily +100 Hero Coin award | PASS | First claim awarded 100 coins and balance became 100 |
 | Duplicate claim blocked/no double-award | PASS | Duplicate claim returned `already-completed`, `coinsAwarded=0`, `dailyCoinsAlreadyAwarded=true` |
 | Camp invite/grow succeeds or calmly blocks | PASS | `unlock-monster` for `glossbloom` returned 409 `hero_insufficient_coins`, "Need 150 coins, have 100" |
-| Hero metrics rows | PASS | Production D1 has 1 `child_game_state` Hero row and 3 Hero event rows (`task.completed`, `daily.completed`, `coins.awarded`) |
+| No subject Stars/mastery/monster mutation by Hero command | PASS | Current-deploy enabled smoke compares subject data and `monster-codex` hashes before and after `claim-task`, duplicate `claim-task`, and blocked `unlock-monster`; hashes remain unchanged |
+| Hero metrics rows | PASS | Production D1 has 3 Hero state learner rows under one real boundary account and 4 Hero event rows (`task.completed` x2, `daily.completed` x1, `coins.awarded` x1) |
 | Support log | Explicit zero beyond James | No real family cohort beyond James's approved validation account |
 
 ---

@@ -2,7 +2,7 @@
 
 **Phase:** A8 release boundary closure and A-series termination
 **Date:** 2026-05-02
-**Status:** EMERGENCY-OFF REHEARSAL PASSED FOR DORMANT BOUNDARY
+**Status:** EMERGENCY-OFF REHEARSAL PASSED; HISTORICAL DORMANT-BOUNDARY EVIDENCE SUPERSEDED
 
 ---
 
@@ -30,6 +30,6 @@ The current boundary is a James-only named internal rollout, not a dormant zero-
 
 ## Boundary
 
-This rehearsal proves the emergency brake exists and hides/rejects Hero while the release is dormant. It does not prove re-enablement of an existing exposed cohort with balances or Hero Pool state, because A8 deliberately ended with zero exposed accounts and zero Hero rows.
+This historical rehearsal proves the emergency brake exists and hides/rejects Hero while the release is dormant. It did not prove re-enablement of an existing exposed cohort with balances or Hero Pool state, because the earlier A8 boundary deliberately ended with zero exposed accounts and zero Hero rows.
 
-That limitation blocks widening and normalisation, but it does not block the final dormant decision.
+That historical limitation is superseded for the current James-only named internal rollout by the 2026-05-10 enabled-path smoke and final completion report. It still blocks global widening and normalisation until Stage 2/Stage 3 evidence exists.

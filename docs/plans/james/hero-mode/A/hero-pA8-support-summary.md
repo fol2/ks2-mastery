@@ -18,10 +18,10 @@ The current boundary is no longer zero Hero rows. It is a James-only named inter
 
 | Role | Name | Status |
 |------|------|--------|
-| Support owner | James | Recorded for dormant decision |
-| Daily review owner | James | Recorded for dormant decision |
+| Support owner | James | Recorded for James-only named internal rollout |
+| Daily review owner | James | Recorded for James-only named internal rollout |
 
-No live family support window was opened because A8 ended with zero exposed accounts.
+No wider live family support window was opened. The current support boundary is James-only named internal rollout; external accounts remain empty and rollout percent is 0.
 
 ---
 
@@ -29,7 +29,8 @@ No live family support window was opened because A8 ended with zero exposed acco
 
 | Issue Date | Reporter | Category | Description | Resolution | Owner |
 |------------|----------|----------|-------------|------------|-------|
-| 2026-05-02 | A8 branch evidence | all categories | No live Hero support rows were supplied. Production Hero state rows and event rows are both 0 after the boundary was narrowed to zero exposed accounts. | Keep dormant until a named owner supplies a release window and known account. | James |
+| 2026-05-02 | A8 branch evidence | all categories | Historical dormant-boundary check: no live Hero support rows were supplied after the boundary was narrowed to zero exposed accounts. | Superseded on 2026-05-10 by James-only named internal rollout evidence. | James |
+| 2026-05-10 | Current boundary evidence | all categories | No support issues were reported beyond James's approved validation account. External rollout remains empty; percentage rollout remains 0. | Hold with known boundary; Stage 2 requires a named support window before any added accounts. | James |
 
 ---
 
@@ -37,15 +38,15 @@ No live family support window was opened because A8 ended with zero exposed acco
 
 | Category | Open | Resolved | Total | Evidence note |
 |----------|------|----------|-------|---------------|
-| comprehension | 0 | 0 | 0 | No live family exposure after A8 rotation |
-| technical | 0 | 0 | 0 | No live family exposure after A8 rotation |
-| economy | 0 | 0 | 0 | No live family exposure after A8 rotation |
-| boundary | 0 | 0 | 0 | Exposure boundary is known zero |
+| comprehension | 0 | 0 | 0 | No wider live family exposure beyond James's validation account |
+| technical | 0 | 0 | 0 | No wider live family exposure beyond James's validation account |
+| economy | 0 | 0 | 0 | No wider live family exposure beyond James's validation account |
+| boundary | 0 | 0 | 0 | Exposure boundary is James-only named internal rollout |
 | opt-out | 0 | 0 | 0 | Exclusion control exists; list count is 0 |
-| **Total** | 0 | 0 | 0 | Explicit zero supplied rows under dormant state |
+| **Total** | 0 | 0 | 0 | Explicit zero supplied support issues beyond James's validation account |
 
 ---
 
 ## Support Decision
 
-Support is not ready for wider family exposure because no live watch window or known-account smoke was supplied. Support is sufficient for the A8 dormant decision because no family is newly exposed.
+Support is not ready for wider family exposure because no Stage 2 live watch window has been supplied. Support is sufficient for the current James-only named internal rollout because the support owner and daily review owner are recorded, no external accounts are exposed, and the current support issue count beyond James's validation account is explicit zero.

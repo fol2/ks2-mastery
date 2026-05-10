@@ -26,8 +26,8 @@ Hero Mode is not normalised by this branch. It is not widened to a cohort or per
 4. `HERO_EMERGENCY_DISABLED` exists, was rehearsed as `true`, and was restored to `false`.
 5. `HERO_ROLLOUT_PERCENT` exists as `0`.
 6. Checked-in global Hero flags remain false.
-7. Production Hero state rows are observable: 1 `child_game_state` row for `system_id='hero-mode'`.
-8. Production Hero event rows are observable: 3 `event_log` rows for `hero.task.completed`, `hero.daily.completed`, and `hero.coins.awarded`.
+7. Production Hero state rows are observable: 3 `child_game_state` learner rows for `system_id='hero-mode'`, all under the one real boundary account.
+8. Production Hero event rows are observable: 4 `event_log` rows: `hero.task.completed` x2, `hero.daily.completed` x1, and `hero.coins.awarded` x1.
 9. Emergency-off hid Hero surfaces and rejected Hero commands with controlled non-500 responses.
 10. Post-rehearsal dormant state returned controlled flag-disabled responses.
 11. James's known account is intentionally widened as the current named internal rollout boundary.

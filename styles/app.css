@@ -12271,6 +12271,14 @@ html { scroll-behavior: smooth; }
   grid-column: 1;
   grid-row: 2;
 }
+@media (max-width: 900px) {
+  .setup-grid > .setup-main,
+  .setup-grid > .setup-side,
+  .setup-grid > .setup-more-practice {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
 .setup-more-practice {
   background: color-mix(in oklab, var(--panel) 78%, transparent);
   border: 1px solid color-mix(in oklab, var(--line) 60%, transparent);
