@@ -1,4 +1,5 @@
 import workerModule from '../../worker/src/index.js';
+import { createWorkerApp } from '../../worker/src/app.js';
 import { createStaticHeaderRepositoryAuthSession } from '../../src/platform/core/repositories/auth-session.js';
 import { createMigratedSqliteD1Database } from './sqlite-d1.js';
 
@@ -23,9 +24,13 @@ export function createWorkerRepositoryServer({
   // test harness that created it can still reuse / teardown via
   // `playwright-isolated-db.js::close()`.
   db = null,
+  now = null,
 } = {}) {
   const ownsDb = db === null;
   const DB = ownsDb ? createMigratedSqliteD1Database() : db;
+  const injectedApp = typeof now === 'function'
+    ? createWorkerApp({ now })
+    : null;
   const env = {
     DB,
     ENVIRONMENT: 'test',
@@ -38,7 +43,9 @@ export function createWorkerRepositoryServer({
       ...init,
       headers: mergeHeaders(headers, init.headers || {}),
     });
-    return workerModule.fetch(request, env, {});
+    return injectedApp
+      ? injectedApp.fetch(request, env, {})
+      : workerModule.fetch(request, env, {});
   }
 
   return {

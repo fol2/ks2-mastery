@@ -26,11 +26,29 @@ import { HERO_CLAIM_GRACE_HOURS } from '../shared/hero/constants.js';
 
 const HERO_COMMAND_URL = 'https://repo.test/api/hero/command';
 const HERO_READ_MODEL_URL = 'https://repo.test/api/hero/read-model';
+const HERO_E2E_NOW_TS = Date.UTC(2026, 0, 15, 12, 0, 0);
+
+function createHeroTestClock(initialTs = HERO_E2E_NOW_TS) {
+  let currentTs = initialTs;
+  return {
+    now: () => currentTs,
+    set: (nextTs) => { currentTs = nextTs; },
+    advance: (deltaMs) => { currentTs += deltaMs; },
+  };
+}
+
+function heroTestNow(server) {
+  return typeof server?.heroClock?.now === 'function'
+    ? server.heroClock.now()
+    : Date.now();
+}
 
 // ── Server factories ───────────────────────────────────────────────────
 
-function createFullP3Server() {
-  return createWorkerRepositoryServer({
+function createFullP3Server({ nowTs = HERO_E2E_NOW_TS } = {}) {
+  const heroClock = createHeroTestClock(nowTs);
+  const server = createWorkerRepositoryServer({
+    now: heroClock.now,
     env: {
       HERO_MODE_SHADOW_ENABLED: 'true',
       HERO_MODE_LAUNCH_ENABLED: 'true',
@@ -39,6 +57,8 @@ function createFullP3Server() {
       PUNCTUATION_SUBJECT_ENABLED: 'true',
     },
   });
+  server.heroClock = heroClock;
+  return server;
 }
 
 function createAllFlagsOffServer() {
@@ -105,7 +125,7 @@ async function seedLearner(server, accountId, learnerId, learnerName = 'Completi
   });
   await repos.flush();
 
-  const now = Date.now();
+  const now = heroTestNow(server);
   server.DB.db.prepare(`
     INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
     VALUES (?, 'spelling', '{}', ?, ?, ?)
@@ -226,8 +246,8 @@ async function startAndCompleteTask(server, learnerId, accountId) {
   assert.equal(launchResp.status, 200, `Launch must succeed: ${JSON.stringify(launchPayload)}`);
 
   // Seed a completed practice_session with heroContext
-  const sessionId = `ps-e2e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-  const nowTs = Date.now();
+  const sessionId = `ps-e2e-${heroTestNow(server).toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const nowTs = heroTestNow(server);
   const summaryJson = JSON.stringify({
     heroContext: {
       source: 'hero-mode',
@@ -296,8 +316,8 @@ test('U12 Flow 1: full happy path — read-model v4 → start → complete → c
   assert.equal(progressAfterStart.daily.tasks[launchable.taskId].status, 'started');
 
   // Step 3: Simulate subject session completion
-  const sessionId = `ps-flow1-${Date.now().toString(36)}`;
-  const nowTs = Date.now();
+  const sessionId = `ps-flow1-${heroTestNow(server).toString(36)}`;
+  const nowTs = heroTestNow(server);
   const summaryJson = JSON.stringify({
     heroContext: {
       source: 'hero-mode',
@@ -514,7 +534,7 @@ test('U12 Flow 4: cross-learner claim → rejection (learner B cannot claim lear
   });
   await reposB.flush();
 
-  const now = Date.now();
+  const now = heroTestNow(server);
   server.DB.db.prepare(`
     INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
     VALUES (?, 'spelling', '{}', ?, ?, ?)
@@ -656,8 +676,8 @@ test('U12 Flow 6: session cleared from ui_json but in practice_sessions → clai
   `).run('learner-1', launchable.subjectId);
 
   // But a completed practice_session with heroContext exists (stronger evidence)
-  const sessionId = `ps-flow6-${Date.now().toString(36)}`;
-  const nowTs = Date.now();
+  const sessionId = `ps-flow6-${heroTestNow(server).toString(36)}`;
+  const nowTs = heroTestNow(server);
   const summaryJson = JSON.stringify({
     heroContext: {
       source: 'hero-mode',
@@ -739,8 +759,8 @@ test('U12 Flow 7: Punctuation hero task preserves normal subject response handli
       'Punctuation response must still include subject data');
 
     // Now seed and claim for punctuation
-    const sessionId = `ps-flow7-punct-${Date.now().toString(36)}`;
-    const nowTs = Date.now();
+    const sessionId = `ps-flow7-punct-${heroTestNow(server).toString(36)}`;
+    const nowTs = heroTestNow(server);
     const summaryJson = JSON.stringify({
       heroContext: {
         source: 'hero-mode',
@@ -876,8 +896,8 @@ test('U12 Flow 10: midnight grace — within 2h window succeeds, beyond 3h fails
   });
 
   // Seed a completed practice session
-  const sessionId = `ps-flow10-${Date.now().toString(36)}`;
-  const nowTs = Date.now();
+  const sessionId = `ps-flow10-${heroTestNow(server).toString(36)}`;
+  const nowTs = heroTestNow(server);
   const summaryJson = JSON.stringify({
     heroContext: {
       source: 'hero-mode',
