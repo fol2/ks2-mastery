@@ -256,7 +256,11 @@ test('punctuation Setup scene renders platform LengthPicker with punctuation-set
   assert.match(html, /data-value="12"/);
   // `data-pref` must NOT appear on any `.length-option` — Punctuation
   // opts out.
-  assert.doesNotMatch(html, /<button[^>]+data-pref=/);
+  const lengthOptionButtons = html.match(/<button\b(?=[^>]*class="[^"]*\blength-option\b[^"]*")[^>]*>/g) || [];
+  assert.equal(lengthOptionButtons.length, 4);
+  for (const button of lengthOptionButtons) {
+    assert.doesNotMatch(button, /data-pref=/);
+  }
 });
 
 // --- HeroWelcome props flow ------------------------------------------------

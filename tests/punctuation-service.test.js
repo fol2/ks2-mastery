@@ -119,7 +119,17 @@ test('punctuation default Smart Practice uses a six-question round', () => {
   const start = service.startSession('learner-a').state;
 
   assert.equal(DEFAULT_PUNCTUATION_PREFS.roundLength, '6');
+  assert.equal(DEFAULT_PUNCTUATION_PREFS.showFadedGuidance, true);
+  assert.equal(DEFAULT_PUNCTUATION_PREFS.showNonScoredBanner, true);
   assert.deepEqual(normalisePunctuationPrefs({}), DEFAULT_PUNCTUATION_PREFS);
+  assert.deepEqual(normalisePunctuationPrefs({
+    showFadedGuidance: false,
+    showNonScoredBanner: false,
+  }), {
+    ...DEFAULT_PUNCTUATION_PREFS,
+    showFadedGuidance: false,
+    showNonScoredBanner: false,
+  });
   assert.equal(start.session.mode, 'smart');
   assert.equal(start.session.length, 6);
 });

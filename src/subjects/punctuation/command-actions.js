@@ -43,6 +43,20 @@ function punctuationSetupRoundLengthForCommand(data = {}, state = {}) {
   return PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(value) ? value : '';
 }
 
+const PUNCTUATION_BOOLEAN_PREFS = Object.freeze(new Set([
+  'showFadedGuidance',
+  'showNonScoredBanner',
+]));
+
+function punctuationBooleanPrefPatchForCommand(data = {}, state = {}) {
+  const phase = state.subjectUi?.punctuation?.phase || '';
+  if (phase !== 'setup') return null;
+  const pref = typeof data?.pref === 'string' ? data.pref : '';
+  if (!PUNCTUATION_BOOLEAN_PREFS.has(pref)) return null;
+  const prefs = state.subjectUi?.punctuation?.prefs || {};
+  return { [pref]: !(prefs[pref] !== false) };
+}
+
 // adv-234-006 MEDIUM: the Setup scene latches `ui.prefsMigrated: true`
 // CLIENT-SIDE (via the adv-234 HIGH 1 fix) BEFORE the `punctuation-set-mode`
 // dispatch fires. If the subsequent Worker `save-prefs` command rejects
@@ -182,6 +196,16 @@ export const punctuationSubjectCommandActions = Object.freeze({
         prefs: {
           roundLength: punctuationSetupRoundLengthForCommand(data, state),
         },
+      };
+    },
+  },
+  'punctuation-toggle-pref': {
+    command({ data, state }) {
+      return punctuationBooleanPrefPatchForCommand(data, state) ? 'save-prefs' : '';
+    },
+    payload({ data, state }) {
+      return {
+        prefs: punctuationBooleanPrefPatchForCommand(data, state) || {},
       };
     },
   },

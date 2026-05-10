@@ -117,6 +117,11 @@ function newlineTextStyle(value) {
   return String(value || '').includes('\n') ? { whiteSpace: 'pre-wrap' } : undefined;
 }
 
+function booleanPref(ui, key) {
+  const prefs = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui.prefs : null;
+  return prefs?.[key] !== false;
+}
+
 // --- Choice input branch ---------------------------------------------------
 
 function ChoiceItem({ item, disabled, submitLabel, onSubmit, errorMessageId = '' }) {
@@ -348,6 +353,8 @@ function ActiveItemBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
   const skillName = skillHeaderName(item);
   const modeLabel = sessionModeHeaderLabel(session.mode);
   const help = punctuationSessionHelpVisibility(session, 'active-item');
+  const showFadedGuidance = booleanPref(ui, 'showFadedGuidance');
+  const showNonScoredBanner = booleanPref(ui, 'showNonScoredBanner');
   const shape = punctuationSessionInputShape(item.mode);
   const submit = (payload) => actions.dispatch('punctuation-submit-form', payload);
   // SH2-U7: surface a session error banner via `role="alert"` and link it
@@ -419,8 +426,8 @@ function ActiveItemBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
         progressLabel={progressLabel}
       />
 
-      {isGps ? <GpsDelayedFeedbackChips session={session} /> : null}
-      {help.showTeachBox ? <CollapsedTeachBox guided={session.guided} /> : null}
+      {isGps && showNonScoredBanner ? <GpsDelayedFeedbackChips session={session} /> : null}
+      {help.showTeachBox && showFadedGuidance ? <CollapsedTeachBox guided={session.guided} /> : null}
 
       {/*
        * adv-232-002 / adv-232-003: TextItem and ChoiceItem keys use

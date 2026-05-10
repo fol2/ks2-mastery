@@ -4901,6 +4901,15 @@ button.chip,
   --setup-label-shadow: rgba(0, 0, 0, 0.62);
   --length-option-ink: rgba(255, 248, 233, 0.78);
   --length-option-hover: #fffdf6;
+  --toggle-chip-ink: rgba(255, 248, 233, 0.88);
+  --toggle-chip-hover-ink: #fffdf6;
+  --toggle-chip-surface: color-mix(in oklab, black 24%, transparent);
+  --toggle-chip-border: color-mix(in oklab, white 34%, transparent);
+  --toggle-chip-box-surface: color-mix(in oklab, black 14%, transparent);
+  --toggle-chip-box-border: color-mix(in oklab, white 58%, transparent);
+  --toggle-chip-on-surface: color-mix(in oklab, var(--brand) 34%, black 24%);
+  --toggle-chip-on-ink: #fffdf6;
+  --toggle-chip-on-border: color-mix(in oklab, var(--brand) 50%, white 20%);
   --mode-card-title: #fff9ec;
   --mode-card-copy: rgba(255, 248, 233, 0.84);
   --mode-card-selected-title: #fffdf6;
@@ -4913,12 +4922,30 @@ button.chip,
   --setup-label-shadow: rgba(255, 255, 255, 0.78);
   --length-option-ink: rgba(29, 43, 58, 0.76);
   --length-option-hover: #182638;
+  --toggle-chip-ink: #24354a;
+  --toggle-chip-hover-ink: #132032;
+  --toggle-chip-surface: color-mix(in oklab, white 68%, transparent);
+  --toggle-chip-border: color-mix(in oklab, #213247 28%, transparent);
+  --toggle-chip-box-surface: color-mix(in oklab, white 74%, transparent);
+  --toggle-chip-box-border: color-mix(in oklab, #213247 58%, transparent);
+  --toggle-chip-on-surface: color-mix(in oklab, var(--brand) 18%, white 78%);
+  --toggle-chip-on-ink: var(--brand-ink);
+  --toggle-chip-on-border: color-mix(in oklab, var(--brand) 38%, transparent);
 }
 .setup-main[data-controls-tone="light"] {
   --setup-label-ink: #fff8e9;
   --setup-label-shadow: rgba(0, 0, 0, 0.62);
   --length-option-ink: rgba(255, 248, 233, 0.78);
   --length-option-hover: #fffdf6;
+  --toggle-chip-ink: rgba(255, 248, 233, 0.88);
+  --toggle-chip-hover-ink: #fffdf6;
+  --toggle-chip-surface: color-mix(in oklab, black 24%, transparent);
+  --toggle-chip-border: color-mix(in oklab, white 34%, transparent);
+  --toggle-chip-box-surface: color-mix(in oklab, black 14%, transparent);
+  --toggle-chip-box-border: color-mix(in oklab, white 58%, transparent);
+  --toggle-chip-on-surface: color-mix(in oklab, var(--brand) 34%, black 24%);
+  --toggle-chip-on-ink: #fffdf6;
+  --toggle-chip-on-border: color-mix(in oklab, var(--brand) 50%, white 20%);
 }
 /* Thin horizontal divider line under the subject eyebrow,
    matching the v1 hero-paper rule. */
@@ -5006,6 +5033,15 @@ button.chip,
   --setup-label-shadow: rgba(0, 0, 0, 0.72);
   --length-option-ink: rgba(255, 248, 233, 0.8);
   --length-option-hover: #fffdf6;
+  --toggle-chip-ink: rgba(255, 248, 233, 0.88);
+  --toggle-chip-hover-ink: #fffdf6;
+  --toggle-chip-surface: color-mix(in oklab, black 24%, transparent);
+  --toggle-chip-border: color-mix(in oklab, white 34%, transparent);
+  --toggle-chip-box-surface: color-mix(in oklab, black 14%, transparent);
+  --toggle-chip-box-border: color-mix(in oklab, white 58%, transparent);
+  --toggle-chip-on-surface: color-mix(in oklab, var(--brand) 34%, black 24%);
+  --toggle-chip-on-ink: #fffdf6;
+  --toggle-chip-on-border: color-mix(in oklab, var(--brand) 50%, white 20%);
 }
 :root[data-theme="dark"] .mode-card[data-text-tone="dark"],
 :root[data-theme="dark"] .mode-card[data-text-tone="light"] {
@@ -5024,6 +5060,15 @@ button.chip,
     --setup-label-shadow: rgba(0, 0, 0, 0.72);
     --length-option-ink: rgba(255, 248, 233, 0.8);
     --length-option-hover: #fffdf6;
+    --toggle-chip-ink: rgba(255, 248, 233, 0.88);
+    --toggle-chip-hover-ink: #fffdf6;
+    --toggle-chip-surface: color-mix(in oklab, black 24%, transparent);
+    --toggle-chip-border: color-mix(in oklab, white 34%, transparent);
+    --toggle-chip-box-surface: color-mix(in oklab, black 14%, transparent);
+    --toggle-chip-box-border: color-mix(in oklab, white 58%, transparent);
+    --toggle-chip-on-surface: color-mix(in oklab, var(--brand) 34%, black 24%);
+    --toggle-chip-on-ink: #fffdf6;
+    --toggle-chip-on-border: color-mix(in oklab, var(--brand) 50%, white 20%);
   }
   :root:not([data-theme="light"]) .mode-card[data-text-tone="dark"],
   :root:not([data-theme="light"]) .mode-card[data-text-tone="light"] {
@@ -5682,15 +5727,15 @@ button.chip,
 
 .toggle-chip {
   appearance: none;
-  border: 1px solid var(--line);
-  background: color-mix(in oklab, black 20%, transparent);
+  border: 1px solid var(--toggle-chip-border, var(--line));
+  background: var(--toggle-chip-surface, color-mix(in oklab, black 20%, transparent));
   backdrop-filter: blur(14px) saturate(1.08);
   -webkit-backdrop-filter: blur(14px) saturate(1.08);
   padding: 7px 12px;
   border-radius: 999px;
   font-weight: 700;
   font-size: 0.84rem;
-  color: var(--ink-2);
+  color: var(--toggle-chip-ink, var(--ink-2));
   cursor: pointer;
   display: inline-flex; align-items: center; gap: 7px;
   transition: border-color var(--dur) var(--ease-out),
@@ -5709,19 +5754,19 @@ button.chip,
   visibility: hidden;
   pointer-events: none;
 }
-.toggle-chip:hover { transform: translateY(-1px); color: var(--ink); }
+.toggle-chip:hover { transform: translateY(-1px); color: var(--toggle-chip-hover-ink, var(--ink)); }
 .toggle-chip .box {
   width: 14px; height: 14px;
   border-radius: 4px;
-  border: 1.5px solid var(--line-strong);
-  background: color-mix(in oklab, var(--panel) 55%, transparent);
+  border: 1.5px solid var(--toggle-chip-box-border, var(--line-strong));
+  background: var(--toggle-chip-box-surface, color-mix(in oklab, var(--panel) 55%, transparent));
   display: inline-grid; place-items: center;
   color: white;
 }
 .toggle-chip.on {
-  background: var(--brand-soft);
-  color: var(--brand-ink);
-  border-color: color-mix(in oklab, var(--brand) 30%, transparent);
+  background: var(--toggle-chip-on-surface, var(--brand-soft));
+  color: var(--toggle-chip-on-ink, var(--brand-ink));
+  border-color: var(--toggle-chip-on-border, color-mix(in oklab, var(--brand) 30%, transparent));
 }
 .toggle-chip.on .box { background: var(--brand); border-color: var(--brand); }
 .toggle-chip .box svg { display: block; }

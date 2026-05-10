@@ -66,6 +66,8 @@ export const PUNCTUATION_ROUND_LENGTHS = Object.freeze(['1', '2', '3', '4', '6',
 export const DEFAULT_PUNCTUATION_PREFS = Object.freeze({
   mode: 'smart',
   roundLength: '6',
+  showFadedGuidance: true,
+  showNonScoredBanner: true,
 });
 
 function isPlainObject(value) {
@@ -125,6 +127,8 @@ export function normalisePunctuationPrefs(value = {}) {
   return {
     mode,
     roundLength: normalisePunctuationRoundLength(raw.roundLength ?? raw.length),
+    showFadedGuidance: normaliseBoolean(raw.showFadedGuidance, DEFAULT_PUNCTUATION_PREFS.showFadedGuidance),
+    showNonScoredBanner: normaliseBoolean(raw.showNonScoredBanner, DEFAULT_PUNCTUATION_PREFS.showNonScoredBanner),
   };
 }
 

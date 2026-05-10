@@ -152,6 +152,51 @@ test('punctuation React surface renders Guided teach box during an active sessio
   assert.doesNotMatch(activeHtml, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
 });
 
+test('punctuation session hides faded guidance when the learner option is off', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    prefs: { mode: 'smart', roundLength: '6', showFadedGuidance: false, showNonScoredBanner: true },
+    session: {
+      id: 'guided-hidden-ui',
+      mode: 'guided',
+      length: 1,
+      answeredCount: 0,
+      guided: {
+        skillId: 'speech',
+        supportLevel: 2,
+        teachBox: {
+          name: 'Inverted commas and speech punctuation',
+          rule: 'Put spoken words inside inverted commas.',
+          workedExample: {
+            before: 'Mia said come here.',
+            after: 'Mia said, "Come here."',
+          },
+          contrastExample: {
+            before: 'Mia said "come here".',
+            after: 'Mia said, "Come here."',
+          },
+        },
+      },
+      currentItem: {
+        id: 'sp_insert_question',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Add the direct-speech punctuation.',
+        stem: 'Ella asked, can we start now?',
+      },
+    },
+  });
+
+  const html = harness.render();
+  assert.doesNotMatch(html, /Inverted commas and speech punctuation/);
+  assert.doesNotMatch(html, /Put spoken words inside inverted commas/);
+  assert.doesNotMatch(html, /Worked example/);
+  assert.doesNotMatch(html, /Common mistake/);
+});
+
 // Phase 3 U3 replaces the adult-facing `WeakFocusChips` diagnostic row with
 // a child-facing header (`Question N of M · Skill · Mode`). The scene
 // derives the skill name from `item.skillIds[0]` against the frozen
@@ -2930,6 +2975,71 @@ test('punctuation Setup scene: round-length preference accessible via secondary 
   // Round length toggle lives inside the secondary drawer
   assert.match(html, /data-section="secondary"[^]*role="radiogroup"/, 'round length radiogroup inside secondary');
   assert.match(html, /Round length/, 'round length label present');
+});
+
+test('punctuation session hides non-scored banner when the learner option is off', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    prefs: { mode: 'smart', roundLength: '6', showFadedGuidance: true, showNonScoredBanner: false },
+    session: {
+      id: 'gps-hidden-ui',
+      mode: 'gps',
+      length: 3,
+      answeredCount: 1,
+      gps: {
+        testLength: 3,
+        answeredCount: 1,
+        remainingCount: 2,
+        delayedFeedback: true,
+      },
+      currentItem: {
+        id: 'se_insert_capital',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Add the missing capital letter and full stop.',
+        stem: 'the boat reached the harbour',
+      },
+    },
+  });
+
+  const html = harness.render();
+  assert.doesNotMatch(html, /Test mode: answers at the end\./);
+  assert.doesNotMatch(html, /data-gps-banner/);
+});
+
+test('punctuation Setup scene: guidance display options render as tickable controls', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  const html = harness.render();
+
+  assert.match(html, /data-action="punctuation-toggle-pref"[^>]*data-pref="showFadedGuidance"/);
+  assert.match(html, /data-action="punctuation-toggle-pref"[^>]*data-pref="showNonScoredBanner"/);
+  assert.match(html, /role="group"[^>]*aria-labelledby="punctuation-display-options-label"/);
+  assert.match(html, /id="punctuation-display-options-label"[^>]*>Options</);
+  assert.match(html, />Faded guidance</);
+  assert.match(html, />Non-scored banner</);
+  assert.match(
+    html,
+    /<button[^>]*aria-pressed="true"[^>]*data-action="punctuation-toggle-pref"[^>]*data-pref="showFadedGuidance"/,
+  );
+  assert.match(
+    html,
+    /<button[^>]*aria-pressed="true"[^>]*data-action="punctuation-toggle-pref"[^>]*data-pref="showNonScoredBanner"/,
+  );
+});
+
+test('punctuation Setup scene: guidance display toggles update stored prefs', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  harness.dispatch('punctuation-toggle-pref', { pref: 'showFadedGuidance' });
+  harness.dispatch('punctuation-toggle-pref', { pref: 'showNonScoredBanner' });
+
+  const prefs = harness.store.getState().subjectUi.punctuation.prefs;
+  assert.equal(prefs.showFadedGuidance, false);
+  assert.equal(prefs.showNonScoredBanner, false);
 });
 
 test('punctuation Setup scene: Punctuation Map link present', () => {

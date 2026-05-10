@@ -204,6 +204,34 @@ function SecondaryModeButton({ label, mode, roundLength, disabled, actions }) {
   );
 }
 
+function CheckIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 12l6 6 10-14" />
+    </svg>
+  );
+}
+
+function ToggleChip({ pref, checked, label, actions, disabled = false }) {
+  return (
+    <button
+      type="button"
+      className={`toggle-chip${checked ? ' on' : ''}`}
+      aria-pressed={checked ? 'true' : 'false'}
+      data-action="punctuation-toggle-pref"
+      data-pref={pref}
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return;
+        actions.dispatch('punctuation-toggle-pref', { pref });
+      }}
+    >
+      <span className="box" aria-hidden="true">{checked ? <CheckIcon /> : null}</span>
+      {label}
+    </button>
+  );
+}
+
 // --- Main scene ------------------------------------------------------------
 
 export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewardState }) {
@@ -233,10 +261,11 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   const heroContrast = useSetupHeroContrast(scene.src, 'setup', {
     staticContrastForBg: heroContrastProfileForPunctuationBg,
     cardSelector: '.punctuation-dashboard-cta-row .btn',
-    controlSelectors: ['.punctuation-round-label', '.punctuation-secondary-action'],
+    controlSelectors: ['.punctuation-round-label', '.punctuation-secondary-action', '.toggle-chip'],
     observeSelectors: [
       '.punctuation-round-label',
       '.punctuation-secondary-action',
+      '.toggle-chip',
       '.punctuation-monster-meter-name',
     ],
   });
@@ -420,6 +449,27 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
                   ariaLabel="Round length"
                   actionName="punctuation-set-round-length"
                   includeDataValue={true}
+                />
+              </div>
+              <div
+                className="punctuation-round-controls punctuation-display-options"
+                role="group"
+                aria-labelledby="punctuation-display-options-label"
+              >
+                <span id="punctuation-display-options-label" className="punctuation-round-label">Options</span>
+                <ToggleChip
+                  pref="showFadedGuidance"
+                  checked={prefs?.showFadedGuidance !== false}
+                  label="Faded guidance"
+                  actions={actions}
+                  disabled={disabled}
+                />
+                <ToggleChip
+                  pref="showNonScoredBanner"
+                  checked={prefs?.showNonScoredBanner !== false}
+                  label="Non-scored banner"
+                  actions={actions}
+                  disabled={disabled}
                 />
               </div>
             </section>

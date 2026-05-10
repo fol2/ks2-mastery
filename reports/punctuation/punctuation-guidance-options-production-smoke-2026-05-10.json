@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "workerCommitSha": "6fa473bd2f02ffa4803c144ea3490a1c053e349b",
+  "workerVersionId": "b49843e5-18d0-405c-8ffc-0f2d276af89f",
+  "startedAt": "2026-05-10T21:23:57.353Z",
+  "completedAt": "2026-05-10T21:24:16.681Z",
+  "probes": [
+    {
+      "name": "gps-non-scored-banner-disabled",
+      "ok": true,
+      "showFadedGuidancePressed": "false",
+      "showNonScoredBannerPressed": "false",
+      "gpsBannerVisible": false,
+      "consoleErrors": [],
+      "requestFailures": [],
+      "httpFailures": [],
+      "setupScreenshot": "output/playwright/punctuation-guidance-options-production-2026-05-10/gps-options-disabled.png"
+    },
+    {
+      "name": "guided-faded-guidance-disabled",
+      "ok": true,
+      "showFadedGuidancePressed": "false",
+      "showNonScoredBannerPressed": "false",
+      "teachBoxVisible": false,
+      "consoleErrors": [],
+      "requestFailures": [],
+      "httpFailures": [],
+      "setupScreenshot": "output/playwright/punctuation-guidance-options-production-2026-05-10/guided-options-disabled.png"
+    }
+  ]
+}

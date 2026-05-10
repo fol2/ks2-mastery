@@ -315,6 +315,117 @@ test('punctuation round-length command action rejects non-setup and off-enum val
   assert.deepEqual(sent, []);
 });
 
+test('punctuation guidance display command actions persist setup booleans through save-prefs', async () => {
+  const cases = [
+    { pref: 'showFadedGuidance', current: true, expected: false },
+    { pref: 'showFadedGuidance', current: false, expected: true },
+    { pref: 'showNonScoredBanner', current: true, expected: false },
+    { pref: 'showNonScoredBanner', current: false, expected: true },
+  ];
+
+  for (const { pref, current, expected } of cases) {
+    const sent = [];
+    const handler = createSubjectCommandActionHandler({
+      subjectId: 'punctuation',
+      getState() {
+        return {
+          ...baseState(),
+          subjectUi: {
+            punctuation: {
+              phase: 'setup',
+              prefs: {
+                mode: 'smart',
+                roundLength: '6',
+                [pref]: current,
+              },
+            },
+          },
+        };
+      },
+      subjectCommands: {
+        send(request) {
+          sent.push(request);
+          return Promise.resolve({ ok: true });
+        },
+      },
+      actions: punctuationSubjectCommandActions,
+    });
+
+    assert.equal(handler.handle('punctuation-toggle-pref', { pref }), true);
+    await flushPromises();
+    assert.deepEqual(sent, [{
+      subjectId: 'punctuation',
+      learnerId: 'learner-a',
+      command: 'save-prefs',
+      payload: { prefs: { [pref]: expected } },
+    }]);
+  }
+});
+
+test('punctuation guidance display command action rejects non-setup and unknown prefs', async () => {
+  const nonSetupSent = [];
+  const nonSetupHandler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    getState() {
+      return {
+        ...baseState(),
+        subjectUi: {
+          punctuation: {
+            phase: 'active-item',
+            prefs: {
+              mode: 'smart',
+              roundLength: '6',
+              showFadedGuidance: true,
+            },
+          },
+        },
+      };
+    },
+    subjectCommands: {
+      send(request) {
+        nonSetupSent.push(request);
+        return Promise.resolve({ ok: true });
+      },
+    },
+    actions: punctuationSubjectCommandActions,
+  });
+
+  assert.equal(nonSetupHandler.handle('punctuation-toggle-pref', { pref: 'showFadedGuidance' }), true);
+  await flushPromises();
+  assert.deepEqual(nonSetupSent, []);
+
+  const invalidPrefSent = [];
+  const invalidPrefHandler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    getState() {
+      return {
+        ...baseState(),
+        subjectUi: {
+          punctuation: {
+            phase: 'setup',
+            prefs: {
+              mode: 'smart',
+              roundLength: '6',
+              showFadedGuidance: true,
+            },
+          },
+        },
+      };
+    },
+    subjectCommands: {
+      send(request) {
+        invalidPrefSent.push(request);
+        return Promise.resolve({ ok: true });
+      },
+    },
+    actions: punctuationSubjectCommandActions,
+  });
+
+  assert.equal(invalidPrefHandler.handle('punctuation-toggle-pref', { pref: 'autoSpeak' }), true);
+  await flushPromises();
+  assert.deepEqual(invalidPrefSent, []);
+});
+
 test('punctuation context-pack action sends only safe request metadata', () => {
   const action = punctuationSubjectCommandActions['punctuation-context-pack'];
   const payload = action.payload({

@@ -13,6 +13,11 @@ import { PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS } from './components/punctuation
 import { SUBJECT_EXPOSURE_GATES } from '../../platform/core/subject-availability.js';
 import { createReadySubjectVisualAdapter } from '../../platform/ui/subject-visual-adapter.js';
 
+const PUNCTUATION_BOOLEAN_PREFS = Object.freeze(new Set([
+  'showFadedGuidance',
+  'showNonScoredBanner',
+]));
+
 function applyTransition(context, transition) {
   if (!transition) return true;
   if (typeof context.applySubjectTransition === 'function') {
@@ -185,6 +190,18 @@ export const punctuationModule = {
       const value = typeof data?.value === 'string' ? data.value : '';
       if (!PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(value)) return false;
       const nextPrefs = service.savePrefs(learnerId, { roundLength: value });
+      store.updateSubjectUi('punctuation', {
+        prefs: normalisePunctuationPrefs(nextPrefs || {}),
+      });
+      return true;
+    }
+
+    if (action === 'punctuation-toggle-pref') {
+      if (ui.phase !== 'setup') return false;
+      const pref = typeof data?.pref === 'string' ? data.pref : '';
+      if (!PUNCTUATION_BOOLEAN_PREFS.has(pref)) return false;
+      const currentPrefs = normalisePunctuationPrefs(service.getPrefs(learnerId));
+      const nextPrefs = service.savePrefs(learnerId, { [pref]: !currentPrefs[pref] });
       store.updateSubjectUi('punctuation', {
         prefs: normalisePunctuationPrefs(nextPrefs || {}),
       });
