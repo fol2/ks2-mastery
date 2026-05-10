@@ -243,14 +243,14 @@ test('I9 retention orchestration — stale rows in three swept tables are purged
         updated_at, updated_by_account_id, row_version, status_revision
       ) VALUES ('adult-admin', 'active', NULL, '[]', NULL, 1, NULL, 0, 5)
     `).run();
-    // Stale non-admin mutation_receipt at 31 days (older than 30-day window).
+    // Stale non-admin mutation_receipt at 25 hours (older than 24-hour window).
     db.db.prepare(`
       INSERT INTO mutation_receipts (
         account_id, request_id, scope_type, scope_id, mutation_kind,
         request_hash, response_json, status_code, correlation_id, applied_at
       ) VALUES ('adult-admin', 'req-old', 'learner', 'adult-admin', 'parent.learner.update',
                 'hash-x', '{}', 200, 'corr-x', ?)
-    `).run(nowTs - 31 * MS_IN_DAY);
+    `).run(nowTs - 25 * 60 * 60 * 1000);
     // Stale request_limits entry (updated_at older than 24h).
     db.db.prepare(`
       INSERT INTO request_limits (limiter_key, window_started_at, request_count, updated_at)

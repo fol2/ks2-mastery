@@ -14,10 +14,11 @@
 
 import { run } from '../d1.js';
 
-// H1 (Phase C reviewer): admin.* receipts are retained 12× longer than
-// generic writes because R23 pins the admin audit trail at 365 days.
-// Non-admin receipts follow the original 30-day window.
-export const MUTATION_RECEIPT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+// H1 (Phase C reviewer): admin.* receipts keep the 365-day audit window.
+// Non-admin receipts are a short idempotency cache, not an audit log. Subject
+// commands replay full read-model payloads, so a 30-day cache can exhaust the
+// 500 MB production D1 quota even with very small real-user traffic.
+export const MUTATION_RECEIPT_RETENTION_MS = 24 * 60 * 60 * 1000; // 24 hours
 // I7 (Phase C reviewer): admin-audit retention — 12 months.
 export const ADMIN_MUTATION_RECEIPT_RETENTION_MS = 365 * 24 * 60 * 60 * 1000; // 365 days
 export const MUTATION_RECEIPT_MAX_DELETE_BATCH = 5000;
@@ -43,7 +44,7 @@ function swallowMissingTable(error, table) {
 /**
  * Prune stale mutation receipts (R23). Retention is split by kind:
  *   - `admin.*` mutation_kind rows: 365-day audit window.
- *   - Everything else: 30-day retention.
+ *   - Everything else: 24-hour idempotency retention.
  * CAS-retry storms can grow `mutation_receipts` unbounded without this
  * sweep; H1 (Phase C) caps each run at 5000 rows so a long backlog
  * drains across a bounded number of cron cycles without ever issuing an

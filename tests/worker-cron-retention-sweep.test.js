@@ -55,7 +55,7 @@ function seedMutationReceipt(db, { requestId, appliedAt, mutationKind = 'parent.
   // mutation_receipts rows require an adult_accounts row (FK CASCADE). Seed
   // the admin once so every seeded receipt can reference it.
   //
-  // Note: default mutationKind is non-admin so the 30-day retention window
+  // Note: default mutationKind is non-admin so the 24-hour retention window
   // applies. I7 (Phase C) introduced a 365-day window for `admin.*` kinds;
   // callers that want to exercise the admin retention path pass an explicit
   // `admin.*` mutationKind.
@@ -86,7 +86,7 @@ function rowCount(db, sql, params = []) {
   return Number(db.db.prepare(sql).get(...params)?.count || 0);
 }
 
-test('U11 sweepMutationReceipts deletes rows older than the 30-day retention window', async () => {
+test('U11 sweepMutationReceipts deletes non-admin rows older than the 24-hour retention window', async () => {
   const db = createMigratedSqliteD1Database();
   try {
     const now = 1_700_000_000_000;
@@ -214,7 +214,7 @@ test('H1 sweepMutationReceipts caps deletions at MUTATION_RECEIPT_MAX_DELETE_BAT
   }
 });
 
-test('I7 sweepMutationReceipts retains admin.* receipts for 365 days, non-admin for 30 days', async () => {
+test('I7 sweepMutationReceipts retains admin.* receipts for 365 days, non-admin for 24 hours', async () => {
   const db = createMigratedSqliteD1Database();
   try {
     const now = 1_700_000_000_000;
@@ -236,10 +236,10 @@ test('I7 sweepMutationReceipts retains admin.* receipts for 365 days, non-admin 
     insertReceipt.run('req-admin-31d', 'admin.accounts.ops_metadata_update', now - 31 * MS_IN_DAY);
     // 366-day-old admin receipt — OUTSIDE the 365-day admin window, PRUNE.
     insertReceipt.run('req-admin-366d', 'admin.accounts.ops_metadata_update', now - 366 * MS_IN_DAY);
-    // 31-day-old non-admin receipt — OUTSIDE the 30-day window, PRUNE.
-    insertReceipt.run('req-non-admin-31d', 'parent.learner.update', now - 31 * MS_IN_DAY);
-    // 29-day-old non-admin receipt — within the 30-day window, KEEP.
-    insertReceipt.run('req-non-admin-29d', 'parent.learner.update', now - 29 * MS_IN_DAY);
+    // 25-hour-old non-admin receipt — OUTSIDE the 24-hour window, PRUNE.
+    insertReceipt.run('req-non-admin-25h', 'parent.learner.update', now - (25 * 60 * 60 * 1000));
+    // 23-hour-old non-admin receipt — within the 24-hour window, KEEP.
+    insertReceipt.run('req-non-admin-23h', 'parent.learner.update', now - (23 * 60 * 60 * 1000));
 
     const { sweepMutationReceipts } = await import('../worker/src/cron/retention-sweep.js');
     const result = await sweepMutationReceipts(db, now);
@@ -247,7 +247,7 @@ test('I7 sweepMutationReceipts retains admin.* receipts for 365 days, non-admin 
     const surviving = db.db.prepare(
       'SELECT request_id FROM mutation_receipts ORDER BY request_id',
     ).all().map((row) => row.request_id);
-    assert.deepEqual(surviving.sort(), ['req-admin-31d', 'req-non-admin-29d']);
+    assert.deepEqual(surviving.sort(), ['req-admin-31d', 'req-non-admin-23h']);
   } finally {
     db.close();
   }

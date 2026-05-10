@@ -3043,9 +3043,9 @@ function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1, { exists = null 
 // I8 (Phase C reviewer): `account_ops_metadata.updates` is NOT in the
 // reconcilable set. It is a monotonic event counter incremented on
 // every ops-metadata write and deliberately not recomputed from
-// `mutation_receipts` — the receipts table is pruned on a 30-day
-// retention window (or 365 for `admin.*` kinds), so a recompute would
-// drift downward as old receipts age out. The counter is the
+// `mutation_receipts` — the receipts table is pruned on a 24-hour
+// non-admin idempotency window (or 365 days for `admin.*` kinds), so a
+// recompute would drift downward as old receipts age out. The counter is the
 // cumulative-lifetime count of ops-metadata writes and is preserved
 // across retention sweeps by keeping it out of `RECONCILABLE_METRIC_KEYS`.
 // Earlier doc comments mistakenly described this counter as

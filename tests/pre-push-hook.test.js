@@ -5,7 +5,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { isDocsOnly, parseRefs, resolveBase } from '../scripts/hooks/pre-push.mjs';
+import { buildChildProcessEnv, isDocsOnly, parseRefs, resolveBase } from '../scripts/hooks/pre-push.mjs';
 
 describe('pre-push hook — isDocsOnly', () => {
   it('returns true for empty file list', () => {
@@ -120,5 +120,23 @@ describe('pre-push hook — SKIP_PREPUSH env var', () => {
         delete process.env.SKIP_PREPUSH;
       }
     }
+  });
+});
+
+describe('pre-push hook — child process environment', () => {
+  it('removes Git hook variables before spawning npm test', () => {
+    const env = buildChildProcessEnv({
+      PATH: 'keep-me',
+      GIT_DIR: '.git',
+      GIT_WORK_TREE: 'C:/repo',
+      GIT_INDEX_FILE: 'C:/repo/.git/index.lock',
+      GIT_PREFIX: 'prefix/',
+    });
+
+    assert.equal(env.PATH, 'keep-me');
+    assert.equal(env.GIT_DIR, undefined);
+    assert.equal(env.GIT_WORK_TREE, undefined);
+    assert.equal(env.GIT_INDEX_FILE, undefined);
+    assert.equal(env.GIT_PREFIX, undefined);
   });
 });

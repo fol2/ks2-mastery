@@ -1,6 +1,7 @@
-import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { computeInlineScriptHashes } from './compute-inline-script-hash.mjs';
 import { PRACTICE_SEO_PAGES, renderPracticeSeoPage } from './lib/seo-practice-pages.mjs';
 import { IDENTITY_SEO_PAGES, renderIdentitySeoPage } from './lib/seo-identity-pages.mjs';
@@ -8,7 +9,8 @@ import { INTENT_SEO_PAGES, renderIntentSeoPage } from './lib/seo-intent-pages.mj
 
 const rootDir = process.cwd();
 const outputDir = path.join(rootDir, 'dist', 'public');
-const tmpDir = path.join(rootDir, 'dist', 'public.tmp');
+const distDir = path.join(rootDir, 'dist');
+const lockDir = path.join(distDir, 'public-build.lock');
 
 // U7 (sys-hardening p1): file paths written at build time so the CSP
 // string carries the exact hash of the inline theme script.
@@ -41,6 +43,24 @@ const entries = [
   'styles',
   'assets',
 ];
+
+async function acquireBuildLock(timeoutMs = 120000) {
+  const startedAt = Date.now();
+  while (true) {
+    try {
+      await mkdir(lockDir);
+      return async () => {
+        await rm(lockDir, { recursive: true, force: true });
+      };
+    } catch (error) {
+      if (error?.code !== 'EEXIST') throw error;
+      if (Date.now() - startedAt > timeoutMs) {
+        throw new Error(`Timed out waiting for build-public lock at ${lockDir}`);
+      }
+      await sleep(100);
+    }
+  }
+}
 
 const filterPublicFiles = source => {
   const base = path.basename(source);
@@ -78,8 +98,15 @@ const filterPublicFiles = source => {
 // stdio-ignore conditions, an unhandled async rejection from a chained
 // step can settle after the entry's sync body finishes and let Node exit 0,
 // hiding the failure from CI. The explicit guard keeps failures loud.
+let tmpDir;
+let releaseBuildLock = async () => {};
 try {
-  await rm(tmpDir, { recursive: true, force: true });
+  // Node's test runner can execute multiple build-facing tests concurrently.
+  // A lock plus per-process temp directory avoids one build deleting another
+  // build's staged public mirror before it is promoted to dist/public.
+  await mkdir(distDir, { recursive: true });
+  releaseBuildLock = await acquireBuildLock();
+  tmpDir = await mkdtemp(path.join(distDir, 'public.tmp-'));
   await mkdir(tmpDir, { recursive: true });
 
   for (const entry of entries) {
@@ -196,7 +223,14 @@ try {
   await rm(outputDir, { recursive: true, force: true });
   await cp(tmpDir, outputDir, { recursive: true, force: true });
   await rm(tmpDir, { recursive: true, force: true });
+  tmpDir = null;
+  await releaseBuildLock();
+  releaseBuildLock = async () => {};
 } catch (error) {
+  if (tmpDir) {
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
+  await releaseBuildLock().catch(() => {});
   console.error(error);
   process.exit(1);
 }

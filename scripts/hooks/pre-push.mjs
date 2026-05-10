@@ -29,6 +29,20 @@ export function isDocsOnly(files) {
 }
 
 const ZERO_SHA = '0000000000000000000000000000000000000000';
+const GIT_HOOK_ENV_KEYS = [
+  'GIT_DIR',
+  'GIT_WORK_TREE',
+  'GIT_INDEX_FILE',
+  'GIT_PREFIX',
+];
+
+export function buildChildProcessEnv(env = process.env) {
+  const childEnv = { ...env };
+  for (const key of GIT_HOOK_ENV_KEYS) {
+    delete childEnv[key];
+  }
+  return childEnv;
+}
 
 /**
  * Parse pre-push stdin into ref pairs.
@@ -117,6 +131,7 @@ function main() {
   const testResult = spawnSync(npmCmd, ['test'], {
     stdio: 'inherit',
     cwd: process.cwd(),
+    env: buildChildProcessEnv(),
     shell: isWindows,
   });
 
