@@ -379,6 +379,7 @@ async function sessionPayload({ session, auth, env, now, capacity = null }) {
     ok: true,
     auth: auth.describe(),
     subjectExposureGates: subjectExposureGatesFromEnv(env),
+    heroMode: heroModeSessionFlags({ env, accountId: session.accountId }),
     account: account
       ? {
         id: account.id,
@@ -419,6 +420,7 @@ async function existingDemoSessionPayload({ session, env, now, capacity = null }
   return {
     ok: true,
     subjectExposureGates: subjectExposureGatesFromEnv(env),
+    heroMode: heroModeSessionFlags({ env, accountId: session.accountId }),
     session: {
       accountId: session.accountId,
       learnerId: account?.selected_learner_id || learnerIds[0] || null,
@@ -441,6 +443,14 @@ function envFlagEnabled(value) {
 export function subjectExposureGatesFromEnv(env = {}) {
   return {
     [SUBJECT_EXPOSURE_GATES.punctuation]: envFlagEnabled(env.PUNCTUATION_SUBJECT_ENABLED),
+  };
+}
+
+function heroModeSessionFlags({ env = {}, accountId = '' } = {}) {
+  const { resolvedEnv, overrideStatus } = resolveHeroFlagsForAccount({ env, accountId });
+  const blocked = overrideStatus === 'emergency-off' || overrideStatus === 'excluded';
+  return {
+    shadowEnabled: !blocked && envFlagEnabled(resolvedEnv.HERO_MODE_SHADOW_ENABLED),
   };
 }
 

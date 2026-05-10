@@ -101,6 +101,9 @@ test('browser bootstrap builds remote repositories from an authenticated session
         platformRole: 'admin',
         repoRevision: 7,
       },
+      heroMode: {
+        shadowEnabled: false,
+      },
     });
   };
 
@@ -115,6 +118,7 @@ test('browser bootstrap builds remote repositories from an authenticated session
   assert.equal(boot.session.accountId, 'adult-remote');
   assert.equal(boot.session.platformRole, 'admin');
   assert.equal(boot.session.repoRevision, 7);
+  assert.deepEqual(boot.session.heroMode, { shadowEnabled: false });
   assert.equal(Boolean(boot.repositories.persistence), true);
 });
 

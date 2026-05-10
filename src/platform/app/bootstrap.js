@@ -67,6 +67,15 @@ export function createAuthRequiredSession({ error = '', code = '' } = {}) {
   };
 }
 
+function normaliseHeroModeSessionFlags(rawValue = {}) {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)
+    ? rawValue
+    : {};
+  return {
+    shadowEnabled: raw.shadowEnabled === true,
+  };
+}
+
 export function createRemoteSyncSession(sessionPayload = {}) {
   const accountId = sessionPayload?.session?.accountId || 'unknown';
   return {
@@ -83,6 +92,7 @@ export function createRemoteSyncSession(sessionPayload = {}) {
     ),
     repoRevision: Number(sessionPayload?.account?.repoRevision) || 0,
     subjectExposureGates: normaliseSubjectExposureGates(sessionPayload?.subjectExposureGates),
+    heroMode: normaliseHeroModeSessionFlags(sessionPayload?.heroMode),
   };
 }
 

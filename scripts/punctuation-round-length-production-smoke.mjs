@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { execFileSync } from 'node:child_process';
 import { chromium } from 'playwright';
 
 const DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
@@ -19,6 +20,19 @@ function argValue(argv, name) {
 
 function normaliseOrigin(value) {
   return String(value || DEFAULT_ORIGIN).replace(/\/+$/, '');
+}
+
+function resolveCommitSha(value = '') {
+  const explicit = String(value || '').trim();
+  if (explicit) return explicit;
+  try {
+    return String(execFileSync('git', ['rev-parse', 'HEAD'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })).trim();
+  } catch {
+    return '';
+  }
 }
 
 async function waitForCondition(page, predicate, { timeoutMs = 15_000, intervalMs = 100, label = 'condition' } = {}) {
@@ -113,6 +127,7 @@ async function probeLength(browser, origin, probe, screenshotDir) {
     result.ok = result.selectedAriaChecked === 'true'
       && result.ctaRoundLength === probe.length
       && result.sessionTextMatched === true
+      && result.consoleErrors.length === 0
       && result.requestFailures.length === 0
       && result.httpFailures.length === 0;
   } catch (error) {
@@ -129,6 +144,8 @@ async function main() {
   const origin = normaliseOrigin(argValue(argv, '--origin') || process.env.KS2_PRODUCTION_ORIGIN);
   const out = argValue(argv, '--out') || DEFAULT_OUT;
   const screenshotDir = argValue(argv, '--screenshot-dir') || DEFAULT_SCREENSHOT_DIR;
+  const workerCommitSha = resolveCommitSha(argValue(argv, '--commit-sha') || process.env.KS2_WORKER_COMMIT_SHA);
+  const workerVersionId = String(argValue(argv, '--worker-version-id') || process.env.KS2_WORKER_VERSION_ID || '').trim();
   const startedAt = new Date().toISOString();
   const browser = await chromium.launch();
   const probes = [];
@@ -144,6 +161,8 @@ async function main() {
   const report = {
     ok: probes.every((probe) => probe.ok),
     origin,
+    workerCommitSha,
+    workerVersionId,
     startedAt,
     completedAt: new Date().toISOString(),
     probes,

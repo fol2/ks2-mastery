@@ -69,6 +69,7 @@ test('production email registration creates an authenticated D1-backed session',
   assert.equal(sessionPayload.auth.mode, 'production');
   assert.equal(sessionPayload.auth.productionReady, true);
   assert.equal(sessionPayload.session.email, 'parent@example.test');
+  assert.deepEqual(sessionPayload.heroMode, { shadowEnabled: false });
 
   server.close();
 });

@@ -586,6 +586,10 @@ let heroUi = {
 // once per dashboard visit (reset on learner switch).
 let heroCardLoggedThisVisit = false;
 
+function canLoadHeroReadModel() {
+  return boot.session?.heroMode?.shadowEnabled === true;
+}
+
 let shellPlatformRole = normalisePlatformRole(boot.session.platformRole || 'parent');
 let adminAccountDirectory = {
   status: 'idle',
@@ -852,6 +856,7 @@ function patchHeroUi(updater) {
 
 async function loadHeroReadModel({ learnerId, force = false } = {}) {
   if (!learnerId) return;
+  if (!canLoadHeroReadModel()) return;
 
   // Increment requestToken — stale responses from prior loads are discarded.
   const requestToken = (Number(heroUi.requestToken) || 0) + 1;
@@ -2937,6 +2942,7 @@ createRoot(root).render(
   const bootState = store.getState();
   if (
     boot.session.signedIn
+    && canLoadHeroReadModel()
     && bootState.route.screen === 'dashboard'
     && bootState.learners.selectedId
   ) {
@@ -3008,7 +3014,7 @@ function handleGlobalAction(action, data) {
     // re-appear when the user re-enters a subject from home.
     patchHeroUi({ lastLaunch: null });
     // P2 U4: trigger Hero read-model refresh when navigating home.
-    if (boot.session.signedIn && learnerId) {
+    if (boot.session.signedIn && canLoadHeroReadModel() && learnerId) {
       queueMicrotask(() => loadHeroReadModel({ learnerId }));
     }
     return true;
@@ -3358,7 +3364,7 @@ function handleGlobalAction(action, data) {
       lastClaim: null,
     };
     heroCardLoggedThisVisit = false; // U10: reset per-visit observability latch
-    if (boot.session.signedIn && nextLearnerId) {
+    if (boot.session.signedIn && canLoadHeroReadModel() && nextLearnerId) {
       queueMicrotask(() => loadHeroReadModel({ learnerId: nextLearnerId }));
     }
     return true;
