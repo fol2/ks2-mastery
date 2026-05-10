@@ -3075,6 +3075,21 @@ test('punctuation Setup scene: gps mode dispatch updates stored prefs', () => {
   assert.equal(state.prefs.mode, 'gps');
 });
 
+test('punctuation Setup scene: GPS selection owns the CTA label for fresh learners', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-mode', { value: 'gps' });
+
+  const html = harness.render();
+  const ctaTag = html.match(/<button\b(?=[^>]*data-punctuation-cta)[^>]*>[\s\S]*?<\/button>/)?.[0] || '';
+  assert.match(ctaTag, />Start GPS Check</, 'GPS-selected setup CTA must not keep the fresh Smart Review label');
+  assert.doesNotMatch(
+    ctaTag,
+    /Find your first punctuation egg/,
+    'fresh Smart Review copy must not override the selected GPS mode CTA',
+  );
+});
+
 test('punctuation Setup scene: Open Map dispatch transitions phase setup → map (paired state assertion)', () => {
   // Paired state-level assertion per learning #7 — catches the
   // U2-before-U5 ordering gap where the dispatch silently no-ops.

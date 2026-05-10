@@ -318,7 +318,9 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
       : "Start today's round";
   const ctaLabel = cta.mode === 'continue'
     ? cta.label
-    : freshLabel || startLabel || `Start ${selectedCardLabel}`;
+    : selectedMode === 'smart'
+      ? freshLabel || startLabel || `Start ${selectedCardLabel}`
+      : startLabel || `Start ${selectedCardLabel}`;
   const ctaMode = cta.mode;
 
   // Progress row values
