@@ -1,7 +1,7 @@
 {
   "ok": true,
-  "startedAt": "2026-05-10T12:51:14.727Z",
-  "completedAt": "2026-05-10T12:52:34.436Z",
+  "startedAt": "2026-05-10T14:32:41.497Z",
+  "completedAt": "2026-05-10T14:33:55.268Z",
   "origin": "https://ks2.eugnel.uk",
   "database": "ks2-mastery-db",
   "internalBoundary": {
@@ -49,8 +49,8 @@
   ],
   "demo": {
     "accountType": "demo",
-    "accountProof": "sha256-16:aac33b4ac9fc0ded",
-    "learnerProof": "sha256-16:98170d0544a2f906"
+    "accountProof": "sha256-16:dbb66bbc050b3a30",
+    "learnerProof": "sha256-16:e24216106e6fc253"
   },
   "steps": [
     {
@@ -71,9 +71,9 @@
       "pass": true,
       "taskCount": 1,
       "selectedSubject": "punctuation",
-      "selectedTaskId": "hero-task-d87a47c9",
+      "selectedTaskId": "hero-task-7bc565cf",
       "initialBalance": 0,
-      "waitedMs": 6801,
+      "waitedMs": 6607,
       "observations": [
         {
           "status": 404,
@@ -93,7 +93,7 @@
       "name": "hero-start-task",
       "pass": true,
       "subjectId": "punctuation",
-      "taskId": "hero-task-d87a47c9"
+      "taskId": "hero-task-7bc565cf"
     },
     {
       "name": "hero-subject-session-completed",
@@ -142,12 +142,12 @@
         "subjectDataHashes": [
           {
             "subjectId": "punctuation",
-            "hash": "sha256-16:611bf5ed12c1156a",
-            "bytes": 7894
+            "hash": "sha256-16:ef9c94003136f740",
+            "bytes": 7117
           }
         ],
-        "monsterCodexHash": "sha256-16:8a2e2bedfc39f61b",
-        "monsterCodexBytes": 210
+        "monsterCodexHash": "sha256-16:853d1d443ea2560d",
+        "monsterCodexBytes": 209
       }
     }
   ],
@@ -161,7 +161,7 @@
       "pass": true,
       "status": 404,
       "code": "hero_shadow_disabled",
-      "waitedMs": 8240,
+      "waitedMs": 6707,
       "observations": [
         {
           "status": 200,
@@ -200,12 +200,23 @@
     },
     "checks": {
       "heroQuestCardVisible": true,
-      "heroCampPanelVisible": true,
+      "heroCampPanelAbsentOnHome": true,
+      "heroCampEntryVisible": true,
+      "heroCampPanelVisibleOnCampPage": true,
+      "heroCampMonsterCount": 6,
       "homeToSubject": true,
+      "homeToHeroCamp": true,
+      "heroCampToHome": true,
       "subjectToCodex": true,
       "codexToHome": true,
       "overflow": {
         "home": {
+          "selector": "html",
+          "clientWidth": 390,
+          "scrollWidth": 390,
+          "ok": true
+        },
+        "camp": {
           "selector": "html",
           "clientWidth": 390,
           "scrollWidth": 390,
@@ -229,7 +240,8 @@
     "requestFailures": [],
     "httpFailures": [],
     "screenshots": {
-      "home": "docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10/mobile-home-hero-camp.png",
+      "home": "docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10/mobile-home-hero-quest.png",
+      "camp": "docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10/mobile-hero-camp-page.png",
       "subject": "docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10/mobile-subject-punctuation.png",
       "codex": "docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10/mobile-codex.png"
     }
