@@ -1,10 +1,10 @@
 # Hero Mode Final Completion Report - 2026-05-10
 
-**Status:** complete for the current production contract boundary, pending final independent re-review  
-**Contract folder:** `docs/plans/james/hero-mode/A/`  
-**Primary contract:** `docs/plans/james/hero-mode/A/hero-mode-pA8.md`  
-**Production origin:** `https://ks2.eugnel.uk`  
-**Deployed Worker version:** `6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0`  
+**Status:** complete for the current production contract boundary, pending final independent re-review
+**Contract folder:** `docs/plans/james/hero-mode/A/`
+**Primary contract:** `docs/plans/james/hero-mode/A/hero-mode-pA8.md`
+**Production origin:** `https://ks2.eugnel.uk`
+**Deployed Worker version:** `6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0`
 **Deployed code baseline:** `6dd02cdb73c60df5154b8018789c9cd33acb9ad5`
 
 ---

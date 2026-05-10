@@ -7,9 +7,9 @@
   "workerVersionId": "6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0",
   "commands": [
     {
-      "command": "node --test tests/app-controller.test.js tests/worker-auth.test.js tests/worker-hero-read-model.test.js tests/hero-pA4-external-cohort-resolver.test.js tests/hero-pA5-rollout-resolver.test.js",
+      "command": "node --test tests/app-controller.test.js tests/worker-auth.test.js tests/worker-hero-read-model.test.js tests/hero-pA4-external-cohort-resolver.test.js tests/hero-pA5-rollout-resolver.test.js tests/hero-pA7-wrangler-oauth.test.js",
       "result": "pass",
-      "summary": "109 tests passed, 0 failed"
+      "summary": "111 tests passed, 0 failed"
     },
     {
       "command": "npm test",

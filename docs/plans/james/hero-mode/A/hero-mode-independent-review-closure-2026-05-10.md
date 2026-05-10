@@ -26,7 +26,7 @@
 | Current deployed enabled Hero path was not replayed | `hero-mode-current-deploy-enabled-smoke-2026-05-10.json` passes read model, start-task, Worker-owned punctuation completion, claim, duplicate claim, Camp insufficient-coins, restore, hide, and cleanup. |
 | Exact exposure values were not freshly proven | `hero-mode-current-deploy-enabled-smoke-2026-05-10.json` records reassertion of `HERO_INTERNAL_ACCOUNTS`, `HERO_EXTERNAL_ACCOUNTS=[]`, `HERO_EXCLUDED_ACCOUNTS=[]`, `HERO_EMERGENCY_DISABLED=false`, and `HERO_ROLLOUT_PERCENT=0` with PII-safe proofs. |
 | Historical pA8 documents contradicted the current boundary | `hero-pA8-support-summary.md` and `hero-pA8-rollback-evidence.md` now carry 2026-05-10 supersession notes. |
-| Evidence files were untracked | This closure package is expected to be committed and pushed before final closure. |
+| Evidence files were untracked | Closed: the closure package is tracked in git and pushed to `origin/main`; final sync is verified with `git status --short --branch` and `git rev-parse HEAD origin/main`. |
 
 ---
 
