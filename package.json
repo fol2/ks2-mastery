@@ -55,6 +55,7 @@
     "smoke:production:grammar": "node ./scripts/grammar-production-smoke.mjs",
     "smoke:production:reading": "node ./scripts/reading-production-smoke.mjs",
     "smoke:production:punctuation": "node ./scripts/punctuation-production-smoke.mjs",
+    "smoke:production:punctuation-round-length": "node ./scripts/punctuation-round-length-production-smoke.mjs",
     "smoke:production:admin-ops": "node ./scripts/admin-ops-production-smoke.mjs",
     "smoke:production:spelling-dense": "node ./scripts/spelling-dense-history-smoke.mjs",
     "smoke:production:spelling-audio": "node ./scripts/spelling-audio-production-smoke.mjs",

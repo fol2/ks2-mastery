@@ -248,6 +248,73 @@ test('punctuation start command action passes guided skill only when present', (
   assert.deepEqual(payload, { mode: 'guided', roundLength: '2', skillId: 'speech' });
 });
 
+test('punctuation round-length command action persists setup lengths through save-prefs', async () => {
+  for (const roundLength of ['4', '6', '8', '12']) {
+    const sent = [];
+    const handler = createSubjectCommandActionHandler({
+      subjectId: 'punctuation',
+      getState() {
+        return {
+          ...baseState(),
+          subjectUi: {
+            punctuation: {
+              phase: 'setup',
+              prefs: { mode: 'smart', roundLength: '6' },
+            },
+          },
+        };
+      },
+      subjectCommands: {
+        send(request) {
+          sent.push(request);
+          return Promise.resolve({ ok: true });
+        },
+      },
+      actions: punctuationSubjectCommandActions,
+    });
+
+    assert.equal(handler.handle('punctuation-set-round-length', { value: roundLength }), true);
+    await flushPromises();
+    assert.deepEqual(sent, [{
+      subjectId: 'punctuation',
+      learnerId: 'learner-a',
+      command: 'save-prefs',
+      payload: { prefs: { roundLength } },
+    }]);
+  }
+});
+
+test('punctuation round-length command action rejects non-setup and off-enum values', async () => {
+  const sent = [];
+  const handler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    getState() {
+      return {
+        ...baseState(),
+        subjectUi: {
+          punctuation: {
+            phase: 'active-item',
+            prefs: { mode: 'smart', roundLength: '6' },
+          },
+        },
+      };
+    },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ ok: true });
+      },
+    },
+    actions: punctuationSubjectCommandActions,
+  });
+
+  assert.equal(handler.handle('punctuation-set-round-length', { value: '8' }), true);
+  assert.equal(handler.handle('punctuation-set-round-length', { value: '1' }), true);
+  assert.equal(handler.handle('punctuation-set-round-length', { value: 'all' }), true);
+  await flushPromises();
+  assert.deepEqual(sent, []);
+});
+
 test('punctuation context-pack action sends only safe request metadata', () => {
   const action = punctuationSubjectCommandActions['punctuation-context-pack'];
   const payload = action.payload({

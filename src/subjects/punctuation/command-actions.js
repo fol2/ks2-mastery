@@ -1,4 +1,5 @@
 import { parseChoiceIndex } from '../../../shared/punctuation/choice-index.js';
+import { PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS } from './components/punctuation-view-model.js';
 import { DEFAULT_PUNCTUATION_PREFS } from './service-contract.js';
 import { sanitisePunctuationTelemetryPayload } from './telemetry.js';
 
@@ -31,6 +32,15 @@ function withCommandExpectation(payload = {}, state = {}) {
     ...payload,
     ...commandExpectationForState(state),
   };
+}
+
+function punctuationSetupRoundLengthForCommand(data = {}, state = {}) {
+  const phase = state.subjectUi?.punctuation?.phase || '';
+  if (phase !== 'setup') return '';
+  const value = typeof data?.value === 'string'
+    ? data.value
+    : (typeof data?.roundLength === 'string' ? data.roundLength : '');
+  return PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(value) ? value : '';
 }
 
 // adv-234-006 MEDIUM: the Setup scene latches `ui.prefsMigrated: true`
@@ -161,6 +171,18 @@ export const punctuationSubjectCommandActions = Object.freeze({
     command: 'save-prefs',
     payload({ data }) {
       return { prefs: { mode: data?.value || data?.mode || 'smart' } };
+    },
+  },
+  'punctuation-set-round-length': {
+    command({ data, state }) {
+      return punctuationSetupRoundLengthForCommand(data, state) ? 'save-prefs' : '';
+    },
+    payload({ data, state }) {
+      return {
+        prefs: {
+          roundLength: punctuationSetupRoundLengthForCommand(data, state),
+        },
+      };
     },
   },
   // Phase 4 U4 — client-side telemetry emission hook.
