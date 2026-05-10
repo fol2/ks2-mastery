@@ -38,11 +38,19 @@ function safeStringArray(value) {
   return value.filter((item) => typeof item === 'string');
 }
 
-function safeFeedback(feedback) {
+function safeFeedback(feedback, session = null) {
   if (!feedback || typeof feedback !== 'object' || Array.isArray(feedback)) return null;
+  const revealAnswer = session?.type !== 'test'
+    && session?.phase === 'correction'
+    && typeof feedback.answer === 'string'
+    && feedback.answer;
   const safe = {
     kind: typeof feedback.kind === 'string' ? feedback.kind : 'info',
     headline: typeof feedback.headline === 'string' ? feedback.headline : '',
+    ...(revealAnswer ? { answer: feedback.answer } : {}),
+    ...(typeof feedback.attemptedAnswer === 'string' && feedback.attemptedAnswer.trim()
+      ? { attemptedAnswer: feedback.attemptedAnswer.trim().slice(0, 80) }
+      : {}),
     body: typeof feedback.body === 'string' ? feedback.body : '',
     footer: typeof feedback.footer === 'string' ? feedback.footer : '',
     familyWords: safeStringArray(feedback.familyWords),
@@ -50,6 +58,8 @@ function safeFeedback(feedback) {
 
   if (
     !safe.headline
+    && !safe.answer
+    && !safe.attemptedAnswer
     && !safe.body
     && !safe.footer
     && !safe.familyWords.length
@@ -87,7 +97,7 @@ export function buildSpellingReadModel({
     phase: safeState.phase || 'dashboard',
     awaitingAdvance: Boolean(safeState.awaitingAdvance),
     session,
-    feedback: safeFeedback(safeState.feedback),
+    feedback: safeFeedback(safeState.feedback, session),
     summary: safeState.summary || null,
     error: typeof safeState.error === 'string' ? safeState.error : '',
     prefs: cloneSerialisable(prefs) || {},

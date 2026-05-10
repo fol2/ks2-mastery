@@ -299,6 +299,31 @@ function assertSpellingStartModelShape(model, path) {
   });
 }
 
+function assertSpellingSubmitModelRedaction(model, path) {
+  assert.equal(
+    model?.session?.currentCard?.word,
+    undefined,
+    `${path}.session.currentCard.word must not expose the raw word.`,
+  );
+  assert.equal(
+    model?.session?.currentCard?.prompt?.sentence,
+    undefined,
+    `${path}.session.currentCard.prompt.sentence must not expose the raw sentence.`,
+  );
+
+  const oracleModel = JSON.parse(JSON.stringify(model || null));
+  if (
+    oracleModel?.feedback
+    && oracleModel?.session?.type !== 'test'
+    && oracleModel?.session?.phase === 'correction'
+    && typeof oracleModel.feedback.answer === 'string'
+    && oracleModel.feedback.answer.trim()
+  ) {
+    delete oracleModel.feedback.answer;
+  }
+  assertNoForbiddenObjectKeys(oracleModel, FORBIDDEN_SPELLING_READ_MODEL_KEYS, path);
+}
+
 async function runSpellingCommand({
   origin,
   cookie,
@@ -435,24 +460,12 @@ export async function runSpellingDenseHistorySmoke(options = {}) {
     throw validationError('Spelling submit-answer returned ok=false.');
   }
   // Redaction must hold on the submit-answer path too — a bug where
-  // post-marking feedback leaks `word` or `prompt.sentence` is
-  // exercised by the submit-answer regression test.
+  // post-marking feedback leaks `word` or `prompt.sentence` is exercised
+  // by the submit-answer regression test. Correction-phase feedback has one
+  // narrow learner-facing exception: it may carry `feedback.answer` so the
+  // UI can show the spelling that must be typed once before continuing.
   rethrowAsValidation(() => {
-    assert.equal(
-      submit.payload?.subjectReadModel?.session?.currentCard?.word,
-      undefined,
-      'spellingDense.submitModel.session.currentCard.word must not expose the raw word.',
-    );
-    assert.equal(
-      submit.payload?.subjectReadModel?.session?.currentCard?.prompt?.sentence,
-      undefined,
-      'spellingDense.submitModel.session.currentCard.prompt.sentence must not expose the raw sentence.',
-    );
-    assertNoForbiddenObjectKeys(
-      submit.payload?.subjectReadModel,
-      FORBIDDEN_SPELLING_READ_MODEL_KEYS,
-      'spellingDense.submitModel',
-    );
+    assertSpellingSubmitModelRedaction(submit.payload?.subjectReadModel, 'spellingDense.submitModel');
   });
   if (submit.signals.includes('exceededCpu')) {
     throw validationError('Spelling submit-answer surfaced exceededCpu.');
