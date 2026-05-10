@@ -1,6 +1,6 @@
 # Hero Mode Independent Review Closure - 2026-05-10
 
-**Status:** pending final independent re-review
+**Status:** GREEN - independent code review and contract audit closed
 **Contract folder:** `docs/plans/james/hero-mode/A/`
 **Production origin:** `https://ks2.eugnel.uk`
 **Deployed code baseline:** `6dd02cdb73c60df5154b8018789c9cd33acb9ad5`
@@ -12,8 +12,8 @@
 
 | Stream | Reviewer | Current status | Notes |
 |--------|----------|----------------|-------|
-| Code review | Russell | Pending re-review | Initial blockers remediated: wrapper-safe D1 evidence, PII-safe boundary classification, and tracked evidence scope. |
-| Contract audit | Carver | Pending re-review | Initial blockers remediated: current deployed enabled-path smoke, stale pA8 document supersession notes, secret reassertion evidence, and tracked completion evidence. |
+| Code review | Russell | GREEN | No remaining runtime, wrapper, D1-evidence, or tracked-evidence blockers after remediation. |
+| Contract audit | Carver | GREEN | No remaining contract, evidence, deployment, boundary, or sync blockers after remediation. |
 
 ---
 
@@ -42,4 +42,5 @@
 
 ## Final Reviewer Verdicts
 
-Pending final re-review.
+- Code review: GREEN.
+- Contract audit: GREEN.

@@ -1,6 +1,6 @@
 # Hero Mode Final Completion Report - 2026-05-10
 
-**Status:** complete for the current production contract boundary, pending final independent re-review
+**Status:** complete for the current production contract boundary; independent code review and contract audit GREEN
 **Contract folder:** `docs/plans/james/hero-mode/A/`
 **Primary contract:** `docs/plans/james/hero-mode/A/hero-mode-pA8.md`
 **Production origin:** `https://ks2.eugnel.uk`
