@@ -70,6 +70,24 @@ function assertNoForbiddenObjectKeys(value, forbiddenKeys, label, path = label) 
   }
 }
 
+function assertSpellingReadModelRedaction(model, label) {
+  const oracleModel = JSON.parse(JSON.stringify(model || null));
+  if (
+    oracleModel?.feedback
+    && oracleModel?.session?.type !== 'test'
+    && oracleModel?.session?.phase === 'correction'
+    && typeof oracleModel.feedback.answer === 'string'
+    && oracleModel.feedback.answer.trim()
+  ) {
+    delete oracleModel.feedback.answer;
+  }
+  assertNoForbiddenObjectKeys(
+    oracleModel,
+    FORBIDDEN_SPELLING_READ_MODEL_KEYS,
+    label,
+  );
+}
+
 async function postCommand(server, {
   command,
   learnerId = 'learner-a',
@@ -372,7 +390,7 @@ test('worker spelling command route starts, submits, continues, and completes se
   }
 });
 
-test('worker spelling command route redacts answer fields from public feedback', async () => {
+test('worker spelling command route reveals answer only for correction feedback', async () => {
   const server = createWorkerRepositoryServer();
   seedAccountLearner(server.DB);
 
@@ -398,11 +416,35 @@ test('worker spelling command route redacts answer fields from public feedback',
     assert.equal(step.response.status, 200);
     assert.equal(step.body.subjectReadModel.phase, 'session');
     assert.ok(step.body.subjectReadModel.feedback);
+    assert.equal(step.body.subjectReadModel.session?.phase, 'retry');
     assert.equal(step.body.subjectReadModel.feedback.answer, undefined);
-    assert.equal(step.body.subjectReadModel.feedback.attemptedAnswer, undefined);
-    assertNoForbiddenObjectKeys(
+    assert.equal(step.body.subjectReadModel.feedback.attemptedAnswer, 'ks2-dense-smoke-wrong-answer');
+    assertSpellingReadModelRedaction(
       step.body.subjectReadModel,
-      FORBIDDEN_SPELLING_READ_MODEL_KEYS,
+      'workerSpelling.feedback',
+    );
+
+    step = await postCommand(server, {
+      command: 'continue-session',
+      requestId: 'spell-feedback-redaction-continue',
+      expectedLearnerRevision: 2,
+    });
+    assert.equal(step.response.status, 200);
+
+    step = await postCommand(server, {
+      command: 'submit-answer',
+      requestId: 'spell-feedback-correction-submit',
+      expectedLearnerRevision: 3,
+      payload: { answer: 'ks2-dense-smoke-wrong-answer' },
+    });
+    assert.equal(step.response.status, 200);
+    assert.equal(step.body.subjectReadModel.phase, 'session');
+    assert.ok(step.body.subjectReadModel.feedback);
+    assert.equal(step.body.subjectReadModel.session?.phase, 'correction');
+    assert.equal(step.body.subjectReadModel.feedback.answer, 'possess');
+    assert.equal(step.body.subjectReadModel.feedback.attemptedAnswer, 'ks2-dense-smoke-wrong-answer');
+    assertSpellingReadModelRedaction(
+      step.body.subjectReadModel,
       'workerSpelling.feedback',
     );
   } finally {
