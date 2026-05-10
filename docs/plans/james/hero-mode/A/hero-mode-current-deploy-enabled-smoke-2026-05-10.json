@@ -1,7 +1,7 @@
 {
   "ok": true,
-  "startedAt": "2026-05-10T10:38:29.051Z",
-  "completedAt": "2026-05-10T10:39:28.078Z",
+  "startedAt": "2026-05-10T10:49:52.401Z",
+  "completedAt": "2026-05-10T10:50:52.584Z",
   "origin": "https://ks2.eugnel.uk",
   "database": "ks2-mastery-db",
   "internalBoundary": {
@@ -49,8 +49,8 @@
   ],
   "demo": {
     "accountType": "demo",
-    "accountProof": "sha256-16:5dd2b19f30450362",
-    "learnerProof": "sha256-16:d339f581e05d0ad1"
+    "accountProof": "sha256-16:4b923ad8467f0016",
+    "learnerProof": "sha256-16:682d310a83fadda2"
   },
   "steps": [
     {
@@ -71,10 +71,16 @@
       "pass": true,
       "taskCount": 1,
       "selectedSubject": "punctuation",
-      "selectedTaskId": "hero-task-a174c606",
+      "selectedTaskId": "hero-task-6664d8bf",
       "initialBalance": 0,
-      "waitedMs": 6599,
+      "waitedMs": 12645,
       "observations": [
+        {
+          "status": 404,
+          "visible": false,
+          "hidden": true,
+          "code": "hero_shadow_disabled"
+        },
         {
           "status": 404,
           "visible": false,
@@ -93,7 +99,7 @@
       "name": "hero-start-task",
       "pass": true,
       "subjectId": "punctuation",
-      "taskId": "hero-task-a174c606"
+      "taskId": "hero-task-6664d8bf"
     },
     {
       "name": "hero-subject-session-completed",
@@ -141,14 +147,8 @@
       "pass": true,
       "status": 404,
       "code": "hero_shadow_disabled",
-      "waitedMs": 7438,
+      "waitedMs": 1792,
       "observations": [
-        {
-          "status": 200,
-          "visible": true,
-          "hidden": false,
-          "code": null
-        },
         {
           "status": 404,
           "visible": false,

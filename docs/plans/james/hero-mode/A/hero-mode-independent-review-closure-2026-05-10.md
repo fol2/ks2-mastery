@@ -3,8 +3,8 @@
 **Status:** pending final independent re-review
 **Contract folder:** `docs/plans/james/hero-mode/A/`
 **Production origin:** `https://ks2.eugnel.uk`
-**Deployed code baseline:** `58fae19b9ecb8a134bbcd13048dea6ccb1f863a6`
-**Deployed Worker version:** `2f62c849-4a22-4c21-80f6-88250b01cb71`
+**Deployed code baseline:** `6dd02cdb73c60df5154b8018789c9cd33acb9ad5`
+**Deployed Worker version:** `6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0`
 
 ---
 

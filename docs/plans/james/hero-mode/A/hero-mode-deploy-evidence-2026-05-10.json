@@ -1,10 +1,10 @@
 {
   "ok": true,
   "phase": "hero-mode-final-production-readiness",
-  "generatedAt": "2026-05-10T10:39:40Z",
+  "generatedAt": "2026-05-10T10:51:00Z",
   "productionOrigin": "https://ks2.eugnel.uk",
-  "deployedCommitSha": "58fae19b9ecb8a134bbcd13048dea6ccb1f863a6",
-  "workerVersionId": "2f62c849-4a22-4c21-80f6-88250b01cb71",
+  "deployedCommitSha": "6dd02cdb73c60df5154b8018789c9cd33acb9ad5",
+  "workerVersionId": "6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0",
   "commands": [
     {
       "command": "node --test tests/app-controller.test.js tests/worker-auth.test.js tests/worker-hero-read-model.test.js tests/hero-pA4-external-cohort-resolver.test.js tests/hero-pA5-rollout-resolver.test.js",
@@ -27,7 +27,7 @@
       "summary": "Worker deployed and production bundle audit passed"
     },
     {
-      "command": "node ./scripts/punctuation-round-length-production-smoke.mjs --commit-sha 58fae19b9ecb8a134bbcd13048dea6ccb1f863a6 --worker-version-id 2f62c849-4a22-4c21-80f6-88250b01cb71 --out docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-smoke-2026-05-10.json --screenshot-dir docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-screenshots-2026-05-10",
+      "command": "node ./scripts/punctuation-round-length-production-smoke.mjs --commit-sha 6dd02cdb73c60df5154b8018789c9cd33acb9ad5 --worker-version-id 6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0 --out docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-smoke-2026-05-10.json --screenshot-dir docs/plans/james/hero-mode/A/hero-mode-production-ui-gating-screenshots-2026-05-10",
       "result": "pass",
       "summary": "Production UI smoke passed on desktop and mobile with no console errors, request failures, or HTTP failures"
     },

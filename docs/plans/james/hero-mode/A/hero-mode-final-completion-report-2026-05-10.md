@@ -4,8 +4,8 @@
 **Contract folder:** `docs/plans/james/hero-mode/A/`  
 **Primary contract:** `docs/plans/james/hero-mode/A/hero-mode-pA8.md`  
 **Production origin:** `https://ks2.eugnel.uk`  
-**Deployed Worker version:** `2f62c849-4a22-4c21-80f6-88250b01cb71`  
-**Deployed code baseline:** `58fae19b9ecb8a134bbcd13048dea6ccb1f863a6`
+**Deployed Worker version:** `6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0`  
+**Deployed code baseline:** `6dd02cdb73c60df5154b8018789c9cd33acb9ad5`
 
 ---
 
@@ -29,7 +29,7 @@ The 2026-05-10 closure reasserted the production boundary secrets through `scrip
 | Do not widen global exposure | `npm run check` and deploy output show all checked-in global Hero flags remain `false`; boundary secrets were reasserted to one internal account, empty external/excluded lists, emergency off `false`, and rollout percent 0. |
 | Pre-deploy verification | `npm test`: 109191 total, 109179 pass, 0 fail, 12 skipped. Targeted Hero/auth tests: 111 pass, 0 fail. |
 | Build/deploy gate | `npm run check`: Wrangler dry-run build, public asset assertion, and client bundle audit passed. |
-| Production deployment | `npm run deploy`: deployed Worker version `2f62c849-4a22-4c21-80f6-88250b01cb71`; production bundle audit passed. |
+| Production deployment | `npm run deploy`: deployed Worker version `6b0ece44-9f85-44c7-aa12-3e6a96d8d2e0`; production bundle audit passed. |
 | Deployed production UI evidence | `hero-mode-production-ui-gating-smoke-2026-05-10.json`: desktop and mobile demo UI flows passed with no console errors, request failures, or HTTP failures. |
 | Deployed production state evidence | `hero-mode-production-counts-2026-05-10.json`: remote D1 returned one real account boundary, 3 learner state rows, 2 event learners, and no demo/external Hero rows after the enabled-path smoke cleanup. |
 | Current deployed enabled-path smoke | `hero-mode-current-deploy-enabled-smoke-2026-05-10.json`: temporary demo external allowlist passed, external list was restored empty, the demo account returned `hero_shadow_disabled`, and scoped demo runtime rows were cleaned. |
