@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "workerCommitSha": "3b15de5950c9a1f8a7ec965f7e0f60ffe0e199bf",
+  "workerVersionId": "c624fa92-2c5a-4d0a-abb8-50af5e222783",
+  "startedAt": "2026-05-10T09:29:52.849Z",
+  "completedAt": "2026-05-10T09:30:06.699Z",
+  "probes": [
+    {
+      "name": "desktop-1024",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "length": "8",
+      "ok": true,
+      "ctaRoundLength": "8",
+      "sessionTextMatched": true,
+      "selectedAriaChecked": "true",
+      "consoleErrors": [],
+      "requestFailures": [],
+      "httpFailures": [],
+      "screenshot": "output/playwright/punctuation-round-length-production-2026-05-10/desktop-1024-selected-8.png"
+    },
+    {
+      "name": "mobile-390",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "length": "12",
+      "ok": true,
+      "ctaRoundLength": "12",
+      "sessionTextMatched": true,
+      "selectedAriaChecked": "true",
+      "consoleErrors": [],
+      "requestFailures": [],
+      "httpFailures": [],
+      "screenshot": "output/playwright/punctuation-round-length-production-2026-05-10/mobile-390-selected-12.png"
+    }
+  ]
+}
