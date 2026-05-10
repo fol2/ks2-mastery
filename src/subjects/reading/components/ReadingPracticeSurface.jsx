@@ -1,4 +1,18 @@
 import { ProgressMeter } from '../../../platform/ui/ProgressMeter.jsx';
+import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
+import { HeroWelcome } from '../../../platform/ui/HeroWelcome.jsx';
+import { Button } from '../../../platform/ui/Button.jsx';
+import { SetupMorePractice } from '../../../platform/ui/SetupMorePractice.jsx';
+import { SetupSidePanel } from '../../../platform/ui/SetupSidePanel.jsx';
+import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
+import { SubjectThemeScope } from '../../../platform/ui/SubjectThemeScope.jsx';
+import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
+import { useSetupHeroContrast } from '../../../platform/ui/useSetupHeroContrast.js';
+import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConfigContext.jsx';
+import { activeReadingMonsterSummaryFromState } from '../../../platform/game/mastery/reading.js';
+import { buildMonsterAssetKey, resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
+import { MONSTER_ASSET_MANIFEST } from '../../../platform/game/monster-asset-manifest.js';
+import { monsterVisualFrameStyle } from '../../../platform/game/monster-visual-style.js';
 import {
   READING_DIFFICULTY_OPTIONS,
   READING_GENRE_OPTIONS,
@@ -7,6 +21,75 @@ import {
   questionTypeLabel,
 } from '../metadata.js';
 import { normaliseReadingReadModel } from '../client-read-models.js';
+
+const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+const READING_HERO_BASE = '/assets/regions/the-moonleaf-archive';
+const MONSTER_ASSET_KEYS = new Set(MONSTER_ASSET_MANIFEST.assets.map((asset) => asset.key));
+const READING_PRIMARY_MODE_IDS = Object.freeze(['smart', 'guided', 'test']);
+const READING_PRIMARY_MODE_CARDS = Object.freeze([
+  Object.freeze({
+    id: 'smart',
+    glyph: 'S',
+    title: 'Smart Review',
+    desc: 'Weak, due and under-practised domains chosen for today.',
+    badge: 'RECOMMENDED',
+  }),
+  Object.freeze({
+    id: 'guided',
+    glyph: 'G',
+    title: 'Guided Practice',
+    desc: 'A shorter passage with immediate feedback after each answer.',
+  }),
+  Object.freeze({
+    id: 'test',
+    glyph: 'P',
+    title: 'SATs Paper',
+    desc: 'Three texts, delayed feedback, and a full 50-mark routine.',
+  }),
+]);
+
+const READING_MORE_MODE_CARDS = Object.freeze(
+  READING_MODE_OPTIONS
+    .filter((option) => !READING_PRIMARY_MODE_IDS.includes(option.id))
+    .map((option) => Object.freeze({
+      id: option.id,
+      title: option.label,
+      desc: option.description,
+    })),
+);
+
+const READING_HERO_MODE_REGION = Object.freeze({
+  smart: 'a',
+  guided: 'a',
+  core: 'b',
+  evidence: 'b',
+  vocab: 'c',
+  inference: 'c',
+  punct: 'd',
+  stamina: 'e',
+  test: 'e',
+});
+
+const READING_HERO_CONTRAST = Object.freeze({
+  1: Object.freeze({
+    tone: '1',
+    shell: 'dark',
+    controls: 'dark',
+    cards: Object.freeze(['dark', 'dark', 'dark']),
+  }),
+  2: Object.freeze({
+    tone: '2',
+    shell: 'light',
+    controls: 'light',
+    cards: Object.freeze(['light', 'light', 'light']),
+  }),
+  3: Object.freeze({
+    tone: '3',
+    shell: 'light',
+    controls: 'light',
+    cards: Object.freeze(['light', 'light', 'light']),
+  }),
+});
 
 function dispatch(actions, action, data = {}) {
   if (typeof actions?.dispatch === 'function') actions.dispatch(action, data);
@@ -21,11 +104,16 @@ function Stat({ label, value }) {
   );
 }
 
-function SetupField({ label, name, value, options }) {
+function ReadingSetupSelect({ label, name, value, options, disabled, onChange }) {
   return (
-    <label className="field">
-      <span>{label}</span>
-      <select name={name} defaultValue={value || ''}>
+    <label className="reading-setup-select">
+      <span className="tool-label">{label}</span>
+      <select
+        name={name}
+        value={value || ''}
+        disabled={disabled}
+        onChange={(event) => onChange(name, event.currentTarget.value)}
+      >
         {options.map((option) => (
           <option key={option.id} value={option.id}>{option.label}</option>
         ))}
@@ -88,57 +176,288 @@ function markActionHint(session) {
   return 'Checks your saved answer now and then shows feedback.';
 }
 
-function ReadingSetup({ ui, actions }) {
-  const prefs = ui.prefs || {};
-  function start(event) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    dispatch(actions, 'reading-start', {
-      mode: String(form.get('mode') || 'smart'),
-      focusSkillId: String(form.get('focusSkillId') || ''),
-      genre: String(form.get('genre') || ''),
-      difficulty: String(form.get('difficulty') || ''),
-      viewMode: String(form.get('viewMode') || 'one'),
-    });
+function readingHeroTone(learnerId = '') {
+  const source = String(learnerId || 'reading');
+  let hash = 0;
+  for (let index = 0; index < source.length; index += 1) {
+    hash = ((hash * 31) + source.charCodeAt(index)) >>> 0;
   }
+  return String((hash % 3) + 1);
+}
+
+function readingHeroBgForMode(mode = 'smart', learnerId = '') {
+  const region = READING_HERO_MODE_REGION[mode] || READING_HERO_MODE_REGION.smart;
+  const tone = readingHeroTone(learnerId);
+  return `${READING_HERO_BASE}/the-moonleaf-archive-${region}${tone}.1280.webp`;
+}
+
+function readingHeroToneForBg(url) {
+  const match = String(url || '').match(/the-moonleaf-archive-[a-e]([1-3])\.1280\.webp(?:$|[?#])/);
+  return match?.[1] || '';
+}
+
+function readingHeroContrastProfile(url) {
+  const tone = readingHeroToneForBg(url);
+  return READING_HERO_CONTRAST[tone] || null;
+}
+
+export function readingMonsterImageVisual(monsterId, progress, config) {
+  const stage = Math.max(0, Math.min(4, Number(progress?.displayStage ?? progress?.stage) || 0));
+  const branch = progress?.branch || 'b1';
+  const assetMonsterId = progress?.monster?.assetId || monsterId;
+  const assetKey = buildMonsterAssetKey(assetMonsterId, branch, stage);
+  if (!MONSTER_ASSET_KEYS.has(assetKey)) return null;
+  const visual = resolveMonsterVisual({
+    monsterId: assetMonsterId,
+    branch,
+    stage,
+    context: 'meadow',
+    config,
+    preferredSize: 320,
+  });
+  return {
+    style: monsterVisualFrameStyle(visual),
+    imageProps: {
+      src: visual.src,
+      srcSet: visual.srcSet,
+      sizes: '(max-width: 720px) 96px, 120px',
+      loading: 'lazy',
+      decoding: 'async',
+    },
+  };
+}
+
+function resolveReadingRewardState(repositories, learnerId) {
+  if (!learnerId || typeof repositories?.gameState?.read !== 'function') return {};
+  try {
+    const state = repositories.gameState.read(learnerId, MONSTER_CODEX_SYSTEM_ID);
+    return state && typeof state === 'object' && !Array.isArray(state) ? state : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function selectedReadingModeLabel(mode) {
+  return READING_MODE_OPTIONS.find((option) => option.id === mode)?.label || 'Smart Review';
+}
+
+function ReadingModeCard({ card, selected, disabled, actions, textTone }) {
+  const classes = ['reading-primary-mode', 'mode-card'];
+  if (selected) classes.push('selected');
+  if (disabled) classes.push('is-disabled');
   return (
-    <div className="grid two">
-      <section className="card border-top reading-accent-card">
-        <div className="eyebrow">KS2 Reading</div>
-        <h2 className="section-title">Read first. Answer from evidence. Review weak domains later.</h2>
-        <p className="subtitle">
-          Build evidence-first reading habits with short passages, focused questions and clear review prompts after each answer.
-        </p>
-        <form onSubmit={start} className="setup-form reading-setup-form">
-          <div className="control-grid">
-            <SetupField label="Mode" name="mode" value={prefs.mode} options={READING_MODE_OPTIONS} />
-            <SetupField label="Reading focus" name="focusSkillId" value={prefs.focusSkillId} options={READING_SKILL_OPTIONS} />
-            <SetupField label="Passage type" name="genre" value={prefs.genre} options={READING_GENRE_OPTIONS} />
-            <SetupField label="Difficulty" name="difficulty" value={prefs.difficulty} options={READING_DIFFICULTY_OPTIONS} />
-            <label className="field">
-              <span>Question view</span>
-              <select name="viewMode" defaultValue={prefs.viewMode || 'one'}>
-                <option value="one">One at a time</option>
-                <option value="list">Full question list</option>
-              </select>
-            </label>
+    <button
+      type="button"
+      className={classes.join(' ')}
+      data-mode-id={card.id}
+      data-action="reading-save-prefs"
+      data-text-tone={textTone}
+      aria-pressed={selected ? 'true' : 'false'}
+      disabled={disabled}
+      aria-disabled={disabled ? 'true' : undefined}
+      onClick={() => dispatch(actions, 'reading-save-prefs', { mode: card.id })}
+    >
+      <div className="mc-top">
+        <span className="mc-icon mc-icon-glyph" aria-hidden="true">
+          <span className="mc-glyph">{card.glyph}</span>
+        </span>
+        {card.badge ? <span className="mc-badge recommended">{card.badge}</span> : <span className="mc-badge-spacer" aria-hidden="true" />}
+      </div>
+      <h4>{card.title}</h4>
+      <p>{card.desc}</p>
+    </button>
+  );
+}
+
+function ReadingMoreModeCard({ card, selected, disabled, actions }) {
+  return (
+    <button
+      type="button"
+      className={`reading-secondary-mode${selected ? ' selected' : ''}${disabled ? ' is-disabled' : ''}`}
+      data-mode-id={card.id}
+      data-action="reading-save-prefs"
+      aria-pressed={selected ? 'true' : 'false'}
+      disabled={disabled}
+      onClick={() => dispatch(actions, 'reading-save-prefs', { mode: card.id })}
+    >
+      <h5>{card.title}</h5>
+      <p>{card.desc}</p>
+    </button>
+  );
+}
+
+function ReadingSetup({ appState, ui, actions, repositories }) {
+  const prefs = ui.prefs || {};
+  const learnerId = appState?.learners?.selectedId || ui.learnerId || '';
+  const learner = learnerId ? appState?.learners?.byId?.[learnerId] || null : null;
+  const learnerName = typeof learner?.name === 'string' ? learner.name.trim() : '';
+  const setupDisabled = Boolean(ui.pendingCommand);
+  const heroBg = readingHeroBgForMode(prefs.mode, learnerId);
+  const heroContrast = useSetupHeroContrast(heroBg, prefs.mode, {
+    staticContrastForBg: readingHeroContrastProfile,
+    cardSelector: '.reading-primary-mode',
+    controlSelectors: ['.tool-label', '.length-unit'],
+  });
+  const setupClasses = ['setup-main', 'reading-setup-main'];
+  if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
+
+  const rewardState = resolveReadingRewardState(repositories, learnerId);
+  const monsterVisualConfig = useMonsterVisualConfig();
+  const panelMonsterEntries = activeReadingMonsterSummaryFromState(rewardState).slice(0, 4);
+  const resolvedPanelMonsterVisuals = panelMonsterEntries
+    .map(({ monster, progress }) => ({
+      id: monster.id,
+      visual: readingMonsterImageVisual(monster.assetId || monster.id, { ...progress, monster }, monsterVisualConfig?.config),
+      isEgg: (progress.displayStage ?? progress.stage) === 0,
+    }))
+    .filter((entry) => entry.visual);
+  const panelMonsterVisuals = resolvedPanelMonsterVisuals.length === panelMonsterEntries.length
+    ? resolvedPanelMonsterVisuals
+    : [];
+  const panelMonsterFallbacks = panelMonsterEntries.map(({ monster }) => ({
+    name: monster.name || monster.id,
+    discovered: true,
+  }));
+
+  const overview = ui.stats?.overview || {};
+  const startLabel = ui.pendingCommand === 'start-session'
+    ? 'Starting...'
+    : `Start ${selectedReadingModeLabel(prefs.mode)}`;
+
+  function updatePref(name, value) {
+    dispatch(actions, 'reading-save-prefs', { [name]: value });
+  }
+
+  function start() {
+    dispatch(actions, 'reading-start', prefs);
+  }
+
+  return (
+    <PracticeStage subjectId="reading" scene="setup" backdrop="library" motion="calm">
+      <SubjectThemeScope subjectId="reading" className="setup-grid reading-setup-grid">
+        <section
+          className={setupClasses.join(' ')}
+          data-react-hero-contrast="true"
+          data-hero-tone={heroContrast.contrast.tone || undefined}
+          data-controls-tone={heroContrast.contrast.controls}
+          ref={heroContrast.ref}
+          aria-label="Start Reading practice"
+        >
+          <HeroBackdrop url={heroBg} />
+          <div className="setup-content">
+            <p className="eyebrow">Moonleaf Archive</p>
+            <h1 className="title reading-hero-title">Reading missions</h1>
+            <p className="lede reading-hero-subtitle">Pick the routine, read the text carefully, and answer from evidence.</p>
+            <HeroWelcome name={learnerName} className="reading-hero-welcome" />
+
+            <div className="mode-row reading-mode-row">
+              {READING_PRIMARY_MODE_CARDS.map((card, index) => (
+                <ReadingModeCard
+                  card={card}
+                  selected={prefs.mode === card.id}
+                  disabled={setupDisabled}
+                  actions={actions}
+                  textTone={heroContrast.contrast.cards[index] || heroContrast.contrast.shell}
+                  key={card.id}
+                />
+              ))}
+            </div>
+
+            <div className="setup-control-stack reading-control-stack">
+              <div className="tweak-row reading-preference-row">
+                <ReadingSetupSelect label="Reading focus" name="focusSkillId" value={prefs.focusSkillId} options={READING_SKILL_OPTIONS} disabled={setupDisabled} onChange={updatePref} />
+                <ReadingSetupSelect label="Passage type" name="genre" value={prefs.genre} options={READING_GENRE_OPTIONS} disabled={setupDisabled} onChange={updatePref} />
+              </div>
+              <div className="tweak-row reading-preference-row">
+                <ReadingSetupSelect label="Difficulty" name="difficulty" value={prefs.difficulty} options={READING_DIFFICULTY_OPTIONS} disabled={setupDisabled} onChange={updatePref} />
+                <ReadingSetupSelect
+                  label="Question view"
+                  name="viewMode"
+                  value={prefs.viewMode || 'one'}
+                  options={[
+                    { id: 'one', label: 'One at a time' },
+                    { id: 'list', label: 'Full question list' },
+                  ]}
+                  disabled={setupDisabled}
+                  onChange={updatePref}
+                />
+              </div>
+            </div>
+
+            {ui.error ? (
+              <div className="feedback bad" role="alert">
+                <strong>Reading is unavailable right now</strong>
+                <div>{ui.error}</div>
+              </div>
+            ) : null}
+
+            <div className="setup-begin-row reading-start-row">
+              <Button
+                size="xl"
+                data-featured="true"
+                dataAction="reading-start"
+                disabled={setupDisabled}
+                onClick={start}
+              >
+                {startLabel}
+              </Button>
+            </div>
           </div>
-          <div className="actions reading-actions-spaced">
-            <button className="btn primary" type="submit" disabled={Boolean(ui.pendingCommand)}>Practise</button>
-          </div>
-        </form>
-      </section>
-      <section className="card">
-        <div className="eyebrow">Current Reading profile</div>
-        <div className="stats-row">
-          <Stat label="Marked" value={ui.stats?.overview?.totalQuestions || 0} />
-          <Stat label="Accuracy" value={`${ui.stats?.overview?.accuracy || 0}%`} />
-          <Stat label="Independent" value={`${ui.stats?.overview?.independentAccuracy || 0}%`} />
-          <Stat label="Due" value={ui.stats?.overview?.due || 0} />
-        </div>
-        <div className="callout reading-callout-spaced">{ui.parentSummary}</div>
-      </section>
-    </div>
+        </section>
+
+        <SetupSidePanel
+          asideClassName="reading-setup-sidebar"
+          cardClassName="reading-setup-sidebar-card"
+          ariaLabel="Where you stand in Reading"
+          body={(
+            <SubjectCompanionPanel
+              subjectId="reading"
+              visible
+              head={(
+                <>
+                  <p className="eyebrow">Where you stand</p>
+                  <button
+                    type="button"
+                    className="ss-codex-link"
+                    data-action="open-codex"
+                    aria-label="Open the full codex"
+                    onClick={() => dispatch(actions, 'open-codex')}
+                  >
+                    Open codex →
+                  </button>
+                </>
+              )}
+              monsterVisuals={panelMonsterVisuals}
+              monsters={panelMonsterVisuals.length ? [] : panelMonsterFallbacks}
+              meadowEmpty={panelMonsterFallbacks.length ? '' : 'Start practising to discover your Reading creatures.'}
+              stats={[
+                { label: 'Marked', value: String(overview.totalQuestions || 0) },
+                { label: 'Accuracy', value: `${overview.accuracy || 0}%` },
+                { label: 'Independent', value: `${overview.independentAccuracy || 0}%` },
+                { label: 'Due today', value: String(overview.due || 0), tone: overview.due > 0 ? 'warn' : undefined },
+              ]}
+              nextFocus={overview.weak > 0 ? 'Weak Reading domains need repair' : ui.parentSummary}
+            />
+          )}
+        />
+
+        <SetupMorePractice
+          summary="More Reading practice"
+          disclosureClassName="setup-more-practice reading-more-practice"
+          gridClassName="setup-more-practice-grid reading-more-practice-grid"
+          cards={READING_MORE_MODE_CARDS}
+          renderCard={(card) => (
+            <ReadingMoreModeCard
+              card={card}
+              selected={prefs.mode === card.id}
+              disabled={setupDisabled}
+              actions={actions}
+              key={card.id}
+            />
+          )}
+        />
+      </SubjectThemeScope>
+    </PracticeStage>
   );
 }
 
@@ -560,14 +879,14 @@ function ReadingAnalytics({ ui }) {
   );
 }
 
-export function ReadingPracticeSurface({ appState, actions }) {
+export function ReadingPracticeSurface({ appState, actions, repositories }) {
   const learnerId = appState?.learners?.selectedId || '';
   const ui = normaliseReadingReadModel(appState?.subjectUi?.reading, learnerId);
   if (ui.phase === 'summary') return <ReadingSummary ui={ui} actions={actions} />;
   if (ui.session) return <ReadingSession ui={ui} actions={actions} />;
   return (
     <>
-      <ReadingSetup ui={ui} actions={actions} />
+      <ReadingSetup appState={appState} ui={ui} actions={actions} repositories={repositories} />
       <ReadingAnalytics ui={ui} />
     </>
   );

@@ -12205,6 +12205,136 @@ html { scroll-behavior: smooth; }
   margin-top: 16px;
 }
 
+.reading-setup-grid {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.reading-setup-main {
+  --subject-accent: #4B7A4A;
+  --btn-accent: #4B7A4A;
+}
+
+.reading-setup-main .reading-hero-title {
+  max-width: 11ch;
+}
+
+.reading-setup-main .reading-hero-subtitle,
+.reading-setup-main .reading-hero-welcome {
+  color: var(--mode-card-copy, var(--ink-2));
+  text-shadow: var(--mode-card-copy-shadow, none);
+}
+
+.reading-setup-main .reading-primary-mode .mc-icon-glyph {
+  background:
+    radial-gradient(circle at 35% 24%, rgba(255, 255, 255, 0.86), transparent 38%),
+    linear-gradient(145deg, #e8f5e8, #4B7A4A 74%);
+  border-color: color-mix(in oklab, #4B7A4A 52%, white);
+  color: #183b22;
+}
+
+.reading-setup-main .reading-primary-mode .mc-glyph {
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.reading-setup-main .reading-primary-mode .mc-badge.recommended {
+  background: color-mix(in oklab, #4B7A4A 82%, white);
+  color: white;
+}
+
+.reading-setup-main .setup-begin-row .btn.primary[data-featured="true"] {
+  box-shadow:
+    0 16px 32px color-mix(in oklab, #4B7A4A 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.reading-preference-row {
+  align-items: flex-end;
+}
+
+.reading-setup-select {
+  display: inline-flex;
+  flex: 1 1 210px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.reading-setup-select .tool-label {
+  min-width: 0;
+}
+
+.reading-setup-select select {
+  appearance: none;
+  background:
+    linear-gradient(135deg, color-mix(in oklab, white 28%, transparent), color-mix(in oklab, black 18%, transparent)),
+    color-mix(in oklab, var(--panel) 38%, transparent);
+  border: 1px solid color-mix(in oklab, white 28%, transparent);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 18%, transparent);
+  color: var(--setup-label-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  min-height: 42px;
+  padding: 0 36px 0 12px;
+  text-shadow: 0 1px 12px var(--setup-label-shadow);
+}
+
+.reading-setup-select::after {
+  align-self: flex-end;
+  color: var(--setup-label-ink);
+  content: "v";
+  font-weight: 900;
+  margin: -34px 12px 0 0;
+  pointer-events: none;
+  text-shadow: 0 1px 12px var(--setup-label-shadow);
+}
+
+.reading-secondary-mode {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 14px;
+  text-align: left;
+}
+
+.reading-secondary-mode:hover:not(:disabled),
+.reading-secondary-mode:focus-visible {
+  border-color: color-mix(in oklab, #4B7A4A 38%, var(--line));
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.reading-secondary-mode.selected {
+  background: color-mix(in oklab, #4B7A4A 12%, var(--panel));
+  border-color: color-mix(in oklab, #4B7A4A 42%, var(--line));
+}
+
+.reading-secondary-mode.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.reading-secondary-mode h5 {
+  font-size: 0.96rem;
+  margin: 0 0 6px;
+}
+
+.reading-secondary-mode p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.reading-setup-sidebar .reading-setup-sidebar-card {
+  border-top: 4px solid #4B7A4A;
+}
+
 .reading-chip-row-before {
   margin-bottom: 12px;
 }
