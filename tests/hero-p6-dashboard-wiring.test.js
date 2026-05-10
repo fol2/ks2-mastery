@@ -12,6 +12,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { buildHeroCampModel, buildInviteConfirmation, buildGrowConfirmation } from '../src/platform/hero/hero-camp-model.js';
 import { createHeroModeClient, HeroModeClientError } from '../src/platform/hero/hero-client.js';
 import { buildHeroHomeModel } from '../src/platform/hero/hero-ui-model.js';
@@ -462,6 +463,18 @@ describe('buildHeroHomeModel produces hero home model for dashboard', () => {
 // ---------------------------------------------------------------------------
 
 describe('full data flow: readModel → camp model + client = HeroCampPanel props', () => {
+  it('main home model threads Hero Camp read model and client into HomeSurface', () => {
+    const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+    const buildHomeModelBlock = source.slice(
+      source.indexOf('function buildHomeModel'),
+      source.indexOf('function buildCodexModel'),
+    );
+
+    assert.match(buildHomeModelBlock, /hero:\s*buildHeroHomeModel\(heroUi\s*\|\|\s*\{\}\)/);
+    assert.match(buildHomeModelBlock, /heroReadModel:\s*heroUi\?\.readModel\s*\|\|\s*null/);
+    assert.match(buildHomeModelBlock, /heroClient,?/);
+  });
+
   it('v6 readModel produces all props HeroCampPanel needs', () => {
     const readModel = v6ReadModel(sixMonsters(), 500);
     const campModel = buildHeroCampModel(readModel);
