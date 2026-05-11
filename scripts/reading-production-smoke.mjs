@@ -30,17 +30,27 @@ function argValue(name, fallback = '') {
   return found ? found.slice(prefix.length) : fallback;
 }
 
+function firstArgValue(names, fallback = '') {
+  for (const name of names) {
+    const value = argValue(name, '');
+    if (value) return value;
+  }
+  return fallback;
+}
+
 function expectedContentSummary() {
   const summary = readingContentSummary();
+  const expectedVersion = Number(argValue('--expected-content-version', String(READING_CONTENT_VERSION)));
   assert.equal(summary.releaseId, READING_CONTENT_RELEASE_ID);
   assert.equal(summary.version, READING_CONTENT_VERSION);
-  assert.equal(summary.passageCount, 108);
-  assert.equal(summary.questionCount, 1052);
-  assert.equal(summary.paperCount, 41);
-  assert.equal(summary.genres.fiction, 37);
-  assert.equal(summary.genres['non-fiction'], 37);
-  assert.equal(summary.genres.poetry, 34);
-  assert.equal(summary.longPassageCount, 64);
+  assert.equal(summary.version, expectedVersion, 'Local Reading content version did not match the expected smoke version.');
+  assert.equal(summary.passageCount, 210);
+  assert.equal(summary.questionCount, 2072);
+  assert.equal(summary.paperCount, 75);
+  assert.equal(summary.genres.fiction, 71);
+  assert.equal(summary.genres['non-fiction'], 71);
+  assert.equal(summary.genres.poetry, 68);
+  assert.equal(summary.longPassageCount, 166);
   return summary;
 }
 
@@ -299,6 +309,10 @@ async function smokeStaleWriteGuard({ origin, cookie, learnerId, revision }) {
 
 async function main() {
   const origin = configuredOrigin();
+  const commitSha = firstArgValue(
+    ['--commit-sha', '--expected-commit-sha'],
+    process.env.GITHUB_SHA || process.env.CF_PAGES_COMMIT_SHA || '',
+  );
   const demo = await createDemoSession(origin);
   const bootstrap = await loadBootstrap(origin, demo.cookie, { expectedSession: demo.session });
   const immediate = await smokeImmediateRound({
@@ -320,6 +334,7 @@ async function main() {
     revision: delayedPaper.revision,
   });
 
+  const finishedAt = new Date().toISOString();
   const evidence = {
     ok: true,
     smokeType: argValue('--smoke-type', 'reading-production'),
@@ -328,14 +343,16 @@ async function main() {
     origin,
     contentReleaseId: READING_CONTENT_RELEASE_ID,
     contentVersion: READING_CONTENT_VERSION,
-    productionReportedCommitSha: null,
+    commitSha: commitSha || null,
+    commitShaSource: commitSha ? 'cli-or-ci-expected' : null,
     learnerFixtureType: 'demo-session',
     accountId: demo.session.accountId,
     learnerId: bootstrap.learnerId,
     immediate,
     delayedPaper,
     staleWriteGuard,
-    finishedAt: new Date().toISOString(),
+    timestamp: finishedAt,
+    finishedAt,
   };
 
   const outPath = argValue('--out', '');

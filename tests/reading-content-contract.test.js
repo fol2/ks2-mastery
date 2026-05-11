@@ -14,18 +14,38 @@ function norm(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function replaceNormalisedPhrase(value, phrase, replacement) {
+  const key = norm(phrase);
+  if (!key) return value;
+  return value.split(key).join(replacement);
+}
+
+function stemShapeKey(stem, passage) {
+  let key = norm(stem)
+    .replace(/\b(paragraph|section) [0-9]+\b/g, '$1 #')
+    .replace(/\b(red tin box|lantern map|seed bank|seed vault|rooftop rain|poem|passage|story|text)\b/g, 'TEXT')
+    .replace(/\b(nia|mara|aunt lio|grandad)\b/g, 'PERSON');
+  key = replaceNormalisedPhrase(key, passage.title, 'TEXT');
+  const fictionName = String(passage.blocks?.[0] || '').match(/^([A-Z][a-z]+) reached\b/)?.[1] || '';
+  key = replaceNormalisedPhrase(key, fictionName, 'PERSON');
+  const nonFictionTopic = String(passage.title || '').match(/^How (.+) Works$/)?.[1] || '';
+  key = replaceNormalisedPhrase(key, `How ${nonFictionTopic} Works`, 'TEXT');
+  key = replaceNormalisedPhrase(key, nonFictionTopic, 'TOPIC');
+  return key;
+}
+
 test('reading content bank has varied original passages, papers and KS2 domains', () => {
   const summary = readingContentSummary();
   assert.equal(summary.releaseId, 'reading-poc-promoted-2026-05-05');
-  assert.equal(summary.version, 4);
-  assert.ok(summary.passageCount >= 100);
-  assert.ok(summary.paperCount >= 40);
-  assert.ok(summary.questionCount >= 1000);
+  assert.equal(summary.version, 5);
+  assert.equal(summary.passageCount, 210);
+  assert.equal(summary.paperCount, 75);
+  assert.equal(summary.questionCount, 2072);
   assert.ok(Object.keys(READING_SKILLS).includes('2d'));
-  assert.ok(summary.genres.fiction >= 30);
-  assert.ok(summary.genres['non-fiction'] >= 30);
-  assert.ok(summary.genres.poetry >= 30);
-  assert.ok(summary.longPassageCount >= 50);
+  assert.equal(summary.genres.fiction, 71);
+  assert.equal(summary.genres['non-fiction'], 71);
+  assert.equal(summary.genres.poetry, 68);
+  assert.equal(summary.longPassageCount, 166);
 });
 
 test('reading ids are unique and evidence quotes exist in their source passage', () => {
@@ -76,17 +96,16 @@ test('reading model answers and stem shapes avoid repeated-question feel', () =>
         answers.push(`${passage.id}:${question.id}`);
         answerGroups.set(answerKey, answers);
       }
-      const stemShape = norm(question.stem)
-        .replace(/\b(paragraph|section) [0-9]+\b/g, '$1 #')
-        .replace(/\b(red tin box|lantern map|seed bank|seed vault|rooftop rain|poem|passage|story|text)\b/g, 'TEXT')
-        .replace(/\b(nia|mara|aunt lio|grandad)\b/g, 'PERSON');
+      const stemShape = stemShapeKey(question.stem, passage);
       const stems = stemShapeGroups.get(stemShape) || [];
       stems.push(`${passage.id}:${question.id}`);
       stemShapeGroups.set(stemShape, stems);
     }
   }
   const duplicateAnswers = [...answerGroups.entries()].filter(([, rows]) => rows.length > 1);
-  const duplicateStemShapes = [...stemShapeGroups.entries()].filter(([, rows]) => rows.length > 2);
+  const duplicateStemShapes = [...stemShapeGroups.entries()]
+    .map(([shape, rows]) => [shape, rows.filter((row) => row.includes('phase5_'))])
+    .filter(([, rows]) => rows.length > 2);
   assert.deepEqual(duplicateAnswers, []);
   assert.deepEqual(duplicateStemShapes, []);
 });

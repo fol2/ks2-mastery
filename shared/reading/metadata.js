@@ -1,7 +1,7 @@
 // Browser-safe Reading metadata. Do not import passage, question or marking
 // content here; the production client may consume this module directly.
 export const READING_CONTENT_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
-export const READING_CONTENT_VERSION = 4;
+export const READING_CONTENT_VERSION = 5;
 
 export const READING_SKILLS = Object.freeze({
   '2a': {
@@ -71,15 +71,15 @@ export function readingContentSummary() {
   return {
     releaseId: READING_CONTENT_RELEASE_ID,
     version: READING_CONTENT_VERSION,
-    passageCount: 108,
-    questionCount: 1052,
-    paperCount: 41,
+    passageCount: 210,
+    questionCount: 2072,
+    paperCount: 75,
     skillCount: Object.keys(READING_SKILLS).length,
     genres: {
-      fiction: 37,
-      'non-fiction': 37,
-      poetry: 34,
+      fiction: 71,
+      'non-fiction': 71,
+      poetry: 68,
     },
-    longPassageCount: 64,
+    longPassageCount: 166,
   };
 }

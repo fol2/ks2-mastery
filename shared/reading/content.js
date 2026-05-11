@@ -3,9 +3,10 @@
 // browser may render its safe metadata but never performs production marking.
 
 import { READING_PHASE4_PASSAGES, READING_PHASE4_TEST_PAPERS } from './phase4-expansion.js';
+import { READING_PHASE5_PASSAGES, READING_PHASE5_TEST_PAPERS } from './phase5-expansion.js';
 
 export const READING_CONTENT_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
-export const READING_CONTENT_VERSION = 4;
+export const READING_CONTENT_VERSION = 5;
 
 export const READING_SKILLS = Object.freeze({
   "2a": {
@@ -10108,7 +10109,8 @@ export const READING_PASSAGES = Object.freeze([
     ]
 
   },
-...READING_PHASE4_PASSAGES
+...READING_PHASE4_PASSAGES,
+...READING_PHASE5_PASSAGES
 
 
 ]);
@@ -10741,7 +10743,8 @@ export const READING_TEST_PAPERS = Object.freeze([
     }
   ]
 },
-...READING_PHASE4_TEST_PAPERS
+...READING_PHASE4_TEST_PAPERS,
+...READING_PHASE5_TEST_PAPERS
 
 
 ]);

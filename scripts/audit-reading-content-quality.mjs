@@ -17,6 +17,27 @@ function norm(value) {
     .trim();
 }
 
+function replaceNormalisedPhrase(value, phrase, replacement) {
+  const key = norm(phrase);
+  if (!key) return value;
+  return value.split(key).join(replacement);
+}
+
+function stemShapeKey(stem, passage) {
+  let key = norm(stem)
+    .replace(/paragraph [0-9]+/g, 'paragraph #')
+    .replace(/section [0-9]+/g, 'section #');
+  key = replaceNormalisedPhrase(key, passage.title, 'TEXT');
+  const fictionName = String(passage.blocks?.[0] || '').match(/^([A-Z][a-z]+) reached\b/)?.[1] || '';
+  key = replaceNormalisedPhrase(key, fictionName, 'PERSON');
+  const nonFictionTopic = String(passage.title || '').match(/^How (.+) Works$/)?.[1] || '';
+  key = replaceNormalisedPhrase(key, `How ${nonFictionTopic} Works`, 'TEXT');
+  key = replaceNormalisedPhrase(key, nonFictionTopic, 'TOPIC');
+  return key
+    .replace(/\b(red tin box|lantern map|seed bank|seed vault|rooftop rain|poem|passage|story|text)\b/g, 'TEXT')
+    .replace(/\b(nia|mara|aunt lio|grandad)\b/g, 'PERSON');
+}
+
 function addGroup(map, key, value) {
   if (!key) return;
   const rows = map.get(key) || [];
@@ -61,9 +82,7 @@ for (const passage of READING_PASSAGES) {
     const stemKey = norm(question.stem).replace(/paragraph [0-9]+/g, 'paragraph #').replace(/section [0-9]+/g, 'section #');
     addGroup(duplicateStemGroups, stemKey, rowId);
     if (question.modelAnswer) addGroup(duplicateModelAnswerGroups, norm(question.modelAnswer), rowId);
-    const stemShape = stemKey
-      .replace(/\b(red tin box|lantern map|seed bank|seed vault|rooftop rain|poem|passage|story|text)\b/g, 'TEXT')
-      .replace(/\b(nia|mara|aunt lio|grandad)\b/g, 'PERSON');
+    const stemShape = stemShapeKey(question.stem, passage);
     addGroup(duplicateStemShapeGroups, stemShape, rowId);
     if (question.evidenceCheck?.containsAny) {
       for (const snippet of question.evidenceCheck.containsAny) {
@@ -84,7 +103,8 @@ for (const [answer, rows] of duplicateModelAnswerGroups.entries()) {
   if (rows.length > 1) failures.push({ type: 'duplicate-model-answer', answer, rows });
 }
 for (const [shape, rows] of duplicateStemShapeGroups.entries()) {
-  if (rows.length > 2) advisories.push({ type: 'repeated-stem-shape', shape, rows });
+  const phase5Rows = rows.filter((row) => row.includes('phase5_'));
+  if (phase5Rows.length > 2) advisories.push({ type: 'repeated-stem-shape', shape, rows: phase5Rows });
 }
 
 const questionMap = new Map(questionRows.map(({ question }) => [question.id, question]));

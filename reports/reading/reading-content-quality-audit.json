@@ -1,46 +1,46 @@
 {
-  "generatedAt": "2026-05-11T08:52:41.178Z",
+  "generatedAt": "2026-05-11T13:38:05.622Z",
   "content": {
     "releaseId": "reading-poc-promoted-2026-05-05",
-    "version": 3,
-    "passageCount": 24,
-    "questionCount": 212,
-    "paperCount": 13,
+    "version": 5,
+    "passageCount": 210,
+    "questionCount": 2072,
+    "paperCount": 75,
     "skillCount": 12,
     "genres": {
-      "fiction": 9,
-      "non-fiction": 9,
-      "poetry": 6
+      "fiction": 71,
+      "non-fiction": 71,
+      "poetry": 68
     },
-    "longPassageCount": 8
+    "longPassageCount": 166
   },
   "skillCounts": {
-    "2a": 24,
-    "2b": 39,
-    "2c": 21,
-    "2d": 35,
-    "2e": 14,
-    "2f": 24,
-    "2g": 25,
-    "2h": 18,
-    "P1": 3,
-    "P2": 2,
-    "P3": 5,
-    "P4": 2
+    "2a": 210,
+    "2b": 315,
+    "2c": 207,
+    "2d": 255,
+    "2e": 166,
+    "2f": 272,
+    "2g": 245,
+    "2h": 204,
+    "P1": 49,
+    "P2": 49,
+    "P3": 52,
+    "P4": 48
   },
   "typeCounts": {
-    "short": 35,
-    "mcq": 51,
-    "evidenceShort": 20,
-    "open": 84,
-    "match": 9,
-    "order": 6,
-    "multiSelect": 7
+    "short": 373,
+    "mcq": 609,
+    "evidenceShort": 206,
+    "open": 304,
+    "match": 195,
+    "order": 192,
+    "multiSelect": 193
   },
   "genreCounts": {
-    "fiction": 9,
-    "non-fiction": 9,
-    "poetry": 6
+    "fiction": 71,
+    "non-fiction": 71,
+    "poetry": 68
   },
   "duplicateNormalisedStemGroups": 0,
   "duplicateModelAnswerGroups": 0,
