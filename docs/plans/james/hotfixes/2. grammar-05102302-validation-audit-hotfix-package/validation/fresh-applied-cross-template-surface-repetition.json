@@ -1,0 +1,10 @@
+{
+  "repoRoot": "/mnt/data/ks2-grammar-audit-05102302-fresh-apply",
+  "summary": {
+    "templateCount": 510,
+    "seedCount": 30,
+    "totalCases": 15300,
+    "crossTemplateDuplicateSurfaceCount": 0
+  },
+  "crossTemplateDuplicates": []
+}

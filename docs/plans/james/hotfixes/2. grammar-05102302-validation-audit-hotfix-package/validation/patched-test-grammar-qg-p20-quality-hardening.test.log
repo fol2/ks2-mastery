@@ -1,0 +1,47 @@
+## node --test tests/grammar-qg-p20-quality-hardening.test.js
+TAP version 13
+# Subtest: P20 quality-hardening audit passes a reviewer smoke window across all five phases
+ok 1 - P20 quality-hardening audit passes a reviewer smoke window across all five phases
+  ---
+  duration_ms: 4296.199426
+  type: 'test'
+  ...
+# Subtest: P20 metadata keeps recovered closed families visible for reviewers
+ok 2 - P20 metadata keeps recovered closed families visible for reviewers
+  ---
+  duration_ms: 0.567534
+  type: 'test'
+  ...
+# Subtest: P20 does not hide learner-facing prompt defects behind HTML stripping
+ok 3 - P20 does not hide learner-facing prompt defects behind HTML stripping
+  ---
+  duration_ms: 148.073617
+  type: 'test'
+  ...
+# Subtest: P20c generated source compaction preserves manual-review fairness flags
+ok 4 - P20c generated source compaction preserves manual-review fairness flags
+  ---
+  duration_ms: 11.04832
+  type: 'test'
+  ...
+# Subtest: P20d apostrophes possession rewrite families do not share identical learner prompts
+ok 5 - P20d apostrophes possession rewrite families do not share identical learner prompts
+  ---
+  duration_ms: 9.270041
+  type: 'test'
+  ...
+# Subtest: P20d learner-facing surfaces do not collide across Grammar templates in the release window
+ok 6 - P20d learner-facing surfaces do not collide across Grammar templates in the release window
+  ---
+  duration_ms: 1360.958759
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6247.649234

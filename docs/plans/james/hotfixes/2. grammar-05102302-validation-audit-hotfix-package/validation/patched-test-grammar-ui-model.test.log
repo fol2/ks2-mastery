@@ -1,0 +1,821 @@
+## node --test tests/grammar-ui-model.test.js
+TAP version 13
+# Subtest: U8 session-ui: grammarSessionSubmitLabel null session returns Submit
+ok 1 - U8 session-ui: grammarSessionSubmitLabel null session returns Submit
+  ---
+  duration_ms: 2.546568
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionSubmitLabel awaitingAdvance returns Saved
+ok 2 - U8 session-ui: grammarSessionSubmitLabel awaitingAdvance returns Saved
+  ---
+  duration_ms: 0.180206
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionSubmitLabel mini-test returns Save and next
+ok 3 - U8 session-ui: grammarSessionSubmitLabel mini-test returns Save and next
+  ---
+  duration_ms: 0.299428
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionSubmitLabel finished mini-test returns Finish mini-set
+ok 4 - U8 session-ui: grammarSessionSubmitLabel finished mini-test returns Finish mini-set
+  ---
+  duration_ms: 0.179037
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionSubmitLabel retry returns Try again
+ok 5 - U8 session-ui: grammarSessionSubmitLabel retry returns Try again
+  ---
+  duration_ms: 0.166148
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionSubmitLabel default returns Submit
+ok 6 - U8 session-ui: grammarSessionSubmitLabel default returns Submit
+  ---
+  duration_ms: 0.133228
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionHelpVisibility mini-test before finish is all false (AE1, AE2)
+ok 7 - U8 session-ui: grammarSessionHelpVisibility mini-test before finish is all false (AE1, AE2)
+  ---
+  duration_ms: 1.018315
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionHelpVisibility mini-test in feedback still hides help when miniTest.finished is false
+ok 8 - U8 session-ui: grammarSessionHelpVisibility mini-test in feedback still hides help when miniTest.finished is false
+  ---
+  duration_ms: 0.163313
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionHelpVisibility smart-feedback-supportLevel-0 shows full help (AE3)
+ok 9 - U8 session-ui: grammarSessionHelpVisibility smart-feedback-supportLevel-0 shows full help (AE3)
+  ---
+  duration_ms: 0.481911
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionHelpVisibility smart-feedback-supportLevel-2 hides faded support
+ok 10 - U8 session-ui: grammarSessionHelpVisibility smart-feedback-supportLevel-2 hides faded support
+  ---
+  duration_ms: 0.929184
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionHelpVisibility smart-session pre-answer hides everything
+ok 11 - U8 session-ui: grammarSessionHelpVisibility smart-session pre-answer hides everything
+  ---
+  duration_ms: 2.522592
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionHelpVisibility null session returns all false
+ok 12 - U8 session-ui: grammarSessionHelpVisibility null session returns all false
+  ---
+  duration_ms: 0.215837
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionProgressLabel null returns empty string
+ok 13 - U8 session-ui: grammarSessionProgressLabel null returns empty string
+  ---
+  duration_ms: 0.245305
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionProgressLabel independent practice renders Question X of N
+ok 14 - U8 session-ui: grammarSessionProgressLabel independent practice renders Question X of N
+  ---
+  duration_ms: 0.119275
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionProgressLabel mini-test renders Mini Test — Question X of N
+ok 15 - U8 session-ui: grammarSessionProgressLabel mini-test renders Mini Test — Question X of N
+  ---
+  duration_ms: 0.159089
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionProgressLabel clamps current index to total
+ok 16 - U8 session-ui: grammarSessionProgressLabel clamps current index to total
+  ---
+  duration_ms: 0.136534
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionInfoChips null returns empty array
+ok 17 - U8 session-ui: grammarSessionInfoChips null returns empty array
+  ---
+  duration_ms: 0.16544
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionInfoChips mini-test adds Mini Test chip
+ok 18 - U8 session-ui: grammarSessionInfoChips mini-test adds Mini Test chip
+  ---
+  duration_ms: 0.144976
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionInfoChips surfaces concept name when present
+ok 19 - U8 session-ui: grammarSessionInfoChips surfaces concept name when present
+  ---
+  duration_ms: 0.20532
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionInfoChips drops adult domain / questionType chips
+ok 20 - U8 session-ui: grammarSessionInfoChips drops adult domain / questionType chips
+  ---
+  duration_ms: 0.252112
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionFooterNote empty when no session
+ok 21 - U8 session-ui: grammarSessionFooterNote empty when no session
+  ---
+  duration_ms: 0.138641
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionFooterNote mini-test child copy only
+ok 22 - U8 session-ui: grammarSessionFooterNote mini-test child copy only
+  ---
+  duration_ms: 0.275681
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarSessionFooterNote practice child copy only
+ok 23 - U8 session-ui: grammarSessionFooterNote practice child copy only
+  ---
+  duration_ms: 0.152015
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarFeedbackTone correct returns good
+ok 24 - U8 session-ui: grammarFeedbackTone correct returns good
+  ---
+  duration_ms: 0.212142
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarFeedbackTone wrong returns bad
+ok 25 - U8 session-ui: grammarFeedbackTone wrong returns bad
+  ---
+  duration_ms: 0.158026
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarFeedbackTone neutral returns neutral
+ok 26 - U8 session-ui: grammarFeedbackTone neutral returns neutral
+  ---
+  duration_ms: 0.110981
+  type: 'test'
+  ...
+# Subtest: P2 session-ui: grammarFeedbackTone treats non-scored manual-review feedback as neutral
+ok 27 - P2 session-ui: grammarFeedbackTone treats non-scored manual-review feedback as neutral
+  ---
+  duration_ms: 0.105902
+  type: 'test'
+  ...
+# Subtest: U8 session-ui: grammarFeedbackNextStepCopy gives clear post-marking actions
+ok 28 - U8 session-ui: grammarFeedbackNextStepCopy gives clear post-marking actions
+  ---
+  duration_ms: 0.151312
+  type: 'test'
+  ...
+# Subtest: aligned view-model: GRAMMAR_PRIMARY_MODE_CARDS has three cards (smart, trouble, satsset)
+ok 29 - aligned view-model: GRAMMAR_PRIMARY_MODE_CARDS has three cards (smart, trouble, satsset)
+  ---
+  duration_ms: 0.129764
+  type: 'test'
+  ...
+# Subtest: aligned view-model: only Smart Practice carries featured/recommended
+ok 30 - aligned view-model: only Smart Practice carries featured/recommended
+  ---
+  duration_ms: 0.358189
+  type: 'test'
+  ...
+# Subtest: aligned view-model: GRAMMAR_PRIMARY_MODE_CARDS is frozen and deeply frozen
+ok 31 - aligned view-model: GRAMMAR_PRIMARY_MODE_CARDS is frozen and deeply frozen
+  ---
+  duration_ms: 0.155513
+  type: 'test'
+  ...
+# Subtest: aligned view-model: GRAMMAR_PRIMARY_MODE_CARDS titles use only child copy
+ok 32 - aligned view-model: GRAMMAR_PRIMARY_MODE_CARDS titles use only child copy
+  ---
+  duration_ms: 0.186067
+  type: 'test'
+  ...
+# Subtest: aligned view-model: trouble card declares disabledWhenNoTrouble + child-facing disabled copy
+ok 33 - aligned view-model: trouble card declares disabledWhenNoTrouble + child-facing disabled copy
+  ---
+  duration_ms: 0.165942
+  type: 'test'
+  ...
+# Subtest: aligned view-model: GRAMMAR_SECONDARY_MODE_LINKS is empty (callers iterate no rows)
+ok 34 - aligned view-model: GRAMMAR_SECONDARY_MODE_LINKS is empty (callers iterate no rows)
+  ---
+  duration_ms: 0.102649
+  type: 'test'
+  ...
+# Subtest: P5-U8 view-model: GRAMMAR_MORE_PRACTICE_MODES has exactly six secondary modes (Writing Try added)
+ok 35 - P5-U8 view-model: GRAMMAR_MORE_PRACTICE_MODES has exactly six secondary modes (Writing Try added)
+  ---
+  duration_ms: 0.11639
+  type: 'test'
+  ...
+# Subtest: P5-U8 view-model: GRAMMAR_MORE_PRACTICE_MODES are frozen
+ok 36 - P5-U8 view-model: GRAMMAR_MORE_PRACTICE_MODES are frozen
+  ---
+  duration_ms: 0.118899
+  type: 'test'
+  ...
+# Subtest: U5 view-model: GRAMMAR_MORE_PRACTICE_MODES carries "Mixed practice" label on Surgery and Builder only
+ok 37 - U5 view-model: GRAMMAR_MORE_PRACTICE_MODES carries "Mixed practice" label on Surgery and Builder only
+  ---
+  duration_ms: 0.167612
+  type: 'test'
+  ...
+# Subtest: U5 view-model: Mixed practice label stays ~12 chars to fit under the mode title
+ok 38 - U5 view-model: Mixed practice label stays ~12 chars to fit under the mode title
+  ---
+  duration_ms: 0.171858
+  type: 'test'
+  ...
+# Subtest: U5 view-model: GRAMMAR_FOCUS_ALLOWED_MODES is a frozen Set of exactly {smart, learn}
+ok 39 - U5 view-model: GRAMMAR_FOCUS_ALLOWED_MODES is a frozen Set of exactly {smart, learn}
+  ---
+  duration_ms: 0.177232
+  type: 'test'
+  ...
+# Subtest: U5 view-model: isGrammarFocusAllowedMode is a pure predicate over mode strings
+ok 40 - U5 view-model: isGrammarFocusAllowedMode is a pure predicate over mode strings
+  ---
+  duration_ms: 0.172836
+  type: 'test'
+  ...
+# Subtest: U5 view-model: allowlist intersects with GRAMMAR_PRIMARY_MODE_CARDS for Smart only
+ok 41 - U5 view-model: allowlist intersects with GRAMMAR_PRIMARY_MODE_CARDS for Smart only
+  ---
+  duration_ms: 0.271231
+  type: 'test'
+  ...
+# Subtest: U5 view-model: allowlist intersects with GRAMMAR_MORE_PRACTICE_MODES for Learn only
+ok 42 - U5 view-model: allowlist intersects with GRAMMAR_MORE_PRACTICE_MODES for Learn only
+  ---
+  duration_ms: 0.176213
+  type: 'test'
+  ...
+# Subtest: U8 view-model: GRAMMAR_BANK_STATUS_FILTER_IDS contains the seven child filter ids
+ok 43 - U8 view-model: GRAMMAR_BANK_STATUS_FILTER_IDS contains the seven child filter ids
+  ---
+  duration_ms: 0.128617
+  type: 'test'
+  ...
+# Subtest: U8 view-model: GRAMMAR_BANK_CLUSTER_FILTER_IDS matches the four active roster ids plus all
+ok 44 - U8 view-model: GRAMMAR_BANK_CLUSTER_FILTER_IDS matches the four active roster ids plus all
+  ---
+  duration_ms: 0.117427
+  type: 'test'
+  ...
+# Subtest: U8 view-model: GRAMMAR_BANK_CLUSTER_FILTER_IDS never lists retired ids (R15)
+ok 45 - U8 view-model: GRAMMAR_BANK_CLUSTER_FILTER_IDS never lists retired ids (R15)
+  ---
+  duration_ms: 0.202366
+  type: 'test'
+  ...
+# Subtest: U8 view-model: GRAMMAR_DASHBOARD_HERO has child-friendly copy
+ok 46 - U8 view-model: GRAMMAR_DASHBOARD_HERO has child-friendly copy
+  ---
+  duration_ms: 0.161883
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarChildConfidenceLabel maps the five internal labels (R12)
+ok 47 - U8 view-model: grammarChildConfidenceLabel maps the five internal labels (R12)
+  ---
+  duration_ms: 0.293938
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarChildConfidenceLabel unknown label falls back to Check status
+ok 48 - U8 view-model: grammarChildConfidenceLabel unknown label falls back to Check status
+  ---
+  duration_ms: 0.12073
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarChildConfidenceTone maps tones for CSS classes
+ok 49 - U8 view-model: grammarChildConfidenceTone maps tones for CSS classes
+  ---
+  duration_ms: 0.221786
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarMonsterClusterForConcept maps direct clusters (word_classes → couronnail)
+ok 50 - U8 view-model: grammarMonsterClusterForConcept maps direct clusters (word_classes → couronnail)
+  ---
+  duration_ms: 0.138925
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarMonsterClusterForConcept maps punctuation-for-grammar concepts to direct owners
+ok 51 - U8 view-model: grammarMonsterClusterForConcept maps punctuation-for-grammar concepts to direct owners
+  ---
+  duration_ms: 0.081695
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarMonsterClusterForConcept unknown/empty concept ids default to concordium
+ok 52 - U8 view-model: grammarMonsterClusterForConcept unknown/empty concept ids default to concordium
+  ---
+  duration_ms: 0.075701
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarBankFilterMatchesStatus all matches everything
+ok 53 - U8 view-model: grammarBankFilterMatchesStatus all matches everything
+  ---
+  duration_ms: 0.100339
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarBankFilterMatchesStatus trouble maps to needs-repair only
+ok 54 - U8 view-model: grammarBankFilterMatchesStatus trouble maps to needs-repair only
+  ---
+  duration_ms: 0.090145
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarBankFilterMatchesStatus secure does not match consolidating
+ok 55 - U8 view-model: grammarBankFilterMatchesStatus secure does not match consolidating
+  ---
+  duration_ms: 0.106296
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarBankFilterMatchesStatus learning maps to building
+ok 56 - U8 view-model: grammarBankFilterMatchesStatus learning maps to building
+  ---
+  duration_ms: 0.099492
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarBankFilterMatchesStatus nearly-secure maps to consolidating
+ok 57 - U8 view-model: grammarBankFilterMatchesStatus nearly-secure maps to consolidating
+  ---
+  duration_ms: 0.103642
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarBankFilterMatchesStatus new maps to emerging
+ok 58 - U8 view-model: grammarBankFilterMatchesStatus new maps to emerging
+  ---
+  duration_ms: 0.105829
+  type: 'test'
+  ...
+# Subtest: U8 view-model: GRAMMAR_CHILD_FORBIDDEN_TERMS contains the critical adult terms
+ok 59 - U8 view-model: GRAMMAR_CHILD_FORBIDDEN_TERMS contains the critical adult terms
+  ---
+  duration_ms: 0.144107
+  type: 'test'
+  ...
+# Subtest: U8 view-model: GRAMMAR_CHILD_FORBIDDEN_TERMS is frozen
+ok 60 - U8 view-model: GRAMMAR_CHILD_FORBIDDEN_TERMS is frozen
+  ---
+  duration_ms: 0.10186
+  type: 'test'
+  ...
+# Subtest: U8 view-model: isGrammarChildCopy rejects Worker-marked modes (case-insensitive)
+ok 61 - U8 view-model: isGrammarChildCopy rejects Worker-marked modes (case-insensitive)
+  ---
+  duration_ms: 0.119023
+  type: 'test'
+  ...
+# Subtest: U8 view-model: isGrammarChildCopy accepts child-friendly prompt copy
+ok 62 - U8 view-model: isGrammarChildCopy accepts child-friendly prompt copy
+  ---
+  duration_ms: 0.108161
+  type: 'test'
+  ...
+# Subtest: U8 view-model: isGrammarChildCopy safe on empty / non-string
+ok 63 - U8 view-model: isGrammarChildCopy safe on empty / non-string
+  ---
+  duration_ms: 0.105562
+  type: 'test'
+  ...
+# Subtest: aligned view-model: buildGrammarDashboardModel returns safe empty shape on null inputs
+ok 64 - aligned view-model: buildGrammarDashboardModel returns safe empty shape on null inputs
+  ---
+  duration_ms: 1.616096
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarDashboardModel surfaces concept counts
+ok 65 - U8 view-model: buildGrammarDashboardModel surfaces concept counts
+  ---
+  duration_ms: 0.329387
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarDashboardModel concordium progress reads reward state
+ok 66 - U8 view-model: buildGrammarDashboardModel concordium progress reads reward state
+  ---
+  duration_ms: 0.845548
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarBankModel default returns 18 concept cards
+ok 67 - U8 view-model: buildGrammarBankModel default returns 18 concept cards
+  ---
+  duration_ms: 0.979827
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarBankModel filter=trouble narrows to needs-repair
+ok 68 - U8 view-model: buildGrammarBankModel filter=trouble narrows to needs-repair
+  ---
+  duration_ms: 0.288367
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarBankModel uses nested confidence label before coarse status
+ok 69 - U8 view-model: buildGrammarBankModel uses nested confidence label before coarse status
+  ---
+  duration_ms: 0.262727
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarBankModel search clause narrows to matching concepts
+ok 70 - U8 view-model: buildGrammarBankModel search clause narrows to matching concepts
+  ---
+  duration_ms: 0.690842
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarBankModel cluster filter concordium shows all 18
+ok 71 - U8 view-model: buildGrammarBankModel cluster filter concordium shows all 18
+  ---
+  duration_ms: 0.236378
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarBankModel cluster filter bracehart narrows to 9
+ok 72 - U8 view-model: buildGrammarBankModel cluster filter bracehart narrows to 9
+  ---
+  duration_ms: 0.212397
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarBankModel counts total 18 across all statuses
+ok 73 - U8 view-model: buildGrammarBankModel counts total 18 across all statuses
+  ---
+  duration_ms: 0.247885
+  type: 'test'
+  ...
+# Subtest: U8 view-model: buildGrammarBankModel empty filter + empty grammar returns cards using child labels
+ok 74 - U8 view-model: buildGrammarBankModel empty filter + empty grammar returns cards using child labels
+  ---
+  duration_ms: 0.237103
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarSummaryCards returns five cards with correct order
+ok 75 - U8 view-model: grammarSummaryCards returns five cards with correct order
+  ---
+  duration_ms: 0.339585
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarSummaryCards monster-progress surfaces 4 active monsters only (R15)
+ok 76 - U8 view-model: grammarSummaryCards monster-progress surfaces 4 active monsters only (R15)
+  ---
+  duration_ms: 0.504943
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarSummaryCards safe on empty inputs
+ok 77 - U8 view-model: grammarSummaryCards safe on empty inputs
+  ---
+  duration_ms: 5.342472
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarSummaryCards accuracy detail is computed from answered/correct
+ok 78 - U8 view-model: grammarSummaryCards accuracy detail is computed from answered/correct
+  ---
+  duration_ms: 0.276758
+  type: 'test'
+  ...
+# Subtest: U8 view-model: grammarSummaryCards excludes manual-review saves from accuracy
+ok 79 - U8 view-model: grammarSummaryCards excludes manual-review saves from accuracy
+  ---
+  duration_ms: 0.394947
+  type: 'test'
+  ...
+# Subtest: P7-U2 view-model: fresh learner summary shows 0 / 100 Stars with "Not found yet" stage
+ok 80 - P7-U2 view-model: fresh learner summary shows 0 / 100 Stars with "Not found yet" stage
+  ---
+  duration_ms: 0.23247
+  type: 'test'
+  ...
+# Subtest: P7-U2 view-model: 42-Star Bracehart summary shows "Hatched" stage name (actually Growing at 42)
+ok 81 - P7-U2 view-model: 42-Star Bracehart summary shows "Hatched" stage name (actually Growing at 42)
+  ---
+  duration_ms: 0.229139
+  type: 'test'
+  ...
+# Subtest: P7-U2 view-model: Concordium at 100 Stars shows "Mega" stage
+ok 82 - P7-U2 view-model: Concordium at 100 Stars shows "Mega" stage
+  ---
+  duration_ms: 0.44579
+  type: 'test'
+  ...
+# Subtest: P7-U2 view-model: null/missing rewardState produces safe empty entries with 0 Stars
+ok 83 - P7-U2 view-model: null/missing rewardState produces safe empty entries with 0 Stars
+  ---
+  duration_ms: 0.267278
+  type: 'test'
+  ...
+# Subtest: P7-U2 view-model: monster-progress card entries do NOT have mastered or total properties
+ok 84 - P7-U2 view-model: monster-progress card entries do NOT have mastered or total properties
+  ---
+  duration_ms: 0.223037
+  type: 'test'
+  ...
+# Subtest: U8 safety: session-ui.js does not import react
+ok 85 - U8 safety: session-ui.js does not import react
+  ---
+  duration_ms: 1.727263
+  type: 'test'
+  ...
+# Subtest: U8 safety: grammar-view-model.js does not import react
+ok 86 - U8 safety: grammar-view-model.js does not import react
+  ---
+  duration_ms: 0.873724
+  type: 'test'
+  ...
+# Subtest: U2 view-model: GRAMMAR_CONCEPT_EXAMPLES covers all 18 concepts
+ok 87 - U2 view-model: GRAMMAR_CONCEPT_EXAMPLES covers all 18 concepts
+  ---
+  duration_ms: 0.985475
+  type: 'test'
+  ...
+# Subtest: U2 view-model: GRAMMAR_CONCEPT_EXAMPLES are KS2-appropriate short sentences
+ok 88 - U2 view-model: GRAMMAR_CONCEPT_EXAMPLES are KS2-appropriate short sentences
+  ---
+  duration_ms: 0.410556
+  type: 'test'
+  ...
+# Subtest: U2 view-model: grammarConceptPrimaryExample safe on unknown ids
+ok 89 - U2 view-model: grammarConceptPrimaryExample safe on unknown ids
+  ---
+  duration_ms: 0.248279
+  type: 'test'
+  ...
+# Subtest: U2 view-model: grammarConceptEvidenceLine produces child copy tallies (no percentages)
+ok 90 - U2 view-model: grammarConceptEvidenceLine produces child copy tallies (no percentages)
+  ---
+  duration_ms: 0.431791
+  type: 'test'
+  ...
+# Subtest: U2 view-model: GRAMMAR_BANK_STATUS_CHIPS ordering matches filter ids
+ok 91 - U2 view-model: GRAMMAR_BANK_STATUS_CHIPS ordering matches filter ids
+  ---
+  duration_ms: 0.2162
+  type: 'test'
+  ...
+# Subtest: U2 view-model: GRAMMAR_BANK_CLUSTER_CHIPS never includes reserved monster ids
+ok 92 - U2 view-model: GRAMMAR_BANK_CLUSTER_CHIPS never includes reserved monster ids
+  ---
+  duration_ms: 0.161206
+  type: 'test'
+  ...
+# Subtest: U2 view-model: grammarBankAggregateCards returns frozen cards in the expected order
+ok 93 - U2 view-model: grammarBankAggregateCards returns frozen cards in the expected order
+  ---
+  duration_ms: 0.300911
+  type: 'test'
+  ...
+# Subtest: U2 follower: grammarBankAggregateCards Total card uses override total when counts narrow to a cluster
+ok 94 - U2 follower: grammarBankAggregateCards Total card uses override total when counts narrow to a cluster
+  ---
+  duration_ms: 0.242838
+  type: 'test'
+  ...
+# Subtest: U2 follower: GRAMMAR_CONCEPT_EXAMPLES.hyphen_ambiguity primary example is the clear positive case
+ok 95 - U2 follower: GRAMMAR_CONCEPT_EXAMPLES.hyphen_ambiguity primary example is the clear positive case
+  ---
+  duration_ms: 0.267909
+  type: 'test'
+  ...
+# Subtest: U2 follower: GRAMMAR_BANK_HERO exposes a search-aware emptyWithSearch copy
+ok 96 - U2 follower: GRAMMAR_BANK_HERO exposes a search-aware emptyWithSearch copy
+  ---
+  duration_ms: 0.288284
+  type: 'test'
+  ...
+# Subtest: U2 view-model: buildGrammarBankModel exposes clusterCounts for chip badges
+ok 97 - U2 view-model: buildGrammarBankModel exposes clusterCounts for chip badges
+  ---
+  duration_ms: 0.342495
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: buildGrammarMonsterStripModel returns 4 active monsters in order
+ok 98 - P5-U7 view-model: buildGrammarMonsterStripModel returns 4 active monsters in order
+  ---
+  duration_ms: 0.15403
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: monster with 0 Stars shows "Not found yet"
+ok 99 - P5-U7 view-model: monster with 0 Stars shows "Not found yet"
+  ---
+  duration_ms: 0.152344
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: monster with starHighWater=42 shows "Growing" (42 Stars)
+ok 100 - P5-U7 view-model: monster with starHighWater=42 shows "Growing" (42 Stars)
+  ---
+  duration_ms: 0.141607
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: monster with starHighWater=100 shows "Mega"
+ok 101 - P5-U7 view-model: monster with starHighWater=100 shows "Mega"
+  ---
+  duration_ms: 0.12803
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: monster strip asset stages align with Codex visual stages
+ok 102 - P5-U7 view-model: monster strip asset stages align with Codex visual stages
+  ---
+  duration_ms: 0.227129
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: monster strip asset stages match Codex entries for the same Grammar progress
+ok 103 - P5-U7 view-model: monster strip asset stages match Codex entries for the same Grammar progress
+  ---
+  duration_ms: 2.69181
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: reserved monsters never appear in strip
+ok 104 - P5-U7 view-model: reserved monsters never appear in strip
+  ---
+  duration_ms: 0.19757
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: child-facing copy in monster strip contains no forbidden terms
+ok 105 - P5-U7 view-model: child-facing copy in monster strip contains no forbidden terms
+  ---
+  duration_ms: 0.191778
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: each monster entry has a valid accentColor from MONSTERS registry
+ok 106 - P5-U7 view-model: each monster entry has a valid accentColor from MONSTERS registry
+  ---
+  duration_ms: 0.213581
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: monster strip entries are frozen
+ok 107 - P5-U7 view-model: monster strip entries are frozen
+  ---
+  duration_ms: 0.127351
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: GRAMMAR_MONSTER_STRIP_CHILD_COPY is correct child-facing sentence
+ok 108 - P5-U7 view-model: GRAMMAR_MONSTER_STRIP_CHILD_COPY is correct child-facing sentence
+  ---
+  duration_ms: 0.155795
+  type: 'test'
+  ...
+# Subtest: P5-U7 view-model: buildGrammarMonsterStripModel + buildGrammarDashboardModel compose without conflict
+ok 109 - P5-U7 view-model: buildGrammarMonsterStripModel + buildGrammarDashboardModel compose without conflict
+  ---
+  duration_ms: 0.440774
+  type: 'test'
+  ...
+# Subtest: P5-U8 view-model: Smart Practice is the only data-featured=true element
+ok 110 - P5-U8 view-model: Smart Practice is the only data-featured=true element
+  ---
+  duration_ms: 0.194666
+  type: 'test'
+  ...
+# Subtest: aligned view-model: Mini Test + Fix Trouble Spots are primary cards; Grammar Bank moved to sidebar
+ok 111 - aligned view-model: Mini Test + Fix Trouble Spots are primary cards; Grammar Bank moved to sidebar
+  ---
+  duration_ms: 0.120114
+  type: 'test'
+  ...
+# Subtest: aligned view-model: Writing Try appears inside collapsed More practice
+ok 112 - aligned view-model: Writing Try appears inside collapsed More practice
+  ---
+  duration_ms: 0.127118
+  type: 'test'
+  ...
+# Subtest: P5-U8 view-model: More practice disclosure contains all 6 secondary modes
+ok 113 - P5-U8 view-model: More practice disclosure contains all 6 secondary modes
+  ---
+  duration_ms: 0.132756
+  type: 'test'
+  ...
+# Subtest: aligned view-model: fresh learner (no progress) still produces valid dashboard with Smart Practice accessible
+ok 114 - aligned view-model: fresh learner (no progress) still produces valid dashboard with Smart Practice accessible
+  ---
+  duration_ms: 0.173568
+  type: 'test'
+  ...
+# Subtest: P5-U8 view-model: all forbidden terms absent from simplified layout labels
+ok 115 - P5-U8 view-model: all forbidden terms absent from simplified layout labels
+  ---
+  duration_ms: 0.269643
+  type: 'test'
+  ...
+# Subtest: P5-U10 view-model: buildGrammarDashboardModel includes monsterStrip with 4 entries alongside concordiumProgress
+ok 116 - P5-U10 view-model: buildGrammarDashboardModel includes monsterStrip with 4 entries alongside concordiumProgress
+  ---
+  duration_ms: 0.211845
+  type: 'test'
+  ...
+# Subtest: P5-U10 view-model: concordiumProgress shape is UNCHANGED ({ mastered, total }) — backward compatibility
+ok 117 - P5-U10 view-model: concordiumProgress shape is UNCHANGED ({ mastered, total }) — backward compatibility
+  ---
+  duration_ms: 0.199393
+  type: 'test'
+  ...
+# Subtest: P5-U10 view-model: monsterStrip entries carry Star fields (stars, starMax, stageName, stageIndex)
+ok 118 - P5-U10 view-model: monsterStrip entries carry Star fields (stars, starMax, stageName, stageIndex)
+  ---
+  duration_ms: 0.232087
+  type: 'test'
+  ...
+# Subtest: P5-U10 view-model: fresh learner with no Grammar data -> monsterStrip shows 0 Stars for all 4 monsters
+ok 119 - P5-U10 view-model: fresh learner with no Grammar data -> monsterStrip shows 0 Stars for all 4 monsters
+  ---
+  duration_ms: 0.386577
+  type: 'test'
+  ...
+# Subtest: P5-U10 view-model: monsterStrip + concordiumProgress do not conflict — both return valid shapes
+ok 120 - P5-U10 view-model: monsterStrip + concordiumProgress do not conflict — both return valid shapes
+  ---
+  duration_ms: 0.294865
+  type: 'test'
+  ...
+# Subtest: P5-U10 view-model: reserved monsters never leak into monsterStrip from dashboard model
+ok 121 - P5-U10 view-model: reserved monsters never leak into monsterStrip from dashboard model
+  ---
+  duration_ms: 0.179899
+  type: 'test'
+  ...
+# Subtest: P6-U6 view-model: dashboard model with evidence → monsterStrip Stars match live derivation
+ok 122 - P6-U6 view-model: dashboard model with evidence → monsterStrip Stars match live derivation
+  ---
+  duration_ms: 1.389234
+  type: 'test'
+  ...
+# Subtest: P6-U6 view-model: dashboard model without evidence (null, null) → graceful fallback to starHighWater
+ok 123 - P6-U6 view-model: dashboard model without evidence (null, null) → graceful fallback to starHighWater
+  ---
+  duration_ms: 0.182778
+  type: 'test'
+  ...
+# Subtest: P6-U6 view-model: live evidence > persisted starHighWater → dashboard shows higher Stars
+ok 124 - P6-U6 view-model: live evidence > persisted starHighWater → dashboard shows higher Stars
+  ---
+  duration_ms: 0.507994
+  type: 'test'
+  ...
+# Subtest: P6-U6 view-model: bridge-only evidence shows direct egg and hides Concordium until breadth gate
+ok 125 - P6-U6 view-model: bridge-only evidence shows direct egg and hides Concordium until breadth gate
+  ---
+  duration_ms: 0.585643
+  type: 'test'
+  ...
+# Subtest: P6-U6 view-model: live evidence < persisted starHighWater → dashboard shows starHighWater (latch holds)
+ok 126 - P6-U6 view-model: live evidence < persisted starHighWater → dashboard shows starHighWater (latch holds)
+  ---
+  duration_ms: 0.479621
+  type: 'test'
+  ...
+# Subtest: P6-U6 view-model: dashboard Stars match direct buildGrammarMonsterStripModel Stars when same evidence supplied
+ok 127 - P6-U6 view-model: dashboard Stars match direct buildGrammarMonsterStripModel Stars when same evidence supplied
+  ---
+  duration_ms: 0.697075
+  type: 'test'
+  ...
+# Subtest: P7-U3 view-model: buildGrammarDashboardModel with aiEnrichment.enabled: false returns writingTryAvailable: true
+ok 128 - P7-U3 view-model: buildGrammarDashboardModel with aiEnrichment.enabled: false returns writingTryAvailable: true
+  ---
+  duration_ms: 0.203088
+  type: 'test'
+  ...
+# Subtest: P7-U3 view-model: buildGrammarDashboardModel with no capabilities returns writingTryAvailable: true
+ok 129 - P7-U3 view-model: buildGrammarDashboardModel with no capabilities returns writingTryAvailable: true
+  ---
+  duration_ms: 0.124467
+  type: 'test'
+  ...
+# Subtest: P7-U3 view-model: GRAMMAR_BANK_STATUS_CHIPS "due" entry has label "Practise next"
+ok 130 - P7-U3 view-model: GRAMMAR_BANK_STATUS_CHIPS "due" entry has label "Practise next"
+  ---
+  duration_ms: 0.120683
+  type: 'test'
+  ...
+# Subtest: P7-U3 view-model: grammarBankFilterMatchesStatus("due", "building") still returns true (unchanged behaviour)
+ok 131 - P7-U3 view-model: grammarBankFilterMatchesStatus("due", "building") still returns true (unchanged behaviour)
+  ---
+  duration_ms: 0.085509
+  type: 'test'
+  ...
+# Subtest: P7-U3 view-model: grammarChildConfidenceLabel({ label: "not-a-label" }) returns "Check status"
+ok 132 - P7-U3 view-model: grammarChildConfidenceLabel({ label: "not-a-label" }) returns "Check status"
+  ---
+  duration_ms: 0.11039
+  type: 'test'
+  ...
+# Subtest: P7-U3 view-model: grammarChildConfidenceLabel({ label: "building" }) returns "Learning" (unchanged)
+ok 133 - P7-U3 view-model: grammarChildConfidenceLabel({ label: "building" }) returns "Learning" (unchanged)
+  ---
+  duration_ms: 0.083516
+  type: 'test'
+  ...
+# Subtest: P7-U3 view-model: grammarChildConfidenceLabel({}) returns "Check status"
+ok 134 - P7-U3 view-model: grammarChildConfidenceLabel({}) returns "Check status"
+  ---
+  duration_ms: 0.079728
+  type: 'test'
+  ...
+# Subtest: P7-U3 view-model: grammarChildConfidenceLabel(undefined) returns "Check status"
+ok 135 - P7-U3 view-model: grammarChildConfidenceLabel(undefined) returns "Check status"
+  ---
+  duration_ms: 0.072452
+  type: 'test'
+  ...
+1..135
+# tests 135
+# suites 0
+# pass 135
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 354.255944

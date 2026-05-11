@@ -1,0 +1,137 @@
+## node --test tests/grammar-qg-p20-answer-acceptance.test.js
+TAP version 13
+# Subtest: P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+ok 1 - P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+  ---
+  duration_ms: 4.576258
+  type: 'test'
+  ...
+# Subtest: P20 accepts harmless learner formatting around deterministic subject/object answers
+ok 2 - P20 accepts harmless learner formatting around deterministic subject/object answers
+  ---
+  duration_ms: 1.198142
+  type: 'test'
+  ...
+# Subtest: P20 acceptedSet answers accept harmless terminal sentence punctuation
+ok 3 - P20 acceptedSet answers accept harmless terminal sentence punctuation
+  ---
+  duration_ms: 0.764011
+  type: 'test'
+  ...
+# Subtest: P20 recovered punctuation rewrites still require the grammar-critical punctuation
+ok 4 - P20 recovered punctuation rewrites still require the grammar-critical punctuation
+  ---
+  duration_ms: 1.256134
+  type: 'test'
+  ...
+# Subtest: P20 recovered punctuation rewrites allow incidental final full-stop omission without dropping the target comma
+ok 5 - P20 recovered punctuation rewrites allow incidental final full-stop omission without dropping the target comma
+  ---
+  duration_ms: 0.783756
+  type: 'test'
+  ...
+# Subtest: P20 recovered modal-verb blanks accept the modal answer as well as the full sentence
+ok 6 - P20 recovered modal-verb blanks accept the modal answer as well as the full sentence
+  ---
+  duration_ms: 1.998245
+  type: 'test'
+  ...
+# Subtest: P20 recovered tense-form fixes accept the corrected verb phrase as well as the full sentence
+ok 7 - P20 recovered tense-form fixes accept the corrected verb phrase as well as the full sentence
+  ---
+  duration_ms: 0.792396
+  type: 'test'
+  ...
+# Subtest: P20 boundary punctuation labels accept semicolon spelling variants
+ok 8 - P20 boundary punctuation labels accept semicolon spelling variants
+  ---
+  duration_ms: 0.539174
+  type: 'test'
+  ...
+# Subtest: P20 keeps genuinely open clause-combine writing as manual-review-only
+ok 9 - P20 keeps genuinely open clause-combine writing as manual-review-only
+  ---
+  duration_ms: 0.890635
+  type: 'test'
+  ...
+# Subtest: P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+not ok 10 - P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+  ---
+  duration_ms: 3.588781
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-audit-05102302-patched/tests/grammar-qg-p20-answer-acceptance.test.js:154:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Classify each word-class target.'
+    - 'Classify the target word or phrase by its grammar role.'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Classify the target word or phrase by its grammar role.'
+  actual: 'Classify each word-class target.'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-audit-05102302-patched/tests/grammar-qg-p20-answer-acceptance.test.js:165:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: P20b punctuation-mark label prompts accept the mark symbol as well as the word label
+ok 11 - P20b punctuation-mark label prompts accept the mark symbol as well as the word label
+  ---
+  duration_ms: 1.714655
+  type: 'test'
+  ...
+# Subtest: P20b internal punctuation rewrites accept omission of only the incidental final full stop
+ok 12 - P20b internal punctuation rewrites accept omission of only the incidental final full stop
+  ---
+  duration_ms: 2.660327
+  type: 'test'
+  ...
+# Subtest: P20b possessive scenario prompts show the scenario after a colon
+not ok 13 - P20b possessive scenario prompts show the scenario after a colon
+  ---
+  duration_ms: 2.83475
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-audit-05102302-patched/tests/grammar-qg-p20-answer-acceptance.test.js:242:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /for:\s+one dog owns a bowl/i. Input:
+    
+    'Rewrite as a precise possessive phrase: one dog owns a bowl.'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: 'Rewrite as a precise possessive phrase: one dog owns a bowl.'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-audit-05102302-patched/tests/grammar-qg-p20-answer-acceptance.test.js:250:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking
+ok 14 - P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking
+  ---
+  duration_ms: 0.374894
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 12
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 450.907651

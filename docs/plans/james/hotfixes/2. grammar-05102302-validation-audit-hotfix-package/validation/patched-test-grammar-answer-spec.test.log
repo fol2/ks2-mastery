@@ -1,0 +1,125 @@
+## node --test tests/grammar-answer-spec.test.js
+TAP version 13
+# Subtest: ANSWER_SPEC_KINDS lists all six declarative types
+ok 1 - ANSWER_SPEC_KINDS lists all six declarative types
+  ---
+  duration_ms: 2.090644
+  type: 'test'
+  ...
+# Subtest: exact: rejects near-miss punctuation, accepts byte-identical
+ok 2 - exact: rejects near-miss punctuation, accepts byte-identical
+  ---
+  duration_ms: 1.050042
+  type: 'test'
+  ...
+# Subtest: normalisedText: accepts whitespace + case variants, preserves the golden
+ok 3 - normalisedText: accepts whitespace + case variants, preserves the golden
+  ---
+  duration_ms: 0.99025
+  type: 'test'
+  ...
+# Subtest: normalisedText: preserves grammar-critical terminal apostrophes while stripping real wrapper quotes
+ok 4 - normalisedText: preserves grammar-critical terminal apostrophes while stripping real wrapper quotes
+  ---
+  duration_ms: 0.499046
+  type: 'test'
+  ...
+# Subtest: normalisedText: accepts semicolon spelling aliases for punctuation mark labels
+ok 5 - normalisedText: accepts semicolon spelling aliases for punctuation mark labels
+  ---
+  duration_ms: 0.451164
+  type: 'test'
+  ...
+# Subtest: acceptedSet: two equivalent clause-combine sentences both score full marks
+ok 6 - acceptedSet: two equivalent clause-combine sentences both score full marks
+  ---
+  duration_ms: 0.671449
+  type: 'test'
+  ...
+# Subtest: acceptedSet: near-miss punctuation gets partial credit when maxScore > 1
+ok 7 - acceptedSet: near-miss punctuation gets partial credit when maxScore > 1
+  ---
+  duration_ms: 0.436336
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: optionalCommas accepts variant without surrounding commas
+ok 8 - punctuationPattern: optionalCommas accepts variant without surrounding commas
+  ---
+  duration_ms: 0.599287
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: optionalCommas=false rejects comma-free variant
+ok 9 - punctuationPattern: optionalCommas=false rejects comma-free variant
+  ---
+  duration_ms: 0.506667
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: optionalTerminalFullStop accepts only incidental final full-stop differences
+ok 10 - punctuationPattern: optionalTerminalFullStop accepts only incidental final full-stop differences
+  ---
+  duration_ms: 0.812695
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: keeps hyphen and dash distinct in punctuation-sensitive tasks
+ok 11 - punctuationPattern: keeps hyphen and dash distinct in punctuation-sensitive tasks
+  ---
+  duration_ms: 2.217636
+  type: 'test'
+  ...
+# Subtest: multiField: scores each sub-field independently and aggregates
+ok 12 - multiField: scores each sub-field independently and aggregates
+  ---
+  duration_ms: 0.653506
+  type: 'test'
+  ...
+# Subtest: manualReviewOnly: never auto-scores correct
+ok 13 - manualReviewOnly: never auto-scores correct
+  ---
+  duration_ms: 0.197047
+  type: 'test'
+  ...
+# Subtest: markByAnswerSpec preserves spec-owned answer text and hint metadata
+ok 14 - markByAnswerSpec preserves spec-owned answer text and hint metadata
+  ---
+  duration_ms: 0.169344
+  type: 'test'
+  ...
+# Subtest: markByAnswerSpec tolerates missing/malformed input gracefully
+ok 15 - markByAnswerSpec tolerates missing/malformed input gracefully
+  ---
+  duration_ms: 0.306756
+  type: 'test'
+  ...
+# Subtest: validateAnswerSpec: all kinds with golden + nearMiss pass
+ok 16 - validateAnswerSpec: all kinds with golden + nearMiss pass
+  ---
+  duration_ms: 0.331048
+  type: 'test'
+  ...
+# Subtest: validateAnswerSpec: rejects missing golden (except manualReviewOnly)
+ok 17 - validateAnswerSpec: rejects missing golden (except manualReviewOnly)
+  ---
+  duration_ms: 0.660924
+  type: 'test'
+  ...
+# Subtest: validateAnswerSpec: multiField recursively validates subfields
+ok 18 - validateAnswerSpec: multiField recursively validates subfields
+  ---
+  duration_ms: 0.197884
+  type: 'test'
+  ...
+# Subtest: Backcompat: acceptedSet answerSpec still scores correctly through markByAnswerSpec
+ok 19 - Backcompat: acceptedSet answerSpec still scores correctly through markByAnswerSpec
+  ---
+  duration_ms: 0.284425
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 174.850418

@@ -1,0 +1,311 @@
+{
+  "repoRoot": "/mnt/data/ks2-grammar-audit-05102302-patched",
+  "summary": {
+    "templateCount": 510,
+    "seedCount": 30,
+    "totalCases": 15300,
+    "exactDuplicateSurfaceCount": 4619,
+    "crossTemplateDuplicateSurfaceCount": 0,
+    "generatedCrossTemplateDuplicateSurfaceCount": 0,
+    "lowDepthGeneratedTemplateCount": 74
+  },
+  "crossTemplateDuplicateSurfaces": [],
+  "lowDepth": [
+    {
+      "templateId": "proc2_standard_english_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "proc2_relative_clause_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_active_passive_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_subject_object_classify_table",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_formality_classify_table",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_voice_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_adverbials_adverbial_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_boundary_punctuation_boundary_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_clauses_clause_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_formality_formal_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_formality_formality_pair_table",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_formality_formality_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_noun_phrases_identify_expanded_np",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_noun_phrases_np_not_clause",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_parenthesis_commas_parenthesis_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_parenthesis_commas_parenthesis_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_relative_clauses_relative_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_speech_punctuation_speech_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p15_standard_english_standard_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_apostrophes_possession_meaning_change_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_clauses_clause_order_meaning_transfer",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_formality_informal_to_formal_pair_table",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_formality_least_formal_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_formality_register_context_choice",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_pronouns_cohesion_choose_cohesive_sentence",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_sentence_functions_punctuation_vs_function_table",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_speech_punctuation_speech_or_indirect",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_standard_english_choose_standard_sentence",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_standard_english_context_formal_standard",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_standard_english_standard_pairs_table",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p16_word_classes_multi_token_classify_table",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_active_passive_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_adverbials_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_apostrophes_possession_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_boundary_punctuation_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_clauses_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_formality_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_hyphen_ambiguity_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_modal_verbs_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_noun_phrases_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_parenthesis_commas_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_pronouns_cohesion_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_relative_clauses_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_sentence_functions_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_speech_punctuation_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_standard_english_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_subject_object_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_tense_aspect_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p17_word_classes_table_classify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_adverbials_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_apostrophes_possession_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_boundary_punctuation_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_clauses_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_formality_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_hyphen_ambiguity_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_modal_verbs_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_noun_phrases_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_parenthesis_commas_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_pronouns_cohesion_diagnostic_identify",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_pronouns_cohesion_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_relative_clauses_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_sentence_functions_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_speech_punctuation_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_standard_english_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_subject_object_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_tense_aspect_sat_table_classification",
+      "surfaces": 1
+    },
+    {
+      "templateId": "qg_p18_p18_word_classes_sat_table_classification",
+      "surfaces": 1
+    }
+  ]
+}

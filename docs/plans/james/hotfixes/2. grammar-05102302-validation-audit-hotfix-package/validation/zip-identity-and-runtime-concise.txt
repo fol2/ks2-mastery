@@ -1,0 +1,14 @@
+Source ZIP: /mnt/data/ks2-mastery-lean-05102302.zip
+ZIP size: 41589899 bytes
+58b5ad91e1aac120f83c49fd0c198d763ffedfdb1b3bc72cfc1fa928c78783c6  /mnt/data/ks2-mastery-lean-05102302.zip
+Integrity: passed (unzip -t: No errors detected)
+Manifest summary:
+repo=ks2-mastery
+mode=placeholder
+exclude_globs=assets/**,worktrees/**,.worktrees/**
+tracked_total=3396
+copied=2613
+omitted=783
+placeholders=783
+symlinks=0
+Runtime: node v22.16.0, npm 10.9.2, .nvmrc 22
