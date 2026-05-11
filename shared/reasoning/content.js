@@ -1366,8 +1366,8 @@ const TEMPLATES = [
         generator(seed) {
           const rng = mulberry32(seed);
           const den = pick(rng, [3,4,5,8,10]);
-          const a = pick(rng, [1,2]);
-          const b = pick(rng, [1,2].filter(x => x + a < den));
+          const a = randInt(rng, 1, Math.min(2, den - 2));
+          const b = randInt(rng, 1, Math.min(2, den - a - 1));
           const wrongN = a + b;
           const wrongD = den + den;
           const correct = simplifyFraction(a + b, den);
@@ -1857,21 +1857,41 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
       skillIds: ["pv_compare", "pv_rounding"],
       satsFriendly: true,
       generator(seed) {
-        const rng = mulberry32(seed);
-        const digitSet = shuffle(rng, [0, randInt(rng, 1, 4), randInt(rng, 5, 7), randInt(rng, 8, 9)]).filter((digit, index, arr) => arr.indexOf(digit) === index);
-        if (digitSet.length < 4) return this.generator(seed + 17);
+        let attemptSeed = seed;
+        let rng = mulberry32(attemptSeed);
+        let digitSet = [];
+        let threshold = 0;
+        let candidates = [];
+        for (let guard = 0; guard < 48; guard += 1) {
+          rng = mulberry32(attemptSeed);
+          digitSet = shuffle(rng, [0, randInt(rng, 1, 4), randInt(rng, 5, 7), randInt(rng, 8, 9)]).filter((digit, index, arr) => arr.indexOf(digit) === index);
+          threshold = randInt(rng, 22, 54) * 100;
+          if (digitSet.length >= 4) {
+            const permsForAttempt = permutations(digitSet).filter(p => p[0] !== 0).map(makeDigitNumber);
+            const validForAttempt = permsForAttempt.filter(n => n > threshold);
+            const groupedForAttempt = {};
+            validForAttempt.forEach(n => {
+              const target = roundToPlace(n, 100);
+              if (!groupedForAttempt[target]) groupedForAttempt[target] = [];
+              groupedForAttempt[target].push(n);
+            });
+            candidates = Object.entries(groupedForAttempt).filter(([, nums]) => nums.length >= 2);
+            if (candidates.length) break;
+          }
+          attemptSeed += 31;
+        }
+        if (!candidates.length) {
+          digitSet = [0, 2, 5, 8];
+          threshold = 2200;
+          const grouped = {};
+          permutations(digitSet).filter(p => p[0] !== 0).map(makeDigitNumber).filter(n => n > threshold).forEach(n => {
+            const target = roundToPlace(n, 100);
+            if (!grouped[target]) grouped[target] = [];
+            grouped[target].push(n);
+          });
+          candidates = Object.entries(grouped).filter(([, nums]) => nums.length >= 2);
+        }
         const place = 100;
-        const perms = permutations(digitSet).filter(p => p[0] !== 0).map(makeDigitNumber);
-        const threshold = randInt(rng, 22, 54) * 100;
-        const valid = perms.filter(n => n > threshold);
-        const grouped = {};
-        valid.forEach(n => {
-          const target = roundToPlace(n, place);
-          if (!grouped[target]) grouped[target] = [];
-          grouped[target].push(n);
-        });
-        const candidates = Object.entries(grouped).filter(([, nums]) => nums.length >= 2);
-        if (!candidates.length) return this.generator(seed + 31);
         const [roundedText, nums] = pick(rng, candidates);
         nums.sort((a, b) => a - b);
         const answer = nums[0];
@@ -2305,14 +2325,28 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
       skillIds: ["mul_div_structure", "add_sub_multistep"],
       satsFriendly: true,
       generator(seed) {
-        const rng = mulberry32(seed);
-        const aGroups = randInt(rng, 4, 8);
-        const aPerGroup = randInt(rng, 16, 34);
-        const bGroups = randInt(rng, 4, 8);
-        const bPerGroup = randInt(rng, 16, 34);
-        const aTotal = aGroups * aPerGroup;
-        const bTotal = bGroups * bPerGroup;
-        if (aTotal === bTotal) return this.generator(seed + 23);
+        let attemptSeed = seed;
+        let rng = mulberry32(attemptSeed);
+        let aGroups = randInt(rng, 4, 8);
+        let aPerGroup = randInt(rng, 16, 34);
+        let bGroups = randInt(rng, 4, 8);
+        let bPerGroup = randInt(rng, 16, 34);
+        let aTotal = aGroups * aPerGroup;
+        let bTotal = bGroups * bPerGroup;
+        for (let guard = 0; aTotal === bTotal && guard < 48; guard += 1) {
+          attemptSeed += 23;
+          rng = mulberry32(attemptSeed);
+          aGroups = randInt(rng, 4, 8);
+          aPerGroup = randInt(rng, 16, 34);
+          bGroups = randInt(rng, 4, 8);
+          bPerGroup = randInt(rng, 16, 34);
+          aTotal = aGroups * aPerGroup;
+          bTotal = bGroups * bPerGroup;
+        }
+        if (aTotal === bTotal) {
+          bPerGroup = bPerGroup < 34 ? bPerGroup + 1 : bPerGroup - 1;
+          bTotal = bGroups * bPerGroup;
+        }
         const names = pick(rng, [
           ["Noah", "Aisha"],
           ["Eva", "Leo"],
@@ -2525,10 +2559,8 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
         const offset = pick(rng, [5, 7, 9, 12, 14]);
         const useAdd = randInt(rng, 0, 1) === 0;
         const minInput = useAdd ? 4 : Math.max(4, Math.floor(offset / mult) + 1);
-        if (minInput > 14) return this.generator(seed + 29);
         const inputA = randInt(rng, minInput, 14);
         const inputBMin = Math.max(minInput, 5);
-        if (inputBMin > 18) return this.generator(seed + 31);
         const inputB = randInt(rng, inputBMin, 18);
         const outputA = useAdd ? (inputA * mult + offset) : (inputA * mult - offset);
         const outputB = useAdd ? (inputB * mult + offset) : (inputB * mult - offset);
@@ -3461,16 +3493,32 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
       skillIds: ["time_elapsed", "add_sub_multistep"],
       satsFriendly: true,
       generator(seed) {
-        const rng = mulberry32(seed);
-        const beforeBreak = pick(rng, [35, 40, 45, 50, 55, 60, 65, 70]);
-        const breakLength = pick(rng, [10, 15, 20, 25]);
-        const afterBreak = pick(rng, [30, 35, 40, 45, 50, 55, 60]);
-        const total = beforeBreak + breakLength + afterBreak;
-        const endHour = randInt(rng, 12, 18);
-        const endMin = pick(rng, [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
-        const end = endHour * 60 + endMin;
-        const start = end - total;
-        if (start < 8 * 60) return this.generator(seed + 19);
+        let attemptSeed = seed;
+        let rng = mulberry32(attemptSeed);
+        let beforeBreak = pick(rng, [35, 40, 45, 50, 55, 60, 65, 70]);
+        let breakLength = pick(rng, [10, 15, 20, 25]);
+        let afterBreak = pick(rng, [30, 35, 40, 45, 50, 55, 60]);
+        let total = beforeBreak + breakLength + afterBreak;
+        let endHour = randInt(rng, 12, 18);
+        let endMin = pick(rng, [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+        let end = endHour * 60 + endMin;
+        let start = end - total;
+        for (let guard = 0; start < 8 * 60 && guard < 48; guard += 1) {
+          attemptSeed += 19;
+          rng = mulberry32(attemptSeed);
+          beforeBreak = pick(rng, [35, 40, 45, 50, 55, 60, 65, 70]);
+          breakLength = pick(rng, [10, 15, 20, 25]);
+          afterBreak = pick(rng, [30, 35, 40, 45, 50, 55, 60]);
+          total = beforeBreak + breakLength + afterBreak;
+          endHour = randInt(rng, 12, 18);
+          endMin = pick(rng, [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+          end = endHour * 60 + endMin;
+          start = end - total;
+        }
+        if (start < 8 * 60) {
+          end = 18 * 60;
+          start = end - total;
+        }
         const breakStart = start + beforeBreak;
         return makeBaseQuestion(this, seed, {
           marks: 2,
@@ -5443,14 +5491,30 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
       skillIds: ["reasonableness"],
       satsFriendly: true,
       generator(seed) {
-        const rng = mulberry32(seed);
-        const a = randInt(rng, 240, 780);
-        const b = randInt(rng, 230, 790);
-        const roundedA = Math.round(a / 100) * 100;
-        const roundedB = Math.round(b / 100) * 100;
-        const estimate = roundedA + roundedB;
-        const exact = a + b;
-        if (exact === estimate) return this.generator(seed + 17);
+        let attemptSeed = seed;
+        let rng = mulberry32(attemptSeed);
+        let a = randInt(rng, 240, 780);
+        let b = randInt(rng, 230, 790);
+        let roundedA = Math.round(a / 100) * 100;
+        let roundedB = Math.round(b / 100) * 100;
+        let estimate = roundedA + roundedB;
+        let exact = a + b;
+        for (let guard = 0; exact === estimate && guard < 48; guard += 1) {
+          attemptSeed += 17;
+          rng = mulberry32(attemptSeed);
+          a = randInt(rng, 240, 780);
+          b = randInt(rng, 230, 790);
+          roundedA = Math.round(a / 100) * 100;
+          roundedB = Math.round(b / 100) * 100;
+          estimate = roundedA + roundedB;
+          exact = a + b;
+        }
+        if (exact === estimate) {
+          b = b < 790 ? b + 1 : b - 1;
+          roundedB = Math.round(b / 100) * 100;
+          estimate = roundedA + roundedB;
+          exact = a + b;
+        }
         const direction = exact > estimate ? "greater" : "less";
         return makeBaseQuestion(this, seed, {
           marks: 2,
@@ -5624,12 +5688,20 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
       skillIds: ["reasonableness"],
       satsFriendly: true,
       generator(seed) {
-        const rng = mulberry32(seed);
-        const a = pick(rng, [184, 196, 198, 205, 214, 223]);
-        const b = pick(rng, [176, 187, 202, 206, 214, 219]);
-        const better = Math.round(a / 100) * 100 + Math.round(b / 100) * 100;
-        const worse = Math.floor(a / 100) * 100 + Math.floor(b / 100) * 100;
-        if (better === worse) return this.generator(seed + 23);
+        let attemptSeed = seed;
+        let rng = mulberry32(attemptSeed);
+        let a = pick(rng, [184, 196, 198, 205, 214, 223]);
+        let b = pick(rng, [176, 187, 202, 206, 214, 219]);
+        let better = Math.round(a / 100) * 100 + Math.round(b / 100) * 100;
+        let worse = Math.floor(a / 100) * 100 + Math.floor(b / 100) * 100;
+        for (let guard = 0; better === worse && guard < 24; guard += 1) {
+          attemptSeed += 23;
+          rng = mulberry32(attemptSeed);
+          a = pick(rng, [184, 196, 198, 205, 214, 223]);
+          b = pick(rng, [176, 187, 202, 206, 214, 219]);
+          better = Math.round(a / 100) * 100 + Math.round(b / 100) * 100;
+          worse = Math.floor(a / 100) * 100 + Math.floor(b / 100) * 100;
+        }
         const betterName = better > worse ? "Suki" : "Amir";
         const otherName = betterName === "Suki" ? "Amir" : "Suki";
         const exact = a + b;
@@ -5748,10 +5820,20 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
       skillIds: ["error_analysis"],
       satsFriendly: true,
       generator(seed) {
-        const rng = mulberry32(seed);
-        const a = pick(rng, [542, 631, 724, 853, 764]);
-        const b = pick(rng, [286, 257, 368, 475, 486]);
-        if (a <= b) return this.generator(seed + 19);
+        let attemptSeed = seed;
+        let rng = mulberry32(attemptSeed);
+        let a = pick(rng, [542, 631, 724, 853, 764]);
+        let b = pick(rng, [286, 257, 368, 475, 486]);
+        for (let guard = 0; a <= b && guard < 48; guard += 1) {
+          attemptSeed += 19;
+          rng = mulberry32(attemptSeed);
+          a = pick(rng, [542, 631, 724, 853, 764]);
+          b = pick(rng, [286, 257, 368, 475, 486]);
+        }
+        if (a <= b) {
+          a = 853;
+          b = 475;
+        }
         const exact = a - b;
         const digitsA = String(a).padStart(3, "0").split("").map(Number);
         const digitsB = String(b).padStart(3, "0").split("").map(Number);

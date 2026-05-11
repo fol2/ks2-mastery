@@ -18,7 +18,9 @@ ZIP identity:
 Reasoning-only scope:
 
 - `shared/reasoning/content.js`
+- `src/subjects/reasoning/command-actions.js`
 - `worker/src/subjects/reasoning/engine.js`
+- `worker/src/repository.js`
 - `src/subjects/reasoning/components/ReasoningPracticeSurface.jsx`
 - `tests/reasoning-content-contract.test.js`
 - `tests/reasoning-engine-rewards.test.js`
@@ -38,13 +40,13 @@ Root cause: one branch selected `b` from an empty filtered array when the denomi
 
 Patch: choose `a` and `b` with safe bounded integer ranges so `a + b < denominator` is always true for the template's denominator choices.
 
-### R2 — Seeded item-id drift in `reason_better_estimate`
+### R2 — Seeded item-id drift in generated templates
 
 The `reason_better_estimate` template sometimes recursively generated a different seed when the two estimates tied. This produced a question whose `itemId` did not match the requested `templateId:seed`.
 
 This is a real Worker contract risk because session refs, safe question IDs, and answer submission expected-question checks depend on deterministic item IDs.
 
-Patch: keep the public item ID tied to the requested seed while using a guarded internal alternate seed only for choosing non-tied parameters.
+Patch: keep the public item ID tied to the requested seed while using guarded internal alternate seeds only for choosing valid non-tied parameters. The same fix was extended to all other Reasoning generators that used recursive seed changes (`smallest_number_clues`, `calc_compare_two_totals`, `calc_function_table_reverse`, `measure_start_and_break`, `reason_sum_estimate_direction`, and `reason_error_subtraction_exchange`) because they share the same session-ref contract risk.
 
 ### R3 — First-wrong feedback leaked full worked-solution metadata to the browser read model
 
@@ -60,6 +62,8 @@ Patch:
 
 - Worker blocks support before effort unless the session is explicitly in a teaching presentation (`worked` or `faded`) or already has seeded support.
 - Worker blocks support in strict SATs sessions and after the question has already been marked.
+- Client support actions send `expectedSessionId` and `expectedQuestionId`, matching submit/save stale-command guards.
+- Persisted first-wrong feedback stores only the nudge-safe result shape, and public bootstrap redaction rebuilds Reasoning UI from the safe read model for existing persisted records.
 - UI hides support controls until the learner has received first-wrong feedback, or until a teaching mode has seeded support.
 
 ### R5 — Worked/Faded modes were named but not structurally seeded
@@ -106,12 +110,12 @@ node --test \
   tests/hero-reasoning-integration.test.js
 ```
 
-Expected result: `18/18` pass.
+Expected result: `20/20` pass.
 
-Recommended content audit: generate 20 seeds for each of the 110 Reasoning templates and verify:
+Recommended content audit: generate 1,000 seeds for each of the 110 Reasoning templates and verify:
 
 - no generator throws;
 - no `undefined`, `NaN`, `Infinity`, or `[object Object]` learner-facing text;
 - `itemId === templateId:seed` for all generated questions.
 
-Expected result: `2,200` checked, `0` failures.
+Expected result: `110,000` checked, `0` failures.

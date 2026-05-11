@@ -82,6 +82,18 @@ function allResponsesPayload({ data, state }) {
   };
 }
 
+function supportPayload(kind) {
+  return ({ state }) => {
+    const session = currentSession(state);
+    const question = currentQuestion(state);
+    return {
+      expectedSessionId: session?.id || '',
+      expectedQuestionId: question?.id || '',
+      kind,
+    };
+  };
+}
+
 export function setReasoningRuntimeError(store, message) {
   store.updateSubjectUi('reasoning', {
     ...createInitialReasoningState(),
@@ -169,12 +181,12 @@ export const reasoningSubjectCommandActions = Object.freeze({
   },
   'reasoning-support-faded': {
     command: 'request-support',
-    payload: { kind: 'faded' },
+    payload: supportPayload('faded'),
     dedupeKey: false,
   },
   'reasoning-support-worked': {
     command: 'request-support',
-    payload: { kind: 'worked' },
+    payload: supportPayload('worked'),
     dedupeKey: false,
   },
   'reasoning-continue': {

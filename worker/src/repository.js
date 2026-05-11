@@ -163,6 +163,7 @@ import { buildReadingReadModel } from './subjects/reading/read-models.js';
 import { __readingEngineInternals } from './subjects/reading/engine.js';
 import { buildArithmeticReadModel } from './subjects/arithmetic/read-models.js';
 import { __arithmeticEngineInternals } from './subjects/arithmetic/engine.js';
+import { buildReasoningReadModel } from './subjects/reasoning/read-models.js';
 import { listPunctuationEvents } from './subjects/punctuation/events.js';
 import { createPunctuationService } from '../../shared/punctuation/service.js';
 import {
@@ -380,6 +381,17 @@ function redactArithmeticUiForClient(ui, data = {}, learnerId = '') {
   });
 }
 
+function redactReasoningUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
+  const runtimeData = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+  const runtimeState = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
+  return buildReasoningReadModel({
+    learnerId,
+    state: runtimeState,
+    data: runtimeData,
+    nowValue: now,
+  });
+}
+
 const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
   async spelling({ record, row, spellingContentSnapshot, now }) {
     const audio = await buildSpellingAudioCue({
@@ -403,6 +415,9 @@ const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
   },
   arithmetic({ record, row }) {
     return redactArithmeticUiForClient(record.ui, record.data, row.learner_id);
+  },
+  reasoning({ record, row, now }) {
+    return redactReasoningUiForClient(record.ui, record.data, row.learner_id, { now });
   },
 });
 

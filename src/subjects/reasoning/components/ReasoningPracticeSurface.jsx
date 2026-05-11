@@ -391,6 +391,9 @@ function QuestionPanel({ ui, actions }) {
   const pending = isPending(ui);
   const formId = `reasoning-question-form-${session.id}`;
   const primaryLabel = result ? 'Continue' : session.delayedFeedback ? (canGoNext(session) ? 'Save and next' : 'Save answer') : 'Submit answer';
+  const canUseSupport = !result && !session.strict && (Boolean(ui.feedback?.result) || Number(session.supportLevel || 0) > 0 || session.presentation === 'faded');
+  const canRequestFaded = canUseSupport && Number(session.supportLevel || 0) < 1;
+  const canRequestWorked = canUseSupport && Number(session.supportLevel || 0) < 2;
   function submit(event) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -436,8 +439,8 @@ function QuestionPanel({ ui, actions }) {
           <button className="btn ghost" type="button" onClick={(event) => saveAndMove(event, { delta: -1 })} disabled={pending || !canGoPrevious(session)}>Previous</button>
           <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save draft and next'}</button>
           {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={mark} disabled={pending}>Mark set</button> : null}
-          {!result && !session.strict ? <button className="btn secondary" type="button" onClick={() => dispatch(actions, 'reasoning-support-faded')} disabled={pending}>Partly worked support</button> : null}
-          {!result && !session.strict ? <button className="btn secondary" type="button" onClick={() => dispatch(actions, 'reasoning-support-worked')} disabled={pending}>Worked solution</button> : null}
+          {canRequestFaded ? <button className="btn secondary" type="button" onClick={() => dispatch(actions, 'reasoning-support-faded')} disabled={pending}>Partly worked support</button> : null}
+          {canRequestWorked ? <button className="btn secondary" type="button" onClick={() => dispatch(actions, 'reasoning-support-worked')} disabled={pending}>Worked solution</button> : null}
           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reasoning-end')} disabled={pending}>End round</button>
         </div>
       </form>

@@ -389,12 +389,18 @@ function buildSession(data, prefs, { nowValue, random, heroContext } = {}) {
   if (!questionRefs.length) return null;
   for (const ref of questionRefs) data.recentTemplateStarts.push({ templateId: ref.templateId, at: nowValue });
   data.recentTemplateStarts = data.recentTemplateStarts.slice(-40);
+  const presentation = presentationFor(prefs.mode);
+  const support = {};
+  if (presentation === 'worked' || presentation === 'faded') {
+    const level = presentation === 'worked' ? 2 : 1;
+    for (const ref of questionRefs) support[ref.itemId] = { level, requestedAt: nowValue, seededByMode: true };
+  }
   return {
     id: uid('reasoning_session'),
     mode: prefs.mode,
     strict: prefs.mode === 'sats' || prefs.mode === 'satsset',
     delayedFeedback: prefs.mode === 'satsset' || prefs.viewMode === 'list',
-    presentation: presentationFor(prefs.mode),
+    presentation,
     startedAt: nowValue,
     timeLimitMin: prefs.mode === 'satsset' ? (prefs.setSize === 12 ? 30 : 20) : null,
     currentQuestionIndex: 0,
@@ -403,7 +409,7 @@ function buildSession(data, prefs, { nowValue, random, heroContext } = {}) {
     responses: {},
     results: {},
     attempts: {},
-    support: {},
+    support,
     heroContext: heroContext || null,
   };
 }
@@ -468,13 +474,28 @@ function buildFeedback(session, feedback) {
   if (!feedback?.questionRef) return null;
   const question = questionFromRef(feedback.questionRef);
   const result = feedback.result || null;
+  const supportLevel = feedback.supportLevel || session?.support?.[feedback.questionRef.itemId]?.level || 0;
+  const final = feedback.final === true;
+  const includeFullFeedback = final || supportLevel > 0;
   return {
-    question: safeReasoningQuestion(question, { includeSkill: true, includeFeedback: true }),
-    result: result ? clone(result) : null,
-    final: feedback.final === true,
-    supportLevel: feedback.supportLevel || 0,
+    question: safeReasoningQuestion(question, { includeSkill: true, includeFeedback: includeFullFeedback }),
+    result: sanitiseFeedbackResult(result, { includeFullFeedback }),
+    final,
+    supportLevel,
     hint: result?.minimalHint || REASONING_MINIMAL_HINTS[result?.misconception] || '',
-    misconceptionLabel: result?.misconception ? REASONING_MISCONCEPTIONS[result.misconception] || result.misconception : '',
+    misconceptionLabel: result?.misconception && final ? REASONING_MISCONCEPTIONS[result.misconception] || result.misconception : '',
+  };
+}
+
+function sanitiseFeedbackResult(result, { includeFullFeedback = false } = {}) {
+  if (!result) return null;
+  if (includeFullFeedback) return clone(result);
+  return {
+    correct: Boolean(result.correct),
+    score: Number(result.score) || 0,
+    maxScore: Number(result.maxScore) || 0,
+    feedbackShort: result.feedbackShort || '',
+    minimalHint: result.minimalHint || REASONING_MINIMAL_HINTS[result.misconception] || '',
   };
 }
 
@@ -695,8 +716,8 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
     supportLevel,
   }];
   const evidenceEvent = maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount });
-  if (evidenceEvent) {
-    if (!data.evidenceKeys.includes(evidenceEvent.masteryKey)) data.evidenceKeys.push(evidenceEvent.masteryKey);
+  if (evidenceEvent && !data.evidenceKeys.includes(evidenceEvent.masteryKey)) {
+    data.evidenceKeys.push(evidenceEvent.masteryKey);
     domainEvents.push(evidenceEvent);
   }
   return domainEvents;
@@ -784,7 +805,7 @@ function applySubmit({ learnerId, state, data, payload, requestId, nowValue }) {
   const result = evaluateReasoningQuestion(question, response);
   const firstWrong = !result.correct && !session.strict && session.presentation === 'independent' && session.attempts[ref.itemId] < 2 && !(session.support?.[ref.itemId]?.level >= 2);
   if (firstWrong) {
-    state.feedback = { questionRef: ref, result, final: false };
+    state.feedback = { questionRef: ref, result: sanitiseFeedbackResult(result, { includeFullFeedback: false }), final: false };
     return [];
   }
   session.results[ref.itemId] = clone(result);
@@ -871,9 +892,16 @@ function applySupport({ state, payload, nowValue }) {
   const session = state.session;
   const ref = currentQuestionRef(session);
   if (!session || !ref) return;
+  if (payload?.expectedSessionId && payload.expectedSessionId !== session.id) return;
+  if (payload?.expectedQuestionId && payload.expectedQuestionId !== ref.itemId) return;
+  if (session.strict || session.results?.[ref.itemId]) return;
+  const currentLevel = session.support?.[ref.itemId]?.level || 0;
+  const attempted = (session.attempts?.[ref.itemId] || 0) > 0;
+  const teachingMode = session.presentation === 'worked' || session.presentation === 'faded';
+  if (!attempted && !teachingMode && !currentLevel) return;
   const level = payload?.kind === 'worked' ? 2 : 1;
-  session.support[ref.itemId] = { level, requestedAt: nowValue };
-  state.feedback = { questionRef: ref, result: null, final: false, supportLevel: level };
+  session.support[ref.itemId] = { level: Math.max(level, currentLevel), requestedAt: nowValue };
+  state.feedback = { questionRef: ref, result: null, final: false, supportLevel: session.support[ref.itemId].level };
 }
 
 function applyContinue({ state }) {

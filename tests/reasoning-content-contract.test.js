@@ -43,3 +43,24 @@ test('reasoning templates generate, mark and serialise cleanly across smoke seed
   }
   assert.deepEqual(failures, []);
 });
+
+
+test('reasoning generated templates keep stable item ids and do not emit malformed maths text', () => {
+  const malformed = /\b(?:undefined|NaN|Infinity|\[object Object\])\b/i;
+  const failures = [];
+  for (const template of REASONING_TEMPLATES) {
+    for (let seed = 1; seed <= 1000; seed += 1) {
+      const question = generateReasoningQuestion(template.id, seed);
+      const text = [
+        question?.stemHtml,
+        question?.visualHtml,
+        ...(question?.solutionLines || []),
+        question?.checkLine,
+        question?.reflectionPrompt,
+      ].filter(Boolean).join('\\n');
+      if (question?.itemId !== `${template.id}:${seed}`) failures.push(`${template.id}:${seed}: unstable itemId ${question?.itemId}`);
+      if (malformed.test(text)) failures.push(`${template.id}:${seed}: malformed generated text`);
+    }
+  }
+  assert.deepEqual(failures, []);
+});

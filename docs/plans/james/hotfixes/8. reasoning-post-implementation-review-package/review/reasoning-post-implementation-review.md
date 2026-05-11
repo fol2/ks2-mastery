@@ -16,15 +16,15 @@ The important content failure was `fraction_error_analysis`, which produced malf
 
 ### Engine determinism and answer contract
 
-Reasoning session refs depend on stable `templateId:seed` identity. The baseline audit found five `reason_better_estimate` cases where the returned item ID drifted from the requested seed because the generator recursed to a different seed.
+Reasoning session refs depend on stable `templateId:seed` identity. The baseline audit found five `reason_better_estimate` cases where the returned item ID drifted from the requested seed because the generator recursed to a different seed. The production-readiness review then extended this check to 1,000 seeds per template and found the same contract risk in other recursive generated templates, so the final patch removes seed-changing recursion across the Reasoning bank.
 
-That is not merely cosmetic. It can make a browser submit an expected question ID that the Worker does not recognise as the active ref, especially when exact due retries or read-model IDs are involved. The patch preserves external item identity while internally re-rolling tied estimates.
+That is not merely cosmetic. It can make a browser submit an expected question ID that the Worker does not recognise as the active ref, especially when exact due retries or read-model IDs are involved. The patch preserves external item identity while internally re-rolling tied or invalid generated parameters.
 
 ### Learning-flow quality
 
 The biggest UX/learning issue was support timing. The subject brief and previous PoC design emphasised independent first attempts, then nudge, then support. The implemented UI and command path allowed support before effort in non-strict modes.
 
-The patch makes the Worker authoritative: support is blocked before effort, blocked in strict SATs mode, and blocked after marking. The UI now mirrors that state instead of advertising buttons the Worker should not accept.
+The patch makes the Worker authoritative: support is blocked before effort, blocked in strict SATs mode, and blocked after marking. The client support actions now send expected session and question IDs, and the UI mirrors that state instead of advertising buttons the Worker should not accept.
 
 Worked/Faded modes are also strengthened. They now seed the intended support level at session creation, rather than merely labelling the session presentation.
 
@@ -32,7 +32,7 @@ Worked/Faded modes are also strengthened. They now seed the intended support lev
 
 The first-wrong nudge should not ship full worked-solution data to the client. In the baseline implementation, the feedback read model included the question with `includeFeedback: true` even before support/finalisation.
 
-The patch withholds solution/check/reflection data until support is requested or the answer is final. This keeps the engine aligned with the no-answer-leakage learning loop.
+The patch withholds solution/check/reflection data and answer-bearing result fields until support is requested or the answer is final. Persisted first-wrong state stores only the nudge-safe result shape, and public bootstrap redaction rebuilds Reasoning UI from the safe read model so older full-result state cannot leak through reload. This keeps the engine aligned with the no-answer-leakage learning loop.
 
 ### Monster/evidence integration
 
@@ -42,9 +42,9 @@ The review found an event hygiene issue: duplicate mastery keys could still re-e
 
 ### Performance
 
-No broad performance regression was found in the Reasoning-only local checks. The content audit generated and serialised 2,200 Reasoning questions quickly under Node 22. The patch adds only small constant-time guards:
+No broad performance regression was found in the Reasoning-only local checks. The content audit generated and serialised 110,000 Reasoning questions quickly under Node 22. The patch adds only small constant-time guards:
 
-- bounded internal loop in one template generator;
+- bounded internal loops in generated templates that previously changed the public seed recursively;
 - support-state initialisation proportional to session question count;
 - stricter boolean checks in support and feedback read-model construction.
 
@@ -66,13 +66,13 @@ On the uploaded ZIP snapshot before patch:
 
 ## Patched validation summary
 
-After patch:
+After the production-ready patch:
 
 - Patch dry-run: passed.
 - Patch apply: passed.
-- Targeted direct `node --test`: `18/18` pass.
-- Fresh patchcheck targeted tests after applying patch to a new ZIP extraction: `18/18` pass.
-- Reasoning content audit: `2,200` generated seed/template cases checked; `0` failures.
+- Targeted direct `node --test`: `20/20` pass.
+- Fresh patchcheck targeted tests after applying patch to a new ZIP extraction: `20/20` pass.
+- Reasoning content audit: `110,000` generated seed/template cases checked; `0` failures.
 - Syntax checks for Reasoning shared/Worker/client JS and updated tests: passed.
 
 ## Remaining limits

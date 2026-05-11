@@ -1,6 +1,7 @@
 {
   "templates": 110,
-  "checked": 2200,
+  "seedsPerTemplate": 1000,
+  "checked": 110000,
   "failures": [],
   "failureCount": 0
 }

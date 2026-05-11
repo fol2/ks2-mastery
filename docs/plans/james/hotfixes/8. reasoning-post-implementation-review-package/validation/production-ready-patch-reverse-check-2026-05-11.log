@@ -1,0 +1,5 @@
+command: git apply --unidiff-zero --reverse --check "docs/plans/james/hotfixes/8. reasoning-post-implementation-review-package/patches/002-reasoning-post-implementation-review.patch"
+startedAt: 2026-05-11T16:56:23.4973167Z
+exitCode: 0
+result: PASS
+finishedAt: 2026-05-11T16:56:23.5373705Z

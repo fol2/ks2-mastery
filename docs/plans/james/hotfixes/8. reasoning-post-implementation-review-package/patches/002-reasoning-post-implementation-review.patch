@@ -1,22 +1,168 @@
 diff --git a/shared/reasoning/content.js b/shared/reasoning/content.js
-index 26a313b..05ecde5 100644
+index b8c32943..2afdb6ed 100644
 --- a/shared/reasoning/content.js
 +++ b/shared/reasoning/content.js
-@@ -1366,8 +1366,8 @@ const TEMPLATES = [
-         generator(seed) {
-           const rng = mulberry32(seed);
-           const den = pick(rng, [3,4,5,8,10]);
+@@ -1369,2 +1369,2 @@ const TEMPLATES = [
 -          const a = pick(rng, [1,2]);
 -          const b = pick(rng, [1,2].filter(x => x + a < den));
 +          const a = randInt(rng, 1, Math.min(2, den - 2));
 +          const b = randInt(rng, 1, Math.min(2, den - a - 1));
-           const wrongN = a + b;
-           const wrongD = den + den;
-           const correct = simplifyFraction(a + b, den);
-@@ -5624,12 +5624,20 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
-       skillIds: ["reasonableness"],
-       satsFriendly: true,
-       generator(seed) {
+@@ -1860,3 +1860,34 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+-        const rng = mulberry32(seed);
+-        const digitSet = shuffle(rng, [0, randInt(rng, 1, 4), randInt(rng, 5, 7), randInt(rng, 8, 9)]).filter((digit, index, arr) => arr.indexOf(digit) === index);
+-        if (digitSet.length < 4) return this.generator(seed + 17);
++        let attemptSeed = seed;
++        let rng = mulberry32(attemptSeed);
++        let digitSet = [];
++        let threshold = 0;
++        let candidates = [];
++        for (let guard = 0; guard < 48; guard += 1) {
++          rng = mulberry32(attemptSeed);
++          digitSet = shuffle(rng, [0, randInt(rng, 1, 4), randInt(rng, 5, 7), randInt(rng, 8, 9)]).filter((digit, index, arr) => arr.indexOf(digit) === index);
++          threshold = randInt(rng, 22, 54) * 100;
++          if (digitSet.length >= 4) {
++            const permsForAttempt = permutations(digitSet).filter(p => p[0] !== 0).map(makeDigitNumber);
++            const validForAttempt = permsForAttempt.filter(n => n > threshold);
++            const groupedForAttempt = {};
++            validForAttempt.forEach(n => {
++              const target = roundToPlace(n, 100);
++              if (!groupedForAttempt[target]) groupedForAttempt[target] = [];
++              groupedForAttempt[target].push(n);
++            });
++            candidates = Object.entries(groupedForAttempt).filter(([, nums]) => nums.length >= 2);
++            if (candidates.length) break;
++          }
++          attemptSeed += 31;
++        }
++        if (!candidates.length) {
++          digitSet = [0, 2, 5, 8];
++          threshold = 2200;
++          const grouped = {};
++          permutations(digitSet).filter(p => p[0] !== 0).map(makeDigitNumber).filter(n => n > threshold).forEach(n => {
++            const target = roundToPlace(n, 100);
++            if (!grouped[target]) grouped[target] = [];
++            grouped[target].push(n);
++          });
++          candidates = Object.entries(grouped).filter(([, nums]) => nums.length >= 2);
++        }
+@@ -1864,11 +1894,0 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+-        const perms = permutations(digitSet).filter(p => p[0] !== 0).map(makeDigitNumber);
+-        const threshold = randInt(rng, 22, 54) * 100;
+-        const valid = perms.filter(n => n > threshold);
+-        const grouped = {};
+-        valid.forEach(n => {
+-          const target = roundToPlace(n, place);
+-          if (!grouped[target]) grouped[target] = [];
+-          grouped[target].push(n);
+-        });
+-        const candidates = Object.entries(grouped).filter(([, nums]) => nums.length >= 2);
+-        if (!candidates.length) return this.generator(seed + 31);
+@@ -2308,8 +2328,22 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+-        const rng = mulberry32(seed);
+-        const aGroups = randInt(rng, 4, 8);
+-        const aPerGroup = randInt(rng, 16, 34);
+-        const bGroups = randInt(rng, 4, 8);
+-        const bPerGroup = randInt(rng, 16, 34);
+-        const aTotal = aGroups * aPerGroup;
+-        const bTotal = bGroups * bPerGroup;
+-        if (aTotal === bTotal) return this.generator(seed + 23);
++        let attemptSeed = seed;
++        let rng = mulberry32(attemptSeed);
++        let aGroups = randInt(rng, 4, 8);
++        let aPerGroup = randInt(rng, 16, 34);
++        let bGroups = randInt(rng, 4, 8);
++        let bPerGroup = randInt(rng, 16, 34);
++        let aTotal = aGroups * aPerGroup;
++        let bTotal = bGroups * bPerGroup;
++        for (let guard = 0; aTotal === bTotal && guard < 48; guard += 1) {
++          attemptSeed += 23;
++          rng = mulberry32(attemptSeed);
++          aGroups = randInt(rng, 4, 8);
++          aPerGroup = randInt(rng, 16, 34);
++          bGroups = randInt(rng, 4, 8);
++          bPerGroup = randInt(rng, 16, 34);
++          aTotal = aGroups * aPerGroup;
++          bTotal = bGroups * bPerGroup;
++        }
++        if (aTotal === bTotal) {
++          bPerGroup = bPerGroup < 34 ? bPerGroup + 1 : bPerGroup - 1;
++          bTotal = bGroups * bPerGroup;
++        }
+@@ -2528 +2561,0 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+-        if (minInput > 14) return this.generator(seed + 29);
+@@ -2531 +2563,0 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+-        if (inputBMin > 18) return this.generator(seed + 31);
+@@ -3464,10 +3496,26 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+-        const rng = mulberry32(seed);
+-        const beforeBreak = pick(rng, [35, 40, 45, 50, 55, 60, 65, 70]);
+-        const breakLength = pick(rng, [10, 15, 20, 25]);
+-        const afterBreak = pick(rng, [30, 35, 40, 45, 50, 55, 60]);
+-        const total = beforeBreak + breakLength + afterBreak;
+-        const endHour = randInt(rng, 12, 18);
+-        const endMin = pick(rng, [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+-        const end = endHour * 60 + endMin;
+-        const start = end - total;
+-        if (start < 8 * 60) return this.generator(seed + 19);
++        let attemptSeed = seed;
++        let rng = mulberry32(attemptSeed);
++        let beforeBreak = pick(rng, [35, 40, 45, 50, 55, 60, 65, 70]);
++        let breakLength = pick(rng, [10, 15, 20, 25]);
++        let afterBreak = pick(rng, [30, 35, 40, 45, 50, 55, 60]);
++        let total = beforeBreak + breakLength + afterBreak;
++        let endHour = randInt(rng, 12, 18);
++        let endMin = pick(rng, [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
++        let end = endHour * 60 + endMin;
++        let start = end - total;
++        for (let guard = 0; start < 8 * 60 && guard < 48; guard += 1) {
++          attemptSeed += 19;
++          rng = mulberry32(attemptSeed);
++          beforeBreak = pick(rng, [35, 40, 45, 50, 55, 60, 65, 70]);
++          breakLength = pick(rng, [10, 15, 20, 25]);
++          afterBreak = pick(rng, [30, 35, 40, 45, 50, 55, 60]);
++          total = beforeBreak + breakLength + afterBreak;
++          endHour = randInt(rng, 12, 18);
++          endMin = pick(rng, [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
++          end = endHour * 60 + endMin;
++          start = end - total;
++        }
++        if (start < 8 * 60) {
++          end = 18 * 60;
++          start = end - total;
++        }
+@@ -5446,8 +5494,24 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+-        const rng = mulberry32(seed);
+-        const a = randInt(rng, 240, 780);
+-        const b = randInt(rng, 230, 790);
+-        const roundedA = Math.round(a / 100) * 100;
+-        const roundedB = Math.round(b / 100) * 100;
+-        const estimate = roundedA + roundedB;
+-        const exact = a + b;
+-        if (exact === estimate) return this.generator(seed + 17);
++        let attemptSeed = seed;
++        let rng = mulberry32(attemptSeed);
++        let a = randInt(rng, 240, 780);
++        let b = randInt(rng, 230, 790);
++        let roundedA = Math.round(a / 100) * 100;
++        let roundedB = Math.round(b / 100) * 100;
++        let estimate = roundedA + roundedB;
++        let exact = a + b;
++        for (let guard = 0; exact === estimate && guard < 48; guard += 1) {
++          attemptSeed += 17;
++          rng = mulberry32(attemptSeed);
++          a = randInt(rng, 240, 780);
++          b = randInt(rng, 230, 790);
++          roundedA = Math.round(a / 100) * 100;
++          roundedB = Math.round(b / 100) * 100;
++          estimate = roundedA + roundedB;
++          exact = a + b;
++        }
++        if (exact === estimate) {
++          b = b < 790 ? b + 1 : b - 1;
++          roundedB = Math.round(b / 100) * 100;
++          estimate = roundedA + roundedB;
++          exact = a + b;
++        }
+@@ -5627,6 +5691,14 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
 -        const rng = mulberry32(seed);
 -        const a = pick(rng, [184, 196, 198, 205, 214, 223]);
 -        const b = pick(rng, [176, 187, 202, 206, 214, 219]);
@@ -37,49 +183,73 @@ index 26a313b..05ecde5 100644
 +          better = Math.round(a / 100) * 100 + Math.round(b / 100) * 100;
 +          worse = Math.floor(a / 100) * 100 + Math.floor(b / 100) * 100;
 +        }
-         const betterName = better > worse ? "Suki" : "Amir";
-         const otherName = betterName === "Suki" ? "Amir" : "Suki";
-         const exact = a + b;
+@@ -5751,4 +5823,14 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+-        const rng = mulberry32(seed);
+-        const a = pick(rng, [542, 631, 724, 853, 764]);
+-        const b = pick(rng, [286, 257, 368, 475, 486]);
+-        if (a <= b) return this.generator(seed + 19);
++        let attemptSeed = seed;
++        let rng = mulberry32(attemptSeed);
++        let a = pick(rng, [542, 631, 724, 853, 764]);
++        let b = pick(rng, [286, 257, 368, 475, 486]);
++        for (let guard = 0; a <= b && guard < 48; guard += 1) {
++          attemptSeed += 19;
++          rng = mulberry32(attemptSeed);
++          a = pick(rng, [542, 631, 724, 853, 764]);
++          b = pick(rng, [286, 257, 368, 475, 486]);
++        }
++        if (a <= b) {
++          a = 853;
++          b = 475;
++        }
+diff --git a/src/subjects/reasoning/command-actions.js b/src/subjects/reasoning/command-actions.js
+index de4df653..e995ea5c 100644
+--- a/src/subjects/reasoning/command-actions.js
++++ b/src/subjects/reasoning/command-actions.js
+@@ -84,0 +85,12 @@ function allResponsesPayload({ data, state }) {
++function supportPayload(kind) {
++  return ({ state }) => {
++    const session = currentSession(state);
++    const question = currentQuestion(state);
++    return {
++      expectedSessionId: session?.id || '',
++      expectedQuestionId: question?.id || '',
++      kind,
++    };
++  };
++}
++
+@@ -172 +184 @@ export const reasoningSubjectCommandActions = Object.freeze({
+-    payload: { kind: 'faded' },
++    payload: supportPayload('faded'),
+@@ -177 +189 @@ export const reasoningSubjectCommandActions = Object.freeze({
+-    payload: { kind: 'worked' },
++    payload: supportPayload('worked'),
 diff --git a/src/subjects/reasoning/components/ReasoningPracticeSurface.jsx b/src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
-index c74f19b..4f4550f 100644
+index 47b922cf..e3c4c3cf 100644
 --- a/src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
 +++ b/src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
-@@ -391,6 +391,9 @@ function QuestionPanel({ ui, actions }) {
-   const pending = isPending(ui);
-   const formId = `reasoning-question-form-${session.id}`;
-   const primaryLabel = result ? 'Continue' : session.delayedFeedback ? (canGoNext(session) ? 'Save and next' : 'Save answer') : 'Submit answer';
+@@ -393,0 +394,3 @@ function QuestionPanel({ ui, actions }) {
 +  const canUseSupport = !result && !session.strict && (Boolean(ui.feedback?.result) || Number(session.supportLevel || 0) > 0 || session.presentation === 'faded');
 +  const canRequestFaded = canUseSupport && Number(session.supportLevel || 0) < 1;
 +  const canRequestWorked = canUseSupport && Number(session.supportLevel || 0) < 2;
-   function submit(event) {
-     event.preventDefault();
-     const formData = new FormData(event.currentTarget);
-@@ -436,8 +439,8 @@ function QuestionPanel({ ui, actions }) {
-           <button className="btn ghost" type="button" onClick={(event) => saveAndMove(event, { delta: -1 })} disabled={pending || !canGoPrevious(session)}>Previous</button>
-           <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save draft and next'}</button>
-           {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={mark} disabled={pending}>Mark set</button> : null}
+@@ -439,2 +442,2 @@ function QuestionPanel({ ui, actions }) {
 -          {!result && !session.strict ? <button className="btn secondary" type="button" onClick={() => dispatch(actions, 'reasoning-support-faded')} disabled={pending}>Partly worked support</button> : null}
 -          {!result && !session.strict ? <button className="btn secondary" type="button" onClick={() => dispatch(actions, 'reasoning-support-worked')} disabled={pending}>Worked solution</button> : null}
 +          {canRequestFaded ? <button className="btn secondary" type="button" onClick={() => dispatch(actions, 'reasoning-support-faded')} disabled={pending}>Partly worked support</button> : null}
 +          {canRequestWorked ? <button className="btn secondary" type="button" onClick={() => dispatch(actions, 'reasoning-support-worked')} disabled={pending}>Worked solution</button> : null}
-           <button className="btn ghost" type="button" onClick={() => dispatch(actions, 'reasoning-end')} disabled={pending}>End round</button>
-         </div>
-       </form>
 diff --git a/tests/reasoning-content-contract.test.js b/tests/reasoning-content-contract.test.js
-index a6b9ee2..431d593 100644
+index cbc82261..6935835e 100644
 --- a/tests/reasoning-content-contract.test.js
 +++ b/tests/reasoning-content-contract.test.js
-@@ -43,3 +43,24 @@ test('reasoning templates generate, mark and serialise cleanly across smoke seed
-   }
-   assert.deepEqual(failures, []);
- });
+@@ -45,0 +46,21 @@ test('reasoning templates generate, mark and serialise cleanly across smoke seed
 +
 +
 +test('reasoning generated templates keep stable item ids and do not emit malformed maths text', () => {
 +  const malformed = /\b(?:undefined|NaN|Infinity|\[object Object\])\b/i;
 +  const failures = [];
 +  for (const template of REASONING_TEMPLATES) {
-+    for (let seed = 1; seed <= 20; seed += 1) {
++    for (let seed = 1; seed <= 1000; seed += 1) {
 +      const question = generateReasoningQuestion(template.id, seed);
 +      const text = [
 +        question?.stemHtml,
@@ -95,39 +265,25 @@ index a6b9ee2..431d593 100644
 +  assert.deepEqual(failures, []);
 +});
 diff --git a/tests/reasoning-engine-rewards.test.js b/tests/reasoning-engine-rewards.test.js
-index fd80e64..cf735ba 100644
+index a515e665..ab6522c6 100644
 --- a/tests/reasoning-engine-rewards.test.js
 +++ b/tests/reasoning-engine-rewards.test.js
-@@ -77,28 +77,158 @@ test('server reasoning engine uses the injected command clock for support and se
-     learnerId: 'learner-clock',
-     subjectRecord: null,
-     command: 'start-session',
+@@ -6,0 +7,2 @@ import { projectReasoningRewards } from '../worker/src/projections/rewards.js';
++import { reasoningSubjectCommandActions } from '../src/subjects/reasoning/command-actions.js';
++import { buildReasoningReadModel } from '../worker/src/subjects/reasoning/read-models.js';
+@@ -80 +82 @@ test('server reasoning engine uses the injected command clock for support and se
 -    payload: { mode: 'smart', roundLength: 3 },
 +    payload: { mode: 'faded', roundLength: 3 },
-     requestId: 'clock-start',
-   });
-   assert.equal(started.practiceSession.startedAt, new Date(1_700_000_000_000).toISOString());
-   assert.equal(started.practiceSession.updatedAt, new Date(1_700_000_000_000).toISOString());
- 
-   nowValue = 1_700_000_060_000;
+@@ -86,0 +89 @@ test('server reasoning engine uses the injected command clock for support and se
 +  const itemId = started.state.session.questionRefs[0].itemId;
-   const supported = engine.apply({
-     learnerId: 'learner-clock',
-     subjectRecord: { state: started.state, data: started.data },
-     command: 'request-support',
+@@ -91 +94 @@ test('server reasoning engine uses the injected command clock for support and se
 -    payload: { kind: 'faded' },
 +    payload: { expectedSessionId: started.state.session.id, expectedQuestionId: itemId, kind: 'worked' },
-     requestId: 'clock-support',
-   });
- 
+@@ -95 +97,0 @@ test('server reasoning engine uses the injected command clock for support and se
 -  const itemId = supported.state.session.questionRefs[0].itemId;
-   assert.equal(supported.state.session.support[itemId].requestedAt, 1_700_000_060_000);
+@@ -96,0 +99 @@ test('server reasoning engine uses the injected command clock for support and se
 +  assert.equal(supported.state.session.support[itemId].level, 2);
-   assert.equal(supported.practiceSession.startedAt, new Date(1_700_000_000_000).toISOString());
-   assert.equal(supported.practiceSession.updatedAt, new Date(1_700_000_060_000).toISOString());
- });
- 
- 
+@@ -101,0 +105,215 @@ test('server reasoning engine uses the injected command clock for support and se
 +
 +test('reasoning first-wrong feedback gives only a nudge until support is requested', () => {
 +  const engine = createServerReasoningEngine({ now: () => 10_000, random: () => 0 });
@@ -148,9 +304,16 @@ index fd80e64..cf735ba 100644
 +
 +  assert.equal(firstWrong.state.phase, 'session');
 +  assert.equal(firstWrong.state.feedback.final, false);
++  assert.equal(firstWrong.state.feedback.result.answerText, undefined);
++  assert.equal(firstWrong.state.feedback.result.feedbackLong, undefined);
++  assert.equal(firstWrong.state.feedback.result.misconception, undefined);
 +  assert.equal(firstWrong.readModel.feedback.final, false);
 +  assert.equal(firstWrong.readModel.feedback.question.solutionLines, undefined);
 +  assert.equal(firstWrong.readModel.session.currentQuestion.solutionLines, undefined);
++  assert.equal(firstWrong.readModel.feedback.result.answerText, undefined);
++  assert.equal(firstWrong.readModel.feedback.result.feedbackLong, undefined);
++  assert.equal(firstWrong.readModel.feedback.result.misconception, undefined);
++  assert.ok(firstWrong.readModel.feedback.result.minimalHint);
 +
 +  const supported = engine.apply({
 +    learnerId: 'learner-nudge',
@@ -200,6 +363,34 @@ index fd80e64..cf735ba 100644
 +  });
 +  assert.equal(strictSupport.state.session.support[strictRef.itemId], undefined);
 +  assert.equal(strictSupport.readModel.session.currentQuestion.solutionLines, undefined);
++
++  const markedStart = engine.apply({
++    learnerId: 'learner-support-guard',
++    subjectRecord: { state: strictSupport.state, data: strictSupport.data },
++    command: 'start-session',
++    payload: { mode: 'smart', roundLength: 3, viewMode: 'one' },
++    requestId: 'guard-marked-start',
++  });
++  const markedRef = markedStart.state.session.questionRefs[0];
++  const markedQuestion = generateReasoningQuestion(markedRef.templateId, markedRef.seed);
++  const markedAnswer = findNumericCorrectAnswer(markedQuestion);
++  const marked = engine.apply({
++    learnerId: 'learner-support-guard',
++    subjectRecord: { state: markedStart.state, data: markedStart.data },
++    command: 'submit-answer',
++    payload: { expectedSessionId: markedStart.state.session.id, expectedQuestionId: markedRef.itemId, response: { answer: markedAnswer } },
++    requestId: 'guard-marked-answer',
++  });
++  const afterMarkedSupport = engine.apply({
++    learnerId: 'learner-support-guard',
++    subjectRecord: { state: marked.state, data: marked.data },
++    command: 'request-support',
++    payload: { expectedSessionId: marked.state.session.id, expectedQuestionId: markedRef.itemId, kind: 'worked' },
++    requestId: 'guard-after-marked',
++  });
++  assert.equal(afterMarkedSupport.state.session.support[markedRef.itemId], undefined);
++  assert.equal(afterMarkedSupport.state.feedback.final, true);
++  assert.ok(Array.isArray(afterMarkedSupport.readModel.session.currentQuestion.solutionLines));
 +});
 +
 +test('worked and faded Reasoning modes expose seeded support without marking as independent', () => {
@@ -225,6 +416,57 @@ index fd80e64..cf735ba 100644
 +  assert.equal(faded.state.session.support[fadedRef.itemId].level, 1);
 +  assert.equal(faded.readModel.session.supportLevel, 1);
 +  assert.ok(Array.isArray(faded.readModel.session.currentQuestion.solutionLines));
++});
++
++test('reasoning support command actions send stale-session and stale-question guards', () => {
++  const state = {
++    learners: { selectedId: 'learner-action' },
++    subjectUi: {
++      reasoning: {
++        session: {
++          id: 'reasoning-session-action',
++          currentQuestion: { id: 'pv_rounding_context:1' },
++        },
++      },
++    },
++  };
++  assert.deepEqual(reasoningSubjectCommandActions['reasoning-support-faded'].payload({ state }), {
++    expectedSessionId: 'reasoning-session-action',
++    expectedQuestionId: 'pv_rounding_context:1',
++    kind: 'faded',
++  });
++  assert.deepEqual(reasoningSubjectCommandActions['reasoning-support-worked'].payload({ state }), {
++    expectedSessionId: 'reasoning-session-action',
++    expectedQuestionId: 'pv_rounding_context:1',
++    kind: 'worked',
++  });
++});
++
++test('reasoning read model redacts legacy persisted first-wrong result fields', () => {
++  const engine = createServerReasoningEngine({ now: () => 35_000, random: () => 0 });
++  const started = engine.apply({
++    learnerId: 'learner-legacy-redaction',
++    command: 'start-session',
++    payload: { mode: 'smart', roundLength: 3, viewMode: 'one' },
++    requestId: 'legacy-redaction-start',
++  });
++  const ref = { templateId: 'pv_rounding_context', seed: 1, itemId: 'pv_rounding_context:1' };
++  const question = generateReasoningQuestion(ref.templateId, ref.seed);
++  const fullResult = question.evaluate({ answer: '0' });
++  const readModel = buildReasoningReadModel({
++    learnerId: 'learner-legacy-redaction',
++    state: {
++      ...started.state,
++      feedback: { questionRef: ref, result: fullResult, final: false },
++    },
++    data: started.data,
++    nowValue: 35_000,
++  });
++  assert.equal(fullResult.answerText.length > 0, true);
++  assert.equal(readModel.feedback.result.answerText, undefined);
++  assert.equal(readModel.feedback.result.feedbackLong, undefined);
++  assert.equal(readModel.feedback.result.misconception, undefined);
++  assert.equal(readModel.feedback.question.solutionLines, undefined);
 +});
 +
 +test('duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events', () => {
@@ -257,77 +499,82 @@ index fd80e64..cf735ba 100644
 +  ]);
 +});
 +
- test('worker subject runtime wires reasoning command handlers', async () => {
-   const runtime = createWorkerSubjectRuntime({ reasoning: { now: () => 1000, random: () => 0 } });
-   const started = await runtime.dispatch({
+diff --git a/worker/src/repository.js b/worker/src/repository.js
+index 42fe5239..dd8a6268 100644
+--- a/worker/src/repository.js
++++ b/worker/src/repository.js
+@@ -165,0 +166 @@ import { __arithmeticEngineInternals } from './subjects/arithmetic/engine.js';
++import { buildReasoningReadModel } from './subjects/reasoning/read-models.js';
+@@ -382,0 +384,11 @@ function redactArithmeticUiForClient(ui, data = {}, learnerId = '') {
++function redactReasoningUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
++  const runtimeData = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
++  const runtimeState = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
++  return buildReasoningReadModel({
++    learnerId,
++    state: runtimeState,
++    data: runtimeData,
++    nowValue: now,
++  });
++}
++
+@@ -406,0 +419,3 @@ const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
++  reasoning({ record, row, now }) {
++    return redactReasoningUiForClient(record.ui, record.data, row.learner_id, { now });
++  },
 diff --git a/worker/src/subjects/reasoning/engine.js b/worker/src/subjects/reasoning/engine.js
-index 79ad5d8..79bb56f 100644
+index 37569332..1fe13b2d 100644
 --- a/worker/src/subjects/reasoning/engine.js
 +++ b/worker/src/subjects/reasoning/engine.js
-@@ -389,12 +389,18 @@ function buildSession(data, prefs, { nowValue, random, heroContext } = {}) {
-   if (!questionRefs.length) return null;
-   for (const ref of questionRefs) data.recentTemplateStarts.push({ templateId: ref.templateId, at: nowValue });
-   data.recentTemplateStarts = data.recentTemplateStarts.slice(-40);
+@@ -391,0 +392,6 @@ function buildSession(data, prefs, { nowValue, random, heroContext } = {}) {
 +  const presentation = presentationFor(prefs.mode);
 +  const support = {};
 +  if (presentation === 'worked' || presentation === 'faded') {
 +    const level = presentation === 'worked' ? 2 : 1;
 +    for (const ref of questionRefs) support[ref.itemId] = { level, requestedAt: nowValue, seededByMode: true };
 +  }
-   return {
-     id: uid('reasoning_session'),
-     mode: prefs.mode,
-     strict: prefs.mode === 'sats' || prefs.mode === 'satsset',
-     delayedFeedback: prefs.mode === 'satsset' || prefs.viewMode === 'list',
+@@ -397 +403 @@ function buildSession(data, prefs, { nowValue, random, heroContext } = {}) {
 -    presentation: presentationFor(prefs.mode),
 +    presentation,
-     startedAt: nowValue,
-     timeLimitMin: prefs.mode === 'satsset' ? (prefs.setSize === 12 ? 30 : 20) : null,
-     currentQuestionIndex: 0,
-@@ -403,7 +409,7 @@ function buildSession(data, prefs, { nowValue, random, heroContext } = {}) {
-     responses: {},
-     results: {},
-     attempts: {},
+@@ -406 +412 @@ function buildSession(data, prefs, { nowValue, random, heroContext } = {}) {
 -    support: {},
 +    support,
-     heroContext: heroContext || null,
-   };
- }
-@@ -468,13 +474,15 @@ function buildFeedback(session, feedback) {
-   if (!feedback?.questionRef) return null;
-   const question = questionFromRef(feedback.questionRef);
-   const result = feedback.result || null;
+@@ -470,0 +477,3 @@ function buildFeedback(session, feedback) {
 +  const supportLevel = feedback.supportLevel || session?.support?.[feedback.questionRef.itemId]?.level || 0;
 +  const final = feedback.final === true;
-   return {
++  const includeFullFeedback = final || supportLevel > 0;
+@@ -472,4 +481,4 @@ function buildFeedback(session, feedback) {
 -    question: safeReasoningQuestion(question, { includeSkill: true, includeFeedback: true }),
-+    question: safeReasoningQuestion(question, { includeSkill: true, includeFeedback: final || supportLevel > 0 }),
-     result: result ? clone(result) : null,
+-    result: result ? clone(result) : null,
 -    final: feedback.final === true,
 -    supportLevel: feedback.supportLevel || 0,
++    question: safeReasoningQuestion(question, { includeSkill: true, includeFeedback: includeFullFeedback }),
++    result: sanitiseFeedbackResult(result, { includeFullFeedback }),
 +    final,
 +    supportLevel,
-     hint: result?.minimalHint || REASONING_MINIMAL_HINTS[result?.misconception] || '',
+@@ -477 +486,13 @@ function buildFeedback(session, feedback) {
 -    misconceptionLabel: result?.misconception ? REASONING_MISCONCEPTIONS[result.misconception] || result.misconception : '',
 +    misconceptionLabel: result?.misconception && final ? REASONING_MISCONCEPTIONS[result.misconception] || result.misconception : '',
-   };
- }
- 
-@@ -695,8 +703,8 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
-     supportLevel,
-   }];
-   const evidenceEvent = maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount });
++  };
++}
++
++function sanitiseFeedbackResult(result, { includeFullFeedback = false } = {}) {
++  if (!result) return null;
++  if (includeFullFeedback) return clone(result);
++  return {
++    correct: Boolean(result.correct),
++    score: Number(result.score) || 0,
++    maxScore: Number(result.maxScore) || 0,
++    feedbackShort: result.feedbackShort || '',
++    minimalHint: result.minimalHint || REASONING_MINIMAL_HINTS[result.misconception] || '',
+@@ -698,2 +719,2 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
 -  if (evidenceEvent) {
 -    if (!data.evidenceKeys.includes(evidenceEvent.masteryKey)) data.evidenceKeys.push(evidenceEvent.masteryKey);
 +  if (evidenceEvent && !data.evidenceKeys.includes(evidenceEvent.masteryKey)) {
 +    data.evidenceKeys.push(evidenceEvent.masteryKey);
-     domainEvents.push(evidenceEvent);
-   }
-   return domainEvents;
-@@ -871,9 +879,16 @@ function applySupport({ state, payload, nowValue }) {
-   const session = state.session;
-   const ref = currentQuestionRef(session);
-   if (!session || !ref) return;
+@@ -787 +808 @@ function applySubmit({ learnerId, state, data, payload, requestId, nowValue }) {
+-    state.feedback = { questionRef: ref, result, final: false };
++    state.feedback = { questionRef: ref, result: sanitiseFeedbackResult(result, { includeFullFeedback: false }), final: false };
+@@ -873,0 +895,7 @@ function applySupport({ state, payload, nowValue }) {
 +  if (payload?.expectedSessionId && payload.expectedSessionId !== session.id) return;
 +  if (payload?.expectedQuestionId && payload.expectedQuestionId !== ref.itemId) return;
 +  if (session.strict || session.results?.[ref.itemId]) return;
@@ -335,11 +582,8 @@ index 79ad5d8..79bb56f 100644
 +  const attempted = (session.attempts?.[ref.itemId] || 0) > 0;
 +  const teachingMode = session.presentation === 'worked' || session.presentation === 'faded';
 +  if (!attempted && !teachingMode && !currentLevel) return;
-   const level = payload?.kind === 'worked' ? 2 : 1;
+@@ -875,2 +903,2 @@ function applySupport({ state, payload, nowValue }) {
 -  session.support[ref.itemId] = { level, requestedAt: nowValue };
 -  state.feedback = { questionRef: ref, result: null, final: false, supportLevel: level };
 +  session.support[ref.itemId] = { level: Math.max(level, currentLevel), requestedAt: nowValue };
 +  state.feedback = { questionRef: ref, result: null, final: false, supportLevel: session.support[ref.itemId].level };
- }
- 
- function applyContinue({ state }) {

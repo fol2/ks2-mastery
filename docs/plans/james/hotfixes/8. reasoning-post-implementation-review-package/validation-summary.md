@@ -46,14 +46,14 @@ Patched targeted tests:
 node --test tests/reasoning-content-contract.test.js tests/reasoning-engine-rewards.test.js tests/reasoning-subject-registry.test.js tests/reasoning-production-smoke.test.js tests/hero-reasoning-integration.test.js
 ```
 
-Result: `18/18` pass.
+Result: `20/20` pass.
 
-Patchcheck targeted tests after applying patch to a fresh ZIP extraction: `18/18` pass.
+Patchcheck targeted tests after applying patch to a fresh ZIP extraction: `20/20` pass.
 
 Patched content audit:
 
 - Templates: `110`
-- Seed/template cases checked: `2,200`
+- Seed/template cases checked: `110,000`
 - Failures: `0`
 
 Syntax checks:
@@ -66,4 +66,11 @@ Syntax checks:
 
 ## Production note
 
-No live production deployment smoke was performed in this environment. This package is a Reasoning-only post-implementation hotfix package for the supplied ZIP snapshot.
+The original package did not include live production deployment smoke. This worktree promotion adds production-readiness gates against the repository state rebased on `origin/main`:
+
+- `node --test tests/reasoning-content-contract.test.js tests/reasoning-engine-rewards.test.js tests/reasoning-subject-registry.test.js tests/reasoning-production-smoke.test.js tests/hero-reasoning-integration.test.js`: `20/20` pass. Evidence: `validation/production-ready-targeted-tests-2026-05-11.log`.
+- `npm test`: `111,449` pass, `0` fail, `12` skipped. Evidence: `validation/production-ready-npm-test-2026-05-11.log`.
+- `npm run check`: Cloudflare dry-run deploy passed; client bundle audit passed; main bundle `204,397 / 232,000` bytes gzip; `--dry-run: exiting now.` Evidence: `validation/production-ready-npm-run-check-2026-05-11.log`.
+- `git apply --unidiff-zero --reverse --check patches/002-reasoning-post-implementation-review.patch`: passed against the patched worktree, proving the package patch matches the current code diff. Evidence: `validation/production-ready-patch-reverse-check-2026-05-11.log`.
+
+Live production deployment and smoke evidence are still required before final closure.
