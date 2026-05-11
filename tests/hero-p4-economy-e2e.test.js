@@ -158,6 +158,7 @@ function getHeroProgressRow(server, learnerId) {
 async function claimAllTasks(server, learnerId, accountId) {
   const readModelPayload = await getReadModel(server, learnerId);
   const quest = readModelPayload.hero.dailyQuest;
+  const dateKey = readModelPayload.hero.dateKey;
   const fingerprint = readModelPayload.hero.questFingerprint;
   const allTasks = quest.tasks.filter(t => t.launchStatus === 'launchable');
   if (allTasks.length < 1) throw new Error('Fixture must produce at least 1 launchable task');
@@ -215,7 +216,7 @@ async function claimAllTasks(server, learnerId, accountId) {
     assert.equal(claimResp.status, 200, `Claim ${i} must succeed: ${JSON.stringify(lastClaimPayload)}`);
   }
 
-  return { lastClaimPayload, lastRequestId, allTasks, quest, fingerprint };
+  return { lastClaimPayload, lastRequestId, allTasks, quest, dateKey, fingerprint };
 }
 
 // ── 1. Full daily completion flow awards coins ───────────────────────────
@@ -241,7 +242,7 @@ test('U8 E2E: replay after completion → already-completed with coinBalance pre
   const server = createEconomyServer();
   await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
 
-  const { quest, fingerprint, allTasks } = await claimAllTasks(server, 'learner-a', 'adult-a');
+  const { quest, dateKey, fingerprint, allTasks } = await claimAllTasks(server, 'learner-a', 'adult-a');
 
   // Replay the final task with a NEW requestId
   const lastTask = allTasks[allTasks.length - 1];
@@ -260,6 +261,10 @@ test('U8 E2E: replay after completion → already-completed with coinBalance pre
   assert.equal(response.status, 200, `Replay must succeed: ${JSON.stringify(payload)}`);
   assert.equal(payload.ok, true);
   assert.equal(payload.heroClaim.status, 'already-completed');
+  assert.equal(payload.heroClaim.dateKey, dateKey);
+  assert.equal(payload.heroClaim.questId, quest.questId);
+  assert.equal(payload.heroClaim.questFingerprint, fingerprint);
+  assert.equal(payload.heroClaim.dailyStatus, 'completed');
   assert.equal(payload.heroClaim.coinsEnabled, true);
   assert.equal(payload.heroClaim.coinBalance, HERO_DAILY_COMPLETION_COINS);
   assert.equal(payload.heroClaim.dailyCoinsAlreadyAwarded, true);
@@ -275,7 +280,7 @@ test('U8 E2E: different requestId after full completion → already-completed, b
   const server = createEconomyServer();
   await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
 
-  const { quest, fingerprint, allTasks } = await claimAllTasks(server, 'learner-a', 'adult-a');
+  const { quest, dateKey, fingerprint, allTasks } = await claimAllTasks(server, 'learner-a', 'adult-a');
 
   // Attempt to claim any task with a completely different requestId
   const firstTask = allTasks[0];
@@ -293,6 +298,10 @@ test('U8 E2E: different requestId after full completion → already-completed, b
 
   assert.equal(response.status, 200, `Expected 200: ${JSON.stringify(payload)}`);
   assert.equal(payload.heroClaim.status, 'already-completed');
+  assert.equal(payload.heroClaim.dateKey, dateKey);
+  assert.equal(payload.heroClaim.questId, quest.questId);
+  assert.equal(payload.heroClaim.questFingerprint, fingerprint);
+  assert.equal(payload.heroClaim.dailyStatus, 'completed');
   assert.equal(payload.heroClaim.coinBalance, HERO_DAILY_COMPLETION_COINS);
   assert.equal(payload.heroClaim.dailyCoinsAlreadyAwarded, true);
 

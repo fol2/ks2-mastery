@@ -22,8 +22,10 @@ import {
   punctuationExpectedContextFor,
 } from '../../../../../scripts/punctuation-production-smoke.mjs';
 
-const OUT = 'docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-smoke-2026-05-10.json';
-const SCREENSHOT_DIR = 'docs/plans/james/hero-mode/A/hero-mode-current-deploy-enabled-ui-screenshots-2026-05-10';
+const OUT = process.env.HERO_SMOKE_OUT
+  || 'docs/plans/james/hero-mode/A/hero-mode-click-coin-e2e-smoke-2026-05-11.json';
+const SCREENSHOT_DIR = process.env.HERO_SMOKE_SCREENSHOT_DIR
+  || 'docs/plans/james/hero-mode/A/hero-mode-click-coin-e2e-screenshots-2026-05-11';
 const DATABASE = 'ks2-mastery-db';
 
 function hashId(value) {
@@ -329,6 +331,68 @@ async function runEnabledBrowserUiSmoke({ origin, cookie }) {
   }
 }
 
+async function runClaimedBrowserUiSmoke({ origin, cookie }) {
+  const browser = await chromium.launch();
+  const consoleErrors = [];
+  const requestFailures = [];
+  const httpFailures = [];
+  const screenshots = {};
+  try {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+    });
+    await context.addCookies([sessionCookieForBrowser(origin, cookie)]);
+    const page = await context.newPage();
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+    page.on('requestfailed', (request) => {
+      requestFailures.push({ url: request.url(), failure: request.failure()?.errorText || '' });
+    });
+    page.on('response', (response) => {
+      if (response.status() >= 400 && !response.url().endsWith('/favicon.ico')) {
+        httpFailures.push({ url: response.url(), status: response.status() });
+      }
+    });
+
+    await mkdir(SCREENSHOT_DIR, { recursive: true });
+    await page.goto(origin, { waitUntil: 'domcontentloaded' });
+    await page.locator('.hero-quest-card--complete').waitFor({ state: 'visible', timeout: 30_000 });
+    const coinsAddedText = await page.locator('.hero-quest-card__coins-added').first().textContent({ timeout: 30_000 });
+    const balanceText = await page.locator('.hero-quest-card__coin-balance').first().textContent({ timeout: 30_000 });
+    assert.match(coinsAddedText || '', /\b100\b/, 'Completed Hero UI did not show 100 awarded coins.');
+    assert.match(balanceText || '', /Balance:\s*100\b/, 'Completed Hero UI did not show a 100 coin balance.');
+    const homeOverflow = await assertNoHorizontalOverflow(page);
+    screenshots.postClaimHome = path.join(SCREENSHOT_DIR, 'mobile-home-hero-claim-coins.png').replace(/\\/g, '/');
+    await page.screenshot({ path: screenshots.postClaimHome, fullPage: true });
+    await context.close();
+
+    return {
+      name: 'claimed-browser-ui-mobile-390',
+      pass: homeOverflow.ok
+        && consoleErrors.length === 0
+        && requestFailures.length === 0
+        && httpFailures.length === 0,
+      viewport: { width: 390, height: 844 },
+      checks: {
+        heroCompleteCardVisible: true,
+        coinsAwardedText: coinsAddedText,
+        coinBalanceText: balanceText,
+        overflow: {
+          home: homeOverflow,
+        },
+      },
+      consoleErrors,
+      requestFailures,
+      httpFailures,
+      screenshots,
+    };
+  } finally {
+    await browser.close();
+  }
+}
+
 async function waitForHeroVisibility({ origin, cookie, learnerId, expectedVisible, label, timeoutMs = 180_000 }) {
   const started = Date.now();
   const observations = [];
@@ -429,7 +493,7 @@ async function main() {
     demo: null,
     steps: [],
     cleanup: [],
-    browserUi: null,
+    browserUi: [],
   };
 
   let demo = null;
@@ -511,8 +575,9 @@ async function main() {
       observations: visibleWait.observations,
     });
 
-    report.browserUi = await runEnabledBrowserUiSmoke({ origin, cookie: demo.cookie });
-    assert.equal(report.browserUi.pass, true, 'Enabled Hero browser UI smoke failed.');
+    const enabledBrowserUi = await runEnabledBrowserUiSmoke({ origin, cookie: demo.cookie });
+    report.browserUi.push(enabledBrowserUi);
+    assert.equal(enabledBrowserUi.pass, true, 'Enabled Hero browser UI smoke failed.');
 
     const startRequestId = createRequestId('hero-enabled-smoke-start');
     const startPayload = await postHeroCommand(origin, demo.cookie, {
@@ -650,6 +715,19 @@ async function main() {
     const afterClaimResult = await getJson(origin, `/api/hero/read-model?learnerId=${encodeURIComponent(demo.learnerId)}`, { cookie: demo.cookie });
     assertOkResponse('Hero after-claim read model', afterClaimResult);
     const afterClaimHero = afterClaimResult.payload.hero;
+    assert.equal(afterClaimHero.progress?.status, 'completed', 'Hero after-claim read model did not show daily completion.');
+    assert.equal(afterClaimHero.economy?.today?.coinsAwarded, 100, 'Hero after-claim read model did not show the awarded daily coins.');
+    assert.equal(afterClaimHero.economy?.balance, 100, 'Hero after-claim read model did not show the awarded coin balance.');
+    report.steps.push({
+      name: 'hero-after-claim-read-model-coins',
+      pass: true,
+      dailyStatus: afterClaimHero.progress.status,
+      coinsAwarded: afterClaimHero.economy.today.coinsAwarded,
+      coinBalance: afterClaimHero.economy.balance,
+    });
+    const claimedBrowserUi = await runClaimedBrowserUiSmoke({ origin, cookie: demo.cookie });
+    report.browserUi.push(claimedBrowserUi);
+    assert.equal(claimedBrowserUi.pass, true, 'Claimed Hero browser UI smoke failed.');
     const unaffordable = (afterClaimHero.camp?.monsters || []).find((monster) => monster.canInvite && !monster.canAffordInvite);
     assert.ok(unaffordable, 'Hero Camp did not expose an unaffordable invite candidate.');
     const campRequestId = createRequestId('hero-enabled-smoke-camp');
@@ -727,7 +805,8 @@ async function main() {
     report.ok = externalSecretRestored
       && report.steps.every((step) => step.pass)
       && report.cleanup.every((step) => step.pass)
-      && report.browserUi?.pass === true;
+      && report.browserUi.length >= 2
+      && report.browserUi.every((step) => step.pass);
     await writeEvidence(report);
   }
 

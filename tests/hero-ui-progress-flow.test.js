@@ -17,14 +17,18 @@ function readModelFixture({
   progress = null,
   pendingCompletedHeroSession = null,
   claim = null,
+  questId = 'quest-001',
+  questFingerprint = 'hero-qf-test-abc',
+  dateKey = '2026-04-28',
 } = {}) {
   return {
     version: 4,
     childVisible,
-    questFingerprint: 'hero-qf-test-abc',
+    questFingerprint,
+    dateKey,
     ui: { enabled: uiEnabled, surface: 'dashboard', reason: uiEnabled ? 'enabled' : 'child-ui-disabled' },
     dailyQuest: {
-      questId: 'quest-001',
+      questId,
       effortPlanned,
       tasks,
     },
@@ -132,6 +136,332 @@ describe('buildHeroHomeModel — progress and claim fields', () => {
     const model = buildHeroHomeModel(heroUi);
 
     assert.deepEqual(model.lastClaim, claimResult);
+  });
+
+  it('projects daily completion and awarded coins from the latest claim before the refreshed read model arrives', () => {
+    const rm = readModelFixture({
+      progress: {
+        status: 'active',
+        effortCompleted: 0,
+        effortPlanned: 6,
+        completedTaskIds: [],
+      },
+    });
+    rm.version = 5;
+    rm.coinsEnabled = true;
+    rm.economy = {
+      enabled: true,
+      balance: 0,
+      today: {
+        awardStatus: 'in-progress',
+        coinsAwarded: 0,
+      },
+    };
+    const lastClaim = {
+      status: 'claimed',
+      taskId: 'task-001',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      dailyStatus: 'completed',
+      coinsEnabled: true,
+      coinsAwarded: 100,
+      coinBalance: 100,
+      dailyCoinsAlreadyAwarded: false,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'completed');
+    assert.equal(model.coinsEnabled, true);
+    assert.equal(model.coinsAwardedToday, 100);
+    assert.equal(model.coinBalance, 100);
+    assert.equal(model.dailyAwardStatus, 'awarded');
+    assert.equal(model.showCoinsAwarded, true);
+  });
+
+  it('preserves awarded balance on an already-completed duplicate claim without showing a second coin award', () => {
+    const rm = readModelFixture({
+      progress: {
+        status: 'active',
+        effortCompleted: 0,
+        effortPlanned: 6,
+        completedTaskIds: [],
+      },
+    });
+    rm.version = 5;
+    rm.coinsEnabled = true;
+    rm.economy = {
+      enabled: true,
+      balance: 0,
+      today: {
+        awardStatus: 'in-progress',
+        coinsAwarded: 0,
+      },
+    };
+    const lastClaim = {
+      status: 'already-completed',
+      taskId: 'task-001',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      dailyStatus: 'completed',
+      coinsEnabled: true,
+      coinsAwarded: 0,
+      coinBalance: 100,
+      dailyCoinsAlreadyAwarded: true,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'completed');
+    assert.equal(model.coinsEnabled, true);
+    assert.equal(model.coinsAwardedToday, 0);
+    assert.equal(model.coinBalance, 100);
+    assert.equal(model.dailyAwardStatus, 'awarded');
+    assert.equal(model.showCoinsAwarded, false);
+    assert.equal(model.showCoinBalance, true);
+  });
+
+  it('handles production-shaped duplicate claim responses with zero award while the read model is stale', () => {
+    const rm = readModelFixture({
+      progress: {
+        status: 'active',
+        effortCompleted: 0,
+        effortPlanned: 6,
+        completedTaskIds: [],
+      },
+    });
+    rm.version = 5;
+    rm.coinsEnabled = true;
+    rm.economy = {
+      enabled: true,
+      balance: 0,
+      today: {
+        awardStatus: 'in-progress',
+        coinsAwarded: 0,
+      },
+    };
+    const lastClaim = {
+      status: 'already-completed',
+      taskId: 'task-001',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      coinsEnabled: true,
+      coinsAwarded: 0,
+      coinBalance: 100,
+      dailyCoinsAlreadyAwarded: true,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'completed');
+    assert.equal(model.coinsEnabled, true);
+    assert.equal(model.coinsAwardedToday, 0);
+    assert.equal(model.coinBalance, 100);
+    assert.equal(model.dailyAwardStatus, 'awarded');
+    assert.equal(model.showCoinsAwarded, false);
+  });
+
+  it('prefers refreshed read model economy over the previous claim snapshot', () => {
+    const rm = readModelFixture({
+      progress: {
+        status: 'completed',
+        effortCompleted: 6,
+        effortPlanned: 6,
+        completedTaskIds: ['task-001'],
+      },
+    });
+    rm.version = 5;
+    rm.coinsEnabled = true;
+    rm.economy = {
+      enabled: true,
+      balance: 80,
+      today: {
+        awardStatus: 'awarded',
+        coinsAwarded: 100,
+      },
+    };
+    const lastClaim = {
+      status: 'claimed',
+      taskId: 'task-001',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      dailyStatus: 'completed',
+      coinsEnabled: true,
+      coinsAwarded: 100,
+      coinBalance: 100,
+      dailyCoinsAlreadyAwarded: false,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'completed');
+    assert.equal(model.coinBalance, 80);
+    assert.equal(model.coinsAwardedToday, 100);
+    assert.equal(model.dailyAwardStatus, 'awarded');
+    assert.equal(model.showCoinsAwarded, true);
+  });
+
+  it('does not project an old claim onto a new daily quest read model', () => {
+    const rm = readModelFixture({
+      questId: 'quest-002',
+      questFingerprint: 'hero-qf-test-def',
+      dateKey: '2026-04-29',
+      progress: {
+        status: 'active',
+        effortCompleted: 0,
+        effortPlanned: 6,
+        completedTaskIds: [],
+      },
+    });
+    rm.version = 5;
+    rm.coinsEnabled = true;
+    rm.economy = {
+      enabled: true,
+      balance: 100,
+      today: {
+        awardStatus: 'in-progress',
+        coinsAwarded: 0,
+      },
+    };
+    const lastClaim = {
+      status: 'claimed',
+      taskId: 'task-001',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      dailyStatus: 'completed',
+      coinsEnabled: true,
+      coinsAwarded: 100,
+      coinBalance: 100,
+      dailyCoinsAlreadyAwarded: false,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'active');
+    assert.equal(model.coinsAwardedToday, 0);
+    assert.equal(model.coinBalance, 100);
+    assert.equal(model.dailyAwardStatus, 'in-progress');
+    assert.equal(model.showCoinsAwarded, false);
+  });
+
+  it('does not let a mismatched old claim enable coin UI on an economy-disabled read model', () => {
+    const rm = readModelFixture({
+      questId: 'quest-002',
+      questFingerprint: 'hero-qf-test-def',
+      dateKey: '2026-04-29',
+      progress: {
+        status: 'active',
+        effortCompleted: 0,
+        effortPlanned: 6,
+        completedTaskIds: [],
+      },
+    });
+    const lastClaim = {
+      status: 'claimed',
+      taskId: 'task-001',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      dailyStatus: 'completed',
+      coinsEnabled: true,
+      coinsAwarded: 100,
+      coinBalance: 100,
+      dailyCoinsAlreadyAwarded: false,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'active');
+    assert.equal(model.coinsEnabled, false);
+    assert.equal(model.coinBalance, 0);
+    assert.equal(model.showCoinBalance, false);
+    assert.equal(model.showCoinsAwarded, false);
+  });
+
+  it('does not project a claim that is missing strict quest identity fields', () => {
+    const rm = readModelFixture({
+      progress: {
+        status: 'active',
+        effortCompleted: 0,
+        effortPlanned: 6,
+        completedTaskIds: [],
+      },
+    });
+    rm.version = 5;
+    rm.coinsEnabled = true;
+    rm.economy = {
+      enabled: true,
+      balance: 0,
+      today: {
+        awardStatus: 'in-progress',
+        coinsAwarded: 0,
+      },
+    };
+    const lastClaim = {
+      status: 'claimed',
+      taskId: 'task-001',
+      dailyStatus: 'completed',
+      coinsEnabled: true,
+      coinsAwarded: 100,
+      coinBalance: 100,
+      dailyCoinsAlreadyAwarded: false,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'active');
+    assert.equal(model.coinsEnabled, true);
+    assert.equal(model.coinBalance, 0);
+    assert.equal(model.coinsAwardedToday, 0);
+    assert.equal(model.showCoinsAwarded, false);
+  });
+
+  it('prefers a matching completed read model over old claim economy when economy is disabled', () => {
+    const rm = readModelFixture({
+      progress: {
+        status: 'completed',
+        effortCompleted: 6,
+        effortPlanned: 6,
+        completedTaskIds: ['task-001'],
+      },
+    });
+    rm.version = 5;
+    rm.coinsEnabled = false;
+    rm.economy = {
+      enabled: false,
+      balance: 0,
+      today: {
+        awardStatus: 'not-eligible',
+        coinsAwarded: 0,
+      },
+    };
+    const lastClaim = {
+      status: 'claimed',
+      taskId: 'task-001',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      dailyStatus: 'completed',
+      coinsEnabled: true,
+      coinsAwarded: 100,
+      coinBalance: 100,
+      dailyCoinsAlreadyAwarded: false,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'completed');
+    assert.equal(model.coinsEnabled, false);
+    assert.equal(model.coinBalance, 0);
+    assert.equal(model.coinsAwardedToday, 0);
+    assert.equal(model.dailyAwardStatus, 'not-eligible');
+    assert.equal(model.showCoinBalance, false);
+    assert.equal(model.showCoinsAwarded, false);
   });
 
   it('includes pendingCompletedHeroSession from readModel', () => {

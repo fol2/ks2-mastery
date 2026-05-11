@@ -43,18 +43,56 @@ export function buildHeroHomeModel(heroUi) {
   const progress = readModel?.progress || null;
   const claiming = heroUi?.status === 'claiming';
   const lastClaim = heroUi?.lastClaim || null;
+  const lastClaimMatchesReadModel = (
+    lastClaim !== null
+    && typeof lastClaim.questId === 'string'
+    && lastClaim.questId === readModel?.dailyQuest?.questId
+    && typeof lastClaim.questFingerprint === 'string'
+    && lastClaim.questFingerprint === readModel?.questFingerprint
+    && typeof lastClaim.dateKey === 'string'
+    && lastClaim.dateKey === readModel?.dateKey
+  );
+  const readModelHasClaimCompletion = progress?.status === 'completed';
+  const readModelHasAwardSnapshot = readModel?.economy?.today?.awardStatus === 'awarded';
+  const lastClaimCompletedDaily = (
+    lastClaimMatchesReadModel
+    && (lastClaim?.status === 'claimed' || lastClaim?.status === 'already-completed')
+    && (
+      lastClaim?.dailyStatus === 'completed'
+      || (lastClaim?.status === 'already-completed' && lastClaim?.dailyCoinsAlreadyAwarded === true)
+    )
+  );
+  const shouldProjectClaimCompletion = lastClaimCompletedDaily && !readModelHasClaimCompletion;
+  const shouldProjectClaimEconomy = lastClaimCompletedDaily && !readModelHasClaimCompletion && !readModelHasAwardSnapshot;
   const pendingCompletedHeroSession = readModel?.pendingCompletedHeroSession || null;
   const canClaim = readModel?.claim?.enabled === true;
-  const dailyStatus = progress?.status || 'none';
+  const dailyStatus = shouldProjectClaimCompletion ? 'completed' : (progress?.status || 'none');
   const effortCompleted = progress?.effortCompleted || 0;
   const completedTaskIds = progress?.completedTaskIds || [];
 
   // P4 U6: Economy fields from read model v5
-  const coinsEnabled = readModel?.coinsEnabled === true;
   const economyBlock = readModel?.economy || null;
-  const coinBalance = coinsEnabled ? (economyBlock?.balance || 0) : 0;
-  const coinsAwardedToday = coinsEnabled ? (economyBlock?.today?.coinsAwarded || 0) : 0;
-  const dailyAwardStatus = economyBlock?.today?.awardStatus || 'not-eligible';
+  const hasClaimEconomy = shouldProjectClaimEconomy && lastClaim?.coinsEnabled === true;
+  const coinsEnabled = readModel?.coinsEnabled === true || hasClaimEconomy;
+  const readModelCoinBalance = economyBlock?.balance;
+  const claimCoinBalance = lastClaim?.coinBalance;
+  const coinBalance = coinsEnabled
+    ? (hasClaimEconomy && typeof claimCoinBalance === 'number'
+      ? claimCoinBalance
+      : (typeof readModelCoinBalance === 'number' ? readModelCoinBalance : 0))
+    : 0;
+  const readModelCoinsAwardedToday = economyBlock?.today?.coinsAwarded;
+  const claimCoinsAwarded = lastClaim?.coinsAwarded;
+  const coinsAwardedToday = coinsEnabled
+    ? (hasClaimEconomy && typeof claimCoinsAwarded === 'number'
+      ? claimCoinsAwarded
+      : (typeof readModelCoinsAwardedToday === 'number' ? readModelCoinsAwardedToday : 0))
+    : 0;
+  const readModelAwardStatus = economyBlock?.today?.awardStatus;
+  const claimAwardStatus = hasClaimEconomy && (coinsAwardedToday > 0 || lastClaim?.dailyCoinsAlreadyAwarded === true)
+    ? 'awarded'
+    : null;
+  const dailyAwardStatus = claimAwardStatus || readModelAwardStatus || 'not-eligible';
   const showCoinsAwarded = coinsEnabled && dailyAwardStatus === 'awarded' && coinsAwardedToday > 0;
   const showCoinBalance = coinsEnabled;
   const campEnabled = readModel?.camp?.enabled === true;

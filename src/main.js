@@ -1060,6 +1060,7 @@ async function heroClaimTask({ questId, questFingerprint, taskId, practiceSessio
       pendingClaimKey: null,
       error: '',
     });
+    queueMicrotask(() => loadHeroReadModel({ learnerId, force: true }));
 
     return result;
   } catch (err) {
