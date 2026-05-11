@@ -1,0 +1,9 @@
+{
+  "contains_prefix_negation": false,
+  "contains_post_negation_needed": true,
+  "contains_post_negation_happen": true,
+  "keyword_post_negation_inside": true,
+  "evidence_post_phrase_negation_score": 2,
+  "evidence_internal_negation_score": 1,
+  "contrast_preserved": true
+}

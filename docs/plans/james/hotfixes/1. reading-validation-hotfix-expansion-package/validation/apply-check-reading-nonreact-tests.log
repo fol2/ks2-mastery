@@ -1,0 +1,600 @@
+TAP version 13
+# (node:5188) ExperimentalWarning: globSync is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: canonical labels: every entry appears at least once in the scanned React source
+ok 1 - canonical labels: every entry appears at least once in the scanned React source
+  ---
+  duration_ms: 91.437506
+  type: 'test'
+  ...
+# Subtest: button labels: drift variants of canonical labels are rejected
+ok 2 - button labels: drift variants of canonical labels are rejected
+  ---
+  duration_ms: 89.839885
+  type: 'test'
+  ...
+# Subtest: button labels: every statically extractable label is classified
+ok 3 - button labels: every statically extractable label is classified
+  ---
+  duration_ms: 23.331404
+  type: 'test'
+  ...
+# Subtest: scanner sanity: extractLiteralLabel handles whitespace, JSX children, and dynamic bodies correctly
+ok 4 - scanner sanity: extractLiteralLabel handles whitespace, JSX children, and dynamic bodies correctly
+  ---
+  duration_ms: 0.209229
+  type: 'test'
+  ...
+# Subtest: Spelling smart-practice maps to { mode: "smart" }
+ok 5 - Spelling smart-practice maps to { mode: "smart" }
+  ---
+  duration_ms: 1.734579
+  type: 'test'
+  ...
+# Subtest: Spelling trouble-practice maps to { mode: "trouble" }
+ok 6 - Spelling trouble-practice maps to { mode: "trouble" }
+  ---
+  duration_ms: 0.196731
+  type: 'test'
+  ...
+# Subtest: Spelling guardian-check maps to { mode: "guardian" }
+ok 7 - Spelling guardian-check maps to { mode: "guardian" }
+  ---
+  duration_ms: 0.192236
+  type: 'test'
+  ...
+# Subtest: Grammar smart-practice maps to { mode: "smart" }
+ok 8 - Grammar smart-practice maps to { mode: "smart" }
+  ---
+  duration_ms: 0.129072
+  type: 'test'
+  ...
+# Subtest: Grammar trouble-practice maps to { mode: "trouble" }
+ok 9 - Grammar trouble-practice maps to { mode: "trouble" }
+  ---
+  duration_ms: 0.108769
+  type: 'test'
+  ...
+# Subtest: Grammar mini-test maps to { mode: "satsset" } (pA2 U3)
+ok 10 - Grammar mini-test maps to { mode: "satsset" } (pA2 U3)
+  ---
+  duration_ms: 0.088405
+  type: 'test'
+  ...
+# Subtest: Punctuation smart-practice maps to { mode: "smart" }
+ok 11 - Punctuation smart-practice maps to { mode: "smart" }
+  ---
+  duration_ms: 0.193702
+  type: 'test'
+  ...
+# Subtest: Punctuation trouble-practice maps to { mode: "weak" }
+ok 12 - Punctuation trouble-practice maps to { mode: "weak" }
+  ---
+  duration_ms: 0.119421
+  type: 'test'
+  ...
+# Subtest: Punctuation gps-check maps to { mode: "gps" }
+ok 13 - Punctuation gps-check maps to { mode: "gps" }
+  ---
+  duration_ms: 0.28495
+  type: 'test'
+  ...
+# Subtest: unsupported launcher returns not-launchable with reason
+ok 14 - unsupported launcher returns not-launchable with reason
+  ---
+  duration_ms: 0.361995
+  type: 'test'
+  ...
+# Subtest: unknown subjectId returns not-launchable with subject-adapter-not-found
+ok 15 - unknown subjectId returns not-launchable with subject-adapter-not-found
+  ---
+  duration_ms: 0.301741
+  type: 'test'
+  ...
+# Subtest: adapters do not mutate the input envelope
+ok 16 - adapters do not mutate the input envelope
+  ---
+  duration_ms: 0.124967
+  type: 'test'
+  ...
+# Subtest: no launch adapter file contains subjects/runtime import
+ok 17 - no launch adapter file contains subjects/runtime import
+  ---
+  duration_ms: 50.311677
+  type: 'test'
+  ...
+# Subtest: registry: runProvider returns null for unregistered subjects
+ok 18 - registry: runProvider returns null for unregistered subjects
+  ---
+  duration_ms: 1.574141
+  type: 'test'
+  ...
+# Subtest: registry: registeredSubjectIds lists exactly four subjects
+ok 19 - registry: registeredSubjectIds lists exactly four subjects
+  ---
+  duration_ms: 0.225182
+  type: 'test'
+  ...
+# Subtest: reading: missing readable signals returns available:false
+ok 20 - reading: missing readable signals returns available:false
+  ---
+  duration_ms: 0.923477
+  type: 'test'
+  ...
+# Subtest: provider registry covers all ready subject IDs
+ok 21 - provider registry covers all ready subject IDs
+  ---
+  duration_ms: 0.13875
+  type: 'test'
+  ...
+# Subtest: grammar: weak concepts emit weak-repair envelope
+ok 22 - grammar: weak concepts emit weak-repair envelope
+  ---
+  duration_ms: 1.018126
+  type: 'test'
+  ...
+# Subtest: grammar: due concepts emit due-review envelope
+ok 23 - grammar: due concepts emit due-review envelope
+  ---
+  duration_ms: 0.333869
+  type: 'test'
+  ...
+# Subtest: grammar: secured concepts with consolidating confidence emit retention-after-secure
+ok 24 - grammar: secured concepts with consolidating confidence emit retention-after-secure
+  ---
+  duration_ms: 0.608612
+  type: 'test'
+  ...
+# Subtest: grammar: absent signals falls back to generic smart-practice
+ok 25 - grammar: absent signals falls back to generic smart-practice
+  ---
+  duration_ms: 0.146036
+  type: 'test'
+  ...
+# Subtest: grammar: totally missing stats returns available:false
+ok 26 - grammar: totally missing stats returns available:false
+  ---
+  duration_ms: 0.292799
+  type: 'test'
+  ...
+# Subtest: grammar: null input returns available:false
+ok 27 - grammar: null input returns available:false
+  ---
+  duration_ms: 0.40513
+  type: 'test'
+  ...
+# Subtest: grammar: breadth-maintenance mini-test when secured >= 3
+ok 28 - grammar: breadth-maintenance mini-test when secured >= 3
+  ---
+  duration_ms: 0.512077
+  type: 'test'
+  ...
+# Subtest: punctuation: due items emit due-review envelope
+ok 29 - punctuation: due items emit due-review envelope
+  ---
+  duration_ms: 0.638169
+  type: 'test'
+  ...
+# Subtest: punctuation: weak items emit weak-repair envelope
+ok 30 - punctuation: weak items emit weak-repair envelope
+  ---
+  duration_ms: 0.427873
+  type: 'test'
+  ...
+# Subtest: punctuation: null read model returns available:false
+ok 31 - punctuation: null read model returns available:false
+  ---
+  duration_ms: 0.125572
+  type: 'test'
+  ...
+# Subtest: punctuation: availability not ready returns available:false
+ok 32 - punctuation: availability not ready returns available:false
+  ---
+  duration_ms: 0.073179
+  type: 'test'
+  ...
+# Subtest: punctuation: absent signals falls back to generic
+ok 33 - punctuation: absent signals falls back to generic
+  ---
+  duration_ms: 0.073894
+  type: 'test'
+  ...
+# Subtest: punctuation: breadth-maintenance gps-check when secured >= 3
+ok 34 - punctuation: breadth-maintenance gps-check when secured >= 3
+  ---
+  duration_ms: 0.241207
+  type: 'test'
+  ...
+# Subtest: spelling: due words emit due-review envelope
+ok 35 - spelling: due words emit due-review envelope
+  ---
+  duration_ms: 0.747016
+  type: 'test'
+  ...
+# Subtest: spelling: trouble words emit weak-repair envelope
+ok 36 - spelling: trouble words emit weak-repair envelope
+  ---
+  duration_ms: 0.662092
+  type: 'test'
+  ...
+# Subtest: spelling: post-mega signals emit post-mega-maintenance guardian-check
+ok 37 - spelling: post-mega signals emit post-mega-maintenance guardian-check
+  ---
+  duration_ms: 0.633667
+  type: 'test'
+  ...
+# Subtest: spelling: absent post-mega signals emit only generic Smart Review envelopes
+ok 38 - spelling: absent post-mega signals emit only generic Smart Review envelopes
+  ---
+  duration_ms: 0.151559
+  type: 'test'
+  ...
+# Subtest: spelling: Mega fixture produces only maintenance envelopes for spelling
+ok 39 - spelling: Mega fixture produces only maintenance envelopes for spelling
+  ---
+  duration_ms: 0.502241
+  type: 'test'
+  ...
+# Subtest: spelling: null stats returns available:false
+ok 40 - spelling: null stats returns available:false
+  ---
+  duration_ms: 0.139278
+  type: 'test'
+  ...
+# Subtest: providers do not mutate input read-model objects
+ok 41 - providers do not mutate input read-model objects
+  ---
+  duration_ms: 0.674921
+  type: 'test'
+  ...
+# Subtest: providers return available:false with reason instead of throwing on missing fields
+ok 42 - providers return available:false with reason instead of throwing on missing fields
+  ---
+  duration_ms: 0.207601
+  type: 'test'
+  ...
+# Subtest: provider modules do not import runtime.js or any command handler (structural grep)
+ok 43 - provider modules do not import runtime.js or any command handler (structural grep)
+  ---
+  duration_ms: 1.682808
+  type: 'test'
+  ...
+# Subtest: each fixture produces valid provider output with valid envelopes
+ok 44 - each fixture produces valid provider output with valid envelopes
+  ---
+  duration_ms: 2.484853
+  type: 'test'
+  ...
+# Subtest: zero-eligible fixture: all providers return available:false
+ok 45 - zero-eligible fixture: all providers return available:false
+  ---
+  duration_ms: 0.329849
+  type: 'test'
+  ...
+# Subtest: punctuation-disabled fixture: punctuation returns available:false, others work
+ok 46 - punctuation-disabled fixture: punctuation returns available:false, others work
+  ---
+  duration_ms: 0.522981
+  type: 'test'
+  ...
+# Subtest: provider signals always contain all required fields
+ok 47 - provider signals always contain all required fields
+  ---
+  duration_ms: 0.542747
+  type: 'test'
+  ...
+# Subtest: grammar provider reads stats.concepts counts (actual read-model field)
+ok 48 - grammar provider reads stats.concepts counts (actual read-model field)
+  ---
+  duration_ms: 0.230034
+  type: 'test'
+  ...
+# Subtest: punctuation provider reads stats.due/weak/secure (actual read-model field)
+ok 49 - punctuation provider reads stats.due/weak/secure (actual read-model field)
+  ---
+  duration_ms: 0.192229
+  type: 'test'
+  ...
+# Subtest: spelling provider reads stats.core pool (actual read-model field)
+ok 50 - spelling provider reads stats.core pool (actual read-model field)
+  ---
+  duration_ms: 0.149814
+  type: 'test'
+  ...
+# Subtest: direct spelling monsters evolve at 10, 30, 60 and 100 secure words
+ok 51 - direct spelling monsters evolve at 10, 30, 60 and 100 secure words
+  ---
+  duration_ms: 1.655933
+  type: 'test'
+  ...
+# Subtest: Vellhorn follows the direct spelling monster stage thresholds
+ok 52 - Vellhorn follows the direct spelling monster stage thresholds
+  ---
+  duration_ms: 0.331753
+  type: 'test'
+  ...
+# Subtest: direct spelling monsters unlock stage 0 from the first secure word
+ok 53 - direct spelling monsters unlock stage 0 from the first secure word
+  ---
+  duration_ms: 0.169254
+  type: 'test'
+  ...
+# Subtest: Phaeton evolves from combined secure spelling words without requiring both pools
+ok 54 - Phaeton evolves from combined secure spelling words without requiring both pools
+  ---
+  duration_ms: 1.205945
+  type: 'test'
+  ...
+# Subtest: Phaeton ignores Extra spelling progress from Vellhorn
+ok 55 - Phaeton ignores Extra spelling progress from Vellhorn
+  ---
+  duration_ms: 0.213876
+  type: 'test'
+  ...
+# Subtest: Phaeton unlocks stage 0 from three combined secure words
+ok 56 - Phaeton unlocks stage 0 from three combined secure words
+  ---
+  duration_ms: 0.175951
+  type: 'test'
+  ...
+# Subtest: monster branches are assigned once and preserved for existing learner state
+ok 57 - monster branches are assigned once and preserved for existing learner state
+  ---
+  duration_ms: 0.617655
+  type: 'test'
+  ...
+# Subtest: spelling monster routing maps Extra words to Vellhorn while preserving core bands
+ok 58 - spelling monster routing maps Extra words to Vellhorn while preserving core bands
+  ---
+  duration_ms: 0.141071
+  type: 'test'
+  ...
+# Subtest: recording mastery stores the selected branch on reward events
+ok 59 - recording mastery stores the selected branch on reward events
+  ---
+  duration_ms: 0.519666
+  type: 'test'
+  ...
+# Subtest: fallback monster summary initialises spelling branches only
+ok 60 - fallback monster summary initialises spelling branches only
+  ---
+  duration_ms: 62.337384
+  type: 'test'
+  ...
+# Subtest: Extra mastery updates Vellhorn without emitting aggregate Phaeton rewards or duplicate progress
+ok 61 - Extra mastery updates Vellhorn without emitting aggregate Phaeton rewards or duplicate progress
+  ---
+  duration_ms: 1.026944
+  type: 'test'
+  ...
+# Subtest: analytics summaries use persisted monster branches while deriving current progress
+ok 62 - analytics summaries use persisted monster branches while deriving current progress
+  ---
+  duration_ms: 1.247703
+  type: 'test'
+  ...
+# Subtest: analytics summaries can project branches without writing during render
+ok 63 - analytics summaries can project branches without writing during render
+  ---
+  duration_ms: 0.536023
+  type: 'test'
+  ...
+# Subtest: analytics summaries project Punctuation live Star eggs before codex high-water backfill
+ok 64 - analytics summaries project Punctuation live Star eggs before codex high-water backfill
+  ---
+  duration_ms: 0.461369
+  type: 'test'
+  ...
+# Subtest: redacted analytics uses public monster projection state without writing during render
+ok 65 - redacted analytics uses public monster projection state without writing during render
+  ---
+  duration_ms: 0.268689
+  type: 'test'
+  ...
+# Subtest: reading content bank has varied original passages, papers and KS2 domains
+ok 66 - reading content bank has varied original passages, papers and KS2 domains
+  ---
+  duration_ms: 0.904422
+  type: 'test'
+  ...
+# Subtest: reading ids are unique and evidence quotes exist in their source passage
+ok 67 - reading ids are unique and evidence quotes exist in their source passage
+  ---
+  duration_ms: 2.628589
+  type: 'test'
+  ...
+# Subtest: reading question stems avoid noticeable repetition after normalisation
+ok 68 - reading question stems avoid noticeable repetition after normalisation
+  ---
+  duration_ms: 1.868761
+  type: 'test'
+  ...
+# Subtest: reading model answers and stem shapes avoid repeated-question feel
+ok 69 - reading model answers and stem shapes avoid repeated-question feel
+  ---
+  duration_ms: 3.481369
+  type: 'test'
+  ...
+# Subtest: reading test papers only reference existing passages and questions and sum to 50 marks
+ok 70 - reading test papers only reference existing passages and questions and sum to 50 marks
+  ---
+  duration_ms: 0.505845
+  type: 'test'
+  ...
+# Subtest: browser Reading metadata stays answer-safe and summary-compatible
+ok 71 - browser Reading metadata stays answer-safe and summary-compatible
+  ---
+  duration_ms: 5.642043
+  type: 'test'
+  ...
+# Subtest: public Reading events preserve subject identity after redaction
+ok 72 - public Reading events preserve subject identity after redaction
+  ---
+  duration_ms: 0.446874
+  type: 'test'
+  ...
+# Subtest: reading module is ready and not a placeholder
+ok 73 - reading module is ready and not a placeholder
+  ---
+  duration_ms: 1.991778
+  type: 'test'
+  ...
+# Subtest: hero mode includes reading as a ready subject with provider and launch adapter
+ok 74 - hero mode includes reading as a ready subject with provider and launch adapter
+  ---
+  duration_ms: 0.461127
+  type: 'test'
+  ...
+# Subtest: reading engine starts a passage-first session and hides answer metadata before attempt
+ok 75 - reading engine starts a passage-first session and hides answer metadata before attempt
+  ---
+  duration_ms: 3.588296
+  type: 'test'
+  ...
+# Subtest: reading engine marks deterministically and then exposes feedback safely
+ok 76 - reading engine marks deterministically and then exposes feedback safely
+  ---
+  duration_ms: 2.064246
+  type: 'test'
+  ...
+# Subtest: reading exact match checks reject learner substrings of the correct answer
+ok 77 - reading exact match checks reject learner substrings of the correct answer
+  ---
+  duration_ms: 0.332174
+  type: 'test'
+  ...
+# Subtest: reading contains checks use phrase boundaries rather than character substrings
+ok 78 - reading contains checks use phrase boundaries rather than character substrings
+  ---
+  duration_ms: 0.225076
+  type: 'test'
+  ...
+# Subtest: reading phrase checks reject locally negated correct phrases
+ok 79 - reading phrase checks reject locally negated correct phrases
+  ---
+  duration_ms: 0.549192
+  type: 'test'
+  ...
+# Subtest: reading evidence fallback does not award marks for negated evidence quotes
+ok 80 - reading evidence fallback does not award marks for negated evidence quotes
+  ---
+  duration_ms: 0.788501
+  type: 'test'
+  ...
+# Subtest: reading save-response rejects stale expected session or question ids
+ok 81 - reading save-response rejects stale expected session or question ids
+  ---
+  duration_ms: 0.7075
+  type: 'test'
+  ...
+# Subtest: reading marked answers cannot be overwritten by duplicate or stale submissions
+ok 82 - reading marked answers cannot be overwritten by duplicate or stale submissions
+  ---
+  duration_ms: 1.649851
+  type: 'test'
+  ...
+# Subtest: reading engine reloads persisted ui state for follow-up commands
+ok 83 - reading engine reloads persisted ui state for follow-up commands
+  ---
+  duration_ms: 0.724949
+  type: 'test'
+  ...
+# Subtest: reading due stats and review queue use the injected command clock
+ok 84 - reading due stats and review queue use the injected command clock
+  ---
+  duration_ms: 0.727809
+  type: 'test'
+  ...
+# Subtest: reading avoids immediate passage repeats after a started session is ended without answers
+ok 85 - reading avoids immediate passage repeats after a started session is ended without answers
+  ---
+  duration_ms: 0.748496
+  type: 'test'
+  ...
+# Subtest: reading guided mode uses weakness and variety rather than always taking the first four questions
+ok 86 - reading guided mode uses weakness and variety rather than always taking the first four questions
+  ---
+  duration_ms: 0.438896
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reading command handlers
+ok 87 - worker subject runtime wires reading command handlers
+  ---
+  duration_ms: 1.398858
+  type: 'test'
+  ...
+# Subtest: reading secured skill events project into reading-owned monster rewards
+ok 88 - reading secured skill events project into reading-owned monster rewards
+  ---
+  duration_ms: 0.892625
+  type: 'test'
+  ...
+# Subtest: reading secured skill event carries deep secure evidence and mastery key
+ok 89 - reading secured skill event carries deep secure evidence and mastery key
+  ---
+  duration_ms: 0.648602
+  type: 'test'
+  ...
+# Subtest: reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+ok 90 - reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+  ---
+  duration_ms: 1.972153
+  type: 'test'
+  ...
+# Subtest: reading reward state exposes release-scoped 100-star high-water progress
+ok 91 - reading reward state exposes release-scoped 100-star high-water progress
+  ---
+  duration_ms: 0.51636
+  type: 'test'
+  ...
+# Subtest: reading reward thresholds use direct clusters plus a full-domain aggregate monster
+ok 92 - reading reward thresholds use direct clusters plus a full-domain aggregate monster
+  ---
+  duration_ms: 0.795261
+  type: 'test'
+  ...
+# Subtest: reading list-view read model exposes a safe current-section question list
+ok 93 - reading list-view read model exposes a safe current-section question list
+  ---
+  duration_ms: 0.350707
+  type: 'test'
+  ...
+# Subtest: reading save-response can persist visible section drafts and navigate without marking
+ok 94 - reading save-response can persist visible section drafts and navigate without marking
+  ---
+  duration_ms: 0.479026
+  type: 'test'
+  ...
+# Subtest: reading mark-section accepts current visible section drafts before deterministic marking
+ok 95 - reading mark-section accepts current visible section drafts before deterministic marking
+  ---
+  duration_ms: 1.186133
+  type: 'test'
+  ...
+# Subtest: reading section response merge does not blank previously saved one-question drafts
+ok 96 - reading section response merge does not blank previously saved one-question drafts
+  ---
+  duration_ms: 1.192555
+  type: 'test'
+  ...
+# Subtest: reading list-mode section save can explicitly clear a previously saved draft
+ok 97 - reading list-mode section save can explicitly clear a previously saved draft
+  ---
+  duration_ms: 0.586369
+  type: 'test'
+  ...
+# Subtest: reading save and mark commands reject stale expected section indexes
+ok 98 - reading save and mark commands reject stale expected section indexes
+  ---
+  duration_ms: 0.601982
+  type: 'test'
+  ...
+1..98
+# tests 98
+# suites 0
+# pass 98
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1438.6684

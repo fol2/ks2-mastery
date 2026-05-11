@@ -1,0 +1,1751 @@
+diff --git a/package.json b/package.json
+index b3d9363..0837012 100644
+--- a/package.json
++++ b/package.json
+@@ -7,6 +7,7 @@
+     "build": "node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs",
+     "build:bundles": "node ./scripts/build-bundles.mjs",
+     "audit:client": "node ./scripts/audit-client-bundle.mjs",
++    "audit:reading-content": "node scripts/audit-reading-content-quality.mjs --out=reports/reading/reading-content-quality-audit.json",
+     "audit:punctuation-content": "node ./scripts/audit-punctuation-content.mjs",
+     "audit:grammar-qg": "node scripts/audit-grammar-question-generator.mjs --json",
+     "audit:grammar-qg:deep": "node scripts/audit-grammar-question-generator.mjs --deep --json",
+diff --git a/scripts/audit-reading-content-quality.mjs b/scripts/audit-reading-content-quality.mjs
+new file mode 100755
+index 0000000..64195c5
+--- /dev/null
++++ b/scripts/audit-reading-content-quality.mjs
+@@ -0,0 +1,116 @@
++#!/usr/bin/env node
++import { writeFileSync } from 'node:fs';
++import {
++  READING_PASSAGES,
++  READING_TEST_PAPERS,
++  READING_SKILLS,
++  readingContentSummary,
++} from '../shared/reading/content.js';
++
++function norm(value) {
++  return String(value || '')
++    .toLowerCase()
++    .replace(/[^a-z0-9]+/g, ' ')
++    .replace(/\s+/g, ' ')
++    .trim();
++}
++
++function addGroup(map, key, value) {
++  if (!key) return;
++  const rows = map.get(key) || [];
++  rows.push(value);
++  map.set(key, rows);
++}
++
++const failures = [];
++const advisories = [];
++const questionRows = [];
++const passageIds = new Set();
++const questionIds = new Set();
++const duplicateStemGroups = new Map();
++const duplicateModelAnswerGroups = new Map();
++const duplicateStemShapeGroups = new Map();
++const skillCounts = Object.fromEntries(Object.keys(READING_SKILLS).map((skill) => [skill, 0]));
++const typeCounts = {};
++const genreCounts = {};
++
++for (const passage of READING_PASSAGES) {
++  if (passageIds.has(passage.id)) failures.push({ type: 'duplicate-passage-id', id: passage.id });
++  passageIds.add(passage.id);
++  genreCounts[passage.genre] = (genreCounts[passage.genre] || 0) + 1;
++  const passageText = norm((passage.blocks || []).join(' '));
++  if (passageText.length < 100) failures.push({ type: 'short-passage', id: passage.id });
++  for (const question of passage.questions || []) {
++    const rowId = `${passage.id}:${question.id}`;
++    questionRows.push({ passage, question, rowId });
++    if (questionIds.has(question.id)) failures.push({ type: 'duplicate-question-id', id: question.id });
++    questionIds.add(question.id);
++    if (!READING_SKILLS[question.skill]) failures.push({ type: 'unknown-skill', rowId, skill: question.skill });
++    skillCounts[question.skill] = (skillCounts[question.skill] || 0) + 1;
++    typeCounts[question.type] = (typeCounts[question.type] || 0) + 1;
++    const stemKey = norm(question.stem).replace(/paragraph [0-9]+/g, 'paragraph #').replace(/section [0-9]+/g, 'section #');
++    addGroup(duplicateStemGroups, stemKey, rowId);
++    if (question.modelAnswer) addGroup(duplicateModelAnswerGroups, norm(question.modelAnswer), rowId);
++    const stemShape = stemKey
++      .replace(/\b(red tin box|lantern map|seed bank|seed vault|rooftop rain|poem|passage|story|text)\b/g, 'TEXT')
++      .replace(/\b(nia|mara|aunt lio|grandad)\b/g, 'PERSON');
++    addGroup(duplicateStemShapeGroups, stemShape, rowId);
++    if (question.evidenceCheck?.containsAny) {
++      for (const snippet of question.evidenceCheck.containsAny) {
++        if (!passageText.includes(norm(snippet))) failures.push({ type: 'missing-evidence-snippet', rowId, snippet });
++      }
++    }
++  }
++}
++
++for (const [stem, rows] of duplicateStemGroups.entries()) {
++  if (rows.length > 1) failures.push({ type: 'duplicate-normalised-stem', stem, rows });
++}
++for (const [answer, rows] of duplicateModelAnswerGroups.entries()) {
++  if (rows.length > 1) failures.push({ type: 'duplicate-model-answer', answer, rows });
++}
++for (const [shape, rows] of duplicateStemShapeGroups.entries()) {
++  if (rows.length > 2) advisories.push({ type: 'repeated-stem-shape', shape, rows });
++}
++
++const questionMap = new Map(questionRows.map(({ question }) => [question.id, question]));
++for (const paper of READING_TEST_PAPERS) {
++  if (paper.timeLimitMin !== 60) failures.push({ type: 'paper-time-limit', paperId: paper.id, timeLimitMin: paper.timeLimitMin });
++  if (paper.totalMarks !== 50) failures.push({ type: 'paper-total-contract', paperId: paper.id, totalMarks: paper.totalMarks });
++  let marks = 0;
++  for (const section of paper.sections || []) {
++    const passage = READING_PASSAGES.find((item) => item.id === section.passageId);
++    if (!passage) failures.push({ type: 'paper-missing-passage', paperId: paper.id, passageId: section.passageId });
++    const passageQuestionIds = new Set((passage?.questions || []).map((question) => question.id));
++    for (const qid of section.questionIds || []) {
++      const question = questionMap.get(qid);
++      if (!question) failures.push({ type: 'paper-missing-question', paperId: paper.id, qid });
++      if (passage && !passageQuestionIds.has(qid)) failures.push({ type: 'paper-question-wrong-passage', paperId: paper.id, passageId: section.passageId, qid });
++      marks += Number(question?.marks) || 0;
++    }
++  }
++  if (marks !== 50) failures.push({ type: 'paper-mark-total', paperId: paper.id, marks });
++}
++
++for (const skill of Object.keys(READING_SKILLS)) {
++  if (!skillCounts[skill]) failures.push({ type: 'skill-without-questions', skill });
++}
++
++const summary = {
++  generatedAt: new Date().toISOString(),
++  content: readingContentSummary(),
++  skillCounts,
++  typeCounts,
++  genreCounts,
++  duplicateNormalisedStemGroups: [...duplicateStemGroups.values()].filter((rows) => rows.length > 1).length,
++  duplicateModelAnswerGroups: [...duplicateModelAnswerGroups.values()].filter((rows) => rows.length > 1).length,
++  repeatedStemShapeAdvisories: advisories.filter((entry) => entry.type === 'repeated-stem-shape').length,
++  failures,
++  advisories,
++};
++
++const outArg = process.argv.find((arg) => arg.startsWith('--out='));
++if (outArg) writeFileSync(outArg.slice('--out='.length), `${JSON.stringify(summary, null, 2)}\n`);
++else console.log(JSON.stringify(summary, null, 2));
++
++if (failures.length) process.exitCode = 1;
+diff --git a/shared/reading/content.js b/shared/reading/content.js
+index efdcffd..1327bfd 100644
+--- a/shared/reading/content.js
++++ b/shared/reading/content.js
+@@ -3,7 +3,7 @@
+ // browser may render its safe metadata but never performs production marking.
+ 
+ export const READING_CONTENT_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
+-export const READING_CONTENT_VERSION = 2;
++export const READING_CONTENT_VERSION = 3;
+ 
+ export const READING_SKILLS = Object.freeze({
+   "2a": {
+@@ -8869,9 +8869,1245 @@ export const READING_PASSAGES = Object.freeze([
+         "hint": "Read the line in two parts: the time phrase, then the main idea."
+       }
+     ]
++  },
++
++  {
++    "id": "lantern_map",
++    "title": "The Lantern Map",
++    "genre": "fiction",
++    "difficulty": 3,
++    "isLong": false,
++    "blocks": [
++      "The storm had pushed the harbour museum's door until it rattled like a drum. Mara was helping Aunt Lio mop the tiled floor when a brass lantern rolled from a shelf and tapped her boot. Its glass was fogged with salt, and a crack ran across the wooden frame behind it.",
++      "As Mara lifted the lantern, a folded map slid from the split in the frame. The paper was soft with damp, but the ink still showed the harbour in careful blue lines. Tiny red stars marked twelve windows above the quay.",
++      "\"Those were the guide lights,\" Aunt Lio said. \"When the lighthouse broke during the winter fog, families kept lamps burning in those windows. The map showed safe paths through fog for fishing boats coming home.\" Mara had imagined treasure or a secret tunnel; instead, the map held a chain of ordinary rooms.",
++      "At first the discovery disappointed her. Then she traced the red stars with one wet finger and pictured people waiting in kitchens, lifting lamps when they heard a bell from the dark water. The streets no longer looked like a maze of alleys. They looked like a maze of promises.",
++      "That evening, Aunt Lio pinned the map in the meeting hall. An old fisherman pointed to one red star and whispered that his grandmother had kept that window bright. Mara stood beside him, suddenly careful with the torn corner in her hand, as if the small map was still helping someone find their way."
++    ],
++    "questions": [
++      {
++        "id": "lm_q1",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "What slid from the split in the lantern frame?",
++        "check": {
++          "keywordAny": [
++            [
++              "fold",
++              "map"
++            ],
++            [
++              "map"
++            ]
++          ]
++        },
++        "modelAnswer": "A folded map slid from the split in the frame.",
++        "explanation": "The detail is stated directly in paragraph 2.",
++        "hint": "Look at what happens when Mara lifts the lantern."
++      },
++      {
++        "id": "lm_q2",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "In paragraph 3, what does the phrase \"a chain of ordinary rooms\" suggest about the guide lights?",
++        "options": [
++          "The rooms worked together to help boats reach the harbour.",
++          "The rooms were locked and difficult to enter.",
++          "The rooms contained expensive treasure.",
++          "The rooms were all in one long building."
++        ],
++        "correct": 0,
++        "modelAnswer": "The rooms worked together to help boats reach the harbour.",
++        "explanation": "The phrase links separate homes into one helpful system.",
++        "hint": "Think about how the windows were connected by their job."
++      },
++      {
++        "id": "lm_q3",
++        "type": "evidenceShort",
++        "skill": "2d",
++        "marks": 2,
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "stem": "Why was the lantern map important to the harbour? Give one piece of evidence.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "safe",
++              "path"
++            ],
++            [
++              "help",
++              "boat"
++            ],
++            [
++              "guide",
++              "light"
++            ],
++            [
++              "fishing",
++              "home"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "safe paths through fog",
++            "families kept lamps burning in those windows"
++          ]
++        },
++        "modelAnswer": "It mattered because it showed how families guided boats safely home; evidence could include \"safe paths through fog\".",
++        "explanation": "The map is important because it records a system that protected people, not because it is valuable treasure.",
++        "hint": "Use Aunt Lio's explanation of the red stars."
++      },
++      {
++        "id": "lm_q4",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "Explain the effect of the phrase \"a maze of promises\".",
++        "rubric": [
++          {
++            "label": "Explains the maze image",
++            "check": {
++              "keywordAny": [
++                [
++                  "maze"
++                ],
++                [
++                  "streets"
++                ],
++                [
++                  "path"
++                ],
++                [
++                  "alleys"
++                ],
++                [
++                  "confusing"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Links promises to help or safety",
++            "check": {
++              "keywordAny": [
++                [
++                  "promise"
++                ],
++                [
++                  "help"
++                ],
++                [
++                  "safe"
++                ],
++                [
++                  "guide"
++                ],
++                [
++                  "hope"
++                ],
++                [
++                  "people"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The phrase makes the harbour streets seem like a network of routes, but the word \"promises\" changes the feeling from confusing to hopeful because families used those streets to help boats home.",
++        "explanation": "A strong answer explains both parts of the image and its effect on the reader.",
++        "hint": "Ask how Mara sees the same streets differently after understanding the map."
++      },
++      {
++        "id": "lm_q5",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "Who said that his grandmother had kept one of the guide-light windows bright?",
++        "check": {
++          "keywordAny": [
++            [
++              "old",
++              "fisherman"
++            ],
++            [
++              "fisherman"
++            ]
++          ]
++        },
++        "modelAnswer": "An old fisherman said it.",
++        "explanation": "This detail appears in the final paragraph at the meeting hall.",
++        "hint": "Look at who points to one of the red stars."
++      },
++      {
++        "id": "lm_q6",
++        "type": "open",
++        "skill": "2c",
++        "marks": 2,
++        "stem": "Summarise how Mara's view of the map changes during the story.",
++        "rubric": [
++          {
++            "label": "Begins with disappointment or treasure expectation",
++            "check": {
++              "keywordAny": [
++                [
++                  "treasure"
++                ],
++                [
++                  "secret",
++                  "tunnel"
++                ],
++                [
++                  "disappointed"
++                ],
++                [
++                  "expected"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Ends with respect for community help",
++            "check": {
++              "keywordAny": [
++                [
++                  "help"
++                ],
++                [
++                  "guide"
++                ],
++                [
++                  "careful"
++                ],
++                [
++                  "families"
++                ],
++                [
++                  "important"
++                ],
++                [
++                  "respect"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "At first Mara expects treasure and feels disappointed, but she comes to understand that the map records how ordinary families helped boats through fog, so she treats it carefully and respectfully.",
++        "explanation": "The summary should track the change from personal excitement to understanding the map's meaning.",
++        "hint": "Use one detail from the discovery and one from the final paragraph."
++      },
++      {
++        "id": "lm_q7",
++        "type": "mcq",
++        "skill": "P2",
++        "marks": 1,
++        "stem": "What do the quotation marks around Aunt Lio's words help the reader follow?",
++        "options": [
++          "They show exactly what Aunt Lio says aloud.",
++          "They mark the title of the map.",
++          "They show that Mara is reading a label silently.",
++          "They separate items in a list of windows."
++        ],
++        "correct": 0,
++        "modelAnswer": "They show exactly what Aunt Lio says aloud.",
++        "explanation": "The quotation marks help the reader identify Aunt Lio's spoken explanation.",
++        "hint": "Look at the words immediately before Aunt Lio said."
++      },
++      {
++        "id": "lm_q8",
++        "type": "match",
++        "skill": "2h",
++        "marks": 2,
++        "stem": "Match each viewpoint to the best description.",
++        "prompts": [
++          "Mara's first reaction",
++          "Aunt Lio's explanation",
++          "Mara after the meeting"
++        ],
++        "options": [
++          "She is disappointed because it is not treasure.",
++          "The map showed how guide lights helped fishing boats.",
++          "She handles the map carefully because it still feels important."
++        ],
++        "correctMap": {
++          "0": "0",
++          "1": "1",
++          "2": "2"
++        },
++        "modelAnswer": "Mara first feels disappointed; Aunt Lio explains the guide lights; after the meeting Mara handles the map carefully.",
++        "explanation": "The comparison follows how different people understand the same object.",
++        "hint": "Use the order of the story: discovery, explanation, meeting."
++      },
++      {
++        "id": "lm_q9",
++        "type": "open",
++        "skill": "2e",
++        "marks": 2,
++        "stem": "What is Mara likely to want to do with the map next? Use clues from the ending.",
++        "rubric": [
++          {
++            "label": "Makes a sensible prediction",
++            "check": {
++              "keywordAny": [
++                [
++                  "display"
++                ],
++                [
++                  "repair"
++                ],
++                [
++                  "protect"
++                ],
++                [
++                  "share"
++                ],
++                [
++                  "keep"
++                ],
++                [
++                  "museum"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Uses ending clues",
++            "check": {
++              "keywordAny": [
++                [
++                  "meeting"
++                ],
++                [
++                  "careful"
++                ],
++                [
++                  "fisherman"
++                ],
++                [
++                  "grandmother"
++                ],
++                [
++                  "helping"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Mara is likely to help protect or display the map, because the meeting shows it matters to local people and she becomes careful with the torn corner.",
++        "explanation": "A prediction should come from clues in the final paragraph, not from a new event invented at random.",
++        "hint": "Look at Mara's behaviour after the old fisherman speaks."
++      },
++      {
++        "id": "lm_q10",
++        "type": "open",
++        "skill": "2f",
++        "marks": 3,
++        "stem": "How does the structure of the story build from discovery to community memory?",
++        "rubric": [
++          {
++            "label": "Identifies the discovery",
++            "check": {
++              "keywordAny": [
++                [
++                  "lantern"
++                ],
++                [
++                  "map"
++                ],
++                [
++                  "discovery"
++                ],
++                [
++                  "frame"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains the middle revelation",
++            "check": {
++              "keywordAny": [
++                [
++                  "Aunt"
++                ],
++                [
++                  "guide",
++                  "lights"
++                ],
++                [
++                  "safe",
++                  "paths"
++                ],
++                [
++                  "lighthouse"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains the final community link",
++            "check": {
++              "keywordAny": [
++                [
++                  "meeting"
++                ],
++                [
++                  "fisherman"
++                ],
++                [
++                  "grandmother"
++                ],
++                [
++                  "community"
++                ],
++                [
++                  "memory"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The story begins with a physical discovery in the museum, then explains what the red stars meant, and finally connects the map to living community memory through the old fisherman's family story.",
++        "explanation": "The structure moves from object, to explanation, to shared meaning.",
++        "hint": "Divide the story into beginning, middle and ending jobs."
++      }
++    ]
++  },
++  {
++    "id": "seed_vault_guardians",
++    "title": "The Seed Vault Guardians",
++    "genre": "non-fiction",
++    "difficulty": 4,
++    "isLong": true,
++    "blocks": [
++      "A seed bank is not a museum of dead things. It is a living library, built to keep future harvests possible. Inside its cold rooms are packets of wheat, beans, rice, grasses and wild relatives of crops. Each packet is dried, labelled and sealed before it is stored at a temperature low enough to slow time down.",
++      "The work starts far from the freezer. Collectors visit farms, forests and mountain slopes to find plants with useful differences: one bean may survive dry soil, while another resists a disease. A few seeds are kept locally, and duplicate samples are sent to another seed bank so one accident cannot erase a variety.",
++      "Before a packet enters long-term storage, scientists test whether the seeds can still germinate. Some seeds are placed on damp paper in a warm cabinet; if too few sprout, the collection must be grown again and refreshed. The careful record is as important as the seed itself: without the right name, place and date, a packet becomes a mystery.",
++      "Seed banks also work with farmers. When floods, heat or new pests damage harvests, stored varieties can be searched for helpful traits. If flood, fire or conflict damages one collection, a duplicate sample in another country may protect years of patient work.",
++      "This does not mean seed banks can solve every food problem. Seeds need soil, water, skilled growers and fair sharing. Still, they give scientists and farmers more choices when weather becomes less predictable.",
++      "The guardians of a seed vault often speak quietly about patience. A packet may sleep for decades before it is needed. Yet when it wakes, it may carry an answer to a question nobody had thought to ask."
++    ],
++    "questions": [
++      {
++        "id": "svg_q1",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "Name two kinds of seeds or plants stored in the seed bank.",
++        "check": {
++          "keywordAny": [
++            [
++              "wheat",
++              "bean"
++            ],
++            [
++              "rice",
++              "grass"
++            ],
++            [
++              "crop",
++              "wild"
++            ],
++            [
++              "wheat",
++              "rice"
++            ],
++            [
++              "beans",
++              "rice"
++            ]
++          ]
++        },
++        "modelAnswer": "Examples include wheat, beans, rice, grasses and wild relatives of crops.",
++        "explanation": "The first paragraph lists several examples from the cold rooms.",
++        "hint": "Look for the list in the opening paragraph."
++      },
++      {
++        "id": "svg_q2",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "In paragraph 2, what does \"duplicate samples\" mean?",
++        "options": [
++          "Extra copies of the same seeds",
++          "Seeds that have already failed",
++          "Labels with missing dates",
++          "Plants that grow twice as fast"
++        ],
++        "correct": 0,
++        "modelAnswer": "Duplicate samples are extra copies of the same seeds.",
++        "explanation": "The duplicate sample protects the variety if one collection is damaged.",
++        "hint": "Use the next part of the sentence to help you."
++      },
++      {
++        "id": "svg_q3",
++        "type": "evidenceShort",
++        "skill": "2d",
++        "marks": 2,
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "stem": "Why are seeds sometimes stored in more than one country? Give evidence.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "accident",
++              "erase"
++            ],
++            [
++              "protect",
++              "collection"
++            ],
++            [
++              "damage",
++              "one"
++            ],
++            [
++              "duplicate",
++              "protect"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "one accident cannot erase a variety",
++            "a duplicate sample in another country may protect years of patient work"
++          ]
++        },
++        "modelAnswer": "They are stored in more than one country so a disaster in one place does not destroy a variety; the text says \"one accident cannot erase a variety\".",
++        "explanation": "The evidence explains the risk of relying on a single collection.",
++        "hint": "Find the sentence about accidents or damaged collections."
++      },
++      {
++        "id": "svg_q4",
++        "type": "open",
++        "skill": "2c",
++        "marks": 2,
++        "stem": "What is the main idea of the first two paragraphs?",
++        "rubric": [
++          {
++            "label": "Explains seed-bank purpose",
++            "check": {
++              "keywordAny": [
++                [
++                  "future",
++                  "harvest"
++                ],
++                [
++                  "keep",
++                  "seeds"
++                ],
++                [
++                  "living",
++                  "library"
++                ],
++                [
++                  "protect"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Mentions collecting/storing variety",
++            "check": {
++              "keywordAny": [
++                [
++                  "collect"
++                ],
++                [
++                  "farms"
++                ],
++                [
++                  "forests"
++                ],
++                [
++                  "duplicate"
++                ],
++                [
++                  "differences"
++                ],
++                [
++                  "variety"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The first two paragraphs explain that seed banks protect future harvests by collecting, drying and storing many different varieties of seeds, including duplicate samples for safety.",
++        "explanation": "A summary should include both the purpose and the collecting/storage process.",
++        "hint": "Use the opening definition and the collector paragraph."
++      },
++      {
++        "id": "svg_q5",
++        "type": "multiSelect",
++        "skill": "2b",
++        "marks": 2,
++        "stem": "Which tasks does the passage say scientists or collectors do before or during storage? Choose all that apply.",
++        "options": [
++          "Dry, label and seal packets",
++          "Paint the seeds different colours",
++          "Test whether seeds can germinate",
++          "Replace every seed with a plastic model"
++        ],
++        "correctSet": [
++          0,
++          2
++        ],
++        "modelAnswer": "They dry, label and seal packets, and they test whether seeds can germinate.",
++        "explanation": "Both details are stated in paragraphs 1 and 3.",
++        "hint": "Check each option against the exact process described."
++      },
++      {
++        "id": "svg_q6",
++        "type": "open",
++        "skill": "2f",
++        "marks": 2,
++        "stem": "How does the order of the paragraphs help the reader understand seed banks?",
++        "rubric": [
++          {
++            "label": "Identifies broad-to-specific movement",
++            "check": {
++              "keywordAny": [
++                [
++                  "first"
++                ],
++                [
++                  "purpose"
++                ],
++                [
++                  "what",
++                  "is"
++                ],
++                [
++                  "definition"
++                ],
++                [
++                  "overview"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Identifies process/use/limits later",
++            "check": {
++              "keywordAny": [
++                [
++                  "collect"
++                ],
++                [
++                  "test"
++                ],
++                [
++                  "farmers"
++                ],
++                [
++                  "limits"
++                ],
++                [
++                  "then"
++                ],
++                [
++                  "later"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The text starts by explaining what a seed bank is, then moves through collecting, testing and storing seeds before explaining how farmers may use them and what the limits are.",
++        "explanation": "The structure builds understanding step by step, from purpose to process to use.",
++        "hint": "Track the job of each paragraph rather than one detail."
++      },
++      {
++        "id": "svg_q7",
++        "type": "mcq",
++        "skill": "P1",
++        "marks": 1,
++        "stem": "In the sentence \"Before a packet enters long-term storage, scientists test whether the seeds can still germinate\", what does the comma help do?",
++        "options": [
++          "It separates the opening time phrase from the main action.",
++          "It shows a speaker has changed.",
++          "It proves the seeds have already sprouted.",
++          "It replaces a missing full stop."
++        ],
++        "correct": 0,
++        "modelAnswer": "The comma separates the opening time phrase from the main action.",
++        "explanation": "The comma marks a pause after the phrase that tells when the testing happens.",
++        "hint": "Read the sentence in two parts: when, then what happens."
++      },
++      {
++        "id": "svg_q8",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "Why is \"living library\" an effective phrase for a seed bank?",
++        "rubric": [
++          {
++            "label": "Explains library idea",
++            "check": {
++              "keywordAny": [
++                [
++                  "library"
++                ],
++                [
++                  "stored"
++                ],
++                [
++                  "collection"
++                ],
++                [
++                  "record"
++                ],
++                [
++                  "many"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains living/future use",
++            "check": {
++              "keywordAny": [
++                [
++                  "living"
++                ],
++                [
++                  "grow"
++                ],
++                [
++                  "future"
++                ],
++                [
++                  "harvest"
++                ],
++                [
++                  "germinate"
++                ],
++                [
++                  "wake"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "It is effective because a seed bank is a collection like a library, but the seeds are alive and may grow into future crops when they are needed.",
++        "explanation": "The phrase combines the idea of organised knowledge with living material.",
++        "hint": "Explain both words in the phrase, not just one."
++      },
++      {
++        "id": "svg_q9",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "What do scientists do if too few tested seeds sprout?",
++        "check": {
++          "keywordAny": [
++            [
++              "grown",
++              "again"
++            ],
++            [
++              "refreshed"
++            ],
++            [
++              "grow",
++              "again"
++            ],
++            [
++              "collection",
++              "refreshed"
++            ]
++          ]
++        },
++        "modelAnswer": "The collection must be grown again and refreshed.",
++        "explanation": "This is stated in paragraph 3 after the germination test.",
++        "hint": "Look at what happens after too few seeds sprout."
++      },
++      {
++        "id": "svg_q10",
++        "type": "evidenceShort",
++        "skill": "2h",
++        "marks": 2,
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "stem": "How is a seed bank different from an ordinary museum? Give evidence.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "living"
++            ],
++            [
++              "grow"
++            ],
++            [
++              "future"
++            ],
++            [
++              "not",
++              "dead"
++            ],
++            [
++              "harvest"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "not a museum of dead things",
++            "It is a living library",
++            "future harvests possible"
++          ]
++        },
++        "modelAnswer": "Unlike an ordinary museum, a seed bank stores living seeds that may be grown for future harvests; the text calls it \"a living library\".",
++        "explanation": "The comparison needs both the museum contrast and the living/future purpose.",
++        "hint": "Use the first two sentences of the passage."
++      },
++      {
++        "id": "svg_q11",
++        "type": "open",
++        "skill": "2e",
++        "marks": 1,
++        "stem": "Why might seed banks become more important as weather becomes less predictable?",
++        "rubric": [
++          {
++            "label": "Links weather change to useful stored traits",
++            "check": {
++              "keywordAny": [
++                [
++                  "weather"
++                ],
++                [
++                  "flood"
++                ],
++                [
++                  "heat"
++                ],
++                [
++                  "pests"
++                ],
++                [
++                  "choices"
++                ],
++                [
++                  "traits"
++                ],
++                [
++                  "harvest"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "They may become more important because stored varieties can give farmers more choices when floods, heat or pests damage harvests.",
++        "explanation": "The prediction is based on the passage's explanation of changing conditions.",
++        "hint": "Use paragraph 4 or 5."
++      },
++      {
++        "id": "svg_q12",
++        "type": "open",
++        "skill": "2d",
++        "marks": 2,
++        "stem": "Why is patience as important as technology in a seed vault?",
++        "rubric": [
++          {
++            "label": "Uses long-term storage/testing details",
++            "check": {
++              "keywordAny": [
++                [
++                  "decades"
++                ],
++                [
++                  "sleep"
++                ],
++                [
++                  "test"
++                ],
++                [
++                  "germinate"
++                ],
++                [
++                  "refresh"
++                ],
++                [
++                  "patient"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains why waiting matters",
++            "check": {
++              "keywordAny": [
++                [
++                  "needed"
++                ],
++                [
++                  "future"
++                ],
++                [
++                  "answer"
++                ],
++                [
++                  "choices"
++                ],
++                [
++                  "weather"
++                ],
++                [
++                  "harvest"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "Patience matters because seeds may sleep for decades and need careful testing and records before they are useful. They may only become important when a future problem appears.",
++        "explanation": "The answer should connect the quiet, long-term work with future usefulness.",
++        "hint": "Use details from the testing paragraph and the final paragraph."
++      }
++    ]
++  },
++  {
++    "id": "rooftop_rain",
++    "title": "Rooftop Rain",
++    "genre": "poetry",
++    "difficulty": 3,
++    "isLong": false,
++    "blocks": [
++      "Rain taps the corrugated roof / in silver stitches, quick and thin; / pigeons shuffle under pipes / and pull their grey coats in.",
++      "The guttering gargles at the lane, / a bottle filling, then overfull; / each puddle catches traffic lights / and shakes them into wool.",
++      "On windows high above the shops / a thousand beads begin to race; / the roof replies — tin-bright, drum-light — / to every cloud that changes place.",
++      "By dusk the storm has spent its coins; / the chimneys breathe a softer steam. / In cracks beside the rooftop door, / small seeds lift green heads from a dream.",
++      "The city has not disappeared; / it stands rinsed, bright and ready. / The rain has written on the roofs / and left the noisy morning steady."
++    ],
++    "questions": [
++      {
++        "id": "rr_q1",
++        "type": "short",
++        "skill": "2b",
++        "marks": 1,
++        "stem": "Where does the rain tap at the start of the poem?",
++        "check": {
++          "keywordAny": [
++            [
++              "corrugated",
++              "roof"
++            ],
++            [
++              "roof"
++            ]
++          ]
++        },
++        "modelAnswer": "It taps the corrugated roof.",
++        "explanation": "The answer is in the first line of the poem.",
++        "hint": "Read the first two lines."
++      },
++      {
++        "id": "rr_q2",
++        "type": "mcq",
++        "skill": "2a",
++        "marks": 1,
++        "stem": "What does \"silver stitches\" suggest about the rain?",
++        "options": [
++          "It falls in thin bright lines.",
++          "It is making clothes for the pigeons.",
++          "It has stopped completely.",
++          "It is heavy enough to break the roof."
++        ],
++        "correct": 0,
++        "modelAnswer": "It suggests thin, bright lines of rain.",
++        "explanation": "The image links rain to small shining stitches.",
++        "hint": "Think about what stitches look like."
++      },
++      {
++        "id": "rr_q3",
++        "type": "open",
++        "skill": "2g",
++        "marks": 2,
++        "stem": "What is the effect of the phrase \"The guttering gargles\"?",
++        "rubric": [
++          {
++            "label": "Explains sound",
++            "check": {
++              "keywordAny": [
++                [
++                  "sound"
++                ],
++                [
++                  "noise"
++                ],
++                [
++                  "gargle"
++                ],
++                [
++                  "water"
++                ],
++                [
++                  "gutter"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Explains lively/personified effect",
++            "check": {
++              "keywordAny": [
++                [
++                  "person"
++                ],
++                [
++                  "alive"
++                ],
++                [
++                  "lively"
++                ],
++                [
++                  "funny"
++                ],
++                [
++                  "mouth"
++                ],
++                [
++                  "full"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The phrase makes the gutter sound noisy and almost alive, as if it has a mouth full of water.",
++        "explanation": "The alliteration and verb make an ordinary drain feel active and audible.",
++        "hint": "Say what sound you imagine and how the object seems to behave."
++      },
++      {
++        "id": "rr_q4",
++        "type": "evidenceShort",
++        "skill": "2d",
++        "marks": 2,
++        "answerMarks": 1,
++        "evidenceMarks": 1,
++        "stem": "How do you know the poem's mood becomes hopeful by the end? Give evidence.",
++        "answerCheck": {
++          "keywordAny": [
++            [
++              "hope"
++            ],
++            [
++              "bright"
++            ],
++            [
++              "ready"
++            ],
++            [
++              "green"
++            ],
++            [
++              "steady"
++            ],
++            [
++              "fresh"
++            ]
++          ]
++        },
++        "evidenceCheck": {
++          "containsAny": [
++            "small seeds lift green heads",
++            "rinsed, bright and ready",
++            "left the noisy morning steady"
++          ]
++        },
++        "modelAnswer": "The mood becomes hopeful because the city is refreshed and new growth appears; evidence could include \"small seeds lift green heads\" or \"rinsed, bright and ready\".",
++        "explanation": "The ending changes the rain from noise into renewal.",
++        "hint": "Look at the last two stanzas."
++      },
++      {
++        "id": "rr_q5",
++        "type": "open",
++        "skill": "2c",
++        "marks": 2,
++        "stem": "Summarise the main change described in the poem.",
++        "rubric": [
++          {
++            "label": "Starts with busy rain/noise",
++            "check": {
++              "keywordAny": [
++                [
++                  "rain"
++                ],
++                [
++                  "taps"
++                ],
++                [
++                  "gargles"
++                ],
++                [
++                  "noise"
++                ],
++                [
++                  "storm"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Ends with calm or renewal",
++            "check": {
++              "keywordAny": [
++                [
++                  "steady"
++                ],
++                [
++                  "rinsed"
++                ],
++                [
++                  "bright"
++                ],
++                [
++                  "green"
++                ],
++                [
++                  "seeds"
++                ],
++                [
++                  "calm"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "The poem moves from busy, noisy rain on the rooftops to a calmer, brighter city where small seeds begin to grow.",
++        "explanation": "A good summary follows the change across the whole poem.",
++        "hint": "Compare the opening sounds with the final image."
++      },
++      {
++        "id": "rr_q6",
++        "type": "order",
++        "skill": "2f",
++        "marks": 2,
++        "stem": "Put these images from the poem in the order they appear.",
++        "items": [
++          "Seeds lift green heads",
++          "Rain taps the roof",
++          "Traffic lights shake in puddles",
++          "The roof replies to clouds"
++        ],
++        "correctPositions": [
++          4,
++          1,
++          2,
++          3
++        ],
++        "modelAnswer": "1 rain taps the roof, 2 traffic lights shake in puddles, 3 the roof replies to clouds, 4 seeds lift green heads.",
++        "explanation": "The order follows the poem from the roof, to the lane, to high windows, to the ending.",
++        "hint": "Work stanza by stanza."
++      },
++      {
++        "id": "rr_q7",
++        "type": "mcq",
++        "skill": "P3",
++        "marks": 1,
++        "stem": "In the line \"the roof replies — tin-bright, drum-light —\", what do the dashes help do?",
++        "options": [
++          "They tuck in extra descriptive detail about the roof's sound.",
++          "They show the poem has ended.",
++          "They mark a list of people speaking.",
++          "They turn the line into a question."
++        ],
++        "correct": 0,
++        "modelAnswer": "The dashes tuck in extra descriptive detail about the roof's sound.",
++        "explanation": "The words between the dashes add a vivid description without changing the main sentence.",
++        "hint": "Read the line once with the dashed words, then once without them."
++      },
++      {
++        "id": "rr_q8",
++        "type": "open",
++        "skill": "2h",
++        "marks": 3,
++        "stem": "Compare the rain at the start of the poem with its effect by the end.",
++        "rubric": [
++          {
++            "label": "Describes start as noisy/active",
++            "check": {
++              "keywordAny": [
++                [
++                  "tap"
++                ],
++                [
++                  "gargle"
++                ],
++                [
++                  "noisy"
++                ],
++                [
++                  "quick"
++                ],
++                [
++                  "storm"
++                ],
++                [
++                  "drum"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Describes end as fresh/calm/growth",
++            "check": {
++              "keywordAny": [
++                [
++                  "rinsed"
++                ],
++                [
++                  "bright"
++                ],
++                [
++                  "ready"
++                ],
++                [
++                  "steady"
++                ],
++                [
++                  "green"
++                ],
++                [
++                  "seeds"
++                ]
++              ]
++            }
++          },
++          {
++            "label": "Makes a direct comparison across the poem",
++            "check": {
++              "keywordAny": [
++                [
++                  "start",
++                  "end"
++                ],
++                [
++                  "beginning",
++                  "end"
++                ],
++                [
++                  "changes"
++                ],
++                [
++                  "different"
++                ],
++                [
++                  "by",
++                  "end"
++                ]
++              ]
++            }
++          }
++        ],
++        "modelAnswer": "At the start the rain is noisy and active, tapping and gargling around the roofs. By the end it has refreshed the city and helped create a calmer, brighter feeling with green seeds appearing.",
++        "explanation": "The comparison needs both the beginning and the ending, not just one image.",
++        "hint": "Use one image from the first half and one from the final stanza."
++      }
++    ]
+   }
+ 
+ 
++
+ ]);
+ 
+ export const READING_TEST_PAPERS = Object.freeze([
+@@ -9448,7 +10684,60 @@ export const READING_TEST_PAPERS = Object.freeze([
+         ]
+       }
+     ]
+-  }
++  },
++{
++  "id": "paper_m",
++  "title": "Original KS2-style Paper M",
++  "timeLimitMin": 60,
++  "totalMarks": 50,
++  "sections": [
++    {
++      "passageId": "lantern_map",
++      "questionIds": [
++        "lm_q1",
++        "lm_q2",
++        "lm_q3",
++        "lm_q4",
++        "lm_q5",
++        "lm_q6",
++        "lm_q7",
++        "lm_q8",
++        "lm_q9",
++        "lm_q10"
++      ]
++    },
++    {
++      "passageId": "seed_vault_guardians",
++      "questionIds": [
++        "svg_q1",
++        "svg_q2",
++        "svg_q3",
++        "svg_q4",
++        "svg_q5",
++        "svg_q6",
++        "svg_q7",
++        "svg_q8",
++        "svg_q9",
++        "svg_q10",
++        "svg_q11",
++        "svg_q12"
++      ]
++    },
++    {
++      "passageId": "rooftop_rain",
++      "questionIds": [
++        "rr_q1",
++        "rr_q2",
++        "rr_q3",
++        "rr_q4",
++        "rr_q5",
++        "rr_q6",
++        "rr_q7",
++        "rr_q8"
++      ]
++    }
++  ]
++}
+ 
+ 
+ ]);
+diff --git a/shared/reading/metadata.js b/shared/reading/metadata.js
+index 1cb9fda..9f47a17 100644
+--- a/shared/reading/metadata.js
++++ b/shared/reading/metadata.js
+@@ -1,7 +1,7 @@
+ // Browser-safe Reading metadata. Do not import passage, question or marking
+ // content here; the production client may consume this module directly.
+ export const READING_CONTENT_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
+-export const READING_CONTENT_VERSION = 2;
++export const READING_CONTENT_VERSION = 3;
+ 
+ export const READING_SKILLS = Object.freeze({
+   '2a': {
+@@ -71,15 +71,15 @@ export function readingContentSummary() {
+   return {
+     releaseId: READING_CONTENT_RELEASE_ID,
+     version: READING_CONTENT_VERSION,
+-    passageCount: 21,
+-    questionCount: 182,
+-    paperCount: 12,
++    passageCount: 24,
++    questionCount: 212,
++    paperCount: 13,
+     skillCount: Object.keys(READING_SKILLS).length,
+     genres: {
+-      fiction: 8,
+-      'non-fiction': 8,
+-      poetry: 5,
++      fiction: 9,
++      'non-fiction': 9,
++      poetry: 6,
+     },
+-    longPassageCount: 7,
++    longPassageCount: 8,
+   };
+ }
+diff --git a/src/subjects/reading/components/ReadingPracticeSurface.jsx b/src/subjects/reading/components/ReadingPracticeSurface.jsx
+index dcd4099..a2fceb8 100644
+--- a/src/subjects/reading/components/ReadingPracticeSurface.jsx
++++ b/src/subjects/reading/components/ReadingPracticeSurface.jsx
+@@ -88,6 +88,12 @@ function markActionHint(session) {
+   return 'Checks your saved answer now and then shows feedback.';
+ }
+ 
++function primarySubmitLabel(session, result) {
++  if (result) return 'Next question';
++  if (!session?.delayedFeedback) return 'Submit answer';
++  return canGoNext(session) ? 'Save and next' : 'Save answer';
++}
++
+ function ReadingSetup({ ui, actions }) {
+   const prefs = ui.prefs || {};
+   function start(event) {
+@@ -327,7 +333,7 @@ function QuestionPanel({ ui, actions }) {
+   const pending = isPending(ui);
+   const formId = `reading-question-form-${session.id}`;
+   const feedback = ui.feedback || (result ? { result } : null);
+-  const primarySubmitLabel = session.delayedFeedback ? 'Save and next' : 'Submit answer';
++  const primaryLabel = primarySubmitLabel(session, result);
+   const showDraftNextButton = !session.delayedFeedback || disabled;
+   function submit(event) {
+     event.preventDefault();
+@@ -379,7 +385,7 @@ function QuestionPanel({ ui, actions }) {
+         <p className="question-stem">{question.stem}</p>
+         <QuestionInput question={question} response={response} disabled={disabled} />
+         <div className="actions reading-actions-spaced">
+-          {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{primarySubmitLabel}</button> : null}
++          {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{primaryLabel}</button> : null}
+           <button className="btn ghost" type="button" onClick={(event) => saveAndMove(event, { delta: -1 })} disabled={pending || !canGoPrevious(session)}>Previous</button>
+           {showDraftNextButton ? <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save draft and next'}</button> : null}
+           {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={finish} disabled={pending}>{markActionLabel(session)}</button> : null}
+diff --git a/tests/reading-content-contract.test.js b/tests/reading-content-contract.test.js
+index e385c03..e9dbab3 100644
+--- a/tests/reading-content-contract.test.js
++++ b/tests/reading-content-contract.test.js
+@@ -16,14 +16,14 @@ function norm(value) {
+ 
+ test('reading content bank has varied original passages, papers and KS2 domains', () => {
+   const summary = readingContentSummary();
+-  assert.equal(summary.passageCount, 21);
+-  assert.equal(summary.paperCount, 12);
+-  assert.ok(summary.questionCount >= 180);
++  assert.ok(summary.passageCount >= 24);
++  assert.ok(summary.paperCount >= 13);
++  assert.ok(summary.questionCount >= 210);
+   assert.ok(Object.keys(READING_SKILLS).includes('2d'));
+-  assert.ok(summary.genres.fiction >= 8);
+-  assert.ok(summary.genres['non-fiction'] >= 8);
+-  assert.ok(summary.genres.poetry >= 5);
+-  assert.ok(summary.longPassageCount >= 7);
++  assert.ok(summary.genres.fiction >= 9);
++  assert.ok(summary.genres['non-fiction'] >= 9);
++  assert.ok(summary.genres.poetry >= 6);
++  assert.ok(summary.longPassageCount >= 8);
+ });
+ 
+ test('reading ids are unique and evidence quotes exist in their source passage', () => {
+@@ -63,6 +63,33 @@ test('reading question stems avoid noticeable repetition after normalisation', (
+   assert.deepEqual(duplicates, []);
+ });
+ 
++
++test('reading model answers and stem shapes avoid repeated-question feel', () => {
++  const answerGroups = new Map();
++  const stemShapeGroups = new Map();
++  for (const passage of READING_PASSAGES) {
++    for (const question of passage.questions || []) {
++      if (question.modelAnswer) {
++        const answerKey = norm(question.modelAnswer);
++        const answers = answerGroups.get(answerKey) || [];
++        answers.push(`${passage.id}:${question.id}`);
++        answerGroups.set(answerKey, answers);
++      }
++      const stemShape = norm(question.stem)
++        .replace(/\b(paragraph|section) [0-9]+\b/g, '$1 #')
++        .replace(/\b(red tin box|lantern map|seed bank|seed vault|rooftop rain|poem|passage|story|text)\b/g, 'TEXT')
++        .replace(/\b(nia|mara|aunt lio|grandad)\b/g, 'PERSON');
++      const stems = stemShapeGroups.get(stemShape) || [];
++      stems.push(`${passage.id}:${question.id}`);
++      stemShapeGroups.set(stemShape, stems);
++    }
++  }
++  const duplicateAnswers = [...answerGroups.entries()].filter(([, rows]) => rows.length > 1);
++  const duplicateStemShapes = [...stemShapeGroups.entries()].filter(([, rows]) => rows.length > 2);
++  assert.deepEqual(duplicateAnswers, []);
++  assert.deepEqual(duplicateStemShapes, []);
++});
++
+ test('reading test papers only reference existing passages and questions and sum to 50 marks', () => {
+   const passageMap = new Map(READING_PASSAGES.map((passage) => [passage.id, passage]));
+   for (const paper of READING_TEST_PAPERS) {
+diff --git a/tests/reading-session-interface.test.js b/tests/reading-session-interface.test.js
+index dea066b..a824db8 100644
+--- a/tests/reading-session-interface.test.js
++++ b/tests/reading-session-interface.test.js
+@@ -82,6 +82,8 @@ test('reading one-question delayed-feedback surface has one save-and-next path',
+   assert.equal(saveAndNextCount, 1);
+   assert.match(ui, /showDraftNextButton/);
+   assert.match(ui, /Save draft and next/);
++  assert.match(ui, /function primarySubmitLabel/);
++  assert.match(ui, /Save answer/);
+ });
+ 
+ test('reading command actions serialise section responses and preserve stale guards', () => {
+diff --git a/tests/worker-reading-runtime.test.js b/tests/worker-reading-runtime.test.js
+index 6901847..fe6343a 100644
+--- a/tests/worker-reading-runtime.test.js
++++ b/tests/worker-reading-runtime.test.js
+@@ -85,6 +85,13 @@ test('reading phrase checks reject locally negated correct phrases', () => {
+   assert.equal(checkMatches('It was folded; not slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), false);
+   assert.equal(checkMatches('not folded slips of paper, but folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), true);
+   assert.equal(checkMatches('not only speech marks', { containsAny: ['speech marks'] }), true);
++  assert.equal(checkMatches('speech marks are not needed', { containsAny: ['speech marks'] }), false);
++  assert.equal(checkMatches('speech marks not needed', { containsAny: ['speech marks'] }), false);
++  assert.equal(checkMatches('folded slips of paper were not inside', { keywordAny: [['fold', 'slip', 'paper']] }), false);
++  assert.equal(checkMatches('the house around her seemed to change did not happen', { containsAny: ['the house around her seemed to change'] }), false);
++  assert.equal(checkMatches('the house around her seemed to change was false', { containsAny: ['the house around her seemed to change'] }), false);
++  assert.equal(checkMatches('It had folded slips of paper, not coins.', { keywordAny: [['fold', 'slip', 'paper']] }), true);
++  assert.equal(checkMatches('folded slips of paper, but not coins', { keywordAny: [['fold', 'slip', 'paper']] }), true);
+ });
+ 
+ test('reading evidence fallback does not award marks for negated evidence quotes', () => {
+@@ -121,6 +128,26 @@ test('reading evidence fallback does not award marks for negated evidence quotes
+   assert.equal(negatedLaterToken.score, 1);
+   assert.equal(negatedLaterToken.correct, false);
+ 
++  const negatedAfterPhrase = evaluateReadingQuestion(question, {
++    answer: 'the house changes',
++    evidence: 'the house around her seemed to change did not happen',
++  });
++  assert.equal(negatedAfterPhrase.score, 1);
++  assert.equal(negatedAfterPhrase.correct, false);
++
++  const negatedAfterOverlap = evaluateReadingQuestion(question, {
++    answer: 'the house changes',
++    evidence: 'house around her seemed to change did not happen',
++  });
++  assert.equal(negatedAfterOverlap.score, 1);
++  assert.equal(negatedAfterOverlap.correct, false);
++
++  const contrastAfterPhrase = evaluateReadingQuestion(question, {
++    answer: 'the house changes',
++    evidence: 'the house around her seemed to change, not the tin box',
++  });
++  assert.equal(contrastAfterPhrase.score, 2);
++
+   const corrected = evaluateReadingQuestion(question, {
+     answer: 'the house changes',
+     evidence: 'not the house around her seemed to change, but the house around her seemed to change',
+diff --git a/worker/src/subjects/reading/engine.js b/worker/src/subjects/reading/engine.js
+index 308d5cf..38c88c1 100644
+--- a/worker/src/subjects/reading/engine.js
++++ b/worker/src/subjects/reading/engine.js
+@@ -133,6 +133,69 @@ function bridgeLooksLikeLocalNegation(tokens, cueIndex, startIndex) {
+   return bridge.length <= 5 && !bridge.some((token) => CONTRADICTION_BREAK_TOKENS.has(token));
+ }
+ 
++const POST_SPAN_NEGATION_BRIDGE_TOKENS = new Set([
++  'am',
++  'is',
++  'are',
++  'was',
++  'were',
++  'be',
++  'been',
++  'being',
++  'do',
++  'does',
++  'did',
++  'has',
++  'have',
++  'had',
++  'would',
++  'should',
++  'could',
++  'might',
++  'must',
++]);
++
++const POST_SPAN_NEGATION_PREDICATE_TOKENS = new Set([
++  'answer',
++  'answers',
++  'correct',
++  'right',
++  'true',
++  'needed',
++  'need',
++  'used',
++  'use',
++  'inside',
++  'there',
++  'shown',
++  'showed',
++  'included',
++  'include',
++  'present',
++  'happen',
++  'happened',
++  'occur',
++  'occurred',
++]);
++
++function bridgeLooksLikePostSpanNegation(tokens, spanEndIndex, cueIndex) {
++  const bridge = tokens.slice(spanEndIndex, cueIndex);
++  if (bridge.length > 5 || bridge.some((token) => CONTRADICTION_BREAK_TOKENS.has(token))) return false;
++  if (bridge.some((token) => POST_SPAN_NEGATION_BRIDGE_TOKENS.has(token))) return true;
++  if (['false', 'wrong', 'incorrect', 'opposite'].includes(tokens[cueIndex])) return bridge.length <= 2;
++  const afterCue = tokens.slice(cueIndex + 1, cueIndex + 4);
++  return afterCue.some((token) => POST_SPAN_NEGATION_PREDICATE_TOKENS.has(token));
++}
++
++function spanContainsInternalContradiction(tokens, startIndex, spanEndIndex) {
++  for (let index = startIndex; index < spanEndIndex; index += 1) {
++    if (!LOCAL_CONTRADICTION_CUES.has(tokens[index])) continue;
++    if (cueIsSoftened(tokens, index)) continue;
++    return true;
++  }
++  return false;
++}
++
+ function spanIsLocallyContradicted(tokens, startIndex, phraseTokens = []) {
+   const lookBehindStart = Math.max(0, startIndex - 7);
+   for (let index = startIndex - 1; index >= lookBehindStart; index -= 1) {
+@@ -140,6 +203,16 @@ function spanIsLocallyContradicted(tokens, startIndex, phraseTokens = []) {
+     if (cueIsSoftened(tokens, index)) continue;
+     if (bridgeLooksLikeLocalNegation(tokens, index, startIndex)) return true;
+   }
++
++  const spanEndIndex = startIndex + Math.max(1, phraseTokens.length || 1);
++  if (spanContainsInternalContradiction(tokens, startIndex, spanEndIndex)) return true;
++  const lookAheadEnd = Math.min(tokens.length, spanEndIndex + 7);
++  for (let index = spanEndIndex; index < lookAheadEnd; index += 1) {
++    if (CONTRADICTION_BREAK_TOKENS.has(tokens[index])) break;
++    if (!LOCAL_CONTRADICTION_CUES.has(tokens[index])) continue;
++    if (cueIsSoftened(tokens, index)) continue;
++    if (bridgeLooksLikePostSpanNegation(tokens, spanEndIndex, index)) return true;
++  }
+   return false;
+ }
+ 
+@@ -218,9 +291,13 @@ function overlapIsLocallyContradicted(text, snippet) {
+     if (clauseOverlap < 0.55) return false;
+     const positions = snippetTokens
+       .flatMap((snippetToken) => stemPositions(textTokens, snippetToken))
+-      .filter((position) => position >= start && position < end);
++      .filter((position) => position >= start && position < end)
++      .sort((a, b) => a - b);
+     if (!positions.length) return false;
+-    return !positions.some((position) => spanIsLocallyContradicted(textTokens, position, snippetTokens));
++    const spanStart = positions[0];
++    const spanEnd = positions[positions.length - 1] + 1;
++    const spanTokens = new Array(Math.max(1, spanEnd - spanStart)).fill('span');
++    return !spanIsLocallyContradicted(textTokens, spanStart, spanTokens);
+   });
+ }
+ 

@@ -1,0 +1,5 @@
+git apply --check patches/001-reading-post-negation-ui-and-pool-expansion.patch
+check: pass
+apply: pass
+audit: pass
+nonreact-tests: pass

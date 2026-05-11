@@ -1,0 +1,5 @@
+Source ZIP SHA-256:
+58b5ad91e1aac120f83c49fd0c198d763ffedfdb1b3bc72cfc1fa928c78783c6  /mnt/data/ks2-mastery-lean-05102302.zip
+
+Patch SHA-256:
+df99871e6c9a0d6f2f2e0f0598446bb1fbb972d9a1dd97560137964087dc77fb  /mnt/data/001-reading-post-negation-ui-and-pool-expansion.patch
