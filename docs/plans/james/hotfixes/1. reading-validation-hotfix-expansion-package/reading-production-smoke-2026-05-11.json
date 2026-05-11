@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "smokeType": "reading-production",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "https://ks2.eugnel.uk",
+  "contentReleaseId": "reading-poc-promoted-2026-05-05",
+  "contentVersion": 3,
+  "commitSha": "34717c00ba5a81f6c3276822816810b1742df3d5",
+  "learnerFixtureType": "demo-session",
+  "accountId": "demo-0KDMCZt82vEnCA",
+  "learnerId": "learner-demo-qZZoIkOGhGpwXQ",
+  "immediate": {
+    "revision": 2,
+    "questionId": "mac_q1",
+    "passageId": "museum_after_closing",
+    "content": {
+      "releaseId": "reading-poc-promoted-2026-05-05",
+      "version": 3,
+      "passageCount": 24,
+      "questionCount": 212,
+      "paperCount": 13,
+      "skillCount": 12,
+      "genres": {
+        "fiction": 9,
+        "non-fiction": 9,
+        "poetry": 6
+      },
+      "longPassageCount": 8
+    },
+    "score": 1,
+    "maxScore": 1
+  },
+  "delayedPaper": {
+    "revision": 6,
+    "paperId": "paper_i",
+    "questionCount": 26,
+    "maxScore": 50,
+    "staleErrorCleared": true
+  },
+  "finishedAt": "2026-05-11T09:12:23.324Z"
+}
