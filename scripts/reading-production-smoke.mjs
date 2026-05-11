@@ -46,13 +46,13 @@ function expectedContentSummary() {
   const summary = readingContentSummary();
   assert.equal(summary.releaseId, READING_CONTENT_RELEASE_ID);
   assert.equal(summary.version, READING_CONTENT_VERSION);
-  assert.equal(summary.passageCount, 21);
-  assert.equal(summary.questionCount, 182);
-  assert.equal(summary.paperCount, 12);
-  assert.equal(summary.genres.fiction, 8);
-  assert.equal(summary.genres['non-fiction'], 8);
-  assert.equal(summary.genres.poetry, 5);
-  assert.equal(summary.longPassageCount, 7);
+  assert.equal(summary.passageCount, 24);
+  assert.equal(summary.questionCount, 212);
+  assert.equal(summary.paperCount, 13);
+  assert.equal(summary.genres.fiction, 9);
+  assert.equal(summary.genres['non-fiction'], 9);
+  assert.equal(summary.genres.poetry, 6);
+  assert.equal(summary.longPassageCount, 8);
   return summary;
 }
 
