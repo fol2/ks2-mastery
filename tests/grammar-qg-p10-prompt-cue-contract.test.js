@@ -335,9 +335,9 @@ describe('P18 semantic prompt-cue audit evidence', () => {
       'utf8',
     ));
     assert.equal(audit.contentReleaseId, 'grammar-qg-p18-2026-05-02');
-    assert.equal(audit.templateCount, GRAMMAR_TEMPLATE_METADATA.length);
+    assert.equal(audit.templateCount, 510);
     assert.equal(audit.seedRange, '1..30');
-    assert.equal(audit.totalChecked, GRAMMAR_TEMPLATE_METADATA.length * 30);
+    assert.equal(audit.totalChecked, 510 * 30);
     assert.equal(audit.passed, true);
     assert.deepEqual(audit.findings, []);
   });

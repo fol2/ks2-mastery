@@ -1,0 +1,4655 @@
+TAP version 13
+# Subtest: audit doc exists on disk
+ok 1 - audit doc exists on disk
+  ---
+  duration_ms: 1.001
+  type: 'test'
+  ...
+# Subtest: classification table has one row per template
+ok 2 - classification table has one row per template
+  ---
+  duration_ms: 1.5271
+  type: 'test'
+  ...
+# Subtest: every proposed answerSpec.kind is in ANSWER_SPEC_KINDS
+ok 3 - every proposed answerSpec.kind is in ANSWER_SPEC_KINDS
+  ---
+  duration_ms: 1.3948
+  type: 'test'
+  ...
+# Subtest: new opt-in generated templates must emit validated answerSpec data
+ok 4 - new opt-in generated templates must emit validated answerSpec data
+  ---
+  duration_ms: 65.443
+  type: 'test'
+  ...
+# Subtest: every template id in the audit doc exists in GRAMMAR_TEMPLATES
+ok 5 - every template id in the audit doc exists in GRAMMAR_TEMPLATES
+  ---
+  duration_ms: 1.631
+  type: 'test'
+  ...
+# Subtest: no duplicate template ids in the audit doc
+ok 6 - no duplicate template ids in the audit doc
+  ---
+  duration_ms: 1.9732
+  type: 'test'
+  ...
+# Subtest: audit lists at least 5 manual-review-only candidates in section 3
+ok 7 - audit lists at least 5 manual-review-only candidates in section 3
+  ---
+  duration_ms: 1.3546
+  type: 'test'
+  ...
+# Subtest: audit lists all 6 P1 focus concepts as high-priority in section 4
+ok 8 - audit lists all 6 P1 focus concepts as high-priority in section 4
+  ---
+  duration_ms: 0.9688
+  type: 'test'
+  ...
+# Subtest: every template carrying a P1 focus concept is priority=high
+ok 9 - every template carrying a P1 focus concept is priority=high
+  ---
+  duration_ms: 3.3867
+  type: 'test'
+  ...
+# Subtest: release-id bump is YES for every constructed-response row
+ok 10 - release-id bump is YES for every constructed-response row
+  ---
+  duration_ms: 3.4459
+  type: 'test'
+  ...
+# Subtest: release-id bump is NO for every selected-response row
+ok 11 - release-id bump is NO for every selected-response row
+  ---
+  duration_ms: 4.2798
+  type: 'test'
+  ...
+# Subtest: audit table proposes the expected current answer-spec distribution
+ok 12 - audit table proposes the expected current answer-spec distribution
+  ---
+  duration_ms: 1.9988
+  type: 'test'
+  ...
+# Subtest: audit doc exists at the declared repo path
+ok 13 - audit doc exists at the declared repo path
+  ---
+  duration_ms: 1.3054
+  type: 'test'
+  ...
+# Subtest: audit doc declares the current QG contentReleaseId bump in its frontmatter
+ok 14 - audit doc declares the current QG contentReleaseId bump in its frontmatter
+  ---
+  duration_ms: 0.7467
+  type: 'test'
+  ...
+# Subtest: concept table has exactly 18 rows, one per GRAMMAR_AGGREGATE_CONCEPTS entry
+ok 15 - concept table has exactly 18 rows, one per GRAMMAR_AGGREGATE_CONCEPTS entry
+  ---
+  duration_ms: 1.7451
+  type: 'test'
+  ...
+# Subtest: thin-pool flags match the executable generator audit
+ok 16 - thin-pool flags match the executable generator audit
+  ---
+  duration_ms: 155.7888
+  type: 'test'
+  ...
+# Subtest: Markdown thin-pool list agrees with the executable generator audit
+ok 17 - Markdown thin-pool list agrees with the executable generator audit
+  ---
+  duration_ms: 127.7413
+  type: 'test'
+  ...
+# Subtest: P1 focus concepts all carry the `high` priority label
+ok 18 - P1 focus concepts all carry the `high` priority label
+  ---
+  duration_ms: 0.5605
+  type: 'test'
+  ...
+# Subtest: audit records active_passive and subject_object as P1-resolved brittle concepts
+ok 19 - audit records active_passive and subject_object as P1-resolved brittle concepts
+  ---
+  duration_ms: 0.4871
+  type: 'test'
+  ...
+# Subtest: each P1 focus concept lists at least five future template ideas
+ok 20 - each P1 focus concept lists at least five future template ideas
+  ---
+  duration_ms: 0.5038
+  type: 'test'
+  ...
+# Subtest: expanded `explain` question-type backlog is called out with high priority
+ok 21 - expanded `explain` question-type backlog is called out with high priority
+  ---
+  duration_ms: 0.4567
+  type: 'test'
+  ...
+# Subtest: Phase 5 release-id discipline is documented explicitly
+ok 22 - Phase 5 release-id discipline is documented explicitly
+  ---
+  duration_ms: 0.4456
+  type: 'test'
+  ...
+# Subtest: Grammar legacy oracle fixture remains frozen for the reviewed denominator
+ok 23 - Grammar legacy oracle fixture remains frozen for the reviewed denominator
+  ---
+  duration_ms: 2.455
+  type: 'test'
+  ...
+# Subtest: Grammar QG P1 baseline remains frozen for the previous content release
+ok 24 - Grammar QG P1 baseline remains frozen for the previous content release
+  ---
+  duration_ms: 1.2339
+  type: 'test'
+  ...
+# Subtest: Grammar QG P2 baseline remains frozen for the shipped declarative marking denominator
+ok 25 - Grammar QG P2 baseline remains frozen for the shipped declarative marking denominator
+  ---
+  duration_ms: 0.6511
+  type: 'test'
+  ...
+# Subtest: Grammar QG P3 baseline pins the historical explanation-depth release
+ok 26 - Grammar QG P3 baseline pins the historical explanation-depth release
+  ---
+  duration_ms: 0.7638
+  type: 'test'
+  ...
+# Subtest: Grammar legacy content still generates serialisable questions matching frozen oracle samples
+ok 27 - Grammar legacy content still generates serialisable questions matching frozen oracle samples
+  ---
+  duration_ms: 11.3741
+  type: 'test'
+  ...
+# Subtest: Grammar QG P1 templates emit answer specs and score their golden responses
+ok 28 - Grammar QG P1 templates emit answer specs and score their golden responses
+  ---
+  duration_ms: 2.1765
+  type: 'test'
+  ...
+# Subtest: Grammar generated attempts store safe variant metadata without exposing it on currentItem
+ok 29 - Grammar generated attempts store safe variant metadata without exposing it on currentItem
+  ---
+  duration_ms: 11.3917
+  type: 'test'
+  ...
+# Subtest: Grammar manual-review-only attempts save responses without scoring or reward evidence
+ok 30 - Grammar manual-review-only attempts save responses without scoring or reward evidence
+  ---
+  duration_ms: 2.6963
+  type: 'test'
+  ...
+# Subtest: Grammar manual-review-only practice summary separates answered from scored answers
+ok 31 - Grammar manual-review-only practice summary separates answered from scored answers
+  ---
+  duration_ms: 2.4302
+  type: 'test'
+  ...
+# Subtest: Grammar mini-test packs exclude manual-review-only templates
+ok 32 - Grammar mini-test packs exclude manual-review-only templates
+  ---
+  duration_ms: 51080.6422
+  type: 'test'
+  ...
+# Subtest: Grammar strict mini-test rejects forced manual-review-only templates
+ok 33 - Grammar strict mini-test rejects forced manual-review-only templates
+  ---
+  duration_ms: 250.7093
+  type: 'test'
+  ...
+# Subtest: Grammar mini-set generation covers mixed and focused pools without looping
+ok 34 - Grammar mini-set generation covers mixed and focused pools without looping
+  ---
+  duration_ms: 386.6516
+  type: 'test'
+  ...
+# Subtest: Grammar mastery status blocks secured state when a strong concept is due
+ok 35 - Grammar mastery status blocks secured state when a strong concept is due
+  ---
+  duration_ms: 0.1794
+  type: 'test'
+  ...
+# Subtest: Grammar answer quality gives supported correctness less gain than independent first attempts
+ok 36 - Grammar answer quality gives supported correctness less gain than independent first attempts
+  ---
+  duration_ms: 1.9253
+  type: 'test'
+  ...
+# Subtest: Grammar multi-skill templates update every concept node
+ok 37 - Grammar multi-skill templates update every concept node
+  ---
+  duration_ms: 2.064
+  type: 'test'
+  ...
+# Subtest: Grammar engine rejects stale content release evidence
+ok 38 - Grammar engine rejects stale content release evidence
+  ---
+  duration_ms: 0.2659
+  type: 'test'
+  ...
+# Subtest: Grammar command engine clears active sessions from an older content release
+ok 39 - Grammar command engine clears active sessions from an older content release
+  ---
+  duration_ms: 1.4155
+  type: 'test'
+  ...
+# Subtest: R6.AC6 — P19 smart-practice audit output is byte-identical to baseline
+ok 40 - R6.AC6 — P19 smart-practice audit output is byte-identical to baseline
+  ---
+  duration_ms: 54020.4751
+  type: 'test'
+  ...
+# Subtest: P10 Evidence Artefacts: file existence
+    # Subtest: grammar-qg-p10-render-inventory.json exists
+    ok 1 - grammar-qg-p10-render-inventory.json exists
+      ---
+      duration_ms: 0.8508
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-render-inventory.md exists
+    ok 2 - grammar-qg-p10-render-inventory.md exists
+      ---
+      duration_ms: 0.327
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-render-inventory-redacted.md exists
+    ok 3 - grammar-qg-p10-render-inventory-redacted.md exists
+      ---
+      duration_ms: 0.1897
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-quality-register.json exists
+    ok 4 - grammar-qg-p10-quality-register.json exists
+      ---
+      duration_ms: 0.1544
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-distractor-audit.json exists
+    ok 5 - grammar-qg-p10-distractor-audit.json exists
+      ---
+      duration_ms: 0.1759
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-marking-matrix.json exists
+    ok 6 - grammar-qg-p10-marking-matrix.json exists
+      ---
+      duration_ms: 0.2166
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-marking-matrix.md exists
+    ok 7 - grammar-qg-p10-marking-matrix.md exists
+      ---
+      duration_ms: 0.177
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-certification-status-map.json exists
+    ok 8 - grammar-qg-p10-certification-status-map.json exists
+      ---
+      duration_ms: 0.2488
+      type: 'test'
+      ...
+    1..8
+ok 41 - P10 Evidence Artefacts: file existence
+  ---
+  duration_ms: 3.154
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: render inventory
+    # Subtest: has 16380 items (546 templates x 30 seeds)
+    ok 1 - has 16380 items (546 templates x 30 seeds)
+      ---
+      duration_ms: 185.5185
+      type: 'test'
+      ...
+    # Subtest: has correct metadata fields
+    ok 2 - has correct metadata fields
+      ---
+      duration_ms: 143.3988
+      type: 'test'
+      ...
+    # Subtest: each item has required render fields
+    ok 3 - each item has required render fields
+      ---
+      duration_ms: 133.6025
+      type: 'test'
+      ...
+    1..3
+ok 42 - P10 Evidence Artefacts: render inventory
+  ---
+  duration_ms: 462.7195
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: U6 render inventory enrichment
+    # Subtest: visibleOptions is non-null for selected-response items (single_choice, checkbox_list, table_choice)
+    ok 1 - visibleOptions is non-null for selected-response items (single_choice, checkbox_list, table_choice)
+      ---
+      duration_ms: 178.2017
+      type: 'test'
+      ...
+    # Subtest: fullSpeechOutput is a non-empty string for items with readAloudText
+    ok 2 - fullSpeechOutput is a non-empty string for items with readAloudText
+      ---
+      duration_ms: 140.1088
+      type: 'test'
+      ...
+    # Subtest: _feedbackSummary has feedbackLong or feedbackShort for all items
+    ok 3 - _feedbackSummary has feedbackLong or feedbackShort for all items
+      ---
+      duration_ms: 137.2745
+      type: 'test'
+      ...
+    # Subtest: three output files exist (.json, .md, -redacted.md)
+    ok 4 - three output files exist (.json, .md, -redacted.md)
+      ---
+      duration_ms: 0.5533
+      type: 'test'
+      ...
+    # Subtest: redacted report strips _ prefixed fields
+    ok 5 - redacted report strips _ prefixed fields
+      ---
+      duration_ms: 6.0915
+      type: 'test'
+      ...
+    1..5
+ok 43 - P10 Evidence Artefacts: U6 render inventory enrichment
+  ---
+  duration_ms: 462.429
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: quality register
+    # Subtest: has 546 entries (one per template)
+    ok 1 - has 546 entries (one per template)
+      ---
+      duration_ms: 5.4295
+      type: 'test'
+      ...
+    # Subtest: each entry has all 14 required fields (13 content + templateId)
+    ok 2 - each entry has all 14 required fields (13 content + templateId)
+      ---
+      duration_ms: 7.0746
+      type: 'test'
+      ...
+    # Subtest: concrete examples have required subfields
+    ok 3 - concrete examples have required subfields
+      ---
+      duration_ms: 5.4043
+      type: 'test'
+      ...
+    # Subtest: high-risk templates have seedWindow 1..15 and 5 examples
+    ok 4 - high-risk templates have seedWindow 1..15 and 5 examples
+      ---
+      duration_ms: 5.5741
+      type: 'test'
+      ...
+    1..4
+ok 44 - P10 Evidence Artefacts: quality register
+  ---
+  duration_ms: 23.6464
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: distractor audit
+    # Subtest: has 0 S0 failures
+    ok 1 - has 0 S0 failures
+      ---
+      duration_ms: 89.0368
+      type: 'test'
+      ...
+    # Subtest: has 0 S1 failures
+    ok 2 - has 0 S1 failures
+      ---
+      duration_ms: 111.4806
+      type: 'test'
+      ...
+    # Subtest: pass flag is true
+    ok 3 - pass flag is true
+      ---
+      duration_ms: 71.5565
+      type: 'test'
+      ...
+    # Subtest: each result has per-option detail with required fields
+    ok 4 - each result has per-option detail with required fields
+      ---
+      duration_ms: 93.3681
+      type: 'test'
+      ...
+    # Subtest: every distractor option has defensibleAlternative and promptDisambiguates boolean fields
+    ok 5 - every distractor option has defensibleAlternative and promptDisambiguates boolean fields
+      ---
+      duration_ms: 89.617
+      type: 'test'
+      ...
+    # Subtest: each result has ambiguousConceptArea and requiresAdultReview flags
+    ok 6 - each result has ambiguousConceptArea and requiresAdultReview flags
+      ---
+      duration_ms: 74.568
+      type: 'test'
+      ...
+    # Subtest: report has ambiguousTemplates array at top level
+    ok 7 - report has ambiguousTemplates array at top level
+      ---
+      duration_ms: 80.097
+      type: 'test'
+      ...
+    1..7
+ok 45 - P10 Evidence Artefacts: distractor audit
+  ---
+  duration_ms: 610.0606
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: status map vs quality register consistency
+    # Subtest: every blocked entry in quality register is blocked in status map
+    ok 1 - every blocked entry in quality register is blocked in status map
+      ---
+      duration_ms: 6.6299
+      type: 'test'
+      ...
+    # Subtest: status map has 546 entries
+    not ok 2 - status map has 546 entries
+      ---
+      duration_ms: 1.3161
+      type: 'test'
+      location: 'D:\\Coding\\ks2-mastery\\.worktrees\\grammar-qg-p21-pool-expansion\\tests\\grammar-qg-p10-evidence-artefacts.test.js:396:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        510 !== 546
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 546
+      actual: 510
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Coding/ks2-mastery/.worktrees/grammar-qg-p21-pool-expansion/tests/grammar-qg-p10-evidence-artefacts.test.js:404:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1442:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    1..2
+not ok 46 - P10 Evidence Artefacts: status map vs quality register consistency
+  ---
+  duration_ms: 8.0549
+  type: 'suite'
+  location: 'D:\\Coding\\ks2-mastery\\.worktrees\\grammar-qg-p21-pool-expansion\\tests\\grammar-qg-p10-evidence-artefacts.test.js:375:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: P10 Evidence Artefacts: marking matrix full variant expansion
+    # Subtest: marking matrix JSON exists and is parseable
+    ok 1 - marking matrix JSON exists and is parseable
+      ---
+      duration_ms: 1.6247
+      type: 'test'
+      ...
+    # Subtest: metadata declares variantCategories = 9
+    ok 2 - metadata declares variantCategories = 9
+      ---
+      duration_ms: 2.48
+      type: 'test'
+      ...
+    # Subtest: metadata.categoriesTested lists all 9 categories
+    ok 3 - metadata.categoriesTested lists all 9 categories
+      ---
+      duration_ms: 3.0493
+      type: 'test'
+      ...
+    # Subtest: seed range is 1..5
+    ok 4 - seed range is 1..5
+      ---
+      duration_ms: 2.3989
+      type: 'test'
+      ...
+    # Subtest: every entry contains all 9 variant categories
+    ok 5 - every entry contains all 9 variant categories
+      ---
+      duration_ms: 1.7612
+      type: 'test'
+      ...
+    # Subtest: goldenAnswers entries have { input, marksCorrect } shape
+    ok 6 - goldenAnswers entries have { input, marksCorrect } shape
+      ---
+      duration_ms: 1.6031
+      type: 'test'
+      ...
+    # Subtest: acceptedVariants entries have { input, marksCorrect } shape
+    ok 7 - acceptedVariants entries have { input, marksCorrect } shape
+      ---
+      duration_ms: 1.5038
+      type: 'test'
+      ...
+    # Subtest: nearMisses entries have { input, marksCorrect } shape
+    ok 8 - nearMisses entries have { input, marksCorrect } shape
+      ---
+      duration_ms: 1.5057
+      type: 'test'
+      ...
+    # Subtest: rawPromptProbes has 3 probes per entry, all mark incorrect
+    ok 9 - rawPromptProbes has 3 probes per entry, all mark incorrect
+      ---
+      duration_ms: 1.6233
+      type: 'test'
+      ...
+    # Subtest: smartPunctuationVariants has 2 entries with { input, marksCorrect } shape
+    ok 10 - smartPunctuationVariants has 2 entries with { input, marksCorrect } shape
+      ---
+      duration_ms: 1.6275
+      type: 'test'
+      ...
+    # Subtest: caseVariants has 2 entries with { input, marksCorrect } shape
+    ok 11 - caseVariants has 2 entries with { input, marksCorrect } shape
+      ---
+      duration_ms: 1.5875
+      type: 'test'
+      ...
+    # Subtest: commonChildMistakes entries have { input, marksCorrect } shape
+    ok 12 - commonChildMistakes entries have { input, marksCorrect } shape
+      ---
+      duration_ms: 1.5964
+      type: 'test'
+      ...
+    # Subtest: expectedScore has pass/fail/varies per category
+    ok 13 - expectedScore has pass/fail/varies per category
+      ---
+      duration_ms: 1.7384
+      type: 'test'
+      ...
+    # Subtest: misconceptionTag is a string or null
+    ok 14 - misconceptionTag is a string or null
+      ---
+      duration_ms: 2.4416
+      type: 'test'
+      ...
+    # Subtest: marking matrix markdown report exists
+    ok 15 - marking matrix markdown report exists
+      ---
+      duration_ms: 0.2838
+      type: 'test'
+      ...
+    1..15
+ok 47 - P10 Evidence Artefacts: marking matrix full variant expansion
+  ---
+  duration_ms: 27.2425
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Truth: manifest-to-code consistency
+    # Subtest: P10 manifest file exists
+    ok 1 - P10 manifest file exists
+      ---
+      duration_ms: 0.7839
+      type: 'test'
+      ...
+    # Subtest: P10 manifest contentReleaseId is the P10 release string
+    ok 2 - P10 manifest contentReleaseId is the P10 release string
+      ---
+      duration_ms: 0.5739
+      type: 'test'
+      ...
+    # Subtest: P10 manifest passes schema validation
+    ok 3 - P10 manifest passes schema validation
+      ---
+      duration_ms: 0.6801
+      type: 'test'
+      ...
+    1..3
+ok 48 - P10 Evidence Truth: manifest-to-code consistency
+  ---
+  duration_ms: 2.6568
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Truth: stale release ID detection
+    # Subtest: manifest with P8 release ID fails cross-check against code
+    ok 1 - manifest with P8 release ID fails cross-check against code
+      ---
+      duration_ms: 0.2152
+      type: 'test'
+      ...
+    # Subtest: manifest with P9 release ID also fails (stale after P10 bump)
+    ok 2 - manifest with P9 release ID also fails (stale after P10 bump)
+      ---
+      duration_ms: 0.0813
+      type: 'test'
+      ...
+    1..2
+ok 49 - P10 Evidence Truth: stale release ID detection
+  ---
+  duration_ms: 0.439
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Truth: placeholder rejection
+    # Subtest: rejects "pending-this-commit" in final_report_commit
+    ok 1 - rejects "pending-this-commit" in final_report_commit
+      ---
+      duration_ms: 1.1511
+      type: 'test'
+      ...
+    # Subtest: rejects "pending-report-commit" as compound placeholder
+    ok 2 - rejects "pending-report-commit" as compound placeholder
+      ---
+      duration_ms: 0.4427
+      type: 'test'
+      ...
+    # Subtest: rejects "todo-sha" as compound placeholder
+    ok 3 - rejects "todo-sha" as compound placeholder
+      ---
+      duration_ms: 0.3404
+      type: 'test'
+      ...
+    1..3
+ok 50 - P10 Evidence Truth: placeholder rejection
+  ---
+  duration_ms: 2.1728
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Truth: inline YAML empty array
+    # Subtest: post_merge_fix_commits: [] parses as empty array and passes validation
+    ok 1 - post_merge_fix_commits: [] parses as empty array and passes validation
+      ---
+      duration_ms: 0.2914
+      type: 'test'
+      ...
+    # Subtest: post_merge_fix_commits: [] does not produce "Must be a list" error
+    ok 2 - post_merge_fix_commits: [] does not produce "Must be a list" error
+      ---
+      duration_ms: 0.3471
+      type: 'test'
+      ...
+    1..2
+ok 51 - P10 Evidence Truth: inline YAML empty array
+  ---
+  duration_ms: 0.7673
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Truth: compound placeholder variants
+    # Subtest: rejects compound placeholder "pending-report-commit" in final_report_commit
+    ok 1 - rejects compound placeholder "pending-report-commit" in final_report_commit
+      ---
+      duration_ms: 0.3324
+      type: 'test'
+      ...
+    # Subtest: rejects compound placeholder "tbd-release-sha" in final_report_commit
+    ok 2 - rejects compound placeholder "tbd-release-sha" in final_report_commit
+      ---
+      duration_ms: 0.1514
+      type: 'test'
+      ...
+    # Subtest: rejects compound placeholder "unknown-final-commit" in final_report_commit
+    ok 3 - rejects compound placeholder "unknown-final-commit" in final_report_commit
+      ---
+      duration_ms: 0.1775
+      type: 'test'
+      ...
+    # Subtest: rejects compound placeholder "tbc-after-merge" in final_report_commit
+    ok 4 - rejects compound placeholder "tbc-after-merge" in final_report_commit
+      ---
+      duration_ms: 0.0979
+      type: 'test'
+      ...
+    # Subtest: rejects compound placeholder "commit-pending" in final_report_commit
+    ok 5 - rejects compound placeholder "commit-pending" in final_report_commit
+      ---
+      duration_ms: 0.0813
+      type: 'test'
+      ...
+    # Subtest: rejects compound placeholder "sha-unknown" in final_report_commit
+    ok 6 - rejects compound placeholder "sha-unknown" in final_report_commit
+      ---
+      duration_ms: 0.0777
+      type: 'test'
+      ...
+    1..6
+ok 52 - P10 Evidence Truth: compound placeholder variants
+  ---
+  duration_ms: 1.1892
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Truth: hex SHAs with placeholder substrings pass
+    # Subtest: "7pendinga3f" passes — digits mixed in means it is not a pure-alpha compound
+    ok 1 - "7pendinga3f" passes — digits mixed in means it is not a pure-alpha compound
+      ---
+      duration_ms: 0.248
+      type: 'test'
+      ...
+    # Subtest: "a0pending1b2c3d4" passes — hex-like value containing "pending" substring
+    ok 2 - "a0pending1b2c3d4" passes — hex-like value containing "pending" substring
+      ---
+      duration_ms: 0.1618
+      type: 'test'
+      ...
+    # Subtest: "deadbeef01234567" passes — pure hex SHA
+    ok 3 - "deadbeef01234567" passes — pure hex SHA
+      ---
+      duration_ms: 0.1312
+      type: 'test'
+      ...
+    1..3
+ok 53 - P10 Evidence Truth: hex SHAs with placeholder substrings pass
+  ---
+  duration_ms: 0.6587
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Truth: report-vs-manifest release ID
+    # Subtest: mismatched report release ID fails
+    ok 1 - mismatched report release ID fails
+      ---
+      duration_ms: 198.2296
+      type: 'test'
+      ...
+    # Subtest: inventory artefacts are internally consistent on the live release ID
+    ok 2 - inventory artefacts are internally consistent on the live release ID
+      ---
+      duration_ms: 150.4895
+      type: 'test'
+      ...
+    1..2
+ok 54 - P10 Evidence Truth: report-vs-manifest release ID
+  ---
+  duration_ms: 348.8305
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Truth: report frontmatter final_content_release_id
+    # Subtest: P10 report frontmatter declares P10 release ID
+    ok 1 - P10 report frontmatter declares P10 release ID
+      ---
+      duration_ms: 0.2852
+      type: 'test'
+      ...
+    1..1
+ok 55 - P10 Evidence Truth: report frontmatter final_content_release_id
+  ---
+  duration_ms: 0.3357
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Truth: inventory release ID cross-check
+    # Subtest: inventory metadata release ID matches the live release string
+    ok 1 - inventory metadata release ID matches the live release string
+      ---
+      duration_ms: 139.5918
+      type: 'test'
+      ...
+    # Subtest: inventory items release IDs match the live release string
+    ok 2 - inventory items release IDs match the live release string
+      ---
+      duration_ms: 158.9767
+      type: 'test'
+      ...
+    1..2
+ok 56 - P10 Evidence Truth: inventory release ID cross-check
+  ---
+  duration_ms: 298.6664
+  type: 'suite'
+  ...
+# Subtest: P10 U2: word_class_underlined_choice — focusCue targets single word
+    # Subtest: seed 1: focusCue.targetText is a single word
+    ok 1 - seed 1: focusCue.targetText is a single word
+      ---
+      duration_ms: 0.6517
+      type: 'test'
+      ...
+    # Subtest: seed 2: focusCue.targetText is a single word
+    ok 2 - seed 2: focusCue.targetText is a single word
+      ---
+      duration_ms: 0.1433
+      type: 'test'
+      ...
+    # Subtest: seed 3: focusCue.targetText is a single word
+    ok 3 - seed 3: focusCue.targetText is a single word
+      ---
+      duration_ms: 0.0757
+      type: 'test'
+      ...
+    # Subtest: seed 4: focusCue.targetText is a single word
+    ok 4 - seed 4: focusCue.targetText is a single word
+      ---
+      duration_ms: 0.0647
+      type: 'test'
+      ...
+    # Subtest: seed 5: focusCue.targetText is a single word
+    ok 5 - seed 5: focusCue.targetText is a single word
+      ---
+      duration_ms: 0.0669
+      type: 'test'
+      ...
+    1..5
+ok 57 - P10 U2: word_class_underlined_choice — focusCue targets single word
+  ---
+  duration_ms: 1.7837
+  type: 'suite'
+  ...
+# Subtest: P10 U2: qg_p4_voice_roles_transfer — focusCue targets noun phrase
+    # Subtest: seed 1: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+    ok 1 - seed 1: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+      ---
+      duration_ms: 0.1907
+      type: 'test'
+      ...
+    # Subtest: seed 2: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+    ok 2 - seed 2: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+      ---
+      duration_ms: 0.1315
+      type: 'test'
+      ...
+    # Subtest: seed 3: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+    ok 3 - seed 3: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+      ---
+      duration_ms: 0.1887
+      type: 'test'
+      ...
+    # Subtest: seed 4: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+    ok 4 - seed 4: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+      ---
+      duration_ms: 0.1604
+      type: 'test'
+      ...
+    # Subtest: seed 5: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+    ok 5 - seed 5: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)
+      ---
+      duration_ms: 0.1744
+      type: 'test'
+      ...
+    1..5
+ok 58 - P10 U2: qg_p4_voice_roles_transfer — focusCue targets noun phrase
+  ---
+  duration_ms: 1.0455
+  type: 'suite'
+  ...
+# Subtest: P10 U2: qg_p4_word_class_noun_phrase_transfer seed 3 — focusCue targets word
+    # Subtest: seed 3: focusCue.targetText is the specific word, not the whole phrase
+    ok 1 - seed 3: focusCue.targetText is the specific word, not the whole phrase
+      ---
+      duration_ms: 0.1424
+      type: 'test'
+      ...
+    1..1
+ok 59 - P10 U2: qg_p4_word_class_noun_phrase_transfer seed 3 — focusCue targets word
+  ---
+  duration_ms: 0.1893
+  type: 'suite'
+  ...
+# Subtest: P10 U2: qg_p3_noun_phrases_explain — underline on noun phrase
+    # Subtest: seed 3: focusCue.targetText is the noun phrase, not the whole sentence
+    ok 1 - seed 3: focusCue.targetText is the noun phrase, not the whole sentence
+      ---
+      duration_ms: 0.1453
+      type: 'test'
+      ...
+    # Subtest: seed 7: focusCue.targetText is the noun phrase, not the whole sentence
+    ok 2 - seed 7: focusCue.targetText is the noun phrase, not the whole sentence
+      ---
+      duration_ms: 0.063
+      type: 'test'
+      ...
+    # Subtest: seed 1: no "underlined" in prompt, so focusCue may be absent
+    ok 3 - seed 1: no "underlined" in prompt, so focusCue may be absent
+      ---
+      duration_ms: 0.0876
+      type: 'test'
+      ...
+    1..3
+ok 60 - P10 U2: qg_p3_noun_phrases_explain — underline on noun phrase
+  ---
+  duration_ms: 0.3515
+  type: 'suite'
+  ...
+# Subtest: P10 U2: no duplicate sentence content in promptParts
+    # Subtest: word_class_underlined_choice: no sentence text duplicated in instruction part
+    ok 1 - word_class_underlined_choice: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.2867
+      type: 'test'
+      ...
+    # Subtest: identify_words_in_sentence: no sentence text duplicated in instruction part
+    ok 2 - identify_words_in_sentence: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.107
+      type: 'test'
+      ...
+    # Subtest: build_noun_phrase: no sentence text duplicated in instruction part
+    ok 3 - build_noun_phrase: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.0834
+      type: 'test'
+      ...
+    # Subtest: subordinate_clause_choice: no sentence text duplicated in instruction part
+    ok 4 - subordinate_clause_choice: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.0682
+      type: 'test'
+      ...
+    # Subtest: subject_object_choice: no sentence text duplicated in instruction part
+    ok 5 - subject_object_choice: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.0668
+      type: 'test'
+      ...
+    # Subtest: parenthesis_replace_choice: no sentence text duplicated in instruction part
+    ok 6 - parenthesis_replace_choice: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.0652
+      type: 'test'
+      ...
+    # Subtest: proc_semicolon_choice: no sentence text duplicated in instruction part
+    ok 7 - proc_semicolon_choice: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.0864
+      type: 'test'
+      ...
+    # Subtest: qg_p4_voice_roles_transfer: no sentence text duplicated in instruction part
+    ok 8 - qg_p4_voice_roles_transfer: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.0976
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_sentence_functions_function_contrast: no sentence text duplicated in instruction part
+    ok 9 - qg_p18_p15_sentence_functions_function_contrast: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.1873
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_word_classes_target_word_class: no sentence text duplicated in instruction part
+    ok 10 - qg_p18_p15_word_classes_target_word_class: no sentence text duplicated in instruction part
+      ---
+      duration_ms: 0.1417
+      type: 'test'
+      ...
+    1..10
+ok 61 - P10 U2: no duplicate sentence content in promptParts
+  ---
+  duration_ms: 1.4987
+  type: 'suite'
+  ...
+# Subtest: P10 U2: cue consistency enforcement
+    # Subtest: word_class_underlined_choice: has focusCue or promptParts when cue language detected
+    ok 1 - word_class_underlined_choice: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.2669
+      type: 'test'
+      ...
+    # Subtest: identify_words_in_sentence: has focusCue or promptParts when cue language detected
+    ok 2 - identify_words_in_sentence: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.1104
+      type: 'test'
+      ...
+    # Subtest: build_noun_phrase: has focusCue or promptParts when cue language detected
+    ok 3 - build_noun_phrase: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.0938
+      type: 'test'
+      ...
+    # Subtest: subordinate_clause_choice: has focusCue or promptParts when cue language detected
+    ok 4 - subordinate_clause_choice: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.0718
+      type: 'test'
+      ...
+    # Subtest: formality_pairs: has focusCue or promptParts when cue language detected
+    ok 5 - formality_pairs: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.1131
+      type: 'test'
+      ...
+    # Subtest: subject_object_choice: has focusCue or promptParts when cue language detected
+    ok 6 - subject_object_choice: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.0588
+      type: 'test'
+      ...
+    # Subtest: parenthesis_replace_choice: has focusCue or promptParts when cue language detected
+    ok 7 - parenthesis_replace_choice: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.0489
+      type: 'test'
+      ...
+    # Subtest: proc_semicolon_choice: has focusCue or promptParts when cue language detected
+    ok 8 - proc_semicolon_choice: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.0477
+      type: 'test'
+      ...
+    # Subtest: qg_p4_voice_roles_transfer: has focusCue or promptParts when cue language detected
+    ok 9 - qg_p4_voice_roles_transfer: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.0697
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_sentence_functions_function_contrast: has focusCue or promptParts when cue language detected
+    ok 10 - qg_p18_p15_sentence_functions_function_contrast: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.0775
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_word_classes_target_word_class: has focusCue or promptParts when cue language detected
+    ok 11 - qg_p18_p15_word_classes_target_word_class: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.0888
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_word_classes_underline_word_class: has focusCue or promptParts when cue language detected
+    ok 12 - qg_p18_p15_word_classes_underline_word_class: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.0573
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_word_classes_multi_token_classify_table: has focusCue or promptParts when cue language detected
+    ok 13 - qg_p18_p16_word_classes_multi_token_classify_table: has focusCue or promptParts when cue language detected
+      ---
+      duration_ms: 0.1725
+      type: 'test'
+      ...
+    1..13
+ok 62 - P10 U2: cue consistency enforcement
+  ---
+  duration_ms: 1.5569
+  type: 'suite'
+  ...
+# Subtest: P10 U2: focusCue.targetText is not a whole sentence
+    # Subtest: word_class_underlined_choice seed 1: focusCue.targetText is not a whole sentence (<=8 words)
+    ok 1 - word_class_underlined_choice seed 1: focusCue.targetText is not a whole sentence (<=8 words)
+      ---
+      duration_ms: 0.1614
+      type: 'test'
+      ...
+    # Subtest: word_class_underlined_choice seed 2: focusCue.targetText is not a whole sentence (<=8 words)
+    ok 2 - word_class_underlined_choice seed 2: focusCue.targetText is not a whole sentence (<=8 words)
+      ---
+      duration_ms: 0.0466
+      type: 'test'
+      ...
+    # Subtest: word_class_underlined_choice seed 3: focusCue.targetText is not a whole sentence (<=8 words)
+    ok 3 - word_class_underlined_choice seed 3: focusCue.targetText is not a whole sentence (<=8 words)
+      ---
+      duration_ms: 0.0395
+      type: 'test'
+      ...
+    # Subtest: qg_p4_voice_roles_transfer seed 1: focusCue.targetText is not a whole sentence (<=8 words)
+    ok 4 - qg_p4_voice_roles_transfer seed 1: focusCue.targetText is not a whole sentence (<=8 words)
+      ---
+      duration_ms: 0.0605
+      type: 'test'
+      ...
+    # Subtest: qg_p4_voice_roles_transfer seed 2: focusCue.targetText is not a whole sentence (<=8 words)
+    ok 5 - qg_p4_voice_roles_transfer seed 2: focusCue.targetText is not a whole sentence (<=8 words)
+      ---
+      duration_ms: 0.043
+      type: 'test'
+      ...
+    # Subtest: qg_p4_voice_roles_transfer seed 3: focusCue.targetText is not a whole sentence (<=8 words)
+    ok 6 - qg_p4_voice_roles_transfer seed 3: focusCue.targetText is not a whole sentence (<=8 words)
+      ---
+      duration_ms: 0.0422
+      type: 'test'
+      ...
+    1..6
+ok 63 - P10 U2: focusCue.targetText is not a whole sentence
+  ---
+  duration_ms: 0.4731
+  type: 'suite'
+  ...
+# Subtest: P10 U2 REGRESSION: target-sentence cue produces visible sentence part
+    # Subtest: subordinate_clause_choice seed 1: promptParts contains a sentence part with actual text
+    ok 1 - subordinate_clause_choice seed 1: promptParts contains a sentence part with actual text
+      ---
+      duration_ms: 0.1349
+      type: 'test'
+      ...
+    # Subtest: subject_object_choice seed 1: promptParts text contains the full instruction (not mangled)
+    ok 2 - subject_object_choice seed 1: promptParts text contains the full instruction (not mangled)
+      ---
+      duration_ms: 0.0753
+      type: 'test'
+      ...
+    # Subtest: P18 word-class target sentence keeps instruction and sentence separated
+    ok 3 - P18 word-class target sentence keeps instruction and sentence separated
+      ---
+      duration_ms: 0.1173
+      type: 'test'
+      ...
+    1..3
+ok 64 - P10 U2 REGRESSION: target-sentence cue produces visible sentence part
+  ---
+  duration_ms: 0.3791
+  type: 'suite'
+  ...
+# Subtest: P10 U7: screenReaderPromptText includes focusCue.targetText
+    # Subtest: word_class_underlined_choice seed 1: screenReaderPromptText mentions focusCue.targetText
+    ok 1 - word_class_underlined_choice seed 1: screenReaderPromptText mentions focusCue.targetText
+      ---
+      duration_ms: 0.1653
+      type: 'test'
+      ...
+    1..1
+ok 65 - P10 U7: screenReaderPromptText includes focusCue.targetText
+  ---
+  duration_ms: 0.2008
+  type: 'suite'
+  ...
+# Subtest: P10 U7: readAloudText includes focusCue.targetText
+    # Subtest: word_class_underlined_choice seed 1: readAloudText mentions focusCue.targetText
+    ok 1 - word_class_underlined_choice seed 1: readAloudText mentions focusCue.targetText
+      ---
+      duration_ms: 0.0982
+      type: 'test'
+      ...
+    1..1
+ok 66 - P10 U7: readAloudText includes focusCue.targetText
+  ---
+  duration_ms: 0.1397
+  type: 'suite'
+  ...
+# Subtest: P10 U7: cueNotRequiredReason present when promptParts exist without focusCue
+    # Subtest: formality_pairs seed 1: has cueNotRequiredReason when promptParts exist without focusCue
+    ok 1 - formality_pairs seed 1: has cueNotRequiredReason when promptParts exist without focusCue
+      ---
+      duration_ms: 0.0772
+      type: 'test'
+      ...
+    1..1
+ok 67 - P10 U7: cueNotRequiredReason present when promptParts exist without focusCue
+  ---
+  duration_ms: 0.1019
+  type: 'suite'
+  ...
+# Subtest: P10 U2 REGRESSION: focusTarget never present on serialised output
+    # Subtest: sentence_type_table: focusTarget must not be present
+    ok 1 - sentence_type_table: focusTarget must not be present
+      ---
+      duration_ms: 3.0889
+      type: 'test'
+      ...
+    # Subtest: question_mark_select: focusTarget must not be present
+    ok 2 - question_mark_select: focusTarget must not be present
+      ---
+      duration_ms: 0.0784
+      type: 'test'
+      ...
+    # Subtest: word_class_underlined_choice: focusTarget must not be present
+    ok 3 - word_class_underlined_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0608
+      type: 'test'
+      ...
+    # Subtest: identify_words_in_sentence: focusTarget must not be present
+    ok 4 - identify_words_in_sentence: focusTarget must not be present
+      ---
+      duration_ms: 0.0641
+      type: 'test'
+      ...
+    # Subtest: expanded_noun_phrase_choice: focusTarget must not be present
+    ok 5 - expanded_noun_phrase_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.03
+      type: 'test'
+      ...
+    # Subtest: build_noun_phrase: focusTarget must not be present
+    ok 6 - build_noun_phrase: focusTarget must not be present
+      ---
+      duration_ms: 0.046
+      type: 'test'
+      ...
+    # Subtest: fronted_adverbial_choose: focusTarget must not be present
+    ok 7 - fronted_adverbial_choose: focusTarget must not be present
+      ---
+      duration_ms: 0.0402
+      type: 'test'
+      ...
+    # Subtest: fix_fronted_adverbial: focusTarget must not be present
+    ok 8 - fix_fronted_adverbial: focusTarget must not be present
+      ---
+      duration_ms: 0.0595
+      type: 'test'
+      ...
+    # Subtest: subordinate_clause_choice: focusTarget must not be present
+    ok 9 - subordinate_clause_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0407
+      type: 'test'
+      ...
+    # Subtest: combine_clauses_rewrite: focusTarget must not be present
+    ok 10 - combine_clauses_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0566
+      type: 'test'
+      ...
+    # Subtest: relative_clause_identify: focusTarget must not be present
+    ok 11 - relative_clause_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0291
+      type: 'test'
+      ...
+    # Subtest: relative_clause_complete: focusTarget must not be present
+    ok 12 - relative_clause_complete: focusTarget must not be present
+      ---
+      duration_ms: 0.0279
+      type: 'test'
+      ...
+    # Subtest: tense_form_choice: focusTarget must not be present
+    ok 13 - tense_form_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0252
+      type: 'test'
+      ...
+    # Subtest: tense_rewrite: focusTarget must not be present
+    ok 14 - tense_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0303
+      type: 'test'
+      ...
+    # Subtest: standard_english_pairs: focusTarget must not be present
+    ok 15 - standard_english_pairs: focusTarget must not be present
+      ---
+      duration_ms: 0.0454
+      type: 'test'
+      ...
+    # Subtest: pronoun_cohesion_choice: focusTarget must not be present
+    ok 16 - pronoun_cohesion_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0251
+      type: 'test'
+      ...
+    # Subtest: formality_pairs: focusTarget must not be present
+    ok 17 - formality_pairs: focusTarget must not be present
+      ---
+      duration_ms: 0.0422
+      type: 'test'
+      ...
+    # Subtest: active_passive_rewrite: focusTarget must not be present
+    ok 18 - active_passive_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0276
+      type: 'test'
+      ...
+    # Subtest: subject_object_choice: focusTarget must not be present
+    ok 19 - subject_object_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0613
+      type: 'test'
+      ...
+    # Subtest: modal_verb_choice: focusTarget must not be present
+    ok 20 - modal_verb_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0243
+      type: 'test'
+      ...
+    # Subtest: parenthesis_replace_choice: focusTarget must not be present
+    ok 21 - parenthesis_replace_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0348
+      type: 'test'
+      ...
+    # Subtest: parenthesis_fix_sentence: focusTarget must not be present
+    ok 22 - parenthesis_fix_sentence: focusTarget must not be present
+      ---
+      duration_ms: 0.0331
+      type: 'test'
+      ...
+    # Subtest: speech_punctuation_fix: focusTarget must not be present
+    ok 23 - speech_punctuation_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0527
+      type: 'test'
+      ...
+    # Subtest: apostrophe_possession_choice: focusTarget must not be present
+    ok 24 - apostrophe_possession_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0421
+      type: 'test'
+      ...
+    # Subtest: explain_reason_choice: focusTarget must not be present
+    ok 25 - explain_reason_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0259
+      type: 'test'
+      ...
+    # Subtest: standard_fix_sentence: focusTarget must not be present
+    ok 26 - standard_fix_sentence: focusTarget must not be present
+      ---
+      duration_ms: 0.0254
+      type: 'test'
+      ...
+    # Subtest: proc_fronted_adverbial_fix: focusTarget must not be present
+    ok 27 - proc_fronted_adverbial_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0404
+      type: 'test'
+      ...
+    # Subtest: proc_semicolon_choice: focusTarget must not be present
+    ok 28 - proc_semicolon_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0475
+      type: 'test'
+      ...
+    # Subtest: proc_colon_list_fix: focusTarget must not be present
+    ok 29 - proc_colon_list_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0371
+      type: 'test'
+      ...
+    # Subtest: proc_dash_boundary_fix: focusTarget must not be present
+    ok 30 - proc_dash_boundary_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0453
+      type: 'test'
+      ...
+    # Subtest: proc_hyphen_ambiguity_choice: focusTarget must not be present
+    ok 31 - proc_hyphen_ambiguity_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0265
+      type: 'test'
+      ...
+    # Subtest: proc_speech_punctuation_fix: focusTarget must not be present
+    ok 32 - proc_speech_punctuation_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0353
+      type: 'test'
+      ...
+    # Subtest: proc_apostrophe_possession_choice: focusTarget must not be present
+    ok 33 - proc_apostrophe_possession_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0334
+      type: 'test'
+      ...
+    # Subtest: proc2_standard_english_choice: focusTarget must not be present
+    ok 34 - proc2_standard_english_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0379
+      type: 'test'
+      ...
+    # Subtest: proc2_standard_english_fix: focusTarget must not be present
+    ok 35 - proc2_standard_english_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0283
+      type: 'test'
+      ...
+    # Subtest: proc2_tense_aspect_choice: focusTarget must not be present
+    ok 36 - proc2_tense_aspect_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0358
+      type: 'test'
+      ...
+    # Subtest: proc2_modal_choice: focusTarget must not be present
+    ok 37 - proc2_modal_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0327
+      type: 'test'
+      ...
+    # Subtest: proc2_formality_choice: focusTarget must not be present
+    ok 38 - proc2_formality_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0313
+      type: 'test'
+      ...
+    # Subtest: proc2_pronoun_cohesion_choice: focusTarget must not be present
+    ok 39 - proc2_pronoun_cohesion_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0555
+      type: 'test'
+      ...
+    # Subtest: proc2_subject_object_identify: focusTarget must not be present
+    ok 40 - proc2_subject_object_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.1336
+      type: 'test'
+      ...
+    # Subtest: proc2_passive_to_active: focusTarget must not be present
+    ok 41 - proc2_passive_to_active: focusTarget must not be present
+      ---
+      duration_ms: 0.089
+      type: 'test'
+      ...
+    # Subtest: proc2_relative_clause_choice: focusTarget must not be present
+    ok 42 - proc2_relative_clause_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.139
+      type: 'test'
+      ...
+    # Subtest: proc2_fronted_adverbial_build: focusTarget must not be present
+    ok 43 - proc2_fronted_adverbial_build: focusTarget must not be present
+      ---
+      duration_ms: 0.0815
+      type: 'test'
+      ...
+    # Subtest: proc2_boundary_punctuation_explain: focusTarget must not be present
+    ok 44 - proc2_boundary_punctuation_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0633
+      type: 'test'
+      ...
+    # Subtest: proc3_sentence_function_choice: focusTarget must not be present
+    ok 45 - proc3_sentence_function_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0433
+      type: 'test'
+      ...
+    # Subtest: proc3_word_class_contrast_choice: focusTarget must not be present
+    ok 46 - proc3_word_class_contrast_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0366
+      type: 'test'
+      ...
+    # Subtest: proc3_noun_phrase_build: focusTarget must not be present
+    ok 47 - proc3_noun_phrase_build: focusTarget must not be present
+      ---
+      duration_ms: 0.0329
+      type: 'test'
+      ...
+    # Subtest: proc3_clause_join_rewrite: focusTarget must not be present
+    ok 48 - proc3_clause_join_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0425
+      type: 'test'
+      ...
+    # Subtest: proc3_parenthesis_commas_fix: focusTarget must not be present
+    ok 49 - proc3_parenthesis_commas_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0428
+      type: 'test'
+      ...
+    # Subtest: proc3_hyphen_fix_meaning: focusTarget must not be present
+    ok 50 - proc3_hyphen_fix_meaning: focusTarget must not be present
+      ---
+      duration_ms: 0.0642
+      type: 'test'
+      ...
+    # Subtest: qg_active_passive_choice: focusTarget must not be present
+    ok 51 - qg_active_passive_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0642
+      type: 'test'
+      ...
+    # Subtest: qg_subject_object_classify_table: focusTarget must not be present
+    ok 52 - qg_subject_object_classify_table: focusTarget must not be present
+      ---
+      duration_ms: 0.0689
+      type: 'test'
+      ...
+    # Subtest: qg_pronoun_referent_identify: focusTarget must not be present
+    ok 53 - qg_pronoun_referent_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0535
+      type: 'test'
+      ...
+    # Subtest: qg_formality_classify_table: focusTarget must not be present
+    ok 54 - qg_formality_classify_table: focusTarget must not be present
+      ---
+      duration_ms: 0.0483
+      type: 'test'
+      ...
+    # Subtest: qg_modal_verb_explain: focusTarget must not be present
+    ok 55 - qg_modal_verb_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.1177
+      type: 'test'
+      ...
+    # Subtest: qg_hyphen_ambiguity_explain: focusTarget must not be present
+    ok 56 - qg_hyphen_ambiguity_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0658
+      type: 'test'
+      ...
+    # Subtest: qg_p3_sentence_functions_explain: focusTarget must not be present
+    ok 57 - qg_p3_sentence_functions_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0712
+      type: 'test'
+      ...
+    # Subtest: qg_p3_word_classes_explain: focusTarget must not be present
+    ok 58 - qg_p3_word_classes_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0728
+      type: 'test'
+      ...
+    # Subtest: qg_p3_noun_phrases_explain: focusTarget must not be present
+    ok 59 - qg_p3_noun_phrases_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0914
+      type: 'test'
+      ...
+    # Subtest: qg_p3_clauses_explain: focusTarget must not be present
+    ok 60 - qg_p3_clauses_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0553
+      type: 'test'
+      ...
+    # Subtest: qg_p3_relative_clauses_explain: focusTarget must not be present
+    ok 61 - qg_p3_relative_clauses_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0455
+      type: 'test'
+      ...
+    # Subtest: qg_p3_tense_aspect_explain: focusTarget must not be present
+    ok 62 - qg_p3_tense_aspect_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0768
+      type: 'test'
+      ...
+    # Subtest: qg_p3_pronouns_cohesion_explain: focusTarget must not be present
+    ok 63 - qg_p3_pronouns_cohesion_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0463
+      type: 'test'
+      ...
+    # Subtest: qg_p3_formality_explain: focusTarget must not be present
+    ok 64 - qg_p3_formality_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.041
+      type: 'test'
+      ...
+    # Subtest: qg_p3_active_passive_explain: focusTarget must not be present
+    ok 65 - qg_p3_active_passive_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0459
+      type: 'test'
+      ...
+    # Subtest: qg_p3_subject_object_explain: focusTarget must not be present
+    ok 66 - qg_p3_subject_object_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.1685
+      type: 'test'
+      ...
+    # Subtest: qg_p3_parenthesis_commas_explain: focusTarget must not be present
+    ok 67 - qg_p3_parenthesis_commas_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0464
+      type: 'test'
+      ...
+    # Subtest: qg_p3_speech_punctuation_explain: focusTarget must not be present
+    ok 68 - qg_p3_speech_punctuation_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0397
+      type: 'test'
+      ...
+    # Subtest: qg_p3_apostrophe_possession_explain: focusTarget must not be present
+    ok 69 - qg_p3_apostrophe_possession_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0385
+      type: 'test'
+      ...
+    # Subtest: proc3_apostrophe_rewrite: focusTarget must not be present
+    ok 70 - proc3_apostrophe_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0403
+      type: 'test'
+      ...
+    # Subtest: qg_p4_sentence_speech_transfer: focusTarget must not be present
+    ok 71 - qg_p4_sentence_speech_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0418
+      type: 'test'
+      ...
+    # Subtest: qg_p4_word_class_noun_phrase_transfer: focusTarget must not be present
+    ok 72 - qg_p4_word_class_noun_phrase_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0506
+      type: 'test'
+      ...
+    # Subtest: qg_p4_adverbial_clause_boundary_transfer: focusTarget must not be present
+    ok 73 - qg_p4_adverbial_clause_boundary_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0419
+      type: 'test'
+      ...
+    # Subtest: qg_p4_relative_parenthesis_transfer: focusTarget must not be present
+    ok 74 - qg_p4_relative_parenthesis_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.041
+      type: 'test'
+      ...
+    # Subtest: qg_p4_verb_form_register_transfer: focusTarget must not be present
+    ok 75 - qg_p4_verb_form_register_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0404
+      type: 'test'
+      ...
+    # Subtest: qg_p4_cohesion_formality_transfer: focusTarget must not be present
+    ok 76 - qg_p4_cohesion_formality_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0386
+      type: 'test'
+      ...
+    # Subtest: qg_p4_voice_roles_transfer: focusTarget must not be present
+    ok 77 - qg_p4_voice_roles_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0706
+      type: 'test'
+      ...
+    # Subtest: qg_p4_possession_hyphen_clarity_transfer: focusTarget must not be present
+    ok 78 - qg_p4_possession_hyphen_clarity_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0489
+      type: 'test'
+      ...
+    # Subtest: qg_p14_standard_english_diagnostic_choice: focusTarget must not be present
+    ok 79 - qg_p14_standard_english_diagnostic_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0468
+      type: 'test'
+      ...
+    # Subtest: qg_p14_standard_english_constructed_rewrite: focusTarget must not be present
+    ok 80 - qg_p14_standard_english_constructed_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0452
+      type: 'test'
+      ...
+    # Subtest: qg_p14_standard_english_explain_why: focusTarget must not be present
+    ok 81 - qg_p14_standard_english_explain_why: focusTarget must not be present
+      ---
+      duration_ms: 0.1335
+      type: 'test'
+      ...
+    # Subtest: qg_p14_standard_english_mixed_transfer: focusTarget must not be present
+    ok 82 - qg_p14_standard_english_mixed_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0418
+      type: 'test'
+      ...
+    # Subtest: qg_p14_fronted_adverbials_diagnostic_choice: focusTarget must not be present
+    ok 83 - qg_p14_fronted_adverbials_diagnostic_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0407
+      type: 'test'
+      ...
+    # Subtest: qg_p14_fronted_adverbials_constructed_rewrite: focusTarget must not be present
+    ok 84 - qg_p14_fronted_adverbials_constructed_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0528
+      type: 'test'
+      ...
+    # Subtest: qg_p14_fronted_adverbials_explain_why: focusTarget must not be present
+    ok 85 - qg_p14_fronted_adverbials_explain_why: focusTarget must not be present
+      ---
+      duration_ms: 0.0522
+      type: 'test'
+      ...
+    # Subtest: qg_p14_fronted_adverbials_mixed_transfer: focusTarget must not be present
+    ok 86 - qg_p14_fronted_adverbials_mixed_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.061
+      type: 'test'
+      ...
+    # Subtest: qg_p14_subject_object_diagnostic_choice: focusTarget must not be present
+    ok 87 - qg_p14_subject_object_diagnostic_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0439
+      type: 'test'
+      ...
+    # Subtest: qg_p14_subject_object_constructed_rewrite: focusTarget must not be present
+    ok 88 - qg_p14_subject_object_constructed_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0381
+      type: 'test'
+      ...
+    # Subtest: qg_p14_subject_object_explain_why: focusTarget must not be present
+    ok 89 - qg_p14_subject_object_explain_why: focusTarget must not be present
+      ---
+      duration_ms: 0.0423
+      type: 'test'
+      ...
+    # Subtest: qg_p14_subject_object_mixed_transfer: focusTarget must not be present
+    ok 90 - qg_p14_subject_object_mixed_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0475
+      type: 'test'
+      ...
+    # Subtest: qg_p14_subordinate_clauses_diagnostic_choice: focusTarget must not be present
+    ok 91 - qg_p14_subordinate_clauses_diagnostic_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0584
+      type: 'test'
+      ...
+    # Subtest: qg_p14_subordinate_clauses_constructed_rewrite: focusTarget must not be present
+    ok 92 - qg_p14_subordinate_clauses_constructed_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0403
+      type: 'test'
+      ...
+    # Subtest: qg_p14_subordinate_clauses_explain_why: focusTarget must not be present
+    ok 93 - qg_p14_subordinate_clauses_explain_why: focusTarget must not be present
+      ---
+      duration_ms: 0.0452
+      type: 'test'
+      ...
+    # Subtest: qg_p14_subordinate_clauses_mixed_transfer: focusTarget must not be present
+    ok 94 - qg_p14_subordinate_clauses_mixed_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.1008
+      type: 'test'
+      ...
+    # Subtest: qg_p14_tense_aspect_diagnostic_choice: focusTarget must not be present
+    ok 95 - qg_p14_tense_aspect_diagnostic_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.068
+      type: 'test'
+      ...
+    # Subtest: qg_p14_tense_aspect_constructed_rewrite: focusTarget must not be present
+    ok 96 - qg_p14_tense_aspect_constructed_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0437
+      type: 'test'
+      ...
+    # Subtest: qg_p14_tense_aspect_explain_why: focusTarget must not be present
+    ok 97 - qg_p14_tense_aspect_explain_why: focusTarget must not be present
+      ---
+      duration_ms: 0.0484
+      type: 'test'
+      ...
+    # Subtest: qg_p14_tense_aspect_mixed_transfer: focusTarget must not be present
+    ok 98 - qg_p14_tense_aspect_mixed_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0388
+      type: 'test'
+      ...
+    # Subtest: qg_p14_speech_punctuation_diagnostic_choice: focusTarget must not be present
+    ok 99 - qg_p14_speech_punctuation_diagnostic_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0442
+      type: 'test'
+      ...
+    # Subtest: qg_p14_speech_punctuation_constructed_rewrite: focusTarget must not be present
+    ok 100 - qg_p14_speech_punctuation_constructed_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0487
+      type: 'test'
+      ...
+    # Subtest: qg_p14_speech_punctuation_explain_why: focusTarget must not be present
+    ok 101 - qg_p14_speech_punctuation_explain_why: focusTarget must not be present
+      ---
+      duration_ms: 0.0418
+      type: 'test'
+      ...
+    # Subtest: qg_p14_speech_punctuation_mixed_transfer: focusTarget must not be present
+    ok 102 - qg_p14_speech_punctuation_mixed_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0419
+      type: 'test'
+      ...
+    # Subtest: qg_p14_expanded_noun_phrases_diagnostic_choice: focusTarget must not be present
+    ok 103 - qg_p14_expanded_noun_phrases_diagnostic_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.1335
+      type: 'test'
+      ...
+    # Subtest: qg_p14_expanded_noun_phrases_constructed_rewrite: focusTarget must not be present
+    ok 104 - qg_p14_expanded_noun_phrases_constructed_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0422
+      type: 'test'
+      ...
+    # Subtest: qg_p14_expanded_noun_phrases_explain_why: focusTarget must not be present
+    ok 105 - qg_p14_expanded_noun_phrases_explain_why: focusTarget must not be present
+      ---
+      duration_ms: 0.0418
+      type: 'test'
+      ...
+    # Subtest: qg_p14_expanded_noun_phrases_mixed_transfer: focusTarget must not be present
+    ok 106 - qg_p14_expanded_noun_phrases_mixed_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0408
+      type: 'test'
+      ...
+    # Subtest: qg_p14_parenthesis_commas_diagnostic_choice: focusTarget must not be present
+    ok 107 - qg_p14_parenthesis_commas_diagnostic_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0394
+      type: 'test'
+      ...
+    # Subtest: qg_p14_parenthesis_commas_constructed_rewrite: focusTarget must not be present
+    ok 108 - qg_p14_parenthesis_commas_constructed_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0478
+      type: 'test'
+      ...
+    # Subtest: qg_p14_parenthesis_commas_explain_why: focusTarget must not be present
+    ok 109 - qg_p14_parenthesis_commas_explain_why: focusTarget must not be present
+      ---
+      duration_ms: 0.0447
+      type: 'test'
+      ...
+    # Subtest: qg_p14_parenthesis_commas_mixed_transfer: focusTarget must not be present
+    ok 110 - qg_p14_parenthesis_commas_mixed_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0392
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_active_passive_explain_voice: focusTarget must not be present
+    ok 111 - qg_p18_p15_active_passive_explain_voice: focusTarget must not be present
+      ---
+      duration_ms: 0.0673
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_active_passive_voice_choice: focusTarget must not be present
+    ok 112 - qg_p18_p15_active_passive_voice_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0503
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_active_passive_voice_rewrite: focusTarget must not be present
+    ok 113 - qg_p18_p15_active_passive_voice_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0462
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_active_passive_voice_roles_table: focusTarget must not be present
+    ok 114 - qg_p18_p15_active_passive_voice_roles_table: focusTarget must not be present
+      ---
+      duration_ms: 0.0738
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_active_passive_voice_transfer: focusTarget must not be present
+    ok 115 - qg_p18_p15_active_passive_voice_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0496
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_adverbials_adverbial_transfer: focusTarget must not be present
+    ok 116 - qg_p18_p15_adverbials_adverbial_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0505
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_adverbials_explain_fronted_adv: focusTarget must not be present
+    ok 117 - qg_p18_p15_adverbials_explain_fronted_adv: focusTarget must not be present
+      ---
+      duration_ms: 0.0648
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_adverbials_fronted_adverbial_comma: focusTarget must not be present
+    ok 118 - qg_p18_p15_adverbials_fronted_adverbial_comma: focusTarget must not be present
+      ---
+      duration_ms: 0.1207
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_adverbials_identify_fronted_adv: focusTarget must not be present
+    ok 119 - qg_p18_p15_adverbials_identify_fronted_adv: focusTarget must not be present
+      ---
+      duration_ms: 0.0673
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_adverbials_move_adverbial: focusTarget must not be present
+    ok 120 - qg_p18_p15_adverbials_move_adverbial: focusTarget must not be present
+      ---
+      duration_ms: 0.0617
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_apostrophes_possession_explain_possession: focusTarget must not be present
+    ok 121 - qg_p18_p15_apostrophes_possession_explain_possession: focusTarget must not be present
+      ---
+      duration_ms: 0.0618
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_apostrophes_possession_possession_table: focusTarget must not be present
+    ok 122 - qg_p18_p15_apostrophes_possession_possession_table: focusTarget must not be present
+      ---
+      duration_ms: 0.0663
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_apostrophes_possession_possession_transfer: focusTarget must not be present
+    ok 123 - qg_p18_p15_apostrophes_possession_possession_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.064
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_apostrophes_possession_possessive_choice: focusTarget must not be present
+    ok 124 - qg_p18_p15_apostrophes_possession_possessive_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0467
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_apostrophes_possession_possessive_rewrite: focusTarget must not be present
+    ok 125 - qg_p18_p15_apostrophes_possession_possessive_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0873
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_boundary_punctuation_boundary_fix: focusTarget must not be present
+    ok 126 - qg_p18_p15_boundary_punctuation_boundary_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0434
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_boundary_punctuation_boundary_label: focusTarget must not be present
+    ok 127 - qg_p18_p15_boundary_punctuation_boundary_label: focusTarget must not be present
+      ---
+      duration_ms: 0.0745
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_boundary_punctuation_boundary_mark_choice: focusTarget must not be present
+    ok 128 - qg_p18_p15_boundary_punctuation_boundary_mark_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0484
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_boundary_punctuation_boundary_transfer: focusTarget must not be present
+    ok 129 - qg_p18_p15_boundary_punctuation_boundary_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0521
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_boundary_punctuation_explain_boundary: focusTarget must not be present
+    ok 130 - qg_p18_p15_boundary_punctuation_explain_boundary: focusTarget must not be present
+      ---
+      duration_ms: 0.054
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_clauses_clause_transfer: focusTarget must not be present
+    ok 131 - qg_p18_p15_clauses_clause_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0638
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_clauses_combine_clause: focusTarget must not be present
+    ok 132 - qg_p18_p15_clauses_combine_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.0606
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_clauses_explain_sub_clause: focusTarget must not be present
+    ok 133 - qg_p18_p15_clauses_explain_sub_clause: focusTarget must not be present
+      ---
+      duration_ms: 2.3833
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_clauses_identify_sub_clause: focusTarget must not be present
+    ok 134 - qg_p18_p15_clauses_identify_sub_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.1338
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_clauses_repair_sub_fragment: focusTarget must not be present
+    ok 135 - qg_p18_p15_clauses_repair_sub_fragment: focusTarget must not be present
+      ---
+      duration_ms: 0.0941
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_formality_explain_formality: focusTarget must not be present
+    ok 136 - qg_p18_p15_formality_explain_formality: focusTarget must not be present
+      ---
+      duration_ms: 0.1278
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_formality_formal_choice: focusTarget must not be present
+    ok 137 - qg_p18_p15_formality_formal_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.1033
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_formality_formal_rewrite: focusTarget must not be present
+    ok 138 - qg_p18_p15_formality_formal_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0815
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_formality_formality_pair_table: focusTarget must not be present
+    ok 139 - qg_p18_p15_formality_formality_pair_table: focusTarget must not be present
+      ---
+      duration_ms: 0.1486
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_formality_formality_transfer: focusTarget must not be present
+    ok 140 - qg_p18_p15_formality_formality_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.1035
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_hyphen_ambiguity_explain_hyphen: focusTarget must not be present
+    ok 141 - qg_p18_p15_hyphen_ambiguity_explain_hyphen: focusTarget must not be present
+      ---
+      duration_ms: 0.1134
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_hyphen_ambiguity_hyphen_choice: focusTarget must not be present
+    ok 142 - qg_p18_p15_hyphen_ambiguity_hyphen_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0985
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_hyphen_ambiguity_hyphen_fix: focusTarget must not be present
+    ok 143 - qg_p18_p15_hyphen_ambiguity_hyphen_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.1689
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_hyphen_ambiguity_hyphen_meaning: focusTarget must not be present
+    ok 144 - qg_p18_p15_hyphen_ambiguity_hyphen_meaning: focusTarget must not be present
+      ---
+      duration_ms: 0.1026
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_hyphen_ambiguity_hyphen_transfer: focusTarget must not be present
+    ok 145 - qg_p18_p15_hyphen_ambiguity_hyphen_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0995
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_modal_verbs_explain_modal: focusTarget must not be present
+    ok 146 - qg_p18_p15_modal_verbs_explain_modal: focusTarget must not be present
+      ---
+      duration_ms: 0.113
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_modal_verbs_modal_gap: focusTarget must not be present
+    ok 147 - qg_p18_p15_modal_verbs_modal_gap: focusTarget must not be present
+      ---
+      duration_ms: 0.0871
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_modal_verbs_modal_meaning: focusTarget must not be present
+    ok 148 - qg_p18_p15_modal_verbs_modal_meaning: focusTarget must not be present
+      ---
+      duration_ms: 0.0973
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_modal_verbs_modal_strength_order: focusTarget must not be present
+    ok 149 - qg_p18_p15_modal_verbs_modal_strength_order: focusTarget must not be present
+      ---
+      duration_ms: 0.118
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_modal_verbs_modal_transfer: focusTarget must not be present
+    ok 150 - qg_p18_p15_modal_verbs_modal_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.1041
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_noun_phrases_build_np_context: focusTarget must not be present
+    ok 151 - qg_p18_p15_noun_phrases_build_np_context: focusTarget must not be present
+      ---
+      duration_ms: 0.0954
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_noun_phrases_explain_np: focusTarget must not be present
+    ok 152 - qg_p18_p15_noun_phrases_explain_np: focusTarget must not be present
+      ---
+      duration_ms: 0.1146
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_noun_phrases_head_noun: focusTarget must not be present
+    ok 153 - qg_p18_p15_noun_phrases_head_noun: focusTarget must not be present
+      ---
+      duration_ms: 0.0932
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_noun_phrases_identify_expanded_np: focusTarget must not be present
+    ok 154 - qg_p18_p15_noun_phrases_identify_expanded_np: focusTarget must not be present
+      ---
+      duration_ms: 0.0982
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_noun_phrases_np_not_clause: focusTarget must not be present
+    ok 155 - qg_p18_p15_noun_phrases_np_not_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.0979
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_parenthesis_commas_explain_parenthesis: focusTarget must not be present
+    ok 156 - qg_p18_p15_parenthesis_commas_explain_parenthesis: focusTarget must not be present
+      ---
+      duration_ms: 0.1018
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_parenthesis_commas_parenthesis_choice: focusTarget must not be present
+    ok 157 - qg_p18_p15_parenthesis_commas_parenthesis_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0984
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_parenthesis_commas_parenthesis_fix: focusTarget must not be present
+    ok 158 - qg_p18_p15_parenthesis_commas_parenthesis_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0857
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_parenthesis_commas_parenthesis_replace: focusTarget must not be present
+    ok 159 - qg_p18_p15_parenthesis_commas_parenthesis_replace: focusTarget must not be present
+      ---
+      duration_ms: 0.0777
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_parenthesis_commas_parenthesis_transfer: focusTarget must not be present
+    ok 160 - qg_p18_p15_parenthesis_commas_parenthesis_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0988
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_pronouns_cohesion_cohesion_choice: focusTarget must not be present
+    ok 161 - qg_p18_p15_pronouns_cohesion_cohesion_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0957
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_pronouns_cohesion_cohesion_rewrite: focusTarget must not be present
+    ok 162 - qg_p18_p15_pronouns_cohesion_cohesion_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0697
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_pronouns_cohesion_cohesion_transfer: focusTarget must not be present
+    ok 163 - qg_p18_p15_pronouns_cohesion_cohesion_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0926
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_pronouns_cohesion_explain_cohesion: focusTarget must not be present
+    ok 164 - qg_p18_p15_pronouns_cohesion_explain_cohesion: focusTarget must not be present
+      ---
+      duration_ms: 0.0993
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_pronouns_cohesion_pronoun_referent: focusTarget must not be present
+    ok 165 - qg_p18_p15_pronouns_cohesion_pronoun_referent: focusTarget must not be present
+      ---
+      duration_ms: 0.0857
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_relative_clauses_complete_relative_clause: focusTarget must not be present
+    ok 166 - qg_p18_p15_relative_clauses_complete_relative_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.0847
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_relative_clauses_explain_relative_clause: focusTarget must not be present
+    ok 167 - qg_p18_p15_relative_clauses_explain_relative_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.1008
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_relative_clauses_identify_relative_clause: focusTarget must not be present
+    ok 168 - qg_p18_p15_relative_clauses_identify_relative_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.0887
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_relative_clauses_punctuate_relative_clause: focusTarget must not be present
+    ok 169 - qg_p18_p15_relative_clauses_punctuate_relative_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.1319
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_relative_clauses_relative_transfer: focusTarget must not be present
+    ok 170 - qg_p18_p15_relative_clauses_relative_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0959
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_sentence_functions_explain_function: focusTarget must not be present
+    ok 171 - qg_p18_p15_sentence_functions_explain_function: focusTarget must not be present
+      ---
+      duration_ms: 0.0607
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_sentence_functions_function_contrast: focusTarget must not be present
+    ok 172 - qg_p18_p15_sentence_functions_function_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0632
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_sentence_functions_identify_function: focusTarget must not be present
+    ok 173 - qg_p18_p15_sentence_functions_identify_function: focusTarget must not be present
+      ---
+      duration_ms: 0.0446
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_sentence_functions_punctuate_by_function: focusTarget must not be present
+    ok 174 - qg_p18_p15_sentence_functions_punctuate_by_function: focusTarget must not be present
+      ---
+      duration_ms: 0.0932
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_sentence_functions_sat_style_function: focusTarget must not be present
+    ok 175 - qg_p18_p15_sentence_functions_sat_style_function: focusTarget must not be present
+      ---
+      duration_ms: 0.1052
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_speech_punctuation_explain_speech: focusTarget must not be present
+    ok 176 - qg_p18_p15_speech_punctuation_explain_speech: focusTarget must not be present
+      ---
+      duration_ms: 0.0601
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_speech_punctuation_speech_choice: focusTarget must not be present
+    ok 177 - qg_p18_p15_speech_punctuation_speech_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.064
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_speech_punctuation_speech_fix: focusTarget must not be present
+    ok 178 - qg_p18_p15_speech_punctuation_speech_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.097
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_speech_punctuation_speech_reporter_position: focusTarget must not be present
+    ok 179 - qg_p18_p15_speech_punctuation_speech_reporter_position: focusTarget must not be present
+      ---
+      duration_ms: 0.0561
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_speech_punctuation_speech_transfer: focusTarget must not be present
+    ok 180 - qg_p18_p15_speech_punctuation_speech_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0503
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_standard_english_explain_standard: focusTarget must not be present
+    ok 181 - qg_p18_p15_standard_english_explain_standard: focusTarget must not be present
+      ---
+      duration_ms: 0.0781
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_standard_english_standard_choice: focusTarget must not be present
+    ok 182 - qg_p18_p15_standard_english_standard_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0439
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_standard_english_standard_fix: focusTarget must not be present
+    ok 183 - qg_p18_p15_standard_english_standard_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0869
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_standard_english_standard_pairs: focusTarget must not be present
+    ok 184 - qg_p18_p15_standard_english_standard_pairs: focusTarget must not be present
+      ---
+      duration_ms: 0.0651
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_standard_english_standard_transfer: focusTarget must not be present
+    ok 185 - qg_p18_p15_standard_english_standard_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0373
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_subject_object_explain_roles: focusTarget must not be present
+    ok 186 - qg_p18_p15_subject_object_explain_roles: focusTarget must not be present
+      ---
+      duration_ms: 0.056
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_subject_object_identify_object: focusTarget must not be present
+    ok 187 - qg_p18_p15_subject_object_identify_object: focusTarget must not be present
+      ---
+      duration_ms: 0.0438
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_subject_object_identify_subject: focusTarget must not be present
+    ok 188 - qg_p18_p15_subject_object_identify_subject: focusTarget must not be present
+      ---
+      duration_ms: 0.0414
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_subject_object_role_table: focusTarget must not be present
+    ok 189 - qg_p18_p15_subject_object_role_table: focusTarget must not be present
+      ---
+      duration_ms: 0.0624
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_subject_object_role_transfer: focusTarget must not be present
+    ok 190 - qg_p18_p15_subject_object_role_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0549
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_tense_aspect_choose_tense_form: focusTarget must not be present
+    ok 191 - qg_p18_p15_tense_aspect_choose_tense_form: focusTarget must not be present
+      ---
+      duration_ms: 0.0448
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_tense_aspect_explain_tense: focusTarget must not be present
+    ok 192 - qg_p18_p15_tense_aspect_explain_tense: focusTarget must not be present
+      ---
+      duration_ms: 0.0525
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_tense_aspect_tense_editing: focusTarget must not be present
+    ok 193 - qg_p18_p15_tense_aspect_tense_editing: focusTarget must not be present
+      ---
+      duration_ms: 0.1484
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_tense_aspect_tense_near_miss: focusTarget must not be present
+    ok 194 - qg_p18_p15_tense_aspect_tense_near_miss: focusTarget must not be present
+      ---
+      duration_ms: 0.0544
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_tense_aspect_tense_rewrite: focusTarget must not be present
+    ok 195 - qg_p18_p15_tense_aspect_tense_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0419
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_word_classes_explain_word_class: focusTarget must not be present
+    ok 196 - qg_p18_p15_word_classes_explain_word_class: focusTarget must not be present
+      ---
+      duration_ms: 0.058
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_word_classes_target_word_class: focusTarget must not be present
+    ok 197 - qg_p18_p15_word_classes_target_word_class: focusTarget must not be present
+      ---
+      duration_ms: 0.067
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_word_classes_underline_word_class: focusTarget must not be present
+    ok 198 - qg_p18_p15_word_classes_underline_word_class: focusTarget must not be present
+      ---
+      duration_ms: 0.0524
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_word_classes_word_class_sort: focusTarget must not be present
+    ok 199 - qg_p18_p15_word_classes_word_class_sort: focusTarget must not be present
+      ---
+      duration_ms: 0.1321
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p15_word_classes_word_class_transfer: focusTarget must not be present
+    ok 200 - qg_p18_p15_word_classes_word_class_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0823
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_active_passive_agent_object_explain: focusTarget must not be present
+    ok 201 - qg_p18_p16_active_passive_agent_object_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.076
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_active_passive_rewrite_voice: focusTarget must not be present
+    ok 202 - qg_p18_p16_active_passive_rewrite_voice: focusTarget must not be present
+      ---
+      duration_ms: 0.0531
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_active_passive_same_meaning_choice: focusTarget must not be present
+    ok 203 - qg_p18_p16_active_passive_same_meaning_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0608
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_active_passive_tense_preserving_voice: focusTarget must not be present
+    ok 204 - qg_p18_p16_active_passive_tense_preserving_voice: focusTarget must not be present
+      ---
+      duration_ms: 0.0408
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_active_passive_voice_error_spot: focusTarget must not be present
+    ok 205 - qg_p18_p16_active_passive_voice_error_spot: focusTarget must not be present
+      ---
+      duration_ms: 0.0571
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_active_passive_voice_identify: focusTarget must not be present
+    ok 206 - qg_p18_p16_active_passive_voice_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0484
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_adverbials_adverbial_or_not: focusTarget must not be present
+    ok 207 - qg_p18_p16_adverbials_adverbial_or_not: focusTarget must not be present
+      ---
+      duration_ms: 0.0595
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_adverbials_choose_best_opening_adverbial: focusTarget must not be present
+    ok 208 - qg_p18_p16_adverbials_choose_best_opening_adverbial: focusTarget must not be present
+      ---
+      duration_ms: 0.0897
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_adverbials_explain_fronted_comma: focusTarget must not be present
+    ok 209 - qg_p18_p16_adverbials_explain_fronted_comma: focusTarget must not be present
+      ---
+      duration_ms: 0.0461
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_adverbials_fronted_adverbial_type: focusTarget must not be present
+    ok 210 - qg_p18_p16_adverbials_fronted_adverbial_type: focusTarget must not be present
+      ---
+      duration_ms: 0.0526
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_adverbials_fronted_comma_fix: focusTarget must not be present
+    ok 211 - qg_p18_p16_adverbials_fronted_comma_fix: focusTarget must not be present
+      ---
+      duration_ms: 0.0948
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_adverbials_move_adverbial_to_front: focusTarget must not be present
+    ok 212 - qg_p18_p16_adverbials_move_adverbial_to_front: focusTarget must not be present
+      ---
+      duration_ms: 0.0467
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_apostrophes_possession_choose_possessive_phrase: focusTarget must not be present
+    ok 213 - qg_p18_p16_apostrophes_possession_choose_possessive_phrase: focusTarget must not be present
+      ---
+      duration_ms: 0.0582
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_apostrophes_possession_explain_position: focusTarget must not be present
+    ok 214 - qg_p18_p16_apostrophes_possession_explain_position: focusTarget must not be present
+      ---
+      duration_ms: 0.0376
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_apostrophes_possession_fix_missing_apostrophe: focusTarget must not be present
+    ok 215 - qg_p18_p16_apostrophes_possession_fix_missing_apostrophe: focusTarget must not be present
+      ---
+      duration_ms: 0.0871
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_apostrophes_possession_meaning_change_choice: focusTarget must not be present
+    ok 216 - qg_p18_p16_apostrophes_possession_meaning_change_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0501
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_apostrophes_possession_possession_not_contraction: focusTarget must not be present
+    ok 217 - qg_p18_p16_apostrophes_possession_possession_not_contraction: focusTarget must not be present
+      ---
+      duration_ms: 0.0461
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_apostrophes_possession_singular_plural_possession: focusTarget must not be present
+    ok 218 - qg_p18_p16_apostrophes_possession_singular_plural_possession: focusTarget must not be present
+      ---
+      duration_ms: 0.0431
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_boundary_punctuation_choose_boundary_mark: focusTarget must not be present
+    ok 219 - qg_p18_p16_boundary_punctuation_choose_boundary_mark: focusTarget must not be present
+      ---
+      duration_ms: 0.0423
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_boundary_punctuation_choose_correct_boundary_sentence: focusTarget must not be present
+    ok 220 - qg_p18_p16_boundary_punctuation_choose_correct_boundary_sentence: focusTarget must not be present
+      ---
+      duration_ms: 0.0613
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_boundary_punctuation_explain_colon_semicolon_dash: focusTarget must not be present
+    ok 221 - qg_p18_p16_boundary_punctuation_explain_colon_semicolon_dash: focusTarget must not be present
+      ---
+      duration_ms: 0.0371
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_boundary_punctuation_insert_boundary_mark: focusTarget must not be present
+    ok 222 - qg_p18_p16_boundary_punctuation_insert_boundary_mark: focusTarget must not be present
+      ---
+      duration_ms: 0.0391
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_boundary_punctuation_match_mark_to_purpose: focusTarget must not be present
+    ok 223 - qg_p18_p16_boundary_punctuation_match_mark_to_purpose: focusTarget must not be present
+      ---
+      duration_ms: 0.0491
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_boundary_punctuation_semicolon_or_comma_splice: focusTarget must not be present
+    ok 224 - qg_p18_p16_boundary_punctuation_semicolon_or_comma_splice: focusTarget must not be present
+      ---
+      duration_ms: 0.0479
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_clauses_clause_order_meaning_transfer: focusTarget must not be present
+    ok 225 - qg_p18_p16_clauses_clause_order_meaning_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0596
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_clauses_explain_subordination: focusTarget must not be present
+    ok 226 - qg_p18_p16_clauses_explain_subordination: focusTarget must not be present
+      ---
+      duration_ms: 0.0425
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_clauses_fragment_or_sentence: focusTarget must not be present
+    ok 227 - qg_p18_p16_clauses_fragment_or_sentence: focusTarget must not be present
+      ---
+      duration_ms: 0.0476
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_clauses_join_with_given_conjunction: focusTarget must not be present
+    ok 228 - qg_p18_p16_clauses_join_with_given_conjunction: focusTarget must not be present
+      ---
+      duration_ms: 0.0399
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_clauses_main_vs_subordinate_table: focusTarget must not be present
+    ok 229 - qg_p18_p16_clauses_main_vs_subordinate_table: focusTarget must not be present
+      ---
+      duration_ms: 0.0593
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_clauses_punctuate_subordinate_first: focusTarget must not be present
+    ok 230 - qg_p18_p16_clauses_punctuate_subordinate_first: focusTarget must not be present
+      ---
+      duration_ms: 0.0376
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_clauses_subordinate_clause_identify: focusTarget must not be present
+    ok 231 - qg_p18_p16_clauses_subordinate_clause_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0473
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_formality_choose_formal_word: focusTarget must not be present
+    ok 232 - qg_p18_p16_formality_choose_formal_word: focusTarget must not be present
+      ---
+      duration_ms: 0.0418
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_formality_explain_formality_effect: focusTarget must not be present
+    ok 233 - qg_p18_p16_formality_explain_formality_effect: focusTarget must not be present
+      ---
+      duration_ms: 0.0405
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_formality_formal_sentence_rewrite: focusTarget must not be present
+    ok 234 - qg_p18_p16_formality_formal_sentence_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0357
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_formality_informal_to_formal_pair_table: focusTarget must not be present
+    ok 235 - qg_p18_p16_formality_informal_to_formal_pair_table: focusTarget must not be present
+      ---
+      duration_ms: 0.075
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_formality_least_formal_choice: focusTarget must not be present
+    ok 236 - qg_p18_p16_formality_least_formal_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0974
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_formality_register_context_choice: focusTarget must not be present
+    ok 237 - qg_p18_p16_formality_register_context_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0481
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning: focusTarget must not be present
+    ok 238 - qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning: focusTarget must not be present
+      ---
+      duration_ms: 0.0479
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning: focusTarget must not be present
+    ok 239 - qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning: focusTarget must not be present
+      ---
+      duration_ms: 0.0524
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase: focusTarget must not be present
+    ok 240 - qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase: focusTarget must not be present
+      ---
+      duration_ms: 0.1132
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_hyphen_ambiguity_hyphen_function_choice: focusTarget must not be present
+    ok 241 - qg_p18_p16_hyphen_ambiguity_hyphen_function_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0511
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table: focusTarget must not be present
+    ok 242 - qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table: focusTarget must not be present
+      ---
+      duration_ms: 0.0556
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading: focusTarget must not be present
+    ok 243 - qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading: focusTarget must not be present
+      ---
+      duration_ms: 0.0499
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_modal_verbs_change_force_rewrite: focusTarget must not be present
+    ok 244 - qg_p18_p16_modal_verbs_change_force_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0389
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_modal_verbs_choose_modal_meaning: focusTarget must not be present
+    ok 245 - qg_p18_p16_modal_verbs_choose_modal_meaning: focusTarget must not be present
+      ---
+      duration_ms: 0.0426
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_modal_verbs_meaning_transfer_choice: focusTarget must not be present
+    ok 246 - qg_p18_p16_modal_verbs_meaning_transfer_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0623
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_modal_verbs_modal_context_explain: focusTarget must not be present
+    ok 247 - qg_p18_p16_modal_verbs_modal_context_explain: focusTarget must not be present
+      ---
+      duration_ms: 0.0347
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_modal_verbs_modal_or_adverb: focusTarget must not be present
+    ok 248 - qg_p18_p16_modal_verbs_modal_or_adverb: focusTarget must not be present
+      ---
+      duration_ms: 0.0443
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_modal_verbs_rank_certainty_choice: focusTarget must not be present
+    ok 249 - qg_p18_p16_modal_verbs_rank_certainty_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0371
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_noun_phrases_build_with_given_head: focusTarget must not be present
+    ok 250 - qg_p18_p16_noun_phrases_build_with_given_head: focusTarget must not be present
+      ---
+      duration_ms: 0.0598
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_noun_phrases_expand_plain_noun: focusTarget must not be present
+    ok 251 - qg_p18_p16_noun_phrases_expand_plain_noun: focusTarget must not be present
+      ---
+      duration_ms: 0.0491
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_noun_phrases_expanded_or_not_choice: focusTarget must not be present
+    ok 252 - qg_p18_p16_noun_phrases_expanded_or_not_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0625
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_noun_phrases_explain_expansion: focusTarget must not be present
+    ok 253 - qg_p18_p16_noun_phrases_explain_expansion: focusTarget must not be present
+      ---
+      duration_ms: 0.0321
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_noun_phrases_head_noun_identify: focusTarget must not be present
+    ok 254 - qg_p18_p16_noun_phrases_head_noun_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.1079
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_noun_phrases_noun_phrase_vs_clause: focusTarget must not be present
+    ok 255 - qg_p18_p16_noun_phrases_noun_phrase_vs_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.0801
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_parenthesis_commas_add_parenthesis_commas: focusTarget must not be present
+    ok 256 - qg_p18_p16_parenthesis_commas_add_parenthesis_commas: focusTarget must not be present
+      ---
+      duration_ms: 0.0958
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_parenthesis_commas_choose_parenthetical_part: focusTarget must not be present
+    ok 257 - qg_p18_p16_parenthesis_commas_choose_parenthetical_part: focusTarget must not be present
+      ---
+      duration_ms: 0.0481
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_parenthesis_commas_explain_parenthesis: focusTarget must not be present
+    ok 258 - qg_p18_p16_parenthesis_commas_explain_parenthesis: focusTarget must not be present
+      ---
+      duration_ms: 0.0331
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_parenthesis_commas_parenthesis_or_not: focusTarget must not be present
+    ok 259 - qg_p18_p16_parenthesis_commas_parenthesis_or_not: focusTarget must not be present
+      ---
+      duration_ms: 0.0425
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_parenthesis_commas_punctuation_for_parenthesis: focusTarget must not be present
+    ok 260 - qg_p18_p16_parenthesis_commas_punctuation_for_parenthesis: focusTarget must not be present
+      ---
+      duration_ms: 0.0415
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_parenthesis_commas_replace_brackets_with_commas: focusTarget must not be present
+    ok 261 - qg_p18_p16_parenthesis_commas_replace_brackets_with_commas: focusTarget must not be present
+      ---
+      duration_ms: 0.0351
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_pronouns_cohesion_choose_cohesive_sentence: focusTarget must not be present
+    ok 262 - qg_p18_p16_pronouns_cohesion_choose_cohesive_sentence: focusTarget must not be present
+      ---
+      duration_ms: 0.0449
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_pronouns_cohesion_explain_cohesion: focusTarget must not be present
+    ok 263 - qg_p18_p16_pronouns_cohesion_explain_cohesion: focusTarget must not be present
+      ---
+      duration_ms: 0.0298
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_pronouns_cohesion_fix_pronoun_reference: focusTarget must not be present
+    ok 264 - qg_p18_p16_pronouns_cohesion_fix_pronoun_reference: focusTarget must not be present
+      ---
+      duration_ms: 0.0318
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_pronouns_cohesion_reduce_repetition_rewrite: focusTarget must not be present
+    ok 265 - qg_p18_p16_pronouns_cohesion_reduce_repetition_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0334
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_pronouns_cohesion_referent_identify: focusTarget must not be present
+    ok 266 - qg_p18_p16_pronouns_cohesion_referent_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0434
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_pronouns_cohesion_too_many_pronouns: focusTarget must not be present
+    ok 267 - qg_p18_p16_pronouns_cohesion_too_many_pronouns: focusTarget must not be present
+      ---
+      duration_ms: 0.105
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_relative_clauses_add_commas_non_defining: focusTarget must not be present
+    ok 268 - qg_p18_p16_relative_clauses_add_commas_non_defining: focusTarget must not be present
+      ---
+      duration_ms: 0.0765
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_relative_clauses_complete_with_relative_clause: focusTarget must not be present
+    ok 269 - qg_p18_p16_relative_clauses_complete_with_relative_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.2773
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_relative_clauses_explain_relative_clause: focusTarget must not be present
+    ok 270 - qg_p18_p16_relative_clauses_explain_relative_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.1242
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_relative_clauses_noun_linked_by_relative: focusTarget must not be present
+    ok 271 - qg_p18_p16_relative_clauses_noun_linked_by_relative: focusTarget must not be present
+      ---
+      duration_ms: 0.112
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_relative_clauses_relative_clause_identify_span: focusTarget must not be present
+    ok 272 - qg_p18_p16_relative_clauses_relative_clause_identify_span: focusTarget must not be present
+      ---
+      duration_ms: 0.1016
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_relative_clauses_relative_or_time_clause: focusTarget must not be present
+    ok 273 - qg_p18_p16_relative_clauses_relative_or_time_clause: focusTarget must not be present
+      ---
+      duration_ms: 0.096
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_sentence_functions_choose_matching_function_for_context: focusTarget must not be present
+    ok 274 - qg_p18_p16_sentence_functions_choose_matching_function_for_context: focusTarget must not be present
+      ---
+      duration_ms: 1.9125
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_sentence_functions_direct_indirect_question_contrast: focusTarget must not be present
+    ok 275 - qg_p18_p16_sentence_functions_direct_indirect_question_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.191
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_sentence_functions_exclamation_not_excited_statement: focusTarget must not be present
+    ok 276 - qg_p18_p16_sentence_functions_exclamation_not_excited_statement: focusTarget must not be present
+      ---
+      duration_ms: 0.1068
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_sentence_functions_explain_function_reasoning: focusTarget must not be present
+    ok 277 - qg_p18_p16_sentence_functions_explain_function_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0996
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_sentence_functions_punctuation_vs_function_table: focusTarget must not be present
+    ok 278 - qg_p18_p16_sentence_functions_punctuation_vs_function_table: focusTarget must not be present
+      ---
+      duration_ms: 0.2048
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_sentence_functions_repair_wrong_function_punctuation: focusTarget must not be present
+    ok 279 - qg_p18_p16_sentence_functions_repair_wrong_function_punctuation: focusTarget must not be present
+      ---
+      duration_ms: 0.1037
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_speech_punctuation_explain_speech_rule: focusTarget must not be present
+    ok 280 - qg_p18_p16_speech_punctuation_explain_speech_rule: focusTarget must not be present
+      ---
+      duration_ms: 0.1332
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_speech_punctuation_fix_punctuation_outside_marks: focusTarget must not be present
+    ok 281 - qg_p18_p16_speech_punctuation_fix_punctuation_outside_marks: focusTarget must not be present
+      ---
+      duration_ms: 0.1181
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_speech_punctuation_inside_marks_choice: focusTarget must not be present
+    ok 282 - qg_p18_p16_speech_punctuation_inside_marks_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.2143
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_speech_punctuation_punctuate_direct_speech: focusTarget must not be present
+    ok 283 - qg_p18_p16_speech_punctuation_punctuate_direct_speech: focusTarget must not be present
+      ---
+      duration_ms: 0.194
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_speech_punctuation_reporting_clause_position: focusTarget must not be present
+    ok 284 - qg_p18_p16_speech_punctuation_reporting_clause_position: focusTarget must not be present
+      ---
+      duration_ms: 0.1049
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_speech_punctuation_speech_or_indirect: focusTarget must not be present
+    ok 285 - qg_p18_p16_speech_punctuation_speech_or_indirect: focusTarget must not be present
+      ---
+      duration_ms: 0.1127
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_standard_english_choose_standard_sentence: focusTarget must not be present
+    ok 286 - qg_p18_p16_standard_english_choose_standard_sentence: focusTarget must not be present
+      ---
+      duration_ms: 0.0965
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_standard_english_context_formal_standard: focusTarget must not be present
+    ok 287 - qg_p18_p16_standard_english_context_formal_standard: focusTarget must not be present
+      ---
+      duration_ms: 0.0963
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_standard_english_explain_standard_choice: focusTarget must not be present
+    ok 288 - qg_p18_p16_standard_english_explain_standard_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0775
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_standard_english_fix_nonstandard: focusTarget must not be present
+    ok 289 - qg_p18_p16_standard_english_fix_nonstandard: focusTarget must not be present
+      ---
+      duration_ms: 0.0798
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_standard_english_rewrite_standard_english: focusTarget must not be present
+    ok 290 - qg_p18_p16_standard_english_rewrite_standard_english: focusTarget must not be present
+      ---
+      duration_ms: 0.0811
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_standard_english_standard_pairs_table: focusTarget must not be present
+    ok 291 - qg_p18_p16_standard_english_standard_pairs_table: focusTarget must not be present
+      ---
+      duration_ms: 0.1361
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_subject_object_explain_roles: focusTarget must not be present
+    ok 292 - qg_p18_p16_subject_object_explain_roles: focusTarget must not be present
+      ---
+      duration_ms: 0.0754
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_subject_object_find_object: focusTarget must not be present
+    ok 293 - qg_p18_p16_subject_object_find_object: focusTarget must not be present
+      ---
+      duration_ms: 0.1638
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_subject_object_find_subject: focusTarget must not be present
+    ok 294 - qg_p18_p16_subject_object_find_subject: focusTarget must not be present
+      ---
+      duration_ms: 0.0927
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_subject_object_opening_adverbial_trap: focusTarget must not be present
+    ok 295 - qg_p18_p16_subject_object_opening_adverbial_trap: focusTarget must not be present
+      ---
+      duration_ms: 0.0959
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_subject_object_rewrite_preserve_roles: focusTarget must not be present
+    ok 296 - qg_p18_p16_subject_object_rewrite_preserve_roles: focusTarget must not be present
+      ---
+      duration_ms: 0.0793
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_subject_object_subject_object_table: focusTarget must not be present
+    ok 297 - qg_p18_p16_subject_object_subject_object_table: focusTarget must not be present
+      ---
+      duration_ms: 0.1062
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_tense_aspect_choose_best_verb_form: focusTarget must not be present
+    ok 298 - qg_p18_p16_tense_aspect_choose_best_verb_form: focusTarget must not be present
+      ---
+      duration_ms: 0.0847
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_tense_aspect_fix_wrong_form: focusTarget must not be present
+    ok 299 - qg_p18_p16_tense_aspect_fix_wrong_form: focusTarget must not be present
+      ---
+      duration_ms: 0.095
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_tense_aspect_form_explanation: focusTarget must not be present
+    ok 300 - qg_p18_p16_tense_aspect_form_explanation: focusTarget must not be present
+      ---
+      duration_ms: 0.0761
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_tense_aspect_rewrite_to_named_form: focusTarget must not be present
+    ok 301 - qg_p18_p16_tense_aspect_rewrite_to_named_form: focusTarget must not be present
+      ---
+      duration_ms: 0.0738
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_tense_aspect_spot_tense_shift_error: focusTarget must not be present
+    ok 302 - qg_p18_p16_tense_aspect_spot_tense_shift_error: focusTarget must not be present
+      ---
+      duration_ms: 0.0883
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_tense_aspect_timeline_order_choice: focusTarget must not be present
+    ok 303 - qg_p18_p16_tense_aspect_timeline_order_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0849
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_word_classes_build_word_class_sentence: focusTarget must not be present
+    ok 304 - qg_p18_p16_word_classes_build_word_class_sentence: focusTarget must not be present
+      ---
+      duration_ms: 0.068
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_word_classes_distractor_reason_choice: focusTarget must not be present
+    ok 305 - qg_p18_p16_word_classes_distractor_reason_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.1045
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_word_classes_edge_word_class_transfer: focusTarget must not be present
+    ok 306 - qg_p18_p16_word_classes_edge_word_class_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0958
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_word_classes_multi_token_classify_table: focusTarget must not be present
+    ok 307 - qg_p18_p16_word_classes_multi_token_classify_table: focusTarget must not be present
+      ---
+      duration_ms: 0.2319
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_word_classes_pick_all_target_class: focusTarget must not be present
+    ok 308 - qg_p18_p16_word_classes_pick_all_target_class: focusTarget must not be present
+      ---
+      duration_ms: 0.0983
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_word_classes_role_in_context_choice: focusTarget must not be present
+    ok 309 - qg_p18_p16_word_classes_role_in_context_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0513
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p16_word_classes_same_word_different_job: focusTarget must not be present
+    ok 310 - qg_p18_p16_word_classes_same_word_different_job: focusTarget must not be present
+      ---
+      duration_ms: 0.0435
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_active_passive_examiner_trap_contrast: focusTarget must not be present
+    ok 311 - qg_p18_p17_active_passive_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0621
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_active_passive_misconception_repair: focusTarget must not be present
+    ok 312 - qg_p18_p17_active_passive_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.044
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_active_passive_precision_choice: focusTarget must not be present
+    ok 313 - qg_p18_p17_active_passive_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0509
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_active_passive_table_classify: focusTarget must not be present
+    ok 314 - qg_p18_p17_active_passive_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1067
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_active_passive_transfer_apply: focusTarget must not be present
+    ok 315 - qg_p18_p17_active_passive_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0375
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_active_passive_written_reason: focusTarget must not be present
+    ok 316 - qg_p18_p17_active_passive_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0331
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_adverbials_misconception_repair: focusTarget must not be present
+    ok 317 - qg_p18_p17_adverbials_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.039
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_adverbials_precision_choice: focusTarget must not be present
+    ok 318 - qg_p18_p17_adverbials_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0476
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_adverbials_table_classify: focusTarget must not be present
+    ok 319 - qg_p18_p17_adverbials_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.0957
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_adverbials_transfer_apply: focusTarget must not be present
+    ok 320 - qg_p18_p17_adverbials_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0369
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_adverbials_written_reason: focusTarget must not be present
+    ok 321 - qg_p18_p17_adverbials_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0322
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_apostrophes_possession_examiner_trap_contrast: focusTarget must not be present
+    ok 322 - qg_p18_p17_apostrophes_possession_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0561
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_apostrophes_possession_misconception_repair: focusTarget must not be present
+    ok 323 - qg_p18_p17_apostrophes_possession_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0342
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_apostrophes_possession_precision_choice: focusTarget must not be present
+    ok 324 - qg_p18_p17_apostrophes_possession_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.043
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_apostrophes_possession_table_classify: focusTarget must not be present
+    ok 325 - qg_p18_p17_apostrophes_possession_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.0963
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_apostrophes_possession_transfer_apply: focusTarget must not be present
+    ok 326 - qg_p18_p17_apostrophes_possession_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0357
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_apostrophes_possession_written_reason: focusTarget must not be present
+    ok 327 - qg_p18_p17_apostrophes_possession_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0318
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_boundary_punctuation_examiner_trap_contrast: focusTarget must not be present
+    ok 328 - qg_p18_p17_boundary_punctuation_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0513
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_boundary_punctuation_misconception_repair: focusTarget must not be present
+    ok 329 - qg_p18_p17_boundary_punctuation_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0378
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_boundary_punctuation_precision_choice: focusTarget must not be present
+    ok 330 - qg_p18_p17_boundary_punctuation_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0412
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_boundary_punctuation_table_classify: focusTarget must not be present
+    ok 331 - qg_p18_p17_boundary_punctuation_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.0872
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_boundary_punctuation_transfer_apply: focusTarget must not be present
+    ok 332 - qg_p18_p17_boundary_punctuation_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0562
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_boundary_punctuation_written_reason: focusTarget must not be present
+    ok 333 - qg_p18_p17_boundary_punctuation_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0338
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_clauses_examiner_trap_contrast: focusTarget must not be present
+    ok 334 - qg_p18_p17_clauses_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0939
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_clauses_misconception_repair: focusTarget must not be present
+    ok 335 - qg_p18_p17_clauses_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0483
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_clauses_precision_choice: focusTarget must not be present
+    ok 336 - qg_p18_p17_clauses_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0533
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_clauses_table_classify: focusTarget must not be present
+    ok 337 - qg_p18_p17_clauses_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1038
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_clauses_transfer_apply: focusTarget must not be present
+    ok 338 - qg_p18_p17_clauses_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0453
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_clauses_written_reason: focusTarget must not be present
+    ok 339 - qg_p18_p17_clauses_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0446
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_formality_misconception_repair: focusTarget must not be present
+    ok 340 - qg_p18_p17_formality_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0392
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_formality_precision_choice: focusTarget must not be present
+    ok 341 - qg_p18_p17_formality_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0459
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_formality_table_classify: focusTarget must not be present
+    ok 342 - qg_p18_p17_formality_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.0917
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_formality_transfer_apply: focusTarget must not be present
+    ok 343 - qg_p18_p17_formality_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0364
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_formality_written_reason: focusTarget must not be present
+    ok 344 - qg_p18_p17_formality_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0346
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_hyphen_ambiguity_examiner_trap_contrast: focusTarget must not be present
+    ok 345 - qg_p18_p17_hyphen_ambiguity_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0593
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_hyphen_ambiguity_misconception_repair: focusTarget must not be present
+    ok 346 - qg_p18_p17_hyphen_ambiguity_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0392
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_hyphen_ambiguity_precision_choice: focusTarget must not be present
+    ok 347 - qg_p18_p17_hyphen_ambiguity_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0489
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_hyphen_ambiguity_table_classify: focusTarget must not be present
+    ok 348 - qg_p18_p17_hyphen_ambiguity_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1084
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_hyphen_ambiguity_transfer_apply: focusTarget must not be present
+    ok 349 - qg_p18_p17_hyphen_ambiguity_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0379
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_hyphen_ambiguity_written_reason: focusTarget must not be present
+    ok 350 - qg_p18_p17_hyphen_ambiguity_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0351
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_modal_verbs_misconception_repair: focusTarget must not be present
+    ok 351 - qg_p18_p17_modal_verbs_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0392
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_modal_verbs_precision_choice: focusTarget must not be present
+    ok 352 - qg_p18_p17_modal_verbs_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0454
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_modal_verbs_table_classify: focusTarget must not be present
+    ok 353 - qg_p18_p17_modal_verbs_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1028
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_modal_verbs_transfer_apply: focusTarget must not be present
+    ok 354 - qg_p18_p17_modal_verbs_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0357
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_modal_verbs_written_reason: focusTarget must not be present
+    ok 355 - qg_p18_p17_modal_verbs_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.033
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_noun_phrases_examiner_trap_contrast: focusTarget must not be present
+    ok 356 - qg_p18_p17_noun_phrases_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0593
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_noun_phrases_misconception_repair: focusTarget must not be present
+    ok 357 - qg_p18_p17_noun_phrases_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0389
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_noun_phrases_precision_choice: focusTarget must not be present
+    ok 358 - qg_p18_p17_noun_phrases_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0462
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_noun_phrases_table_classify: focusTarget must not be present
+    ok 359 - qg_p18_p17_noun_phrases_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.0984
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_noun_phrases_transfer_apply: focusTarget must not be present
+    ok 360 - qg_p18_p17_noun_phrases_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0378
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_noun_phrases_written_reason: focusTarget must not be present
+    ok 361 - qg_p18_p17_noun_phrases_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0341
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_parenthesis_commas_misconception_repair: focusTarget must not be present
+    ok 362 - qg_p18_p17_parenthesis_commas_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.044
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_parenthesis_commas_precision_choice: focusTarget must not be present
+    ok 363 - qg_p18_p17_parenthesis_commas_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0567
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_parenthesis_commas_table_classify: focusTarget must not be present
+    ok 364 - qg_p18_p17_parenthesis_commas_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1775
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_parenthesis_commas_transfer_apply: focusTarget must not be present
+    ok 365 - qg_p18_p17_parenthesis_commas_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0616
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_parenthesis_commas_written_reason: focusTarget must not be present
+    ok 366 - qg_p18_p17_parenthesis_commas_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0458
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_pronouns_cohesion_misconception_repair: focusTarget must not be present
+    ok 367 - qg_p18_p17_pronouns_cohesion_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0468
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_pronouns_cohesion_precision_choice: focusTarget must not be present
+    ok 368 - qg_p18_p17_pronouns_cohesion_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0561
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_pronouns_cohesion_table_classify: focusTarget must not be present
+    ok 369 - qg_p18_p17_pronouns_cohesion_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1136
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_pronouns_cohesion_transfer_apply: focusTarget must not be present
+    ok 370 - qg_p18_p17_pronouns_cohesion_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0394
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_pronouns_cohesion_written_reason: focusTarget must not be present
+    ok 371 - qg_p18_p17_pronouns_cohesion_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0359
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_relative_clauses_misconception_repair: focusTarget must not be present
+    ok 372 - qg_p18_p17_relative_clauses_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0434
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_relative_clauses_precision_choice: focusTarget must not be present
+    ok 373 - qg_p18_p17_relative_clauses_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0491
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_relative_clauses_table_classify: focusTarget must not be present
+    ok 374 - qg_p18_p17_relative_clauses_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1042
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_relative_clauses_transfer_apply: focusTarget must not be present
+    ok 375 - qg_p18_p17_relative_clauses_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0402
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_relative_clauses_written_reason: focusTarget must not be present
+    ok 376 - qg_p18_p17_relative_clauses_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0375
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_sentence_functions_misconception_repair: focusTarget must not be present
+    ok 377 - qg_p18_p17_sentence_functions_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0652
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_sentence_functions_precision_choice: focusTarget must not be present
+    ok 378 - qg_p18_p17_sentence_functions_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0813
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_sentence_functions_table_classify: focusTarget must not be present
+    ok 379 - qg_p18_p17_sentence_functions_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1921
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_sentence_functions_transfer_apply: focusTarget must not be present
+    ok 380 - qg_p18_p17_sentence_functions_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0715
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_sentence_functions_written_reason: focusTarget must not be present
+    ok 381 - qg_p18_p17_sentence_functions_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0583
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_speech_punctuation_examiner_trap_contrast: focusTarget must not be present
+    ok 382 - qg_p18_p17_speech_punctuation_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0734
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_speech_punctuation_misconception_repair: focusTarget must not be present
+    ok 383 - qg_p18_p17_speech_punctuation_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.048
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_speech_punctuation_precision_choice: focusTarget must not be present
+    ok 384 - qg_p18_p17_speech_punctuation_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0552
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_speech_punctuation_table_classify: focusTarget must not be present
+    ok 385 - qg_p18_p17_speech_punctuation_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.114
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_speech_punctuation_transfer_apply: focusTarget must not be present
+    ok 386 - qg_p18_p17_speech_punctuation_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0425
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_speech_punctuation_written_reason: focusTarget must not be present
+    ok 387 - qg_p18_p17_speech_punctuation_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0351
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_standard_english_misconception_repair: focusTarget must not be present
+    ok 388 - qg_p18_p17_standard_english_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0389
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_standard_english_precision_choice: focusTarget must not be present
+    ok 389 - qg_p18_p17_standard_english_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.044
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_standard_english_table_classify: focusTarget must not be present
+    ok 390 - qg_p18_p17_standard_english_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1008
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_standard_english_transfer_apply: focusTarget must not be present
+    ok 391 - qg_p18_p17_standard_english_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0491
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_standard_english_written_reason: focusTarget must not be present
+    ok 392 - qg_p18_p17_standard_english_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0357
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_subject_object_examiner_trap_contrast: focusTarget must not be present
+    ok 393 - qg_p18_p17_subject_object_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0583
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_subject_object_misconception_repair: focusTarget must not be present
+    ok 394 - qg_p18_p17_subject_object_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0398
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_subject_object_precision_choice: focusTarget must not be present
+    ok 395 - qg_p18_p17_subject_object_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0515
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_subject_object_table_classify: focusTarget must not be present
+    ok 396 - qg_p18_p17_subject_object_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.0911
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_subject_object_transfer_apply: focusTarget must not be present
+    ok 397 - qg_p18_p17_subject_object_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0386
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_subject_object_written_reason: focusTarget must not be present
+    ok 398 - qg_p18_p17_subject_object_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0336
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_tense_aspect_examiner_trap_contrast: focusTarget must not be present
+    ok 399 - qg_p18_p17_tense_aspect_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0575
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_tense_aspect_misconception_repair: focusTarget must not be present
+    ok 400 - qg_p18_p17_tense_aspect_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0378
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_tense_aspect_precision_choice: focusTarget must not be present
+    ok 401 - qg_p18_p17_tense_aspect_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0452
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_tense_aspect_table_classify: focusTarget must not be present
+    ok 402 - qg_p18_p17_tense_aspect_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1014
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_tense_aspect_transfer_apply: focusTarget must not be present
+    ok 403 - qg_p18_p17_tense_aspect_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0372
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_tense_aspect_written_reason: focusTarget must not be present
+    ok 404 - qg_p18_p17_tense_aspect_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0341
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_word_classes_examiner_trap_contrast: focusTarget must not be present
+    ok 405 - qg_p18_p17_word_classes_examiner_trap_contrast: focusTarget must not be present
+      ---
+      duration_ms: 0.0566
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_word_classes_misconception_repair: focusTarget must not be present
+    ok 406 - qg_p18_p17_word_classes_misconception_repair: focusTarget must not be present
+      ---
+      duration_ms: 0.0413
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_word_classes_precision_choice: focusTarget must not be present
+    ok 407 - qg_p18_p17_word_classes_precision_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0466
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_word_classes_table_classify: focusTarget must not be present
+    ok 408 - qg_p18_p17_word_classes_table_classify: focusTarget must not be present
+      ---
+      duration_ms: 0.1366
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_word_classes_transfer_apply: focusTarget must not be present
+    ok 409 - qg_p18_p17_word_classes_transfer_apply: focusTarget must not be present
+      ---
+      duration_ms: 0.0391
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p17_word_classes_written_reason: focusTarget must not be present
+    ok 410 - qg_p18_p17_word_classes_written_reason: focusTarget must not be present
+      ---
+      duration_ms: 0.0352
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_active_passive_application_transfer: focusTarget must not be present
+    ok 411 - qg_p18_p18_active_passive_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0571
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_active_passive_diagnostic_identify: focusTarget must not be present
+    ok 412 - qg_p18_p18_active_passive_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0524
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_active_passive_explain_reasoning: focusTarget must not be present
+    ok 413 - qg_p18_p18_active_passive_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0498
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_active_passive_precision_repair_or_rewrite: focusTarget must not be present
+    ok 414 - qg_p18_p18_active_passive_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0361
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_active_passive_sat_table_classification: focusTarget must not be present
+    ok 415 - qg_p18_p18_active_passive_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.048
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_active_passive_subject_object_voice_subject_object_roles: focusTarget must not be present
+    ok 416 - qg_p18_p18_active_passive_subject_object_voice_subject_object_roles: focusTarget must not be present
+      ---
+      duration_ms: 0.0347
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_adverbials_application_transfer: focusTarget must not be present
+    ok 417 - qg_p18_p18_adverbials_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0351
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_adverbials_clauses_adverbial_clause_join: focusTarget must not be present
+    ok 418 - qg_p18_p18_adverbials_clauses_adverbial_clause_join: focusTarget must not be present
+      ---
+      duration_ms: 0.0359
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_adverbials_diagnostic_identify: focusTarget must not be present
+    ok 419 - qg_p18_p18_adverbials_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0434
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_adverbials_explain_reasoning: focusTarget must not be present
+    ok 420 - qg_p18_p18_adverbials_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.048
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_adverbials_precision_repair_or_rewrite: focusTarget must not be present
+    ok 421 - qg_p18_p18_adverbials_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0421
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_adverbials_sat_table_classification: focusTarget must not be present
+    ok 422 - qg_p18_p18_adverbials_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0445
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_apostrophes_possession_application_transfer: focusTarget must not be present
+    ok 423 - qg_p18_p18_apostrophes_possession_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0308
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_apostrophes_possession_diagnostic_identify: focusTarget must not be present
+    ok 424 - qg_p18_p18_apostrophes_possession_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0466
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_apostrophes_possession_explain_reasoning: focusTarget must not be present
+    ok 425 - qg_p18_p18_apostrophes_possession_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.8795
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision: focusTarget must not be present
+    ok 426 - qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision: focusTarget must not be present
+      ---
+      duration_ms: 0.0938
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite: focusTarget must not be present
+    ok 427 - qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.095
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_apostrophes_possession_sat_table_classification: focusTarget must not be present
+    ok 428 - qg_p18_p18_apostrophes_possession_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0594
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_boundary_punctuation_application_transfer: focusTarget must not be present
+    ok 429 - qg_p18_p18_boundary_punctuation_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0321
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_boundary_punctuation_diagnostic_identify: focusTarget must not be present
+    ok 430 - qg_p18_p18_boundary_punctuation_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0398
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_boundary_punctuation_explain_reasoning: focusTarget must not be present
+    ok 431 - qg_p18_p18_boundary_punctuation_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0464
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite: focusTarget must not be present
+    ok 432 - qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0736
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_boundary_punctuation_sat_table_classification: focusTarget must not be present
+    ok 433 - qg_p18_p18_boundary_punctuation_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.043
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation: focusTarget must not be present
+    ok 434 - qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation: focusTarget must not be present
+      ---
+      duration_ms: 0.0385
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_clauses_application_transfer: focusTarget must not be present
+    ok 435 - qg_p18_p18_clauses_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0284
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_clauses_diagnostic_identify: focusTarget must not be present
+    ok 436 - qg_p18_p18_clauses_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.042
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_clauses_explain_reasoning: focusTarget must not be present
+    ok 437 - qg_p18_p18_clauses_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0478
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_clauses_precision_repair_or_rewrite: focusTarget must not be present
+    ok 438 - qg_p18_p18_clauses_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0711
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_clauses_sat_table_classification: focusTarget must not be present
+    ok 439 - qg_p18_p18_clauses_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0452
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_formality_application_transfer: focusTarget must not be present
+    ok 440 - qg_p18_p18_formality_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.03
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_formality_diagnostic_identify: focusTarget must not be present
+    ok 441 - qg_p18_p18_formality_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0455
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_formality_explain_reasoning: focusTarget must not be present
+    ok 442 - qg_p18_p18_formality_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.045
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_formality_precision_repair_or_rewrite: focusTarget must not be present
+    ok 443 - qg_p18_p18_formality_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0333
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_formality_sat_table_classification: focusTarget must not be present
+    ok 444 - qg_p18_p18_formality_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0421
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_hyphen_ambiguity_application_transfer: focusTarget must not be present
+    ok 445 - qg_p18_p18_hyphen_ambiguity_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0273
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_hyphen_ambiguity_diagnostic_identify: focusTarget must not be present
+    ok 446 - qg_p18_p18_hyphen_ambiguity_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0393
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_hyphen_ambiguity_explain_reasoning: focusTarget must not be present
+    ok 447 - qg_p18_p18_hyphen_ambiguity_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.042
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite: focusTarget must not be present
+    ok 448 - qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0925
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_hyphen_ambiguity_sat_table_classification: focusTarget must not be present
+    ok 449 - qg_p18_p18_hyphen_ambiguity_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0453
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_modal_verbs_application_transfer: focusTarget must not be present
+    ok 450 - qg_p18_p18_modal_verbs_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0311
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_modal_verbs_diagnostic_identify: focusTarget must not be present
+    ok 451 - qg_p18_p18_modal_verbs_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0359
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_modal_verbs_explain_reasoning: focusTarget must not be present
+    ok 452 - qg_p18_p18_modal_verbs_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0423
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_modal_verbs_formality_modal_formality_strength: focusTarget must not be present
+    ok 453 - qg_p18_p18_modal_verbs_formality_modal_formality_strength: focusTarget must not be present
+      ---
+      duration_ms: 0.0313
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_modal_verbs_precision_repair_or_rewrite: focusTarget must not be present
+    ok 454 - qg_p18_p18_modal_verbs_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.1032
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_modal_verbs_sat_table_classification: focusTarget must not be present
+    ok 455 - qg_p18_p18_modal_verbs_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0461
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_noun_phrases_application_transfer: focusTarget must not be present
+    ok 456 - qg_p18_p18_noun_phrases_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0314
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_noun_phrases_diagnostic_identify: focusTarget must not be present
+    ok 457 - qg_p18_p18_noun_phrases_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0442
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_noun_phrases_explain_reasoning: focusTarget must not be present
+    ok 458 - qg_p18_p18_noun_phrases_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0467
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_noun_phrases_precision_repair_or_rewrite: focusTarget must not be present
+    ok 459 - qg_p18_p18_noun_phrases_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0344
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_noun_phrases_sat_table_classification: focusTarget must not be present
+    ok 460 - qg_p18_p18_noun_phrases_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0437
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_parenthesis_commas_application_transfer: focusTarget must not be present
+    ok 461 - qg_p18_p18_parenthesis_commas_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0263
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_parenthesis_commas_diagnostic_identify: focusTarget must not be present
+    ok 462 - qg_p18_p18_parenthesis_commas_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0463
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_parenthesis_commas_explain_reasoning: focusTarget must not be present
+    ok 463 - qg_p18_p18_parenthesis_commas_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0409
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite: focusTarget must not be present
+    ok 464 - qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0808
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_parenthesis_commas_sat_table_classification: focusTarget must not be present
+    ok 465 - qg_p18_p18_parenthesis_commas_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0424
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_pronouns_cohesion_application_transfer: focusTarget must not be present
+    ok 466 - qg_p18_p18_pronouns_cohesion_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0359
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_pronouns_cohesion_diagnostic_identify: focusTarget must not be present
+    ok 467 - qg_p18_p18_pronouns_cohesion_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0461
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_pronouns_cohesion_explain_reasoning: focusTarget must not be present
+    ok 468 - qg_p18_p18_pronouns_cohesion_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.046
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_pronouns_cohesion_formality_cohesion_formality_choice: focusTarget must not be present
+    ok 469 - qg_p18_p18_pronouns_cohesion_formality_cohesion_formality_choice: focusTarget must not be present
+      ---
+      duration_ms: 0.0377
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite: focusTarget must not be present
+    ok 470 - qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0332
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_pronouns_cohesion_sat_table_classification: focusTarget must not be present
+    ok 471 - qg_p18_p18_pronouns_cohesion_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0451
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_relative_clauses_application_transfer: focusTarget must not be present
+    ok 472 - qg_p18_p18_relative_clauses_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0342
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_relative_clauses_diagnostic_identify: focusTarget must not be present
+    ok 473 - qg_p18_p18_relative_clauses_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0485
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_relative_clauses_explain_reasoning: focusTarget must not be present
+    ok 474 - qg_p18_p18_relative_clauses_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0464
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_relative_clauses_parenthesis_commas_relative_parenthesis_punctuation: focusTarget must not be present
+    ok 475 - qg_p18_p18_relative_clauses_parenthesis_commas_relative_parenthesis_punctuation: focusTarget must not be present
+      ---
+      duration_ms: 0.0324
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_relative_clauses_precision_repair_or_rewrite: focusTarget must not be present
+    ok 476 - qg_p18_p18_relative_clauses_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0714
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_relative_clauses_sat_table_classification: focusTarget must not be present
+    ok 477 - qg_p18_p18_relative_clauses_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.043
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_sentence_functions_application_transfer: focusTarget must not be present
+    ok 478 - qg_p18_p18_sentence_functions_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0326
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_sentence_functions_diagnostic_identify: focusTarget must not be present
+    ok 479 - qg_p18_p18_sentence_functions_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0381
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_sentence_functions_explain_reasoning: focusTarget must not be present
+    ok 480 - qg_p18_p18_sentence_functions_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0462
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_sentence_functions_precision_repair_or_rewrite: focusTarget must not be present
+    ok 481 - qg_p18_p18_sentence_functions_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0868
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_sentence_functions_sat_table_classification: focusTarget must not be present
+    ok 482 - qg_p18_p18_sentence_functions_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0499
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary: focusTarget must not be present
+    ok 483 - qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary: focusTarget must not be present
+      ---
+      duration_ms: 0.0392
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_speech_punctuation_application_transfer: focusTarget must not be present
+    ok 484 - qg_p18_p18_speech_punctuation_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0306
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_speech_punctuation_diagnostic_identify: focusTarget must not be present
+    ok 485 - qg_p18_p18_speech_punctuation_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0475
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_speech_punctuation_explain_reasoning: focusTarget must not be present
+    ok 486 - qg_p18_p18_speech_punctuation_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0491
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_speech_punctuation_precision_repair_or_rewrite: focusTarget must not be present
+    ok 487 - qg_p18_p18_speech_punctuation_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.1225
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_speech_punctuation_sat_table_classification: focusTarget must not be present
+    ok 488 - qg_p18_p18_speech_punctuation_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0535
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_standard_english_application_transfer: focusTarget must not be present
+    ok 489 - qg_p18_p18_standard_english_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0341
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_standard_english_diagnostic_identify: focusTarget must not be present
+    ok 490 - qg_p18_p18_standard_english_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0441
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_standard_english_explain_reasoning: focusTarget must not be present
+    ok 491 - qg_p18_p18_standard_english_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0457
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_standard_english_precision_repair_or_rewrite: focusTarget must not be present
+    ok 492 - qg_p18_p18_standard_english_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0717
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_standard_english_sat_table_classification: focusTarget must not be present
+    ok 493 - qg_p18_p18_standard_english_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0447
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_subject_object_application_transfer: focusTarget must not be present
+    ok 494 - qg_p18_p18_subject_object_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0324
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_subject_object_diagnostic_identify: focusTarget must not be present
+    ok 495 - qg_p18_p18_subject_object_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0407
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_subject_object_explain_reasoning: focusTarget must not be present
+    ok 496 - qg_p18_p18_subject_object_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0449
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_subject_object_precision_repair_or_rewrite: focusTarget must not be present
+    ok 497 - qg_p18_p18_subject_object_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0652
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_subject_object_sat_table_classification: focusTarget must not be present
+    ok 498 - qg_p18_p18_subject_object_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0426
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_tense_aspect_application_transfer: focusTarget must not be present
+    ok 499 - qg_p18_p18_tense_aspect_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0328
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_tense_aspect_diagnostic_identify: focusTarget must not be present
+    ok 500 - qg_p18_p18_tense_aspect_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0482
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_tense_aspect_explain_reasoning: focusTarget must not be present
+    ok 501 - qg_p18_p18_tense_aspect_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0484
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_tense_aspect_precision_repair_or_rewrite: focusTarget must not be present
+    ok 502 - qg_p18_p18_tense_aspect_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0335
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_tense_aspect_sat_table_classification: focusTarget must not be present
+    ok 503 - qg_p18_p18_tense_aspect_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0468
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_tense_aspect_standard_english_tense_standard_register: focusTarget must not be present
+    ok 504 - qg_p18_p18_tense_aspect_standard_english_tense_standard_register: focusTarget must not be present
+      ---
+      duration_ms: 0.0347
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_word_classes_application_transfer: focusTarget must not be present
+    ok 505 - qg_p18_p18_word_classes_application_transfer: focusTarget must not be present
+      ---
+      duration_ms: 0.0351
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_word_classes_diagnostic_identify: focusTarget must not be present
+    ok 506 - qg_p18_p18_word_classes_diagnostic_identify: focusTarget must not be present
+      ---
+      duration_ms: 0.0377
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_word_classes_explain_reasoning: focusTarget must not be present
+    ok 507 - qg_p18_p18_word_classes_explain_reasoning: focusTarget must not be present
+      ---
+      duration_ms: 0.0483
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_word_classes_noun_phrases_word_class_np_roles: focusTarget must not be present
+    ok 508 - qg_p18_p18_word_classes_noun_phrases_word_class_np_roles: focusTarget must not be present
+      ---
+      duration_ms: 0.0321
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_word_classes_precision_repair_or_rewrite: focusTarget must not be present
+    ok 509 - qg_p18_p18_word_classes_precision_repair_or_rewrite: focusTarget must not be present
+      ---
+      duration_ms: 0.0626
+      type: 'test'
+      ...
+    # Subtest: qg_p18_p18_word_classes_sat_table_classification: focusTarget must not be present
+    ok 510 - qg_p18_p18_word_classes_sat_table_classification: focusTarget must not be present
+      ---
+      duration_ms: 0.0519
+      type: 'test'
+      ...
+    # Subtest: qg_p21_sentence_functions_closed_choice_variety: focusTarget must not be present
+    ok 511 - qg_p21_sentence_functions_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.045
+      type: 'test'
+      ...
+    # Subtest: qg_p21_sentence_functions_explanation_choice_variety: focusTarget must not be present
+    ok 512 - qg_p21_sentence_functions_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0451
+      type: 'test'
+      ...
+    # Subtest: qg_p21_word_classes_closed_choice_variety: focusTarget must not be present
+    ok 513 - qg_p21_word_classes_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0399
+      type: 'test'
+      ...
+    # Subtest: qg_p21_word_classes_explanation_choice_variety: focusTarget must not be present
+    ok 514 - qg_p21_word_classes_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.047
+      type: 'test'
+      ...
+    # Subtest: qg_p21_noun_phrases_closed_choice_variety: focusTarget must not be present
+    ok 515 - qg_p21_noun_phrases_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0408
+      type: 'test'
+      ...
+    # Subtest: qg_p21_noun_phrases_explanation_choice_variety: focusTarget must not be present
+    ok 516 - qg_p21_noun_phrases_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0457
+      type: 'test'
+      ...
+    # Subtest: qg_p21_adverbials_closed_choice_variety: focusTarget must not be present
+    ok 517 - qg_p21_adverbials_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0423
+      type: 'test'
+      ...
+    # Subtest: qg_p21_adverbials_explanation_choice_variety: focusTarget must not be present
+    ok 518 - qg_p21_adverbials_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.047
+      type: 'test'
+      ...
+    # Subtest: qg_p21_clauses_closed_choice_variety: focusTarget must not be present
+    ok 519 - qg_p21_clauses_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0413
+      type: 'test'
+      ...
+    # Subtest: qg_p21_clauses_explanation_choice_variety: focusTarget must not be present
+    ok 520 - qg_p21_clauses_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0473
+      type: 'test'
+      ...
+    # Subtest: qg_p21_relative_clauses_closed_choice_variety: focusTarget must not be present
+    ok 521 - qg_p21_relative_clauses_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0404
+      type: 'test'
+      ...
+    # Subtest: qg_p21_relative_clauses_explanation_choice_variety: focusTarget must not be present
+    ok 522 - qg_p21_relative_clauses_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0454
+      type: 'test'
+      ...
+    # Subtest: qg_p21_tense_aspect_closed_choice_variety: focusTarget must not be present
+    ok 523 - qg_p21_tense_aspect_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0394
+      type: 'test'
+      ...
+    # Subtest: qg_p21_tense_aspect_explanation_choice_variety: focusTarget must not be present
+    ok 524 - qg_p21_tense_aspect_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0577
+      type: 'test'
+      ...
+    # Subtest: qg_p21_standard_english_closed_choice_variety: focusTarget must not be present
+    ok 525 - qg_p21_standard_english_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0402
+      type: 'test'
+      ...
+    # Subtest: qg_p21_standard_english_explanation_choice_variety: focusTarget must not be present
+    ok 526 - qg_p21_standard_english_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0436
+      type: 'test'
+      ...
+    # Subtest: qg_p21_pronouns_cohesion_closed_choice_variety: focusTarget must not be present
+    ok 527 - qg_p21_pronouns_cohesion_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0444
+      type: 'test'
+      ...
+    # Subtest: qg_p21_pronouns_cohesion_explanation_choice_variety: focusTarget must not be present
+    ok 528 - qg_p21_pronouns_cohesion_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0494
+      type: 'test'
+      ...
+    # Subtest: qg_p21_formality_closed_choice_variety: focusTarget must not be present
+    ok 529 - qg_p21_formality_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0427
+      type: 'test'
+      ...
+    # Subtest: qg_p21_formality_explanation_choice_variety: focusTarget must not be present
+    ok 530 - qg_p21_formality_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0431
+      type: 'test'
+      ...
+    # Subtest: qg_p21_active_passive_closed_choice_variety: focusTarget must not be present
+    ok 531 - qg_p21_active_passive_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0418
+      type: 'test'
+      ...
+    # Subtest: qg_p21_active_passive_explanation_choice_variety: focusTarget must not be present
+    ok 532 - qg_p21_active_passive_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0435
+      type: 'test'
+      ...
+    # Subtest: qg_p21_subject_object_closed_choice_variety: focusTarget must not be present
+    ok 533 - qg_p21_subject_object_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0429
+      type: 'test'
+      ...
+    # Subtest: qg_p21_subject_object_explanation_choice_variety: focusTarget must not be present
+    ok 534 - qg_p21_subject_object_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0676
+      type: 'test'
+      ...
+    # Subtest: qg_p21_modal_verbs_closed_choice_variety: focusTarget must not be present
+    ok 535 - qg_p21_modal_verbs_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0373
+      type: 'test'
+      ...
+    # Subtest: qg_p21_modal_verbs_explanation_choice_variety: focusTarget must not be present
+    ok 536 - qg_p21_modal_verbs_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0419
+      type: 'test'
+      ...
+    # Subtest: qg_p21_parenthesis_commas_closed_choice_variety: focusTarget must not be present
+    ok 537 - qg_p21_parenthesis_commas_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0407
+      type: 'test'
+      ...
+    # Subtest: qg_p21_parenthesis_commas_explanation_choice_variety: focusTarget must not be present
+    ok 538 - qg_p21_parenthesis_commas_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0446
+      type: 'test'
+      ...
+    # Subtest: qg_p21_speech_punctuation_closed_choice_variety: focusTarget must not be present
+    ok 539 - qg_p21_speech_punctuation_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0502
+      type: 'test'
+      ...
+    # Subtest: qg_p21_speech_punctuation_explanation_choice_variety: focusTarget must not be present
+    ok 540 - qg_p21_speech_punctuation_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0464
+      type: 'test'
+      ...
+    # Subtest: qg_p21_apostrophes_possession_closed_choice_variety: focusTarget must not be present
+    ok 541 - qg_p21_apostrophes_possession_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0387
+      type: 'test'
+      ...
+    # Subtest: qg_p21_apostrophes_possession_explanation_choice_variety: focusTarget must not be present
+    ok 542 - qg_p21_apostrophes_possession_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0422
+      type: 'test'
+      ...
+    # Subtest: qg_p21_boundary_punctuation_closed_choice_variety: focusTarget must not be present
+    ok 543 - qg_p21_boundary_punctuation_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0448
+      type: 'test'
+      ...
+    # Subtest: qg_p21_boundary_punctuation_explanation_choice_variety: focusTarget must not be present
+    ok 544 - qg_p21_boundary_punctuation_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0444
+      type: 'test'
+      ...
+    # Subtest: qg_p21_hyphen_ambiguity_closed_choice_variety: focusTarget must not be present
+    ok 545 - qg_p21_hyphen_ambiguity_closed_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0394
+      type: 'test'
+      ...
+    # Subtest: qg_p21_hyphen_ambiguity_explanation_choice_variety: focusTarget must not be present
+    ok 546 - qg_p21_hyphen_ambiguity_explanation_choice_variety: focusTarget must not be present
+      ---
+      duration_ms: 0.0444
+      type: 'test'
+      ...
+    1..546
+ok 68 - P10 U2 REGRESSION: focusTarget never present on serialised output
+  ---
+  duration_ms: 47.4755
+  type: 'suite'
+  ...
+# Subtest: P18 semantic prompt-cue audit evidence
+    # Subtest: commits the P18 semantic audit artefact as a frozen historical snapshot
+    ok 1 - commits the P18 semantic audit artefact as a frozen historical snapshot
+      ---
+      duration_ms: 1.4677
+      type: 'test'
+      ...
+    1..1
+ok 69 - P18 semantic prompt-cue audit evidence
+  ---
+  duration_ms: 1.5468
+  type: 'suite'
+  ...
+# Subtest: P13 Scheduler Blocklist: completeness
+    # Subtest: P11 certification status map covers the live 546-template inventory
+    ok 1 - P11 certification status map covers the live 546-template inventory
+      ---
+      duration_ms: 0.4347
+      type: 'test'
+      ...
+    # Subtest: every active GRAMMAR_TEMPLATE_METADATA template exists in the runtime certification map
+    ok 2 - every active GRAMMAR_TEMPLATE_METADATA template exists in the runtime certification map
+      ---
+      duration_ms: 0.2972
+      type: 'test'
+      ...
+    # Subtest: historical P11 template IDs remain known to the active runtime
+    ok 3 - historical P11 template IDs remain known to the active runtime
+      ---
+      duration_ms: 0.3471
+      type: 'test'
+      ...
+    # Subtest: no unknown templates exist in the runtime map (no stale entries)
+    ok 4 - no unknown templates exist in the runtime map (no stale entries)
+      ---
+      duration_ms: 0.2237
+      type: 'test'
+      ...
+    1..4
+ok 70 - P13 Scheduler Blocklist: completeness
+  ---
+  duration_ms: 1.9557
+  type: 'suite'
+  ...
+# Subtest: P13 Scheduler Blocklist: zero blocked templates
+    # Subtest: no template has blocked or retire_candidate decision in the JSON artefact
+    ok 1 - no template has blocked or retire_candidate decision in the JSON artefact
+      ---
+      duration_ms: 0.1706
+      type: 'test'
+      ...
+    # Subtest: no template has blocked or retire_candidate status in the runtime module
+    ok 2 - no template has blocked or retire_candidate status in the runtime module
+      ---
+      duration_ms: 0.2189
+      type: 'test'
+      ...
+    # Subtest: approved_with_limitation decisions are preserved and still schedulable
+    ok 3 - approved_with_limitation decisions are preserved and still schedulable
+      ---
+      duration_ms: 0.3119
+      type: 'test'
+      ...
+    1..3
+ok 71 - P13 Scheduler Blocklist: zero blocked templates
+  ---
+  duration_ms: 0.9385
+  type: 'suite'
+  ...
+# Subtest: P13 Scheduler Blocklist: fail-closed behaviour
+    # Subtest: isTemplateBlocked returns true for an unknown template ID
+    ok 1 - isTemplateBlocked returns true for an unknown template ID
+      ---
+      duration_ms: 0.1429
+      type: 'test'
+      ...
+    # Subtest: isTemplateBlocked returns true for an empty string
+    ok 2 - isTemplateBlocked returns true for an empty string
+      ---
+      duration_ms: 0.0788
+      type: 'test'
+      ...
+    # Subtest: isTemplateBlocked returns true for undefined
+    ok 3 - isTemplateBlocked returns true for undefined
+      ---
+      duration_ms: 0.1417
+      type: 'test'
+      ...
+    # Subtest: isTemplateBlocked returns false for every known approved template
+    ok 4 - isTemplateBlocked returns false for every known approved template
+      ---
+      duration_ms: 0.1745
+      type: 'test'
+      ...
+    1..4
+ok 72 - P13 Scheduler Blocklist: fail-closed behaviour
+  ---
+  duration_ms: 0.6766
+  type: 'suite'
+  ...
+# Subtest: P13 Scheduler Blocklist: active denominator
+    # Subtest: active template count equals the current runtime certification count
+    ok 1 - active template count equals the current runtime certification count
+      ---
+      duration_ms: 0.1732
+      type: 'test'
+      ...
+    # Subtest: GRAMMAR_TEMPLATE_METADATA length equals the runtime certification count
+    ok 2 - GRAMMAR_TEMPLATE_METADATA length equals the runtime certification count
+      ---
+      duration_ms: 0.0354
+      type: 'test'
+      ...
+    # Subtest: runtime status-map metadata matches the generated runtime authority
+    ok 3 - runtime status-map metadata matches the generated runtime authority
+      ---
+      duration_ms: 0.0336
+      type: 'test'
+      ...
+    # Subtest: CERTIFICATION_STATUS_MAP key count equals GRAMMAR_TEMPLATE_METADATA length
+    ok 4 - CERTIFICATION_STATUS_MAP key count equals GRAMMAR_TEMPLATE_METADATA length
+      ---
+      duration_ms: 0.0402
+      type: 'test'
+      ...
+    1..4
+ok 73 - P13 Scheduler Blocklist: active denominator
+  ---
+  duration_ms: 0.3496
+  type: 'suite'
+  ...
+# Subtest: P20 quality-hardening audit passes a reviewer smoke window across all five phases
+ok 74 - P20 quality-hardening audit passes a reviewer smoke window across all five phases
+  ---
+  duration_ms: 2439.1116
+  type: 'test'
+  ...
+# Subtest: P20 metadata keeps recovered closed families visible for reviewers
+ok 75 - P20 metadata keeps recovered closed families visible for reviewers
+  ---
+  duration_ms: 0.259
+  type: 'test'
+  ...
+# Subtest: P20 does not hide learner-facing prompt defects behind HTML stripping
+ok 76 - P20 does not hide learner-facing prompt defects behind HTML stripping
+  ---
+  duration_ms: 60.9767
+  type: 'test'
+  ...
+# Subtest: P20c generated source compaction preserves manual-review fairness flags
+ok 77 - P20c generated source compaction preserves manual-review fairness flags
+  ---
+  duration_ms: 3.8294
+  type: 'test'
+  ...
+# Subtest: P20d apostrophes possession rewrite families do not share identical learner prompts
+ok 78 - P20d apostrophes possession rewrite families do not share identical learner prompts
+  ---
+  duration_ms: 2.9796
+  type: 'test'
+  ...
+# Subtest: P20d learner-facing surfaces do not collide across Grammar templates in the release window
+not ok 79 - P20d learner-facing surfaces do not collide across Grammar templates in the release window
+  ---
+  duration_ms: 624.7245
+  type: 'test'
+  location: 'D:\\Coding\\ks2-mastery\\.worktrees\\grammar-qg-p21-pool-expansion\\tests\\grammar-qg-p20-quality-hardening.test.js:100:1'
+  failureType: 'testCodeFailure'
+  error: 'learner-facing surface repeats across templates: proc3_sentence_function_choice:12 and qg_p21_sentence_functions_closed_choice_variety:2 -> Which sentence is a question?'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'fail'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Coding/ks2-mastery/.worktrees/grammar-qg-p21-pool-expansion/tests/grammar-qg-p20-quality-hardening.test.js:116:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R6 parity: every case is deterministic (identical output on re-run)
+ok 80 - R6 parity: every case is deterministic (identical output on re-run)
+  ---
+  duration_ms: 120591.6347
+  type: 'test'
+  ...
+# Subtest: R6 parity: queue + miniPack outputs match committed snapshot (byte-identical)
+ok 81 - R6 parity: queue + miniPack outputs match committed snapshot (byte-identical)
+  ---
+  duration_ms: 61451.3673
+  type: 'test'
+  ...
+# Subtest: R6 parity: PR gate covers >=200 cases (R6.AC2 floor)
+ok 82 - R6 parity: PR gate covers >=200 cases (R6.AC2 floor)
+  ---
+  duration_ms: 0.3607
+  type: 'test'
+  ...
+# Subtest: R6 parity: full sweep covers >=2000 cases when GRAMMAR_PARITY_FULL_SWEEP=1
+ok 83 - R6 parity: full sweep covers >=2000 cases when GRAMMAR_PARITY_FULL_SWEEP=1
+  ---
+  duration_ms: 0.697
+  type: 'test'
+  ...
+1..83
+# tests 729
+# suites 33
+# pass 727
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 182285.6106

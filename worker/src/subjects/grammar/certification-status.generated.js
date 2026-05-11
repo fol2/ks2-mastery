@@ -1,9 +1,9 @@
 /**
- * Grammar QG P20 — generated runtime certification status.
+ * Grammar QG P21 — generated runtime certification status.
  *
  * Source artefact: reports/grammar/grammar-qg-p11-certification-status-map.json
- * Content release: grammar-qg-p20-2026-05-05
- * Template entries: 510
+ * Content release: grammar-qg-p21-2026-05-11
+ * Template entries: 546
  *
  * Do not edit manually. Regenerate with:
  * node scripts/generate-grammar-qg-runtime-certification-status.mjs --status-map=reports/grammar/grammar-qg-p11-certification-status-map.json --out=worker/src/subjects/grammar/certification-status.generated.js
@@ -5619,15 +5619,411 @@ const RAW_CERTIFICATION_STATUS_MAP = {
       "distractor-audit",
       "marking-matrix"
     ]
+  },
+  "qg_p21_sentence_functions_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_sentence_functions_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_word_classes_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_word_classes_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_noun_phrases_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_noun_phrases_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_adverbials_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_adverbials_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_clauses_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_clauses_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_relative_clauses_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_relative_clauses_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_tense_aspect_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_tense_aspect_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_standard_english_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_standard_english_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_pronouns_cohesion_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_pronouns_cohesion_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_formality_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_formality_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_active_passive_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_active_passive_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_subject_object_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_subject_object_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_modal_verbs_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_modal_verbs_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_parenthesis_commas_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_parenthesis_commas_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_speech_punctuation_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_speech_punctuation_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_apostrophes_possession_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_apostrophes_possession_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_boundary_punctuation_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_boundary_punctuation_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_hyphen_ambiguity_closed_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
+  },
+  "qg_p21_hyphen_ambiguity_explanation_choice_variety": {
+    "status": "approved",
+    "severity": "none",
+    "evidence": [
+      "oracle",
+      "review",
+      "prompt-cue-render",
+      "distractor-audit",
+      "marking-matrix"
+    ]
   }
 };
 
-export const GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID = "grammar-qg-p20-2026-05-05";
+export const GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID = "grammar-qg-p21-2026-05-11";
 export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE = "reports/grammar/grammar-qg-p11-certification-status-map.json";
-export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE_GENERATED_AT = "2026-05-05T15:30:45.955Z";
-export const GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT = 510;
+export const GRAMMAR_RUNTIME_CERTIFICATION_SOURCE_GENERATED_AT = "2026-05-11T13:45:57.381Z";
+export const GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT = 546;
 export const GRAMMAR_RUNTIME_CERTIFICATION_STATUS_COUNTS = Object.freeze({
-  "approved": 353,
+  "approved": 389,
   "approved_with_limitation": 157
 });
 

@@ -72,27 +72,27 @@ describe('Grammar QG P12 — P11 artefact identity', () => {
   });
 
   describe('Certification status map (live runtime authority)', () => {
-    // P19 supersedes the P11 frozen baseline: grammar-qg-p11-certification-
+    // P21 supersedes the P11 frozen baseline: grammar-qg-p11-certification-
     // status-map.json is now the live runtime authority that the generator
     // regenerates every release. The render inventory + quality register stay
     // frozen at P11 (those are historical evidence), but the cert-status-map
-    // tracks the current 510-template runtime release.
+    // tracks the current 546-template runtime release.
     const statusMap = readJSON('grammar-qg-p11-certification-status-map.json');
 
-    it('covers the live 510-template runtime inventory', () => {
-      assert.equal(statusMap.entries.length, 510);
-      assert.equal(statusMap.metadata.templateCount, 510);
+    it('covers the live 546-template runtime inventory', () => {
+      assert.equal(statusMap.entries.length, 546);
+      assert.equal(statusMap.metadata.templateCount, 546);
     });
 
-    it('metadata.contentReleaseId matches the current P20 runtime release', () => {
-      assert.equal(statusMap.metadata.contentReleaseId, 'grammar-qg-p20-2026-05-05');
+    it('metadata.contentReleaseId matches the current P21 runtime release', () => {
+      assert.equal(statusMap.metadata.contentReleaseId, 'grammar-qg-p21-2026-05-11');
     });
 
     it('rejects unknown template ID (fail-closed assertion)', () => {
       const knownIds = new Set(statusMap.entries.map((e) => e.templateId));
       assert.equal(knownIds.has('FAKE_TEMPLATE_THAT_DOES_NOT_EXIST'), false);
       // The generator itself enforces fail-closed — verify no duplicates
-      assert.equal(knownIds.size, 510);
+      assert.equal(knownIds.size, 546);
     });
 
     it('every entry has valid decision field', () => {

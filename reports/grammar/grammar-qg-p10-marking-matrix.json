@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "contentReleaseId": "grammar-qg-p20-2026-05-05",
-    "generatedAt": "2026-05-05T15:30:36.668Z",
+    "contentReleaseId": "grammar-qg-p21-2026-05-11",
+    "generatedAt": "2026-05-11T13:25:36.901Z",
     "seedRange": "1..5",
     "totalEntries": 160,
     "variantCategories": 9,
@@ -5841,6 +5841,10 @@
         {
           "input": "I have finished my homework.",
           "marksCorrect": true
+        },
+        {
+          "input": "have finished",
+          "marksCorrect": true
         }
       ],
       "acceptedVariants": [
@@ -5917,6 +5921,10 @@
       "goldenAnswers": [
         {
           "input": "She had packed her bag before the trip.",
+          "marksCorrect": true
+        },
+        {
+          "input": "had packed",
           "marksCorrect": true
         }
       ],
@@ -5995,6 +6003,10 @@
         {
           "input": "The dog was chasing the cat.",
           "marksCorrect": true
+        },
+        {
+          "input": "was chasing",
+          "marksCorrect": true
         }
       ],
       "acceptedVariants": [
@@ -6072,6 +6084,10 @@
         {
           "input": "We are eating lunch in the hall.",
           "marksCorrect": true
+        },
+        {
+          "input": "are eating",
+          "marksCorrect": true
         }
       ],
       "acceptedVariants": [
@@ -6148,6 +6164,10 @@
       "goldenAnswers": [
         {
           "input": "He has written the report.",
+          "marksCorrect": true
+        },
+        {
+          "input": "has written",
           "marksCorrect": true
         }
       ],
@@ -9306,6 +9326,10 @@
         {
           "input": "You should wear a helmet on this trail.",
           "marksCorrect": true
+        },
+        {
+          "input": "should",
+          "marksCorrect": true
         }
       ],
       "acceptedVariants": [
@@ -9382,6 +9406,10 @@
       "goldenAnswers": [
         {
           "input": "It might rain later, but the sky is clear now.",
+          "marksCorrect": true
+        },
+        {
+          "input": "might",
           "marksCorrect": true
         }
       ],
@@ -9460,6 +9488,10 @@
         {
           "input": "The train will arrive at six because it is on the timetable.",
           "marksCorrect": true
+        },
+        {
+          "input": "will",
+          "marksCorrect": true
         }
       ],
       "acceptedVariants": [
@@ -9537,6 +9569,10 @@
         {
           "input": "You should apologise if you broke the model.",
           "marksCorrect": true
+        },
+        {
+          "input": "should",
+          "marksCorrect": true
         }
       ],
       "acceptedVariants": [
@@ -9613,6 +9649,10 @@
       "goldenAnswers": [
         {
           "input": "The parcel must be in the office; I saw it delivered.",
+          "marksCorrect": true
+        },
+        {
+          "input": "must",
           "marksCorrect": true
         }
       ],

@@ -1,7 +1,7 @@
-# Grammar QG P20 — smart-practice surface audit
+# Grammar QG P21 — smart-practice surface audit
 
-Content release: `grammar-qg-p20-2026-05-05`
-Generated: `2026-05-06T08:51:04.459Z`
+Content release: `grammar-qg-p21-2026-05-11`
+Generated: `2026-05-11T13:56:36.077Z`
 Sessions: 330 (11 profiles × 30 seeds, size=5)
 Status: **PASS** — 0 failures, 0 advisories.
 
@@ -9,17 +9,17 @@ Status: **PASS** — 0 failures, 0 advisories.
 
 | Profile | Sessions | Eligible pool | Concept-distinct mean | Q-type-distinct mean | Constructed share | ManualReview share | Repeated surfaces |
 |---|---|---|---|---|---|---|---|
-| firstTime | 30 | 510 | 4.73 | 3.23 | 42.7% | 27.3% | 3 / 147 |
-| returning | 30 | 93 | 4.40 | 3.50 | 46.7% | 28.7% | 3 / 147 |
-| weak | 30 | 243 | 4.87 | 3.37 | 39.3% | 27.3% | 3 / 147 |
-| dueHeavy | 30 | 358 | 4.80 | 3.40 | 44.7% | 28.7% | 1 / 149 |
-| postMega | 30 | 300 | 4.73 | 3.53 | 46.7% | 31.3% | 3 / 147 |
-| focusConcept | 30 | 27 | 1.40 | 3.50 | 39.3% | 32.7% | 21 / 127 |
-| recentMisses | 30 | 95 | 4.30 | 3.63 | 48.7% | 33.3% | 3 / 147 |
-| retryActive | 30 | 63 | 3.13 | 3.47 | 40.7% | 23.3% | 16 / 124 |
-| similarProblemEligible | 30 | 64 | 3.87 | 3.37 | 46.0% | 29.3% | 4 / 146 |
-| spacedRetrievalDue | 30 | 125 | 4.73 | 3.73 | 48.7% | 31.3% | 2 / 148 |
-| troubleMode | 30 | 62 | 3.77 | 3.47 | 42.7% | 32.0% | 8 / 142 |
+| firstTime | 30 | 546 | 4.63 | 3.33 | 48.0% | 28.7% | 2 / 147 |
+| returning | 30 | 99 | 4.50 | 3.70 | 48.0% | 25.3% | 2 / 148 |
+| weak | 30 | 259 | 4.73 | 3.37 | 49.3% | 31.3% | 3 / 147 |
+| dueHeavy | 30 | 382 | 4.67 | 3.47 | 48.7% | 30.7% | 2 / 148 |
+| postMega | 30 | 320 | 4.53 | 3.37 | 42.7% | 26.7% | 4 / 146 |
+| focusConcept | 30 | 29 | 1.40 | 3.47 | 40.7% | 35.3% | 21 / 128 |
+| recentMisses | 30 | 101 | 4.07 | 3.63 | 52.0% | 27.3% | 1 / 149 |
+| retryActive | 30 | 67 | 3.13 | 3.30 | 41.3% | 21.3% | 10 / 130 |
+| similarProblemEligible | 30 | 68 | 4.00 | 3.50 | 47.3% | 29.3% | 4 / 146 |
+| spacedRetrievalDue | 30 | 133 | 4.60 | 3.53 | 52.0% | 30.7% | 4 / 146 |
+| troubleMode | 30 | 66 | 3.87 | 3.53 | 48.0% | 34.0% | 4 / 146 |
 
 ## Selection lane reasons exercised
 

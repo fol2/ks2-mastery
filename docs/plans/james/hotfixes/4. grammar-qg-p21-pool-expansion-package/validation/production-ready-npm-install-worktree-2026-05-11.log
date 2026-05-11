@@ -1,0 +1,13 @@
+npm warn reify Removing non-directory D:\Coding\ks2-mastery\.worktrees\grammar-qg-p21-pool-expansion\node_modules
+
+> ks2-mastery@0.1.0 prepare
+> simple-git-hooks
+
+[ERROR], Was not able to set git hooks. Error: Error: ENOTDIR: not a directory, mkdir 'D:\Coding\ks2-mastery\.worktrees\grammar-qg-p21-pool-expansion\.git\hooks'
+
+added 84 packages, and audited 85 packages in 4s
+
+14 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities

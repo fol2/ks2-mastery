@@ -38,5 +38,5 @@ test('R6.AC6 — P19 smart-practice audit output is byte-identical to baseline',
   });
   const actual = normaliseStdout(stdout);
   const expected = readFileSync(BASELINE_PATH, 'utf8').replace(/\r\n/g, '\n');
-  assert.equal(actual, expected, 'P19 audit stdout drifted from baseline; R6 parity broken.');
+  assert.equal(actual, expected, 'Smart-practice audit stdout drifted from baseline; R6 parity broken.');
 });

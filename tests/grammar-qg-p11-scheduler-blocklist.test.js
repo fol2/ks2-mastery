@@ -42,11 +42,11 @@ const runtimeStatusMapById = new Map(runtimeStatusMapJson.entries.map((entry) =>
 // ---------------------------------------------------------------------------
 
 describe('P13 Scheduler Blocklist: completeness', () => {
-  it('P11 certification status map covers the live 510-template inventory', () => {
-    // P19 supersedes the original P11 78-template snapshot. The P11 status map
+  it('P11 certification status map covers the live 546-template inventory', () => {
+    // P21 supersedes the original P11 78-template snapshot. The P11 status map
     // is now the live runtime authority covering every template, regenerated
-    // as part of the P19 follow-up. Historical 78-entry pin no longer applies.
-    assert.equal(historicalP11StatusMapJson.entries.length, 510);
+    // as part of the P21 follow-up. Historical 78-entry pin no longer applies.
+    assert.equal(historicalP11StatusMapJson.entries.length, 546);
   });
 
   it('every active GRAMMAR_TEMPLATE_METADATA template exists in the runtime certification map', () => {

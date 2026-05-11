@@ -114,11 +114,10 @@ test('Grammar QG P3 baseline pins the historical explanation-depth release', () 
   assert.equal(baseline.p3ExplanationComplete, true);
   assert.deepEqual(baseline.thinPoolConcepts, []);
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
-  // Live content now reflects the P19 follow-up: 4 P14 priority rewrites
-  // converted from constructed to selected-response (Contract A.2).
+  // Live content now reflects the P21 pool-expansion follow-up.
   assert.equal(GRAMMAR_CONCEPTS.length, 18);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 510);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 321);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 546);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 357);
   assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 189);
 });
 

@@ -20,7 +20,7 @@ test('Grammar question-generator audit covers the current template inventory', (
   assert.deepEqual(audit.templatesMissingAnswerSpecs, []);
   assert.deepEqual(audit.invalidAnswerSpecs, []);
   assert.equal(audit.conceptCoverage.length, GRAMMAR_CONCEPTS.length);
-  assert.equal(audit.answerSpecTemplateCount, 479);
+  assert.equal(audit.answerSpecTemplateCount, 515);
   assert.equal(audit.constructedResponseTemplateCount, 189);
   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
   assert.equal(audit.legacyAdapterTemplateCount, 0);
@@ -29,7 +29,7 @@ test('Grammar question-generator audit covers the current template inventory', (
   // auto-marking. Genuinely open writing remains manualReviewOnly.
   assert.equal(audit.manualReviewOnlyTemplateCount, 157);
   assert.equal(audit.p2MigrationComplete, true);
-  assert.equal(audit.explainTemplateCount, 126);
+  assert.equal(audit.explainTemplateCount, 144);
   assert.equal(audit.conceptsWithExplainCoverage.length, GRAMMAR_CONCEPTS.length);
   assert.deepEqual(audit.conceptsMissingExplainCoverage, []);
   assert.equal(audit.p3ExplanationComplete, true);
@@ -38,7 +38,7 @@ test('Grammar question-generator audit covers the current template inventory', (
     'Every Grammar concept should have at least one explanation template after QG P3.',
   );
   assert.deepEqual(audit.answerSpecKindCounts, {
-    exact: 234,
+    exact: 270,
     manualReviewOnly: 157,
     multiField: 56,
     normalisedText: 12,
@@ -78,22 +78,22 @@ test('Grammar question-generator P20 quality-recovery denominator assertions', (
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
 
-  assert.equal(audit.releaseId, 'grammar-qg-p20-2026-05-05');
-  assert.equal(audit.templateCount, 510);
+  assert.equal(audit.releaseId, 'grammar-qg-p21-2026-05-11');
+  assert.equal(audit.templateCount, 546);
   assert.equal(audit.conceptCount, 18);
   // P19 Contract A.2 selected-response conversion: 4 P14 priority rewrites
   // promoted from constructed-response to single_choice selected-response.
-  assert.equal(audit.selectedResponseCount, 321);
+  assert.equal(audit.selectedResponseCount, 357);
   assert.equal(audit.constructedResponseCount, 189);
-  assert.equal(audit.generatedTemplateCount, 484);
+  assert.equal(audit.generatedTemplateCount, 520);
   assert.equal(audit.fixedTemplateCount, 26);
-  assert.equal(audit.explainTemplateCount, 126);
+  assert.equal(audit.explainTemplateCount, 144);
   assert.equal(audit.conceptsWithExplainCoverage.length, 18);
   assert.equal(audit.mixedTransferTemplateCount, 26);
   assert.equal(audit.conceptsWithMixedTransferCoverage.length, 18);
   assert.equal(audit.repeatedGeneratedVariants.length, 0, 'Default-window repeated variants must be zero');
   assert.equal(audit.lowDepthGeneratedTemplates.length, 0, 'Deep low-depth families must be zero');
-  assert.equal(audit.answerSpecTemplateCount, 479);
+  assert.equal(audit.answerSpecTemplateCount, 515);
   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 189);
   assert.equal(audit.manualReviewOnlyTemplateCount, 157);
   assert.equal(audit.generatedSignatureCollisions.length, 0, 'Cross-template collisions must be zero');
@@ -106,7 +106,7 @@ test('Grammar P6 baseline fixture remains frozen while P20 supersedes the live a
 
   assert.equal(baseline.releaseId, 'grammar-qg-p11-2026-04-30');
   assert.equal(audit.conceptCount, baseline.conceptCount);
-  assert.equal(audit.templateCount, 510);
+  assert.equal(audit.templateCount, 546);
   assert.equal(baseline.templateCount, 78);
   assert.ok(audit.selectedResponseCount > baseline.selectedResponseCount);
   assert.ok(audit.constructedResponseCount > baseline.constructedResponseCount);

@@ -31,12 +31,12 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
-// P20 supersedes P19: read live runtime authority artefacts (P11 status map +
-// P20 manifest). The committed runtime generated file is regenerated from the
-// P11 status map; the P19 manifest references it via manifest.artefacts.
+// P21 supersedes P20: read live runtime authority artefacts (P11 status map +
+// P21 manifest). The committed runtime generated file is regenerated from the
+// P11 status map; the P21 manifest references it via manifest.artefacts.
 const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p11-certification-status-map.json');
 const GENERATED_PATH = path.resolve(ROOT_DIR, 'worker', 'src', 'subjects', 'grammar', 'certification-status.generated.js');
-const MANIFEST_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p20-certification-manifest.json');
+const MANIFEST_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p21-certification-manifest.json');
 
 const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
@@ -53,13 +53,13 @@ function cloneStatusMap(overrides = {}) {
 }
 
 describe('P13 runtime certification source', () => {
-  it('uses the active P20 content release', () => {
-    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p20-2026-05-05');
+  it('uses the active P21 content release', () => {
+    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p21-2026-05-11');
     assert.equal(GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID, GRAMMAR_CONTENT_RELEASE_ID);
   });
 
   it('contains exactly one runtime entry for each current template', () => {
-    assert.equal(GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT, 510);
+    assert.equal(GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT, 546);
     assert.equal(Object.keys(CERTIFICATION_STATUS_MAP).length, GRAMMAR_TEMPLATE_METADATA.length);
     for (const template of GRAMMAR_TEMPLATE_METADATA) {
       assert.ok(CERTIFICATION_STATUS_MAP[template.id], `Missing runtime status entry: ${template.id}`);
@@ -70,7 +70,7 @@ describe('P13 runtime certification source', () => {
     // P20 recovers deterministic closed manual-expansion families while
     // preserving genuinely open writing as approved_with_limitation.
     assert.deepEqual(GRAMMAR_RUNTIME_CERTIFICATION_STATUS_COUNTS, {
-      approved: 353,
+      approved: 389,
       approved_with_limitation: 157,
     });
 
@@ -152,13 +152,13 @@ describe('P13 runtime certification generator', () => {
     });
 
     const runtimeStatus = buildRuntimeCertificationStatus(historicalStatusMap, { statusMapPath: STATUS_MAP_PATH });
-    assert.equal(runtimeStatus.templateCount, 510);
+    assert.equal(runtimeStatus.templateCount, 546);
     assert.equal('__historical_retired_template__' in runtimeStatus.entries, false);
   });
 });
 
 describe('P13 validator runtime authority gate', () => {
-  it('passes against the committed P20 manifest and runtime source', () => {
+  it('passes against the committed P21 manifest and runtime source', () => {
     const result = validateRuntimeCertificationAuthority(manifest, { rootDir: ROOT_DIR });
     assert.equal(result.pass, true, JSON.stringify(result.mismatches, null, 2));
   });

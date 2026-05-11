@@ -41,11 +41,11 @@ function createTempRoot() {
 
 describe('P11 U7: marking matrix totalEntries matches manifest expectation', () => {
   it('real marking matrix matches expected entries when manifest is supplied', () => {
-    // P20 supersedes the historical P10 80-entry pin. The validator now reads
+    // P21 supersedes the historical P10 80-entry pin. The validator now reads
     // expected entries from manifest.expectedMarkingMatrixEntryCount; when
     // called with no manifest the legacy 80 fallback applies. Test the
-    // manifest-driven path against the live P20 manifest.
-    const manifestPath = path.join(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p20-certification-manifest.json');
+    // manifest-driven path against the live P21 manifest.
+    const manifestPath = path.join(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p21-certification-manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const result = validateMarkingMatrixCounts(manifest, ROOT_DIR);
     assert.equal(result.pass, true, `Expected pass but got: expected=${result.expected}, actual=${result.actual}`);

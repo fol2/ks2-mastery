@@ -1,4 +1,4 @@
-Grammar QG P20 smart-practice audit: PASS
+Grammar QG P21 smart-practice audit: PASS
   Sessions: 330 (11 profiles × 30 seeds)
   Failures: 0
   Advisories: 0

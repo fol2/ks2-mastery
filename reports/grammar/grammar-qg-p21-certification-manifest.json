@@ -1,0 +1,39 @@
+{
+  "contentReleaseId": "grammar-qg-p21-2026-05-11",
+  "certificationPhase": "grammar-qg-p21",
+  "templateDenominator": 546,
+  "seedWindow": {
+    "certification": "1..30"
+  },
+  "seedWindowPerEvidenceType": {
+    "selected-response-oracle": "1..15",
+    "constructed-response-oracle": "1..10",
+    "manual-review-oracle": "1..5",
+    "redaction-oracle": "1..30",
+    "content-quality-audit": "1..30",
+    "semantic-prompt-cue-audit": "1..30"
+  },
+  "expectedItemCount": 16380,
+  "expectedMarkingMatrixEntryCount": 160,
+  "expectedOutputPaths": [
+    "reports/grammar/grammar-qg-p21-render-inventory.json",
+    "reports/grammar/grammar-qg-p21-render-inventory-redacted.md"
+  ],
+  "artefacts": {
+    "renderInventory": "reports/grammar/grammar-qg-p21-render-inventory.json",
+    "renderInventoryRedacted": "reports/grammar/grammar-qg-p21-render-inventory-redacted.md",
+    "qualityRegister": "reports/grammar/grammar-qg-p21-quality-register.json",
+    "distractorAudit": "reports/grammar/grammar-qg-p21-distractor-audit.json",
+    "markingMatrix": "reports/grammar/grammar-qg-p21-marking-matrix.json",
+    "certificationStatusMap": "reports/grammar/grammar-qg-p11-certification-status-map.json",
+    "semanticAuditScript": "scripts/audit-grammar-prompt-cues-semantic.mjs",
+    "productionSmoke": "reports/grammar/grammar-production-smoke-grammar-qg-p21-2026-05-11.json"
+  },
+  "generatorScript": "scripts/generate-grammar-qg-quality-inventory.mjs",
+  "generatorScriptHash": "82b0bf220b9bd6b6d0190dbd5bb64bc98777f191b0ea4e2adaa471ec140535c8",
+  "generationCommand": "node scripts/generate-grammar-qg-quality-inventory.mjs --seeds=1..30 --release=p21",
+  "generatedAt": "2026-05-11T13:45:58.082Z",
+  "answerInternalsIncluded": true,
+  "answerInternalsRedacted": true,
+  "postDeployRequiredForPostDeployCertification": true
+}

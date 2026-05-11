@@ -1,13 +1,13 @@
 {
   "metadata": {
-    "contentReleaseId": "grammar-qg-p20-2026-05-05",
-    "generatedAt": "2026-05-05T15:30:37.119Z",
-    "templateCount": 510,
-    "approved": 353,
+    "contentReleaseId": "grammar-qg-p21-2026-05-11",
+    "generatedAt": "2026-05-11T13:45:55.410Z",
+    "templateCount": 546,
+    "approved": 389,
     "approvedWithLimitation": 157,
     "blocked": 0,
     "highRiskCount": 199,
-    "adultReviewDecisionCount": 103
+    "adultReviewDecisionCount": 118
   },
   "entries": [
     {
@@ -1986,35 +1986,35 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Rewrite the sentence in Standard English. Ava don't know why the gate is locked.",
+          "promptText": "Correct this sentence into Standard English. Ava don't know why the gate is locked.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
           "feedbackSnippet": "A correct answer is: Ava doesn't know why the gate is locked."
         },
         {
           "seed": 2,
-          "promptText": "Rewrite the sentence in Standard English. Noah don't know where the hall is.",
+          "promptText": "Correct this sentence into Standard English. Noah don't know where the hall is.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
           "feedbackSnippet": "A correct answer is: Noah doesn't know where the hall is."
         },
         {
           "seed": 3,
-          "promptText": "Rewrite the sentence in Standard English. Ava don't know where the hall is.",
+          "promptText": "Correct this sentence into Standard English. Ava don't know where the hall is.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
           "feedbackSnippet": "A correct answer is: Ava doesn't know where the hall is."
         },
         {
           "seed": 4,
-          "promptText": "Rewrite the sentence in Standard English. Noah seen the comet last night.",
+          "promptText": "Correct this sentence into Standard English. Noah seen the comet last night.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
           "feedbackSnippet": "A correct answer is: Noah saw the comet last night."
         },
         {
           "seed": 5,
-          "promptText": "Rewrite the sentence in Standard English. Nora don't know the answer yet.",
+          "promptText": "Correct this sentence into Standard English. Nora don't know the answer yet.",
           "goldenAnswer": "test response",
           "markingResult": "non-scored",
           "feedbackSnippet": "A correct answer is: Nora doesn't know the answer yet."
@@ -2391,7 +2391,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Which sentence contains a relative clause?",
+          "promptText": "Choose the sentence where a relative clause adds information about a noun.",
           "options": [
             "When everyone wanted the book, it was easy to spot.",
             "The book that belonged to the club was easy to spot.",
@@ -2403,7 +2403,7 @@
         },
         {
           "seed": 2,
-          "promptText": "Which sentence contains a relative clause?",
+          "promptText": "Choose the sentence where a relative clause adds information about a noun.",
           "options": [
             "The bag which Ben packed carefully was easy to spot.",
             "When everyone wanted the bag, it was easy to spot.",
@@ -2415,7 +2415,7 @@
         },
         {
           "seed": 3,
-          "promptText": "Which sentence contains a relative clause?",
+          "promptText": "Choose the sentence where a relative clause adds information about a noun.",
           "options": [
             "When everyone wanted the book, it was easy to spot.",
             "The book was easy to spot outside.",
@@ -6642,35 +6642,35 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. Before sunrise the campers packed their bags.",
+          "promptText": "Add the missing comma after the fronted adverbial, then copy the sentence. Before sunrise the campers packed their bags.",
           "goldenAnswer": "Before sunrise, the campers packed their bags.",
           "markingResult": "correct",
           "feedbackSnippet": "\"Before sunrise\" is fronted, so add a comma after it."
         },
         {
           "seed": 2,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. After the concert the audience cheered loudly.",
+          "promptText": "Add the missing comma after the fronted adverbial, then copy the sentence. After the concert the audience cheered loudly.",
           "goldenAnswer": "After the concert, the audience cheered loudly.",
           "markingResult": "correct",
           "feedbackSnippet": "\"After the concert\" is fronted, so add a comma after it."
         },
         {
           "seed": 3,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. In the corner of the hall the orchestra tuned up.",
+          "promptText": "Add the missing comma after the fronted adverbial, then copy the sentence. In the corner of the hall the orchestra tuned up.",
           "goldenAnswer": "In the corner of the hall, the orchestra tuned up.",
           "markingResult": "correct",
           "feedbackSnippet": "\"In the corner of the hall\" is fronted, so add a comma after it."
         },
         {
           "seed": 4,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. With great care Lena carried the glass model.",
+          "promptText": "Add the missing comma after the fronted adverbial, then copy the sentence. With great care Lena carried the glass model.",
           "goldenAnswer": "With great care, Lena carried the glass model.",
           "markingResult": "correct",
           "feedbackSnippet": "\"With great care\" is fronted, so add a comma after it."
         },
         {
           "seed": 5,
-          "promptText": "Copy the sentence and add the comma after the fronted adverbial. During the thunderstorm the lights flickered twice.",
+          "promptText": "Add the missing comma after the fronted adverbial, then copy the sentence. During the thunderstorm the lights flickered twice.",
           "goldenAnswer": "During the thunderstorm, the lights flickered twice.",
           "markingResult": "correct",
           "feedbackSnippet": "\"During the thunderstorm\" is fronted, so add a comma after it."
@@ -8626,7 +8626,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Which option is an expanded noun phrase?",
+          "promptText": "Choose the expanded noun phrase from the options.",
           "options": [
             "the nervous goalkeeper with muddy gloves",
             "ran across the yard",
@@ -8638,7 +8638,7 @@
         },
         {
           "seed": 2,
-          "promptText": "Which option is an expanded noun phrase?",
+          "promptText": "Choose the expanded noun phrase from the options.",
           "options": [
             "a cracked wooden box beneath the stairs",
             "ran across the yard",
@@ -8650,7 +8650,7 @@
         },
         {
           "seed": 3,
-          "promptText": "Which option is an expanded noun phrase?",
+          "promptText": "Choose the expanded noun phrase from the options.",
           "options": [
             "the tiny silver key on the hook",
             "ran across the yard",
@@ -9596,7 +9596,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Why is this sentence a command? Close the library door quietly.",
+          "promptText": "Choose the best reason this sentence is a command: Close the library door quietly.",
           "options": [
             "It tells someone to do something.",
             "It only depends on the final punctuation mark.",
@@ -9608,7 +9608,7 @@
         },
         {
           "seed": 2,
-          "promptText": "Why is this sentence an exclamation? How bright the comet looked!",
+          "promptText": "Choose the best reason this sentence is an exclamation: How bright the comet looked!",
           "options": [
             "It uses What/How to show strong feeling.",
             "It only depends on the final punctuation mark.",
@@ -9620,7 +9620,7 @@
         },
         {
           "seed": 3,
-          "promptText": "Why is this sentence a question? Did Maya remember her reading journal?",
+          "promptText": "Choose the best reason this sentence is a question: Did Maya remember her reading journal?",
           "options": [
             "It asks for an answer.",
             "It only depends on the final punctuation mark.",
@@ -12799,7 +12799,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Which option is the subordinate clause? Although the wind was strong, the boat reached the shore.",
+          "promptText": "Choose the subordinate clause from this sentence: Although the wind was strong, the boat reached the shore.",
           "options": [
             "Although the wind was strong",
             "the boat reached the shore",
@@ -12811,7 +12811,7 @@
         },
         {
           "seed": 2,
-          "promptText": "Which option is the subordinate clause? When the bell rang, the pupils lined up.",
+          "promptText": "Choose the subordinate clause from this sentence: When the bell rang, the pupils lined up.",
           "options": [
             "When the bell rang",
             "the pupils lined up",
@@ -12823,7 +12823,7 @@
         },
         {
           "seed": 3,
-          "promptText": "Which option is the subordinate clause? Because it was raining, we stayed inside.",
+          "promptText": "Choose the subordinate clause from this sentence: Because it was raining, we stayed inside.",
           "options": [
             "Because it was raining",
             "we stayed inside",
@@ -13560,7 +13560,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "You ___ wear a helmet on this trail.",
+          "promptText": "Choose the modal verb that best fits: You ___ wear a helmet on this trail.",
           "options": [
             "should",
             "might",
@@ -13572,7 +13572,7 @@
         },
         {
           "seed": 2,
-          "promptText": "It ___ snow tonight.",
+          "promptText": "Choose the modal verb that best fits: It ___ snow tonight.",
           "options": [
             "might",
             "might (2)",
@@ -13584,7 +13584,7 @@
         },
         {
           "seed": 3,
-          "promptText": "The team ___ win if they practise.",
+          "promptText": "Choose the modal verb that best fits: The team ___ win if they practise.",
           "options": [
             "could",
             "might",
@@ -15794,7 +15794,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Which sentence uses Standard English?",
+          "promptText": "Choose the sentence written in Standard English.",
           "options": [
             "We were late.",
             "We was late.",
@@ -15806,7 +15806,7 @@
         },
         {
           "seed": 2,
-          "promptText": "Which sentence uses Standard English?",
+          "promptText": "Choose the sentence written in Standard English.",
           "options": [
             "I did my homework.",
             "I done my homework.",
@@ -15818,7 +15818,7 @@
         },
         {
           "seed": 3,
-          "promptText": "Which sentence uses Standard English?",
+          "promptText": "Choose the sentence written in Standard English.",
           "options": [
             "She saw the poster.",
             "She seen the poster.",
@@ -16143,7 +16143,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "What is the object of this sentence? The noisy gull stole the sandwich from Max.",
+          "promptText": "Find the object in this sentence: The noisy gull stole the sandwich from Max.",
           "options": [
             "the sandwich",
             "The noisy gull",
@@ -16155,7 +16155,7 @@
         },
         {
           "seed": 2,
-          "promptText": "What is the object of this sentence? On Friday morning, our science club visited the museum.",
+          "promptText": "Find the object in this sentence: On Friday morning, our science club visited the museum.",
           "options": [
             "the museum",
             "our science club",
@@ -16167,7 +16167,7 @@
         },
         {
           "seed": 3,
-          "promptText": "What is the object of this sentence? After lunch, the tired goalkeeper caught the ball.",
+          "promptText": "Find the object in this sentence: After lunch, the tired goalkeeper caught the ball.",
           "options": [
             "the ball",
             "the tired goalkeeper",
@@ -16187,7 +16187,7 @@
       "finalAction": "ship",
       "adultReviewDecision": {
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
-        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "disambiguationRationale": "The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.",
         "acceptedExample": "the sandwich",
         "rejectedAlternative": "The noisy gull",
         "reviewerId": "grammar-engineering-review",
@@ -16208,7 +16208,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "What is the subject of this sentence? The noisy gull stole the sandwich from Max.",
+          "promptText": "Find the subject in this sentence: The noisy gull stole the sandwich from Max.",
           "options": [
             "The noisy gull",
             "the sandwich",
@@ -16220,7 +16220,7 @@
         },
         {
           "seed": 2,
-          "promptText": "What is the subject of this sentence? On Friday morning, our science club visited the museum.",
+          "promptText": "Find the subject in this sentence: On Friday morning, our science club visited the museum.",
           "options": [
             "our science club",
             "the museum",
@@ -16232,7 +16232,7 @@
         },
         {
           "seed": 3,
-          "promptText": "What is the subject of this sentence? After lunch, the tired goalkeeper caught the ball.",
+          "promptText": "Find the subject in this sentence: After lunch, the tired goalkeeper caught the ball.",
           "options": [
             "the tired goalkeeper",
             "the ball",
@@ -16252,7 +16252,7 @@
       "finalAction": "ship",
       "adultReviewDecision": {
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
-        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "disambiguationRationale": "The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.",
         "acceptedExample": "The noisy gull",
         "rejectedAlternative": "the sandwich",
         "reviewerId": "grammar-engineering-review",
@@ -22391,19 +22391,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each sentence as active or passive.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each sentence as active or passive.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each sentence as active or passive.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -22740,19 +22740,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each adverbial by how it works.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each adverbial by how it works.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each adverbial by how it works.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -22827,7 +22827,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Which phrase correctly shows possession for one dog owns a bowl?",
+          "promptText": "Which phrase correctly shows possession for: one dog owns a bowl?",
           "options": [
             "the dog's bowl",
             "the dogs' bowl",
@@ -22839,7 +22839,7 @@
         },
         {
           "seed": 2,
-          "promptText": "Which phrase correctly shows possession for several girls own boots?",
+          "promptText": "Which phrase correctly shows possession for: several girls own boots?",
           "options": [
             "the girls' boots",
             "the girl's boots",
@@ -22851,7 +22851,7 @@
         },
         {
           "seed": 3,
-          "promptText": "Which phrase correctly shows possession for one teacher owns a desk?",
+          "promptText": "Which phrase correctly shows possession for: one teacher owns a desk?",
           "options": [
             "the teacher's desk",
             "the teachers' desk",
@@ -22880,7 +22880,7 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Why is 'the dog's bowl' correct for one dog owns a bowl?",
+          "promptText": "Why is 'the dog's bowl' correct for: one dog owns a bowl?",
           "options": [
             "One dog owns the bowl, so apostrophe before s.",
             "Because apostrophes always show plural",
@@ -22892,7 +22892,7 @@
         },
         {
           "seed": 2,
-          "promptText": "Why is 'the girls' boots' correct for several girls own boots?",
+          "promptText": "Why is 'the girls' boots' correct for: several girls own boots?",
           "options": [
             "Girls is plural ending in s, so apostrophe after s.",
             "Because apostrophes always show plural",
@@ -22904,7 +22904,7 @@
         },
         {
           "seed": 3,
-          "promptText": "Why is 'the teacher's desk' correct for one teacher owns a desk?",
+          "promptText": "Why is 'the teacher's desk' correct for: one teacher owns a desk?",
           "options": [
             "One teacher, apostrophe before s.",
             "Because apostrophes always show plural",
@@ -22985,35 +22985,35 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Write the possessive phrase for one dog owns a bowl.",
+          "promptText": "Rewrite as a precise possessive phrase: one dog owns a bowl.",
           "goldenAnswer": "the dog's bowl",
           "markingResult": "correct",
           "feedbackSnippet": "One dog owns the bowl, so apostrophe before s."
         },
         {
           "seed": 2,
-          "promptText": "Write the possessive phrase for several girls own boots.",
+          "promptText": "Rewrite as a precise possessive phrase: several girls own boots.",
           "goldenAnswer": "the girls' boots",
           "markingResult": "correct",
           "feedbackSnippet": "Girls is plural ending in s, so apostrophe after s."
         },
         {
           "seed": 3,
-          "promptText": "Write the possessive phrase for one teacher owns a desk.",
+          "promptText": "Rewrite as a precise possessive phrase: one teacher owns a desk.",
           "goldenAnswer": "the teacher's desk",
           "markingResult": "correct",
           "feedbackSnippet": "One teacher, apostrophe before s."
         },
         {
           "seed": 4,
-          "promptText": "Write the possessive phrase for several birds own nests.",
+          "promptText": "Rewrite as a precise possessive phrase: several birds own nests.",
           "goldenAnswer": "the birds' nests",
           "markingResult": "correct",
           "feedbackSnippet": "Plural birds takes apostrophe after s."
         },
         {
           "seed": 5,
-          "promptText": "Write the possessive phrase for one child owns a coat.",
+          "promptText": "Rewrite as a precise possessive phrase: one child owns a coat.",
           "goldenAnswer": "the child's coat",
           "markingResult": "correct",
           "feedbackSnippet": "Child is singular, so child's."
@@ -23037,19 +23037,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each possessive apostrophe example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each possessive apostrophe example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each possessive apostrophe example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -23282,19 +23282,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each boundary punctuation choice.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each boundary punctuation choice.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each boundary punctuation choice.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -23603,19 +23603,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each clause target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each clause target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each clause target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -23872,19 +23872,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each phrase by formality.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each phrase by formality.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each phrase by formality.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -24112,19 +24112,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each hyphen example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each hyphen example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each hyphen example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -24433,19 +24433,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each modal verb by meaning.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each modal verb by meaning.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each modal verb by meaning.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -24678,19 +24678,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each noun-phrase target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each noun-phrase target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each noun-phrase target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -24923,19 +24923,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each parenthesis punctuation target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each parenthesis punctuation target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each parenthesis punctuation target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -25220,19 +25220,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each pronoun-cohesion choice.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each pronoun-cohesion choice.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each pronoun-cohesion choice.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -25542,19 +25542,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each relative-clause target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each relative-clause target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each relative-clause target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -25787,19 +25787,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each sentence by function.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each sentence by function.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each sentence by function.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -26080,19 +26080,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each speech-punctuation target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each speech-punctuation target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each speech-punctuation target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -26325,19 +26325,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each Standard English example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each Standard English example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each Standard English example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -26595,19 +26595,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each subject or object target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each subject or object target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each subject or object target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -26852,19 +26852,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each tense or aspect example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each tense or aspect example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each tense or aspect example.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -27213,19 +27213,19 @@
       "concreteExamples": [
         {
           "seed": 1,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each word-class target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 2,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each word-class target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         },
         {
           "seed": 3,
-          "promptText": "Classify the target word or phrase by its grammar role.",
+          "promptText": "Classify each word-class target.",
           "markingResult": "correct",
           "feedbackSnippet": "Classify by the grammar role, not by surface length."
         }
@@ -27233,6 +27233,2095 @@
       "answerabilityJudgement": "All 10 seeds produce a valid table with unambiguous row answers",
       "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'word_classes'",
       "distractorQualityJudgement": "Table-choice: each row has column distractors drawn from related grammatical categories",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_sentence_functions_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which option gives an instruction about the gate?",
+          "options": [
+            "Close the gate before the puppy runs out.",
+            "The gate is closed.",
+            "Did you close the gate?",
+            "What a noisy puppy that is!"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A command tells someone to do something."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which option asks about the red scarf?",
+          "options": [
+            "Where did you put the red scarf?",
+            "Put the red scarf in the drawer.",
+            "The red scarf is in the drawer.",
+            "What a bright red scarf this is!"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A question asks for information and normally uses a question mark."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which option gives information about the lighthouse?",
+          "options": [
+            "The lighthouse flashed every ten seconds.",
+            "Flash the lighthouse lamp now.",
+            "How often did the lighthouse flash?",
+            "What a powerful beam the lighthouse had!"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A statement gives information."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'sentence_functions'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_sentence_functions_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which option gives an instruction about the gate? Answer: Close the gate before the puppy runs out.",
+          "options": [
+            "A command tells someone to do something.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A command tells someone to do something."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which option asks about the red scarf? Answer: Where did you put the red scarf?",
+          "options": [
+            "A question asks for information and normally uses a question mark.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A question asks for information and normally uses a question mark."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which option gives information about the lighthouse? Answer: The lighthouse flashed every ten seconds.",
+          "options": [
+            "A statement gives information.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A statement gives information."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'sentence_functions'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
+        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
+        "acceptedExample": "A KS2 exclamation often begins with what or how and shows strong feeling.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "likely-surface-cue"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_word_classes_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "In the sentence \"Ben often walks home\", what is \"often\"?",
+          "options": [
+            "adverb",
+            "noun",
+            "determiner",
+            "preposition"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Often is an adverb because it tells us how frequently Ben walks."
+        },
+        {
+          "seed": 2,
+          "promptText": "In the sentence \"These biscuits are warm\", what is \"These\"?",
+          "options": [
+            "determiner",
+            "pronoun",
+            "verb",
+            "adverb"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "These is a determiner because it comes before the noun and points to which biscuits."
+        },
+        {
+          "seed": 3,
+          "promptText": "In the sentence \"The marble rolled under the cupboard\", what is \"under\"?",
+          "options": [
+            "preposition",
+            "conjunction",
+            "adjective",
+            "pronoun"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Under is a preposition because it shows the marble's position."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'word_classes'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_word_classes_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. In the sentence \"Ben often walks home\", what is \"often\"? Answer: adverb",
+          "options": [
+            "Often is an adverb because it tells us how frequently Ben walks.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Often is an adverb because it tells us how frequently Ben walks."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. In the sentence \"These biscuits are warm\", what is \"These\"? Answer: determiner",
+          "options": [
+            "These is a determiner because it comes before the noun and points to which biscuits.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "These is a determiner because it comes before the noun and points to which biscuits."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. In the sentence \"The marble rolled under the cupboard\", what is \"under\"? Answer: preposition",
+          "options": [
+            "Under is a preposition because it shows the marble's position.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Under is a preposition because it shows the marble's position."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'word_classes'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
+        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
+        "acceptedExample": "These is a determiner because it comes before the noun and points to which biscuits.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "likely-surface-cue"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_noun_phrases_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which option is the expanded noun phrase about the key?",
+          "options": [
+            "the tiny silver key beside the vase",
+            "opened the door quickly",
+            "because the key was silver",
+            "the key unlocked it"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The phrase is centred on the noun key and expands it with description."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which word is the head noun in \"the old wooden boat\"?",
+          "options": [
+            "boat",
+            "old",
+            "wooden",
+            "the"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Boat is the noun at the centre of the noun phrase."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which option is a noun phrase, not a clause?",
+          "options": [
+            "the nervous goalkeeper near the post",
+            "the goalkeeper saved the shot",
+            "because the goalkeeper was nervous",
+            "when the whistle blew"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A noun phrase does not contain its own subject-verb clause here."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'noun_phrases'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_noun_phrases_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which option is the expanded noun phrase about the key? Answer: the tiny silver key beside the vase",
+          "options": [
+            "The phrase is centred on the noun key and expands it with description.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The phrase is centred on the noun key and expands it with description."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which word is the head noun in \"the old wooden boat\"? Answer: boat",
+          "options": [
+            "Boat is the noun at the centre of the noun phrase.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Boat is the noun at the centre of the noun phrase."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which option is a noun phrase, not a clause? Answer: the nervous goalkeeper near the post",
+          "options": [
+            "A noun phrase does not contain its own subject-verb clause here.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A noun phrase does not contain its own subject-verb clause here."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'noun_phrases'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
+        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
+        "acceptedExample": "The expanded noun phrase adds detail while keeping garden as the main noun.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "likely-surface-cue"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_adverbials_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which option correctly places the fronted adverbial after breakfast?",
+          "options": [
+            "After breakfast, the class walked to the hall.",
+            "The class after breakfast walked to the hall.",
+            "After breakfast the class walked to the hall.",
+            "The class walked, after breakfast to the hall."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "After breakfast is a fronted adverbial and needs a comma after it."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which opening phrase is a fronted adverbial of place?",
+          "options": [
+            "Beside the river,",
+            "The river was wide,",
+            "Because the river flooded,",
+            "The boat beside the river,"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Beside the river tells us where and has been moved to the front."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which sentence needs a comma after the fronted adverbial?",
+          "options": [
+            "Without making a sound, the fox crossed the path.",
+            "The fox crossed the path silently.",
+            "The fox, without making a sound crossed the path.",
+            "The path without making a sound was crossed."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Without making a sound is a fronted adverbial telling us how."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'adverbials'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_adverbials_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which option correctly places the fronted adverbial after breakfast? Answer: After breakfast, the class walked to the hall.",
+          "options": [
+            "After breakfast is a fronted adverbial and needs a comma after it.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "After breakfast is a fronted adverbial and needs a comma after it."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which opening phrase is a fronted adverbial of place? Answer: Beside the river,",
+          "options": [
+            "Beside the river tells us where and has been moved to the front.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Beside the river tells us where and has been moved to the front."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which sentence needs a comma after the fronted adverbial? Answer: Without making a sound, the fox crossed the path.",
+          "options": [
+            "Without making a sound is a fronted adverbial telling us how.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Without making a sound is a fronted adverbial telling us how."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'adverbials'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
+        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
+        "acceptedExample": "At the edge of the forest tells us where and has been moved to the front.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "likely-surface-cue"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_clauses_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which part is the subordinate clause in \"Because it was icy, we walked slowly\"?",
+          "options": [
+            "Because it was icy",
+            "we walked slowly",
+            "it was icy, we",
+            "walked slowly"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Because it was icy depends on the main clause for the full sentence."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which part is the main clause in \"After the bell rang, the pupils lined up\"?",
+          "options": [
+            "the pupils lined up",
+            "After the bell rang",
+            "the bell rang",
+            "rang, the pupils"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The pupils lined up can stand as the main idea of the sentence."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which sentence correctly uses although?",
+          "options": [
+            "Although the path was muddy, we reached the farm.",
+            "Although the path was muddy.",
+            "The path was muddy although.",
+            "We reached although the path was muddy the farm."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Although introduces a subordinate clause that needs a main clause."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'clauses'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "acceptedExample": "Because it was icy",
+        "rejectedAlternative": "we walked slowly",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_clauses_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which part is the subordinate clause in \"Because it was icy, we walked slowly\"? Answer: Because it was icy",
+          "options": [
+            "Because it was icy depends on the main clause for the full sentence.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Because it was icy depends on the main clause for the full sentence."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which part is the main clause in \"After the bell rang, the pupils lined up\"? Answer: the pupils lined up",
+          "options": [
+            "The pupils lined up can stand as the main idea of the sentence.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The pupils lined up can stand as the main idea of the sentence."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which sentence correctly uses although? Answer: Although the path was muddy, we reached the farm.",
+          "options": [
+            "Although introduces a subordinate clause that needs a main clause.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Although introduces a subordinate clause that needs a main clause."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'clauses'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "acceptedExample": "Because it was icy depends on the main clause for the full sentence.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_relative_clauses_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which sentence uses a relative clause about a person?",
+          "options": [
+            "The girl who won the race smiled.",
+            "The girl ran because she trained hard.",
+            "Who won the race?",
+            "The girl smiled after the race."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Who won the race adds information about the girl."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which sentence uses which correctly for a thing?",
+          "options": [
+            "The kite, which was torn, dropped into the field.",
+            "The kite who was torn dropped.",
+            "Which kite was torn?",
+            "The kite was torn because it hit a tree."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Which was torn is a relative clause about the kite."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which option contains a relative clause about the shop?",
+          "options": [
+            "The shop that sells maps closes at five.",
+            "When the shop closes, we will leave.",
+            "The shop closes at five.",
+            "Because the shop sells maps, it is useful."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "That sells maps adds information about the shop."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'relative_clauses'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "acceptedExample": "The girl who won the race smiled.",
+        "rejectedAlternative": "The girl ran because she trained hard.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_relative_clauses_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses a relative clause about a person? Answer: The girl who won the race smiled.",
+          "options": [
+            "Who won the race adds information about the girl.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Who won the race adds information about the girl."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses which correctly for a thing? Answer: The kite, which was torn, dropped into the field.",
+          "options": [
+            "Which was torn is a relative clause about the kite.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Which was torn is a relative clause about the kite."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which option contains a relative clause about the shop? Answer: The shop that sells maps closes at five.",
+          "options": [
+            "That sells maps adds information about the shop.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "That sells maps adds information about the shop."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'relative_clauses'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "acceptedExample": "Who won the race adds information about the girl.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_tense_aspect_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which sentence uses the present perfect?",
+          "options": [
+            "She has finished her homework.",
+            "She finished her homework yesterday.",
+            "She is finishing her homework.",
+            "She had finished her homework before tea."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Has finished links a completed action to the present."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which sentence uses the past progressive?",
+          "options": [
+            "They were playing chess when the bell rang.",
+            "They played chess after lunch.",
+            "They have played chess before.",
+            "They had played chess before the bell rang."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Were playing shows an action in progress in the past."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which sentence uses the past perfect?",
+          "options": [
+            "Maya had packed her bag before the taxi arrived.",
+            "Maya packed her bag.",
+            "Maya has packed her bag.",
+            "Maya was packing her bag."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Had packed shows an earlier past action before another past action."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'tense_aspect'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_tense_aspect_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses the present perfect? Answer: She has finished her homework.",
+          "options": [
+            "Has finished links a completed action to the present.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Has finished links a completed action to the present."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses the past progressive? Answer: They were playing chess when the bell rang.",
+          "options": [
+            "Were playing shows an action in progress in the past.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Were playing shows an action in progress in the past."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses the past perfect? Answer: Maya had packed her bag before the taxi arrived.",
+          "options": [
+            "Had packed shows an earlier past action before another past action.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Had packed shows an earlier past action before another past action."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'tense_aspect'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_standard_english_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which option uses the Standard English verb were?",
+          "options": [
+            "We were late for assembly.",
+            "We was late for assembly.",
+            "We been late for assembly.",
+            "We is late for assembly."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "We were is the standard written form."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which option uses the Standard English past-tense verb did?",
+          "options": [
+            "I did my homework before tea.",
+            "I done my homework before tea.",
+            "I doing my homework before tea.",
+            "I does my homework before tea."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Did is the standard past-tense form here."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which option uses the Standard English phrase should have?",
+          "options": [
+            "You should have checked your answer.",
+            "You should of checked your answer.",
+            "You should has checked your answer.",
+            "You should checked have your answer."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Should have is the standard written form."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'standard_english'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_standard_english_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which option uses the Standard English verb were? Answer: We were late for assembly.",
+          "options": [
+            "We were is the standard written form.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "We were is the standard written form."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which option uses the Standard English past-tense verb did? Answer: I did my homework before tea.",
+          "options": [
+            "Did is the standard past-tense form here.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Did is the standard past-tense form here."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which option uses the Standard English phrase should have? Answer: You should have checked your answer.",
+          "options": [
+            "Should have is the standard written form.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Should have is the standard written form."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'standard_english'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_pronouns_cohesion_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which sentence keeps the pronoun reference clear?",
+          "options": [
+            "Amira picked up the map and folded it carefully.",
+            "Amira picked up the map and folded she carefully.",
+            "Amira picked up the map and it folded it carefully.",
+            "Amira picked up the map and folded them carefully."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "It clearly refers to the map."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which sentence is clearer?",
+          "options": [
+            "Tom gave the trophy to Lucas because Lucas had won it.",
+            "Tom gave the trophy to Lucas because he had won it.",
+            "Tom gave it to him because he had won it.",
+            "He gave the trophy to him because he had won it."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Repeating Lucas avoids an unclear he."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which option improves cohesion without confusion?",
+          "options": [
+            "The kittens slept in the basket. They looked peaceful.",
+            "The kittens slept in the basket. It looked peaceful.",
+            "The kittens slept in the basket. He looked peaceful.",
+            "The kittens slept in the basket. Them looked peaceful."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "They clearly refers to the kittens."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'pronouns_cohesion'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_pronouns_cohesion_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which sentence keeps the pronoun reference clear? Answer: Amira picked up the map and folded it carefully.",
+          "options": [
+            "It clearly refers to the map.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "It clearly refers to the map."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which sentence is clearer? Answer: Tom gave the trophy to Lucas because Lucas had won it.",
+          "options": [
+            "Repeating Lucas avoids an unclear he.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Repeating Lucas avoids an unclear he."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which option improves cohesion without confusion? Answer: The kittens slept in the basket. They looked peaceful.",
+          "options": [
+            "They clearly refers to the kittens.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "They clearly refers to the kittens."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'pronouns_cohesion'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_formality_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which sentence is most formal?",
+          "options": [
+            "I would be grateful if you could reply soon.",
+            "Please get back to me soon.",
+            "Can you reply quick?",
+            "Give me an answer soon, yeah?"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The vocabulary and structure suit formal writing."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which sentence is informal?",
+          "options": [
+            "That film was awesome!",
+            "The film was highly enjoyable.",
+            "The film received positive reviews.",
+            "The film was suitable for families."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Awesome is chatty, informal vocabulary."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which word is the most formal replacement for \"kids\"?",
+          "options": [
+            "children",
+            "mates",
+            "gang",
+            "little ones"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Children is more formal and precise than kids."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'formality'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "acceptedExample": "I would be grateful if you could reply soon.",
+        "rejectedAlternative": "Please get back to me soon.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_formality_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which sentence is most formal? Answer: I would be grateful if you could reply soon.",
+          "options": [
+            "The vocabulary and structure suit formal writing.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The vocabulary and structure suit formal writing."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which sentence is informal? Answer: That film was awesome!",
+          "options": [
+            "Awesome is chatty, informal vocabulary.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Awesome is chatty, informal vocabulary."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which word is the most formal replacement for \"kids\"? Answer: children",
+          "options": [
+            "Children is more formal and precise than kids.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Children is more formal and precise than kids."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'formality'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "acceptedExample": "The vocabulary and structure suit formal writing.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_active_passive_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which sentence is active voice?",
+          "options": [
+            "The chef baked the bread.",
+            "The bread was baked by the chef.",
+            "The bread had been baked.",
+            "The bread was being baked."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "In active voice, the doer comes before the verb."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which sentence is passive voice?",
+          "options": [
+            "The trophy was lifted by the captain.",
+            "The captain lifted the trophy.",
+            "The captain was lifting the trophy.",
+            "The captain had lifted the trophy."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "In passive voice, the thing affected comes first."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which passive sentence keeps the same meaning as \"The dog chased the ball\"?",
+          "options": [
+            "The ball was chased by the dog.",
+            "The dog was chased by the ball.",
+            "The ball chased the dog.",
+            "The dog was chasing the ball."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The ball is still the thing being chased."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'active_passive'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_active_passive_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which sentence is active voice? Answer: The chef baked the bread.",
+          "options": [
+            "In active voice, the doer comes before the verb.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "In active voice, the doer comes before the verb."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which sentence is passive voice? Answer: The trophy was lifted by the captain.",
+          "options": [
+            "In passive voice, the thing affected comes first.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "In passive voice, the thing affected comes first."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which passive sentence keeps the same meaning as \"The dog chased the ball\"? Answer: The ball was chased by the dog.",
+          "options": [
+            "The ball is still the thing being chased.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The ball is still the thing being chased."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'active_passive'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_subject_object_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "In \"The cat chased the mouse\", what is the subject?",
+          "options": [
+            "The cat",
+            "the mouse",
+            "chased",
+            "the cat chased"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The subject is the doer of the action."
+        },
+        {
+          "seed": 2,
+          "promptText": "In \"Jamal kicked the ball\", what is the object?",
+          "options": [
+            "the ball",
+            "Jamal",
+            "kicked",
+            "Jamal kicked"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The object receives the action."
+        },
+        {
+          "seed": 3,
+          "promptText": "In \"After lunch, Priya watered the plants\", what is the subject?",
+          "options": [
+            "Priya",
+            "After lunch",
+            "the plants",
+            "watered"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Priya is the person doing the watering."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'subject_object'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "acceptedExample": "The cat",
+        "rejectedAlternative": "the mouse",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_subject_object_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. In \"The cat chased the mouse\", what is the subject? Answer: The cat",
+          "options": [
+            "The subject is the doer of the action.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The subject is the doer of the action."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. In \"Jamal kicked the ball\", what is the object? Answer: the ball",
+          "options": [
+            "The object receives the action.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The object receives the action."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. In \"After lunch, Priya watered the plants\", what is the subject? Answer: Priya",
+          "options": [
+            "Priya is the person doing the watering.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Priya is the person doing the watering."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'subject_object'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "acceptedExample": "The subject is the doer of the action.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_modal_verbs_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which modal verb shows the strongest certainty?",
+          "options": [
+            "must",
+            "might",
+            "could",
+            "may"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Must shows stronger certainty than might, could or may."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which sentence shows possibility, not certainty?",
+          "options": [
+            "We might visit Gran on Saturday.",
+            "We must visit Gran on Saturday.",
+            "We will visit Gran on Saturday.",
+            "We have visited Gran on Saturday."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Might suggests something is possible."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which sentence gives advice?",
+          "options": [
+            "You should wear a coat.",
+            "You might wear a coat.",
+            "You wore a coat.",
+            "You are wearing a coat."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Should is often used to give advice."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'modal_verbs'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
+        "acceptedExample": "must",
+        "rejectedAlternative": "might",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_modal_verbs_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which modal verb shows the strongest certainty? Answer: must",
+          "options": [
+            "Must shows stronger certainty than might, could or may.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Must shows stronger certainty than might, could or may."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which sentence shows possibility, not certainty? Answer: We might visit Gran on Saturday.",
+          "options": [
+            "Might suggests something is possible.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Might suggests something is possible."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which sentence gives advice? Answer: You should wear a coat.",
+          "options": [
+            "Should is often used to give advice.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Should is often used to give advice."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'modal_verbs'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
+        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
+        "acceptedExample": "Must shows stronger certainty than might, could or may.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "ambiguous-concept-area",
+          "likely-surface-cue"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_parenthesis_commas_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which sentence uses commas to show parenthesis?",
+          "options": [
+            "The garden, full of roses, smelled sweet.",
+            "The garden full of roses, smelled sweet.",
+            "The garden, full of roses smelled sweet.",
+            "The garden full, of roses, smelled sweet."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The commas mark extra information that can be lifted out."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which sentence uses brackets for parenthesis?",
+          "options": [
+            "Our teacher (who is very kind) helped us tidy.",
+            "Our teacher who is very kind) helped us tidy.",
+            "Our teacher (who is very kind helped us tidy.",
+            "Our teacher who is (very kind) helped us tidy."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The brackets enclose the extra information."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which sentence uses dashes to show parenthesis?",
+          "options": [
+            "The match - delayed by rain - started at four.",
+            "The match - delayed by rain started at four.",
+            "The match delayed - by rain - started at four.",
+            "The match delayed by rain - started at four."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The pair of dashes marks the extra information."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'parenthesis_commas'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_parenthesis_commas_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses commas to show parenthesis? Answer: The garden, full of roses, smelled sweet.",
+          "options": [
+            "The commas mark extra information that can be lifted out.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The commas mark extra information that can be lifted out."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses brackets for parenthesis? Answer: Our teacher (who is very kind) helped us tidy.",
+          "options": [
+            "The brackets enclose the extra information.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The brackets enclose the extra information."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses dashes to show parenthesis? Answer: The match - delayed by rain - started at four.",
+          "options": [
+            "The pair of dashes marks the extra information.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The pair of dashes marks the extra information."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'parenthesis_commas'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_speech_punctuation_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which sentence punctuates direct speech correctly?",
+          "options": [
+            "\"Where are my shoes?\" asked Leo.",
+            "\"Where are my shoes\"? asked Leo.",
+            "Where are my shoes? asked Leo.",
+            "\"Where are my shoes? asked Leo.\""
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The question mark belongs inside the speech marks."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which sentence uses the comma before speech correctly?",
+          "options": [
+            "Sara said, \"I will meet you at the gate.\"",
+            "Sara said \"I will meet you at the gate.\"",
+            "Sara said, I will meet you at the gate.",
+            "Sara said \"I will meet you at the gate\"."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A reporting clause before speech usually needs a comma before the opening speech marks."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which sentence keeps the exclamation mark inside the speech marks?",
+          "options": [
+            "\"Watch out!\" shouted Dad.",
+            "\"Watch out\"! shouted Dad.",
+            "\"Watch out! shouted Dad.\"",
+            "Watch out! shouted Dad."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The punctuation for the spoken words goes inside the speech marks."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'speech_punctuation'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_speech_punctuation_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which sentence punctuates direct speech correctly? Answer: \"Where are my shoes?\" asked Leo.",
+          "options": [
+            "The question mark belongs inside the speech marks.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The question mark belongs inside the speech marks."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses the comma before speech correctly? Answer: Sara said, \"I will meet you at the gate.\"",
+          "options": [
+            "A reporting clause before speech usually needs a comma before the opening speech marks.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A reporting clause before speech usually needs a comma before the opening speech marks."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which sentence keeps the exclamation mark inside the speech marks? Answer: \"Watch out!\" shouted Dad.",
+          "options": [
+            "The punctuation for the spoken words goes inside the speech marks.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The punctuation for the spoken words goes inside the speech marks."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'speech_punctuation'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
+        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
+        "acceptedExample": "A reporting clause before speech usually needs a comma before the opening speech marks.",
+        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review",
+        "reasons": [
+          "likely-surface-cue"
+        ]
+      }
+    },
+    {
+      "templateId": "qg_p21_apostrophes_possession_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which phrase shows singular possession?",
+          "options": [
+            "Tom's pencil",
+            "Toms' pencil",
+            "Toms pencil",
+            "Tom's pencils'"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The apostrophe before s shows that one Tom owns the pencil."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which phrase shows that more than one girl owns the coats?",
+          "options": [
+            "the girls' coats",
+            "the girl's coats",
+            "the girls coats",
+            "the girl coat's"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "For a regular plural ending in s, the apostrophe goes after the s."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which phrase shows that the children own the books?",
+          "options": [
+            "the children's books",
+            "the childrens' books",
+            "the children books",
+            "the children's book's"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Children is an irregular plural, so add apostrophe s."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'apostrophes_possession'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_apostrophes_possession_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which phrase shows singular possession? Answer: Tom's pencil",
+          "options": [
+            "The apostrophe before s shows that one Tom owns the pencil.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The apostrophe before s shows that one Tom owns the pencil."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which phrase shows that more than one girl owns the coats? Answer: the girls' coats",
+          "options": [
+            "For a regular plural ending in s, the apostrophe goes after the s.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "For a regular plural ending in s, the apostrophe goes after the s."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which phrase shows that the children own the books? Answer: the children's books",
+          "options": [
+            "Children is an irregular plural, so add apostrophe s.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "Children is an irregular plural, so add apostrophe s."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'apostrophes_possession'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_boundary_punctuation_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which sentence uses a colon to introduce a list?",
+          "options": [
+            "Bring these items: a pen, a ruler and a book.",
+            "Bring these items; a pen, a ruler and a book.",
+            "Bring these items, a pen, a ruler and a book.",
+            "Bring these items. a pen, a ruler and a book."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A colon can introduce a list after a complete clause."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which option links the storm clauses with a semicolon?",
+          "options": [
+            "The sky turned dark; the storm was close.",
+            "The sky turned dark, the storm was close.",
+            "The sky turned dark: the storm, was close.",
+            "The sky turned dark; and the storm was close."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A semicolon can link two complete, closely related clauses."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which sentence uses a dash to add an explanation?",
+          "options": [
+            "Only one thing mattered - the lost key.",
+            "Only one thing mattered, the lost key.",
+            "Only one thing mattered; the lost key.",
+            "Only one thing mattered the lost key."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The dash introduces an explanatory phrase."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'boundary_punctuation'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_boundary_punctuation_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses a colon to introduce a list? Answer: Bring these items: a pen, a ruler and a book.",
+          "options": [
+            "A colon can introduce a list after a complete clause.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A colon can introduce a list after a complete clause."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which option links the storm clauses with a semicolon? Answer: The sky turned dark; the storm was close.",
+          "options": [
+            "A semicolon can link two complete, closely related clauses.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "A semicolon can link two complete, closely related clauses."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which sentence uses a dash to add an explanation? Answer: Only one thing mattered - the lost key.",
+          "options": [
+            "The dash introduces an explanatory phrase.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The dash introduces an explanatory phrase."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'boundary_punctuation'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_hyphen_ambiguity_closed_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Which phrase means the shark eats people?",
+          "options": [
+            "man-eating shark",
+            "man eating shark",
+            "man, eating shark",
+            "man eating-shark"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The hyphen joins man and eating so they work together as one modifier."
+        },
+        {
+          "seed": 2,
+          "promptText": "Which word means to cover something again?",
+          "options": [
+            "re-cover",
+            "recover",
+            "re cover",
+            "re,cover"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The hyphen separates re and cover to avoid confusion with recover."
+        },
+        {
+          "seed": 3,
+          "promptText": "Which phrase uses a hyphen correctly before a noun?",
+          "options": [
+            "well-earned break",
+            "well earned break",
+            "well, earned break",
+            "well earned-break"
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The hyphen joins well and earned before the noun break."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'hyphen_ambiguity'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
+      "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
+      "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
+      "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
+      "finalAction": "ship"
+    },
+    {
+      "templateId": "qg_p21_hyphen_ambiguity_explanation_choice_variety",
+      "decision": "approved",
+      "severity": null,
+      "reviewerId": "automated-p10-oracle",
+      "reviewMethod": "automated-oracle-with-concrete-evidence",
+      "seedWindow": "1..10",
+      "concreteExamples": [
+        {
+          "seed": 1,
+          "promptText": "Choose the best explanation for this answer. Which phrase means the shark eats people? Answer: man-eating shark",
+          "options": [
+            "The hyphen joins man and eating so they work together as one modifier.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The hyphen joins man and eating so they work together as one modifier."
+        },
+        {
+          "seed": 2,
+          "promptText": "Choose the best explanation for this answer. Which word means to cover something again? Answer: re-cover",
+          "options": [
+            "The hyphen separates re and cover to avoid confusion with recover.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The hyphen separates re and cover to avoid confusion with recover."
+        },
+        {
+          "seed": 3,
+          "promptText": "Choose the best explanation for this answer. Which phrase uses a hyphen correctly before a noun? Answer: well-earned break",
+          "options": [
+            "The hyphen joins well and earned before the noun break.",
+            "It only depends on the final punctuation mark.",
+            "It is correct because it is the shortest option.",
+            "It is correct because it sounds more exciting."
+          ],
+          "markingResult": "correct",
+          "feedbackSnippet": "The hyphen joins well and earned before the noun break."
+        }
+      ],
+      "answerabilityJudgement": "All 10 seeds produce exactly one correct option with clear prompt",
+      "grammarLogicJudgement": "Feedback correctly references grammar rule for concept 'hyphen_ambiguity'",
+      "distractorQualityJudgement": "4 options per seed, 3 distractors represent common misconceptions",
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",

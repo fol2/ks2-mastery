@@ -2,7 +2,7 @@
  * Grammar QG P12 — Release gate validation
  *
  * Ensures package.json production-release scripts reference
- * the active P20 certification manifest and expected release tag.
+ * the active P21 certification manifest and expected release tag.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,17 +17,17 @@ const scripts = pkg.scripts;
 describe('verify:grammar-qg-production-release gate', () => {
   const releaseScript = scripts['verify:grammar-qg-production-release'];
 
-  it('references grammar-qg-p20-certification-manifest.json', () => {
+  it('references grammar-qg-p21-certification-manifest.json', () => {
     assert.ok(
-      releaseScript.includes('grammar-qg-p20-certification-manifest.json'),
-      `Expected production-release script to reference P20 manifest, got: ${releaseScript}`
+      releaseScript.includes('grammar-qg-p21-certification-manifest.json'),
+      `Expected production-release script to reference P21 manifest, got: ${releaseScript}`
     );
   });
 
-  it('references --expected-release=grammar-qg-p20-2026-05-05', () => {
+  it('references --expected-release=grammar-qg-p21-2026-05-11', () => {
     assert.ok(
-      releaseScript.includes('--expected-release=grammar-qg-p20-2026-05-05'),
-      `Expected production-release script to target P20 release tag, got: ${releaseScript}`
+      releaseScript.includes('--expected-release=grammar-qg-p21-2026-05-11'),
+      `Expected production-release script to target P21 release tag, got: ${releaseScript}`
     );
   });
 

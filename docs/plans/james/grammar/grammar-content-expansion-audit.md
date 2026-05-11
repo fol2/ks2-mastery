@@ -1,19 +1,19 @@
 ---
 title: "Grammar content-expansion audit (Phase 5 backlog)"
 type: audit
-status: p20-updated
-date: 2026-05-05
-plan: docs/plans/james/grammar/questions-generator/p20/grammar-qg-p20-answer-acceptance-template-quality-variety-expansion-contract.md
-unit: QG-P20
-contentReleaseId: grammar-qg-p20-2026-05-05
+status: p21-updated
+date: 2026-05-11
+plan: docs/plans/james/hotfixes/4. grammar-qg-p21-pool-expansion-package/contract/grammar-qg-p21-pool-expansion-contract.md
+unit: QG-P21
+contentReleaseId: grammar-qg-p21-2026-05-11
 contentReleaseBump: yes
 ---
 
 # Grammar content-expansion audit (Phase 5 backlog)
 
-This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the QG lineage through P20: P1 generator expansion, P2 declarative constructed-response marking, P3 explanation breadth, P4 mixed-transfer coverage, P5/P6 depth and stability hardening, P8-P11 production-certification content and delivery work, P12/P13 evidence/certification locks, P14 learner-variety expansion, the P15-P18 manual expansion promoted in `grammar-qg-p19-2026-05-04`, and the P20 answer-acceptance and safe closed auto-mark recovery promoted in `grammar-qg-p20-2026-05-05`. Historical fixtures remain frozen for compatibility checks rather than being overwritten.
+This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the QG lineage through P21: P1 generator expansion, P2 declarative constructed-response marking, P3 explanation breadth, P4 mixed-transfer coverage, P5/P6 depth and stability hardening, P8-P11 production-certification content and delivery work, P12/P13 evidence/certification locks, P14 learner-variety expansion, the P15-P18 manual expansion promoted in `grammar-qg-p19-2026-05-04`, the P20 answer-acceptance recovery promoted in `grammar-qg-p20-2026-05-05`, and the P21 pool-expansion slice promoted in `grammar-qg-p21-2026-05-11`. Historical fixtures remain frozen for compatibility checks rather than being overwritten.
 
-The audit is produced by reading `worker/src/subjects/grammar/content.js` at the current Grammar content release id and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 510 distinct templates in the audited pool: 321 selected-response, 189 constructed-response, 484 generated, and 26 fixed.
+The audit is produced by reading `worker/src/subjects/grammar/content.js` at the current Grammar content release id and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 546 distinct templates in the audited pool: 357 selected-response, 189 constructed-response, 520 generated, and 26 fixed.
 
 An executable generator audit backs this document:
 
@@ -22,6 +22,7 @@ node scripts/audit-grammar-question-generator.mjs
 ```
 
 The script reads live Grammar metadata and seeded generated questions, then reports template counts, generated/fixed split, selected/constructed-response balance, thin-pool concepts, single-question-type concepts, missing generator metadata, and safe visible-prompt signatures. The doc gate in `tests/grammar-content-expansion-audit.test.js` compares this Markdown table with the executable thin-pool list so the prose cannot silently drift from the release gate.
+
 ---
 
 ## How to read the concept table
@@ -32,10 +33,10 @@ Each concept row records the eight audit fields required by the Phase 4 plan (`�
 - **Templates** — the count of templates whose `skillIds` array includes this concept id.
 - **Types present** — the distinct `questionType` values across those templates, drawn from the eight-member family `{classify, identify, choose, fill, fix, rewrite, build, explain}`.
 - **Types absent** — the complement: question-type families not currently represented for this concept.
-- **Misconceptions covered** — the misconception ids (from `GRAMMAR_MISCONCEPTIONS`) that template evaluators can emit for this concept. Cross-concept misconceptions such as `punctuation_precision` (emitted by every constructed-response template that uses `markStringAnswer`) and `misread_question` (generic across the subject) are noted only when they provide the primary signal.
+- **Misconceptions covered** — the misconception ids (from `GRAMMAR_MISCONCEPTIONS`) that template evaluators can emit for this concept. Cross-concept misconceptions such as `punctuation_precision` and `misread_question` are noted only when they provide the primary signal.
 - **SR / CR balance** — selected-response (`isSelectedResponse: true`) versus constructed-response counts; the total equals the **Templates** field.
-- **Thin-pool flag** — `true` when the concept has `<= 2` templates. P1 ground truth: no concept is now thin-pool; the six former thin-pool concepts remain high-priority focus concepts because their new coverage is fresh.
-- **Priority** — `high` for the six P1 focus concepts and for the `explain` question-type expansion; `medium` for single-question-type structural concerns outside that set; `low` otherwise.
+- **Thin-pool flag** — `true` when the concept has `<= 2` templates. P21 ground truth: no concept is thin-pool.
+- **Priority** — `high` for the six P1 focus concepts; `medium` for single-question-type structural concerns outside that set; `low` otherwise.
 
 ---
 
@@ -43,24 +44,24 @@ Each concept row records the eight audit fields required by the Phase 4 plan (`�
 
 | Concept id | Templates | Types present | Types absent | Misconceptions covered | SR / CR | Thin-pool | Priority |
 |---|---|---|---|---|---|---|---|
-| sentence_functions | 27 | classify, identify, choose, fix, build, explain | fill, rewrite | sentence_function_confusion | 18 / 9 | false | low |
-| word_classes | 29 | classify, identify, choose, fix, build, explain | fill, rewrite | word_class_confusion | 21 / 8 | false | low |
-| noun_phrases | 32 | classify, identify, choose, fix, rewrite, build, explain | fill | noun_phrase_confusion | 19 / 13 | false | low |
-| adverbials | 32 | classify, identify, choose, fix, rewrite, build, explain | fill | fronted_adverbial_confusion | 17 / 15 | false | low |
-| clauses | 33 | classify, identify, choose, fix, rewrite, build, explain | fill | subordinate_clause_confusion | 19 / 14 | false | low |
-| relative_clauses | 27 | classify, identify, choose, fill, fix, build, explain | rewrite | relative_clause_confusion | 18 / 9 | false | low |
-| tense_aspect | 32 | classify, choose, fill, fix, rewrite, build, explain | identify | tense_confusion | 19 / 13 | false | low |
-| standard_english | 32 | classify, choose, fix, rewrite, build, explain | identify, fill | standard_english_confusion | 18 / 14 | false | low |
-| pronouns_cohesion | 27 | classify, identify, choose, fix, rewrite, build, explain | fill | pronoun_cohesion_confusion | 17 / 10 | false | high |
-| formality | 28 | classify, choose, fix, rewrite, build, explain | identify, fill | formality_confusion | 18 / 10 | false | high |
-| active_passive | 28 | classify, choose, fix, rewrite, build, explain | identify, fill | active_passive_confusion | 16 / 12 | false | high |
-| subject_object | 32 | classify, identify, choose, fix, rewrite, build, explain | fill | subject_object_confusion | 23 / 9 | false | high |
-| modal_verbs | 26 | classify, identify, choose, fill, fix, rewrite, build, explain |  | modal_verb_confusion | 18 / 8 | false | high |
-| parenthesis_commas | 31 | classify, identify, choose, fix, rewrite, build, explain | fill | parenthesis_confusion | 17 / 14 | false | low |
-| speech_punctuation | 33 | classify, identify, choose, fix, rewrite, build, explain | fill | speech_punctuation_confusion | 19 / 14 | false | low |
-| apostrophes_possession | 28 | classify, choose, fix, rewrite, build, explain | identify, fill | apostrophe_possession_confusion | 18 / 10 | false | low |
-| boundary_punctuation | 28 | classify, identify, choose, fix, build, explain | fill, rewrite | boundary_punctuation_confusion | 17 / 11 | false | low |
-| hyphen_ambiguity | 27 | classify, identify, choose, fix, build, explain | fill, rewrite | hyphen_ambiguity_confusion | 17 / 10 | false | high |
+| active_passive | 30 | classify, choose, fix, rewrite, build, explain | identify, fill | active_passive_confusion | 18 / 12 | false | high |
+| adverbials | 34 | classify, identify, choose, fix, rewrite, build, explain | fill | fronted_adverbial_confusion | 20 / 14 | false | low |
+| apostrophes_possession | 30 | classify, choose, fix, rewrite, build, explain | identify, fill | apostrophe_possession_confusion | 20 / 10 | false | low |
+| boundary_punctuation | 30 | classify, identify, choose, fix, build, explain | fill, rewrite | boundary_punctuation_confusion | 19 / 11 | false | low |
+| clauses | 35 | classify, identify, choose, fix, rewrite, build, explain | fill | subordinate_clause_confusion | 21 / 14 | false | low |
+| formality | 30 | classify, choose, fix, rewrite, build, explain | identify, fill | formality_confusion | 20 / 10 | false | high |
+| hyphen_ambiguity | 29 | classify, identify, choose, fix, build, explain | fill, rewrite | hyphen_ambiguity_confusion | 19 / 10 | false | high |
+| modal_verbs | 28 | classify, identify, choose, fill, fix, rewrite, build, explain |  | modal_verb_confusion | 20 / 8 | false | high |
+| noun_phrases | 34 | classify, identify, choose, fix, rewrite, build, explain | fill | noun_phrase_confusion | 21 / 13 | false | low |
+| parenthesis_commas | 33 | classify, identify, choose, fix, rewrite, build, explain | fill | parenthesis_confusion | 20 / 13 | false | low |
+| pronouns_cohesion | 29 | classify, identify, choose, fix, rewrite, build, explain | fill | pronoun_cohesion_confusion | 19 / 10 | false | high |
+| relative_clauses | 29 | classify, identify, choose, fill, fix, build, explain | rewrite | relative_clause_confusion | 20 / 9 | false | low |
+| sentence_functions | 29 | classify, identify, choose, fix, build, explain | fill, rewrite | sentence_function_confusion | 20 / 9 | false | low |
+| speech_punctuation | 35 | classify, identify, choose, fix, build, explain | fill, rewrite | speech_punctuation_confusion | 22 / 13 | false | low |
+| standard_english | 34 | classify, choose, fix, rewrite, build, explain | identify, fill | standard_english_confusion | 21 / 13 | false | low |
+| subject_object | 34 | classify, identify, choose, fix, rewrite, build, explain | fill | subject_object_confusion | 25 / 9 | false | high |
+| tense_aspect | 34 | classify, choose, fill, fix, rewrite, build, explain | identify | tense_confusion | 21 / 13 | false | low |
+| word_classes | 31 | classify, identify, choose, fix, build, explain | fill, rewrite | word_class_confusion | 23 / 8 | false | low |
 
 Row count: **18**. Thin-pool rows where the flag is `true`: **0**. The six P1 focus concepts (`pronouns_cohesion`, `formality`, `active_passive`, `subject_object`, `modal_verbs`, `hyphen_ambiguity`) are no longer thin-pool but stay priority `high`.
 

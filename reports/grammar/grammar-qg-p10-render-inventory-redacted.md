@@ -1,10 +1,10 @@
 # Grammar QG P10 Render Inventory (Redacted)
 
-Content Release: grammar-qg-p20-2026-05-05
-Total Items: 15300
-Templates: 510
+Content Release: grammar-qg-p21-2026-05-11
+Total Items: 16380
+Templates: 546
 Seed Range: 1..30
-Generated: 2026-05-05T15:30:37.205Z
+Generated: 2026-05-11T13:45:50.634Z
 
 _Answer internals stripped from this report._
 
@@ -1030,36 +1030,36 @@ _Answer internals stripped from this report._
 | proc2_standard_english_choice | 28 | single_choice | - | Which sentence is written in Standard English? |
 | proc2_standard_english_choice | 29 | single_choice | - | Which sentence is written in Standard English? |
 | proc2_standard_english_choice | 30 | single_choice | - | Which sentence is written in Standard English? |
-| proc2_standard_english_fix | 1 | textarea | - | Rewrite the sentence in Standard English. Ava don't know why |
-| proc2_standard_english_fix | 2 | textarea | - | Rewrite the sentence in Standard English. Noah don't know wh |
-| proc2_standard_english_fix | 3 | textarea | - | Rewrite the sentence in Standard English. Ava don't know whe |
-| proc2_standard_english_fix | 4 | textarea | - | Rewrite the sentence in Standard English. Noah seen the come |
-| proc2_standard_english_fix | 5 | textarea | - | Rewrite the sentence in Standard English. Nora don't know th |
-| proc2_standard_english_fix | 6 | textarea | - | Rewrite the sentence in Standard English. Ava don't know why |
-| proc2_standard_english_fix | 7 | textarea | - | Rewrite the sentence in Standard English. The visitors was w |
-| proc2_standard_english_fix | 8 | textarea | - | Rewrite the sentence in Standard English. They was standing  |
-| proc2_standard_english_fix | 9 | textarea | - | Rewrite the sentence in Standard English. We was ready for t |
-| proc2_standard_english_fix | 10 | textarea | - | Rewrite the sentence in Standard English. Ruby don't know wh |
-| proc2_standard_english_fix | 11 | textarea | - | Rewrite the sentence in Standard English. Luca don't know wh |
-| proc2_standard_english_fix | 12 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| proc2_standard_english_fix | 13 | textarea | - | Rewrite the sentence in Standard English. Elsie don't know t |
-| proc2_standard_english_fix | 14 | textarea | - | Rewrite the sentence in Standard English. I done the poster  |
-| proc2_standard_english_fix | 15 | textarea | - | Rewrite the sentence in Standard English. They was walking h |
-| proc2_standard_english_fix | 16 | textarea | - | Rewrite the sentence in Standard English. Ben don't know how |
-| proc2_standard_english_fix | 17 | textarea | - | Rewrite the sentence in Standard English. Mia don't know why |
-| proc2_standard_english_fix | 18 | textarea | - | Rewrite the sentence in Standard English. I done my reading  |
-| proc2_standard_english_fix | 19 | textarea | - | Rewrite the sentence in Standard English. They was walking h |
-| proc2_standard_english_fix | 20 | textarea | - | Rewrite the sentence in Standard English. Elsie seen the tro |
-| proc2_standard_english_fix | 21 | textarea | - | Rewrite the sentence in Standard English. I done the poster  |
-| proc2_standard_english_fix | 22 | textarea | - | Rewrite the sentence in Standard English. Mia don't know the |
-| proc2_standard_english_fix | 23 | textarea | - | Rewrite the sentence in Standard English. The players was wa |
-| proc2_standard_english_fix | 24 | textarea | - | Rewrite the sentence in Standard English. I done the map wor |
-| proc2_standard_english_fix | 25 | textarea | - | Rewrite the sentence in Standard English. Nora don't know wh |
-| proc2_standard_english_fix | 26 | textarea | - | Rewrite the sentence in Standard English. Jay don't know why |
-| proc2_standard_english_fix | 27 | textarea | - | Rewrite the sentence in Standard English. I done my homework |
-| proc2_standard_english_fix | 28 | textarea | - | Rewrite the sentence in Standard English. I done my reading  |
-| proc2_standard_english_fix | 29 | textarea | - | Rewrite the sentence in Standard English. They was waiting b |
-| proc2_standard_english_fix | 30 | textarea | - | Rewrite the sentence in Standard English. Sam seen the notic |
+| proc2_standard_english_fix | 1 | textarea | - | Correct this sentence into Standard English. Ava don't know  |
+| proc2_standard_english_fix | 2 | textarea | - | Correct this sentence into Standard English. Noah don't know |
+| proc2_standard_english_fix | 3 | textarea | - | Correct this sentence into Standard English. Ava don't know  |
+| proc2_standard_english_fix | 4 | textarea | - | Correct this sentence into Standard English. Noah seen the c |
+| proc2_standard_english_fix | 5 | textarea | - | Correct this sentence into Standard English. Nora don't know |
+| proc2_standard_english_fix | 6 | textarea | - | Correct this sentence into Standard English. Ava don't know  |
+| proc2_standard_english_fix | 7 | textarea | - | Correct this sentence into Standard English. The visitors wa |
+| proc2_standard_english_fix | 8 | textarea | - | Correct this sentence into Standard English. They was standi |
+| proc2_standard_english_fix | 9 | textarea | - | Correct this sentence into Standard English. We was ready fo |
+| proc2_standard_english_fix | 10 | textarea | - | Correct this sentence into Standard English. Ruby don't know |
+| proc2_standard_english_fix | 11 | textarea | - | Correct this sentence into Standard English. Luca don't know |
+| proc2_standard_english_fix | 12 | textarea | - | Correct this sentence into Standard English. I done my homew |
+| proc2_standard_english_fix | 13 | textarea | - | Correct this sentence into Standard English. Elsie don't kno |
+| proc2_standard_english_fix | 14 | textarea | - | Correct this sentence into Standard English. I done the post |
+| proc2_standard_english_fix | 15 | textarea | - | Correct this sentence into Standard English. They was walkin |
+| proc2_standard_english_fix | 16 | textarea | - | Correct this sentence into Standard English. Ben don't know  |
+| proc2_standard_english_fix | 17 | textarea | - | Correct this sentence into Standard English. Mia don't know  |
+| proc2_standard_english_fix | 18 | textarea | - | Correct this sentence into Standard English. I done my readi |
+| proc2_standard_english_fix | 19 | textarea | - | Correct this sentence into Standard English. They was walkin |
+| proc2_standard_english_fix | 20 | textarea | - | Correct this sentence into Standard English. Elsie seen the  |
+| proc2_standard_english_fix | 21 | textarea | - | Correct this sentence into Standard English. I done the post |
+| proc2_standard_english_fix | 22 | textarea | - | Correct this sentence into Standard English. Mia don't know  |
+| proc2_standard_english_fix | 23 | textarea | - | Correct this sentence into Standard English. The players was |
+| proc2_standard_english_fix | 24 | textarea | - | Correct this sentence into Standard English. I done the map  |
+| proc2_standard_english_fix | 25 | textarea | - | Correct this sentence into Standard English. Nora don't know |
+| proc2_standard_english_fix | 26 | textarea | - | Correct this sentence into Standard English. Jay don't know  |
+| proc2_standard_english_fix | 27 | textarea | - | Correct this sentence into Standard English. I done my homew |
+| proc2_standard_english_fix | 28 | textarea | - | Correct this sentence into Standard English. I done my readi |
+| proc2_standard_english_fix | 29 | textarea | - | Correct this sentence into Standard English. They was waitin |
+| proc2_standard_english_fix | 30 | textarea | - | Correct this sentence into Standard English. Sam seen the no |
 | proc2_tense_aspect_choice | 1 | single_choice | - | Choose the verb form that best completes the sentence: By th |
 | proc2_tense_aspect_choice | 2 | single_choice | - | Choose the verb form that best completes the sentence: last  |
 | proc2_tense_aspect_choice | 3 | single_choice | - | Choose the verb form that best completes the sentence: last  |
@@ -1240,36 +1240,36 @@ _Answer internals stripped from this report._
 | proc2_passive_to_active | 28 | textarea | - | Rewrite the sentence in the active voice. The rucksack was c |
 | proc2_passive_to_active | 29 | textarea | - | Rewrite the sentence in the active voice. The gate was carri |
 | proc2_passive_to_active | 30 | textarea | - | Rewrite the sentence in the active voice. The picnic basket  |
-| proc2_relative_clause_choice | 1 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 2 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 3 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 4 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 5 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 6 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 7 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 8 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 9 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 10 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 11 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 12 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 13 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 14 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 15 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 16 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 17 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 18 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 19 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 20 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 21 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 22 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 23 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 24 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 25 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 26 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 27 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 28 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 29 | single_choice | - | Which sentence contains a relative clause? |
-| proc2_relative_clause_choice | 30 | single_choice | - | Which sentence contains a relative clause? |
+| proc2_relative_clause_choice | 1 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 2 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 3 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 4 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 5 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 6 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 7 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 8 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 9 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 10 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 11 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 12 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 13 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 14 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 15 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 16 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 17 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 18 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 19 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 20 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 21 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 22 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 23 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 24 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 25 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 26 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 27 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 28 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 29 | single_choice | - | Choose the sentence where a relative clause adds information |
+| proc2_relative_clause_choice | 30 | single_choice | - | Choose the sentence where a relative clause adds information |
 | proc2_fronted_adverbial_build | 1 | textarea | - | Use this opening phrase and clause to build one correct sent |
 | proc2_fronted_adverbial_build | 2 | textarea | - | Use this opening phrase and clause to build one correct sent |
 | proc2_fronted_adverbial_build | 3 | textarea | - | Use this opening phrase and clause to build one correct sent |
@@ -3520,36 +3520,36 @@ _Answer internals stripped from this report._
 | qg_p18_p15_adverbials_explain_fronted_adv | 28 | single_choice | - | Why does this sentence need a comma after "With great care"? |
 | qg_p18_p15_adverbials_explain_fronted_adv | 29 | single_choice | - | Why does this sentence need a comma after "During the thunde |
 | qg_p18_p15_adverbials_explain_fronted_adv | 30 | single_choice | - | Why does this sentence need a comma after "Beside the canal" |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 1 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 2 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 3 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 4 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 5 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 6 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 7 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 8 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 9 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 10 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 11 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 12 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 13 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 14 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 15 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 16 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 17 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 18 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 19 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 20 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 21 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 22 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 23 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 24 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 25 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 26 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 27 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 28 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 29 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
-| qg_p18_p15_adverbials_fronted_adverbial_comma | 30 | textarea | - | Copy the sentence and add the comma after the fronted adverb |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 1 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 2 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 3 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 4 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 5 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 6 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 7 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 8 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 9 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 10 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 11 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 12 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 13 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 14 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 15 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 16 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 17 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 18 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 19 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 20 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 21 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 22 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 23 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 24 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 25 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 26 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 27 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 28 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 29 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
+| qg_p18_p15_adverbials_fronted_adverbial_comma | 30 | textarea | - | Add the missing comma after the fronted adverbial, then copy |
 | qg_p18_p15_adverbials_identify_fronted_adv | 1 | single_choice | - | Which part is the fronted adverbial? Before sunrise, the cam |
 | qg_p18_p15_adverbials_identify_fronted_adv | 2 | single_choice | - | Which part is the fronted adverbial? After the concert, the  |
 | qg_p18_p15_adverbials_identify_fronted_adv | 3 | single_choice | - | Which part is the fronted adverbial? In the corner of the ha |
@@ -4600,36 +4600,36 @@ _Answer internals stripped from this report._
 | qg_p18_p15_noun_phrases_head_noun | 28 | single_choice | - | What is the head noun in this noun phrase? three excited pup |
 | qg_p18_p15_noun_phrases_head_noun | 29 | single_choice | - | What is the head noun in this noun phrase? the old red kite  |
 | qg_p18_p15_noun_phrases_head_noun | 30 | single_choice | - | What is the head noun in this noun phrase? a bright torch wi |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 1 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 2 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 3 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 4 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 5 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 6 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 7 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 8 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 9 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 10 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 11 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 12 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 13 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 14 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 15 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 16 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 17 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 18 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 19 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 20 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 21 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 22 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 23 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 24 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 25 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 26 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 27 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 28 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 29 | single_choice | - | Which option is an expanded noun phrase? |
-| qg_p18_p15_noun_phrases_identify_expanded_np | 30 | single_choice | - | Which option is an expanded noun phrase? |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 1 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 2 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 3 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 4 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 5 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 6 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 7 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 8 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 9 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 10 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 11 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 12 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 13 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 14 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 15 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 16 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 17 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 18 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 19 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 20 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 21 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 22 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 23 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 24 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 25 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 26 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 27 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 28 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 29 | single_choice | - | Choose the expanded noun phrase from the options. |
+| qg_p18_p15_noun_phrases_identify_expanded_np | 30 | single_choice | - | Choose the expanded noun phrase from the options. |
 | qg_p18_p15_noun_phrases_np_not_clause | 1 | single_choice | - | Which answer is a noun phrase rather than a clause? |
 | qg_p18_p15_noun_phrases_np_not_clause | 2 | single_choice | - | Which answer is a noun phrase rather than a clause? |
 | qg_p18_p15_noun_phrases_np_not_clause | 3 | single_choice | - | Which answer is a noun phrase rather than a clause? |
@@ -5110,36 +5110,36 @@ _Answer internals stripped from this report._
 | qg_p18_p15_relative_clauses_relative_transfer | 28 | single_choice | - | Which sentence uses a relative clause? |
 | qg_p18_p15_relative_clauses_relative_transfer | 29 | single_choice | - | Which sentence uses a relative clause? |
 | qg_p18_p15_relative_clauses_relative_transfer | 30 | single_choice | - | Which sentence uses a relative clause? |
-| qg_p18_p15_sentence_functions_explain_function | 1 | single_choice | - | Why is this sentence a command? Close the library door quiet |
-| qg_p18_p15_sentence_functions_explain_function | 2 | single_choice | - | Why is this sentence an exclamation? How bright the comet lo |
-| qg_p18_p15_sentence_functions_explain_function | 3 | single_choice | - | Why is this sentence a question? Did Maya remember her readi |
-| qg_p18_p15_sentence_functions_explain_function | 4 | single_choice | - | Why is this sentence a statement? The old clock chimed at no |
-| qg_p18_p15_sentence_functions_explain_function | 5 | single_choice | - | Why is this sentence a command? Please pass the glue stick. |
-| qg_p18_p15_sentence_functions_explain_function | 6 | single_choice | - | Why is this sentence an exclamation? What a brave rescue tha |
-| qg_p18_p15_sentence_functions_explain_function | 7 | single_choice | - | Why is this sentence a question? Can we check the timetable  |
-| qg_p18_p15_sentence_functions_explain_function | 8 | single_choice | - | Why is this sentence a statement? A thin mist covered the pl |
-| qg_p18_p15_sentence_functions_explain_function | 9 | single_choice | - | Why is this sentence a command? Bring the science trays to t |
-| qg_p18_p15_sentence_functions_explain_function | 10 | single_choice | - | Why is this sentence an exclamation? How quickly the storm a |
-| qg_p18_p15_sentence_functions_explain_function | 11 | single_choice | - | Why is this sentence a question? Where did the caretaker lea |
-| qg_p18_p15_sentence_functions_explain_function | 12 | single_choice | - | Why is this sentence a statement? The chess club meets after |
-| qg_p18_p15_sentence_functions_explain_function | 13 | single_choice | - | Why is this sentence a command? Close the library door quiet |
-| qg_p18_p15_sentence_functions_explain_function | 14 | single_choice | - | Why is this sentence an exclamation? How bright the comet lo |
-| qg_p18_p15_sentence_functions_explain_function | 15 | single_choice | - | Why is this sentence a question? Did Maya remember her readi |
-| qg_p18_p15_sentence_functions_explain_function | 16 | single_choice | - | Why is this sentence a statement? The old clock chimed at no |
-| qg_p18_p15_sentence_functions_explain_function | 17 | single_choice | - | Why is this sentence a command? Please pass the glue stick. |
-| qg_p18_p15_sentence_functions_explain_function | 18 | single_choice | - | Why is this sentence an exclamation? What a brave rescue tha |
-| qg_p18_p15_sentence_functions_explain_function | 19 | single_choice | - | Why is this sentence a question? Can we check the timetable  |
-| qg_p18_p15_sentence_functions_explain_function | 20 | single_choice | - | Why is this sentence a statement? A thin mist covered the pl |
-| qg_p18_p15_sentence_functions_explain_function | 21 | single_choice | - | Why is this sentence a command? Bring the science trays to t |
-| qg_p18_p15_sentence_functions_explain_function | 22 | single_choice | - | Why is this sentence an exclamation? How quickly the storm a |
-| qg_p18_p15_sentence_functions_explain_function | 23 | single_choice | - | Why is this sentence a question? Where did the caretaker lea |
-| qg_p18_p15_sentence_functions_explain_function | 24 | single_choice | - | Why is this sentence a statement? The chess club meets after |
-| qg_p18_p15_sentence_functions_explain_function | 25 | single_choice | - | Why is this sentence a command? Close the library door quiet |
-| qg_p18_p15_sentence_functions_explain_function | 26 | single_choice | - | Why is this sentence an exclamation? How bright the comet lo |
-| qg_p18_p15_sentence_functions_explain_function | 27 | single_choice | - | Why is this sentence a question? Did Maya remember her readi |
-| qg_p18_p15_sentence_functions_explain_function | 28 | single_choice | - | Why is this sentence a statement? The old clock chimed at no |
-| qg_p18_p15_sentence_functions_explain_function | 29 | single_choice | - | Why is this sentence a command? Please pass the glue stick. |
-| qg_p18_p15_sentence_functions_explain_function | 30 | single_choice | - | Why is this sentence an exclamation? What a brave rescue tha |
+| qg_p18_p15_sentence_functions_explain_function | 1 | single_choice | - | Choose the best reason this sentence is a command: Close the |
+| qg_p18_p15_sentence_functions_explain_function | 2 | single_choice | - | Choose the best reason this sentence is an exclamation: How  |
+| qg_p18_p15_sentence_functions_explain_function | 3 | single_choice | - | Choose the best reason this sentence is a question: Did Maya |
+| qg_p18_p15_sentence_functions_explain_function | 4 | single_choice | - | Choose the best reason this sentence is a statement: The old |
+| qg_p18_p15_sentence_functions_explain_function | 5 | single_choice | - | Choose the best reason this sentence is a command: Please pa |
+| qg_p18_p15_sentence_functions_explain_function | 6 | single_choice | - | Choose the best reason this sentence is an exclamation: What |
+| qg_p18_p15_sentence_functions_explain_function | 7 | single_choice | - | Choose the best reason this sentence is a question: Can we c |
+| qg_p18_p15_sentence_functions_explain_function | 8 | single_choice | - | Choose the best reason this sentence is a statement: A thin  |
+| qg_p18_p15_sentence_functions_explain_function | 9 | single_choice | - | Choose the best reason this sentence is a command: Bring the |
+| qg_p18_p15_sentence_functions_explain_function | 10 | single_choice | - | Choose the best reason this sentence is an exclamation: How  |
+| qg_p18_p15_sentence_functions_explain_function | 11 | single_choice | - | Choose the best reason this sentence is a question: Where di |
+| qg_p18_p15_sentence_functions_explain_function | 12 | single_choice | - | Choose the best reason this sentence is a statement: The che |
+| qg_p18_p15_sentence_functions_explain_function | 13 | single_choice | - | Choose the best reason this sentence is a command: Close the |
+| qg_p18_p15_sentence_functions_explain_function | 14 | single_choice | - | Choose the best reason this sentence is an exclamation: How  |
+| qg_p18_p15_sentence_functions_explain_function | 15 | single_choice | - | Choose the best reason this sentence is a question: Did Maya |
+| qg_p18_p15_sentence_functions_explain_function | 16 | single_choice | - | Choose the best reason this sentence is a statement: The old |
+| qg_p18_p15_sentence_functions_explain_function | 17 | single_choice | - | Choose the best reason this sentence is a command: Please pa |
+| qg_p18_p15_sentence_functions_explain_function | 18 | single_choice | - | Choose the best reason this sentence is an exclamation: What |
+| qg_p18_p15_sentence_functions_explain_function | 19 | single_choice | - | Choose the best reason this sentence is a question: Can we c |
+| qg_p18_p15_sentence_functions_explain_function | 20 | single_choice | - | Choose the best reason this sentence is a statement: A thin  |
+| qg_p18_p15_sentence_functions_explain_function | 21 | single_choice | - | Choose the best reason this sentence is a command: Bring the |
+| qg_p18_p15_sentence_functions_explain_function | 22 | single_choice | - | Choose the best reason this sentence is an exclamation: How  |
+| qg_p18_p15_sentence_functions_explain_function | 23 | single_choice | - | Choose the best reason this sentence is a question: Where di |
+| qg_p18_p15_sentence_functions_explain_function | 24 | single_choice | - | Choose the best reason this sentence is a statement: The che |
+| qg_p18_p15_sentence_functions_explain_function | 25 | single_choice | - | Choose the best reason this sentence is a command: Close the |
+| qg_p18_p15_sentence_functions_explain_function | 26 | single_choice | - | Choose the best reason this sentence is an exclamation: How  |
+| qg_p18_p15_sentence_functions_explain_function | 27 | single_choice | - | Choose the best reason this sentence is a question: Did Maya |
+| qg_p18_p15_sentence_functions_explain_function | 28 | single_choice | - | Choose the best reason this sentence is a statement: The old |
+| qg_p18_p15_sentence_functions_explain_function | 29 | single_choice | - | Choose the best reason this sentence is a command: Please pa |
+| qg_p18_p15_sentence_functions_explain_function | 30 | single_choice | - | Choose the best reason this sentence is an exclamation: What |
 | qg_p18_p15_sentence_functions_function_contrast | 1 | single_choice | target-sentence: Close the library door quietly. | Which label best matches the sentence below? Close the libra |
 | qg_p18_p15_sentence_functions_function_contrast | 2 | single_choice | target-sentence: How bright the comet looked! | Which label best matches the sentence below? How bright the  |
 | qg_p18_p15_sentence_functions_function_contrast | 3 | single_choice | target-sentence: Did Maya remember her reading journal? | Which label best matches the sentence below? Did Maya rememb |
@@ -6910,36 +6910,36 @@ _Answer internals stripped from this report._
 | qg_p18_p16_clauses_punctuate_subordinate_first | 28 | textarea | - | Add punctuation when the subordinate clause comes first: If  |
 | qg_p18_p16_clauses_punctuate_subordinate_first | 29 | textarea | - | Add punctuation when the subordinate clause comes first: Bef |
 | qg_p18_p16_clauses_punctuate_subordinate_first | 30 | textarea | - | Add punctuation when the subordinate clause comes first: Whi |
-| qg_p18_p16_clauses_subordinate_clause_identify | 1 | single_choice | - | Which option is the subordinate clause? Although the wind wa |
-| qg_p18_p16_clauses_subordinate_clause_identify | 2 | single_choice | - | Which option is the subordinate clause? When the bell rang,  |
-| qg_p18_p16_clauses_subordinate_clause_identify | 3 | single_choice | - | Which option is the subordinate clause? Because it was raini |
-| qg_p18_p16_clauses_subordinate_clause_identify | 4 | single_choice | - | Which option is the subordinate clause? If the path is icy,  |
-| qg_p18_p16_clauses_subordinate_clause_identify | 5 | single_choice | - | Which option is the subordinate clause? Before the bus arriv |
-| qg_p18_p16_clauses_subordinate_clause_identify | 6 | single_choice | - | Which option is the subordinate clause? While Omar painted,  |
-| qg_p18_p16_clauses_subordinate_clause_identify | 7 | single_choice | - | Which option is the subordinate clause? Since the gate was l |
-| qg_p18_p16_clauses_subordinate_clause_identify | 8 | single_choice | - | Which option is the subordinate clause? After the lights wen |
-| qg_p18_p16_clauses_subordinate_clause_identify | 9 | single_choice | - | Which option is the subordinate clause? Although the hill wa |
-| qg_p18_p16_clauses_subordinate_clause_identify | 10 | single_choice | - | Which option is the subordinate clause? When the dog barked, |
-| qg_p18_p16_clauses_subordinate_clause_identify | 11 | single_choice | - | Which option is the subordinate clause? Because the vase was |
-| qg_p18_p16_clauses_subordinate_clause_identify | 12 | single_choice | - | Which option is the subordinate clause? If the tent leaks, w |
-| qg_p18_p16_clauses_subordinate_clause_identify | 13 | single_choice | - | Which option is the subordinate clause? Although the wind wa |
-| qg_p18_p16_clauses_subordinate_clause_identify | 14 | single_choice | - | Which option is the subordinate clause? When the bell rang,  |
-| qg_p18_p16_clauses_subordinate_clause_identify | 15 | single_choice | - | Which option is the subordinate clause? Because it was raini |
-| qg_p18_p16_clauses_subordinate_clause_identify | 16 | single_choice | - | Which option is the subordinate clause? If the path is icy,  |
-| qg_p18_p16_clauses_subordinate_clause_identify | 17 | single_choice | - | Which option is the subordinate clause? Before the bus arriv |
-| qg_p18_p16_clauses_subordinate_clause_identify | 18 | single_choice | - | Which option is the subordinate clause? While Omar painted,  |
-| qg_p18_p16_clauses_subordinate_clause_identify | 19 | single_choice | - | Which option is the subordinate clause? Since the gate was l |
-| qg_p18_p16_clauses_subordinate_clause_identify | 20 | single_choice | - | Which option is the subordinate clause? After the lights wen |
-| qg_p18_p16_clauses_subordinate_clause_identify | 21 | single_choice | - | Which option is the subordinate clause? Although the hill wa |
-| qg_p18_p16_clauses_subordinate_clause_identify | 22 | single_choice | - | Which option is the subordinate clause? When the dog barked, |
-| qg_p18_p16_clauses_subordinate_clause_identify | 23 | single_choice | - | Which option is the subordinate clause? Because the vase was |
-| qg_p18_p16_clauses_subordinate_clause_identify | 24 | single_choice | - | Which option is the subordinate clause? If the tent leaks, w |
-| qg_p18_p16_clauses_subordinate_clause_identify | 25 | single_choice | - | Which option is the subordinate clause? Although the wind wa |
-| qg_p18_p16_clauses_subordinate_clause_identify | 26 | single_choice | - | Which option is the subordinate clause? When the bell rang,  |
-| qg_p18_p16_clauses_subordinate_clause_identify | 27 | single_choice | - | Which option is the subordinate clause? Because it was raini |
-| qg_p18_p16_clauses_subordinate_clause_identify | 28 | single_choice | - | Which option is the subordinate clause? If the path is icy,  |
-| qg_p18_p16_clauses_subordinate_clause_identify | 29 | single_choice | - | Which option is the subordinate clause? Before the bus arriv |
-| qg_p18_p16_clauses_subordinate_clause_identify | 30 | single_choice | - | Which option is the subordinate clause? While Omar painted,  |
+| qg_p18_p16_clauses_subordinate_clause_identify | 1 | single_choice | - | Choose the subordinate clause from this sentence: Although t |
+| qg_p18_p16_clauses_subordinate_clause_identify | 2 | single_choice | - | Choose the subordinate clause from this sentence: When the b |
+| qg_p18_p16_clauses_subordinate_clause_identify | 3 | single_choice | - | Choose the subordinate clause from this sentence: Because it |
+| qg_p18_p16_clauses_subordinate_clause_identify | 4 | single_choice | - | Choose the subordinate clause from this sentence: If the pat |
+| qg_p18_p16_clauses_subordinate_clause_identify | 5 | single_choice | - | Choose the subordinate clause from this sentence: Before the |
+| qg_p18_p16_clauses_subordinate_clause_identify | 6 | single_choice | - | Choose the subordinate clause from this sentence: While Omar |
+| qg_p18_p16_clauses_subordinate_clause_identify | 7 | single_choice | - | Choose the subordinate clause from this sentence: Since the  |
+| qg_p18_p16_clauses_subordinate_clause_identify | 8 | single_choice | - | Choose the subordinate clause from this sentence: After the  |
+| qg_p18_p16_clauses_subordinate_clause_identify | 9 | single_choice | - | Choose the subordinate clause from this sentence: Although t |
+| qg_p18_p16_clauses_subordinate_clause_identify | 10 | single_choice | - | Choose the subordinate clause from this sentence: When the d |
+| qg_p18_p16_clauses_subordinate_clause_identify | 11 | single_choice | - | Choose the subordinate clause from this sentence: Because th |
+| qg_p18_p16_clauses_subordinate_clause_identify | 12 | single_choice | - | Choose the subordinate clause from this sentence: If the ten |
+| qg_p18_p16_clauses_subordinate_clause_identify | 13 | single_choice | - | Choose the subordinate clause from this sentence: Although t |
+| qg_p18_p16_clauses_subordinate_clause_identify | 14 | single_choice | - | Choose the subordinate clause from this sentence: When the b |
+| qg_p18_p16_clauses_subordinate_clause_identify | 15 | single_choice | - | Choose the subordinate clause from this sentence: Because it |
+| qg_p18_p16_clauses_subordinate_clause_identify | 16 | single_choice | - | Choose the subordinate clause from this sentence: If the pat |
+| qg_p18_p16_clauses_subordinate_clause_identify | 17 | single_choice | - | Choose the subordinate clause from this sentence: Before the |
+| qg_p18_p16_clauses_subordinate_clause_identify | 18 | single_choice | - | Choose the subordinate clause from this sentence: While Omar |
+| qg_p18_p16_clauses_subordinate_clause_identify | 19 | single_choice | - | Choose the subordinate clause from this sentence: Since the  |
+| qg_p18_p16_clauses_subordinate_clause_identify | 20 | single_choice | - | Choose the subordinate clause from this sentence: After the  |
+| qg_p18_p16_clauses_subordinate_clause_identify | 21 | single_choice | - | Choose the subordinate clause from this sentence: Although t |
+| qg_p18_p16_clauses_subordinate_clause_identify | 22 | single_choice | - | Choose the subordinate clause from this sentence: When the d |
+| qg_p18_p16_clauses_subordinate_clause_identify | 23 | single_choice | - | Choose the subordinate clause from this sentence: Because th |
+| qg_p18_p16_clauses_subordinate_clause_identify | 24 | single_choice | - | Choose the subordinate clause from this sentence: If the ten |
+| qg_p18_p16_clauses_subordinate_clause_identify | 25 | single_choice | - | Choose the subordinate clause from this sentence: Although t |
+| qg_p18_p16_clauses_subordinate_clause_identify | 26 | single_choice | - | Choose the subordinate clause from this sentence: When the b |
+| qg_p18_p16_clauses_subordinate_clause_identify | 27 | single_choice | - | Choose the subordinate clause from this sentence: Because it |
+| qg_p18_p16_clauses_subordinate_clause_identify | 28 | single_choice | - | Choose the subordinate clause from this sentence: If the pat |
+| qg_p18_p16_clauses_subordinate_clause_identify | 29 | single_choice | - | Choose the subordinate clause from this sentence: Before the |
+| qg_p18_p16_clauses_subordinate_clause_identify | 30 | single_choice | - | Choose the subordinate clause from this sentence: While Omar |
 | qg_p18_p16_formality_choose_formal_word | 1 | single_choice | - | Which word is more formal: request / ask for? |
 | qg_p18_p16_formality_choose_formal_word | 2 | single_choice | - | Which word is more formal: established / set up? |
 | qg_p18_p16_formality_choose_formal_word | 3 | single_choice | - | Which word is more formal: discover / find out? |
@@ -7330,36 +7330,36 @@ _Answer internals stripped from this report._
 | qg_p18_p16_modal_verbs_change_force_rewrite | 28 | text | - | Rewrite to make the sentence show obligation: You could fini |
 | qg_p18_p16_modal_verbs_change_force_rewrite | 29 | text | - | Rewrite to make the sentence show certainty: The train could |
 | qg_p18_p16_modal_verbs_change_force_rewrite | 30 | text | - | Rewrite to make the sentence show possibility: We could leav |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 1 | single_choice | - | You ___ wear a helmet on this trail. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 2 | single_choice | - | It ___ snow tonight. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 3 | single_choice | - | The team ___ win if they practise. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 4 | single_choice | - | You ___ finish your homework before the trip. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 5 | single_choice | - | The train ___ arrive at six. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 6 | single_choice | - | We ___ leave early if the road floods. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 7 | single_choice | - | You ___ not run beside the pool. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 8 | single_choice | - | The parcel ___ arrive tomorrow. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 9 | single_choice | - | You ___ check your answer carefully. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 10 | single_choice | - | This key ___ open the cupboard. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 11 | single_choice | - | The alarm ___ ring during the test. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 12 | single_choice | - | The class ___ perform on Friday. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 13 | single_choice | - | You ___ wear a helmet on this trail. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 14 | single_choice | - | It ___ snow tonight. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 15 | single_choice | - | The team ___ win if they practise. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 16 | single_choice | - | You ___ finish your homework before the trip. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 17 | single_choice | - | The train ___ arrive at six. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 18 | single_choice | - | We ___ leave early if the road floods. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 19 | single_choice | - | You ___ not run beside the pool. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 20 | single_choice | - | The parcel ___ arrive tomorrow. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 21 | single_choice | - | You ___ check your answer carefully. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 22 | single_choice | - | This key ___ open the cupboard. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 23 | single_choice | - | The alarm ___ ring during the test. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 24 | single_choice | - | The class ___ perform on Friday. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 25 | single_choice | - | You ___ wear a helmet on this trail. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 26 | single_choice | - | It ___ snow tonight. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 27 | single_choice | - | The team ___ win if they practise. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 28 | single_choice | - | You ___ finish your homework before the trip. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 29 | single_choice | - | The train ___ arrive at six. |
-| qg_p18_p16_modal_verbs_choose_modal_meaning | 30 | single_choice | - | We ___ leave early if the road floods. |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 1 | single_choice | - | Choose the modal verb that best fits: You ___ wear a helmet  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 2 | single_choice | - | Choose the modal verb that best fits: It ___ snow tonight. |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 3 | single_choice | - | Choose the modal verb that best fits: The team ___ win if th |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 4 | single_choice | - | Choose the modal verb that best fits: You ___ finish your ho |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 5 | single_choice | - | Choose the modal verb that best fits: The train ___ arrive a |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 6 | single_choice | - | Choose the modal verb that best fits: We ___ leave early if  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 7 | single_choice | - | Choose the modal verb that best fits: You ___ not run beside |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 8 | single_choice | - | Choose the modal verb that best fits: The parcel ___ arrive  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 9 | single_choice | - | Choose the modal verb that best fits: You ___ check your ans |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 10 | single_choice | - | Choose the modal verb that best fits: This key ___ open the  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 11 | single_choice | - | Choose the modal verb that best fits: The alarm ___ ring dur |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 12 | single_choice | - | Choose the modal verb that best fits: The class ___ perform  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 13 | single_choice | - | Choose the modal verb that best fits: You ___ wear a helmet  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 14 | single_choice | - | Choose the modal verb that best fits: It ___ snow tonight. |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 15 | single_choice | - | Choose the modal verb that best fits: The team ___ win if th |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 16 | single_choice | - | Choose the modal verb that best fits: You ___ finish your ho |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 17 | single_choice | - | Choose the modal verb that best fits: The train ___ arrive a |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 18 | single_choice | - | Choose the modal verb that best fits: We ___ leave early if  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 19 | single_choice | - | Choose the modal verb that best fits: You ___ not run beside |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 20 | single_choice | - | Choose the modal verb that best fits: The parcel ___ arrive  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 21 | single_choice | - | Choose the modal verb that best fits: You ___ check your ans |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 22 | single_choice | - | Choose the modal verb that best fits: This key ___ open the  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 23 | single_choice | - | Choose the modal verb that best fits: The alarm ___ ring dur |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 24 | single_choice | - | Choose the modal verb that best fits: The class ___ perform  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 25 | single_choice | - | Choose the modal verb that best fits: You ___ wear a helmet  |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 26 | single_choice | - | Choose the modal verb that best fits: It ___ snow tonight. |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 27 | single_choice | - | Choose the modal verb that best fits: The team ___ win if th |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 28 | single_choice | - | Choose the modal verb that best fits: You ___ finish your ho |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 29 | single_choice | - | Choose the modal verb that best fits: The train ___ arrive a |
+| qg_p18_p16_modal_verbs_choose_modal_meaning | 30 | single_choice | - | Choose the modal verb that best fits: We ___ leave early if  |
 | qg_p18_p16_modal_verbs_meaning_transfer_choice | 1 | single_choice | - | Which sentence best shows strong advice? |
 | qg_p18_p16_modal_verbs_meaning_transfer_choice | 2 | single_choice | - | Which sentence best shows possibility? |
 | qg_p18_p16_modal_verbs_meaning_transfer_choice | 3 | single_choice | - | Which sentence best shows possibility? |
@@ -8560,36 +8560,36 @@ _Answer internals stripped from this report._
 | qg_p18_p16_speech_punctuation_speech_or_indirect | 28 | single_choice | - | Which sentence is direct speech? |
 | qg_p18_p16_speech_punctuation_speech_or_indirect | 29 | single_choice | - | Which sentence is direct speech? |
 | qg_p18_p16_speech_punctuation_speech_or_indirect | 30 | single_choice | - | Which sentence is direct speech? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 1 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 2 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 3 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 4 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 5 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 6 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 7 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 8 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 9 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 10 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 11 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 12 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 13 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 14 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 15 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 16 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 17 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 18 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 19 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 20 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 21 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 22 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 23 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 24 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 25 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 26 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 27 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 28 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 29 | single_choice | - | Which sentence uses Standard English? |
-| qg_p18_p16_standard_english_choose_standard_sentence | 30 | single_choice | - | Which sentence uses Standard English? |
+| qg_p18_p16_standard_english_choose_standard_sentence | 1 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 2 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 3 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 4 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 5 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 6 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 7 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 8 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 9 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 10 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 11 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 12 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 13 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 14 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 15 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 16 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 17 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 18 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 19 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 20 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 21 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 22 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 23 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 24 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 25 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 26 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 27 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 28 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 29 | single_choice | - | Choose the sentence written in Standard English. |
+| qg_p18_p16_standard_english_choose_standard_sentence | 30 | single_choice | - | Choose the sentence written in Standard English. |
 | qg_p18_p16_standard_english_context_formal_standard | 1 | single_choice | - | Which version should be used in a school report? |
 | qg_p18_p16_standard_english_context_formal_standard | 2 | single_choice | - | Which version should be used in a school report? |
 | qg_p18_p16_standard_english_context_formal_standard | 3 | single_choice | - | Which version should be used in a school report? |
@@ -8770,66 +8770,66 @@ _Answer internals stripped from this report._
 | qg_p18_p16_subject_object_explain_roles | 28 | textarea | - | Explain the subject and object in: The small robot carried t |
 | qg_p18_p16_subject_object_explain_roles | 29 | textarea | - | Explain the subject and object in: Beside the river, Maya fo |
 | qg_p18_p16_subject_object_explain_roles | 30 | textarea | - | Explain the subject and object in: The storm broke the old f |
-| qg_p18_p16_subject_object_find_object | 1 | single_choice | - | What is the object of this sentence? The noisy gull stole th |
-| qg_p18_p16_subject_object_find_object | 2 | single_choice | - | What is the object of this sentence? On Friday morning, our  |
-| qg_p18_p16_subject_object_find_object | 3 | single_choice | - | What is the object of this sentence? After lunch, the tired  |
-| qg_p18_p16_subject_object_find_object | 4 | single_choice | - | What is the object of this sentence? The small robot carried |
-| qg_p18_p16_subject_object_find_object | 5 | single_choice | - | What is the object of this sentence? Beside the river, Maya  |
-| qg_p18_p16_subject_object_find_object | 6 | single_choice | - | What is the object of this sentence? The storm broke the old |
-| qg_p18_p16_subject_object_find_object | 7 | single_choice | - | What is the object of this sentence? The choir sang a new so |
-| qg_p18_p16_subject_object_find_object | 8 | single_choice | - | What is the object of this sentence? In the kitchen, Omar wa |
-| qg_p18_p16_subject_object_find_object | 9 | single_choice | - | What is the object of this sentence? The red kite crossed th |
-| qg_p18_p16_subject_object_find_object | 10 | single_choice | - | What is the object of this sentence? The guide led the visit |
-| qg_p18_p16_subject_object_find_object | 11 | single_choice | - | What is the object of this sentence? Before the match, Ben c |
-| qg_p18_p16_subject_object_find_object | 12 | single_choice | - | What is the object of this sentence? The lantern lit the pat |
-| qg_p18_p16_subject_object_find_object | 13 | single_choice | - | What is the object of this sentence? The noisy gull stole th |
-| qg_p18_p16_subject_object_find_object | 14 | single_choice | - | What is the object of this sentence? On Friday morning, our  |
-| qg_p18_p16_subject_object_find_object | 15 | single_choice | - | What is the object of this sentence? After lunch, the tired  |
-| qg_p18_p16_subject_object_find_object | 16 | single_choice | - | What is the object of this sentence? The small robot carried |
-| qg_p18_p16_subject_object_find_object | 17 | single_choice | - | What is the object of this sentence? Beside the river, Maya  |
-| qg_p18_p16_subject_object_find_object | 18 | single_choice | - | What is the object of this sentence? The storm broke the old |
-| qg_p18_p16_subject_object_find_object | 19 | single_choice | - | What is the object of this sentence? The choir sang a new so |
-| qg_p18_p16_subject_object_find_object | 20 | single_choice | - | What is the object of this sentence? In the kitchen, Omar wa |
-| qg_p18_p16_subject_object_find_object | 21 | single_choice | - | What is the object of this sentence? The red kite crossed th |
-| qg_p18_p16_subject_object_find_object | 22 | single_choice | - | What is the object of this sentence? The guide led the visit |
-| qg_p18_p16_subject_object_find_object | 23 | single_choice | - | What is the object of this sentence? Before the match, Ben c |
-| qg_p18_p16_subject_object_find_object | 24 | single_choice | - | What is the object of this sentence? The lantern lit the pat |
-| qg_p18_p16_subject_object_find_object | 25 | single_choice | - | What is the object of this sentence? The noisy gull stole th |
-| qg_p18_p16_subject_object_find_object | 26 | single_choice | - | What is the object of this sentence? On Friday morning, our  |
-| qg_p18_p16_subject_object_find_object | 27 | single_choice | - | What is the object of this sentence? After lunch, the tired  |
-| qg_p18_p16_subject_object_find_object | 28 | single_choice | - | What is the object of this sentence? The small robot carried |
-| qg_p18_p16_subject_object_find_object | 29 | single_choice | - | What is the object of this sentence? Beside the river, Maya  |
-| qg_p18_p16_subject_object_find_object | 30 | single_choice | - | What is the object of this sentence? The storm broke the old |
-| qg_p18_p16_subject_object_find_subject | 1 | single_choice | - | What is the subject of this sentence? The noisy gull stole t |
-| qg_p18_p16_subject_object_find_subject | 2 | single_choice | - | What is the subject of this sentence? On Friday morning, our |
-| qg_p18_p16_subject_object_find_subject | 3 | single_choice | - | What is the subject of this sentence? After lunch, the tired |
-| qg_p18_p16_subject_object_find_subject | 4 | single_choice | - | What is the subject of this sentence? The small robot carrie |
-| qg_p18_p16_subject_object_find_subject | 5 | single_choice | - | What is the subject of this sentence? Beside the river, Maya |
-| qg_p18_p16_subject_object_find_subject | 6 | single_choice | - | What is the subject of this sentence? The storm broke the ol |
-| qg_p18_p16_subject_object_find_subject | 7 | single_choice | - | What is the subject of this sentence? The choir sang a new s |
-| qg_p18_p16_subject_object_find_subject | 8 | single_choice | - | What is the subject of this sentence? In the kitchen, Omar w |
-| qg_p18_p16_subject_object_find_subject | 9 | single_choice | - | What is the subject of this sentence? The red kite crossed t |
-| qg_p18_p16_subject_object_find_subject | 10 | single_choice | - | What is the subject of this sentence? The guide led the visi |
-| qg_p18_p16_subject_object_find_subject | 11 | single_choice | - | What is the subject of this sentence? Before the match, Ben  |
-| qg_p18_p16_subject_object_find_subject | 12 | single_choice | - | What is the subject of this sentence? The lantern lit the pa |
-| qg_p18_p16_subject_object_find_subject | 13 | single_choice | - | What is the subject of this sentence? The noisy gull stole t |
-| qg_p18_p16_subject_object_find_subject | 14 | single_choice | - | What is the subject of this sentence? On Friday morning, our |
-| qg_p18_p16_subject_object_find_subject | 15 | single_choice | - | What is the subject of this sentence? After lunch, the tired |
-| qg_p18_p16_subject_object_find_subject | 16 | single_choice | - | What is the subject of this sentence? The small robot carrie |
-| qg_p18_p16_subject_object_find_subject | 17 | single_choice | - | What is the subject of this sentence? Beside the river, Maya |
-| qg_p18_p16_subject_object_find_subject | 18 | single_choice | - | What is the subject of this sentence? The storm broke the ol |
-| qg_p18_p16_subject_object_find_subject | 19 | single_choice | - | What is the subject of this sentence? The choir sang a new s |
-| qg_p18_p16_subject_object_find_subject | 20 | single_choice | - | What is the subject of this sentence? In the kitchen, Omar w |
-| qg_p18_p16_subject_object_find_subject | 21 | single_choice | - | What is the subject of this sentence? The red kite crossed t |
-| qg_p18_p16_subject_object_find_subject | 22 | single_choice | - | What is the subject of this sentence? The guide led the visi |
-| qg_p18_p16_subject_object_find_subject | 23 | single_choice | - | What is the subject of this sentence? Before the match, Ben  |
-| qg_p18_p16_subject_object_find_subject | 24 | single_choice | - | What is the subject of this sentence? The lantern lit the pa |
-| qg_p18_p16_subject_object_find_subject | 25 | single_choice | - | What is the subject of this sentence? The noisy gull stole t |
-| qg_p18_p16_subject_object_find_subject | 26 | single_choice | - | What is the subject of this sentence? On Friday morning, our |
-| qg_p18_p16_subject_object_find_subject | 27 | single_choice | - | What is the subject of this sentence? After lunch, the tired |
-| qg_p18_p16_subject_object_find_subject | 28 | single_choice | - | What is the subject of this sentence? The small robot carrie |
-| qg_p18_p16_subject_object_find_subject | 29 | single_choice | - | What is the subject of this sentence? Beside the river, Maya |
-| qg_p18_p16_subject_object_find_subject | 30 | single_choice | - | What is the subject of this sentence? The storm broke the ol |
+| qg_p18_p16_subject_object_find_object | 1 | single_choice | - | Find the object in this sentence: The noisy gull stole the s |
+| qg_p18_p16_subject_object_find_object | 2 | single_choice | - | Find the object in this sentence: On Friday morning, our sci |
+| qg_p18_p16_subject_object_find_object | 3 | single_choice | - | Find the object in this sentence: After lunch, the tired goa |
+| qg_p18_p16_subject_object_find_object | 4 | single_choice | - | Find the object in this sentence: The small robot carried th |
+| qg_p18_p16_subject_object_find_object | 5 | single_choice | - | Find the object in this sentence: Beside the river, Maya fou |
+| qg_p18_p16_subject_object_find_object | 6 | single_choice | - | Find the object in this sentence: The storm broke the old fe |
+| qg_p18_p16_subject_object_find_object | 7 | single_choice | - | Find the object in this sentence: The choir sang a new song. |
+| qg_p18_p16_subject_object_find_object | 8 | single_choice | - | Find the object in this sentence: In the kitchen, Omar washe |
+| qg_p18_p16_subject_object_find_object | 9 | single_choice | - | Find the object in this sentence: The red kite crossed the s |
+| qg_p18_p16_subject_object_find_object | 10 | single_choice | - | Find the object in this sentence: The guide led the visitors |
+| qg_p18_p16_subject_object_find_object | 11 | single_choice | - | Find the object in this sentence: Before the match, Ben chec |
+| qg_p18_p16_subject_object_find_object | 12 | single_choice | - | Find the object in this sentence: The lantern lit the path. |
+| qg_p18_p16_subject_object_find_object | 13 | single_choice | - | Find the object in this sentence: The noisy gull stole the s |
+| qg_p18_p16_subject_object_find_object | 14 | single_choice | - | Find the object in this sentence: On Friday morning, our sci |
+| qg_p18_p16_subject_object_find_object | 15 | single_choice | - | Find the object in this sentence: After lunch, the tired goa |
+| qg_p18_p16_subject_object_find_object | 16 | single_choice | - | Find the object in this sentence: The small robot carried th |
+| qg_p18_p16_subject_object_find_object | 17 | single_choice | - | Find the object in this sentence: Beside the river, Maya fou |
+| qg_p18_p16_subject_object_find_object | 18 | single_choice | - | Find the object in this sentence: The storm broke the old fe |
+| qg_p18_p16_subject_object_find_object | 19 | single_choice | - | Find the object in this sentence: The choir sang a new song. |
+| qg_p18_p16_subject_object_find_object | 20 | single_choice | - | Find the object in this sentence: In the kitchen, Omar washe |
+| qg_p18_p16_subject_object_find_object | 21 | single_choice | - | Find the object in this sentence: The red kite crossed the s |
+| qg_p18_p16_subject_object_find_object | 22 | single_choice | - | Find the object in this sentence: The guide led the visitors |
+| qg_p18_p16_subject_object_find_object | 23 | single_choice | - | Find the object in this sentence: Before the match, Ben chec |
+| qg_p18_p16_subject_object_find_object | 24 | single_choice | - | Find the object in this sentence: The lantern lit the path. |
+| qg_p18_p16_subject_object_find_object | 25 | single_choice | - | Find the object in this sentence: The noisy gull stole the s |
+| qg_p18_p16_subject_object_find_object | 26 | single_choice | - | Find the object in this sentence: On Friday morning, our sci |
+| qg_p18_p16_subject_object_find_object | 27 | single_choice | - | Find the object in this sentence: After lunch, the tired goa |
+| qg_p18_p16_subject_object_find_object | 28 | single_choice | - | Find the object in this sentence: The small robot carried th |
+| qg_p18_p16_subject_object_find_object | 29 | single_choice | - | Find the object in this sentence: Beside the river, Maya fou |
+| qg_p18_p16_subject_object_find_object | 30 | single_choice | - | Find the object in this sentence: The storm broke the old fe |
+| qg_p18_p16_subject_object_find_subject | 1 | single_choice | - | Find the subject in this sentence: The noisy gull stole the  |
+| qg_p18_p16_subject_object_find_subject | 2 | single_choice | - | Find the subject in this sentence: On Friday morning, our sc |
+| qg_p18_p16_subject_object_find_subject | 3 | single_choice | - | Find the subject in this sentence: After lunch, the tired go |
+| qg_p18_p16_subject_object_find_subject | 4 | single_choice | - | Find the subject in this sentence: The small robot carried t |
+| qg_p18_p16_subject_object_find_subject | 5 | single_choice | - | Find the subject in this sentence: Beside the river, Maya fo |
+| qg_p18_p16_subject_object_find_subject | 6 | single_choice | - | Find the subject in this sentence: The storm broke the old f |
+| qg_p18_p16_subject_object_find_subject | 7 | single_choice | - | Find the subject in this sentence: The choir sang a new song |
+| qg_p18_p16_subject_object_find_subject | 8 | single_choice | - | Find the subject in this sentence: In the kitchen, Omar wash |
+| qg_p18_p16_subject_object_find_subject | 9 | single_choice | - | Find the subject in this sentence: The red kite crossed the  |
+| qg_p18_p16_subject_object_find_subject | 10 | single_choice | - | Find the subject in this sentence: The guide led the visitor |
+| qg_p18_p16_subject_object_find_subject | 11 | single_choice | - | Find the subject in this sentence: Before the match, Ben che |
+| qg_p18_p16_subject_object_find_subject | 12 | single_choice | - | Find the subject in this sentence: The lantern lit the path. |
+| qg_p18_p16_subject_object_find_subject | 13 | single_choice | - | Find the subject in this sentence: The noisy gull stole the  |
+| qg_p18_p16_subject_object_find_subject | 14 | single_choice | - | Find the subject in this sentence: On Friday morning, our sc |
+| qg_p18_p16_subject_object_find_subject | 15 | single_choice | - | Find the subject in this sentence: After lunch, the tired go |
+| qg_p18_p16_subject_object_find_subject | 16 | single_choice | - | Find the subject in this sentence: The small robot carried t |
+| qg_p18_p16_subject_object_find_subject | 17 | single_choice | - | Find the subject in this sentence: Beside the river, Maya fo |
+| qg_p18_p16_subject_object_find_subject | 18 | single_choice | - | Find the subject in this sentence: The storm broke the old f |
+| qg_p18_p16_subject_object_find_subject | 19 | single_choice | - | Find the subject in this sentence: The choir sang a new song |
+| qg_p18_p16_subject_object_find_subject | 20 | single_choice | - | Find the subject in this sentence: In the kitchen, Omar wash |
+| qg_p18_p16_subject_object_find_subject | 21 | single_choice | - | Find the subject in this sentence: The red kite crossed the  |
+| qg_p18_p16_subject_object_find_subject | 22 | single_choice | - | Find the subject in this sentence: The guide led the visitor |
+| qg_p18_p16_subject_object_find_subject | 23 | single_choice | - | Find the subject in this sentence: Before the match, Ben che |
+| qg_p18_p16_subject_object_find_subject | 24 | single_choice | - | Find the subject in this sentence: The lantern lit the path. |
+| qg_p18_p16_subject_object_find_subject | 25 | single_choice | - | Find the subject in this sentence: The noisy gull stole the  |
+| qg_p18_p16_subject_object_find_subject | 26 | single_choice | - | Find the subject in this sentence: On Friday morning, our sc |
+| qg_p18_p16_subject_object_find_subject | 27 | single_choice | - | Find the subject in this sentence: After lunch, the tired go |
+| qg_p18_p16_subject_object_find_subject | 28 | single_choice | - | Find the subject in this sentence: The small robot carried t |
+| qg_p18_p16_subject_object_find_subject | 29 | single_choice | - | Find the subject in this sentence: Beside the river, Maya fo |
+| qg_p18_p16_subject_object_find_subject | 30 | single_choice | - | Find the subject in this sentence: The storm broke the old f |
 | qg_p18_p16_subject_object_opening_adverbial_trap | 1 | single_choice | - | Why is the opening phrase not the subject? The noisy gull st |
 | qg_p18_p16_subject_object_opening_adverbial_trap | 2 | single_choice | - | Why is the opening phrase not the subject? On Friday morning |
 | qg_p18_p16_subject_object_opening_adverbial_trap | 3 | single_choice | - | Why is the opening phrase not the subject? After lunch, the  |
@@ -12430,36 +12430,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_active_passive_precision_repair_or_rewrite | 28 | textarea | - | Rewrite in the passive voice: The team will collect the trop |
 | qg_p18_p18_active_passive_precision_repair_or_rewrite | 29 | textarea | - | Rewrite in the passive voice: The artist painted the mural. |
 | qg_p18_p18_active_passive_precision_repair_or_rewrite | 30 | textarea | - | Rewrite in the passive voice: The librarian sorted the books |
-| qg_p18_p18_active_passive_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_active_passive_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_active_passive_sat_table_classification | 1 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 2 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 3 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 4 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 5 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 6 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 7 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 8 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 9 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 10 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 11 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 12 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 13 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 14 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 15 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 16 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 17 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 18 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 19 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 20 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 21 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 22 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 23 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 24 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 25 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 26 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 27 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 28 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 29 | table_choice | - | Classify each sentence as active or passive. |
+| qg_p18_p18_active_passive_sat_table_classification | 30 | table_choice | - | Classify each sentence as active or passive. |
 | qg_p18_p18_active_passive_subject_object_voice_subject_object_roles | 1 | textarea | - | Mixed check: passive rewrite and object identification. The  |
 | qg_p18_p18_active_passive_subject_object_voice_subject_object_roles | 2 | textarea | - | Mixed check: passive rewrite and object identification. The  |
 | qg_p18_p18_active_passive_subject_object_voice_subject_object_roles | 3 | textarea | - | Mixed check: passive rewrite and object identification. The  |
@@ -12640,36 +12640,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_adverbials_precision_repair_or_rewrite | 28 | textarea | - | Copy the sentence and add the missing comma after the fronte |
 | qg_p18_p18_adverbials_precision_repair_or_rewrite | 29 | textarea | - | Copy the sentence and add the missing comma after the fronte |
 | qg_p18_p18_adverbials_precision_repair_or_rewrite | 30 | textarea | - | Copy the sentence and add the missing comma after the fronte |
-| qg_p18_p18_adverbials_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_adverbials_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_adverbials_sat_table_classification | 1 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 2 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 3 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 4 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 5 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 6 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 7 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 8 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 9 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 10 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 11 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 12 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 13 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 14 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 15 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 16 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 17 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 18 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 19 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 20 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 21 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 22 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 23 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 24 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 25 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 26 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 27 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 28 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 29 | table_choice | - | Classify each adverbial by how it works. |
+| qg_p18_p18_adverbials_sat_table_classification | 30 | table_choice | - | Classify each adverbial by how it works. |
 | qg_p18_p18_apostrophes_possession_application_transfer | 1 | textarea | - | Explain where the apostrophe goes in 'the dog's bowl'. |
 | qg_p18_p18_apostrophes_possession_application_transfer | 2 | textarea | - | Explain where the apostrophe goes in 'the girls' boots'. |
 | qg_p18_p18_apostrophes_possession_application_transfer | 3 | textarea | - | Explain where the apostrophe goes in 'the teacher's desk'. |
@@ -12700,66 +12700,66 @@ _Answer internals stripped from this report._
 | qg_p18_p18_apostrophes_possession_application_transfer | 28 | textarea | - | Explain where the apostrophe goes in 'the birds' nests'. |
 | qg_p18_p18_apostrophes_possession_application_transfer | 29 | textarea | - | Explain where the apostrophe goes in 'the child's coat'. |
 | qg_p18_p18_apostrophes_possession_application_transfer | 30 | textarea | - | Explain where the apostrophe goes in 'the children's lunches |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 1 | single_choice | - | Which phrase correctly shows possession for one dog owns a b |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 2 | single_choice | - | Which phrase correctly shows possession for several girls ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 3 | single_choice | - | Which phrase correctly shows possession for one teacher owns |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 4 | single_choice | - | Which phrase correctly shows possession for several birds ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 5 | single_choice | - | Which phrase correctly shows possession for one child owns a |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 6 | single_choice | - | Which phrase correctly shows possession for several children |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 7 | single_choice | - | Which phrase correctly shows possession for one fox owns a d |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 8 | single_choice | - | Which phrase correctly shows possession for several foxes ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 9 | single_choice | - | Which phrase correctly shows possession for one team owns a  |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 10 | single_choice | - | Which phrase correctly shows possession for several teams ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 11 | single_choice | - | Which phrase correctly shows possession for one woman owns a |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 12 | single_choice | - | Which phrase correctly shows possession for several women ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 13 | single_choice | - | Which phrase correctly shows possession for one dog owns a b |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 14 | single_choice | - | Which phrase correctly shows possession for several girls ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 15 | single_choice | - | Which phrase correctly shows possession for one teacher owns |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 16 | single_choice | - | Which phrase correctly shows possession for several birds ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 17 | single_choice | - | Which phrase correctly shows possession for one child owns a |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 18 | single_choice | - | Which phrase correctly shows possession for several children |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 19 | single_choice | - | Which phrase correctly shows possession for one fox owns a d |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 20 | single_choice | - | Which phrase correctly shows possession for several foxes ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 21 | single_choice | - | Which phrase correctly shows possession for one team owns a  |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 22 | single_choice | - | Which phrase correctly shows possession for several teams ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 23 | single_choice | - | Which phrase correctly shows possession for one woman owns a |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 24 | single_choice | - | Which phrase correctly shows possession for several women ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 25 | single_choice | - | Which phrase correctly shows possession for one dog owns a b |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 26 | single_choice | - | Which phrase correctly shows possession for several girls ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 27 | single_choice | - | Which phrase correctly shows possession for one teacher owns |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 28 | single_choice | - | Which phrase correctly shows possession for several birds ow |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 29 | single_choice | - | Which phrase correctly shows possession for one child owns a |
-| qg_p18_p18_apostrophes_possession_diagnostic_identify | 30 | single_choice | - | Which phrase correctly shows possession for several children |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 1 | single_choice | - | Why is 'the dog's bowl' correct for one dog owns a bowl? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 2 | single_choice | - | Why is 'the girls' boots' correct for several girls own boot |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 3 | single_choice | - | Why is 'the teacher's desk' correct for one teacher owns a d |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 4 | single_choice | - | Why is 'the birds' nests' correct for several birds own nest |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 5 | single_choice | - | Why is 'the child's coat' correct for one child owns a coat? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 6 | single_choice | - | Why is 'the children's lunches' correct for several children |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 7 | single_choice | - | Why is 'the fox's den' correct for one fox owns a den? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 8 | single_choice | - | Why is 'the foxes' dens' correct for several foxes own dens? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 9 | single_choice | - | Why is 'the team's flag' correct for one team owns a flag? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 10 | single_choice | - | Why is 'the teams' flags' correct for several teams own flag |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 11 | single_choice | - | Why is 'the woman's bicycle' correct for one woman owns a bi |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 12 | single_choice | - | Why is 'the women's bicycles' correct for several women own  |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 13 | single_choice | - | Why is 'the dog's bowl' correct for one dog owns a bowl? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 14 | single_choice | - | Why is 'the girls' boots' correct for several girls own boot |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 15 | single_choice | - | Why is 'the teacher's desk' correct for one teacher owns a d |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 16 | single_choice | - | Why is 'the birds' nests' correct for several birds own nest |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 17 | single_choice | - | Why is 'the child's coat' correct for one child owns a coat? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 18 | single_choice | - | Why is 'the children's lunches' correct for several children |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 19 | single_choice | - | Why is 'the fox's den' correct for one fox owns a den? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 20 | single_choice | - | Why is 'the foxes' dens' correct for several foxes own dens? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 21 | single_choice | - | Why is 'the team's flag' correct for one team owns a flag? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 22 | single_choice | - | Why is 'the teams' flags' correct for several teams own flag |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 23 | single_choice | - | Why is 'the woman's bicycle' correct for one woman owns a bi |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 24 | single_choice | - | Why is 'the women's bicycles' correct for several women own  |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 25 | single_choice | - | Why is 'the dog's bowl' correct for one dog owns a bowl? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 26 | single_choice | - | Why is 'the girls' boots' correct for several girls own boot |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 27 | single_choice | - | Why is 'the teacher's desk' correct for one teacher owns a d |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 28 | single_choice | - | Why is 'the birds' nests' correct for several birds own nest |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 29 | single_choice | - | Why is 'the child's coat' correct for one child owns a coat? |
-| qg_p18_p18_apostrophes_possession_explain_reasoning | 30 | single_choice | - | Why is 'the children's lunches' correct for several children |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 1 | single_choice | - | Which phrase correctly shows possession for: one dog owns a  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 2 | single_choice | - | Which phrase correctly shows possession for: several girls o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 3 | single_choice | - | Which phrase correctly shows possession for: one teacher own |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 4 | single_choice | - | Which phrase correctly shows possession for: several birds o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 5 | single_choice | - | Which phrase correctly shows possession for: one child owns  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 6 | single_choice | - | Which phrase correctly shows possession for: several childre |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 7 | single_choice | - | Which phrase correctly shows possession for: one fox owns a  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 8 | single_choice | - | Which phrase correctly shows possession for: several foxes o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 9 | single_choice | - | Which phrase correctly shows possession for: one team owns a |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 10 | single_choice | - | Which phrase correctly shows possession for: several teams o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 11 | single_choice | - | Which phrase correctly shows possession for: one woman owns  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 12 | single_choice | - | Which phrase correctly shows possession for: several women o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 13 | single_choice | - | Which phrase correctly shows possession for: one dog owns a  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 14 | single_choice | - | Which phrase correctly shows possession for: several girls o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 15 | single_choice | - | Which phrase correctly shows possession for: one teacher own |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 16 | single_choice | - | Which phrase correctly shows possession for: several birds o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 17 | single_choice | - | Which phrase correctly shows possession for: one child owns  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 18 | single_choice | - | Which phrase correctly shows possession for: several childre |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 19 | single_choice | - | Which phrase correctly shows possession for: one fox owns a  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 20 | single_choice | - | Which phrase correctly shows possession for: several foxes o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 21 | single_choice | - | Which phrase correctly shows possession for: one team owns a |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 22 | single_choice | - | Which phrase correctly shows possession for: several teams o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 23 | single_choice | - | Which phrase correctly shows possession for: one woman owns  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 24 | single_choice | - | Which phrase correctly shows possession for: several women o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 25 | single_choice | - | Which phrase correctly shows possession for: one dog owns a  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 26 | single_choice | - | Which phrase correctly shows possession for: several girls o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 27 | single_choice | - | Which phrase correctly shows possession for: one teacher own |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 28 | single_choice | - | Which phrase correctly shows possession for: several birds o |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 29 | single_choice | - | Which phrase correctly shows possession for: one child owns  |
+| qg_p18_p18_apostrophes_possession_diagnostic_identify | 30 | single_choice | - | Which phrase correctly shows possession for: several childre |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 1 | single_choice | - | Why is 'the dog's bowl' correct for: one dog owns a bowl? |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 2 | single_choice | - | Why is 'the girls' boots' correct for: several girls own boo |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 3 | single_choice | - | Why is 'the teacher's desk' correct for: one teacher owns a  |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 4 | single_choice | - | Why is 'the birds' nests' correct for: several birds own nes |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 5 | single_choice | - | Why is 'the child's coat' correct for: one child owns a coat |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 6 | single_choice | - | Why is 'the children's lunches' correct for: several childre |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 7 | single_choice | - | Why is 'the fox's den' correct for: one fox owns a den? |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 8 | single_choice | - | Why is 'the foxes' dens' correct for: several foxes own dens |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 9 | single_choice | - | Why is 'the team's flag' correct for: one team owns a flag? |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 10 | single_choice | - | Why is 'the teams' flags' correct for: several teams own fla |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 11 | single_choice | - | Why is 'the woman's bicycle' correct for: one woman owns a b |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 12 | single_choice | - | Why is 'the women's bicycles' correct for: several women own |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 13 | single_choice | - | Why is 'the dog's bowl' correct for: one dog owns a bowl? |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 14 | single_choice | - | Why is 'the girls' boots' correct for: several girls own boo |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 15 | single_choice | - | Why is 'the teacher's desk' correct for: one teacher owns a  |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 16 | single_choice | - | Why is 'the birds' nests' correct for: several birds own nes |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 17 | single_choice | - | Why is 'the child's coat' correct for: one child owns a coat |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 18 | single_choice | - | Why is 'the children's lunches' correct for: several childre |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 19 | single_choice | - | Why is 'the fox's den' correct for: one fox owns a den? |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 20 | single_choice | - | Why is 'the foxes' dens' correct for: several foxes own dens |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 21 | single_choice | - | Why is 'the team's flag' correct for: one team owns a flag? |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 22 | single_choice | - | Why is 'the teams' flags' correct for: several teams own fla |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 23 | single_choice | - | Why is 'the woman's bicycle' correct for: one woman owns a b |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 24 | single_choice | - | Why is 'the women's bicycles' correct for: several women own |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 25 | single_choice | - | Why is 'the dog's bowl' correct for: one dog owns a bowl? |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 26 | single_choice | - | Why is 'the girls' boots' correct for: several girls own boo |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 27 | single_choice | - | Why is 'the teacher's desk' correct for: one teacher owns a  |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 28 | single_choice | - | Why is 'the birds' nests' correct for: several birds own nes |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 29 | single_choice | - | Why is 'the child's coat' correct for: one child owns a coat |
+| qg_p18_p18_apostrophes_possession_explain_reasoning | 30 | single_choice | - | Why is 'the children's lunches' correct for: several childre |
 | qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision | 1 | textarea | - | Mixed check: possessive apostrophe and ambiguity hyphen. one |
 | qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision | 2 | textarea | - | Mixed check: possessive apostrophe and ambiguity hyphen. sev |
 | qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision | 3 | textarea | - | Mixed check: possessive apostrophe and ambiguity hyphen. one |
@@ -12790,66 +12790,66 @@ _Answer internals stripped from this report._
 | qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision | 28 | textarea | - | Mixed check: possessive apostrophe and ambiguity hyphen. sev |
 | qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision | 29 | textarea | - | Mixed check: possessive apostrophe and ambiguity hyphen. one |
 | qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision | 30 | textarea | - | Mixed check: possessive apostrophe and ambiguity hyphen. sev |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 1 | text | - | Write the possessive phrase for one dog owns a bowl. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 2 | text | - | Write the possessive phrase for several girls own boots. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 3 | text | - | Write the possessive phrase for one teacher owns a desk. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 4 | text | - | Write the possessive phrase for several birds own nests. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 5 | text | - | Write the possessive phrase for one child owns a coat. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 6 | text | - | Write the possessive phrase for several children own lunches |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 7 | text | - | Write the possessive phrase for one fox owns a den. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 8 | text | - | Write the possessive phrase for several foxes own dens. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 9 | text | - | Write the possessive phrase for one team owns a flag. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 10 | text | - | Write the possessive phrase for several teams own flags. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 11 | text | - | Write the possessive phrase for one woman owns a bicycle. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 12 | text | - | Write the possessive phrase for several women own bicycles. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 13 | text | - | Write the possessive phrase for one dog owns a bowl. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 14 | text | - | Write the possessive phrase for several girls own boots. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 15 | text | - | Write the possessive phrase for one teacher owns a desk. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 16 | text | - | Write the possessive phrase for several birds own nests. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 17 | text | - | Write the possessive phrase for one child owns a coat. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 18 | text | - | Write the possessive phrase for several children own lunches |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 19 | text | - | Write the possessive phrase for one fox owns a den. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 20 | text | - | Write the possessive phrase for several foxes own dens. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 21 | text | - | Write the possessive phrase for one team owns a flag. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 22 | text | - | Write the possessive phrase for several teams own flags. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 23 | text | - | Write the possessive phrase for one woman owns a bicycle. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 24 | text | - | Write the possessive phrase for several women own bicycles. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 25 | text | - | Write the possessive phrase for one dog owns a bowl. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 26 | text | - | Write the possessive phrase for several girls own boots. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 27 | text | - | Write the possessive phrase for one teacher owns a desk. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 28 | text | - | Write the possessive phrase for several birds own nests. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 29 | text | - | Write the possessive phrase for one child owns a coat. |
-| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 30 | text | - | Write the possessive phrase for several children own lunches |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_apostrophes_possession_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 1 | text | - | Rewrite as a precise possessive phrase: one dog owns a bowl. |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 2 | text | - | Rewrite as a precise possessive phrase: several girls own bo |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 3 | text | - | Rewrite as a precise possessive phrase: one teacher owns a d |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 4 | text | - | Rewrite as a precise possessive phrase: several birds own ne |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 5 | text | - | Rewrite as a precise possessive phrase: one child owns a coa |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 6 | text | - | Rewrite as a precise possessive phrase: several children own |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 7 | text | - | Rewrite as a precise possessive phrase: one fox owns a den. |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 8 | text | - | Rewrite as a precise possessive phrase: several foxes own de |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 9 | text | - | Rewrite as a precise possessive phrase: one team owns a flag |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 10 | text | - | Rewrite as a precise possessive phrase: several teams own fl |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 11 | text | - | Rewrite as a precise possessive phrase: one woman owns a bic |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 12 | text | - | Rewrite as a precise possessive phrase: several women own bi |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 13 | text | - | Rewrite as a precise possessive phrase: one dog owns a bowl. |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 14 | text | - | Rewrite as a precise possessive phrase: several girls own bo |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 15 | text | - | Rewrite as a precise possessive phrase: one teacher owns a d |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 16 | text | - | Rewrite as a precise possessive phrase: several birds own ne |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 17 | text | - | Rewrite as a precise possessive phrase: one child owns a coa |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 18 | text | - | Rewrite as a precise possessive phrase: several children own |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 19 | text | - | Rewrite as a precise possessive phrase: one fox owns a den. |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 20 | text | - | Rewrite as a precise possessive phrase: several foxes own de |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 21 | text | - | Rewrite as a precise possessive phrase: one team owns a flag |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 22 | text | - | Rewrite as a precise possessive phrase: several teams own fl |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 23 | text | - | Rewrite as a precise possessive phrase: one woman owns a bic |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 24 | text | - | Rewrite as a precise possessive phrase: several women own bi |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 25 | text | - | Rewrite as a precise possessive phrase: one dog owns a bowl. |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 26 | text | - | Rewrite as a precise possessive phrase: several girls own bo |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 27 | text | - | Rewrite as a precise possessive phrase: one teacher owns a d |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 28 | text | - | Rewrite as a precise possessive phrase: several birds own ne |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 29 | text | - | Rewrite as a precise possessive phrase: one child owns a coa |
+| qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite | 30 | text | - | Rewrite as a precise possessive phrase: several children own |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 1 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 2 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 3 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 4 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 5 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 6 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 7 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 8 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 9 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 10 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 11 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 12 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 13 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 14 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 15 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 16 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 17 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 18 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 19 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 20 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 21 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 22 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 23 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 24 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 25 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 26 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 27 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 28 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 29 | table_choice | - | Classify each possessive apostrophe example. |
+| qg_p18_p18_apostrophes_possession_sat_table_classification | 30 | table_choice | - | Classify each possessive apostrophe example. |
 | qg_p18_p18_boundary_punctuation_application_transfer | 1 | textarea | - | Explain how the boundary punctuation works in: The sky darke |
 | qg_p18_p18_boundary_punctuation_application_transfer | 2 | textarea | - | Explain how the boundary punctuation works in: I needed only |
 | qg_p18_p18_boundary_punctuation_application_transfer | 3 | textarea | - | Explain how the boundary punctuation works in: The gate open |
@@ -12970,36 +12970,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite | 28 | text | - | Write the punctuation mark used in this sentence: The path w |
 | qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite | 29 | text | - | Write the punctuation mark used in this sentence: Bring thes |
 | qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite | 30 | text | - | Write the punctuation mark used in this sentence: Then came  |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_boundary_punctuation_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 1 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 2 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 3 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 4 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 5 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 6 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 7 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 8 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 9 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 10 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 11 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 12 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 13 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 14 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 15 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 16 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 17 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 18 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 19 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 20 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 21 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 22 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 23 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 24 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 25 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 26 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 27 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 28 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 29 | table_choice | - | Classify each boundary punctuation choice. |
+| qg_p18_p18_boundary_punctuation_sat_table_classification | 30 | table_choice | - | Classify each boundary punctuation choice. |
 | qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation | 1 | textarea | - | Mixed check: explain the boundary mark and correct the speec |
 | qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation | 2 | textarea | - | Mixed check: explain the boundary mark and correct the speec |
 | qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation | 3 | textarea | - | Mixed check: explain the boundary mark and correct the speec |
@@ -13150,36 +13150,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_clauses_precision_repair_or_rewrite | 28 | text | - | Write the subordinate clause from this sentence: If the libr |
 | qg_p18_p18_clauses_precision_repair_or_rewrite | 29 | text | - | Write the subordinate clause from this sentence: While the s |
 | qg_p18_p18_clauses_precision_repair_or_rewrite | 30 | text | - | Write the subordinate clause from this sentence: Since the b |
-| qg_p18_p18_clauses_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_clauses_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_clauses_sat_table_classification | 1 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 2 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 3 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 4 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 5 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 6 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 7 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 8 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 9 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 10 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 11 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 12 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 13 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 14 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 15 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 16 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 17 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 18 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 19 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 20 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 21 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 22 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 23 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 24 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 25 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 26 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 27 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 28 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 29 | table_choice | - | Classify each clause target. |
+| qg_p18_p18_clauses_sat_table_classification | 30 | table_choice | - | Classify each clause target. |
 | qg_p18_p18_formality_application_transfer | 1 | textarea | - | Explain why 'The club was established last year.' fits forma |
 | qg_p18_p18_formality_application_transfer | 2 | textarea | - | Explain why 'Please discover whether the hall is available.' |
 | qg_p18_p18_formality_application_transfer | 3 | textarea | - | Explain why 'We need to request additional equipment.' fits  |
@@ -13300,36 +13300,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_formality_precision_repair_or_rewrite | 28 | text | - | Rewrite this more formally: The visitor popped in at noon. |
 | qg_p18_p18_formality_precision_repair_or_rewrite | 29 | textarea | - | Rewrite this more formally: The council said no to the plan. |
 | qg_p18_p18_formality_precision_repair_or_rewrite | 30 | textarea | - | Rewrite this more formally: The team had a go at the challen |
-| qg_p18_p18_formality_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_formality_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_formality_sat_table_classification | 1 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 2 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 3 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 4 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 5 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 6 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 7 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 8 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 9 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 10 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 11 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 12 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 13 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 14 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 15 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 16 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 17 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 18 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 19 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 20 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 21 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 22 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 23 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 24 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 25 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 26 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 27 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 28 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 29 | table_choice | - | Classify each phrase by formality. |
+| qg_p18_p18_formality_sat_table_classification | 30 | table_choice | - | Classify each phrase by formality. |
 | qg_p18_p18_hyphen_ambiguity_application_transfer | 1 | textarea | - | Explain the meaning difference between 'man eating shark' an |
 | qg_p18_p18_hyphen_ambiguity_application_transfer | 2 | textarea | - | Explain the meaning difference between 'recover the chair' a |
 | qg_p18_p18_hyphen_ambiguity_application_transfer | 3 | textarea | - | Explain the meaning difference between 'twenty odd pupils' a |
@@ -13450,36 +13450,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite | 28 | text | - | Rewrite with a hyphen to make this meaning clear (a keeper o |
 | qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite | 29 | text | - | Rewrite with a hyphen to make this meaning clear (a club out |
 | qg_p18_p18_hyphen_ambiguity_precision_repair_or_rewrite | 30 | text | - | Rewrite with a hyphen to make this meaning clear (an author  |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 1 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 2 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 3 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 4 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 5 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 6 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 7 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 8 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 9 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 10 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 11 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 12 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 13 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 14 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 15 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 16 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 17 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 18 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 19 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 20 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 21 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 22 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 23 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 24 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 25 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 26 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 27 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 28 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 29 | table_choice | - | Classify each hyphen example. |
+| qg_p18_p18_hyphen_ambiguity_sat_table_classification | 30 | table_choice | - | Classify each hyphen example. |
 | qg_p18_p18_modal_verbs_application_transfer | 1 | textarea | - | Explain why another modal verb would change the meaning in:  |
 | qg_p18_p18_modal_verbs_application_transfer | 2 | textarea | - | Explain why another modal verb would change the meaning in:  |
 | qg_p18_p18_modal_verbs_application_transfer | 3 | textarea | - | Explain why another modal verb would change the meaning in:  |
@@ -13630,36 +13630,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_modal_verbs_precision_repair_or_rewrite | 28 | textarea | - | Complete the sentence with the best modal verb for obligatio |
 | qg_p18_p18_modal_verbs_precision_repair_or_rewrite | 29 | textarea | - | Complete the sentence with the best modal verb for strong ce |
 | qg_p18_p18_modal_verbs_precision_repair_or_rewrite | 30 | textarea | - | Complete the sentence with the best modal verb for possibili |
-| qg_p18_p18_modal_verbs_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_modal_verbs_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 1 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 2 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 3 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 4 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 5 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 6 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 7 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 8 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 9 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 10 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 11 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 12 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 13 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 14 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 15 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 16 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 17 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 18 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 19 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 20 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 21 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 22 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 23 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 24 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 25 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 26 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 27 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 28 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 29 | table_choice | - | Classify each modal verb by meaning. |
+| qg_p18_p18_modal_verbs_sat_table_classification | 30 | table_choice | - | Classify each modal verb by meaning. |
 | qg_p18_p18_noun_phrases_application_transfer | 1 | textarea | - | Explain why 'rolled beneath' is not a noun phrase, then give |
 | qg_p18_p18_noun_phrases_application_transfer | 2 | textarea | - | Explain why 'waited outside' is not a noun phrase, then give |
 | qg_p18_p18_noun_phrases_application_transfer | 3 | textarea | - | Explain why 'glittered brightly' is not a noun phrase, then  |
@@ -13780,36 +13780,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_noun_phrases_precision_repair_or_rewrite | 28 | textarea | - | Complete the sentence with this expanded noun phrase: a fall |
 | qg_p18_p18_noun_phrases_precision_repair_or_rewrite | 29 | textarea | - | Complete the sentence with this expanded noun phrase: the wh |
 | qg_p18_p18_noun_phrases_precision_repair_or_rewrite | 30 | textarea | - | Complete the sentence with this expanded noun phrase: the ne |
-| qg_p18_p18_noun_phrases_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_noun_phrases_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 1 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 2 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 3 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 4 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 5 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 6 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 7 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 8 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 9 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 10 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 11 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 12 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 13 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 14 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 15 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 16 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 17 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 18 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 19 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 20 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 21 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 22 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 23 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 24 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 25 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 26 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 27 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 28 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 29 | table_choice | - | Classify each noun-phrase target. |
+| qg_p18_p18_noun_phrases_sat_table_classification | 30 | table_choice | - | Classify each noun-phrase target. |
 | qg_p18_p18_parenthesis_commas_application_transfer | 1 | textarea | - | Explain why the phrase 'who was first in line' can be marked |
 | qg_p18_p18_parenthesis_commas_application_transfer | 2 | textarea | - | Explain why the phrase 'built in 1200' can be marked as pare |
 | qg_p18_p18_parenthesis_commas_application_transfer | 3 | textarea | - | Explain why the phrase 'a keen cyclist' can be marked as par |
@@ -13930,36 +13930,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite | 28 | textarea | - | Copy the sentence and add commas for parenthesis. The match  |
 | qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite | 29 | textarea | - | Copy the sentence and add commas for parenthesis. Mina weari |
 | qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite | 30 | textarea | - | Copy the sentence and add commas for parenthesis. The book a |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_parenthesis_commas_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 1 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 2 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 3 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 4 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 5 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 6 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 7 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 8 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 9 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 10 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 11 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 12 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 13 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 14 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 15 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 16 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 17 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 18 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 19 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 20 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 21 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 22 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 23 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 24 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 25 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 26 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 27 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 28 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 29 | table_choice | - | Classify each parenthesis punctuation target. |
+| qg_p18_p18_parenthesis_commas_sat_table_classification | 30 | table_choice | - | Classify each parenthesis punctuation target. |
 | qg_p18_p18_pronouns_cohesion_application_transfer | 1 | textarea | - | Explain why this version is unclear: Amira picked up the map |
 | qg_p18_p18_pronouns_cohesion_application_transfer | 2 | textarea | - | Explain why this version is unclear: Ben showed the photo to |
 | qg_p18_p18_pronouns_cohesion_application_transfer | 3 | textarea | - | Explain why this version is unclear: The dog chased the ball |
@@ -14110,36 +14110,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite | 28 | textarea | - | Rewrite this so the pronouns are clear: Maya lent her pen to |
 | qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite | 29 | textarea | - | Rewrite this so the pronouns are clear: The class visited th |
 | qg_p18_p18_pronouns_cohesion_precision_repair_or_rewrite | 30 | textarea | - | Rewrite this so the pronouns are clear: Tom put the cake on  |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_pronouns_cohesion_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 1 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 2 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 3 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 4 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 5 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 6 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 7 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 8 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 9 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 10 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 11 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 12 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 13 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 14 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 15 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 16 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 17 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 18 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 19 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 20 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 21 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 22 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 23 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 24 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 25 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 26 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 27 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 28 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 29 | table_choice | - | Classify each pronoun-cohesion choice. |
+| qg_p18_p18_pronouns_cohesion_sat_table_classification | 30 | table_choice | - | Classify each pronoun-cohesion choice. |
 | qg_p18_p18_relative_clauses_application_transfer | 1 | textarea | - | Add the relative clause 'who painted the mural' to the noun  |
 | qg_p18_p18_relative_clauses_application_transfer | 2 | textarea | - | Add the relative clause 'that we borrowed' to the noun 'comp |
 | qg_p18_p18_relative_clauses_application_transfer | 3 | textarea | - | Add the relative clause 'where my uncle lives' to the noun ' |
@@ -14290,36 +14290,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_relative_clauses_precision_repair_or_rewrite | 28 | text | - | Write the relative clause from this sentence: The player who |
 | qg_p18_p18_relative_clauses_precision_repair_or_rewrite | 29 | text | - | Write the relative clause from this sentence: The cake which |
 | qg_p18_p18_relative_clauses_precision_repair_or_rewrite | 30 | text | - | Write the relative clause from this sentence: The school tha |
-| qg_p18_p18_relative_clauses_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_relative_clauses_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 1 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 2 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 3 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 4 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 5 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 6 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 7 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 8 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 9 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 10 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 11 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 12 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 13 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 14 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 15 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 16 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 17 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 18 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 19 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 20 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 21 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 22 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 23 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 24 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 25 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 26 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 27 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 28 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 29 | table_choice | - | Classify each relative-clause target. |
+| qg_p18_p18_relative_clauses_sat_table_classification | 30 | table_choice | - | Classify each relative-clause target. |
 | qg_p18_p18_sentence_functions_application_transfer | 1 | textarea | - | A pupil says this is a statement: Please return the atlas to |
 | qg_p18_p18_sentence_functions_application_transfer | 2 | textarea | - | A pupil says this is a statement: How bright the lanterns lo |
 | qg_p18_p18_sentence_functions_application_transfer | 3 | textarea | - | A pupil says this is a statement: Did the choir practise bef |
@@ -14440,36 +14440,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_sentence_functions_precision_repair_or_rewrite | 28 | textarea | - | Add the correct ending punctuation, then copy the sentence:  |
 | qg_p18_p18_sentence_functions_precision_repair_or_rewrite | 29 | textarea | - | Add the correct ending punctuation, then copy the sentence:  |
 | qg_p18_p18_sentence_functions_precision_repair_or_rewrite | 30 | textarea | - | Add the correct ending punctuation, then copy the sentence:  |
-| qg_p18_p18_sentence_functions_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_sentence_functions_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 1 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 2 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 3 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 4 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 5 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 6 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 7 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 8 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 9 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 10 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 11 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 12 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 13 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 14 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 15 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 16 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 17 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 18 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 19 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 20 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 21 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 22 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 23 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 24 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 25 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 26 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 27 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 28 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 29 | table_choice | - | Classify each sentence by function. |
+| qg_p18_p18_sentence_functions_sat_table_classification | 30 | table_choice | - | Classify each sentence by function. |
 | qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary | 1 | textarea | - | Mixed check: classify the function of 'Please return the atl |
 | qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary | 2 | textarea | - | Mixed check: classify the function of 'How bright the lanter |
 | qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary | 3 | textarea | - | Mixed check: classify the function of 'Did the choir practis |
@@ -14620,36 +14620,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_speech_punctuation_precision_repair_or_rewrite | 28 | textarea | - | Copy and correct the speech punctuation. Dad asked "Have you |
 | qg_p18_p18_speech_punctuation_precision_repair_or_rewrite | 29 | textarea | - | Copy and correct the speech punctuation. "Please wait here"  |
 | qg_p18_p18_speech_punctuation_precision_repair_or_rewrite | 30 | text | - | Copy and correct the speech punctuation. "Watch out" cried B |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_speech_punctuation_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 1 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 2 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 3 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 4 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 5 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 6 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 7 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 8 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 9 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 10 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 11 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 12 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 13 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 14 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 15 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 16 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 17 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 18 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 19 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 20 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 21 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 22 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 23 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 24 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 25 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 26 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 27 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 28 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 29 | table_choice | - | Classify each speech-punctuation target. |
+| qg_p18_p18_speech_punctuation_sat_table_classification | 30 | table_choice | - | Classify each speech-punctuation target. |
 | qg_p18_p18_standard_english_application_transfer | 1 | textarea | - | Explain the Standard English correction from 'We was late fo |
 | qg_p18_p18_standard_english_application_transfer | 2 | textarea | - | Explain the Standard English correction from 'I done the was |
 | qg_p18_p18_standard_english_application_transfer | 3 | textarea | - | Explain the Standard English correction from 'She seen the p |
@@ -14770,36 +14770,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_standard_english_precision_repair_or_rewrite | 28 | text | - | Rewrite this in Standard English: They has finished already. |
 | qg_p18_p18_standard_english_precision_repair_or_rewrite | 29 | textarea | - | Rewrite this in Standard English: There was three pencils on |
 | qg_p18_p18_standard_english_precision_repair_or_rewrite | 30 | text | - | Rewrite this in Standard English: Me and Jack went first. |
-| qg_p18_p18_standard_english_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_standard_english_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_standard_english_sat_table_classification | 1 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 2 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 3 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 4 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 5 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 6 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 7 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 8 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 9 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 10 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 11 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 12 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 13 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 14 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 15 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 16 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 17 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 18 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 19 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 20 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 21 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 22 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 23 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 24 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 25 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 26 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 27 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 28 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 29 | table_choice | - | Classify each Standard English example. |
+| qg_p18_p18_standard_english_sat_table_classification | 30 | table_choice | - | Classify each Standard English example. |
 | qg_p18_p18_subject_object_application_transfer | 1 | textarea | - | Explain the subject-object relationship in this sentence: Th |
 | qg_p18_p18_subject_object_application_transfer | 2 | textarea | - | Explain the subject-object relationship in this sentence: Af |
 | qg_p18_p18_subject_object_application_transfer | 3 | textarea | - | Explain the subject-object relationship in this sentence: Th |
@@ -14920,36 +14920,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_subject_object_precision_repair_or_rewrite | 28 | text | - | Write the subject of this sentence: During the storm, the wi |
 | qg_p18_p18_subject_object_precision_repair_or_rewrite | 29 | text | - | Write the subject of this sentence: The engineer tested the  |
 | qg_p18_p18_subject_object_precision_repair_or_rewrite | 30 | text | - | Write the subject of this sentence: Near the fountain, Priya |
-| qg_p18_p18_subject_object_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_subject_object_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_subject_object_sat_table_classification | 1 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 2 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 3 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 4 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 5 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 6 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 7 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 8 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 9 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 10 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 11 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 12 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 13 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 14 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 15 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 16 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 17 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 18 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 19 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 20 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 21 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 22 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 23 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 24 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 25 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 26 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 27 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 28 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 29 | table_choice | - | Classify each subject or object target. |
+| qg_p18_p18_subject_object_sat_table_classification | 30 | table_choice | - | Classify each subject or object target. |
 | qg_p18_p18_tense_aspect_application_transfer | 1 | textarea | - | Explain the change from 'She packs her bag before the trip.' |
 | qg_p18_p18_tense_aspect_application_transfer | 2 | textarea | - | Explain the change from 'I finish my homework.' to 'I have f |
 | qg_p18_p18_tense_aspect_application_transfer | 3 | textarea | - | Explain the change from 'The dog chases the cat.' to 'The do |
@@ -15070,36 +15070,36 @@ _Answer internals stripped from this report._
 | qg_p18_p18_tense_aspect_precision_repair_or_rewrite | 28 | text | - | Rewrite in the present progressive: We walk to school. |
 | qg_p18_p18_tense_aspect_precision_repair_or_rewrite | 29 | text | - | Rewrite in the past perfect: They leave before noon. |
 | qg_p18_p18_tense_aspect_precision_repair_or_rewrite | 30 | text | - | Rewrite in the present perfect: Tom visits the castle. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_tense_aspect_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 1 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 2 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 3 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 4 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 5 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 6 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 7 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 8 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 9 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 10 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 11 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 12 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 13 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 14 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 15 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 16 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 17 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 18 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 19 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 20 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 21 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 22 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 23 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 24 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 25 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 26 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 27 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 28 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 29 | table_choice | - | Classify each tense or aspect example. |
+| qg_p18_p18_tense_aspect_sat_table_classification | 30 | table_choice | - | Classify each tense or aspect example. |
 | qg_p18_p18_tense_aspect_standard_english_tense_standard_register | 1 | textarea | - | Mixed check: rewrite in the past perfect and correct the Sta |
 | qg_p18_p18_tense_aspect_standard_english_tense_standard_register | 2 | textarea | - | Mixed check: rewrite in the present perfect and correct the  |
 | qg_p18_p18_tense_aspect_standard_english_tense_standard_register | 3 | textarea | - | Mixed check: rewrite in the past progressive and correct the |
@@ -15280,33 +15280,1113 @@ _Answer internals stripped from this report._
 | qg_p18_p18_word_classes_precision_repair_or_rewrite | 28 | text | - | Write the word class of 'After' in this sentence: After brea |
 | qg_p18_p18_word_classes_precision_repair_or_rewrite | 29 | text | - | Write the word class of 'curious' in this sentence: The curi |
 | qg_p18_p18_word_classes_precision_repair_or_rewrite | 30 | text | - | Write the word class of 'and' in this sentence: Luca and Pri |
-| qg_p18_p18_word_classes_sat_table_classification | 1 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 2 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 3 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 4 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 5 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 6 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 7 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 8 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 9 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 10 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 11 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 12 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 13 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 14 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 15 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 16 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 17 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 18 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 19 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 20 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 21 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 22 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 23 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 24 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 25 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 26 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 27 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 28 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 29 | table_choice | - | Classify the target word or phrase by its grammar role. |
-| qg_p18_p18_word_classes_sat_table_classification | 30 | table_choice | - | Classify the target word or phrase by its grammar role. |
+| qg_p18_p18_word_classes_sat_table_classification | 1 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 2 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 3 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 4 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 5 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 6 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 7 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 8 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 9 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 10 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 11 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 12 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 13 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 14 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 15 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 16 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 17 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 18 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 19 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 20 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 21 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 22 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 23 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 24 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 25 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 26 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 27 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 28 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 29 | table_choice | - | Classify each word-class target. |
+| qg_p18_p18_word_classes_sat_table_classification | 30 | table_choice | - | Classify each word-class target. |
+| qg_p21_sentence_functions_closed_choice_variety | 1 | single_choice | - | Which option gives an instruction about the gate? |
+| qg_p21_sentence_functions_closed_choice_variety | 2 | single_choice | - | Which option asks about the red scarf? |
+| qg_p21_sentence_functions_closed_choice_variety | 3 | single_choice | - | Which option gives information about the lighthouse? |
+| qg_p21_sentence_functions_closed_choice_variety | 4 | single_choice | - | Which option is a grammatical exclamation about the cake? |
+| qg_p21_sentence_functions_closed_choice_variety | 5 | single_choice | - | Which option gives an instruction about the answer? |
+| qg_p21_sentence_functions_closed_choice_variety | 6 | single_choice | - | Which option asks about the library card? |
+| qg_p21_sentence_functions_closed_choice_variety | 7 | single_choice | - | Which option gives information about the river? |
+| qg_p21_sentence_functions_closed_choice_variety | 8 | single_choice | - | Which option is a grammatical exclamation about the model? |
+| qg_p21_sentence_functions_closed_choice_variety | 9 | single_choice | - | Which option gives an instruction about the gate? |
+| qg_p21_sentence_functions_closed_choice_variety | 10 | single_choice | - | Which option asks about the red scarf? |
+| qg_p21_sentence_functions_closed_choice_variety | 11 | single_choice | - | Which option gives information about the lighthouse? |
+| qg_p21_sentence_functions_closed_choice_variety | 12 | single_choice | - | Which option is a grammatical exclamation about the cake? |
+| qg_p21_sentence_functions_closed_choice_variety | 13 | single_choice | - | Which option gives an instruction about the answer? |
+| qg_p21_sentence_functions_closed_choice_variety | 14 | single_choice | - | Which option asks about the library card? |
+| qg_p21_sentence_functions_closed_choice_variety | 15 | single_choice | - | Which option gives information about the river? |
+| qg_p21_sentence_functions_closed_choice_variety | 16 | single_choice | - | Which option is a grammatical exclamation about the model? |
+| qg_p21_sentence_functions_closed_choice_variety | 17 | single_choice | - | Which option gives an instruction about the gate? |
+| qg_p21_sentence_functions_closed_choice_variety | 18 | single_choice | - | Which option asks about the red scarf? |
+| qg_p21_sentence_functions_closed_choice_variety | 19 | single_choice | - | Which option gives information about the lighthouse? |
+| qg_p21_sentence_functions_closed_choice_variety | 20 | single_choice | - | Which option is a grammatical exclamation about the cake? |
+| qg_p21_sentence_functions_closed_choice_variety | 21 | single_choice | - | Which option gives an instruction about the answer? |
+| qg_p21_sentence_functions_closed_choice_variety | 22 | single_choice | - | Which option asks about the library card? |
+| qg_p21_sentence_functions_closed_choice_variety | 23 | single_choice | - | Which option gives information about the river? |
+| qg_p21_sentence_functions_closed_choice_variety | 24 | single_choice | - | Which option is a grammatical exclamation about the model? |
+| qg_p21_sentence_functions_closed_choice_variety | 25 | single_choice | - | Which option gives an instruction about the gate? |
+| qg_p21_sentence_functions_closed_choice_variety | 26 | single_choice | - | Which option asks about the red scarf? |
+| qg_p21_sentence_functions_closed_choice_variety | 27 | single_choice | - | Which option gives information about the lighthouse? |
+| qg_p21_sentence_functions_closed_choice_variety | 28 | single_choice | - | Which option is a grammatical exclamation about the cake? |
+| qg_p21_sentence_functions_closed_choice_variety | 29 | single_choice | - | Which option gives an instruction about the answer? |
+| qg_p21_sentence_functions_closed_choice_variety | 30 | single_choice | - | Which option asks about the library card? |
+| qg_p21_sentence_functions_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which option as |
+| qg_p21_sentence_functions_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_sentence_functions_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which option as |
+| qg_p21_sentence_functions_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_sentence_functions_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which option as |
+| qg_p21_sentence_functions_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_sentence_functions_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which option as |
+| qg_p21_sentence_functions_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_sentence_functions_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which option as |
+| qg_p21_sentence_functions_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_sentence_functions_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which option as |
+| qg_p21_sentence_functions_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_sentence_functions_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which option as |
+| qg_p21_sentence_functions_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_sentence_functions_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which option gi |
+| qg_p21_sentence_functions_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which option as |
+| qg_p21_word_classes_closed_choice_variety | 1 | single_choice | - | In the sentence "Ben often walks home", what is "often"? |
+| qg_p21_word_classes_closed_choice_variety | 2 | single_choice | - | In the sentence "These biscuits are warm", what is "These"? |
+| qg_p21_word_classes_closed_choice_variety | 3 | single_choice | - | In the sentence "The marble rolled under the cupboard", what |
+| qg_p21_word_classes_closed_choice_variety | 4 | single_choice | - | In the sentence "We stayed inside because it rained", what i |
+| qg_p21_word_classes_closed_choice_variety | 5 | single_choice | - | In the sentence "Rain hammered against the roof", what is "h |
+| qg_p21_word_classes_closed_choice_variety | 6 | single_choice | - | In the sentence "The cracked vase stood on the shelf", what  |
+| qg_p21_word_classes_closed_choice_variety | 7 | single_choice | - | In the sentence "She passed the notebook to him", what is "h |
+| qg_p21_word_classes_closed_choice_variety | 8 | single_choice | - | In the sentence "Luca shared the telescope", what is "telesc |
+| qg_p21_word_classes_closed_choice_variety | 9 | single_choice | - | In the sentence "Ben often walks home", what is "often"? |
+| qg_p21_word_classes_closed_choice_variety | 10 | single_choice | - | In the sentence "These biscuits are warm", what is "These"? |
+| qg_p21_word_classes_closed_choice_variety | 11 | single_choice | - | In the sentence "The marble rolled under the cupboard", what |
+| qg_p21_word_classes_closed_choice_variety | 12 | single_choice | - | In the sentence "We stayed inside because it rained", what i |
+| qg_p21_word_classes_closed_choice_variety | 13 | single_choice | - | In the sentence "Rain hammered against the roof", what is "h |
+| qg_p21_word_classes_closed_choice_variety | 14 | single_choice | - | In the sentence "The cracked vase stood on the shelf", what  |
+| qg_p21_word_classes_closed_choice_variety | 15 | single_choice | - | In the sentence "She passed the notebook to him", what is "h |
+| qg_p21_word_classes_closed_choice_variety | 16 | single_choice | - | In the sentence "Luca shared the telescope", what is "telesc |
+| qg_p21_word_classes_closed_choice_variety | 17 | single_choice | - | In the sentence "Ben often walks home", what is "often"? |
+| qg_p21_word_classes_closed_choice_variety | 18 | single_choice | - | In the sentence "These biscuits are warm", what is "These"? |
+| qg_p21_word_classes_closed_choice_variety | 19 | single_choice | - | In the sentence "The marble rolled under the cupboard", what |
+| qg_p21_word_classes_closed_choice_variety | 20 | single_choice | - | In the sentence "We stayed inside because it rained", what i |
+| qg_p21_word_classes_closed_choice_variety | 21 | single_choice | - | In the sentence "Rain hammered against the roof", what is "h |
+| qg_p21_word_classes_closed_choice_variety | 22 | single_choice | - | In the sentence "The cracked vase stood on the shelf", what  |
+| qg_p21_word_classes_closed_choice_variety | 23 | single_choice | - | In the sentence "She passed the notebook to him", what is "h |
+| qg_p21_word_classes_closed_choice_variety | 24 | single_choice | - | In the sentence "Luca shared the telescope", what is "telesc |
+| qg_p21_word_classes_closed_choice_variety | 25 | single_choice | - | In the sentence "Ben often walks home", what is "often"? |
+| qg_p21_word_classes_closed_choice_variety | 26 | single_choice | - | In the sentence "These biscuits are warm", what is "These"? |
+| qg_p21_word_classes_closed_choice_variety | 27 | single_choice | - | In the sentence "The marble rolled under the cupboard", what |
+| qg_p21_word_classes_closed_choice_variety | 28 | single_choice | - | In the sentence "We stayed inside because it rained", what i |
+| qg_p21_word_classes_closed_choice_variety | 29 | single_choice | - | In the sentence "Rain hammered against the roof", what is "h |
+| qg_p21_word_classes_closed_choice_variety | 30 | single_choice | - | In the sentence "The cracked vase stood on the shelf", what  |
+| qg_p21_word_classes_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_word_classes_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. In the sentence |
+| qg_p21_noun_phrases_closed_choice_variety | 1 | single_choice | - | Which option is the expanded noun phrase about the key? |
+| qg_p21_noun_phrases_closed_choice_variety | 2 | single_choice | - | Which word is the head noun in "the old wooden boat"? |
+| qg_p21_noun_phrases_closed_choice_variety | 3 | single_choice | - | Which option is a noun phrase, not a clause? |
+| qg_p21_noun_phrases_closed_choice_variety | 4 | single_choice | - | Which noun phrase best expands "the garden"? |
+| qg_p21_noun_phrases_closed_choice_variety | 5 | single_choice | - | Which option is the expanded noun phrase about the box? |
+| qg_p21_noun_phrases_closed_choice_variety | 6 | single_choice | - | Which word is the head noun in "the bright new library"? |
+| qg_p21_noun_phrases_closed_choice_variety | 7 | single_choice | - | Which option is a noun phrase? |
+| qg_p21_noun_phrases_closed_choice_variety | 8 | single_choice | - | Which noun phrase best expands "the puppy"? |
+| qg_p21_noun_phrases_closed_choice_variety | 9 | single_choice | - | Which option is the expanded noun phrase about the key? |
+| qg_p21_noun_phrases_closed_choice_variety | 10 | single_choice | - | Which word is the head noun in "the old wooden boat"? |
+| qg_p21_noun_phrases_closed_choice_variety | 11 | single_choice | - | Which option is a noun phrase, not a clause? |
+| qg_p21_noun_phrases_closed_choice_variety | 12 | single_choice | - | Which noun phrase best expands "the garden"? |
+| qg_p21_noun_phrases_closed_choice_variety | 13 | single_choice | - | Which option is the expanded noun phrase about the box? |
+| qg_p21_noun_phrases_closed_choice_variety | 14 | single_choice | - | Which word is the head noun in "the bright new library"? |
+| qg_p21_noun_phrases_closed_choice_variety | 15 | single_choice | - | Which option is a noun phrase? |
+| qg_p21_noun_phrases_closed_choice_variety | 16 | single_choice | - | Which noun phrase best expands "the puppy"? |
+| qg_p21_noun_phrases_closed_choice_variety | 17 | single_choice | - | Which option is the expanded noun phrase about the key? |
+| qg_p21_noun_phrases_closed_choice_variety | 18 | single_choice | - | Which word is the head noun in "the old wooden boat"? |
+| qg_p21_noun_phrases_closed_choice_variety | 19 | single_choice | - | Which option is a noun phrase, not a clause? |
+| qg_p21_noun_phrases_closed_choice_variety | 20 | single_choice | - | Which noun phrase best expands "the garden"? |
+| qg_p21_noun_phrases_closed_choice_variety | 21 | single_choice | - | Which option is the expanded noun phrase about the box? |
+| qg_p21_noun_phrases_closed_choice_variety | 22 | single_choice | - | Which word is the head noun in "the bright new library"? |
+| qg_p21_noun_phrases_closed_choice_variety | 23 | single_choice | - | Which option is a noun phrase? |
+| qg_p21_noun_phrases_closed_choice_variety | 24 | single_choice | - | Which noun phrase best expands "the puppy"? |
+| qg_p21_noun_phrases_closed_choice_variety | 25 | single_choice | - | Which option is the expanded noun phrase about the key? |
+| qg_p21_noun_phrases_closed_choice_variety | 26 | single_choice | - | Which word is the head noun in "the old wooden boat"? |
+| qg_p21_noun_phrases_closed_choice_variety | 27 | single_choice | - | Which option is a noun phrase, not a clause? |
+| qg_p21_noun_phrases_closed_choice_variety | 28 | single_choice | - | Which noun phrase best expands "the garden"? |
+| qg_p21_noun_phrases_closed_choice_variety | 29 | single_choice | - | Which option is the expanded noun phrase about the box? |
+| qg_p21_noun_phrases_closed_choice_variety | 30 | single_choice | - | Which word is the head noun in "the bright new library"? |
+| qg_p21_noun_phrases_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_noun_phrases_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which noun phra |
+| qg_p21_noun_phrases_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_noun_phrases_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which noun phra |
+| qg_p21_noun_phrases_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_noun_phrases_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which noun phra |
+| qg_p21_noun_phrases_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_noun_phrases_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which noun phra |
+| qg_p21_noun_phrases_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_noun_phrases_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which noun phra |
+| qg_p21_noun_phrases_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_noun_phrases_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which noun phra |
+| qg_p21_noun_phrases_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_noun_phrases_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which noun phra |
+| qg_p21_noun_phrases_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which option is |
+| qg_p21_noun_phrases_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_adverbials_closed_choice_variety | 1 | single_choice | - | Which option correctly places the fronted adverbial after br |
+| qg_p21_adverbials_closed_choice_variety | 2 | single_choice | - | Which opening phrase is a fronted adverbial of place? |
+| qg_p21_adverbials_closed_choice_variety | 3 | single_choice | - | Which sentence needs a comma after the fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 4 | single_choice | - | Which sentence does not start with a fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 5 | single_choice | - | Which opening is a fronted adverbial of place? |
+| qg_p21_adverbials_closed_choice_variety | 6 | single_choice | - | Which sentence uses a fronted adverbial of manner? |
+| qg_p21_adverbials_closed_choice_variety | 7 | single_choice | - | Which sentence needs a comma after the fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 8 | single_choice | - | Which sentence does not start with a fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 9 | single_choice | - | Which option correctly places the fronted adverbial after br |
+| qg_p21_adverbials_closed_choice_variety | 10 | single_choice | - | Which opening phrase is a fronted adverbial of place? |
+| qg_p21_adverbials_closed_choice_variety | 11 | single_choice | - | Which sentence needs a comma after the fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 12 | single_choice | - | Which sentence does not start with a fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 13 | single_choice | - | Which opening is a fronted adverbial of place? |
+| qg_p21_adverbials_closed_choice_variety | 14 | single_choice | - | Which sentence uses a fronted adverbial of manner? |
+| qg_p21_adverbials_closed_choice_variety | 15 | single_choice | - | Which sentence needs a comma after the fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 16 | single_choice | - | Which sentence does not start with a fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 17 | single_choice | - | Which option correctly places the fronted adverbial after br |
+| qg_p21_adverbials_closed_choice_variety | 18 | single_choice | - | Which opening phrase is a fronted adverbial of place? |
+| qg_p21_adverbials_closed_choice_variety | 19 | single_choice | - | Which sentence needs a comma after the fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 20 | single_choice | - | Which sentence does not start with a fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 21 | single_choice | - | Which opening is a fronted adverbial of place? |
+| qg_p21_adverbials_closed_choice_variety | 22 | single_choice | - | Which sentence uses a fronted adverbial of manner? |
+| qg_p21_adverbials_closed_choice_variety | 23 | single_choice | - | Which sentence needs a comma after the fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 24 | single_choice | - | Which sentence does not start with a fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 25 | single_choice | - | Which option correctly places the fronted adverbial after br |
+| qg_p21_adverbials_closed_choice_variety | 26 | single_choice | - | Which opening phrase is a fronted adverbial of place? |
+| qg_p21_adverbials_closed_choice_variety | 27 | single_choice | - | Which sentence needs a comma after the fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 28 | single_choice | - | Which sentence does not start with a fronted adverbial? |
+| qg_p21_adverbials_closed_choice_variety | 29 | single_choice | - | Which opening is a fronted adverbial of place? |
+| qg_p21_adverbials_closed_choice_variety | 30 | single_choice | - | Which sentence uses a fronted adverbial of manner? |
+| qg_p21_adverbials_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_adverbials_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which opening p |
+| qg_p21_adverbials_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which opening i |
+| qg_p21_adverbials_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_adverbials_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which opening p |
+| qg_p21_adverbials_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which opening i |
+| qg_p21_adverbials_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_adverbials_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which opening p |
+| qg_p21_adverbials_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which opening i |
+| qg_p21_adverbials_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_adverbials_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which opening p |
+| qg_p21_adverbials_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_adverbials_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which opening i |
+| qg_p21_adverbials_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_clauses_closed_choice_variety | 1 | single_choice | - | Which part is the subordinate clause in "Because it was icy, |
+| qg_p21_clauses_closed_choice_variety | 2 | single_choice | - | Which part is the main clause in "After the bell rang, the p |
+| qg_p21_clauses_closed_choice_variety | 3 | single_choice | - | Which sentence correctly uses although? |
+| qg_p21_clauses_closed_choice_variety | 4 | single_choice | - | Which option repairs the fragment "When the lights went out" |
+| qg_p21_clauses_closed_choice_variety | 5 | single_choice | - | Which part is the subordinate clause in "Although the sun wa |
+| qg_p21_clauses_closed_choice_variety | 6 | single_choice | - | Which part is the main clause in "When the rain stopped, we  |
+| qg_p21_clauses_closed_choice_variety | 7 | single_choice | - | Which sentence correctly uses if? |
+| qg_p21_clauses_closed_choice_variety | 8 | single_choice | - | Which option repairs the fragment "Because the gate was lock |
+| qg_p21_clauses_closed_choice_variety | 9 | single_choice | - | Which part is the subordinate clause in "Because it was icy, |
+| qg_p21_clauses_closed_choice_variety | 10 | single_choice | - | Which part is the main clause in "After the bell rang, the p |
+| qg_p21_clauses_closed_choice_variety | 11 | single_choice | - | Which sentence correctly uses although? |
+| qg_p21_clauses_closed_choice_variety | 12 | single_choice | - | Which option repairs the fragment "When the lights went out" |
+| qg_p21_clauses_closed_choice_variety | 13 | single_choice | - | Which part is the subordinate clause in "Although the sun wa |
+| qg_p21_clauses_closed_choice_variety | 14 | single_choice | - | Which part is the main clause in "When the rain stopped, we  |
+| qg_p21_clauses_closed_choice_variety | 15 | single_choice | - | Which sentence correctly uses if? |
+| qg_p21_clauses_closed_choice_variety | 16 | single_choice | - | Which option repairs the fragment "Because the gate was lock |
+| qg_p21_clauses_closed_choice_variety | 17 | single_choice | - | Which part is the subordinate clause in "Because it was icy, |
+| qg_p21_clauses_closed_choice_variety | 18 | single_choice | - | Which part is the main clause in "After the bell rang, the p |
+| qg_p21_clauses_closed_choice_variety | 19 | single_choice | - | Which sentence correctly uses although? |
+| qg_p21_clauses_closed_choice_variety | 20 | single_choice | - | Which option repairs the fragment "When the lights went out" |
+| qg_p21_clauses_closed_choice_variety | 21 | single_choice | - | Which part is the subordinate clause in "Although the sun wa |
+| qg_p21_clauses_closed_choice_variety | 22 | single_choice | - | Which part is the main clause in "When the rain stopped, we  |
+| qg_p21_clauses_closed_choice_variety | 23 | single_choice | - | Which sentence correctly uses if? |
+| qg_p21_clauses_closed_choice_variety | 24 | single_choice | - | Which option repairs the fragment "Because the gate was lock |
+| qg_p21_clauses_closed_choice_variety | 25 | single_choice | - | Which part is the subordinate clause in "Because it was icy, |
+| qg_p21_clauses_closed_choice_variety | 26 | single_choice | - | Which part is the main clause in "After the bell rang, the p |
+| qg_p21_clauses_closed_choice_variety | 27 | single_choice | - | Which sentence correctly uses although? |
+| qg_p21_clauses_closed_choice_variety | 28 | single_choice | - | Which option repairs the fragment "When the lights went out" |
+| qg_p21_clauses_closed_choice_variety | 29 | single_choice | - | Which part is the subordinate clause in "Although the sun wa |
+| qg_p21_clauses_closed_choice_variety | 30 | single_choice | - | Which part is the main clause in "When the rain stopped, we  |
+| qg_p21_clauses_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_clauses_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which option re |
+| qg_p21_clauses_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_clauses_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which option re |
+| qg_p21_clauses_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_clauses_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which option re |
+| qg_p21_clauses_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_clauses_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which option re |
+| qg_p21_clauses_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_clauses_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which option re |
+| qg_p21_clauses_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_clauses_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which option re |
+| qg_p21_clauses_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_clauses_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which option re |
+| qg_p21_clauses_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_clauses_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which part is t |
+| qg_p21_relative_clauses_closed_choice_variety | 1 | single_choice | - | Which sentence uses a relative clause about a person? |
+| qg_p21_relative_clauses_closed_choice_variety | 2 | single_choice | - | Which sentence uses which correctly for a thing? |
+| qg_p21_relative_clauses_closed_choice_variety | 3 | single_choice | - | Which option contains a relative clause about the shop? |
+| qg_p21_relative_clauses_closed_choice_variety | 4 | single_choice | - | Which sentence uses commas for extra relative-clause informa |
+| qg_p21_relative_clauses_closed_choice_variety | 5 | single_choice | - | Which sentence uses whose in a relative clause? |
+| qg_p21_relative_clauses_closed_choice_variety | 6 | single_choice | - | Which option contains a relative clause about the village? |
+| qg_p21_relative_clauses_closed_choice_variety | 7 | single_choice | - | Which sentence uses commas for extra relative-clause informa |
+| qg_p21_relative_clauses_closed_choice_variety | 8 | single_choice | - | Which sentence uses who correctly? |
+| qg_p21_relative_clauses_closed_choice_variety | 9 | single_choice | - | Which sentence uses a relative clause about a person? |
+| qg_p21_relative_clauses_closed_choice_variety | 10 | single_choice | - | Which sentence uses which correctly for a thing? |
+| qg_p21_relative_clauses_closed_choice_variety | 11 | single_choice | - | Which option contains a relative clause about the shop? |
+| qg_p21_relative_clauses_closed_choice_variety | 12 | single_choice | - | Which sentence uses commas for extra relative-clause informa |
+| qg_p21_relative_clauses_closed_choice_variety | 13 | single_choice | - | Which sentence uses whose in a relative clause? |
+| qg_p21_relative_clauses_closed_choice_variety | 14 | single_choice | - | Which option contains a relative clause about the village? |
+| qg_p21_relative_clauses_closed_choice_variety | 15 | single_choice | - | Which sentence uses commas for extra relative-clause informa |
+| qg_p21_relative_clauses_closed_choice_variety | 16 | single_choice | - | Which sentence uses who correctly? |
+| qg_p21_relative_clauses_closed_choice_variety | 17 | single_choice | - | Which sentence uses a relative clause about a person? |
+| qg_p21_relative_clauses_closed_choice_variety | 18 | single_choice | - | Which sentence uses which correctly for a thing? |
+| qg_p21_relative_clauses_closed_choice_variety | 19 | single_choice | - | Which option contains a relative clause about the shop? |
+| qg_p21_relative_clauses_closed_choice_variety | 20 | single_choice | - | Which sentence uses commas for extra relative-clause informa |
+| qg_p21_relative_clauses_closed_choice_variety | 21 | single_choice | - | Which sentence uses whose in a relative clause? |
+| qg_p21_relative_clauses_closed_choice_variety | 22 | single_choice | - | Which option contains a relative clause about the village? |
+| qg_p21_relative_clauses_closed_choice_variety | 23 | single_choice | - | Which sentence uses commas for extra relative-clause informa |
+| qg_p21_relative_clauses_closed_choice_variety | 24 | single_choice | - | Which sentence uses who correctly? |
+| qg_p21_relative_clauses_closed_choice_variety | 25 | single_choice | - | Which sentence uses a relative clause about a person? |
+| qg_p21_relative_clauses_closed_choice_variety | 26 | single_choice | - | Which sentence uses which correctly for a thing? |
+| qg_p21_relative_clauses_closed_choice_variety | 27 | single_choice | - | Which option contains a relative clause about the shop? |
+| qg_p21_relative_clauses_closed_choice_variety | 28 | single_choice | - | Which sentence uses commas for extra relative-clause informa |
+| qg_p21_relative_clauses_closed_choice_variety | 29 | single_choice | - | Which sentence uses whose in a relative clause? |
+| qg_p21_relative_clauses_closed_choice_variety | 30 | single_choice | - | Which option contains a relative clause about the village? |
+| qg_p21_relative_clauses_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_relative_clauses_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_relative_clauses_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_relative_clauses_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_relative_clauses_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_relative_clauses_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_relative_clauses_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_relative_clauses_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_relative_clauses_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which option co |
+| qg_p21_tense_aspect_closed_choice_variety | 1 | single_choice | - | Which sentence uses the present perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 2 | single_choice | - | Which sentence uses the past progressive? |
+| qg_p21_tense_aspect_closed_choice_variety | 3 | single_choice | - | Which sentence uses the past perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 4 | single_choice | - | Which sentence uses the simple present? |
+| qg_p21_tense_aspect_closed_choice_variety | 5 | single_choice | - | Which sentence uses the present progressive? |
+| qg_p21_tense_aspect_closed_choice_variety | 6 | single_choice | - | Which sentence uses the simple past? |
+| qg_p21_tense_aspect_closed_choice_variety | 7 | single_choice | - | Which sentence uses the present perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 8 | single_choice | - | Which sentence shows one past action before another? |
+| qg_p21_tense_aspect_closed_choice_variety | 9 | single_choice | - | Which sentence uses the present perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 10 | single_choice | - | Which sentence uses the past progressive? |
+| qg_p21_tense_aspect_closed_choice_variety | 11 | single_choice | - | Which sentence uses the past perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 12 | single_choice | - | Which sentence uses the simple present? |
+| qg_p21_tense_aspect_closed_choice_variety | 13 | single_choice | - | Which sentence uses the present progressive? |
+| qg_p21_tense_aspect_closed_choice_variety | 14 | single_choice | - | Which sentence uses the simple past? |
+| qg_p21_tense_aspect_closed_choice_variety | 15 | single_choice | - | Which sentence uses the present perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 16 | single_choice | - | Which sentence shows one past action before another? |
+| qg_p21_tense_aspect_closed_choice_variety | 17 | single_choice | - | Which sentence uses the present perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 18 | single_choice | - | Which sentence uses the past progressive? |
+| qg_p21_tense_aspect_closed_choice_variety | 19 | single_choice | - | Which sentence uses the past perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 20 | single_choice | - | Which sentence uses the simple present? |
+| qg_p21_tense_aspect_closed_choice_variety | 21 | single_choice | - | Which sentence uses the present progressive? |
+| qg_p21_tense_aspect_closed_choice_variety | 22 | single_choice | - | Which sentence uses the simple past? |
+| qg_p21_tense_aspect_closed_choice_variety | 23 | single_choice | - | Which sentence uses the present perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 24 | single_choice | - | Which sentence shows one past action before another? |
+| qg_p21_tense_aspect_closed_choice_variety | 25 | single_choice | - | Which sentence uses the present perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 26 | single_choice | - | Which sentence uses the past progressive? |
+| qg_p21_tense_aspect_closed_choice_variety | 27 | single_choice | - | Which sentence uses the past perfect? |
+| qg_p21_tense_aspect_closed_choice_variety | 28 | single_choice | - | Which sentence uses the simple present? |
+| qg_p21_tense_aspect_closed_choice_variety | 29 | single_choice | - | Which sentence uses the present progressive? |
+| qg_p21_tense_aspect_closed_choice_variety | 30 | single_choice | - | Which sentence uses the simple past? |
+| qg_p21_tense_aspect_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_tense_aspect_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_standard_english_closed_choice_variety | 1 | single_choice | - | Which option uses the Standard English verb were? |
+| qg_p21_standard_english_closed_choice_variety | 2 | single_choice | - | Which option uses the Standard English past-tense verb did? |
+| qg_p21_standard_english_closed_choice_variety | 3 | single_choice | - | Which option uses the Standard English phrase should have? |
+| qg_p21_standard_english_closed_choice_variety | 4 | single_choice | - | Which option uses Standard English subject-verb agreement fo |
+| qg_p21_standard_english_closed_choice_variety | 5 | single_choice | - | Which option uses Standard English with she has? |
+| qg_p21_standard_english_closed_choice_variety | 6 | single_choice | - | Which option uses Standard English with there are? |
+| qg_p21_standard_english_closed_choice_variety | 7 | single_choice | - | Which option uses Standard English with they were? |
+| qg_p21_standard_english_closed_choice_variety | 8 | single_choice | - | Which option uses a Standard English negative verb form? |
+| qg_p21_standard_english_closed_choice_variety | 9 | single_choice | - | Which option uses the Standard English verb were? |
+| qg_p21_standard_english_closed_choice_variety | 10 | single_choice | - | Which option uses the Standard English past-tense verb did? |
+| qg_p21_standard_english_closed_choice_variety | 11 | single_choice | - | Which option uses the Standard English phrase should have? |
+| qg_p21_standard_english_closed_choice_variety | 12 | single_choice | - | Which option uses Standard English subject-verb agreement fo |
+| qg_p21_standard_english_closed_choice_variety | 13 | single_choice | - | Which option uses Standard English with she has? |
+| qg_p21_standard_english_closed_choice_variety | 14 | single_choice | - | Which option uses Standard English with there are? |
+| qg_p21_standard_english_closed_choice_variety | 15 | single_choice | - | Which option uses Standard English with they were? |
+| qg_p21_standard_english_closed_choice_variety | 16 | single_choice | - | Which option uses a Standard English negative verb form? |
+| qg_p21_standard_english_closed_choice_variety | 17 | single_choice | - | Which option uses the Standard English verb were? |
+| qg_p21_standard_english_closed_choice_variety | 18 | single_choice | - | Which option uses the Standard English past-tense verb did? |
+| qg_p21_standard_english_closed_choice_variety | 19 | single_choice | - | Which option uses the Standard English phrase should have? |
+| qg_p21_standard_english_closed_choice_variety | 20 | single_choice | - | Which option uses Standard English subject-verb agreement fo |
+| qg_p21_standard_english_closed_choice_variety | 21 | single_choice | - | Which option uses Standard English with she has? |
+| qg_p21_standard_english_closed_choice_variety | 22 | single_choice | - | Which option uses Standard English with there are? |
+| qg_p21_standard_english_closed_choice_variety | 23 | single_choice | - | Which option uses Standard English with they were? |
+| qg_p21_standard_english_closed_choice_variety | 24 | single_choice | - | Which option uses a Standard English negative verb form? |
+| qg_p21_standard_english_closed_choice_variety | 25 | single_choice | - | Which option uses the Standard English verb were? |
+| qg_p21_standard_english_closed_choice_variety | 26 | single_choice | - | Which option uses the Standard English past-tense verb did? |
+| qg_p21_standard_english_closed_choice_variety | 27 | single_choice | - | Which option uses the Standard English phrase should have? |
+| qg_p21_standard_english_closed_choice_variety | 28 | single_choice | - | Which option uses Standard English subject-verb agreement fo |
+| qg_p21_standard_english_closed_choice_variety | 29 | single_choice | - | Which option uses Standard English with she has? |
+| qg_p21_standard_english_closed_choice_variety | 30 | single_choice | - | Which option uses Standard English with there are? |
+| qg_p21_standard_english_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_standard_english_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which option us |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 1 | single_choice | - | Which sentence keeps the pronoun reference clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 2 | single_choice | - | Which sentence is clearer? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 3 | single_choice | - | Which option improves cohesion without confusion? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 4 | single_choice | - | Which pronoun correctly refers to the bus driver? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 5 | single_choice | - | Which sentence keeps the pronoun reference clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 6 | single_choice | - | Which sentence avoids an unclear pronoun? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 7 | single_choice | - | Which sentence uses a pronoun clearly? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 8 | single_choice | - | Which sentence keeps cohesion clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 9 | single_choice | - | Which sentence keeps the pronoun reference clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 10 | single_choice | - | Which sentence is clearer? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 11 | single_choice | - | Which option improves cohesion without confusion? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 12 | single_choice | - | Which pronoun correctly refers to the bus driver? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 13 | single_choice | - | Which sentence keeps the pronoun reference clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 14 | single_choice | - | Which sentence avoids an unclear pronoun? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 15 | single_choice | - | Which sentence uses a pronoun clearly? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 16 | single_choice | - | Which sentence keeps cohesion clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 17 | single_choice | - | Which sentence keeps the pronoun reference clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 18 | single_choice | - | Which sentence is clearer? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 19 | single_choice | - | Which option improves cohesion without confusion? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 20 | single_choice | - | Which pronoun correctly refers to the bus driver? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 21 | single_choice | - | Which sentence keeps the pronoun reference clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 22 | single_choice | - | Which sentence avoids an unclear pronoun? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 23 | single_choice | - | Which sentence uses a pronoun clearly? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 24 | single_choice | - | Which sentence keeps cohesion clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 25 | single_choice | - | Which sentence keeps the pronoun reference clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 26 | single_choice | - | Which sentence is clearer? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 27 | single_choice | - | Which option improves cohesion without confusion? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 28 | single_choice | - | Which pronoun correctly refers to the bus driver? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 29 | single_choice | - | Which sentence keeps the pronoun reference clear? |
+| qg_p21_pronouns_cohesion_closed_choice_variety | 30 | single_choice | - | Which sentence avoids an unclear pronoun? |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which option im |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which pronoun c |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which option im |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which pronoun c |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which option im |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which pronoun c |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which option im |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which pronoun c |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_pronouns_cohesion_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_closed_choice_variety | 1 | single_choice | - | Which sentence is most formal? |
+| qg_p21_formality_closed_choice_variety | 2 | single_choice | - | Which sentence is informal? |
+| qg_p21_formality_closed_choice_variety | 3 | single_choice | - | Which word is the most formal replacement for "kids"? |
+| qg_p21_formality_closed_choice_variety | 4 | single_choice | - | Which sentence best suits a formal report? |
+| qg_p21_formality_closed_choice_variety | 5 | single_choice | - | Which word is the most formal replacement for "moan"? |
+| qg_p21_formality_closed_choice_variety | 6 | single_choice | - | Which sentence is most formal? |
+| qg_p21_formality_closed_choice_variety | 7 | single_choice | - | Which sentence is informal? |
+| qg_p21_formality_closed_choice_variety | 8 | single_choice | - | Which sentence best suits a formal announcement? |
+| qg_p21_formality_closed_choice_variety | 9 | single_choice | - | Which sentence is most formal? |
+| qg_p21_formality_closed_choice_variety | 10 | single_choice | - | Which sentence is informal? |
+| qg_p21_formality_closed_choice_variety | 11 | single_choice | - | Which word is the most formal replacement for "kids"? |
+| qg_p21_formality_closed_choice_variety | 12 | single_choice | - | Which sentence best suits a formal report? |
+| qg_p21_formality_closed_choice_variety | 13 | single_choice | - | Which word is the most formal replacement for "moan"? |
+| qg_p21_formality_closed_choice_variety | 14 | single_choice | - | Which sentence is most formal? |
+| qg_p21_formality_closed_choice_variety | 15 | single_choice | - | Which sentence is informal? |
+| qg_p21_formality_closed_choice_variety | 16 | single_choice | - | Which sentence best suits a formal announcement? |
+| qg_p21_formality_closed_choice_variety | 17 | single_choice | - | Which sentence is most formal? |
+| qg_p21_formality_closed_choice_variety | 18 | single_choice | - | Which sentence is informal? |
+| qg_p21_formality_closed_choice_variety | 19 | single_choice | - | Which word is the most formal replacement for "kids"? |
+| qg_p21_formality_closed_choice_variety | 20 | single_choice | - | Which sentence best suits a formal report? |
+| qg_p21_formality_closed_choice_variety | 21 | single_choice | - | Which word is the most formal replacement for "moan"? |
+| qg_p21_formality_closed_choice_variety | 22 | single_choice | - | Which sentence is most formal? |
+| qg_p21_formality_closed_choice_variety | 23 | single_choice | - | Which sentence is informal? |
+| qg_p21_formality_closed_choice_variety | 24 | single_choice | - | Which sentence best suits a formal announcement? |
+| qg_p21_formality_closed_choice_variety | 25 | single_choice | - | Which sentence is most formal? |
+| qg_p21_formality_closed_choice_variety | 26 | single_choice | - | Which sentence is informal? |
+| qg_p21_formality_closed_choice_variety | 27 | single_choice | - | Which word is the most formal replacement for "kids"? |
+| qg_p21_formality_closed_choice_variety | 28 | single_choice | - | Which sentence best suits a formal report? |
+| qg_p21_formality_closed_choice_variety | 29 | single_choice | - | Which word is the most formal replacement for "moan"? |
+| qg_p21_formality_closed_choice_variety | 30 | single_choice | - | Which sentence is most formal? |
+| qg_p21_formality_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_formality_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_formality_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_formality_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_formality_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_formality_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_formality_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_formality_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_formality_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which word is t |
+| qg_p21_formality_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_closed_choice_variety | 1 | single_choice | - | Which sentence is active voice? |
+| qg_p21_active_passive_closed_choice_variety | 2 | single_choice | - | Which sentence is passive voice? |
+| qg_p21_active_passive_closed_choice_variety | 3 | single_choice | - | Which passive sentence keeps the same meaning as "The dog ch |
+| qg_p21_active_passive_closed_choice_variety | 4 | single_choice | - | Which passive sentence leaves out the doer? |
+| qg_p21_active_passive_closed_choice_variety | 5 | single_choice | - | Which sentence is active voice? |
+| qg_p21_active_passive_closed_choice_variety | 6 | single_choice | - | Which sentence is passive voice? |
+| qg_p21_active_passive_closed_choice_variety | 7 | single_choice | - | Which passive sentence keeps the same meaning as "Noah score |
+| qg_p21_active_passive_closed_choice_variety | 8 | single_choice | - | Which passive sentence leaves out the doer? |
+| qg_p21_active_passive_closed_choice_variety | 9 | single_choice | - | Which sentence is active voice? |
+| qg_p21_active_passive_closed_choice_variety | 10 | single_choice | - | Which sentence is passive voice? |
+| qg_p21_active_passive_closed_choice_variety | 11 | single_choice | - | Which passive sentence keeps the same meaning as "The dog ch |
+| qg_p21_active_passive_closed_choice_variety | 12 | single_choice | - | Which passive sentence leaves out the doer? |
+| qg_p21_active_passive_closed_choice_variety | 13 | single_choice | - | Which sentence is active voice? |
+| qg_p21_active_passive_closed_choice_variety | 14 | single_choice | - | Which sentence is passive voice? |
+| qg_p21_active_passive_closed_choice_variety | 15 | single_choice | - | Which passive sentence keeps the same meaning as "Noah score |
+| qg_p21_active_passive_closed_choice_variety | 16 | single_choice | - | Which passive sentence leaves out the doer? |
+| qg_p21_active_passive_closed_choice_variety | 17 | single_choice | - | Which sentence is active voice? |
+| qg_p21_active_passive_closed_choice_variety | 18 | single_choice | - | Which sentence is passive voice? |
+| qg_p21_active_passive_closed_choice_variety | 19 | single_choice | - | Which passive sentence keeps the same meaning as "The dog ch |
+| qg_p21_active_passive_closed_choice_variety | 20 | single_choice | - | Which passive sentence leaves out the doer? |
+| qg_p21_active_passive_closed_choice_variety | 21 | single_choice | - | Which sentence is active voice? |
+| qg_p21_active_passive_closed_choice_variety | 22 | single_choice | - | Which sentence is passive voice? |
+| qg_p21_active_passive_closed_choice_variety | 23 | single_choice | - | Which passive sentence keeps the same meaning as "Noah score |
+| qg_p21_active_passive_closed_choice_variety | 24 | single_choice | - | Which passive sentence leaves out the doer? |
+| qg_p21_active_passive_closed_choice_variety | 25 | single_choice | - | Which sentence is active voice? |
+| qg_p21_active_passive_closed_choice_variety | 26 | single_choice | - | Which sentence is passive voice? |
+| qg_p21_active_passive_closed_choice_variety | 27 | single_choice | - | Which passive sentence keeps the same meaning as "The dog ch |
+| qg_p21_active_passive_closed_choice_variety | 28 | single_choice | - | Which passive sentence leaves out the doer? |
+| qg_p21_active_passive_closed_choice_variety | 29 | single_choice | - | Which sentence is active voice? |
+| qg_p21_active_passive_closed_choice_variety | 30 | single_choice | - | Which sentence is passive voice? |
+| qg_p21_active_passive_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which passive s |
+| qg_p21_active_passive_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_active_passive_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_subject_object_closed_choice_variety | 1 | single_choice | - | In "The cat chased the mouse", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 2 | single_choice | - | In "Jamal kicked the ball", what is the object? |
+| qg_p21_subject_object_closed_choice_variety | 3 | single_choice | - | In "After lunch, Priya watered the plants", what is the subj |
+| qg_p21_subject_object_closed_choice_variety | 4 | single_choice | - | In "The letter was opened by Dad", who is the doer? |
+| qg_p21_subject_object_closed_choice_variety | 5 | single_choice | - | In "The tall tree shaded the bench", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 6 | single_choice | - | In "Mia read the book", what is the object? |
+| qg_p21_subject_object_closed_choice_variety | 7 | single_choice | - | In "The flowers were planted by the gardener", who is the do |
+| qg_p21_subject_object_closed_choice_variety | 8 | single_choice | - | In "The cyclist could see the sign", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 9 | single_choice | - | In "The cat chased the mouse", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 10 | single_choice | - | In "Jamal kicked the ball", what is the object? |
+| qg_p21_subject_object_closed_choice_variety | 11 | single_choice | - | In "After lunch, Priya watered the plants", what is the subj |
+| qg_p21_subject_object_closed_choice_variety | 12 | single_choice | - | In "The letter was opened by Dad", who is the doer? |
+| qg_p21_subject_object_closed_choice_variety | 13 | single_choice | - | In "The tall tree shaded the bench", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 14 | single_choice | - | In "Mia read the book", what is the object? |
+| qg_p21_subject_object_closed_choice_variety | 15 | single_choice | - | In "The flowers were planted by the gardener", who is the do |
+| qg_p21_subject_object_closed_choice_variety | 16 | single_choice | - | In "The cyclist could see the sign", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 17 | single_choice | - | In "The cat chased the mouse", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 18 | single_choice | - | In "Jamal kicked the ball", what is the object? |
+| qg_p21_subject_object_closed_choice_variety | 19 | single_choice | - | In "After lunch, Priya watered the plants", what is the subj |
+| qg_p21_subject_object_closed_choice_variety | 20 | single_choice | - | In "The letter was opened by Dad", who is the doer? |
+| qg_p21_subject_object_closed_choice_variety | 21 | single_choice | - | In "The tall tree shaded the bench", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 22 | single_choice | - | In "Mia read the book", what is the object? |
+| qg_p21_subject_object_closed_choice_variety | 23 | single_choice | - | In "The flowers were planted by the gardener", who is the do |
+| qg_p21_subject_object_closed_choice_variety | 24 | single_choice | - | In "The cyclist could see the sign", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 25 | single_choice | - | In "The cat chased the mouse", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 26 | single_choice | - | In "Jamal kicked the ball", what is the object? |
+| qg_p21_subject_object_closed_choice_variety | 27 | single_choice | - | In "After lunch, Priya watered the plants", what is the subj |
+| qg_p21_subject_object_closed_choice_variety | 28 | single_choice | - | In "The letter was opened by Dad", who is the doer? |
+| qg_p21_subject_object_closed_choice_variety | 29 | single_choice | - | In "The tall tree shaded the bench", what is the subject? |
+| qg_p21_subject_object_closed_choice_variety | 30 | single_choice | - | In "Mia read the book", what is the object? |
+| qg_p21_subject_object_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. In "The cat cha |
+| qg_p21_subject_object_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. In "Jamal kicke |
+| qg_p21_subject_object_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. In "After lunch |
+| qg_p21_subject_object_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. In "The letter  |
+| qg_p21_subject_object_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. In "The tall tr |
+| qg_p21_subject_object_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. In "Mia read th |
+| qg_p21_subject_object_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. In "The flowers |
+| qg_p21_subject_object_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. In "The cyclist |
+| qg_p21_subject_object_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. In "The cat cha |
+| qg_p21_subject_object_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. In "Jamal kicke |
+| qg_p21_subject_object_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. In "After lunch |
+| qg_p21_subject_object_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. In "The letter  |
+| qg_p21_subject_object_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. In "The tall tr |
+| qg_p21_subject_object_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. In "Mia read th |
+| qg_p21_subject_object_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. In "The flowers |
+| qg_p21_subject_object_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. In "The cyclist |
+| qg_p21_subject_object_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. In "The cat cha |
+| qg_p21_subject_object_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. In "Jamal kicke |
+| qg_p21_subject_object_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. In "After lunch |
+| qg_p21_subject_object_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. In "The letter  |
+| qg_p21_subject_object_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. In "The tall tr |
+| qg_p21_subject_object_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. In "Mia read th |
+| qg_p21_subject_object_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. In "The flowers |
+| qg_p21_subject_object_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. In "The cyclist |
+| qg_p21_subject_object_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. In "The cat cha |
+| qg_p21_subject_object_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. In "Jamal kicke |
+| qg_p21_subject_object_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. In "After lunch |
+| qg_p21_subject_object_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. In "The letter  |
+| qg_p21_subject_object_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. In "The tall tr |
+| qg_p21_subject_object_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. In "Mia read th |
+| qg_p21_modal_verbs_closed_choice_variety | 1 | single_choice | - | Which modal verb shows the strongest certainty? |
+| qg_p21_modal_verbs_closed_choice_variety | 2 | single_choice | - | Which sentence shows possibility, not certainty? |
+| qg_p21_modal_verbs_closed_choice_variety | 3 | single_choice | - | Which sentence gives advice? |
+| qg_p21_modal_verbs_closed_choice_variety | 4 | single_choice | - | Which sentence asks for permission? |
+| qg_p21_modal_verbs_closed_choice_variety | 5 | single_choice | - | Which modal verb shows obligation? |
+| qg_p21_modal_verbs_closed_choice_variety | 6 | single_choice | - | Which sentence shows ability? |
+| qg_p21_modal_verbs_closed_choice_variety | 7 | single_choice | - | Which sentence shows possibility? |
+| qg_p21_modal_verbs_closed_choice_variety | 8 | single_choice | - | Which sentence uses a modal verb for a polite request? |
+| qg_p21_modal_verbs_closed_choice_variety | 9 | single_choice | - | Which modal verb shows the strongest certainty? |
+| qg_p21_modal_verbs_closed_choice_variety | 10 | single_choice | - | Which sentence shows possibility, not certainty? |
+| qg_p21_modal_verbs_closed_choice_variety | 11 | single_choice | - | Which sentence gives advice? |
+| qg_p21_modal_verbs_closed_choice_variety | 12 | single_choice | - | Which sentence asks for permission? |
+| qg_p21_modal_verbs_closed_choice_variety | 13 | single_choice | - | Which modal verb shows obligation? |
+| qg_p21_modal_verbs_closed_choice_variety | 14 | single_choice | - | Which sentence shows ability? |
+| qg_p21_modal_verbs_closed_choice_variety | 15 | single_choice | - | Which sentence shows possibility? |
+| qg_p21_modal_verbs_closed_choice_variety | 16 | single_choice | - | Which sentence uses a modal verb for a polite request? |
+| qg_p21_modal_verbs_closed_choice_variety | 17 | single_choice | - | Which modal verb shows the strongest certainty? |
+| qg_p21_modal_verbs_closed_choice_variety | 18 | single_choice | - | Which sentence shows possibility, not certainty? |
+| qg_p21_modal_verbs_closed_choice_variety | 19 | single_choice | - | Which sentence gives advice? |
+| qg_p21_modal_verbs_closed_choice_variety | 20 | single_choice | - | Which sentence asks for permission? |
+| qg_p21_modal_verbs_closed_choice_variety | 21 | single_choice | - | Which modal verb shows obligation? |
+| qg_p21_modal_verbs_closed_choice_variety | 22 | single_choice | - | Which sentence shows ability? |
+| qg_p21_modal_verbs_closed_choice_variety | 23 | single_choice | - | Which sentence shows possibility? |
+| qg_p21_modal_verbs_closed_choice_variety | 24 | single_choice | - | Which sentence uses a modal verb for a polite request? |
+| qg_p21_modal_verbs_closed_choice_variety | 25 | single_choice | - | Which modal verb shows the strongest certainty? |
+| qg_p21_modal_verbs_closed_choice_variety | 26 | single_choice | - | Which sentence shows possibility, not certainty? |
+| qg_p21_modal_verbs_closed_choice_variety | 27 | single_choice | - | Which sentence gives advice? |
+| qg_p21_modal_verbs_closed_choice_variety | 28 | single_choice | - | Which sentence asks for permission? |
+| qg_p21_modal_verbs_closed_choice_variety | 29 | single_choice | - | Which modal verb shows obligation? |
+| qg_p21_modal_verbs_closed_choice_variety | 30 | single_choice | - | Which sentence shows ability? |
+| qg_p21_modal_verbs_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which modal ver |
+| qg_p21_modal_verbs_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which modal ver |
+| qg_p21_modal_verbs_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which modal ver |
+| qg_p21_modal_verbs_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which modal ver |
+| qg_p21_modal_verbs_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which modal ver |
+| qg_p21_modal_verbs_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which modal ver |
+| qg_p21_modal_verbs_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which modal ver |
+| qg_p21_modal_verbs_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_modal_verbs_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which modal ver |
+| qg_p21_modal_verbs_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_closed_choice_variety | 1 | single_choice | - | Which sentence uses commas to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 2 | single_choice | - | Which sentence uses brackets for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 3 | single_choice | - | Which sentence uses dashes to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 4 | single_choice | - | Which sentence still makes sense after removing the parenthe |
+| qg_p21_parenthesis_commas_closed_choice_variety | 5 | single_choice | - | Which sentence uses commas to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 6 | single_choice | - | Which sentence uses brackets for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 7 | single_choice | - | Which sentence uses dashes for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 8 | single_choice | - | Which sentence still works after removing the parenthesis fr |
+| qg_p21_parenthesis_commas_closed_choice_variety | 9 | single_choice | - | Which sentence uses commas to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 10 | single_choice | - | Which sentence uses brackets for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 11 | single_choice | - | Which sentence uses dashes to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 12 | single_choice | - | Which sentence still makes sense after removing the parenthe |
+| qg_p21_parenthesis_commas_closed_choice_variety | 13 | single_choice | - | Which sentence uses commas to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 14 | single_choice | - | Which sentence uses brackets for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 15 | single_choice | - | Which sentence uses dashes for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 16 | single_choice | - | Which sentence still works after removing the parenthesis fr |
+| qg_p21_parenthesis_commas_closed_choice_variety | 17 | single_choice | - | Which sentence uses commas to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 18 | single_choice | - | Which sentence uses brackets for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 19 | single_choice | - | Which sentence uses dashes to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 20 | single_choice | - | Which sentence still makes sense after removing the parenthe |
+| qg_p21_parenthesis_commas_closed_choice_variety | 21 | single_choice | - | Which sentence uses commas to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 22 | single_choice | - | Which sentence uses brackets for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 23 | single_choice | - | Which sentence uses dashes for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 24 | single_choice | - | Which sentence still works after removing the parenthesis fr |
+| qg_p21_parenthesis_commas_closed_choice_variety | 25 | single_choice | - | Which sentence uses commas to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 26 | single_choice | - | Which sentence uses brackets for parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 27 | single_choice | - | Which sentence uses dashes to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 28 | single_choice | - | Which sentence still makes sense after removing the parenthe |
+| qg_p21_parenthesis_commas_closed_choice_variety | 29 | single_choice | - | Which sentence uses commas to show parenthesis? |
+| qg_p21_parenthesis_commas_closed_choice_variety | 30 | single_choice | - | Which sentence uses brackets for parenthesis? |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_parenthesis_commas_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_closed_choice_variety | 1 | single_choice | - | Which sentence punctuates direct speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 2 | single_choice | - | Which sentence uses the comma before speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 3 | single_choice | - | Which sentence keeps the exclamation mark inside the speech  |
+| qg_p21_speech_punctuation_closed_choice_variety | 4 | single_choice | - | Which sentence correctly places the reporting clause after s |
+| qg_p21_speech_punctuation_closed_choice_variety | 5 | single_choice | - | Which sentence punctuates direct speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 6 | single_choice | - | Which sentence uses a reporting clause before speech correct |
+| qg_p21_speech_punctuation_closed_choice_variety | 7 | single_choice | - | Which sentence keeps the full stop inside the speech marks? |
+| qg_p21_speech_punctuation_closed_choice_variety | 8 | single_choice | - | Which sentence correctly adds the reporting clause after spe |
+| qg_p21_speech_punctuation_closed_choice_variety | 9 | single_choice | - | Which sentence punctuates direct speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 10 | single_choice | - | Which sentence uses the comma before speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 11 | single_choice | - | Which sentence keeps the exclamation mark inside the speech  |
+| qg_p21_speech_punctuation_closed_choice_variety | 12 | single_choice | - | Which sentence correctly places the reporting clause after s |
+| qg_p21_speech_punctuation_closed_choice_variety | 13 | single_choice | - | Which sentence punctuates direct speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 14 | single_choice | - | Which sentence uses a reporting clause before speech correct |
+| qg_p21_speech_punctuation_closed_choice_variety | 15 | single_choice | - | Which sentence keeps the full stop inside the speech marks? |
+| qg_p21_speech_punctuation_closed_choice_variety | 16 | single_choice | - | Which sentence correctly adds the reporting clause after spe |
+| qg_p21_speech_punctuation_closed_choice_variety | 17 | single_choice | - | Which sentence punctuates direct speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 18 | single_choice | - | Which sentence uses the comma before speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 19 | single_choice | - | Which sentence keeps the exclamation mark inside the speech  |
+| qg_p21_speech_punctuation_closed_choice_variety | 20 | single_choice | - | Which sentence correctly places the reporting clause after s |
+| qg_p21_speech_punctuation_closed_choice_variety | 21 | single_choice | - | Which sentence punctuates direct speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 22 | single_choice | - | Which sentence uses a reporting clause before speech correct |
+| qg_p21_speech_punctuation_closed_choice_variety | 23 | single_choice | - | Which sentence keeps the full stop inside the speech marks? |
+| qg_p21_speech_punctuation_closed_choice_variety | 24 | single_choice | - | Which sentence correctly adds the reporting clause after spe |
+| qg_p21_speech_punctuation_closed_choice_variety | 25 | single_choice | - | Which sentence punctuates direct speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 26 | single_choice | - | Which sentence uses the comma before speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 27 | single_choice | - | Which sentence keeps the exclamation mark inside the speech  |
+| qg_p21_speech_punctuation_closed_choice_variety | 28 | single_choice | - | Which sentence correctly places the reporting clause after s |
+| qg_p21_speech_punctuation_closed_choice_variety | 29 | single_choice | - | Which sentence punctuates direct speech correctly? |
+| qg_p21_speech_punctuation_closed_choice_variety | 30 | single_choice | - | Which sentence uses a reporting clause before speech correct |
+| qg_p21_speech_punctuation_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_speech_punctuation_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_apostrophes_possession_closed_choice_variety | 1 | single_choice | - | Which phrase shows singular possession? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 2 | single_choice | - | Which phrase shows that more than one girl owns the coats? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 3 | single_choice | - | Which phrase shows that the children own the books? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 4 | single_choice | - | Which sentence uses possession without an apostrophe? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 5 | single_choice | - | Which phrase shows that more than one boy owns the boots? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 6 | single_choice | - | Which phrase shows singular possession? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 7 | single_choice | - | Which phrase shows that the mice own the cage? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 8 | single_choice | - | Which sentence uses an apostrophe for a contraction? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 9 | single_choice | - | Which phrase shows singular possession? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 10 | single_choice | - | Which phrase shows that more than one girl owns the coats? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 11 | single_choice | - | Which phrase shows that the children own the books? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 12 | single_choice | - | Which sentence uses possession without an apostrophe? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 13 | single_choice | - | Which phrase shows that more than one boy owns the boots? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 14 | single_choice | - | Which phrase shows singular possession? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 15 | single_choice | - | Which phrase shows that the mice own the cage? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 16 | single_choice | - | Which sentence uses an apostrophe for a contraction? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 17 | single_choice | - | Which phrase shows singular possession? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 18 | single_choice | - | Which phrase shows that more than one girl owns the coats? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 19 | single_choice | - | Which phrase shows that the children own the books? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 20 | single_choice | - | Which sentence uses possession without an apostrophe? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 21 | single_choice | - | Which phrase shows that more than one boy owns the boots? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 22 | single_choice | - | Which phrase shows singular possession? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 23 | single_choice | - | Which phrase shows that the mice own the cage? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 24 | single_choice | - | Which sentence uses an apostrophe for a contraction? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 25 | single_choice | - | Which phrase shows singular possession? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 26 | single_choice | - | Which phrase shows that more than one girl owns the coats? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 27 | single_choice | - | Which phrase shows that the children own the books? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 28 | single_choice | - | Which sentence uses possession without an apostrophe? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 29 | single_choice | - | Which phrase shows that more than one boy owns the boots? |
+| qg_p21_apostrophes_possession_closed_choice_variety | 30 | single_choice | - | Which phrase shows singular possession? |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_apostrophes_possession_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which phrase sh |
+| qg_p21_boundary_punctuation_closed_choice_variety | 1 | single_choice | - | Which sentence uses a colon to introduce a list? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 2 | single_choice | - | Which option links the storm clauses with a semicolon? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 3 | single_choice | - | Which sentence uses a dash to add an explanation? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 4 | single_choice | - | Which option avoids a comma splice? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 5 | single_choice | - | Which sentence uses a colon to introduce an explanation? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 6 | single_choice | - | Which option links the match clauses with a semicolon? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 7 | single_choice | - | Which sentence uses a dash to add an afterthought? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 8 | single_choice | - | Which sentence uses a colon before a list? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 9 | single_choice | - | Which sentence uses a colon to introduce a list? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 10 | single_choice | - | Which option links the storm clauses with a semicolon? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 11 | single_choice | - | Which sentence uses a dash to add an explanation? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 12 | single_choice | - | Which option avoids a comma splice? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 13 | single_choice | - | Which sentence uses a colon to introduce an explanation? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 14 | single_choice | - | Which option links the match clauses with a semicolon? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 15 | single_choice | - | Which sentence uses a dash to add an afterthought? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 16 | single_choice | - | Which sentence uses a colon before a list? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 17 | single_choice | - | Which sentence uses a colon to introduce a list? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 18 | single_choice | - | Which option links the storm clauses with a semicolon? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 19 | single_choice | - | Which sentence uses a dash to add an explanation? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 20 | single_choice | - | Which option avoids a comma splice? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 21 | single_choice | - | Which sentence uses a colon to introduce an explanation? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 22 | single_choice | - | Which option links the match clauses with a semicolon? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 23 | single_choice | - | Which sentence uses a dash to add an afterthought? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 24 | single_choice | - | Which sentence uses a colon before a list? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 25 | single_choice | - | Which sentence uses a colon to introduce a list? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 26 | single_choice | - | Which option links the storm clauses with a semicolon? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 27 | single_choice | - | Which sentence uses a dash to add an explanation? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 28 | single_choice | - | Which option avoids a comma splice? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 29 | single_choice | - | Which sentence uses a colon to introduce an explanation? |
+| qg_p21_boundary_punctuation_closed_choice_variety | 30 | single_choice | - | Which option links the match clauses with a semicolon? |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which option li |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which option av |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which option li |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which option li |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which option av |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which option li |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which option li |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which option av |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which option li |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which option li |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which option av |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which sentence  |
+| qg_p21_boundary_punctuation_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which option li |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 1 | single_choice | - | Which phrase means the shark eats people? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 2 | single_choice | - | Which word means to cover something again? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 3 | single_choice | - | Which phrase uses a hyphen correctly before a noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 4 | single_choice | - | Which phrase means an owner of a small business? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 5 | single_choice | - | Which phrase uses hyphens correctly before the noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 6 | single_choice | - | Which phrase means paint that is between blue and green? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 7 | single_choice | - | Which phrase uses a hyphen correctly before the noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 8 | single_choice | - | Which word means to sign something again? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 9 | single_choice | - | Which phrase means the shark eats people? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 10 | single_choice | - | Which word means to cover something again? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 11 | single_choice | - | Which phrase uses a hyphen correctly before a noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 12 | single_choice | - | Which phrase means an owner of a small business? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 13 | single_choice | - | Which phrase uses hyphens correctly before the noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 14 | single_choice | - | Which phrase means paint that is between blue and green? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 15 | single_choice | - | Which phrase uses a hyphen correctly before the noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 16 | single_choice | - | Which word means to sign something again? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 17 | single_choice | - | Which phrase means the shark eats people? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 18 | single_choice | - | Which word means to cover something again? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 19 | single_choice | - | Which phrase uses a hyphen correctly before a noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 20 | single_choice | - | Which phrase means an owner of a small business? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 21 | single_choice | - | Which phrase uses hyphens correctly before the noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 22 | single_choice | - | Which phrase means paint that is between blue and green? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 23 | single_choice | - | Which phrase uses a hyphen correctly before the noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 24 | single_choice | - | Which word means to sign something again? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 25 | single_choice | - | Which phrase means the shark eats people? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 26 | single_choice | - | Which word means to cover something again? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 27 | single_choice | - | Which phrase uses a hyphen correctly before a noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 28 | single_choice | - | Which phrase means an owner of a small business? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 29 | single_choice | - | Which phrase uses hyphens correctly before the noun? |
+| qg_p21_hyphen_ambiguity_closed_choice_variety | 30 | single_choice | - | Which phrase means paint that is between blue and green? |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 1 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 2 | single_choice | - | Choose the best explanation for this answer. Which word mean |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 3 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 4 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 5 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 6 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 7 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 8 | single_choice | - | Choose the best explanation for this answer. Which word mean |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 9 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 10 | single_choice | - | Choose the best explanation for this answer. Which word mean |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 11 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 12 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 13 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 14 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 15 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 16 | single_choice | - | Choose the best explanation for this answer. Which word mean |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 17 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 18 | single_choice | - | Choose the best explanation for this answer. Which word mean |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 19 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 20 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 21 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 22 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 23 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 24 | single_choice | - | Choose the best explanation for this answer. Which word mean |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 25 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 26 | single_choice | - | Choose the best explanation for this answer. Which word mean |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 27 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 28 | single_choice | - | Choose the best explanation for this answer. Which phrase me |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 29 | single_choice | - | Choose the best explanation for this answer. Which phrase us |
+| qg_p21_hyphen_ambiguity_explanation_choice_variety | 30 | single_choice | - | Choose the best explanation for this answer. Which phrase me |

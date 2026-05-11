@@ -1,10 +1,9 @@
-# Grammar QG P21A Pool Expansion + Learner-Local Anti-Repetition Contract
+# Grammar QG P21 Pool Expansion + Learner-Local Anti-Repetition Contract
 
-Status: apply-ready patch package  
-Base: `ks2-mastery-lean-05102302.zip` after the previous Grammar 05102302 validation/hotfix patch has been applied  
-Primary evidence layer: uploaded ZIP/local patched snapshot  
-GitHub layer: supplementary only  
-Production layer: not certified by this package
+Status: production rollout candidate  
+Base: current `origin/main` plus the supplied P21 package patch  
+Primary evidence layer: repository tests, generated Grammar release artefacts, and production smoke  
+Production layer: completed after GitHub `main` deployment and live smoke evidence are attached to this folder
 
 ## Purpose
 
@@ -91,11 +90,14 @@ Hard failures:
 - visible variant repeat inside the focused simulation;
 - insufficient unique variant coverage.
 
-Warnings:
+Historical warning classification:
 
 - prompt-rhythm repeats where the short instruction text repeats but the full visible surface differs, such as repeated table prompts with different rows/options.
 
-Warnings are not release blockers by themselves, but they are product-review signals.
+Production classification:
+
+- prompt-rhythm repeats are blockers for this release pass.
+- the final P21 local repetition report must show `0` hard violations and `0` warnings.
 
 ## Required validation before merge
 
@@ -121,15 +123,17 @@ Expected results:
 - Existing Grammar QG audit tests pass.
 - Local repetition audit status is `pass`.
 - Local repetition hard violation count is `0`.
+- Local repetition warning count is `0`.
 - Grammar QG audit has no repeated generated variants.
 - Grammar QG deep audit has no generated signature collisions.
 - Content quality seeds 1..3 have `0` hard failures and `0` advisories.
+- Full `npm test` passes before deployment.
+- `npm run check` passes before deployment.
 
 ## Release-readiness boundary
 
-This patch is locally validated and apply-ready. It is not production-certified.
-
-Before live rollout, regenerate or refresh any release evidence your release process requires, especially:
+Before live rollout, regenerate or refresh any release evidence required by the
+normal Grammar QG release process, especially:
 
 - render inventory;
 - certification evidence manifest;
@@ -137,6 +141,17 @@ Before live rollout, regenerate or refresh any release evidence your release pro
 - any report that embeds the previous P20 release id;
 - any CI evidence requiring a full seed window.
 
+After live rollout, complete these release blockers:
+
+- deploy from GitHub `main` through the project deployment path;
+- run live Grammar production smoke against `https://ks2.eugnel.uk`;
+- run the Grammar QG production-release evidence verifier;
+- obtain independent code-review and contract-audit GREEN status;
+- confirm the local main checkout is synced to `origin/main`.
+
 ## Known limits
 
-This is P21A, a safe first expansion slice. It is not the final 900-1,100 template endpoint. The final endpoint should continue concept-by-concept expansion after this harness is merged, using the same local repetition audit as a release gate.
+This is P21, a safe first expansion slice. It is not the final 900-1,100
+template endpoint. The final endpoint should continue concept-by-concept
+expansion after this harness is merged, using the same local repetition audit
+as a release gate.

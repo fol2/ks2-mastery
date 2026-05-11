@@ -1,0 +1,693 @@
+TAP version 13
+# Subtest: P11 U10 Verify Chain: verify:grammar-qg-p11
+    # Subtest: verify:grammar-qg-p11 script exists in package.json
+    ok 1 - verify:grammar-qg-p11 script exists in package.json
+      ---
+      duration_ms: 0.3954
+      type: 'test'
+      ...
+    # Subtest: verify:grammar-qg-p11 starts with "npm run verify:grammar-qg-p10"
+    ok 2 - verify:grammar-qg-p11 starts with "npm run verify:grammar-qg-p10"
+      ---
+      duration_ms: 0.0747
+      type: 'test'
+      ...
+    # Subtest: verify:grammar-qg-p11 includes p11 test files via node --test
+    ok 3 - verify:grammar-qg-p11 includes p11 test files via node --test
+      ---
+      duration_ms: 0.0598
+      type: 'test'
+      ...
+    # Subtest: verify:grammar-qg-p11 chains with && (fail-fast)
+    ok 4 - verify:grammar-qg-p11 chains with && (fail-fast)
+      ---
+      duration_ms: 0.0977
+      type: 'test'
+      ...
+    1..4
+ok 1 - P11 U10 Verify Chain: verify:grammar-qg-p11
+  ---
+  duration_ms: 1.1508
+  type: 'suite'
+  ...
+# Subtest: P11 U10 Verify Chain: verify:grammar-qg-production-release
+    # Subtest: verify:grammar-qg-production-release script exists in package.json
+    ok 1 - verify:grammar-qg-production-release script exists in package.json
+      ---
+      duration_ms: 0.1347
+      type: 'test'
+      ...
+    # Subtest: verify:grammar-qg-production-release chains the active p14 release gate first
+    ok 2 - verify:grammar-qg-production-release chains the active p14 release gate first
+      ---
+      duration_ms: 0.0554
+      type: 'test'
+      ...
+    # Subtest: verify:grammar-qg-p14 chains p11 first
+    ok 3 - verify:grammar-qg-p14 chains p11 first
+      ---
+      duration_ms: 0.0939
+      type: 'test'
+      ...
+    # Subtest: verify:grammar-qg-production-release includes the semantic audit
+    ok 4 - verify:grammar-qg-production-release includes the semantic audit
+      ---
+      duration_ms: 0.1355
+      type: 'test'
+      ...
+    # Subtest: verify:grammar-qg-production-release includes the certification evidence validator
+    ok 5 - verify:grammar-qg-production-release includes the certification evidence validator
+      ---
+      duration_ms: 0.125
+      type: 'test'
+      ...
+    # Subtest: verify:grammar-qg-production-release checks manual expansion generated source freshness
+    ok 6 - verify:grammar-qg-production-release checks manual expansion generated source freshness
+      ---
+      duration_ms: 0.1606
+      type: 'test'
+      ...
+    # Subtest: verify:grammar-qg-production-release references the certification manifest
+    ok 7 - verify:grammar-qg-production-release references the certification manifest
+      ---
+      duration_ms: 0.0569
+      type: 'test'
+      ...
+    1..7
+ok 2 - P11 U10 Verify Chain: verify:grammar-qg-production-release
+  ---
+  duration_ms: 0.9854
+  type: 'suite'
+  ...
+# Subtest: P11 U10 Verify Chain: ordering integrity
+    # Subtest: p11 chains p10 which chains p9 (transitive)
+    ok 1 - p11 chains p10 which chains p9 (transitive)
+      ---
+      duration_ms: 0.053
+      type: 'test'
+      ...
+    # Subtest: production-release chains p14, which chains p11 and p10 (no skipping)
+    ok 2 - production-release chains p14, which chains p11 and p10 (no skipping)
+      ---
+      duration_ms: 0.0377
+      type: 'test'
+      ...
+    1..2
+ok 3 - P11 U10 Verify Chain: ordering integrity
+  ---
+  duration_ms: 0.136
+  type: 'suite'
+  ...
+# Subtest: Grammar QG P12 — P11 artefact identity
+    # Subtest: Render inventory
+        # Subtest: metadata.contentReleaseId equals grammar-qg-p11-2026-04-30
+        ok 1 - metadata.contentReleaseId equals grammar-qg-p11-2026-04-30
+          ---
+          duration_ms: 0.4751
+          type: 'test'
+          ...
+        # Subtest: first item has correct contentReleaseId
+        ok 2 - first item has correct contentReleaseId
+          ---
+          duration_ms: 0.1361
+          type: 'test'
+          ...
+        # Subtest: middle item has correct contentReleaseId
+        ok 3 - middle item has correct contentReleaseId
+          ---
+          duration_ms: 0.0695
+          type: 'test'
+          ...
+        # Subtest: last item has correct contentReleaseId
+        ok 4 - last item has correct contentReleaseId
+          ---
+          duration_ms: 0.0558
+          type: 'test'
+          ...
+        # Subtest: has exactly 2,340 items
+        ok 5 - has exactly 2,340 items
+          ---
+          duration_ms: 0.0528
+          type: 'test'
+          ...
+        # Subtest: has 78 unique templateIds
+        ok 6 - has 78 unique templateIds
+          ---
+          duration_ms: 0.2533
+          type: 'test'
+          ...
+        1..6
+    ok 1 - Render inventory
+      ---
+      duration_ms: 1.6713
+      type: 'suite'
+      ...
+    # Subtest: Quality register
+        # Subtest: metadata.contentReleaseId matches P11
+        ok 1 - metadata.contentReleaseId matches P11
+          ---
+          duration_ms: 0.1081
+          type: 'test'
+          ...
+        # Subtest: has 78 entries
+        ok 2 - has 78 entries
+          ---
+          duration_ms: 0.1485
+          type: 'test'
+          ...
+        1..2
+    ok 2 - Quality register
+      ---
+      duration_ms: 0.4703
+      type: 'suite'
+      ...
+    # Subtest: Distractor audit
+        # Subtest: metadata.contentReleaseId matches P11
+        ok 1 - metadata.contentReleaseId matches P11
+          ---
+          duration_ms: 0.084
+          type: 'test'
+          ...
+        1..1
+    ok 3 - Distractor audit
+      ---
+      duration_ms: 0.2024
+      type: 'suite'
+      ...
+    # Subtest: Marking matrix
+        # Subtest: metadata.contentReleaseId matches P11
+        ok 1 - metadata.contentReleaseId matches P11
+          ---
+          duration_ms: 0.0804
+          type: 'test'
+          ...
+        1..1
+    ok 4 - Marking matrix
+      ---
+      duration_ms: 0.1378
+      type: 'suite'
+      ...
+    # Subtest: Certification status map (live runtime authority)
+        # Subtest: covers the live 546-template runtime inventory
+        ok 1 - covers the live 546-template runtime inventory
+          ---
+          duration_ms: 0.0697
+          type: 'test'
+          ...
+        # Subtest: metadata.contentReleaseId matches the current P21 runtime release
+        ok 2 - metadata.contentReleaseId matches the current P21 runtime release
+          ---
+          duration_ms: 0.0325
+          type: 'test'
+          ...
+        # Subtest: rejects unknown template ID (fail-closed assertion)
+        ok 3 - rejects unknown template ID (fail-closed assertion)
+          ---
+          duration_ms: 0.1121
+          type: 'test'
+          ...
+        # Subtest: every entry has valid decision field
+        ok 4 - every entry has valid decision field
+          ---
+          duration_ms: 0.1617
+          type: 'test'
+          ...
+        # Subtest: every entry has evidence array with expected sources
+        ok 5 - every entry has evidence array with expected sources
+          ---
+          duration_ms: 0.1777
+          type: 'test'
+          ...
+        1..5
+    ok 5 - Certification status map (live runtime authority)
+      ---
+      duration_ms: 0.6471
+      type: 'suite'
+      ...
+    1..5
+ok 4 - Grammar QG P12 — P11 artefact identity
+  ---
+  duration_ms: 3.5967
+  type: 'suite'
+  ...
+# Subtest: verify:grammar-qg-production-release gate
+    # Subtest: references grammar-qg-p21-certification-manifest.json
+    ok 1 - references grammar-qg-p21-certification-manifest.json
+      ---
+      duration_ms: 0.394
+      type: 'test'
+      ...
+    # Subtest: references --expected-release=grammar-qg-p21-2026-05-11
+    ok 2 - references --expected-release=grammar-qg-p21-2026-05-11
+      ---
+      duration_ms: 0.132
+      type: 'test'
+      ...
+    # Subtest: checks generated manual expansion freshness before certification validation
+    ok 3 - checks generated manual expansion freshness before certification validation
+      ---
+      duration_ms: 0.1407
+      type: 'test'
+      ...
+    # Subtest: no active production-release script references P10 manifest as proof
+    ok 4 - no active production-release script references P10 manifest as proof
+      ---
+      duration_ms: 0.1438
+      type: 'test'
+      ...
+    1..4
+ok 5 - verify:grammar-qg-production-release gate
+  ---
+  duration_ms: 1.9565
+  type: 'suite'
+  ...
+# Subtest: P13 runtime certification source
+    # Subtest: uses the active P21 content release
+    ok 1 - uses the active P21 content release
+      ---
+      duration_ms: 0.3943
+      type: 'test'
+      ...
+    # Subtest: contains exactly one runtime entry for each current template
+    ok 2 - contains exactly one runtime entry for each current template
+      ---
+      duration_ms: 0.2497
+      type: 'test'
+      ...
+    # Subtest: preserves approved_with_limitation diagnostics instead of flattening them
+    ok 3 - preserves approved_with_limitation diagnostics instead of flattening them
+      ---
+      duration_ms: 0.6493
+      type: 'test'
+      ...
+    # Subtest: fails closed for invalid or unknown template IDs
+    ok 4 - fails closed for invalid or unknown template IDs
+      ---
+      duration_ms: 0.0727
+      type: 'test'
+      ...
+    # Subtest: has no active P10 or dynamic Node runtime authority references
+    ok 5 - has no active P10 or dynamic Node runtime authority references
+      ---
+      duration_ms: 1.4254
+      type: 'test'
+      ...
+    1..5
+ok 6 - P13 runtime certification source
+  ---
+  duration_ms: 3.4054
+  type: 'suite'
+  ...
+# Subtest: P13 runtime certification generator
+    # Subtest: committed generated source is byte-for-byte fresh
+    ok 1 - committed generated source is byte-for-byte fresh
+      ---
+      duration_ms: 1.9789
+      type: 'test'
+      ...
+    # Subtest: rejects a missing current metadata template
+    ok 2 - rejects a missing current metadata template
+      ---
+      duration_ms: 1.1948
+      type: 'test'
+      ...
+    # Subtest: rejects unknown active entries
+    ok 3 - rejects unknown active entries
+      ---
+      duration_ms: 1.4642
+      type: 'test'
+      ...
+    # Subtest: allows explicitly retired historical entries but excludes them from runtime scheduling
+    ok 4 - allows explicitly retired historical entries but excludes them from runtime scheduling
+      ---
+      duration_ms: 1.2822
+      type: 'test'
+      ...
+    1..4
+ok 7 - P13 runtime certification generator
+  ---
+  duration_ms: 6.3276
+  type: 'suite'
+  ...
+# Subtest: P13 validator runtime authority gate
+    # Subtest: passes against the committed P21 manifest and runtime source
+    ok 1 - passes against the committed P21 manifest and runtime source
+      ---
+      duration_ms: 4.0941
+      type: 'test'
+      ...
+    # Subtest: fails clearly when manifest expectedOutputPaths names a missing file
+    ok 2 - fails clearly when manifest expectedOutputPaths names a missing file
+      ---
+      duration_ms: 0.4813
+      type: 'test'
+      ...
+    1..2
+ok 8 - P13 validator runtime authority gate
+  ---
+  duration_ms: 4.7074
+  type: 'suite'
+  ...
+# Subtest: Grammar QG P14 depth and variety contract
+    # Subtest: ships the active P21 release denominator and preserves P14 priority families
+    ok 1 - ships the active P21 release denominator and preserves P14 priority families
+      ---
+      duration_ms: 622.8058
+      type: 'test'
+      ...
+    # Subtest: meets the learner-visible surface and prompt growth thresholds
+    ok 2 - meets the learner-visible surface and prompt growth thresholds
+      ---
+      duration_ms: 154.2452
+      type: 'test'
+      ...
+    # Subtest: expands the former low-diversity fixed banks below the P14 threshold
+    not ok 3 - expands the former low-diversity fixed banks below the P14 threshold
+      ---
+      duration_ms: 142.8443
+      type: 'test'
+      location: 'D:\\Coding\\ks2-mastery\\.worktrees\\grammar-qg-p21-pool-expansion\\tests\\grammar-qg-p14-depth-variety.test.js:82:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        
+        + [
+        +   {
+        +     templateId: 'qg_p21_sentence_functions_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_sentence_functions_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_word_classes_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_word_classes_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_noun_phrases_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_noun_phrases_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_adverbials_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_adverbials_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_clauses_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_clauses_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_relative_clauses_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_relative_clauses_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_tense_aspect_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_tense_aspect_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_standard_english_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_standard_english_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_pronouns_cohesion_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_pronouns_cohesion_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_formality_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_formality_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_active_passive_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_active_passive_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_subject_object_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_subject_object_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_modal_verbs_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_modal_verbs_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_parenthesis_commas_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_parenthesis_commas_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_speech_punctuation_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_speech_punctuation_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_apostrophes_possession_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_apostrophes_possession_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_boundary_punctuation_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_boundary_punctuation_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_hyphen_ambiguity_closed_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   },
+        +   {
+        +     templateId: 'qg_p21_hyphen_ambiguity_explanation_choice_variety',
+        +     uniqueSurfaceCount: 8
+        +   }
+        + ]
+        - []
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+        0:
+          templateId: 'qg_p21_sentence_functions_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        1:
+          templateId: 'qg_p21_sentence_functions_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        2:
+          templateId: 'qg_p21_word_classes_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        3:
+          templateId: 'qg_p21_word_classes_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        4:
+          templateId: 'qg_p21_noun_phrases_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        5:
+          templateId: 'qg_p21_noun_phrases_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        6:
+          templateId: 'qg_p21_adverbials_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        7:
+          templateId: 'qg_p21_adverbials_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        8:
+          templateId: 'qg_p21_clauses_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        9:
+          templateId: 'qg_p21_clauses_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        10:
+          templateId: 'qg_p21_relative_clauses_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        11:
+          templateId: 'qg_p21_relative_clauses_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        12:
+          templateId: 'qg_p21_tense_aspect_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        13:
+          templateId: 'qg_p21_tense_aspect_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        14:
+          templateId: 'qg_p21_standard_english_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        15:
+          templateId: 'qg_p21_standard_english_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        16:
+          templateId: 'qg_p21_pronouns_cohesion_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        17:
+          templateId: 'qg_p21_pronouns_cohesion_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        18:
+          templateId: 'qg_p21_formality_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        19:
+          templateId: 'qg_p21_formality_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        20:
+          templateId: 'qg_p21_active_passive_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        21:
+          templateId: 'qg_p21_active_passive_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        22:
+          templateId: 'qg_p21_subject_object_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        23:
+          templateId: 'qg_p21_subject_object_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        24:
+          templateId: 'qg_p21_modal_verbs_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        25:
+          templateId: 'qg_p21_modal_verbs_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        26:
+          templateId: 'qg_p21_parenthesis_commas_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        27:
+          templateId: 'qg_p21_parenthesis_commas_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        28:
+          templateId: 'qg_p21_speech_punctuation_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        29:
+          templateId: 'qg_p21_speech_punctuation_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        30:
+          templateId: 'qg_p21_apostrophes_possession_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        31:
+          templateId: 'qg_p21_apostrophes_possession_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        32:
+          templateId: 'qg_p21_boundary_punctuation_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        33:
+          templateId: 'qg_p21_boundary_punctuation_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+        34:
+          templateId: 'qg_p21_hyphen_ambiguity_closed_choice_variety'
+          uniqueSurfaceCount: 8
+        35:
+          templateId: 'qg_p21_hyphen_ambiguity_explanation_choice_variety'
+          uniqueSurfaceCount: 8
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Coding/ks2-mastery/.worktrees/grammar-qg-p21-pool-expansion/tests/grammar-qg-p14-depth-variety.test.js:100:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: keeps every P14 selected-response item to four distinct options
+    ok 4 - keeps every P14 selected-response item to four distinct options
+      ---
+      duration_ms: 14.0841
+      type: 'test'
+      ...
+    # Subtest: uses real interrogative clauses for P14 speech mixed-transfer questions
+    ok 5 - uses real interrogative clauses for P14 speech mixed-transfer questions
+      ---
+      duration_ms: 0.8857
+      type: 'test'
+      ...
+    # Subtest: keeps P14 selected-response distractor options free of likely surface cues
+    ok 6 - keeps P14 selected-response distractor options free of likely surface cues
+      ---
+      duration_ms: 68.7255
+      type: 'test'
+      ...
+    # Subtest: covers every P14 distractor review flag with quality-register adult decisions
+    ok 7 - covers every P14 distractor review flag with quality-register adult decisions
+      ---
+      duration_ms: 79.5292
+      type: 'test'
+      ...
+    # Subtest: does not repeat templates inside normal smart five-question sessions
+    ok 8 - does not repeat templates inside normal smart five-question sessions
+      ---
+      duration_ms: 23099.9157
+      type: 'test'
+      ...
+    1..8
+not ok 9 - Grammar QG P14 depth and variety contract
+  ---
+  duration_ms: 24183.9764
+  type: 'suite'
+  location: 'D:\\Coding\\ks2-mastery\\.worktrees\\grammar-qg-p21-pool-expansion\\tests\\grammar-qg-p14-depth-variety.test.js:41:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..9
+# tests 51
+# suites 14
+# pass 50
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 24377.7485

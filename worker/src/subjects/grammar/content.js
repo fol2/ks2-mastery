@@ -12166,6 +12166,340 @@ function buildManualExpansionQuestion(template, seed, family) {
   return buildManualExpansionSelectedQuestion(template, seed, caseItem, family);
 }
 
+// --- P21 curated local-pool expansion ---------------------------------------
+// P21 adds a small, closed-response layer that deliberately increases per-
+// concept template variety without weakening deterministic marking. Every item
+// is selected-response only, carries misconception-specific feedback, and is
+// tagged separately from the generated P18/P20 material so audits can measure it
+// without confusing it with the certification pack.
+const GRAMMAR_P21_EXPANSION_RELEASE_ID = 'grammar-qg-p21-2026-05-11';
+
+const P21_EXPLANATION_DISTRACTORS = Object.freeze([
+  'It only depends on the final punctuation mark.',
+  'It is correct because it is the shortest option.',
+  'It is correct because it sounds more exciting.',
+]);
+
+function p21ExpansionTemplateId(familyId) {
+  return `qg_${String(familyId || '').replace(/[^a-zA-Z0-9_]+/g, '_')}`;
+}
+
+function p21Case(id, prompt, correct, distractors, feedback) {
+  return Object.freeze({
+    id,
+    prompt,
+    correct,
+    distractors: Object.freeze(distractors.slice(0, 3)),
+    feedback,
+  });
+}
+
+const P21_CONCEPT_VARIETY_BANKS = Object.freeze({
+  sentence_functions: Object.freeze([
+    p21Case('command_gate', 'Which option gives an instruction about the gate?', 'Close the gate before the puppy runs out.', ['The gate is closed.', 'Did you close the gate?', 'What a noisy puppy that is!'], 'A command tells someone to do something.'),
+    p21Case('question_scarf', 'Which option asks about the red scarf?', 'Where did you put the red scarf?', ['Put the red scarf in the drawer.', 'The red scarf is in the drawer.', 'What a bright red scarf this is!'], 'A question asks for information and normally uses a question mark.'),
+    p21Case('statement_lighthouse', 'Which option gives information about the lighthouse?', 'The lighthouse flashed every ten seconds.', ['Flash the lighthouse lamp now.', 'How often did the lighthouse flash?', 'What a powerful beam the lighthouse had!'], 'A statement gives information.'),
+    p21Case('exclamation_cake', 'Which option is a grammatical exclamation about the cake?', 'What a delicious cake this is!', ['The cake is delicious.', 'Is the cake delicious?', 'Please cut the cake carefully.'], 'A KS2 exclamation often begins with what or how and shows strong feeling.'),
+  ]),
+  word_classes: Object.freeze([
+    p21Case('adverb_often', 'In the sentence "Ben often walks home", what is "often"?', 'adverb', ['noun', 'determiner', 'preposition'], 'Often is an adverb because it tells us how frequently Ben walks.'),
+    p21Case('determiner_these', 'In the sentence "These biscuits are warm", what is "These"?', 'determiner', ['pronoun', 'verb', 'adverb'], 'These is a determiner because it comes before the noun and points to which biscuits.'),
+    p21Case('preposition_under', 'In the sentence "The marble rolled under the cupboard", what is "under"?', 'preposition', ['conjunction', 'adjective', 'pronoun'], 'Under is a preposition because it shows the marble’s position.'),
+    p21Case('conjunction_because', 'In the sentence "We stayed inside because it rained", what is "because"?', 'conjunction', ['adverb', 'noun', 'determiner'], 'Because is a conjunction because it joins the reason to the main clause.'),
+  ]),
+  noun_phrases: Object.freeze([
+    p21Case('full_np_key', 'Which option is the expanded noun phrase about the key?', 'the tiny silver key beside the vase', ['opened the door quickly', 'because the key was silver', 'the key unlocked it'], 'The phrase is centred on the noun key and expands it with description.'),
+    p21Case('head_noun_boat', 'Which word is the head noun in "the old wooden boat"?', 'boat', ['old', 'wooden', 'the'], 'Boat is the noun at the centre of the noun phrase.'),
+    p21Case('not_clause_np', 'Which option is a noun phrase, not a clause?', 'the nervous goalkeeper near the post', ['the goalkeeper saved the shot', 'because the goalkeeper was nervous', 'when the whistle blew'], 'A noun phrase does not contain its own subject-verb clause here.'),
+    p21Case('expanded_np_garden', 'Which noun phrase best expands "the garden"?', 'the quiet garden behind the library', ['the garden was quiet', 'behind the library, we waited', 'we walked through the garden'], 'The expanded noun phrase adds detail while keeping garden as the main noun.'),
+  ]),
+  adverbials: Object.freeze([
+    p21Case('fronted_when', 'Which option correctly places the fronted adverbial after breakfast?', 'After breakfast, the class walked to the hall.', ['The class after breakfast walked to the hall.', 'After breakfast the class walked to the hall.', 'The class walked, after breakfast to the hall.'], 'After breakfast is a fronted adverbial and needs a comma after it.'),
+    p21Case('fronted_where', 'Which opening phrase is a fronted adverbial of place?', 'Beside the river,', ['The river was wide,', 'Because the river flooded,', 'The boat beside the river,'], 'Beside the river tells us where and has been moved to the front.'),
+    p21Case('fronted_how', 'Which sentence needs a comma after the fronted adverbial?', 'Without making a sound, the fox crossed the path.', ['The fox crossed the path silently.', 'The fox, without making a sound crossed the path.', 'The path without making a sound was crossed.'], 'Without making a sound is a fronted adverbial telling us how.'),
+    p21Case('not_fronted', 'Which sentence does not start with a fronted adverbial?', 'The choir practised after lunch.', ['After lunch, the choir practised.', 'In the hall, the choir practised.', 'With great care, the choir practised.'], 'The adverbial after lunch comes at the end, so it is not fronted.'),
+  ]),
+  clauses: Object.freeze([
+    p21Case('subordinate_because', 'Which part is the subordinate clause in "Because it was icy, we walked slowly"?', 'Because it was icy', ['we walked slowly', 'it was icy, we', 'walked slowly'], 'Because it was icy depends on the main clause for the full sentence.'),
+    p21Case('main_clause_after', 'Which part is the main clause in "After the bell rang, the pupils lined up"?', 'the pupils lined up', ['After the bell rang', 'the bell rang', 'rang, the pupils'], 'The pupils lined up can stand as the main idea of the sentence.'),
+    p21Case('join_although', 'Which sentence correctly uses although?', 'Although the path was muddy, we reached the farm.', ['Although the path was muddy.', 'The path was muddy although.', 'We reached although the path was muddy the farm.'], 'Although introduces a subordinate clause that needs a main clause.'),
+    p21Case('fragment_repair', 'Which option repairs the fragment "When the lights went out"?', 'When the lights went out, we lit a torch.', ['When the lights went out.', 'The lights when went out.', 'When the lights.'], 'The repaired sentence adds a main clause after the subordinate clause.'),
+  ]),
+  relative_clauses: Object.freeze([
+    p21Case('who_person', 'Which sentence uses a relative clause about a person?', 'The girl who won the race smiled.', ['The girl ran because she trained hard.', 'Who won the race?', 'The girl smiled after the race.'], 'Who won the race adds information about the girl.'),
+    p21Case('which_object', 'Which sentence uses which correctly for a thing?', 'The kite, which was torn, dropped into the field.', ['The kite who was torn dropped.', 'Which kite was torn?', 'The kite was torn because it hit a tree.'], 'Which was torn is a relative clause about the kite.'),
+    p21Case('relative_not_time', 'Which option contains a relative clause about the shop?', 'The shop that sells maps closes at five.', ['When the shop closes, we will leave.', 'The shop closes at five.', 'Because the shop sells maps, it is useful.'], 'That sells maps adds information about the shop.'),
+    p21Case('commas_extra_info', 'Which sentence uses commas for extra relative-clause information?', 'My bike, which has a red bell, is outside.', ['My bike which has a red bell is outside.', 'Which bike has a red bell?', 'My bike has a red bell, is outside.'], 'The relative clause adds extra information, so commas mark it off.'),
+  ]),
+  tense_aspect: Object.freeze([
+    p21Case('present_perfect', 'Which sentence uses the present perfect?', 'She has finished her homework.', ['She finished her homework yesterday.', 'She is finishing her homework.', 'She had finished her homework before tea.'], 'Has finished links a completed action to the present.'),
+    p21Case('past_progressive', 'Which sentence uses the past progressive?', 'They were playing chess when the bell rang.', ['They played chess after lunch.', 'They have played chess before.', 'They had played chess before the bell rang.'], 'Were playing shows an action in progress in the past.'),
+    p21Case('past_perfect', 'Which sentence uses the past perfect?', 'Maya had packed her bag before the taxi arrived.', ['Maya packed her bag.', 'Maya has packed her bag.', 'Maya was packing her bag.'], 'Had packed shows an earlier past action before another past action.'),
+    p21Case('simple_present', 'Which sentence uses the simple present?', 'The train leaves at nine.', ['The train is leaving now.', 'The train has left.', 'The train had left.'], 'Leaves is the simple present form.'),
+  ]),
+  standard_english: Object.freeze([
+    p21Case('were_not_was', 'Which option uses the Standard English verb were?', 'We were late for assembly.', ['We was late for assembly.', 'We been late for assembly.', 'We is late for assembly.'], 'We were is the standard written form.'),
+    p21Case('did_not_done', 'Which option uses the Standard English past-tense verb did?', 'I did my homework before tea.', ['I done my homework before tea.', 'I doing my homework before tea.', 'I does my homework before tea.'], 'Did is the standard past-tense form here.'),
+    p21Case('should_have', 'Which option uses the Standard English phrase should have?', 'You should have checked your answer.', ['You should of checked your answer.', 'You should has checked your answer.', 'You should checked have your answer.'], 'Should have is the standard written form.'),
+    p21Case('subject_verb_agreement', 'Which option uses Standard English subject-verb agreement for boxes?', 'The boxes are beside the door.', ['The boxes is beside the door.', 'The boxes be beside the door.', 'The boxes was beside the door.'], 'The plural subject boxes needs are.'),
+  ]),
+  pronouns_cohesion: Object.freeze([
+    p21Case('clear_referent_map', 'Which sentence keeps the pronoun reference clear?', 'Amira picked up the map and folded it carefully.', ['Amira picked up the map and folded she carefully.', 'Amira picked up the map and it folded it carefully.', 'Amira picked up the map and folded them carefully.'], 'It clearly refers to the map.'),
+    p21Case('avoid_unclear_it', 'Which sentence is clearer?', 'Tom gave the trophy to Lucas because Lucas had won it.', ['Tom gave the trophy to Lucas because he had won it.', 'Tom gave it to him because he had won it.', 'He gave the trophy to him because he had won it.'], 'Repeating Lucas avoids an unclear he.'),
+    p21Case('cohesive_pronoun', 'Which option improves cohesion without confusion?', 'The kittens slept in the basket. They looked peaceful.', ['The kittens slept in the basket. It looked peaceful.', 'The kittens slept in the basket. He looked peaceful.', 'The kittens slept in the basket. Them looked peaceful.'], 'They clearly refers to the kittens.'),
+    p21Case('who_reference', 'Which pronoun correctly refers to the bus driver?', 'The children thanked the bus driver, who smiled.', ['The children thanked the bus driver, which smiled.', 'The children thanked the bus driver, it smiled.', 'The children thanked the bus driver, they smiled.'], 'Who refers clearly to a person.'),
+  ]),
+  formality: Object.freeze([
+    p21Case('formal_request', 'Which sentence is most formal?', 'I would be grateful if you could reply soon.', ['Please get back to me soon.', 'Can you reply quick?', 'Give me an answer soon, yeah?'], 'The vocabulary and structure suit formal writing.'),
+    p21Case('informal_chat', 'Which sentence is informal?', 'That film was awesome!', ['The film was highly enjoyable.', 'The film received positive reviews.', 'The film was suitable for families.'], 'Awesome is chatty, informal vocabulary.'),
+    p21Case('formal_substitution', 'Which word is the most formal replacement for "kids"?', 'children', ['mates', 'gang', 'little ones'], 'Children is more formal and precise than kids.'),
+    p21Case('formal_report', 'Which sentence best suits a formal report?', 'The experiment produced clear results.', ['The experiment was pretty cool.', 'The experiment went OK, I guess.', 'The experiment was a bit of a laugh.'], 'A formal report uses precise, neutral wording.'),
+  ]),
+  active_passive: Object.freeze([
+    p21Case('active_chef', 'Which sentence is active voice?', 'The chef baked the bread.', ['The bread was baked by the chef.', 'The bread had been baked.', 'The bread was being baked.'], 'In active voice, the doer comes before the verb.'),
+    p21Case('passive_trophy', 'Which sentence is passive voice?', 'The trophy was lifted by the captain.', ['The captain lifted the trophy.', 'The captain was lifting the trophy.', 'The captain had lifted the trophy.'], 'In passive voice, the thing affected comes first.'),
+    p21Case('same_roles', 'Which passive sentence keeps the same meaning as "The dog chased the ball"?', 'The ball was chased by the dog.', ['The dog was chased by the ball.', 'The ball chased the dog.', 'The dog was chasing the ball.'], 'The ball is still the thing being chased.'),
+    p21Case('agent_removed', 'Which passive sentence leaves out the doer?', 'The window was broken.', ['The boy broke the window.', 'The window broke the boy.', 'The boy was breaking the window.'], 'Passive voice can leave the doer unstated.'),
+  ]),
+  subject_object: Object.freeze([
+    p21Case('subject_cat', 'In "The cat chased the mouse", what is the subject?', 'The cat', ['the mouse', 'chased', 'the cat chased'], 'The subject is the doer of the action.'),
+    p21Case('object_ball', 'In "Jamal kicked the ball", what is the object?', 'the ball', ['Jamal', 'kicked', 'Jamal kicked'], 'The object receives the action.'),
+    p21Case('subject_after_fronted', 'In "After lunch, Priya watered the plants", what is the subject?', 'Priya', ['After lunch', 'the plants', 'watered'], 'Priya is the person doing the watering.'),
+    p21Case('object_passive_warning', 'In "The letter was opened by Dad", who is the doer?', 'Dad', ['The letter', 'opened', 'was opened'], 'In a passive sentence, the doer can appear after by.'),
+  ]),
+  modal_verbs: Object.freeze([
+    p21Case('modal_certain', 'Which modal verb shows the strongest certainty?', 'must', ['might', 'could', 'may'], 'Must shows stronger certainty than might, could or may.'),
+    p21Case('modal_possibility', 'Which sentence shows possibility, not certainty?', 'We might visit Gran on Saturday.', ['We must visit Gran on Saturday.', 'We will visit Gran on Saturday.', 'We have visited Gran on Saturday.'], 'Might suggests something is possible.'),
+    p21Case('modal_advice', 'Which sentence gives advice?', 'You should wear a coat.', ['You might wear a coat.', 'You wore a coat.', 'You are wearing a coat.'], 'Should is often used to give advice.'),
+    p21Case('modal_permission', 'Which sentence asks for permission?', 'May I leave the room?', ['I may leave the room.', 'I left the room.', 'I must leave the room.'], 'May I asks permission politely.'),
+  ]),
+  parenthesis_commas: Object.freeze([
+    p21Case('comma_parenthesis', 'Which sentence uses commas to show parenthesis?', 'The garden, full of roses, smelled sweet.', ['The garden full of roses, smelled sweet.', 'The garden, full of roses smelled sweet.', 'The garden full, of roses, smelled sweet.'], 'The commas mark extra information that can be lifted out.'),
+    p21Case('bracket_parenthesis', 'Which sentence uses brackets for parenthesis?', 'Our teacher (who is very kind) helped us tidy.', ['Our teacher who is very kind) helped us tidy.', 'Our teacher (who is very kind helped us tidy.', 'Our teacher who is (very kind) helped us tidy.'], 'The brackets enclose the extra information.'),
+    p21Case('dash_parenthesis', 'Which sentence uses dashes to show parenthesis?', 'The match - delayed by rain - started at four.', ['The match - delayed by rain started at four.', 'The match delayed - by rain - started at four.', 'The match delayed by rain - started at four.'], 'The pair of dashes marks the extra information.'),
+    p21Case('remove_parenthesis', 'Which sentence still makes sense after removing the parenthesis from "The cake, which was lemon, tasted fresh"?', 'The cake tasted fresh.', ['which was lemon tasted fresh.', 'The cake which was lemon.', 'The cake, tasted which was lemon.'], 'Parenthesis can be removed while the main sentence still works.'),
+  ]),
+  speech_punctuation: Object.freeze([
+    p21Case('speech_question', 'Which sentence punctuates direct speech correctly?', '"Where are my shoes?" asked Leo.', ['"Where are my shoes"? asked Leo.', 'Where are my shoes? asked Leo.', '"Where are my shoes? asked Leo."'], 'The question mark belongs inside the speech marks.'),
+    p21Case('speech_comma_before', 'Which sentence uses the comma before speech correctly?', 'Sara said, "I will meet you at the gate."', ['Sara said "I will meet you at the gate."', 'Sara said, I will meet you at the gate.', 'Sara said "I will meet you at the gate".'], 'A reporting clause before speech usually needs a comma before the opening speech marks.'),
+    p21Case('speech_exclamation', 'Which sentence keeps the exclamation mark inside the speech marks?', '"Watch out!" shouted Dad.', ['"Watch out"! shouted Dad.', '"Watch out! shouted Dad."', 'Watch out! shouted Dad.'], 'The punctuation for the spoken words goes inside the speech marks.'),
+    p21Case('speech_reporting_after', 'Which sentence correctly places the reporting clause after speech?', '"I found it," whispered Mina.', ['"I found it", whispered Mina.', '"I found it" whispered Mina.', 'I found it, whispered Mina.'], 'A comma inside the speech marks can link the spoken words to the reporting clause.'),
+  ]),
+  apostrophes_possession: Object.freeze([
+    p21Case('singular_possession', 'Which phrase shows singular possession?', "Tom's pencil", ["Toms' pencil", 'Toms pencil', "Tom's pencils'"], 'The apostrophe before s shows that one Tom owns the pencil.'),
+    p21Case('plural_s_possession', 'Which phrase shows that more than one girl owns the coats?', "the girls' coats", ["the girl's coats", 'the girls coats', "the girl coat's"], 'For a regular plural ending in s, the apostrophe goes after the s.'),
+    p21Case('plural_irregular', 'Which phrase shows that the children own the books?', "the children's books", ["the childrens' books", 'the children books', "the children's book's"], 'Children is an irregular plural, so add apostrophe s.'),
+    p21Case('its_vs_its', 'Which sentence uses possession without an apostrophe?', 'The dog wagged its tail.', ["The dog wagged it's tail.", "The dog's wagged its tail.", "The dog wagged its' tail."], 'Its means belonging to it; it does not take an apostrophe.'),
+  ]),
+  boundary_punctuation: Object.freeze([
+    p21Case('colon_list', 'Which sentence uses a colon to introduce a list?', 'Bring these items: a pen, a ruler and a book.', ['Bring these items; a pen, a ruler and a book.', 'Bring these items, a pen, a ruler and a book.', 'Bring these items. a pen, a ruler and a book.'], 'A colon can introduce a list after a complete clause.'),
+    p21Case('semicolon_link', 'Which option links the storm clauses with a semicolon?', 'The sky turned dark; the storm was close.', ['The sky turned dark, the storm was close.', 'The sky turned dark: the storm, was close.', 'The sky turned dark; and the storm was close.'], 'A semicolon can link two complete, closely related clauses.'),
+    p21Case('dash_explanation', 'Which sentence uses a dash to add an explanation?', 'Only one thing mattered - the lost key.', ['Only one thing mattered, the lost key.', 'Only one thing mattered; the lost key.', 'Only one thing mattered the lost key.'], 'The dash introduces an explanatory phrase.'),
+    p21Case('comma_splice', 'Which option avoids a comma splice?', 'The rain stopped; we went outside.', ['The rain stopped, we went outside.', 'The rain stopped we went outside.', 'The rain stopped: we, went outside.'], 'Two complete clauses need stronger punctuation than a comma alone.'),
+  ]),
+  hyphen_ambiguity: Object.freeze([
+    p21Case('man_eating', 'Which phrase means the shark eats people?', 'man-eating shark', ['man eating shark', 'man, eating shark', 'man eating-shark'], 'The hyphen joins man and eating so they work together as one modifier.'),
+    p21Case('recover_re_cover', 'Which word means to cover something again?', 're-cover', ['recover', 're cover', 're,cover'], 'The hyphen separates re and cover to avoid confusion with recover.'),
+    p21Case('well_earned', 'Which phrase uses a hyphen correctly before a noun?', 'well-earned break', ['well earned break', 'well, earned break', 'well earned-break'], 'The hyphen joins well and earned before the noun break.'),
+    p21Case('small_business_owner', 'Which phrase means an owner of a small business?', 'small-business owner', ['small business-owner', 'small business owner', 'small, business owner'], 'The hyphen shows that small describes the business, not the owner.'),
+  ]),
+});
+
+const P21_CONCEPT_EXTRA_VARIETY_BANKS = Object.freeze({
+  sentence_functions: Object.freeze([
+    p21Case('command_circle', 'Which option gives an instruction about the answer?', 'Draw a neat circle around the answer.', ['The answer has a neat circle around it.', 'Did you circle the answer neatly?', 'What a neat circle you drew!'], 'A command gives an instruction.'),
+    p21Case('question_card', 'Which option asks about the library card?', 'Have you seen my library card?', ['You have seen my library card.', 'Look for my library card.', 'What a useful library card this is!'], 'A question asks something and uses a question mark.'),
+    p21Case('statement_river', 'Which option gives information about the river?', 'The river flowed past the old mill.', ['Did the river flow past the old mill?', 'Watch the river by the old mill.', 'What a fast river that is!'], 'A statement tells the reader information.'),
+    p21Case('exclamation_model', 'Which option is a grammatical exclamation about the model?', 'How carefully you painted that model!', ['You painted the model carefully.', 'Did you paint the model carefully?', 'Paint the model carefully.'], 'A KS2 exclamation can begin with how and show strong feeling.'),
+  ]),
+  word_classes: Object.freeze([
+    p21Case('verb_hammered', 'In the sentence "Rain hammered against the roof", what is "hammered"?', 'verb', ['noun', 'adjective', 'determiner'], 'Hammered is a verb because it shows the action.'),
+    p21Case('adjective_cracked', 'In the sentence "The cracked vase stood on the shelf", what is "cracked"?', 'adjective', ['adverb', 'conjunction', 'pronoun'], 'Cracked is an adjective because it describes the vase.'),
+    p21Case('pronoun_him', 'In the sentence "She passed the notebook to him", what is "him"?', 'pronoun', ['preposition', 'determiner', 'verb'], 'Him is a pronoun because it stands for a person.'),
+    p21Case('noun_telescope', 'In the sentence "Luca shared the telescope", what is "telescope"?', 'noun', ['verb', 'adverb', 'conjunction'], 'Telescope is a noun because it names a thing.'),
+  ]),
+  noun_phrases: Object.freeze([
+    p21Case('dusty_box', 'Which option is the expanded noun phrase about the box?', 'a dusty box under the stairs', ['the box was dusty', 'because the box was under the stairs', 'opened the dusty box'], 'The phrase is centred on the noun box and adds detail.'),
+    p21Case('head_library', 'Which word is the head noun in "the bright new library"?', 'library', ['bright', 'new', 'the'], 'Library is the noun at the centre of the phrase.'),
+    p21Case('whale_np', 'Which option is a noun phrase?', 'the enormous whale near the boat', ['the whale swam near the boat', 'when the enormous whale appeared', 'because the whale was enormous'], 'The option is a phrase centred on the noun whale.'),
+    p21Case('puppy_expand', 'Which noun phrase best expands "the puppy"?', 'the sleepy brown puppy with muddy paws', ['the puppy slept by the door', 'because the puppy had muddy paws', 'the puppy was sleepy and brown'], 'The phrase adds description while keeping puppy as the main noun.'),
+  ]),
+  adverbials: Object.freeze([
+    p21Case('forest_place', 'Which opening is a fronted adverbial of place?', 'At the edge of the forest,', ['The forest was dark,', 'Because the forest was dark,', 'The edge of the forest was,'], 'At the edge of the forest tells us where and has been moved to the front.'),
+    p21Case('crash_how', 'Which sentence uses a fronted adverbial of manner?', 'With a loud crash, the shelves fell.', ['The shelves fell with a loud crash.', 'The shelves, with a loud crash fell.', 'The loud crash with the shelves fell.'], 'With a loud crash tells us how the shelves fell.'),
+    p21Case('storm_time', 'Which sentence needs a comma after the fronted adverbial?', 'During the storm, the lights flickered.', ['The lights flickered during the storm.', 'The storm during the lights flickered.', 'During the storm the lights flickered'], 'During the storm is a fronted adverbial of time.'),
+    p21Case('quiet_corner', 'Which sentence does not start with a fronted adverbial?', 'Ravi read quietly in the corner.', ['In the corner, Ravi read quietly.', 'After dinner, Ravi read quietly.', 'With great concentration, Ravi read quietly.'], 'The sentence starts with the subject Ravi, not a fronted adverbial.'),
+  ]),
+  clauses: Object.freeze([
+    p21Case('although_bright', 'Which part is the subordinate clause in "Although the sun was bright, the air felt cold"?', 'Although the sun was bright', ['the air felt cold', 'the sun was bright, the air', 'felt cold'], 'Although the sun was bright depends on the main clause.'),
+    p21Case('picnic_main', 'Which part is the main clause in "When the rain stopped, we unpacked the picnic"?', 'we unpacked the picnic', ['When the rain stopped', 'the rain stopped', 'stopped, we unpacked'], 'We unpacked the picnic can stand as a complete main clause.'),
+    p21Case('if_bus', 'Which sentence correctly uses if?', 'If the bus arrives early, we will board first.', ['If the bus arrives early.', 'The bus if arrives early, we will board first.', 'We will if the bus arrives early board first.'], 'If introduces a subordinate clause that needs a main clause.'),
+    p21Case('locked_gate', 'Which option repairs the fragment "Because the gate was locked"?', 'Because the gate was locked, we used the side path.', ['Because the gate was locked.', 'The gate because was locked.', 'Because the gate.'], 'The repaired sentence adds a main clause.'),
+  ]),
+  relative_clauses: Object.freeze([
+    p21Case('whose_coat', 'Which sentence uses whose in a relative clause?', 'The boy whose coat was blue waited by the door.', ['Whose coat was blue?', 'The boy waited because his coat was blue.', 'The boy wore a blue coat by the door.'], 'Whose coat was blue adds information about the boy.'),
+    p21Case('where_village', 'Which option contains a relative clause about the village?', 'The village where my aunt lives is near the coast.', ['When my aunt visits, we go to the coast.', 'My aunt lives near the coast.', 'The village is near the coast.'], 'Where my aunt lives adds information about the village.'),
+    p21Case('silver_trophy', 'Which sentence uses commas for extra relative-clause information?', 'The trophy, which was silver, stood in the cabinet.', ['The trophy which was silver stood in the cabinet.', 'Which trophy was silver?', 'The trophy was silver, stood in the cabinet.'], 'The relative clause adds extra information and is marked with commas.'),
+    p21Case('pupil_who', 'Which sentence uses who correctly?', 'The pupil who asked the question listened carefully.', ['The pupil which asked the question listened carefully.', 'Who asked the question?', 'The pupil listened because she asked the question.'], 'Who is used for a relative clause about a person.'),
+  ]),
+  tense_aspect: Object.freeze([
+    p21Case('present_progressive', 'Which sentence uses the present progressive?', 'Dad is painting the fence.', ['Dad painted the fence.', 'Dad has painted the fence.', 'Dad had painted the fence.'], 'Is painting shows an action in progress now.'),
+    p21Case('past_simple', 'Which sentence uses the simple past?', 'The class walked to the museum.', ['The class was walking to the museum.', 'The class has walked to the museum.', 'The class had walked to the museum.'], 'Walked is the simple past form.'),
+    p21Case('present_perfect_have', 'Which sentence uses the present perfect?', 'We have eaten lunch already.', ['We ate lunch yesterday.', 'We were eating lunch.', 'We had eaten lunch before noon.'], 'Have eaten links the completed action to now.'),
+    p21Case('past_perfect_left', 'Which sentence shows one past action before another?', 'The train had left before we reached the station.', ['The train left the station.', 'The train has left the station.', 'The train was leaving the station.'], 'Had left shows the earlier past action.'),
+  ]),
+  standard_english: Object.freeze([
+    p21Case('she_has', 'Which option uses Standard English with she has?', 'She has finished the puzzle.', ['She have finished the puzzle.', 'She finished has the puzzle.', 'She done finished the puzzle.'], 'She has is the standard written form.'),
+    p21Case('there_are', 'Which option uses Standard English with there are?', 'There are three books on the table.', ['There is three books on the table.', 'There be three books on the table.', 'There was three books on the table.'], 'A plural noun phrase needs are here.'),
+    p21Case('they_were', 'Which option uses Standard English with they were?', 'They were waiting by the gate.', ['They was waiting by the gate.', 'They is waiting by the gate.', 'They be waiting by the gate.'], 'They were is the standard form.'),
+    p21Case('negative_standard', 'Which option uses a Standard English negative verb form?', "I haven't seen the film yet.", ["I ain't seen the film yet.", "I hasn't seen the film yet.", "I haven't saw the film yet."], 'The sentence uses a standard negative verb form.'),
+  ]),
+  pronouns_cohesion: Object.freeze([
+    p21Case('cup_it', 'Which sentence keeps the pronoun reference clear?', 'Ravi dropped the cup. It smashed on the floor.', ['Ravi dropped the cup. He smashed on the floor.', 'Ravi dropped the cup. They smashed on the floor.', 'Ravi dropped the cup. Them smashed on the floor.'], 'It clearly refers to the cup.'),
+    p21Case('ella_sia', 'Which sentence avoids an unclear pronoun?', 'Ella told Sia that Sia had won the prize.', ['Ella told Sia that she had won the prize.', 'She told her that she had won the prize.', 'Ella told her that she had won it.'], 'Repeating Sia makes the winner clear.'),
+    p21Case('boxes_them', 'Which sentence uses a pronoun clearly?', 'The boxes were heavy, so Dad moved them.', ['The boxes were heavy, so Dad moved it.', 'The boxes were heavy, so Dad moved he.', 'The boxes were heavy, so Dad moved they.'], 'Them clearly refers to the boxes.'),
+    p21Case('pupils_they', 'Which sentence keeps cohesion clear?', 'The teacher thanked the pupils because they helped.', ['The teacher thanked the pupils because it helped.', 'The teacher thanked the pupils because he helped.', 'The teacher thanked the pupils because them helped.'], 'They clearly refers to the pupils.'),
+  ]),
+  formality: Object.freeze([
+    p21Case('formal_complain', 'Which word is the most formal replacement for "moan"?', 'complain', ['whinge', 'grumble', 'kick off'], 'Complain is more suitable for formal writing.'),
+    p21Case('formal_notice', 'Which sentence is most formal?', 'Please ensure that all bags are labelled.', ['Make sure your bags have names on.', 'Stick your name on your bag.', 'Sort your bags out, please.'], 'Ensure and labelled suit a formal notice.'),
+    p21Case('informal_goodbye', 'Which sentence is informal?', 'No worries, see you later!', ['I look forward to seeing you later.', 'Thank you for your assistance.', 'Please accept my apology.'], 'No worries and see you later are informal expressions.'),
+    p21Case('postponed', 'Which sentence best suits a formal announcement?', 'The visit has been postponed until Friday.', ['The trip has been shoved back to Friday.', 'The visit is off for now, yeah?', 'We are not doing the trip till Friday.'], 'Postponed is precise formal vocabulary.'),
+  ]),
+  active_passive: Object.freeze([
+    p21Case('storm_active', 'Which sentence is active voice?', 'The storm damaged the roof.', ['The roof was damaged by the storm.', 'The roof had been damaged.', 'The roof was being damaged.'], 'The doer, the storm, comes first.'),
+    p21Case('roof_passive', 'Which sentence is passive voice?', 'The roof was damaged by the storm.', ['The storm damaged the roof.', 'The storm was damaging the roof.', 'The storm had damaged the roof.'], 'The thing affected, the roof, comes first.'),
+    p21Case('goal_roles', 'Which passive sentence keeps the same meaning as "Noah scored the goal"?', 'The goal was scored by Noah.', ['Noah was scored by the goal.', 'The goal scored Noah.', 'Noah was scoring the goal.'], 'The goal is still the thing being scored.'),
+    p21Case('parcels_omitted', 'Which passive sentence leaves out the doer?', 'The parcels were delivered.', ['The driver delivered the parcels.', 'The parcels delivered the driver.', 'The driver was delivering the parcels.'], 'The passive sentence does not say who delivered the parcels.'),
+  ]),
+  subject_object: Object.freeze([
+    p21Case('tree_subject', 'In "The tall tree shaded the bench", what is the subject?', 'The tall tree', ['the bench', 'shaded', 'the tall tree shaded'], 'The subject is the thing doing the shading.'),
+    p21Case('book_object', 'In "Mia read the book", what is the object?', 'the book', ['Mia', 'read', 'Mia read'], 'The book receives the action of reading.'),
+    p21Case('gardener_doer', 'In "The flowers were planted by the gardener", who is the doer?', 'the gardener', ['The flowers', 'were planted', 'planted by'], 'In passive voice, the doer can appear after by.'),
+    p21Case('cyclist_subject', 'In "The cyclist could see the sign", what is the subject?', 'The cyclist', ['the sign', 'could see', 'see the sign'], 'The cyclist is the person doing the seeing.'),
+  ]),
+  modal_verbs: Object.freeze([
+    p21Case('modal_obligation', 'Which modal verb shows obligation?', 'must', ['might', 'could', 'may'], 'Must shows that something is required.'),
+    p21Case('modal_ability', 'Which sentence shows ability?', 'I can swim across the pool.', ['I must swim across the pool.', 'I might swim across the pool.', 'I should swim across the pool.'], 'Can can show ability.'),
+    p21Case('modal_could', 'Which sentence shows possibility?', 'It could snow tomorrow.', ['It must snow tomorrow.', 'It did snow tomorrow.', 'It had snowed tomorrow.'], 'Could suggests a possible event.'),
+    p21Case('modal_request', 'Which sentence uses a modal verb for a polite request?', 'Could you pass the ruler?', ['You passed the ruler.', 'You are passing the ruler.', 'You had passed the ruler.'], 'Could is used politely to make a request.'),
+  ]),
+  parenthesis_commas: Object.freeze([
+    p21Case('sam_cousin', 'Which sentence uses commas to show parenthesis?', 'Sam, my oldest cousin, lives nearby.', ['Sam my oldest cousin, lives nearby.', 'Sam, my oldest cousin lives nearby.', 'Sam my, oldest cousin, lives nearby.'], 'The commas mark extra information about Sam.'),
+    p21Case('concert_brackets', 'Which sentence uses brackets for parenthesis?', 'The concert (which was loud) ended late.', ['The concert which was loud) ended late.', 'The concert (which was loud ended late.', 'The concert which was (loud) ended late.'], 'The brackets enclose extra information.'),
+    p21Case('bus_dashes', 'Which sentence uses dashes for parenthesis?', 'The bus - packed with pupils - left at nine.', ['The bus - packed with pupils left at nine.', 'The bus packed - with pupils - left at nine.', 'The bus packed with pupils - left at nine.'], 'The pair of dashes marks parenthesis.'),
+    p21Case('remove_jacket', 'Which sentence still works after removing the parenthesis from "The jacket, torn at the sleeve, was still warm"?', 'The jacket was still warm.', ['torn at the sleeve was still warm.', 'The jacket torn at the sleeve.', 'The jacket, was torn at the sleeve.'], 'The main sentence remains after the extra information is removed.'),
+  ]),
+  speech_punctuation: Object.freeze([
+    p21Case('hello_said', 'Which sentence punctuates direct speech correctly?', '"Hello," said Aisha.', ['"Hello", said Aisha.', 'Hello, said Aisha.', '"Hello" said Aisha.'], 'The comma sits inside the speech marks before the reporting clause.'),
+    p21Case('before_speech', 'Which sentence uses a reporting clause before speech correctly?', 'Dad asked, "Are you ready?"', ['Dad asked "Are you ready?"', 'Dad asked, Are you ready?', 'Dad asked "Are you ready"?'], 'The comma comes before the opening speech marks.'),
+    p21Case('speech_answer', 'Which sentence keeps the full stop inside the speech marks?', '"I know the answer."', ['"I know the answer".', 'I know the answer.', '"I know the answer.".'], 'The punctuation for the spoken sentence belongs inside the speech marks.'),
+    p21Case('after_speech_tag', 'Which sentence correctly adds the reporting clause after speech?', '"Wait there," called the coach.', ['"Wait there", called the coach.', '"Wait there" called the coach.', 'Wait there, called the coach.'], 'The comma inside the speech marks links to the reporting clause.'),
+  ]),
+  apostrophes_possession: Object.freeze([
+    p21Case('boys_boots', 'Which phrase shows that more than one boy owns the boots?', "the boys' boots", ["the boy's boots", 'the boys boots', "the boys boot's"], 'For a regular plural ending in s, the apostrophe goes after the s.'),
+    p21Case('baby_blanket', 'Which phrase shows singular possession?', "the baby's blanket", ["the babys' blanket", 'the baby blanket', "the babies' blanket"], 'The apostrophe before s shows that one baby owns the blanket.'),
+    p21Case('mice_cage', 'Which phrase shows that the mice own the cage?', "the mice's cage", ["the mices' cage", 'the mice cage', "the mice cage's"], 'Mice is an irregular plural, so add apostrophe s.'),
+    p21Case('contraction_not_possession', 'Which sentence uses an apostrophe for a contraction?', "It's raining heavily.", ['The dog wagged its tail.', "The girl's coat is red.", "The cats' bowls are empty."], "It's is short for it is, so the apostrophe marks a contraction."),
+  ]),
+  boundary_punctuation: Object.freeze([
+    p21Case('colon_explain', 'Which sentence uses a colon to introduce an explanation?', 'There was one problem: the door was locked.', ['There was one problem; the door was locked.', 'There was one problem, the door was locked.', 'There was one problem the door was locked.'], 'The colon introduces the explanation after a complete clause.'),
+    p21Case('semicolon_related', 'Which option links the match clauses with a semicolon?', 'The match ended; the crowd cheered.', ['The match ended, the crowd cheered.', 'The match ended; and the crowd cheered.', 'The match ended: the crowd, cheered.'], 'A semicolon can link two complete related clauses.'),
+    p21Case('dash_afterthought', 'Which sentence uses a dash to add an afterthought?', 'I packed everything - except my lunch.', ['I packed everything, except my lunch.', 'I packed everything; except my lunch.', 'I packed everything except - my lunch.'], 'The dash adds an afterthought or explanation.'),
+    p21Case('colon_list_school', 'Which sentence uses a colon before a list?', 'Pack three things: trainers, socks and a towel.', ['Pack three things; trainers, socks and a towel.', 'Pack three things, trainers, socks and a towel.', 'Pack three things. trainers, socks and a towel.'], 'A colon can introduce a list after a complete clause.'),
+  ]),
+  hyphen_ambiguity: Object.freeze([
+    p21Case('two_year_old', 'Which phrase uses hyphens correctly before the noun?', 'two-year-old child', ['two year old child', 'two-year old-child', 'two year-old child'], 'The words two, year and old work together before child.'),
+    p21Case('blue_green', 'Which phrase means paint that is between blue and green?', 'blue-green paint', ['blue green paint', 'blue, green paint', 'blue green-paint'], 'The hyphen joins blue and green into one colour description.'),
+    p21Case('long_term', 'Which phrase uses a hyphen correctly before the noun?', 'long-term plan', ['long term plan', 'long term-plan', 'long, term plan'], 'The hyphen joins long and term before plan.'),
+    p21Case('re_sign', 'Which word means to sign something again?', 're-sign', ['resign', 're sign', 're,sign'], 'The hyphen separates re and sign so it does not mean resign from a job.'),
+  ]),
+});
+
+function p21MergedConceptCases(conceptId, baseCases) {
+  return (Array.isArray(baseCases) ? baseCases : []).concat(P21_CONCEPT_EXTRA_VARIETY_BANKS[conceptId] || []);
+}
+
+function p21SelectedCaseFromBank(conceptId, familyKind, caseItem, index) {
+  return {
+    id: `${GRAMMAR_P21_EXPANSION_RELEASE_ID}:${conceptId}:${familyKind}:${caseItem.id}`,
+    sourcePack: GRAMMAR_P21_EXPANSION_RELEASE_ID,
+    seedCase: index + 1,
+    inputType: 'single_choice',
+    questionType: familyKind === 'explain' ? 'explain' : 'choose',
+    depthTier: familyKind === 'explain' ? 'p21-explain-variety' : 'p21-choice-variety',
+    promptText: familyKind === 'explain'
+      ? `Choose the best explanation for this answer. ${caseItem.prompt} Answer: ${caseItem.correct}`
+      : caseItem.prompt,
+    expectedAnswerSummary: familyKind === 'explain' ? caseItem.feedback : caseItem.correct,
+    feedbackLong: caseItem.feedback,
+    correctAnswer: familyKind === 'explain' ? caseItem.feedback : caseItem.correct,
+    acceptedAnswers: [],
+    nearMisses: familyKind === 'explain' ? P21_EXPLANATION_DISTRACTORS.slice() : caseItem.distractors.slice(),
+    options: (familyKind === 'explain' ? P21_EXPLANATION_DISTRACTORS : caseItem.distractors)
+      .map((value) => ({ value, label: value, rationale: 'Misconception option.' })),
+  };
+}
+
+const GRAMMAR_P21_EXPANSION_FAMILIES = Object.freeze(Object.entries(P21_CONCEPT_VARIETY_BANKS).flatMap(([conceptId, baseCases]) => {
+  const cases = p21MergedConceptCases(conceptId, baseCases);
+  return [
+  Object.freeze({
+    id: `p21_${conceptId}_closed_choice_variety`,
+    conceptIds: Object.freeze([conceptId]),
+    sourcePacks: Object.freeze([GRAMMAR_P21_EXPANSION_RELEASE_ID]),
+    questionType: 'choose',
+    inputType: 'single_choice',
+    depthTiers: Object.freeze(['p21', 'closed-choice', 'local-pool-expansion']),
+    cases: Object.freeze(cases.map((caseItem, index) => Object.freeze(p21SelectedCaseFromBank(conceptId, 'choose', caseItem, index)))),
+  }),
+  Object.freeze({
+    id: `p21_${conceptId}_explanation_choice_variety`,
+    conceptIds: Object.freeze([conceptId]),
+    sourcePacks: Object.freeze([GRAMMAR_P21_EXPANSION_RELEASE_ID]),
+    questionType: 'explain',
+    inputType: 'single_choice',
+    depthTiers: Object.freeze(['p21', 'explain', 'local-pool-expansion']),
+    cases: Object.freeze(cases.map((caseItem, index) => Object.freeze(p21SelectedCaseFromBank(conceptId, 'explain', caseItem, index)))),
+  }),
+  ];
+}));
+
+const GRAMMAR_P21_EXPANSION_TEMPLATES = GRAMMAR_P21_EXPANSION_FAMILIES.map((family) => Object.freeze({
+  id: p21ExpansionTemplateId(family.id),
+  label: `P21 local pool expansion: ${manualExpansionTitleFromId(family.id)}`,
+  domain: manualExpansionDomain(family),
+  questionType: family.questionType || 'choose',
+  difficulty: family.questionType === 'explain' ? 3 : 2,
+  satsFriendly: true,
+  isSelectedResponse: true,
+  generative: true,
+  generatorFamilyId: p21ExpansionTemplateId(family.id),
+  requiresAnswerSpec: true,
+  answerSpecKind: 'exact',
+  tags: ['qg-p21', 'local-pool-expansion'].concat(family.sourcePacks || [], family.depthTiers || []),
+  skillIds: (family.conceptIds || []).slice(),
+  manualExpansionCaseCount: (family.cases || []).length,
+  p21ExpansionCaseCount: (family.cases || []).length,
+  fairnessConversion: null,
+  p20ClosedAutoMarkKind: null,
+  generator(seed) {
+    return buildManualExpansionQuestion(this, seed, family);
+  },
+}));
+
+const GRAMMAR_P21_EXPANSION_SUMMARY_INTERNAL = Object.freeze({
+  releaseId: GRAMMAR_P21_EXPANSION_RELEASE_ID,
+  familyCount: GRAMMAR_P21_EXPANSION_FAMILIES.length,
+  templateCount: GRAMMAR_P21_EXPANSION_TEMPLATES.length,
+  caseCount: GRAMMAR_P21_EXPANSION_FAMILIES.reduce((sum, family) => sum + (family.cases || []).length, 0),
+  conceptCount: Object.keys(P21_CONCEPT_VARIETY_BANKS).length,
+  minCasesPerFamily: Math.min(...GRAMMAR_P21_EXPANSION_FAMILIES.map((family) => (family.cases || []).length)),
+  maxCasesPerFamily: Math.max(...GRAMMAR_P21_EXPANSION_FAMILIES.map((family) => (family.cases || []).length)),
+  policy: 'closed selected-response only; no manualReviewOnly; no reward/mastery mutation',
+});
+
+
 const MANUAL_EXPANSION_TEMPLATES = GRAMMAR_MANUAL_EXPANSION_FAMILIES.map((family) => {
   const p20ClosedAutoMarkKind = manualExpansionP20ClosedAutoMarkKindForFamily(family);
   const isManualReviewFamily = family.fairnessConversion === 'manualReviewOnly' && !p20ClosedAutoMarkKind;
@@ -12203,6 +12537,7 @@ const MANUAL_EXPANSION_TEMPLATES = GRAMMAR_MANUAL_EXPANSION_FAMILIES.map((family
 
 TEMPLATES.push(...P14_PRIORITY_TEMPLATES);
 TEMPLATES.push(...MANUAL_EXPANSION_TEMPLATES);
+TEMPLATES.push(...GRAMMAR_P21_EXPANSION_TEMPLATES);
 
 const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map(template => [template.id, template]));
 
@@ -12290,7 +12625,8 @@ export function grammarQuestionVariantSignature(question) {
 }
 
 export const GRAMMAR_CONTENT_BASE_RELEASE_ID = GRAMMAR_MANUAL_EXPANSION_RELEASE_ID;
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p20-2026-05-05';
+export const GRAMMAR_CONTENT_RELEASE_ID = GRAMMAR_P21_EXPANSION_RELEASE_ID;
+export const GRAMMAR_P21_EXPANSION_SUMMARY = GRAMMAR_P21_EXPANSION_SUMMARY_INTERNAL;
 export const GRAMMAR_MANUAL_EXPANSION_RELEASE_SUMMARY = Object.freeze(GRAMMAR_MANUAL_EXPANSION_SUMMARY);
 export const GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS = Object.freeze(P14_FIXED_DIAGNOSTIC_TEMPLATE_IDS.slice());
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);

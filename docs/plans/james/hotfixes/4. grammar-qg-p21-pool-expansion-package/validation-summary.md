@@ -1,10 +1,14 @@
-# Grammar QG P21A Validation Summary
+# Grammar QG P21 Validation Summary
 
 ## Source boundary
 
-The uploaded lean ZIP remains the supplied snapshot. This package was built against the previously patched Grammar 05102302 baseline, because P21A builds on the earlier interface/variety and Grammar Bank hotfix package.
+The uploaded lean ZIP remains the supplied snapshot. The applied production
+work was completed in an isolated git worktree against current `origin/main`,
+then reconciled with the existing Grammar release evidence chain.
 
-GitHub was used only as supplementary shape evidence. Production was not independently certified.
+The package remains Grammar-only. Reward, Stars, mastery, Hero Mode, monster,
+event projection, D1 schema, R2, spelling, punctuation, and cross-subject
+runtime behaviour were not intentionally changed.
 
 ## Patch identity
 
@@ -14,7 +18,7 @@ Patch file:
 
 Patch SHA-256:
 
-`650b17cd8ba6ee5563f04c10d79d25e65469a7deb5cf0f6a9fbed1592f0d6444`
+`fbcafa53a8a3394720a42fad026008a89ff39d7e55046a24585780188b0b6cfb`
 
 Source ZIP SHA-256:
 
@@ -52,12 +56,12 @@ Package verifier:
 npm run verify:grammar-qg-p21
 ```
 
-Result: exit `0`.
+Result: exit `0`, `9/9` tests pass.
 
 Local repetition audit:
 
 ```text
-node scripts/audit-grammar-qg-p21-local-repetition.mjs --steps=40 --json
+node scripts/audit-grammar-qg-p21-local-repetition.mjs --json
 ```
 
 Result:
@@ -67,28 +71,29 @@ Result:
   "status": "pass",
   "summary": {
     "violationCount": 0,
-    "warningCount": 147,
+    "warningCount": 0,
     "minUniqueTemplates": 18,
-    "minUniquePrompts": 29,
-    "minUniqueVariants": 40
+    "minUniquePrompts": 53,
+    "minUniqueVariants": 59
   }
 }
 ```
 
-Default package local repetition report:
+Full local production gate:
 
-```json
-{
-  "status": "pass",
-  "summary": {
-    "violationCount": 0,
-    "warningCount": 327,
-    "minUniqueTemplates": 18,
-    "minUniquePrompts": 40,
-    "minUniqueVariants": 58
-  }
-}
+```text
+npm test
 ```
+
+Result after latest rebase onto `origin/main`: `111436` pass, `0` fail, `12` skipped.
+
+Cloudflare dry-run gate:
+
+```text
+npm run check
+```
+
+Result: exit `0`.
 
 Grammar QG audit:
 
@@ -117,15 +122,40 @@ Content quality seeds 1..3:
 
 ## Product interpretation
 
-P21A improves the learner experience in two ways:
+P21 fixes the learner-local pool and repetition contract in two ways:
 
 1. It expands the pool with curated, low-risk, selected-response cases across every Grammar concept.
 2. It prevents the scheduler from leaning on recently seen visible variants or static templates during heavy focused practice.
 
-The warning count in the local repetition audit is not a hard failure. Those warnings are prompt-rhythm repeats where the short instruction repeats but the full visible task surface differs. They are kept in the report so product review can continue to improve perceived variety.
+The initial package treated prompt-rhythm repeats as warnings. For this
+production pass, those warnings were treated as blockers and fixed. The final
+P21 local repetition report has `0` warnings.
 
-## Honest limits
+## Evidence files
 
-This package does not prove production. It does not include a final live smoke, deployed origin, production release id, or Cloudflare/D1 evidence.
+- `validation/production-ready-npm-run-verify-grammar-qg-p21-after-p21-collision-scan-zero-2026-05-11.log`
+- `validation/production-ready-npm-run-verify-grammar-qg-p21-after-rebase-2026-05-11.log`
+- `validation/production-ready-npm-run-verify-grammar-qg-p21-after-second-rebase-2026-05-11.log`
+- `validation/production-ready-node-test-p10-evidence-p20-quality-hardening-final-2026-05-11.log`
+- `validation/production-ready-node-test-p10-scheduler-p11-matrix-final-2026-05-11.log`
+- `validation/production-ready-npm-test-after-rebase-2026-05-11.log`
+- `validation/production-ready-npm-run-check-after-rebase-2026-05-11.log`
+- `validation/production-ready-npm-test-after-second-rebase-2026-05-11.log`
+- `validation/production-ready-npm-run-check-after-second-rebase-2026-05-11.log`
+- `validation/production-ready-npm-run-verify-grammar-qg-p21-after-reasoning-rebase-2026-05-11.log`
+- `validation/production-ready-npm-test-after-reasoning-rebase-2026-05-11.log`
+- `validation/production-ready-npm-run-check-after-reasoning-rebase-2026-05-11.log`
+- `validation/production-ready-npm-run-verify-grammar-qg-p21-after-reasoning-evidence-rebase-2026-05-11.log`
+- `reports/grammar/grammar-qg-p21-local-repetition.json`
+- `reports/grammar/grammar-qg-p21-certification-manifest.json`
+- `reports/grammar/grammar-qg-p21-render-inventory.json`
+- `reports/grammar/grammar-qg-p21-quality-register.json`
+- `reports/grammar/grammar-qg-p21-distractor-audit.json`
+- `reports/grammar/grammar-qg-p21-marking-matrix.json`
 
-This package also does not complete the long-term target of 900-1,100 effective Grammar templates. It creates the P21A harness and first curated expansion slice so future expansion can happen safely.
+## Remaining production boundary
+
+Live production certification is completed after the change is merged to
+GitHub `main`, deployed by the Cloudflare path, and smoked on
+`https://ks2.eugnel.uk`. The final deploy, smoke, independent review, and
+sync evidence are recorded in the completion report in this folder.

@@ -1,0 +1,5 @@
+Grammar QG runtime certification status generated:
+  Content release: grammar-qg-p21-2026-05-11
+  Templates: 546
+  Status counts: {"approved":389,"approved_with_limitation":157}
+  Output: D:\Coding\ks2-mastery\.worktrees\grammar-qg-p21-pool-expansion\worker\src\subjects\grammar\certification-status.generated.js

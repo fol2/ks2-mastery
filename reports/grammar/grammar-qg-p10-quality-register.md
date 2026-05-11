@@ -1,11 +1,11 @@
 # Grammar QG P10 — Quality Register
 
-**Content Release:** grammar-qg-p20-2026-05-05
-**Generated:** 2026-05-05T15:30:37.119Z
-**Templates:** 510
-**Approved:** 353 | **Blocked:** 0
+**Content Release:** grammar-qg-p21-2026-05-11
+**Generated:** 2026-05-11T13:45:55.410Z
+**Templates:** 546
+**Approved:** 389 | **Blocked:** 0
 **High-risk (1..15 seeds):** 199
-**Adult review decisions:** 103
+**Adult review decisions:** 118
 
 ## Summary Table
 
@@ -521,6 +521,42 @@
 | 508 | `qg_p18_p18_word_classes_noun_phrases_word_class_np_roles` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 509 | `qg_p18_p18_word_classes_precision_repair_or_rewrite` | approved | - | 1..15 | ship |
 | 510 | `qg_p18_p18_word_classes_sat_table_classification` | approved | - | 1..10 | ship |
+| 511 | `qg_p21_sentence_functions_closed_choice_variety` | approved | - | 1..10 | ship |
+| 512 | `qg_p21_sentence_functions_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 513 | `qg_p21_word_classes_closed_choice_variety` | approved | - | 1..10 | ship |
+| 514 | `qg_p21_word_classes_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 515 | `qg_p21_noun_phrases_closed_choice_variety` | approved | - | 1..10 | ship |
+| 516 | `qg_p21_noun_phrases_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 517 | `qg_p21_adverbials_closed_choice_variety` | approved | - | 1..10 | ship |
+| 518 | `qg_p21_adverbials_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 519 | `qg_p21_clauses_closed_choice_variety` | approved | - | 1..10 | ship |
+| 520 | `qg_p21_clauses_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 521 | `qg_p21_relative_clauses_closed_choice_variety` | approved | - | 1..10 | ship |
+| 522 | `qg_p21_relative_clauses_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 523 | `qg_p21_tense_aspect_closed_choice_variety` | approved | - | 1..10 | ship |
+| 524 | `qg_p21_tense_aspect_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 525 | `qg_p21_standard_english_closed_choice_variety` | approved | - | 1..10 | ship |
+| 526 | `qg_p21_standard_english_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 527 | `qg_p21_pronouns_cohesion_closed_choice_variety` | approved | - | 1..10 | ship |
+| 528 | `qg_p21_pronouns_cohesion_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 529 | `qg_p21_formality_closed_choice_variety` | approved | - | 1..10 | ship |
+| 530 | `qg_p21_formality_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 531 | `qg_p21_active_passive_closed_choice_variety` | approved | - | 1..10 | ship |
+| 532 | `qg_p21_active_passive_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 533 | `qg_p21_subject_object_closed_choice_variety` | approved | - | 1..10 | ship |
+| 534 | `qg_p21_subject_object_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 535 | `qg_p21_modal_verbs_closed_choice_variety` | approved | - | 1..10 | ship |
+| 536 | `qg_p21_modal_verbs_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 537 | `qg_p21_parenthesis_commas_closed_choice_variety` | approved | - | 1..10 | ship |
+| 538 | `qg_p21_parenthesis_commas_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 539 | `qg_p21_speech_punctuation_closed_choice_variety` | approved | - | 1..10 | ship |
+| 540 | `qg_p21_speech_punctuation_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 541 | `qg_p21_apostrophes_possession_closed_choice_variety` | approved | - | 1..10 | ship |
+| 542 | `qg_p21_apostrophes_possession_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 543 | `qg_p21_boundary_punctuation_closed_choice_variety` | approved | - | 1..10 | ship |
+| 544 | `qg_p21_boundary_punctuation_explanation_choice_variety` | approved | - | 1..10 | ship |
+| 545 | `qg_p21_hyphen_ambiguity_closed_choice_variety` | approved | - | 1..10 | ship |
+| 546 | `qg_p21_hyphen_ambiguity_explanation_choice_variety` | approved | - | 1..10 | ship |
 
 ## Detailed Judgements
 
@@ -1459,15 +1495,15 @@
 
 **Concrete examples:**
 
-- Seed 1: "Rewrite the sentence in Standard English. Ava don't know why the gate is locked." → non-scored
+- Seed 1: "Correct this sentence into Standard English. Ava don't know why the gate is l..." → non-scored
   - Feedback: A correct answer is: Ava doesn't know why the gate is locked.
-- Seed 2: "Rewrite the sentence in Standard English. Noah don't know where the hall is." → non-scored
+- Seed 2: "Correct this sentence into Standard English. Noah don't know where the hall is." → non-scored
   - Feedback: A correct answer is: Noah doesn't know where the hall is.
-- Seed 3: "Rewrite the sentence in Standard English. Ava don't know where the hall is." → non-scored
+- Seed 3: "Correct this sentence into Standard English. Ava don't know where the hall is." → non-scored
   - Feedback: A correct answer is: Ava doesn't know where the hall is.
-- Seed 4: "Rewrite the sentence in Standard English. Noah seen the comet last night." → non-scored
+- Seed 4: "Correct this sentence into Standard English. Noah seen the comet last night." → non-scored
   - Feedback: A correct answer is: Noah saw the comet last night.
-- Seed 5: "Rewrite the sentence in Standard English. Nora don't know the answer yet." → non-scored
+- Seed 5: "Correct this sentence into Standard English. Nora don't know the answer yet." → non-scored
   - Feedback: A correct answer is: Nora doesn't know the answer yet.
 
 ### `proc2_tense_aspect_choice`
@@ -1655,11 +1691,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Which sentence contains a relative clause?" → correct
+- Seed 1: "Choose the sentence where a relative clause adds information about a noun." → correct
   - Feedback: The correct answer is: The book that belonged to the club was easy to spot.
-- Seed 2: "Which sentence contains a relative clause?" → correct
+- Seed 2: "Choose the sentence where a relative clause adds information about a noun." → correct
   - Feedback: The correct answer is: The bag which Ben packed carefully was easy to spot.
-- Seed 3: "Which sentence contains a relative clause?" → correct
+- Seed 3: "Choose the sentence where a relative clause adds information about a noun." → correct
   - Feedback: The correct answer is: The book which Ben packed carefully was easy to spot.
 
 ### `proc2_fronted_adverbial_build`
@@ -3651,15 +3687,15 @@
 
 **Concrete examples:**
 
-- Seed 1: "Copy the sentence and add the comma after the fronted adverbial. Before sunri..." → correct
+- Seed 1: "Add the missing comma after the fronted adverbial, then copy the sentence. Be..." → correct
   - Feedback: "Before sunrise" is fronted, so add a comma after it.
-- Seed 2: "Copy the sentence and add the comma after the fronted adverbial. After the co..." → correct
+- Seed 2: "Add the missing comma after the fronted adverbial, then copy the sentence. Af..." → correct
   - Feedback: "After the concert" is fronted, so add a comma after it.
-- Seed 3: "Copy the sentence and add the comma after the fronted adverbial. In the corne..." → correct
+- Seed 3: "Add the missing comma after the fronted adverbial, then copy the sentence. In..." → correct
   - Feedback: "In the corner of the hall" is fronted, so add a comma after it.
-- Seed 4: "Copy the sentence and add the comma after the fronted adverbial. With great c..." → correct
+- Seed 4: "Add the missing comma after the fronted adverbial, then copy the sentence. Wi..." → correct
   - Feedback: "With great care" is fronted, so add a comma after it.
-- Seed 5: "Copy the sentence and add the comma after the fronted adverbial. During the t..." → correct
+- Seed 5: "Add the missing comma after the fronted adverbial, then copy the sentence. Du..." → correct
   - Feedback: "During the thunderstorm" is fronted, so add a comma after it.
 
 ### `qg_p18_p15_adverbials_identify_fronted_adv`
@@ -4611,11 +4647,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Which option is an expanded noun phrase?" → correct
+- Seed 1: "Choose the expanded noun phrase from the options." → correct
   - Feedback: The head noun is "goalkeeper".
-- Seed 2: "Which option is an expanded noun phrase?" → correct
+- Seed 2: "Choose the expanded noun phrase from the options." → correct
   - Feedback: The head noun is "box".
-- Seed 3: "Which option is an expanded noun phrase?" → correct
+- Seed 3: "Choose the expanded noun phrase from the options." → correct
   - Feedback: The head noun is "key".
 
 ### `qg_p18_p15_noun_phrases_np_not_clause`
@@ -5065,11 +5101,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Why is this sentence a command? Close the library door quietly." → correct
+- Seed 1: "Choose the best reason this sentence is a command: Close the library door qui..." → correct
   - Feedback: It tells someone to do something.
-- Seed 2: "Why is this sentence an exclamation? How bright the comet looked!" → correct
+- Seed 2: "Choose the best reason this sentence is an exclamation: How bright the comet ..." → correct
   - Feedback: It uses What/How to show strong feeling.
-- Seed 3: "Why is this sentence a question? Did Maya remember her reading journal?" → correct
+- Seed 3: "Choose the best reason this sentence is a question: Did Maya remember her rea..." → correct
   - Feedback: It asks for an answer.
 
 ### `qg_p18_p15_sentence_functions_function_contrast`
@@ -6639,11 +6675,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Which option is the subordinate clause? Although the wind was strong, the boa..." → correct
+- Seed 1: "Choose the subordinate clause from this sentence: Although the wind was stron..." → correct
   - Feedback: The subordinate clause is "Although the wind was strong".
-- Seed 2: "Which option is the subordinate clause? When the bell rang, the pupils lined up." → correct
+- Seed 2: "Choose the subordinate clause from this sentence: When the bell rang, the pup..." → correct
   - Feedback: The subordinate clause is "When the bell rang".
-- Seed 3: "Which option is the subordinate clause? Because it was raining, we stayed ins..." → correct
+- Seed 3: "Choose the subordinate clause from this sentence: Because it was raining, we ..." → correct
   - Feedback: The subordinate clause is "Because it was raining".
 
 ### `qg_p18_p16_formality_choose_formal_word`
@@ -7020,11 +7056,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "You ___ wear a helmet on this trail." → correct
+- Seed 1: "Choose the modal verb that best fits: You ___ wear a helmet on this trail." → correct
   - Feedback: "should" shows strong advice.
-- Seed 2: "It ___ snow tonight." → correct
+- Seed 2: "Choose the modal verb that best fits: It ___ snow tonight." → correct
   - Feedback: "might" shows possibility.
-- Seed 3: "The team ___ win if they practise." → correct
+- Seed 3: "Choose the modal verb that best fits: The team ___ win if they practise." → correct
   - Feedback: "could" shows possibility.
 
 ### `qg_p18_p16_modal_verbs_meaning_transfer_choice`
@@ -8107,11 +8143,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Which sentence uses Standard English?" → correct
+- Seed 1: "Choose the sentence written in Standard English." → correct
   - Feedback: The Standard English sentence is: We were late.
-- Seed 2: "Which sentence uses Standard English?" → correct
+- Seed 2: "Choose the sentence written in Standard English." → correct
   - Feedback: The Standard English sentence is: I did my homework.
-- Seed 3: "Which sentence uses Standard English?" → correct
+- Seed 3: "Choose the sentence written in Standard English." → correct
   - Feedback: The Standard English sentence is: She saw the poster.
 
 ### `qg_p18_p16_standard_english_context_formal_standard`
@@ -8289,18 +8325,18 @@
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Adult review decision:** approved_with_review
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
-  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
   - Accepted example: the sandwich
   - Rejected alternative: The noisy gull
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "What is the object of this sentence? The noisy gull stole the sandwich from Max." → correct
+- Seed 1: "Find the object in this sentence: The noisy gull stole the sandwich from Max." → correct
   - Feedback: The object is the sandwich.
-- Seed 2: "What is the object of this sentence? On Friday morning, our science club visi..." → correct
+- Seed 2: "Find the object in this sentence: On Friday morning, our science club visited..." → correct
   - Feedback: The object is the museum.
-- Seed 3: "What is the object of this sentence? After lunch, the tired goalkeeper caught..." → correct
+- Seed 3: "Find the object in this sentence: After lunch, the tired goalkeeper caught th..." → correct
   - Feedback: The object is the ball.
 
 ### `qg_p18_p16_subject_object_find_subject`
@@ -8318,18 +8354,18 @@
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Adult review decision:** approved_with_review
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
-  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
   - Accepted example: The noisy gull
   - Rejected alternative: the sandwich
 - **Final action:** ship
 
 **Concrete examples:**
 
-- Seed 1: "What is the subject of this sentence? The noisy gull stole the sandwich from ..." → correct
+- Seed 1: "Find the subject in this sentence: The noisy gull stole the sandwich from Max." → correct
   - Feedback: The subject is The noisy gull.
-- Seed 2: "What is the subject of this sentence? On Friday morning, our science club vis..." → correct
+- Seed 2: "Find the subject in this sentence: On Friday morning, our science club visite..." → correct
   - Feedback: The subject is our science club.
-- Seed 3: "What is the subject of this sentence? After lunch, the tired goalkeeper caugh..." → correct
+- Seed 3: "Find the subject in this sentence: After lunch, the tired goalkeeper caught t..." → correct
   - Feedback: The subject is the tired goalkeeper.
 
 ### `qg_p18_p16_subject_object_opening_adverbial_trap`
@@ -11552,11 +11588,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each sentence as active or passive." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each sentence as active or passive." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each sentence as active or passive." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_active_passive_subject_object_voice_subject_object_roles`
@@ -11736,11 +11772,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each adverbial by how it works." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each adverbial by how it works." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each adverbial by how it works." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_apostrophes_possession_application_transfer`
@@ -11788,11 +11824,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Which phrase correctly shows possession for one dog owns a bowl?" → correct
+- Seed 1: "Which phrase correctly shows possession for: one dog owns a bowl?" → correct
   - Feedback: One dog owns the bowl, so apostrophe before s.
-- Seed 2: "Which phrase correctly shows possession for several girls own boots?" → correct
+- Seed 2: "Which phrase correctly shows possession for: several girls own boots?" → correct
   - Feedback: Girls is plural ending in s, so apostrophe after s.
-- Seed 3: "Which phrase correctly shows possession for one teacher owns a desk?" → correct
+- Seed 3: "Which phrase correctly shows possession for: one teacher owns a desk?" → correct
   - Feedback: One teacher, apostrophe before s.
 
 ### `qg_p18_p18_apostrophes_possession_explain_reasoning`
@@ -11812,11 +11848,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Why is 'the dog's bowl' correct for one dog owns a bowl?" → correct
+- Seed 1: "Why is 'the dog's bowl' correct for: one dog owns a bowl?" → correct
   - Feedback: Possession depends on who owns the noun.
-- Seed 2: "Why is 'the girls' boots' correct for several girls own boots?" → correct
+- Seed 2: "Why is 'the girls' boots' correct for: several girls own boots?" → correct
   - Feedback: Possession depends on who owns the noun.
-- Seed 3: "Why is 'the teacher's desk' correct for one teacher owns a desk?" → correct
+- Seed 3: "Why is 'the teacher's desk' correct for: one teacher owns a desk?" → correct
   - Feedback: Possession depends on who owns the noun.
 
 ### `qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision`
@@ -11864,15 +11900,15 @@
 
 **Concrete examples:**
 
-- Seed 1: "Write the possessive phrase for one dog owns a bowl." → correct
+- Seed 1: "Rewrite as a precise possessive phrase: one dog owns a bowl." → correct
   - Feedback: One dog owns the bowl, so apostrophe before s.
-- Seed 2: "Write the possessive phrase for several girls own boots." → correct
+- Seed 2: "Rewrite as a precise possessive phrase: several girls own boots." → correct
   - Feedback: Girls is plural ending in s, so apostrophe after s.
-- Seed 3: "Write the possessive phrase for one teacher owns a desk." → correct
+- Seed 3: "Rewrite as a precise possessive phrase: one teacher owns a desk." → correct
   - Feedback: One teacher, apostrophe before s.
-- Seed 4: "Write the possessive phrase for several birds own nests." → correct
+- Seed 4: "Rewrite as a precise possessive phrase: several birds own nests." → correct
   - Feedback: Plural birds takes apostrophe after s.
-- Seed 5: "Write the possessive phrase for one child owns a coat." → correct
+- Seed 5: "Rewrite as a precise possessive phrase: one child owns a coat." → correct
   - Feedback: Child is singular, so child's.
 
 ### `qg_p18_p18_apostrophes_possession_sat_table_classification`
@@ -11892,11 +11928,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each possessive apostrophe example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each possessive apostrophe example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each possessive apostrophe example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_boundary_punctuation_application_transfer`
@@ -12020,11 +12056,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each boundary punctuation choice." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each boundary punctuation choice." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each boundary punctuation choice." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation`
@@ -12186,11 +12222,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each clause target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each clause target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each clause target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_formality_application_transfer`
@@ -12324,11 +12360,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each phrase by formality." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each phrase by formality." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each phrase by formality." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_hyphen_ambiguity_application_transfer`
@@ -12452,11 +12488,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each hyphen example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each hyphen example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each hyphen example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_modal_verbs_application_transfer`
@@ -12618,11 +12654,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each modal verb by meaning." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each modal verb by meaning." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each modal verb by meaning." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_noun_phrases_application_transfer`
@@ -12746,11 +12782,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each noun-phrase target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each noun-phrase target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each noun-phrase target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_parenthesis_commas_application_transfer`
@@ -12874,11 +12910,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each parenthesis punctuation target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each parenthesis punctuation target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each parenthesis punctuation target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_pronouns_cohesion_application_transfer`
@@ -13030,11 +13066,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each pronoun-cohesion choice." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each pronoun-cohesion choice." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each pronoun-cohesion choice." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_relative_clauses_application_transfer`
@@ -13196,11 +13232,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each relative-clause target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each relative-clause target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each relative-clause target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_sentence_functions_application_transfer`
@@ -13324,11 +13360,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each sentence by function." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each sentence by function." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each sentence by function." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary`
@@ -13480,11 +13516,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each speech-punctuation target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each speech-punctuation target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each speech-punctuation target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_standard_english_application_transfer`
@@ -13608,11 +13644,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each Standard English example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each Standard English example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each Standard English example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_subject_object_application_transfer`
@@ -13746,11 +13782,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each subject or object target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each subject or object target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each subject or object target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_tense_aspect_application_transfer`
@@ -13879,11 +13915,11 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each tense or aspect example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each tense or aspect example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each tense or aspect example." → correct
   - Feedback: Classify by the grammar role, not by surface length.
 
 ### `qg_p18_p18_tense_aspect_standard_english_tense_standard_register`
@@ -14068,9 +14104,948 @@
 
 **Concrete examples:**
 
-- Seed 1: "Classify the target word or phrase by its grammar role." → correct
+- Seed 1: "Classify each word-class target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 2: "Classify the target word or phrase by its grammar role." → correct
+- Seed 2: "Classify each word-class target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
-- Seed 3: "Classify the target word or phrase by its grammar role." → correct
+- Seed 3: "Classify each word-class target." → correct
   - Feedback: Classify by the grammar role, not by surface length.
+
+### `qg_p21_sentence_functions_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option gives an instruction about the gate?" → correct
+  - Feedback: A command tells someone to do something.
+- Seed 2: "Which option asks about the red scarf?" → correct
+  - Feedback: A question asks for information and normally uses a question mark.
+- Seed 3: "Which option gives information about the lighthouse?" → correct
+  - Feedback: A statement gives information.
+
+### `qg_p21_sentence_functions_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'sentence_functions'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: A KS2 exclamation often begins with what or how and shows strong feeling.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which option gives an instructio..." → correct
+  - Feedback: A command tells someone to do something.
+- Seed 2: "Choose the best explanation for this answer. Which option asks about the red ..." → correct
+  - Feedback: A question asks for information and normally uses a question mark.
+- Seed 3: "Choose the best explanation for this answer. Which option gives information a..." → correct
+  - Feedback: A statement gives information.
+
+### `qg_p21_word_classes_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "In the sentence "Ben often walks home", what is "often"?" → correct
+  - Feedback: Often is an adverb because it tells us how frequently Ben walks.
+- Seed 2: "In the sentence "These biscuits are warm", what is "These"?" → correct
+  - Feedback: These is a determiner because it comes before the noun and points to which biscuits.
+- Seed 3: "In the sentence "The marble rolled under the cupboard", what is "under"?" → correct
+  - Feedback: Under is a preposition because it shows the marble's position.
+
+### `qg_p21_word_classes_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'word_classes'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: These is a determiner because it comes before the noun and points to which biscuits.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. In the sentence "Ben often walks..." → correct
+  - Feedback: Often is an adverb because it tells us how frequently Ben walks.
+- Seed 2: "Choose the best explanation for this answer. In the sentence "These biscuits ..." → correct
+  - Feedback: These is a determiner because it comes before the noun and points to which biscuits.
+- Seed 3: "Choose the best explanation for this answer. In the sentence "The marble roll..." → correct
+  - Feedback: Under is a preposition because it shows the marble's position.
+
+### `qg_p21_noun_phrases_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option is the expanded noun phrase about the key?" → correct
+  - Feedback: The phrase is centred on the noun key and expands it with description.
+- Seed 2: "Which word is the head noun in "the old wooden boat"?" → correct
+  - Feedback: Boat is the noun at the centre of the noun phrase.
+- Seed 3: "Which option is a noun phrase, not a clause?" → correct
+  - Feedback: A noun phrase does not contain its own subject-verb clause here.
+
+### `qg_p21_noun_phrases_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'noun_phrases'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: The expanded noun phrase adds detail while keeping garden as the main noun.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which option is the expanded nou..." → correct
+  - Feedback: The phrase is centred on the noun key and expands it with description.
+- Seed 2: "Choose the best explanation for this answer. Which word is the head noun in "..." → correct
+  - Feedback: Boat is the noun at the centre of the noun phrase.
+- Seed 3: "Choose the best explanation for this answer. Which option is a noun phrase, n..." → correct
+  - Feedback: A noun phrase does not contain its own subject-verb clause here.
+
+### `qg_p21_adverbials_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option correctly places the fronted adverbial after breakfast?" → correct
+  - Feedback: After breakfast is a fronted adverbial and needs a comma after it.
+- Seed 2: "Which opening phrase is a fronted adverbial of place?" → correct
+  - Feedback: Beside the river tells us where and has been moved to the front.
+- Seed 3: "Which sentence needs a comma after the fronted adverbial?" → correct
+  - Feedback: Without making a sound is a fronted adverbial telling us how.
+
+### `qg_p21_adverbials_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'adverbials'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: At the edge of the forest tells us where and has been moved to the front.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which option correctly places th..." → correct
+  - Feedback: After breakfast is a fronted adverbial and needs a comma after it.
+- Seed 2: "Choose the best explanation for this answer. Which opening phrase is a fronte..." → correct
+  - Feedback: Beside the river tells us where and has been moved to the front.
+- Seed 3: "Choose the best explanation for this answer. Which sentence needs a comma aft..." → correct
+  - Feedback: Without making a sound is a fronted adverbial telling us how.
+
+### `qg_p21_clauses_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: Because it was icy
+  - Rejected alternative: we walked slowly
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which part is the subordinate clause in "Because it was icy, we walked slowly"?" → correct
+  - Feedback: Because it was icy depends on the main clause for the full sentence.
+- Seed 2: "Which part is the main clause in "After the bell rang, the pupils lined up"?" → correct
+  - Feedback: The pupils lined up can stand as the main idea of the sentence.
+- Seed 3: "Which sentence correctly uses although?" → correct
+  - Feedback: Although introduces a subordinate clause that needs a main clause.
+
+### `qg_p21_clauses_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: Because it was icy depends on the main clause for the full sentence.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which part is the subordinate cl..." → correct
+  - Feedback: Because it was icy depends on the main clause for the full sentence.
+- Seed 2: "Choose the best explanation for this answer. Which part is the main clause in..." → correct
+  - Feedback: The pupils lined up can stand as the main idea of the sentence.
+- Seed 3: "Choose the best explanation for this answer. Which sentence correctly uses al..." → correct
+  - Feedback: Although introduces a subordinate clause that needs a main clause.
+
+### `qg_p21_relative_clauses_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The girl who won the race smiled.
+  - Rejected alternative: The girl ran because she trained hard.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence uses a relative clause about a person?" → correct
+  - Feedback: Who won the race adds information about the girl.
+- Seed 2: "Which sentence uses which correctly for a thing?" → correct
+  - Feedback: Which was torn is a relative clause about the kite.
+- Seed 3: "Which option contains a relative clause about the shop?" → correct
+  - Feedback: That sells maps adds information about the shop.
+
+### `qg_p21_relative_clauses_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'relative_clauses'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: Who won the race adds information about the girl.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which sentence uses a relative c..." → correct
+  - Feedback: Who won the race adds information about the girl.
+- Seed 2: "Choose the best explanation for this answer. Which sentence uses which correc..." → correct
+  - Feedback: Which was torn is a relative clause about the kite.
+- Seed 3: "Choose the best explanation for this answer. Which option contains a relative..." → correct
+  - Feedback: That sells maps adds information about the shop.
+
+### `qg_p21_tense_aspect_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence uses the present perfect?" → correct
+  - Feedback: Has finished links a completed action to the present.
+- Seed 2: "Which sentence uses the past progressive?" → correct
+  - Feedback: Were playing shows an action in progress in the past.
+- Seed 3: "Which sentence uses the past perfect?" → correct
+  - Feedback: Had packed shows an earlier past action before another past action.
+
+### `qg_p21_tense_aspect_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'tense_aspect'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which sentence uses the present ..." → correct
+  - Feedback: Has finished links a completed action to the present.
+- Seed 2: "Choose the best explanation for this answer. Which sentence uses the past pro..." → correct
+  - Feedback: Were playing shows an action in progress in the past.
+- Seed 3: "Choose the best explanation for this answer. Which sentence uses the past per..." → correct
+  - Feedback: Had packed shows an earlier past action before another past action.
+
+### `qg_p21_standard_english_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which option uses the Standard English verb were?" → correct
+  - Feedback: We were is the standard written form.
+- Seed 2: "Which option uses the Standard English past-tense verb did?" → correct
+  - Feedback: Did is the standard past-tense form here.
+- Seed 3: "Which option uses the Standard English phrase should have?" → correct
+  - Feedback: Should have is the standard written form.
+
+### `qg_p21_standard_english_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'standard_english'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which option uses the Standard E..." → correct
+  - Feedback: We were is the standard written form.
+- Seed 2: "Choose the best explanation for this answer. Which option uses the Standard E..." → correct
+  - Feedback: Did is the standard past-tense form here.
+- Seed 3: "Choose the best explanation for this answer. Which option uses the Standard E..." → correct
+  - Feedback: Should have is the standard written form.
+
+### `qg_p21_pronouns_cohesion_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'pronouns_cohesion'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence keeps the pronoun reference clear?" → correct
+  - Feedback: It clearly refers to the map.
+- Seed 2: "Which sentence is clearer?" → correct
+  - Feedback: Repeating Lucas avoids an unclear he.
+- Seed 3: "Which option improves cohesion without confusion?" → correct
+  - Feedback: They clearly refers to the kittens.
+
+### `qg_p21_pronouns_cohesion_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'pronouns_cohesion'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which sentence keeps the pronoun..." → correct
+  - Feedback: It clearly refers to the map.
+- Seed 2: "Choose the best explanation for this answer. Which sentence is clearer? Answe..." → correct
+  - Feedback: Repeating Lucas avoids an unclear he.
+- Seed 3: "Choose the best explanation for this answer. Which option improves cohesion w..." → correct
+  - Feedback: They clearly refers to the kittens.
+
+### `qg_p21_formality_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'formality'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: I would be grateful if you could reply soon.
+  - Rejected alternative: Please get back to me soon.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence is most formal?" → correct
+  - Feedback: The vocabulary and structure suit formal writing.
+- Seed 2: "Which sentence is informal?" → correct
+  - Feedback: Awesome is chatty, informal vocabulary.
+- Seed 3: "Which word is the most formal replacement for "kids"?" → correct
+  - Feedback: Children is more formal and precise than kids.
+
+### `qg_p21_formality_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'formality'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The vocabulary and structure suit formal writing.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which sentence is most formal? A..." → correct
+  - Feedback: The vocabulary and structure suit formal writing.
+- Seed 2: "Choose the best explanation for this answer. Which sentence is informal? Answ..." → correct
+  - Feedback: Awesome is chatty, informal vocabulary.
+- Seed 3: "Choose the best explanation for this answer. Which word is the most formal re..." → correct
+  - Feedback: Children is more formal and precise than kids.
+
+### `qg_p21_active_passive_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence is active voice?" → correct
+  - Feedback: In active voice, the doer comes before the verb.
+- Seed 2: "Which sentence is passive voice?" → correct
+  - Feedback: In passive voice, the thing affected comes first.
+- Seed 3: "Which passive sentence keeps the same meaning as "The dog chased the ball"?" → correct
+  - Feedback: The ball is still the thing being chased.
+
+### `qg_p21_active_passive_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'active_passive'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which sentence is active voice? ..." → correct
+  - Feedback: In active voice, the doer comes before the verb.
+- Seed 2: "Choose the best explanation for this answer. Which sentence is passive voice?..." → correct
+  - Feedback: In passive voice, the thing affected comes first.
+- Seed 3: "Choose the best explanation for this answer. Which passive sentence keeps the..." → correct
+  - Feedback: The ball is still the thing being chased.
+
+### `qg_p21_subject_object_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The cat
+  - Rejected alternative: the mouse
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "In "The cat chased the mouse", what is the subject?" → correct
+  - Feedback: The subject is the doer of the action.
+- Seed 2: "In "Jamal kicked the ball", what is the object?" → correct
+  - Feedback: The object receives the action.
+- Seed 3: "In "After lunch, Priya watered the plants", what is the subject?" → correct
+  - Feedback: Priya is the person doing the watering.
+
+### `qg_p21_subject_object_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'subject_object'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: The subject is the doer of the action.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. In "The cat chased the mouse", w..." → correct
+  - Feedback: The subject is the doer of the action.
+- Seed 2: "Choose the best explanation for this answer. In "Jamal kicked the ball", what..." → correct
+  - Feedback: The object receives the action.
+- Seed 3: "Choose the best explanation for this answer. In "After lunch, Priya watered t..." → correct
+  - Feedback: Priya is the person doing the watering.
+
+### `qg_p21_modal_verbs_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'modal_verbs'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
+  - Accepted example: must
+  - Rejected alternative: might
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which modal verb shows the strongest certainty?" → correct
+  - Feedback: Must shows stronger certainty than might, could or may.
+- Seed 2: "Which sentence shows possibility, not certainty?" → correct
+  - Feedback: Might suggests something is possible.
+- Seed 3: "Which sentence gives advice?" → correct
+  - Feedback: Should is often used to give advice.
+
+### `qg_p21_modal_verbs_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'modal_verbs'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: Must shows stronger certainty than might, could or may.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which modal verb shows the stron..." → correct
+  - Feedback: Must shows stronger certainty than might, could or may.
+- Seed 2: "Choose the best explanation for this answer. Which sentence shows possibility..." → correct
+  - Feedback: Might suggests something is possible.
+- Seed 3: "Choose the best explanation for this answer. Which sentence gives advice? Ans..." → correct
+  - Feedback: Should is often used to give advice.
+
+### `qg_p21_parenthesis_commas_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence uses commas to show parenthesis?" → correct
+  - Feedback: The commas mark extra information that can be lifted out.
+- Seed 2: "Which sentence uses brackets for parenthesis?" → correct
+  - Feedback: The brackets enclose the extra information.
+- Seed 3: "Which sentence uses dashes to show parenthesis?" → correct
+  - Feedback: The pair of dashes marks the extra information.
+
+### `qg_p21_parenthesis_commas_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'parenthesis_commas'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which sentence uses commas to sh..." → correct
+  - Feedback: The commas mark extra information that can be lifted out.
+- Seed 2: "Choose the best explanation for this answer. Which sentence uses brackets for..." → correct
+  - Feedback: The brackets enclose the extra information.
+- Seed 3: "Choose the best explanation for this answer. Which sentence uses dashes to sh..." → correct
+  - Feedback: The pair of dashes marks the extra information.
+
+### `qg_p21_speech_punctuation_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence punctuates direct speech correctly?" → correct
+  - Feedback: The question mark belongs inside the speech marks.
+- Seed 2: "Which sentence uses the comma before speech correctly?" → correct
+  - Feedback: A reporting clause before speech usually needs a comma before the opening speech marks.
+- Seed 3: "Which sentence keeps the exclamation mark inside the speech marks?" → correct
+  - Feedback: The punctuation for the spoken words goes inside the speech marks.
+
+### `qg_p21_speech_punctuation_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'speech_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Adult review decision:** approved_with_review
+  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
+  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Accepted example: A reporting clause before speech usually needs a comma before the opening speech marks.
+  - Rejected alternative: It only depends on the final punctuation mark.
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which sentence punctuates direct..." → correct
+  - Feedback: The question mark belongs inside the speech marks.
+- Seed 2: "Choose the best explanation for this answer. Which sentence uses the comma be..." → correct
+  - Feedback: A reporting clause before speech usually needs a comma before the opening speech marks.
+- Seed 3: "Choose the best explanation for this answer. Which sentence keeps the exclama..." → correct
+  - Feedback: The punctuation for the spoken words goes inside the speech marks.
+
+### `qg_p21_apostrophes_possession_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which phrase shows singular possession?" → correct
+  - Feedback: The apostrophe before s shows that one Tom owns the pencil.
+- Seed 2: "Which phrase shows that more than one girl owns the coats?" → correct
+  - Feedback: For a regular plural ending in s, the apostrophe goes after the s.
+- Seed 3: "Which phrase shows that the children own the books?" → correct
+  - Feedback: Children is an irregular plural, so add apostrophe s.
+
+### `qg_p21_apostrophes_possession_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'apostrophes_possession'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which phrase shows singular poss..." → correct
+  - Feedback: The apostrophe before s shows that one Tom owns the pencil.
+- Seed 2: "Choose the best explanation for this answer. Which phrase shows that more tha..." → correct
+  - Feedback: For a regular plural ending in s, the apostrophe goes after the s.
+- Seed 3: "Choose the best explanation for this answer. Which phrase shows that the chil..." → correct
+  - Feedback: Children is an irregular plural, so add apostrophe s.
+
+### `qg_p21_boundary_punctuation_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'boundary_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which sentence uses a colon to introduce a list?" → correct
+  - Feedback: A colon can introduce a list after a complete clause.
+- Seed 2: "Which option links the storm clauses with a semicolon?" → correct
+  - Feedback: A semicolon can link two complete, closely related clauses.
+- Seed 3: "Which sentence uses a dash to add an explanation?" → correct
+  - Feedback: The dash introduces an explanatory phrase.
+
+### `qg_p21_boundary_punctuation_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'boundary_punctuation'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which sentence uses a colon to i..." → correct
+  - Feedback: A colon can introduce a list after a complete clause.
+- Seed 2: "Choose the best explanation for this answer. Which option links the storm cla..." → correct
+  - Feedback: A semicolon can link two complete, closely related clauses.
+- Seed 3: "Choose the best explanation for this answer. Which sentence uses a dash to ad..." → correct
+  - Feedback: The dash introduces an explanatory phrase.
+
+### `qg_p21_hyphen_ambiguity_closed_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Which phrase means the shark eats people?" → correct
+  - Feedback: The hyphen joins man and eating so they work together as one modifier.
+- Seed 2: "Which word means to cover something again?" → correct
+  - Feedback: The hyphen separates re and cover to avoid confusion with recover.
+- Seed 3: "Which phrase uses a hyphen correctly before a noun?" → correct
+  - Feedback: The hyphen joins well and earned before the noun break.
+
+### `qg_p21_hyphen_ambiguity_explanation_choice_variety`
+
+- **Decision:** approved
+- **Severity:** none
+- **Reviewer:** automated-p10-oracle
+- **Method:** automated-oracle-with-concrete-evidence
+- **Seed window:** 1..10
+- **Answerability:** All 10 seeds produce exactly one correct option with clear prompt
+- **Grammar logic:** Feedback correctly references grammar rule for concept 'hyphen_ambiguity'
+- **Distractor quality:** 4 options per seed, 3 distractors represent common misconceptions
+- **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
+- **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
+- **Accessibility:** No visual cue required; standard text prompt accessible by default
+- **Final action:** ship
+
+**Concrete examples:**
+
+- Seed 1: "Choose the best explanation for this answer. Which phrase means the shark eat..." → correct
+  - Feedback: The hyphen joins man and eating so they work together as one modifier.
+- Seed 2: "Choose the best explanation for this answer. Which word means to cover someth..." → correct
+  - Feedback: The hyphen separates re and cover to avoid confusion with recover.
+- Seed 3: "Choose the best explanation for this answer. Which phrase uses a hyphen corre..." → correct
+  - Feedback: The hyphen joins well and earned before the noun break.

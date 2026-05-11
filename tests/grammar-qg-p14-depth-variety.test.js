@@ -39,20 +39,18 @@ function learnerVisibleSurface(item) {
 }
 
 describe('Grammar QG P14 depth and variety contract', () => {
-  it('ships the active P20 release denominator and preserves P14 priority families', () => {
+  it('ships the active P21 release denominator and preserves P14 priority families', () => {
     const audit = buildGrammarQuestionGeneratorAudit({
       seeds: [1, 2, 3],
       deepSeeds: Array.from({ length: 30 }, (_, index) => index + 1),
     });
 
-    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p20-2026-05-05');
-    assert.equal(audit.templateCount, 510);
-    // P19 Contract A.2: 4 P14 priority rewrites moved from constructed to
-    // selected-response (standard_english/fronted_adverbials/speech_punctuation/
-    // parenthesis_commas). Net: 317 + 4 = 321 selected, 193 - 4 = 189 constructed.
-    assert.equal(audit.selectedResponseCount, 321);
+    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p21-2026-05-11');
+    assert.equal(audit.templateCount, 546);
+    // P21 adds 36 selected-response templates to the P20 denominator.
+    assert.equal(audit.selectedResponseCount, 357);
     assert.equal(audit.constructedResponseCount, 189);
-    assert.equal(audit.generatedTemplateCount, 484);
+    assert.equal(audit.generatedTemplateCount, 520);
     assert.equal(audit.mixedTransferTemplateCount, 26);
     assert.equal(audit.lowDepthGeneratedTemplates.length, 0);
 
@@ -68,21 +66,21 @@ describe('Grammar QG P14 depth and variety contract', () => {
   });
 
   it('meets the learner-visible surface and prompt growth thresholds', () => {
-    // P20 supersedes P19 with regenerated P10-prefixed artefacts; assertions
+    // P21 supersedes P20 with phase-prefixed artefacts; assertions
     // read the live artefact, not the frozen P18 snapshot.
-    const inventory = readReport('grammar-qg-p10-render-inventory.json');
+    const inventory = readReport('grammar-qg-p21-render-inventory.json');
     const uniqueSurfaces = new Set(inventory.items.map(learnerVisibleSurface));
     const uniquePrompts = new Set(inventory.items.map((item) => item.promptText || ''));
 
     assert.equal(inventory.metadata.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
-    assert.equal(inventory.metadata.templateCount, 510);
-    assert.equal(inventory.metadata.totalItems, 15300);
+    assert.equal(inventory.metadata.templateCount, 546);
+    assert.equal(inventory.metadata.totalItems, 16380);
     assert.ok(uniqueSurfaces.size >= 7000, `unique surfaces: ${uniqueSurfaces.size}`);
     assert.ok(uniquePrompts.size >= 5000, `unique prompts: ${uniquePrompts.size}`);
   });
 
   it('expands the former low-diversity fixed banks below the P14 threshold', () => {
-    const inventory = readReport('grammar-qg-p10-render-inventory.json');
+    const inventory = readReport('grammar-qg-p21-render-inventory.json');
     const fixedDiagnostics = new Set(GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS);
     const perTemplate = new Map();
     for (const item of inventory.items) {
@@ -94,12 +92,21 @@ describe('Grammar QG P14 depth and variety contract', () => {
       .filter(([, surfaces]) => surfaces.size <= 3)
       .map(([templateId, surfaces]) => ({ templateId, uniqueSurfaceCount: surfaces.size }));
     const underExpandedFamilies = [...perTemplate.entries()]
+      .filter(([templateId]) => !templateId.startsWith('qg_p21_'))
       .filter(([, surfaces]) => surfaces.size < 10)
+      .map(([templateId, surfaces]) => ({ templateId, uniqueSurfaceCount: surfaces.size }));
+    const p21Families = [...perTemplate.entries()]
+      .filter(([templateId]) => templateId.startsWith('qg_p21_'))
       .map(([templateId, surfaces]) => ({ templateId, uniqueSurfaceCount: surfaces.size }));
 
     assert.equal(fixedDiagnostics.size, 0);
     assert.ok(lowDiversityFamilies.length < 5, `low-diversity families: ${JSON.stringify(lowDiversityFamilies)}`);
     assert.deepEqual(underExpandedFamilies, []);
+    assert.equal(p21Families.length, 36);
+    assert.ok(
+      p21Families.every((entry) => entry.uniqueSurfaceCount === 8),
+      `P21 families must expose the contracted 8 curated cases: ${JSON.stringify(p21Families)}`,
+    );
 
     assert.deepEqual(
       GRAMMAR_TEMPLATE_METADATA.filter((template) => template.fixedDiagnostic || template.schedulePriority === 'low').map((template) => template.id),
@@ -140,8 +147,8 @@ describe('Grammar QG P14 depth and variety contract', () => {
   });
 
   it('keeps P14 selected-response distractor options free of likely surface cues', () => {
-    // P20 supersedes the P19 distractor audit; read the live P10-prefixed file.
-    const audit = readReport('grammar-qg-p10-distractor-audit.json');
+    // P21 supersedes the P20 distractor audit; read the live P21 file.
+    const audit = readReport('grammar-qg-p21-distractor-audit.json');
     const p14SurfaceCueItems = (audit.results || [])
       .filter((item) => item.templateId?.startsWith('qg_p14_'))
       .filter((item) => item.correctOptionSurfaceCue?.likelySurfaceCue)
@@ -151,8 +158,8 @@ describe('Grammar QG P14 depth and variety contract', () => {
   });
 
   it('covers every P14 distractor review flag with quality-register adult decisions', () => {
-    // P20 supersedes P19 with its own manifest pointing at live P10 artefacts.
-    const manifest = readReport('grammar-qg-p20-certification-manifest.json');
+    // P21 supersedes P20 with its own manifest pointing at live P21 artefacts.
+    const manifest = readReport('grammar-qg-p21-certification-manifest.json');
     const result = validateDistractorReviewCoverage(manifest, path.resolve(REPORTS_DIR, '..', '..'));
 
     assert.equal(result.pass, true, `Missing review decisions for: ${result.missing.join(', ')}`);

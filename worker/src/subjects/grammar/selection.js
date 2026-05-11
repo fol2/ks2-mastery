@@ -4,6 +4,7 @@ import {
   createGrammarQuestion,
   grammarQuestionVariantSignature,
   grammarTemplateGeneratorFamilyId,
+  serialiseGrammarQuestion,
 } from './content.js';
 import { isTemplateBlocked } from './certification-status.js';
 
@@ -21,6 +22,9 @@ export const SELECTION_WEIGHTS = Object.freeze({
 });
 
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
+export const GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW = 40;
+export const GRAMMAR_RECENT_TEMPLATE_REPEAT_WINDOW = 12;
+export const GRAMMAR_RECENT_STATIC_TEMPLATE_REPEAT_WINDOW = GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW;
 
 function seededRandom(seed) {
   let t = (Number(seed) || 0) >>> 0;
@@ -144,23 +148,29 @@ function variantKey(generatorFamilyId, variantSignature) {
   return `${generatorFamilyId}:${variantSignature}`;
 }
 
+function stablePromptKeyForQuestion(question) {
+  const serialised = serialiseGrammarQuestion(question);
+  return String(serialised?.promptText || '')
+    .toLowerCase()
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function candidateVariantMetadata(template, seed, variantMemo) {
-  if (!template) return { generatorFamilyId: '', variantSignature: '' };
+  if (!template) return { generatorFamilyId: '', variantSignature: '', promptKey: '' };
   const memoKey = template.generative ? `${template.id}:${seed >>> 0}` : template.id;
   if (variantMemo) {
     const cached = variantMemo.get(memoKey);
     if (cached) return cached;
   }
   const generatorFamilyId = grammarTemplateGeneratorFamilyId(template);
-  if (!template.generative) {
-    const result = { generatorFamilyId, variantSignature: '' };
-    if (variantMemo) variantMemo.set(memoKey, result);
-    return result;
-  }
   const question = createGrammarQuestion({ templateId: template.id, seed });
   const result = {
     generatorFamilyId,
-    variantSignature: grammarQuestionVariantSignature(question) || '',
+    variantSignature: template.generative ? grammarQuestionVariantSignature(question) || '' : '',
+    promptKey: stablePromptKeyForQuestion(question),
   };
   if (variantMemo) variantMemo.set(memoKey, result);
   return result;
@@ -242,6 +252,29 @@ function recentVariantIndex(recentAttempts) {
   return index;
 }
 
+function recentPromptIndex(recentAttempts, variantMemo) {
+  const index = new Map();
+  const attempts = normaliseRecentAttempts(recentAttempts);
+  const horizon = attempts.length;
+  attempts.forEach((attempt, position) => {
+    let key = typeof attempt.promptKey === 'string' ? attempt.promptKey : '';
+    if (!key && attempt.templateId) {
+      const template = GRAMMAR_TEMPLATE_METADATA.find((entry) => entry.id === attempt.templateId);
+      if (template) {
+        const seed = Number.isFinite(Number(attempt.seed)) ? Number(attempt.seed) : 1;
+        key = candidateVariantMetadata(template, seed, variantMemo).promptKey;
+      }
+    }
+    if (!key) return;
+    const distance = horizon - position;
+    const entry = index.get(key) || { lastDistance: Infinity, count: 0 };
+    entry.count += 1;
+    if (distance < entry.lastDistance) entry.lastDistance = distance;
+    index.set(key, entry);
+  });
+  return index;
+}
+
 function addPlannedGeneratedVariant(index, template, seed, variantMemo) {
   const candidateVariant = candidateVariantMetadata(template, seed, variantMemo);
   const key = variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature);
@@ -254,11 +287,39 @@ function addPlannedGeneratedVariant(index, template, seed, variantMemo) {
   });
 }
 
+function addPlannedPrompt(index, template, seed, variantMemo) {
+  const promptKey = candidateVariantMetadata(template, seed, variantMemo).promptKey;
+  if (!promptKey) return;
+  const entry = index.get(promptKey) || { lastDistance: Infinity, count: 0 };
+  index.set(promptKey, {
+    ...entry,
+    count: entry.count + 1,
+    lastDistance: Math.min(entry.lastDistance, 1),
+  });
+}
+
 function hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo) {
   const candidateVariant = candidateVariantMetadata(template, candidateSeed, variantMemo);
   if (!candidateVariant.variantSignature) return false;
   const recentVariant = recentVariants?.get(variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature));
-  return Boolean(recentVariant && recentVariant.lastDistance <= 6);
+  return Boolean(recentVariant && recentVariant.lastDistance <= GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW);
+}
+
+function hasRecentPromptRhythm(template, recentPrompts, candidateSeed, variantMemo) {
+  const promptKey = candidateVariantMetadata(template, candidateSeed, variantMemo).promptKey;
+  if (!promptKey) return false;
+  const recentPrompt = recentPrompts?.get(promptKey);
+  return Boolean(recentPrompt && recentPrompt.lastDistance <= GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW);
+}
+
+function hasRecentTemplate(template, recentTemplates) {
+  if (!template) return false;
+  const recentTemplate = recentTemplates?.get(template.id);
+  if (!recentTemplate) return false;
+  const window = template.generative
+    ? GRAMMAR_RECENT_TEMPLATE_REPEAT_WINDOW
+    : GRAMMAR_RECENT_STATIC_TEMPLATE_REPEAT_WINDOW;
+  return recentTemplate.lastDistance <= window;
 }
 
 function variantFreshTemplates(pool, recentVariants, candidateSeed, variantMemo) {
@@ -323,8 +384,9 @@ function weightFor(template, context) {
   const candidateVariant = candidateVariantMetadata(template, candidateSeed, variantMemo);
   const recentVariant = recentVariants?.get(variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature));
   if (recentVariant) {
-    if (recentVariant.lastDistance <= 6) {
-      weight /= (SELECTION_WEIGHTS.variantFreshness + 0.25 * (7 - recentVariant.lastDistance));
+    if (recentVariant.lastDistance <= GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW) {
+      const closeRepeatPenalty = Math.max(0, 7 - recentVariant.lastDistance);
+      weight /= (SELECTION_WEIGHTS.variantFreshness + 0.25 * closeRepeatPenalty);
     } else {
       weight /= SELECTION_WEIGHTS.variantFreshness;
     }
@@ -441,11 +503,13 @@ function recentAttemptForQueueTemplate(template, seed, variantMemo) {
   const variant = candidateVariantMetadata(template, seed, variantMemo);
   return {
     templateId: template.id,
+    seed,
     conceptIds: (template.skillIds || []).slice(),
     questionType: template.questionType,
     result: { correct: true },
     generatorFamilyId: variant.generatorFamilyId || grammarTemplateGeneratorFamilyId(template),
     variantSignature: variant.variantSignature || '',
+    promptKey: variant.promptKey || '',
   };
 }
 
@@ -493,6 +557,7 @@ export function buildGrammarPracticeQueue({
   const workingRecentVariants = recentVariantIndex(recentAttempts);
   // Per-invocation memo. Key: "templateId:seed>>>0" (generative) or "templateId" (non-generative). Depends on I3 (createGrammarQuestion purity); remove if I3 violated. See R6 contract.
   const variantMemo = new Map();
+  const workingRecentPrompts = recentPromptIndex(recentAttempts, variantMemo);
   const plannedTemplateIds = new Set(
     [...(avoidTemplateIds instanceof Set ? avoidTemplateIds : (Array.isArray(avoidTemplateIds) ? avoidTemplateIds : []))]
       .filter((id) => typeof id === 'string' && id),
@@ -503,15 +568,26 @@ export function buildGrammarPracticeQueue({
     return candidatePool.filter((template) => !plannedTemplateIds.has(template.id));
   }
 
+  function repeatSafeUnplannedTemplates(candidatePool) {
+    const recentTemplates = recentTemplateIndex(workingRecent);
+    return unplannedTemplates(candidatePool).filter((template) => !hasRecentTemplate(template, recentTemplates));
+  }
+
   function templateFreshPool(candidatePool) {
+    const repeatSafe = repeatSafeUnplannedTemplates(candidatePool);
+    if (repeatSafe.length > 0) return repeatSafe;
     const fresh = unplannedTemplates(candidatePool);
     return fresh.length > 0 ? fresh : candidatePool;
   }
 
   function templateFreshPoolWithBroadFallback(candidatePool) {
     if (candidatePool.length === 0) return candidatePool;
+    const repeatSafe = repeatSafeUnplannedTemplates(candidatePool);
+    if (repeatSafe.length > 0) return repeatSafe;
     const fresh = unplannedTemplates(candidatePool);
     if (fresh.length > 0) return fresh;
+    const broadRepeatSafe = repeatSafeUnplannedTemplates(broadPool);
+    if (broadRepeatSafe.length > 0) return broadRepeatSafe;
     const broadFresh = unplannedTemplates(broadPool);
     return broadFresh.length > 0 ? broadFresh : candidatePool;
   }
@@ -522,11 +598,19 @@ export function buildGrammarPracticeQueue({
     const variantFresh = templateFresh.filter(
       (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo),
     );
-    if (variantFresh.length > 0) return variantFresh;
-    const broadFresh = unplannedTemplates(broadPool).filter(
+    const promptFresh = variantFresh.filter(
+      (template) => !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo),
+    );
+    if (promptFresh.length > 0) return promptFresh;
+    const broadSurfaceFresh = unplannedTemplates(broadPool).filter(
+      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo)
+        && !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo),
+    );
+    if (broadSurfaceFresh.length > 0) return broadSurfaceFresh;
+    const broadVariantFresh = unplannedTemplates(broadPool).filter(
       (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo),
     );
-    return broadFresh.length > 0 ? broadFresh : templateFresh;
+    return broadVariantFresh.length > 0 ? broadVariantFresh : templateFresh;
   }
 
   function pushQueueEntry(template, candidateSeed, reason) {
@@ -534,6 +618,7 @@ export function buildGrammarPracticeQueue({
     plannedTemplateIds.add(template.id);
     workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed, variantMemo));
     addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo);
+    addPlannedPrompt(workingRecentPrompts, template, candidateSeed, variantMemo);
   }
 
   // P19b polish: focus-saturation lane fires only when the focus concept's
@@ -723,6 +808,7 @@ export function buildGrammarMiniPack({
   const workingRecentVariants = recentVariantIndex(recentAttempts);
   // Per-invocation memo. Key: "templateId:seed>>>0" (generative) or "templateId" (non-generative). Depends on I3 (createGrammarQuestion purity); remove if I3 violated. See R6 contract.
   const variantMemo = new Map();
+  const workingRecentPrompts = recentPromptIndex(recentAttempts, variantMemo);
   const seeds = Array.from({ length: safeSize }, (_, index) => ((Number(seed) || 1) + index * 104729) >>> 0);
   const pack = [];
   const usedTemplateIds = new Set();
@@ -744,6 +830,7 @@ export function buildGrammarMiniPack({
         usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
         workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed, variantMemo));
         addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo);
+        addPlannedPrompt(workingRecentPrompts, template, candidateSeed, variantMemo);
       }
     }
   }
@@ -768,8 +855,11 @@ export function buildGrammarMiniPack({
     const recentConcepts = recentConceptIndex(workingRecent);
     const recentVariants = workingRecentVariants;
     const candidateSeed = seeds[pack.length] || Number(seed) || 1;
+    const promptFreshRoundPool = roundPool.filter(
+      (template) => !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo),
+    );
     const template = pickTemplate({
-      pool: roundPool,
+      pool: promptFreshRoundPool.length > 0 ? promptFreshRoundPool : roundPool,
       rng,
       mastery,
       focusConceptId: normalisedFocus,
@@ -790,6 +880,7 @@ export function buildGrammarMiniPack({
     usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
     workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed, variantMemo));
     addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo);
+    addPlannedPrompt(workingRecentPrompts, template, candidateSeed, variantMemo);
   }
 
   return pack.slice(0, safeSize);

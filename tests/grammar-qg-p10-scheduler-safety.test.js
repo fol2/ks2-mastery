@@ -46,8 +46,8 @@ describe('P10 Scheduler Safety: status map structure', () => {
     assert.ok(fs.existsSync(STATUS_MAP_PATH), 'P10 status map file must exist');
   });
 
-  // P19 supersedes the original flat 78-template P10 register. The live status
-  // map is now a `{ metadata, entries: [...] }` envelope covering 510
+  // P21 supersedes the original flat 78-template P10 register. The live status
+  // map is now a `{ metadata, entries: [...] }` envelope covering the current
   // templates and uses `decision` (approved | blocked | watchlist | ...) plus
   // `severity` per entry. The historical P10 quality register has the same
   // shape, so we read entries from both via a normalised view.
@@ -58,8 +58,8 @@ describe('P10 Scheduler Safety: status map structure', () => {
   const statusMapById = new Map(statusEntries.map((entry) => [entry.templateId, entry]));
   const p10TemplateIds = qualityEntries.map((entry) => entry.templateId);
 
-  it('has entries for every live template (P19 covers the whole 510-template inventory)', () => {
-    assert.equal(statusEntries.length, 510);
+  it('has entries for every live template', () => {
+    assert.equal(statusEntries.length, GRAMMAR_TEMPLATE_METADATA.length);
   });
 
   it('every quality-register template exists in the status map', () => {

@@ -1,0 +1,359 @@
+TAP version 13
+# Subtest: P10 Evidence Artefacts: file existence
+    # Subtest: grammar-qg-p10-render-inventory.json exists
+    ok 1 - grammar-qg-p10-render-inventory.json exists
+      ---
+      duration_ms: 1.1467
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-render-inventory.md exists
+    ok 2 - grammar-qg-p10-render-inventory.md exists
+      ---
+      duration_ms: 0.4017
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-render-inventory-redacted.md exists
+    ok 3 - grammar-qg-p10-render-inventory-redacted.md exists
+      ---
+      duration_ms: 0.2967
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-quality-register.json exists
+    ok 4 - grammar-qg-p10-quality-register.json exists
+      ---
+      duration_ms: 0.2892
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-distractor-audit.json exists
+    ok 5 - grammar-qg-p10-distractor-audit.json exists
+      ---
+      duration_ms: 0.3152
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-marking-matrix.json exists
+    ok 6 - grammar-qg-p10-marking-matrix.json exists
+      ---
+      duration_ms: 0.2571
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-marking-matrix.md exists
+    ok 7 - grammar-qg-p10-marking-matrix.md exists
+      ---
+      duration_ms: 0.4193
+      type: 'test'
+      ...
+    # Subtest: grammar-qg-p10-certification-status-map.json exists
+    ok 8 - grammar-qg-p10-certification-status-map.json exists
+      ---
+      duration_ms: 0.4516
+      type: 'test'
+      ...
+    1..8
+ok 1 - P10 Evidence Artefacts: file existence
+  ---
+  duration_ms: 4.816
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: render inventory
+    # Subtest: has 16380 items (546 templates x 30 seeds)
+    ok 1 - has 16380 items (546 templates x 30 seeds)
+      ---
+      duration_ms: 161.6231
+      type: 'test'
+      ...
+    # Subtest: has correct metadata fields
+    ok 2 - has correct metadata fields
+      ---
+      duration_ms: 140.3968
+      type: 'test'
+      ...
+    # Subtest: each item has required render fields
+    ok 3 - each item has required render fields
+      ---
+      duration_ms: 125.4857
+      type: 'test'
+      ...
+    1..3
+ok 2 - P10 Evidence Artefacts: render inventory
+  ---
+  duration_ms: 427.7464
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: U6 render inventory enrichment
+    # Subtest: visibleOptions is non-null for selected-response items (single_choice, checkbox_list, table_choice)
+    ok 1 - visibleOptions is non-null for selected-response items (single_choice, checkbox_list, table_choice)
+      ---
+      duration_ms: 175.4046
+      type: 'test'
+      ...
+    # Subtest: fullSpeechOutput is a non-empty string for items with readAloudText
+    ok 2 - fullSpeechOutput is a non-empty string for items with readAloudText
+      ---
+      duration_ms: 131.6126
+      type: 'test'
+      ...
+    # Subtest: _feedbackSummary has feedbackLong or feedbackShort for all items
+    ok 3 - _feedbackSummary has feedbackLong or feedbackShort for all items
+      ---
+      duration_ms: 126.5377
+      type: 'test'
+      ...
+    # Subtest: three output files exist (.json, .md, -redacted.md)
+    ok 4 - three output files exist (.json, .md, -redacted.md)
+      ---
+      duration_ms: 0.4706
+      type: 'test'
+      ...
+    # Subtest: redacted report strips _ prefixed fields
+    ok 5 - redacted report strips _ prefixed fields
+      ---
+      duration_ms: 6.0336
+      type: 'test'
+      ...
+    1..5
+ok 3 - P10 Evidence Artefacts: U6 render inventory enrichment
+  ---
+  duration_ms: 440.242
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: quality register
+    # Subtest: has 546 entries (one per template)
+    ok 1 - has 546 entries (one per template)
+      ---
+      duration_ms: 5.2321
+      type: 'test'
+      ...
+    # Subtest: each entry has all 14 required fields (13 content + templateId)
+    ok 2 - each entry has all 14 required fields (13 content + templateId)
+      ---
+      duration_ms: 7.2018
+      type: 'test'
+      ...
+    # Subtest: concrete examples have required subfields
+    ok 3 - concrete examples have required subfields
+      ---
+      duration_ms: 5.3773
+      type: 'test'
+      ...
+    # Subtest: high-risk templates have seedWindow 1..15 and 5 examples
+    ok 4 - high-risk templates have seedWindow 1..15 and 5 examples
+      ---
+      duration_ms: 5.1005
+      type: 'test'
+      ...
+    1..4
+ok 4 - P10 Evidence Artefacts: quality register
+  ---
+  duration_ms: 23.0553
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: distractor audit
+    # Subtest: has 0 S0 failures
+    ok 1 - has 0 S0 failures
+      ---
+      duration_ms: 87.5498
+      type: 'test'
+      ...
+    # Subtest: has 0 S1 failures
+    ok 2 - has 0 S1 failures
+      ---
+      duration_ms: 68.1667
+      type: 'test'
+      ...
+    # Subtest: pass flag is true
+    ok 3 - pass flag is true
+      ---
+      duration_ms: 72.3014
+      type: 'test'
+      ...
+    # Subtest: each result has per-option detail with required fields
+    ok 4 - each result has per-option detail with required fields
+      ---
+      duration_ms: 69.0332
+      type: 'test'
+      ...
+    # Subtest: every distractor option has defensibleAlternative and promptDisambiguates boolean fields
+    ok 5 - every distractor option has defensibleAlternative and promptDisambiguates boolean fields
+      ---
+      duration_ms: 78.9328
+      type: 'test'
+      ...
+    # Subtest: each result has ambiguousConceptArea and requiresAdultReview flags
+    ok 6 - each result has ambiguousConceptArea and requiresAdultReview flags
+      ---
+      duration_ms: 69.6809
+      type: 'test'
+      ...
+    # Subtest: report has ambiguousTemplates array at top level
+    ok 7 - report has ambiguousTemplates array at top level
+      ---
+      duration_ms: 78.0516
+      type: 'test'
+      ...
+    1..7
+ok 5 - P10 Evidence Artefacts: distractor audit
+  ---
+  duration_ms: 523.9956
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: status map vs quality register consistency
+    # Subtest: every blocked entry in quality register is blocked in status map
+    ok 1 - every blocked entry in quality register is blocked in status map
+      ---
+      duration_ms: 6.1459
+      type: 'test'
+      ...
+    # Subtest: status map has 546 entries
+    ok 2 - status map has 546 entries
+      ---
+      duration_ms: 0.8699
+      type: 'test'
+      ...
+    1..2
+ok 6 - P10 Evidence Artefacts: status map vs quality register consistency
+  ---
+  duration_ms: 7.0967
+  type: 'suite'
+  ...
+# Subtest: P10 Evidence Artefacts: marking matrix full variant expansion
+    # Subtest: marking matrix JSON exists and is parseable
+    ok 1 - marking matrix JSON exists and is parseable
+      ---
+      duration_ms: 1.5892
+      type: 'test'
+      ...
+    # Subtest: metadata declares variantCategories = 9
+    ok 2 - metadata declares variantCategories = 9
+      ---
+      duration_ms: 1.5036
+      type: 'test'
+      ...
+    # Subtest: metadata.categoriesTested lists all 9 categories
+    ok 3 - metadata.categoriesTested lists all 9 categories
+      ---
+      duration_ms: 1.9117
+      type: 'test'
+      ...
+    # Subtest: seed range is 1..5
+    ok 4 - seed range is 1..5
+      ---
+      duration_ms: 1.477
+      type: 'test'
+      ...
+    # Subtest: every entry contains all 9 variant categories
+    ok 5 - every entry contains all 9 variant categories
+      ---
+      duration_ms: 1.6317
+      type: 'test'
+      ...
+    # Subtest: goldenAnswers entries have { input, marksCorrect } shape
+    ok 6 - goldenAnswers entries have { input, marksCorrect } shape
+      ---
+      duration_ms: 1.592
+      type: 'test'
+      ...
+    # Subtest: acceptedVariants entries have { input, marksCorrect } shape
+    ok 7 - acceptedVariants entries have { input, marksCorrect } shape
+      ---
+      duration_ms: 1.5162
+      type: 'test'
+      ...
+    # Subtest: nearMisses entries have { input, marksCorrect } shape
+    ok 8 - nearMisses entries have { input, marksCorrect } shape
+      ---
+      duration_ms: 1.7414
+      type: 'test'
+      ...
+    # Subtest: rawPromptProbes has 3 probes per entry, all mark incorrect
+    ok 9 - rawPromptProbes has 3 probes per entry, all mark incorrect
+      ---
+      duration_ms: 1.6946
+      type: 'test'
+      ...
+    # Subtest: smartPunctuationVariants has 2 entries with { input, marksCorrect } shape
+    ok 10 - smartPunctuationVariants has 2 entries with { input, marksCorrect } shape
+      ---
+      duration_ms: 1.7066
+      type: 'test'
+      ...
+    # Subtest: caseVariants has 2 entries with { input, marksCorrect } shape
+    ok 11 - caseVariants has 2 entries with { input, marksCorrect } shape
+      ---
+      duration_ms: 1.6106
+      type: 'test'
+      ...
+    # Subtest: commonChildMistakes entries have { input, marksCorrect } shape
+    ok 12 - commonChildMistakes entries have { input, marksCorrect } shape
+      ---
+      duration_ms: 1.6203
+      type: 'test'
+      ...
+    # Subtest: expectedScore has pass/fail/varies per category
+    ok 13 - expectedScore has pass/fail/varies per category
+      ---
+      duration_ms: 1.7835
+      type: 'test'
+      ...
+    # Subtest: misconceptionTag is a string or null
+    ok 14 - misconceptionTag is a string or null
+      ---
+      duration_ms: 1.4615
+      type: 'test'
+      ...
+    # Subtest: marking matrix markdown report exists
+    ok 15 - marking matrix markdown report exists
+      ---
+      duration_ms: 0.2135
+      type: 'test'
+      ...
+    1..15
+ok 7 - P10 Evidence Artefacts: marking matrix full variant expansion
+  ---
+  duration_ms: 23.388
+  type: 'suite'
+  ...
+# Subtest: P20 quality-hardening audit passes a reviewer smoke window across all five phases
+ok 8 - P20 quality-hardening audit passes a reviewer smoke window across all five phases
+  ---
+  duration_ms: 2281.7269
+  type: 'test'
+  ...
+# Subtest: P20 metadata keeps recovered closed families visible for reviewers
+ok 9 - P20 metadata keeps recovered closed families visible for reviewers
+  ---
+  duration_ms: 0.267
+  type: 'test'
+  ...
+# Subtest: P20 does not hide learner-facing prompt defects behind HTML stripping
+ok 10 - P20 does not hide learner-facing prompt defects behind HTML stripping
+  ---
+  duration_ms: 61.2819
+  type: 'test'
+  ...
+# Subtest: P20c generated source compaction preserves manual-review fairness flags
+ok 11 - P20c generated source compaction preserves manual-review fairness flags
+  ---
+  duration_ms: 3.748
+  type: 'test'
+  ...
+# Subtest: P20d apostrophes possession rewrite families do not share identical learner prompts
+ok 12 - P20d apostrophes possession rewrite families do not share identical learner prompts
+  ---
+  duration_ms: 2.9992
+  type: 'test'
+  ...
+# Subtest: P20d learner-facing surfaces do not collide across Grammar templates in the release window
+ok 13 - P20d learner-facing surfaces do not collide across Grammar templates in the release window
+  ---
+  duration_ms: 519.382
+  type: 'test'
+  ...
+1..13
+# tests 50
+# suites 7
+# pass 50
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3021.2818
