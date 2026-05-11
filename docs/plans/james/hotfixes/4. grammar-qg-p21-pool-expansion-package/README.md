@@ -17,8 +17,12 @@ P21 release candidate:
 - P21 curated selected-response cases added: `288`
 - P21 concept coverage: `18/18`
 - local repetition audit: `0` violations, `0` warnings
-- full local suite after latest rebase: `111436` pass, `0` fail, `12` skipped
+- full local suite after CRLF verifier fix: `111437` pass, `0` fail, `12` skipped
 - Cloudflare dry-run check: pass
+- production deploy: pass
+- production smoke: pass on `https://ks2.eugnel.uk`
+- production-release verifier: pass, `0` failures, `0` advisories
 
-The production deployment and live smoke evidence are completed as post-merge
-release artefacts and recorded in the completion report in this folder.
+The production deployment, live smoke evidence, production-release verifier,
+and independent review closure are recorded in the completion report in this
+folder.

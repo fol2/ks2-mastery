@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: P20 quality-hardening audit passes a reviewer smoke window across all five phases
+ok 1 - P20 quality-hardening audit passes a reviewer smoke window across all five phases
+  ---
+  duration_ms: 2146.8211
+  type: 'test'
+  ...
+# Subtest: P20 metadata keeps recovered closed families visible for reviewers
+ok 2 - P20 metadata keeps recovered closed families visible for reviewers
+  ---
+  duration_ms: 0.2634
+  type: 'test'
+  ...
+# Subtest: P20 does not hide learner-facing prompt defects behind HTML stripping
+ok 3 - P20 does not hide learner-facing prompt defects behind HTML stripping
+  ---
+  duration_ms: 60.3187
+  type: 'test'
+  ...
+# Subtest: P20c generated source compaction preserves manual-review fairness flags
+ok 4 - P20c generated source compaction preserves manual-review fairness flags
+  ---
+  duration_ms: 4.1386
+  type: 'test'
+  ...
+# Subtest: P20c manual expansion freshness check tolerates Windows line endings
+ok 5 - P20c manual expansion freshness check tolerates Windows line endings
+  ---
+  duration_ms: 0.1707
+  type: 'test'
+  ...
+# Subtest: P20d apostrophes possession rewrite families do not share identical learner prompts
+ok 6 - P20d apostrophes possession rewrite families do not share identical learner prompts
+  ---
+  duration_ms: 3.054
+  type: 'test'
+  ...
+# Subtest: P20d learner-facing surfaces do not collide across Grammar templates in the release window
+ok 7 - P20d learner-facing surfaces do not collide across Grammar templates in the release window
+  ---
+  duration_ms: 507.3334
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2852.2056

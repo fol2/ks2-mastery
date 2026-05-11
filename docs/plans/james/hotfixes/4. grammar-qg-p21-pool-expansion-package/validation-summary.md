@@ -18,7 +18,7 @@ Patch file:
 
 Patch SHA-256:
 
-`fbcafa53a8a3394720a42fad026008a89ff39d7e55046a24585780188b0b6cfb`
+`81aa706873ad7d1a081854b6b65d3eb5fb2f989d1061f6df1ad51b07837d26da`
 
 Source ZIP SHA-256:
 
@@ -85,7 +85,7 @@ Full local production gate:
 npm test
 ```
 
-Result after latest rebase onto `origin/main`: `111436` pass, `0` fail, `12` skipped.
+Result after the manual-expansion CRLF verifier fix: `111437` pass, `0` fail, `12` skipped.
 
 Cloudflare dry-run gate:
 
@@ -94,6 +94,28 @@ npm run check
 ```
 
 Result: exit `0`.
+
+Manual expansion freshness gate:
+
+```text
+node scripts/generate-grammar-manual-expansion.mjs --check
+```
+
+Result after CRLF normalisation fix: exit `0`.
+
+Production release gate:
+
+```text
+npm run verify:grammar-qg-production-release
+```
+
+Result after CRLF normalisation fix: exit `0`, full smart-practice audit `0` failures and `0` advisories.
+
+Production deploy and smoke:
+
+- `npm run deploy`: exit `0`, Cloudflare version `af313454-1cb3-4a2e-9eb8-2edf7ab3c801`
+- `npm run smoke:production:grammar -- --json --expected-release=grammar-qg-p21-2026-05-11 --out=reports/grammar/grammar-production-smoke-grammar-qg-p21-2026-05-11.json`: exit `0`
+- smoke result: `ok=true`, release `grammar-qg-p21-2026-05-11`, console/request/HTTP failures `0`
 
 Grammar QG audit:
 
@@ -131,6 +153,12 @@ The initial package treated prompt-rhythm repeats as warnings. For this
 production pass, those warnings were treated as blockers and fixed. The final
 P21 local repetition report has `0` warnings.
 
+The production-release verifier also exposed a Windows-only false stale result
+in `scripts/generate-grammar-manual-expansion.mjs --check`: the generated file
+content was semantically current, but CRLF line endings in the working tree did
+not byte-match the LF generator output. The check now normalises line endings
+before comparison and is covered by `tests/grammar-qg-p20-quality-hardening.test.js`.
+
 ## Evidence files
 
 - `validation/production-ready-npm-run-verify-grammar-qg-p21-after-p21-collision-scan-zero-2026-05-11.log`
@@ -146,16 +174,30 @@ P21 local repetition report has `0` warnings.
 - `validation/production-ready-npm-test-after-reasoning-rebase-2026-05-11.log`
 - `validation/production-ready-npm-run-check-after-reasoning-rebase-2026-05-11.log`
 - `validation/production-ready-npm-run-verify-grammar-qg-p21-after-reasoning-evidence-rebase-2026-05-11.log`
+- `validation/production-ready-npm-run-deploy-2026-05-11.log`
+- `validation/production-ready-grammar-production-smoke-p21-2026-05-11.log`
+- `validation/production-ready-npm-run-verify-grammar-qg-production-release-2026-05-11.log`
+- `validation/production-ready-generate-grammar-manual-expansion-after-production-release-blocker-2026-05-11.log`
+- `validation/production-ready-npm-run-verify-grammar-qg-production-release-after-manual-expansion-2026-05-11.log`
+- `validation/production-ready-manual-expansion-check-after-crlf-fix-2026-05-11.log`
+- `validation/production-ready-node-test-grammar-qg-p20-quality-hardening-after-crlf-fix-2026-05-11.log`
+- `validation/production-ready-npm-test-after-manual-expansion-2026-05-11.log`
+- `validation/production-ready-npm-run-check-after-manual-expansion-2026-05-11.log`
+- `validation/production-ready-npm-test-after-crlf-fix-2026-05-11.log`
+- `validation/production-ready-npm-run-check-after-crlf-fix-2026-05-11.log`
+- `validation/production-ready-npm-run-verify-grammar-qg-production-release-after-crlf-fix-2026-05-11.log`
 - `reports/grammar/grammar-qg-p21-local-repetition.json`
+- `reports/grammar/grammar-production-smoke-grammar-qg-p21-2026-05-11.json`
+- `reports/grammar/grammar-qg-p21-smart-practice-full.json`
+- `reports/grammar/grammar-qg-p21-smart-practice-full.md`
 - `reports/grammar/grammar-qg-p21-certification-manifest.json`
 - `reports/grammar/grammar-qg-p21-render-inventory.json`
 - `reports/grammar/grammar-qg-p21-quality-register.json`
 - `reports/grammar/grammar-qg-p21-distractor-audit.json`
 - `reports/grammar/grammar-qg-p21-marking-matrix.json`
 
-## Remaining production boundary
+## Production boundary
 
-Live production certification is completed after the change is merged to
-GitHub `main`, deployed by the Cloudflare path, and smoked on
-`https://ks2.eugnel.uk`. The final deploy, smoke, independent review, and
-sync evidence are recorded in the completion report in this folder.
+Live production certification has been completed on `https://ks2.eugnel.uk`.
+The final deploy, smoke, independent review, and sync evidence are recorded in
+the completion report in this folder.

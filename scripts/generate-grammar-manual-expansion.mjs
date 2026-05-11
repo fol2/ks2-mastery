@@ -584,6 +584,10 @@ export const GRAMMAR_MANUAL_EXPANSION_FAMILIES = ${JSON.stringify(families)};
 `;
 }
 
+export function normaliseGeneratedSourceForCheck(source) {
+  return String(source).replace(/\r\n/g, '\n');
+}
+
 async function main() {
   const { values } = parseArgs({
     options: {
@@ -609,7 +613,7 @@ async function main() {
     } catch (err) {
       throw new Error(`Generated manual expansion file is missing: ${outPath}`);
     }
-    if (current !== source) {
+    if (normaliseGeneratedSourceForCheck(current) !== normaliseGeneratedSourceForCheck(source)) {
       throw new Error(
         `Generated manual expansion file is stale. Run: node scripts/generate-grammar-manual-expansion.mjs`,
       );

@@ -83,6 +83,16 @@ test('P20c generated source compaction preserves manual-review fairness flags', 
   assert.equal(compacted.nonScored, true);
 });
 
+test('P20c manual expansion freshness check tolerates Windows line endings', async () => {
+  const module = await import('../scripts/generate-grammar-manual-expansion.mjs');
+  assert.equal(typeof module.normaliseGeneratedSourceForCheck, 'function');
+
+  assert.equal(
+    module.normaliseGeneratedSourceForCheck('export const value = 1;\r\n'),
+    'export const value = 1;\n',
+  );
+});
+
 test('P20d apostrophes possession rewrite families do not share identical learner prompts', () => {
   const rewriteTemplateId = 'qg_p18_p15_apostrophes_possession_possessive_rewrite';
   const precisionTemplateId = 'qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite';
