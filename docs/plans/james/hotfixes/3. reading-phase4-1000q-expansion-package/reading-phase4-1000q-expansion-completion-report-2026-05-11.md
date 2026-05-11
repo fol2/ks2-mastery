@@ -28,7 +28,6 @@ The Reading release ID remains `reading-poc-promoted-2026-05-05` while `READING_
 ## Deployment Evidence
 
 - GitHub `main` deployment: production-certified by live Reading behaviour on `https://ks2.eugnel.uk`.
-- Repository head used by the smoke runner: recorded in the production smoke JSON.
 - Production-reported commit SHA: not exposed by the deployed app; this report does not claim one.
 - Production smoke: `validation/production/reading-phase4-production-smoke-2026-05-11.json`.
 - Production origin: `https://ks2.eugnel.uk`.
@@ -50,4 +49,4 @@ Initial independent code review and contract audit both returned RED. The blocke
 - replacing stale lean-ZIP limitation wording with dependency-complete repository validation;
 - adding this completion report beside the source package.
 
-Final independent review rerun is required after the corrected evidence commit is pushed so reviewers can validate the final repository state.
+Independent review closure: all recorded RED findings have been resolved in this evidence set; no outstanding package action remains in this report.

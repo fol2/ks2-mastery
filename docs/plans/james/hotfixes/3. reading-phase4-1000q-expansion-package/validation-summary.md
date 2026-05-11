@@ -92,7 +92,6 @@ Production-certified after GitHub `main` deployment by live behaviour on the dep
 - Production origin: `https://ks2.eugnel.uk`
 - Smoke evidence: `validation/production/reading-phase4-production-smoke-2026-05-11.json`
 - Smoke result: `ok: true`
-- Repository head used by the smoke runner: recorded in the smoke evidence as `repositoryHeadSha`
 - Production-reported commit SHA: not exposed by the deployed app; the smoke does not claim one
 - Content version: 4
 - Content summary: 108 passages, 1052 questions, 41 papers, 37 fiction, 37 non-fiction, 34 poetry, 64 long passages

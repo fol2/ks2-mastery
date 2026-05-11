@@ -1,7 +1,7 @@
 e83e04a248fcae114e6c4baf569c45317afc24da99d03a9d6d794a802695437e  ./contract/reading-phase4-1000q-expansion-contract.md
 292e020865cd6c6491c6e887fac0c170c214b8780addabd914d3539f1f2415a9  ./patches/001-reading-phase4-1000q-expansion.patch
-024bdbaeb83861a154a4677626b87f9f9c76880312daf60007f6912610240996  ./reading-phase4-1000q-expansion-completion-report-2026-05-11.md
-d4059c782d5ac208f18a65cbe7807cecdd2bc2c1be51b558ab770bed30368c3f  ./validation-summary.md
+5eadeaca849bf9a67cfdbf90ba341adb5434b73255f68dcc7c5e89f1f4f54e9e  ./reading-phase4-1000q-expansion-completion-report-2026-05-11.md
+860845add4900093889afcfd00e83ff17cf75409c6f6126e3c56108327a65218  ./validation-summary.md
 907ca49112349d24d7f5a8b881ce725dadce41a8298343f32b764f7ff63f1a37  ./validation/content-expansion-derived-counts.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/node-check-phase4-expansion.log
 e918b9933bbebf7e740af87a9bbee8d12ca874ac72f04005871958ea6d9caf8e  ./validation/patch-apply-check.log
@@ -11,8 +11,8 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/p
 3cc3d08668a04c5c68aa53c7a9e2f2683324370099a4dea9be3e4e29185ffdd0  ./validation/production-ready-npm-test-2026-05-11.log
 f9169d1608cf8dc677bf12193cee1721a497e1bf0a353c8806f7a65833ce3733  ./validation/production-ready-reading-content-quality-audit-2026-05-11.json
 61cd80b19886596c5e0892be81d9d5081e6394967852d9afa610ab69f7084288  ./validation/production-ready-reading-targeted-tests-2026-05-11.log
-24bfdaa48ab291c484f20916c4865018e380275e5a5673266a4f89c3129e8fa0  ./validation/production/reading-phase4-production-smoke-2026-05-11.json
-c07f31aeb931164b3d94c91ecb609fba782d1295e91de7e6092b774e05cd2cfc  ./validation/production/reading-phase4-production-smoke-2026-05-11.log
+6ef7b922fe88ba714bf5cd47409352e2a2a31206a8847065d5a3d6583a555d7b  ./validation/production/reading-phase4-production-smoke-2026-05-11.json
+a8f40e28c09f4ef6a0e7732e964258fc01937e5620530c58f160bf5dcdfeeeab  ./validation/production/reading-phase4-production-smoke-2026-05-11.log
 2214e88ab77ccd8b4397107720b7d3aad41216dfb5dc664fb6a1cc3c5390dea3  ./validation/reading-content-quality-audit.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/reading-content-quality-audit.stdout.log
 5a5632ec3c7728a59e4170f8432dbe5acde42a5dab5e2e9b80ef8533fd9fcd7f  ./validation/reading-focused-tests.log

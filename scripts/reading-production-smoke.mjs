@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -29,17 +28,6 @@ function argValue(name, fallback = '') {
   const prefix = `${name}=`;
   const found = process.argv.find((arg) => arg.startsWith(prefix));
   return found ? found.slice(prefix.length) : fallback;
-}
-
-function readSafeRepositoryHeadSha() {
-  try {
-    return execSync('git rev-parse HEAD', {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim();
-  } catch {
-    return 'unknown';
-  }
 }
 
 function expectedContentSummary() {
@@ -340,7 +328,6 @@ async function main() {
     origin,
     contentReleaseId: READING_CONTENT_RELEASE_ID,
     contentVersion: READING_CONTENT_VERSION,
-    repositoryHeadSha: readSafeRepositoryHeadSha(),
     productionReportedCommitSha: null,
     learnerFixtureType: 'demo-session',
     accountId: demo.session.accountId,

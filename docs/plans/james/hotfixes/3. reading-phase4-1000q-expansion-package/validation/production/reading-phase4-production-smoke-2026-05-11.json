@@ -6,15 +6,14 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 4,
-  "repositoryHeadSha": "5c72403c60a086b5ad02094877e9a0e3e64ef0d6",
   "productionReportedCommitSha": null,
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-U5RKCDri7ga_pQ",
-  "learnerId": "learner-demo-beoZVi3xTe5pEQ",
+  "accountId": "demo-OdzEcSD4AEEAVQ",
+  "learnerId": "learner-demo-MDxvZ78iEgflxA",
   "immediate": {
     "revision": 2,
-    "questionId": "p4n13_peat_bog_memory_q2",
-    "passageId": "p4n13_peat_bog_memory",
+    "questionId": "ubs_q1",
+    "passageId": "under_bridge_song",
     "content": {
       "releaseId": "reading-poc-promoted-2026-05-05",
       "version": 4,
@@ -40,13 +39,13 @@
     "staleErrorCleared": true
   },
   "staleWriteGuard": {
-    "expectedSessionId": "reading_session_mp14liin_zmgnbzje",
+    "expectedSessionId": "reading_session_mp14uosw_wg11p7bh",
     "expectedQuestionId": "stale-question-id",
-    "protectedQuestionId": "p4f13_compass_drawer_q2",
+    "protectedQuestionId": "p4n05_river_plastic_journey_q2",
     "changed": false,
     "revisionUnchanged": true,
     "staleResponsePersisted": false,
     "protectedQuestionResponsePersisted": false
   },
-  "finishedAt": "2026-05-11T11:35:57.278Z"
+  "finishedAt": "2026-05-11T11:43:05.273Z"
 }
