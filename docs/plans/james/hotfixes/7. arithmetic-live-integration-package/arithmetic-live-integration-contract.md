@@ -25,6 +25,8 @@ Implementation contract:
 9. Hero Mode treats Arithmetic as a ready subject through provider and launch-adapter wiring. Hero tasks launch Arithmetic envelopes; Hero does not mark Arithmetic answers or mutate Arithmetic mastery directly.
 10. Reasoning remains the only locked placeholder subject in the ready/locked constants.
 
+2026-05-11 rebase closure note: item 10 describes the uploaded ZIP snapshot boundary. The final repository integration rebased over latest `main`, where Reasoning had already shipped as a live subject. The production closure therefore preserves Reasoning as live, keeps `HERO_LOCKED_SUBJECT_IDS` empty, and ships Arithmetic as an additional ready subject rather than re-locking Reasoning.
+
 Patch contents:
 
 - `shared/arithmetic/content.js`: procedural content, answer parsing, marking, content summary, test blueprints.
@@ -33,7 +35,7 @@ Patch contents:
 - Registry/runtime/route changes: `src/platform/core/subject-registry.js`, `src/surfaces/subject/SubjectRoute.jsx`, `worker/src/subjects/runtime.js`, `src/main.js`.
 - Reward/monster changes: `src/platform/game/mastery/arithmetic.js`, shared mastery exports, `monsters.js`, reward projection.
 - Hero changes: `shared/hero/constants.js`, arithmetic provider/launch adapter, provider/adapter registries.
-- Admin/content overview changes: Arithmetic and Reading live status handling; Reasoning remains placeholder.
+- Admin/content overview changes: Arithmetic and Reading live status handling; Reasoning placeholder handling is superseded by the latest-main Reasoning live rollout noted above.
 - Tests updated/added for Arithmetic runtime, Hero provider/adapter, admin overview, subject adapter contract, and related fixture drift.
 
 Validation performed locally on the extracted ZIP snapshot:
