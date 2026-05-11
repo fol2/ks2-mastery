@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 import { createWorkerApp } from '../worker/src/app.js';
 import { createWorkerRepository } from '../worker/src/repository.js';
@@ -91,6 +92,17 @@ test('subject runtime dispatches to subject-owned handlers', async () => {
   assert.equal(result.command, 'start-session');
   assert.equal(result.learnerId, 'learner-a');
   assert.deepEqual(result.subjectReadModel, { phase: 'setup' });
+});
+
+test('worker subject runtime keeps heavy punctuation command handlers off the startup path', async () => {
+  const source = await readFile(new URL('../worker/src/subjects/runtime.js', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(
+    source,
+    /import\s+\{[^}]*createPunctuationCommandHandlers[^}]*\}\s+from\s+['"]\.\/punctuation\/commands\.js['"]/,
+    'punctuation command handlers must stay lazy so the generated runtime manifest is not built during Worker startup',
+  );
+  assert.match(source, /import\(['"]\.\/punctuation\/commands\.js['"]\)/);
 });
 
 test('repository reuses cached spelling runtime content for hot subject paths', async () => {

@@ -1,0 +1,14 @@
+
+> ks2-mastery@0.1.0 build
+> node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs
+
+Generated src\platform\game\monster-asset-manifest.js with 180 monster assets.
+
+  src\bundles\app.bundle.js                 704.6kb
+  src\bundles\chunk-ROQXNINB.js             278.1kb
+  src\bundles\AdminHubSurface-E5KENFMQ.js   227.4kb
+  src\bundles\ParentHubSurface-MRTSMHTL.js   22.9kb
+  src\bundles\chunk-EE2UYWMZ.js              15.7kb
+  ...and 3 more output files...
+
+Done in 57ms
