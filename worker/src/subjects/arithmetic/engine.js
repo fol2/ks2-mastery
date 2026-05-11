@@ -398,6 +398,10 @@ function goalComplete(session, data, now) {
   return target > 0 && (Number(session.answered) || 0) >= target;
 }
 
+function responseHasAnswerContent(response = {}) {
+  return ['answer', 'value'].some((key) => String(response?.[key] ?? '').trim() !== '');
+}
+
 function sessionSummary(session) {
   if (!session) return null;
   return {
@@ -603,6 +607,13 @@ function submitPractice({ learnerId, state, data, payload, requestId, now }) {
   const session = state.session;
   if (!session?.currentQuestion) return [];
   const response = payload?.response || {};
+  if (!responseHasAnswerContent(response)) {
+    state.error = 'Enter an answer before marking.';
+    state.feedback = null;
+    session.waitingForContinue = false;
+    state.phase = 'session';
+    return [];
+  }
   const question = session.currentQuestion;
   const sessionQuestion = { attempts: 0 };
   const result = evaluateArithmeticQuestion(question, response);
@@ -611,6 +622,7 @@ function submitPractice({ learnerId, state, data, payload, requestId, now }) {
   if (result.correct) session.correct += 1;
   session.score += result.score;
   session.maxScore += result.maxScore;
+  state.error = '';
   state.feedback = { questionId: question.id, result, response, solutionLines: question.solutionLines || [], checkLine: question.checkLine || '' };
   if (goalComplete(session, data, now)) {
     events.push(...completeSession({ learnerId, state, data, now, requestId }));
@@ -629,7 +641,7 @@ function submitTestSave({ state, payload }) {
   if (entry) {
     entry.response = clone(payload?.response || {});
     entry.working = String(payload?.working || '');
-    entry.status = Object.values(entry.response || {}).some((v) => String(v || '').trim()) ? 'saved' : 'blank';
+    entry.status = responseHasAnswerContent(entry.response || {}) ? 'saved' : 'blank';
   }
   const nextIndex = payload?.advance === false ? index : Math.min(session.paper.length - 1, index + 1);
   session.currentIndex = nextIndex;
@@ -646,14 +658,17 @@ function finishTest({ learnerId, state, data, payload, requestId, now }) {
   session.score = 0;
   session.maxScore = 0;
   for (const entry of session.paper) {
+    const answered = responseHasAnswerContent(entry.response || {});
     const result = evaluateArithmeticQuestion(entry.question, entry.response || {});
     entry.result = result;
-    entry.status = result.correct ? 'correct' : result.score > 0 ? 'partial' : 'wrong';
-    session.answered += Object.values(entry.response || {}).some((v) => String(v || '').trim()) ? 1 : 0;
-    if (result.correct) session.correct += 1;
+    entry.status = answered ? (result.correct ? 'correct' : result.score > 0 ? 'partial' : 'wrong') : 'blank';
+    if (answered) {
+      session.answered += 1;
+      if (result.correct) session.correct += 1;
+      events.push(...applyLearning({ learnerId, data, question: entry.question, result, response: entry.response || {}, now, requestId, sessionQuestion: { attempts: 0 } }));
+    }
     session.score += result.score;
     session.maxScore += result.maxScore;
-    events.push(...applyLearning({ learnerId, data, question: entry.question, result, response: entry.response || {}, now, requestId, sessionQuestion: { attempts: 0 } }));
   }
   events.push(...completeSession({ learnerId, state, data, now, requestId, auto: Boolean(payload?.auto) }));
   return events;

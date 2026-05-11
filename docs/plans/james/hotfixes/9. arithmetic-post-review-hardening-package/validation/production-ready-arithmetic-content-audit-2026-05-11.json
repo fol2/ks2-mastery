@@ -1,0 +1,160 @@
+{
+  "templateCount": 30,
+  "generated": 18000,
+  "correctMarked": 18000,
+  "uniqueStemCount": 13943,
+  "findingCount": 0,
+  "findings": [],
+  "templateStats": {
+    "bonds_missing": {
+      "generated": 600,
+      "unique": 441,
+      "failures": 0
+    },
+    "place_value_partition": {
+      "generated": 600,
+      "unique": 600,
+      "failures": 0
+    },
+    "powers_of_ten_shift": {
+      "generated": 600,
+      "unique": 593,
+      "failures": 0
+    },
+    "times_table_fact": {
+      "generated": 600,
+      "unique": 417,
+      "failures": 0
+    },
+    "mental_addition": {
+      "generated": 600,
+      "unique": 508,
+      "failures": 0
+    },
+    "mental_subtraction": {
+      "generated": 600,
+      "unique": 62,
+      "failures": 0
+    },
+    "column_addition": {
+      "generated": 600,
+      "unique": 600,
+      "failures": 0
+    },
+    "column_subtraction": {
+      "generated": 600,
+      "unique": 600,
+      "failures": 0
+    },
+    "missing_number_inverse": {
+      "generated": 600,
+      "unique": 599,
+      "failures": 0
+    },
+    "mental_multiplication": {
+      "generated": 600,
+      "unique": 65,
+      "failures": 0
+    },
+    "short_multiplication": {
+      "generated": 600,
+      "unique": 568,
+      "failures": 0
+    },
+    "short_division": {
+      "generated": 600,
+      "unique": 566,
+      "failures": 0
+    },
+    "long_multiplication": {
+      "generated": 600,
+      "unique": 599,
+      "failures": 0
+    },
+    "long_division": {
+      "generated": 600,
+      "unique": 579,
+      "failures": 0
+    },
+    "decimal_add_sub": {
+      "generated": 600,
+      "unique": 600,
+      "failures": 0
+    },
+    "decimal_times_integer": {
+      "generated": 600,
+      "unique": 574,
+      "failures": 0
+    },
+    "decimal_divide_integer": {
+      "generated": 600,
+      "unique": 544,
+      "failures": 0
+    },
+    "fraction_of_amount": {
+      "generated": 600,
+      "unique": 479,
+      "failures": 0
+    },
+    "fraction_add_sub": {
+      "generated": 600,
+      "unique": 68,
+      "failures": 0
+    },
+    "mixed_number_add_sub": {
+      "generated": 600,
+      "unique": 581,
+      "failures": 0
+    },
+    "fraction_divide_whole": {
+      "generated": 600,
+      "unique": 342,
+      "failures": 0
+    },
+    "fraction_multiply_fraction": {
+      "generated": 600,
+      "unique": 147,
+      "failures": 0
+    },
+    "percentage_of_amount": {
+      "generated": 600,
+      "unique": 504,
+      "failures": 0
+    },
+    "fdp_equivalent": {
+      "generated": 600,
+      "unique": 63,
+      "failures": 0
+    },
+    "order_of_operations": {
+      "generated": 600,
+      "unique": 597,
+      "failures": 0
+    },
+    "formal_decimal_missing_digit": {
+      "generated": 600,
+      "unique": 600,
+      "failures": 0
+    },
+    "short_multiplication_missing_digit": {
+      "generated": 600,
+      "unique": 600,
+      "failures": 0
+    },
+    "short_division_missing_digit": {
+      "generated": 600,
+      "unique": 586,
+      "failures": 0
+    },
+    "fraction_decimal_hybrid": {
+      "generated": 600,
+      "unique": 261,
+      "failures": 0
+    },
+    "formal_missing_digit": {
+      "generated": 600,
+      "unique": 600,
+      "failures": 0
+    }
+  }
+}

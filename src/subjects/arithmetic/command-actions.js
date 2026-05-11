@@ -56,10 +56,11 @@ export function applyArithmeticCommandResponse({ store, shouldDelayMonsterCelebr
     const learnerId = response?.learnerId ? String(response.learnerId) : '';
     if (learnerId && store.getState().learners?.selectedId !== learnerId) return;
     if (response?.subjectReadModel) {
+      const readModel = normaliseArithmeticReadModel(response.subjectReadModel, learnerId);
       store.updateSubjectUi('arithmetic', {
-        ...normaliseArithmeticReadModel(response.subjectReadModel, learnerId),
+        ...readModel,
         pendingCommand: '',
-        error: '',
+        error: readModel.error || '',
       });
     }
     const nextUi = store.getState().subjectUi?.arithmetic || null;

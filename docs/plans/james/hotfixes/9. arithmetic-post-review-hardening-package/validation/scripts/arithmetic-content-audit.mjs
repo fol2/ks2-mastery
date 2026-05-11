@@ -1,4 +1,9 @@
-import { ARITHMETIC_TEMPLATES, evaluateArithmeticQuestion, generateArithmeticQuestion } from '/mnt/data/arithmetic-review-applycheck/shared/arithmetic/content.js';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+
+const repoRoot = process.env.ARITHMETIC_REPO_ROOT || process.cwd();
+const contentModule = await import(pathToFileURL(path.join(repoRoot, 'shared/arithmetic/content.js')).href);
+const { ARITHMETIC_TEMPLATES, evaluateArithmeticQuestion, generateArithmeticQuestion } = contentModule;
 const findings = [];
 let generated = 0;
 let correctMarked = 0;

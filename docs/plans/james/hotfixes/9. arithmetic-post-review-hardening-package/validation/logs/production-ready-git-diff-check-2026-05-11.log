@@ -1,0 +1,6 @@
+warning: in the working copy of 'docs/plans/james/hotfixes/9. arithmetic-post-review-hardening-package/MANIFEST.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/9. arithmetic-post-review-hardening-package/SOURCE_BOUNDARY.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/9. arithmetic-post-review-hardening-package/patches/001-arithmetic-post-review-hardening.patch', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/9. arithmetic-post-review-hardening-package/validation/scripts/arithmetic-post-probe.mjs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/9. arithmetic-post-review-hardening-package/validation/validation-summary.md', LF will be replaced by CRLF the next time Git touches it
+exit_code=0

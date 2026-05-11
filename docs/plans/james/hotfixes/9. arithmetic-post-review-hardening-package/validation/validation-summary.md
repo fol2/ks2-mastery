@@ -12,27 +12,37 @@ Patch file:
 
 `patches/001-arithmetic-post-review-hardening.patch`
 
+Production repository base for refreshed package validation:
+
+`origin/main` at `7bbf968601d84b6f72d6ad5f1c4eaa6bb95ce20e`.
+
 ## Patch validation
 
-Fresh ZIP extraction patch dry-run:
+Fresh production worktree patch dry-run:
 
 ```text
-checking file shared/arithmetic/content.js
-checking file worker/src/subjects/arithmetic/engine.js
-checking file src/subjects/arithmetic/command-actions.js
-checking file tests/worker-arithmetic-runtime.test.js
+exit_code=0
 ```
 
-Fresh ZIP extraction patch apply:
+Evidence: `validation/logs/production-ready-patch-dry-run-2026-05-11.log`.
+
+Fresh production worktree patch apply:
 
 ```text
-patching file shared/arithmetic/content.js
-patching file worker/src/subjects/arithmetic/engine.js
-patching file src/subjects/arithmetic/command-actions.js
-patching file tests/worker-arithmetic-runtime.test.js
+exit_code=0
 ```
+
+Evidence: `validation/logs/production-ready-patch-apply-2026-05-11.log`.
 
 ## Static checks
+
+Passed:
+
+```bash
+git diff --check
+```
+
+Evidence: `validation/logs/production-ready-git-diff-check-2026-05-11.log`.
 
 Passed:
 
@@ -41,6 +51,12 @@ node --check shared/arithmetic/content.js
 node --check worker/src/subjects/arithmetic/engine.js
 node --check src/subjects/arithmetic/command-actions.js
 ```
+
+Evidence:
+
+- `validation/logs/production-ready-node-check-shared-arithmetic-content-2026-05-11.log`
+- `validation/logs/production-ready-node-check-worker-arithmetic-engine-2026-05-11.log`
+- `validation/logs/production-ready-node-check-arithmetic-command-actions-2026-05-11.log`
 
 ## Tests
 
@@ -52,6 +68,8 @@ node --test tests/worker-arithmetic-runtime.test.js
 
 Result: 14/14 passed.
 
+Evidence: `validation/logs/production-ready-worker-arithmetic-runtime-test-2026-05-11.log`.
+
 Passed:
 
 ```bash
@@ -59,6 +77,8 @@ node --test tests/worker-arithmetic-runtime.test.js tests/worker-admin-content-o
 ```
 
 Result: 56/56 passed.
+
+Evidence: `validation/logs/production-ready-arithmetic-cross-test-2026-05-11.log`.
 
 ## Custom probes
 
@@ -76,7 +96,10 @@ Post-patch probe result:
 - 0 non-integer difficulty-2 order-of-operations answers in the 1,000-seed probe.
 - Place-value seed 96433 generates a valid missing-box item with expected value 700.
 - Blank practice submit produces an error but 0 answered, 0 attempts, and 0 events.
-- Blank short test has 0 answered, 0 attempts, 0 retries, and 0 wrong skill increments.
+- Blank practice submit with only working/draft content also produces an error but 0 answered, 0 attempts, and 0 events.
+- Blank short test with only working/draft content has 0 answered, 0 attempts, 0 retries, and 0 wrong skill increments.
+
+Evidence: `validation/production-ready-arithmetic-post-probe-2026-05-11.json`.
 
 ## Content audit
 
@@ -88,12 +111,51 @@ Custom content audit result:
 - Unique stem/visual combinations: 13,943.
 - Findings: 0.
 
-## Environment limit
+Evidence: `validation/production-ready-arithmetic-content-audit-2026-05-11.json`.
 
-`npm test` could not run from this lean ZIP extraction because `node_modules` is missing. The preflight output says:
+## Full repository gates
 
-```text
-Missing node_modules (react, esbuild) — run "npm install" from this worktree root before "npm test".
+Passed after installing worktree dependencies:
+
+```bash
+npm test
 ```
 
-That is an environment limitation of the lean ZIP, not a failing Arithmetic assertion. CI/release should still run the full build/test suite after installing dependencies.
+Result: 111,442 passed, 0 failed, 12 skipped.
+
+Passed:
+
+```bash
+npm run check
+```
+
+Result: Wrangler dry-run build, public-build assertion, and client-bundle audit passed.
+
+Evidence: `validation/logs/production-ready-npm-run-check-2026-05-11.log`.
+
+## Deployment and live smoke
+
+Passed:
+
+```bash
+npm run deploy
+```
+
+Result: Cloudflare deployed `ks2-mastery` and production bundle audit passed for `https://ks2.eugnel.uk/`.
+
+Cloudflare Version ID: `6f9a3d8a-e6af-44bd-a4a8-4fd5e32a2076`.
+
+Evidence: `validation/logs/production-ready-npm-run-deploy-2026-05-11.log`.
+
+Passed:
+
+```bash
+cmd.exe /c "npm run smoke:production:arithmetic -- --out ""docs/plans/james/hotfixes/9. arithmetic-post-review-hardening-package/validation/production-ready-arithmetic-live-smoke-2026-05-11.json"""
+```
+
+Result: Arithmetic live smoke passed against `https://ks2.eugnel.uk` with production environment, release `arithmetic-ks2-worker-v1-2026-05-11`, 30 templates, 90 reward units, delayed True Test feedback, and stale-write protection unchanged.
+
+Evidence:
+
+- `validation/logs/production-ready-arithmetic-live-smoke-2026-05-11.log`
+- `validation/production-ready-arithmetic-live-smoke-2026-05-11.json`

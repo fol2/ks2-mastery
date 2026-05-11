@@ -1,0 +1,359 @@
+TAP version 13
+# Subtest: monster celebration timing keeps Spelling session-end behaviour
+ok 1 - monster celebration timing keeps Spelling session-end behaviour
+  ---
+  duration_ms: 0.6103
+  type: 'test'
+  ...
+# Subtest: monster celebration timing defers Punctuation active-question overlays until session end
+ok 2 - monster celebration timing defers Punctuation active-question overlays until session end
+  ---
+  duration_ms: 0.0854
+  type: 'test'
+  ...
+# Subtest: monster celebration timing defers Grammar session overlays until session end
+ok 3 - monster celebration timing defers Grammar session overlays until session end
+  ---
+  duration_ms: 0.0641
+  type: 'test'
+  ...
+# Subtest: monster celebration timing defers Reading and Reasoning session overlays until session end
+ok 4 - monster celebration timing defers Reading and Reasoning session overlays until session end
+  ---
+  duration_ms: 0.0636
+  type: 'test'
+  ...
+# Subtest: monster celebration timing leaves subjects without live engines immediate
+ok 5 - monster celebration timing leaves subjects without live engines immediate
+  ---
+  duration_ms: 0.0631
+  type: 'test'
+  ...
+# Subtest: reward.presentation celebration intents can enter the legacy monster celebration queue
+ok 6 - reward.presentation celebration intents can enter the legacy monster celebration queue
+  ---
+  duration_ms: 0.501
+  type: 'test'
+  ...
+# Subtest: monster celebration normalisation preserves Star display fields for Egg Found overlays
+ok 7 - monster celebration normalisation preserves Star display fields for Egg Found overlays
+  ---
+  duration_ms: 0.187
+  type: 'test'
+  ...
+# Subtest: monster celebration acknowledgement writes legacy id and presentation intent key
+ok 8 - monster celebration acknowledgement writes legacy id and presentation intent key
+  ---
+  duration_ms: 0.9067
+  type: 'test'
+  ...
+# Subtest: presentation celebration acknowledgement still honours old legacy event ids
+ok 9 - presentation celebration acknowledgement still honours old legacy event ids
+  ---
+  duration_ms: 0.3514
+  type: 'test'
+  ...
+# Subtest: Punctuation scenes: no bare \#B8873F in JSX — must use CSS variable
+ok 10 - Punctuation scenes: no bare \#B8873F in JSX — must use CSS variable
+  ---
+  duration_ms: 63.5825
+  type: 'test'
+  ...
+# Subtest: Punctuation scenes: no bare \#E8C88E in JSX
+ok 11 - Punctuation scenes: no bare \#E8C88E in JSX
+  ---
+  duration_ms: 1.2674
+  type: 'test'
+  ...
+# Subtest: Spelling setup: no inline --btn-accent style override
+ok 12 - Spelling setup: no inline --btn-accent style override
+  ---
+  duration_ms: 20.8372
+  type: 'test'
+  ...
+# Subtest: Grammar setup: accent still consumed via CSS class, not inline --btn-accent
+ok 13 - Grammar setup: accent still consumed via CSS class, not inline --btn-accent
+  ---
+  duration_ms: 12.1858
+  type: 'test'
+  ...
+# Subtest: Grammar accent CSS rule exists in app.css
+ok 14 - Grammar accent CSS rule exists in app.css
+  ---
+  duration_ms: 6.462
+  type: 'test'
+  ...
+# Subtest: SubjectThemeScope module exports a named function
+ok 15 - SubjectThemeScope module exports a named function
+  ---
+  duration_ms: 0.8108
+  type: 'test'
+  ...
+# Subtest: SubjectThemeScope source renders data-subject and className
+ok 16 - SubjectThemeScope source renders data-subject and className
+  ---
+  duration_ms: 0.276
+  type: 'test'
+  ...
+# Subtest: Dark-mode subject-theme tokens exist for spelling, grammar, punctuation
+ok 17 - Dark-mode subject-theme tokens exist for spelling, grammar, punctuation
+  ---
+  duration_ms: 0.9788
+  type: 'test'
+  ...
+# Subtest: Dark-mode subject-theme tokens also cover prefers-color-scheme fallback
+ok 18 - Dark-mode subject-theme tokens also cover prefers-color-scheme fallback
+  ---
+  duration_ms: 1.387
+  type: 'test'
+  ...
+# Subtest: SubjectThemeScope handles falsy subjectId without crash
+ok 19 - SubjectThemeScope handles falsy subjectId without crash
+  ---
+  duration_ms: 0.4014
+  type: 'test'
+  ...
+# Subtest: Punctuation Setup scene preserves journey selectors
+ok 20 - Punctuation Setup scene preserves journey selectors
+  ---
+  duration_ms: 0.4572
+  type: 'test'
+  ...
+# Subtest: Punctuation Session scene preserves journey selectors
+ok 21 - Punctuation Session scene preserves journey selectors
+  ---
+  duration_ms: 0.28
+  type: 'test'
+  ...
+# Subtest: Punctuation Summary scene preserves journey selectors
+ok 22 - Punctuation Summary scene preserves journey selectors
+  ---
+  duration_ms: 0.2583
+  type: 'test'
+  ...
+# Subtest: Punctuation Map scene preserves journey selectors
+ok 23 - Punctuation Map scene preserves journey selectors
+  ---
+  duration_ms: 0.2333
+  type: 'test'
+  ...
+# Subtest: Spelling setup preserves data-action selectors
+ok 24 - Spelling setup preserves data-action selectors
+  ---
+  duration_ms: 0.2323
+  type: 'test'
+  ...
+# Subtest: subject-themes.js exports all six subjects
+ok 25 - subject-themes.js exports all six subjects
+  ---
+  duration_ms: 4.7176
+  type: 'test'
+  ...
+# Subtest: subject-themes.js getSubjectTheme returns undefined for unknown
+ok 26 - subject-themes.js getSubjectTheme returns undefined for unknown
+  ---
+  duration_ms: 0.1841
+  type: 'test'
+  ...
+# Subtest: subject-themes.js SUBJECT_IDS is frozen array of 6
+ok 27 - subject-themes.js SUBJECT_IDS is frozen array of 6
+  ---
+  duration_ms: 0.0861
+  type: 'test'
+  ...
+# Subtest: Subject-theme CSS remap carries btn-accent, card-accent, progress-accent, accent
+ok 28 - Subject-theme CSS remap carries btn-accent, card-accent, progress-accent, accent
+  ---
+  duration_ms: 1.0661
+  type: 'test'
+  ...
+# Subtest: ready subjects expose a complete SubjectVisualAdapter
+ok 29 - ready subjects expose a complete SubjectVisualAdapter
+  ---
+  duration_ms: 0.6157
+  type: 'test'
+  ...
+# Subtest: placeholder subjects expose unavailable adapters without production practice controls
+ok 30 - placeholder subjects expose unavailable adapters without production practice controls
+  ---
+  duration_ms: 0.3922
+  type: 'test'
+  ...
+# Subtest: placeholder adapter module does not import Worker command handlers or browser engines
+ok 31 - placeholder adapter module does not import Worker command handlers or browser engines
+  ---
+  duration_ms: 1.0297
+  type: 'test'
+  ...
+# Subtest: subject expansion documentation references the visual adapter contract
+ok 32 - subject expansion documentation references the visual adapter contract
+  ---
+  duration_ms: 7.6226
+  type: 'test'
+  ...
+# (node:192792) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_d3dcbc1a-3972-4fd1-ac80-79add2a704a0","endpoint":"/api/admin/ops/content-overview","method":"GET","status":200,"phase":null,"queryCount":9,"d1RowsRead":8,"d1RowsWritten":0,"d1DurationMs":1.101699999999937,"wallMs":5.961000000000013,"responseBytes":1867,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.2907999999999902},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.047000000000025466},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.025900000000092405},{"name":"first:SELECT content_json, updated_at FROM account_subject_content WHERE subject_id...","rowsRead":0,"rowsWritten":null,"durationMs":0.2236000000000331},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.13989999999989777},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.11889999999993961},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.09960000000000946},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.08529999999996107},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.070699999999988}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.808Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_201bee43-1c47-4056-8216-531c07707fa5","endpoint":"/api/admin/ops/content-overview","method":"GET","status":200,"phase":null,"queryCount":9,"d1RowsRead":8,"d1RowsWritten":0,"d1DurationMs":0.4985999999998967,"wallMs":0.8558000000000447,"responseBytes":1868,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.05989999999997053},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.03999999999996362},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.018399999999928696},{"name":"first:SELECT content_json, updated_at FROM account_subject_content WHERE subject_id...","rowsRead":0,"rowsWritten":null,"durationMs":0.11580000000003565},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.09200000000009823},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.06100000000014916},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.04949999999985266},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.036800000000084765},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.02519999999981337}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.816Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_e17d4d16-bcbf-4504-b3c9-fb85e5150f57","endpoint":"/api/admin/ops/content-overview","method":"GET","status":200,"phase":null,"queryCount":9,"d1RowsRead":8,"d1RowsWritten":0,"d1DurationMs":0.5153999999999996,"wallMs":0.7309999999999945,"responseBytes":1868,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.05880000000001928},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.034199999999827924},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.013099999999894862},{"name":"first:SELECT content_json, updated_at FROM account_subject_content WHERE subject_id...","rowsRead":0,"rowsWritten":null,"durationMs":0.11520000000018626},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.09269999999992251},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.07690000000002328},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.06079999999997199},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.038600000000087675},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.025100000000065847}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.824Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_45cf8c69-a1ea-40b6-887d-65e03c0f2637","endpoint":"/api/admin/ops/content-overview","method":"GET","status":200,"phase":null,"queryCount":9,"d1RowsRead":8,"d1RowsWritten":0,"d1DurationMs":0.4886999999998807,"wallMs":0.5968000000000302,"responseBytes":1868,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.04800000000000182},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.027399999999943248},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.011899999999968713},{"name":"first:SELECT content_json, updated_at FROM account_subject_content WHERE subject_id...","rowsRead":0,"rowsWritten":null,"durationMs":0.11010000000010223},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.08980000000019572},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.07399999999984175},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.05829999999991742},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.04349999999999454},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.025699999999915235}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.831Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_0ebaa12a-6a7c-4365-a073-670829f77273","endpoint":"/api/admin/ops/content-overview","method":"GET","status":200,"phase":null,"queryCount":9,"d1RowsRead":8,"d1RowsWritten":0,"d1DurationMs":0.5373999999997068,"wallMs":0.7059999999999036,"responseBytes":1869,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.055899999999837746},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.03260000000000218},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.014299999999821011},{"name":"first:SELECT content_json, updated_at FROM account_subject_content WHERE subject_id...","rowsRead":0,"rowsWritten":null,"durationMs":0.12630000000012842},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.10279999999988831},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.07460000000014588},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.05809999999996762},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.04359999999996944},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.029199999999946158}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.839Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_e45aa197-c3e5-42d3-8a8c-fd5541b0a50f","endpoint":"/api/admin/ops/content-overview","method":"GET","status":200,"phase":null,"queryCount":9,"d1RowsRead":8,"d1RowsWritten":0,"d1DurationMs":0.47309999999993124,"wallMs":0.5649000000000797,"responseBytes":1868,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.048199999999951615},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.027800000000070213},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.012600000000020373},{"name":"first:SELECT content_json, updated_at FROM account_subject_content WHERE subject_id...","rowsRead":0,"rowsWritten":null,"durationMs":0.11779999999998836},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.09719999999992979},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.059799999999995634},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.04800000000000182},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.035499999999956344},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.0262000000000171}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.846Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_7fb67596-061c-4acc-b53e-3e453962ffe2","endpoint":"/api/admin/ops/content-overview","method":"GET","status":403,"phase":null,"queryCount":3,"d1RowsRead":3,"d1RowsWritten":0,"d1DurationMs":0.0941000000002532,"wallMs":0.6242999999999483,"responseBytes":127,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.05330000000003565},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.028300000000172076},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.012500000000045475}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.853Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_c1c0aabb-e33d-4e92-9450-c1f7d8c13db3","endpoint":"/api/admin/ops/content-overview","method":"GET","status":200,"phase":null,"queryCount":9,"d1RowsRead":9,"d1RowsWritten":0,"d1DurationMs":0.47870000000011714,"wallMs":0.6277000000000044,"responseBytes":1867,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.0522000000000844},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.030600000000049477},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.014899999999897773},{"name":"first:SELECT content_json, updated_at FROM account_subject_content WHERE subject_id...","rowsRead":1,"rowsWritten":null,"durationMs":0.1148000000000593},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.08169999999995525},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.06719999999995707},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.0523000000000593},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.03870000000006257},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.026299999999991996}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.860Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_b1839551-ea92-499a-9497-164ff07e1a07","endpoint":"/api/admin/ops/content-overview","method":"GET","status":200,"phase":null,"queryCount":9,"d1RowsRead":9,"d1RowsWritten":0,"d1DurationMs":0.47240000000010696,"wallMs":0.7785999999998694,"responseBytes":1887,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.051400000000057844},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.031400000000076034},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.013599999999996726},{"name":"first:SELECT content_json, updated_at FROM account_subject_content WHERE subject_id...","rowsRead":1,"rowsWritten":null,"durationMs":0.10950000000002547},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.08249999999998181},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.06670000000008258},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.05309999999985848},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.03899999999998727},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.025200000000040745}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.867Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_dbb10ae2-60ae-446c-9beb-aa4728c2bdad","endpoint":"/api/admin/ops/content-overview","method":"GET","status":200,"phase":null,"queryCount":9,"d1RowsRead":8,"d1RowsWritten":0,"d1DurationMs":0.711399999999685,"wallMs":0.9200000000000728,"responseBytes":1868,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.24799999999981992},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.061100000000124055},{"name":"first:SELECT id, email, display_name, platform_role, repo_revision, account_type, s...","rowsRead":1,"rowsWritten":null,"durationMs":0.015899999999874126},{"name":"first:SELECT content_json, updated_at FROM account_subject_content WHERE subject_id...","rowsRead":0,"rowsWritten":null,"durationMs":0.10900000000015098},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.08549999999991087},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.06909999999993488},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.05590000000006512},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.039800000000013824},{"name":"first:SELECT COUNT(*) AS value FROM ops_error_events WHERE (lower(route_name) LIKE ...","rowsRead":1,"rowsWritten":null,"durationMs":0.02709999999979118}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T16:11:01.875Z"}
+# Subtest: content overview returns all 6 subjects
+ok 33 - content overview returns all 6 subjects
+  ---
+  duration_ms: 34.5542
+  type: 'test'
+  ...
+# Subtest: spelling, grammar, punctuation are live
+ok 34 - spelling, grammar, punctuation are live
+  ---
+  duration_ms: 7.4041
+  type: 'test'
+  ...
+# Subtest: arithmetic and reading are live while reasoning remains placeholder
+ok 35 - arithmetic and reading are live while reasoning remains placeholder
+  ---
+  duration_ms: 8.1138
+  type: 'test'
+  ...
+# Subtest: live subject with zero errors shows 0 not N/A
+ok 36 - live subject with zero errors shows 0 not N/A
+  ---
+  duration_ms: 6.7857
+  type: 'test'
+  ...
+# Subtest: live subjects surface 7d error counts from ops_error_events
+ok 37 - live subjects surface 7d error counts from ops_error_events
+  ---
+  duration_ms: 7.9082
+  type: 'test'
+  ...
+# Subtest: subject with no content release shows null releaseVersion
+ok 38 - subject with no content release shows null releaseVersion
+  ---
+  duration_ms: 6.7986
+  type: 'test'
+  ...
+# Subtest: non-admin account receives 403 for content overview
+ok 39 - non-admin account receives 403 for content overview
+  ---
+  duration_ms: 6.7585
+  type: 'test'
+  ...
+# Subtest: spelling release version is extracted from content_json publication.publishedVersion
+ok 40 - spelling release version is extracted from content_json publication.publishedVersion
+  ---
+  duration_ms: 7.0518
+  type: 'test'
+  ...
+# Subtest: spelling release falls back to updated_at when no publishedVersion
+ok 41 - spelling release falls back to updated_at when no publishedVersion
+  ---
+  duration_ms: 7.4823
+  type: 'test'
+  ...
+# Subtest: overview includes generatedAt timestamp
+ok 42 - overview includes generatedAt timestamp
+  ---
+  duration_ms: 7.1008
+  type: 'test'
+  ...
+# Subtest: arithmetic content generates and marks every template across difficulty bands
+ok 43 - arithmetic content generates and marks every template across difficulty bands
+  ---
+  duration_ms: 14.2575
+  type: 'test'
+  ...
+# Subtest: arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms
+ok 44 - arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms
+  ---
+  duration_ms: 0.1388
+  type: 'test'
+  ...
+# Subtest: arithmetic generators avoid malformed place-value items and repeating-decimal order answers
+ok 45 - arithmetic generators avoid malformed place-value items and repeating-decimal order answers
+  ---
+  duration_ms: 1.1315
+  type: 'test'
+  ...
+# Subtest: arithmetic practice session keeps question isolated and emits reward unit evidence on clean win
+ok 46 - arithmetic practice session keeps question isolated and emits reward unit evidence on clean win
+  ---
+  duration_ms: 3.3317
+  type: 'test'
+  ...
+# Subtest: arithmetic test mode delays marking until finish-test
+ok 47 - arithmetic test mode delays marking until finish-test
+  ---
+  duration_ms: 1.6021
+  type: 'test'
+  ...
+# Subtest: arithmetic practice blank submissions do not count as attempts or adaptive failures
+ok 48 - arithmetic practice blank submissions do not count as attempts or adaptive failures
+  ---
+  duration_ms: 0.9684
+  type: 'test'
+  ...
+# Subtest: arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery
+ok 49 - arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery
+  ---
+  duration_ms: 1.3268
+  type: 'test'
+  ...
+# Subtest: arithmetic rejects stale session and question submissions without mutating state
+ok 50 - arithmetic rejects stale session and question submissions without mutating state
+  ---
+  duration_ms: 0.7514
+  type: 'test'
+  ...
+# Subtest: arithmetic requires fresh session and question ids for active write commands
+ok 51 - arithmetic requires fresh session and question ids for active write commands
+  ---
+  duration_ms: 1.624
+  type: 'test'
+  ...
+# Subtest: arithmetic prefs ignore untrusted payload keys
+ok 52 - arithmetic prefs ignore untrusted payload keys
+  ---
+  duration_ms: 0.6765
+  type: 'test'
+  ...
+# Subtest: arithmetic duplicate practice submissions cannot mark the same current question twice
+ok 53 - arithmetic duplicate practice submissions cannot mark the same current question twice
+  ---
+  duration_ms: 0.852
+  type: 'test'
+  ...
+# Subtest: arithmetic read model redacts answer data before the browser sees current questions
+ok 54 - arithmetic read model redacts answer data before the browser sees current questions
+  ---
+  duration_ms: 0.8082
+  type: 'test'
+  ...
+# Subtest: arithmetic reward projection updates the shared monster codex without touching other subjects
+ok 55 - arithmetic reward projection updates the shared monster codex without touching other subjects
+  ---
+  duration_ms: 0.7899
+  type: 'test'
+  ...
+# Subtest: arithmetic command response preserves server-side validation errors in subject UI
+ok 56 - arithmetic command response preserves server-side validation errors in subject UI
+  ---
+  duration_ms: 0.2959
+  type: 'test'
+  ...
+1..56
+# tests 56
+# suites 0
+# pass 56
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1507.2277
+exit_code=0

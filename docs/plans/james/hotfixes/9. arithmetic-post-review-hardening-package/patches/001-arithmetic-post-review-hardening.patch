@@ -1,9 +1,9 @@
+diff --git a/shared/arithmetic/content.js b/shared/arithmetic/content.js
+index 0d2dfee0..f5faf193 100644
 --- a/shared/arithmetic/content.js
 +++ b/shared/arithmetic/content.js
-@@ -111,12 +111,17 @@
-   '½': '1/2', '¼': '1/4', '¾': '3/4', '⅓': '1/3', '⅔': '2/3', '⅕': '1/5', '⅖': '2/5', '⅗': '3/5', '⅘': '4/5', '⅙': '1/6', '⅚': '5/6', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8',
- });
- 
+@@ -113,8 +113,13 @@ const VULGAR = Object.freeze({
+
 +const VULGAR_GLYPHS = Object.freeze(Object.keys(VULGAR));
 +const VULGAR_GLYPH_CLASS = VULGAR_GLYPHS.join('');
 +const VULGAR_AFTER_WHOLE_RE = new RegExp(`(\\d)\\s*([${VULGAR_GLYPH_CLASS}])`, 'g');
@@ -20,11 +20,7 @@
 +  text = text.replace(VULGAR_AFTER_SIGN_RE, (_match, sign, glyph) => `${sign}${VULGAR[glyph] || glyph}`);
 +  return text.replace(VULGAR_RE, (glyph) => VULGAR[glyph] || glyph);
  }
- 
- export function parseNumberInput(value) {
-@@ -256,7 +261,18 @@
-     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(part)} + □ = ${formatNumber(target)}`, inputSpec: { type: 'number', label: 'Missing number' }, expected: { kind: 'number', value: answer, misconception: 'fact_recall' }, solutionLines: [`Find the part that completes ${formatNumber(target)}.`, `${formatNumber(target)} − ${formatNumber(part)} = ${formatNumber(answer)}.`] });
-   } }),
+@@ -258,3 +263,14 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
    template({ id: 'place_value_partition', label: 'Place value partitioning', domain: 'Place value', strand: 'facts_place_value', skillIds: ['place_value_partition'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
 -    const rng = seededRng(seed); const digits = difficulty === 0 ? 4 : difficulty === 1 ? 5 : 6; const parts = Array.from({ length: digits }, (_, i) => i ? randInt(rng, 0, 9) : randInt(rng, 1, 9)); const values = parts.map((digit, i) => digit * (10 ** (digits - i - 1))); const indexes = values.map((v, i) => v ? i : -1).filter((i) => i >= 0); const missing = pick(rng, indexes.slice(1)); const expanded = values.map((v, i) => i === missing ? '□' : formatNumber(v));
 +    const rng = seededRng(seed);
@@ -40,11 +36,7 @@
 +    const missing = pick(rng, indexes.slice(1));
 +    const expanded = values.map((v, i) => i === missing ? '□' : formatNumber(v));
      return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(Number(parts.join('')))} = ${expanded.join(' + ')}`, inputSpec: { type: 'number', label: 'Missing place-value part' }, expected: { kind: 'number', value: values[missing], misconception: 'place_value_confusion' }, solutionLines: ['Read the number one place at a time.', `The missing part is ${formatNumber(values[missing])}.`] });
-   } }),
-   template({ id: 'powers_of_ten_shift', label: 'Multiply and divide by powers of 10', domain: 'Place value', strand: 'facts_place_value', skillIds: ['powers_of_10_shift'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
-@@ -324,7 +340,18 @@
-     return makeQuestion(this, seed, difficulty, { stem: `${fractionText(num, den)} of ${formatNumber(total)} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'fraction_method_error' }, solutionLines: [`Find one part: ${formatNumber(total)} ÷ ${den} = ${formatNumber(onePart)}.`, `Then ${num} part(s): ${formatNumber(onePart)} × ${num} = ${formatNumber(answer)}.`] });
-   } }),
+@@ -326,3 +342,14 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
    template({ id: 'fraction_add_sub', label: 'Fraction calculations', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_calc'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
 -    const rng = seededRng(seed); const op = pick(rng, ['+', '−']); let [aN, aD, bN, bD] = pick(rng, difficulty === 0 ? [[1,4,2,4],[2,5,1,5],[3,8,1,8]] : [[1,3,1,9],[2,5,1,10],[3,4,1,8],[1,6,2,3],[5,8,3,4]]); if (op === '−' && aN / aD < bN / bD) [aN, aD, bN, bD] = [bN, bD, aN, aD]; const lcm = Math.abs(aD * bD) / gcd(aD, bD); const n = op === '+' ? aN * (lcm / aD) + bN * (lcm / bD) : aN * (lcm / aD) - bN * (lcm / bD); const f = normaliseFraction(n, lcm);
 +    const rng = seededRng(seed);
@@ -60,11 +52,7 @@
 +    const n = op === '+' ? aN * (lcm / aD) + bN * (lcm / bD) : aN * (lcm / aD) - bN * (lcm / bD);
 +    const f = normaliseFraction(n, lcm);
      return makeQuestion(this, seed, difficulty, { stem: `${fractionText(aN, aD)} ${op} ${fractionText(bN, bD)} =`, inputSpec: { type: 'text', label: 'Answer as a fraction or mixed number' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: true }, solutionLines: [aD === bD ? 'The denominators match, so keep the denominator.' : `Change both fractions to denominator ${lcm}.`, `The answer is ${mixedFractionText(f.n, f.d, true)}.`] });
-   } }),
-   template({ id: 'mixed_number_add_sub', label: 'Mixed-number calculations', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_calc'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
-@@ -350,7 +377,22 @@
-     return makeQuestion(this, seed, difficulty, { stem: `Write ${e.pct}% as a fraction in simplest form.`, inputSpec: { type: 'text', label: 'Fraction' }, expected: { kind: 'fraction', n: e.n, d: e.d, preferMixed: false }, solutionLines: [`${e.pct}% = ${e.pct}/100 = ${fractionText(e.n,e.d)}.`] });
-   } }),
+@@ -352,3 +379,18 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
    template({ id: 'order_of_operations', label: 'Order of operations', domain: 'Mixed arithmetic', strand: 'percentages_mixed', skillIds: ['order_of_operations'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
 -    const rng = seededRng(seed); const a = randInt(rng, 30, 120); const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const d = randInt(rng, 10, 30); const expression = difficulty === 0 ? `(${a} + ${c}) − ${b} × 2` : difficulty === 1 ? `${a} − ${b} × ${c} + ${d}` : `(${a} − ${b * c}) ÷ ${c} + ${d}`; const answer = difficulty === 0 ? (a + c) - b * 2 : difficulty === 1 ? a - b * c + d : (a - b * c) / c + d;
 +    const rng = seededRng(seed);
@@ -84,72 +72,11 @@
 +      answer = quotient + d;
 +    }
      return makeQuestion(this, seed, difficulty, { stem: `${expression} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'order_of_operations_error' }, solutionLines: ['Do brackets first, then multiplication or division, then addition or subtraction.', `${expression} = ${formatNumber(answer)}.`] });
-   } }),
- 
-
---- a/worker/src/subjects/arithmetic/engine.js
-+++ b/worker/src/subjects/arithmetic/engine.js
-@@ -398,6 +398,10 @@
-   return target > 0 && (Number(session.answered) || 0) >= target;
- }
- 
-+function responseHasAnswerContent(response = {}) {
-+  return Object.values(response || {}).some((value) => String(value ?? '').trim() !== '');
-+}
-+
- function sessionSummary(session) {
-   if (!session) return null;
-   return {
-@@ -603,6 +607,13 @@
-   const session = state.session;
-   if (!session?.currentQuestion) return [];
-   const response = payload?.response || {};
-+  if (!responseHasAnswerContent(response)) {
-+    state.error = 'Enter an answer before marking.';
-+    state.feedback = null;
-+    session.waitingForContinue = false;
-+    state.phase = 'session';
-+    return [];
-+  }
-   const question = session.currentQuestion;
-   const sessionQuestion = { attempts: 0 };
-   const result = evaluateArithmeticQuestion(question, response);
-@@ -611,6 +622,7 @@
-   if (result.correct) session.correct += 1;
-   session.score += result.score;
-   session.maxScore += result.maxScore;
-+  state.error = '';
-   state.feedback = { questionId: question.id, result, response, solutionLines: question.solutionLines || [], checkLine: question.checkLine || '' };
-   if (goalComplete(session, data, now)) {
-     events.push(...completeSession({ learnerId, state, data, now, requestId }));
-@@ -646,14 +658,17 @@
-   session.score = 0;
-   session.maxScore = 0;
-   for (const entry of session.paper) {
-+    const answered = responseHasAnswerContent(entry.response || {});
-     const result = evaluateArithmeticQuestion(entry.question, entry.response || {});
-     entry.result = result;
--    entry.status = result.correct ? 'correct' : result.score > 0 ? 'partial' : 'wrong';
--    session.answered += Object.values(entry.response || {}).some((v) => String(v || '').trim()) ? 1 : 0;
--    if (result.correct) session.correct += 1;
-+    entry.status = answered ? (result.correct ? 'correct' : result.score > 0 ? 'partial' : 'wrong') : 'blank';
-+    if (answered) {
-+      session.answered += 1;
-+      if (result.correct) session.correct += 1;
-+      events.push(...applyLearning({ learnerId, data, question: entry.question, result, response: entry.response || {}, now, requestId, sessionQuestion: { attempts: 0 } }));
-+    }
-     session.score += result.score;
-     session.maxScore += result.maxScore;
--    events.push(...applyLearning({ learnerId, data, question: entry.question, result, response: entry.response || {}, now, requestId, sessionQuestion: { attempts: 0 } }));
-   }
-   events.push(...completeSession({ learnerId, state, data, now, requestId, auto: Boolean(payload?.auto) }));
-   return events;
-
+diff --git a/src/subjects/arithmetic/command-actions.js b/src/subjects/arithmetic/command-actions.js
+index 0151e799..f1ba1f6b 100644
 --- a/src/subjects/arithmetic/command-actions.js
 +++ b/src/subjects/arithmetic/command-actions.js
-@@ -56,10 +56,11 @@
-     const learnerId = response?.learnerId ? String(response.learnerId) : '';
-     if (learnerId && store.getState().learners?.selectedId !== learnerId) return;
+@@ -58,6 +58,7 @@ export function applyArithmeticCommandResponse({ store, shouldDelayMonsterCelebr
      if (response?.subjectReadModel) {
 +      const readModel = normaliseArithmeticReadModel(response.subjectReadModel, learnerId);
        store.updateSubjectUi('arithmetic', {
@@ -159,30 +86,20 @@
 -        error: '',
 +        error: readModel.error || '',
        });
-     }
-     const nextUi = store.getState().subjectUi?.arithmetic || null;
-
+diff --git a/tests/worker-arithmetic-runtime.test.js b/tests/worker-arithmetic-runtime.test.js
+index 08930e36..3731b7d7 100644
 --- a/tests/worker-arithmetic-runtime.test.js
 +++ b/tests/worker-arithmetic-runtime.test.js
-@@ -6,12 +6,14 @@
-   arithmeticPublicQuestionId,
-   evaluateArithmeticQuestion,
+@@ -8,2 +8,3 @@ import {
    generateArithmeticQuestion,
 +  parseFractionInput,
  } from '../shared/arithmetic/content.js';
- import {
-   ARITHMETIC_EVENT_TYPES,
-   createServerArithmeticEngine,
- } from '../worker/src/subjects/arithmetic/engine.js';
+@@ -14,2 +15,3 @@ import {
  import { buildArithmeticReadModel } from '../worker/src/subjects/arithmetic/read-models.js';
 +import { applyArithmeticCommandResponse } from '../src/subjects/arithmetic/command-actions.js';
  import { projectArithmeticRewards } from '../worker/src/projections/rewards.js';
- 
- function publicQuestionId(session, index = session?.currentIndex || 0) {
-@@ -36,6 +38,29 @@
-   }
- });
- 
+@@ -38,2 +40,25 @@ test('arithmetic content generates and marks every template across difficulty ba
+
 +test('arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms', () => {
 +  const parsed = parseFractionInput('2½');
 +  assert.equal(parsed.value, 2.5);
@@ -207,14 +124,8 @@
 +});
 +
  test('arithmetic practice session keeps question isolated and emits reward unit evidence on clean win', () => {
-   const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
-   const started = engine.apply({
-@@ -124,6 +149,70 @@
-   assert.equal(finished.state.phase, 'summary');
-   assert.ok(finished.state.session.paper[0].result);
-   assert.ok(finished.events.some((event) => event.type === ARITHMETIC_EVENT_TYPES.SESSION_COMPLETED));
-+});
-+
+@@ -128,2 +153,86 @@ test('arithmetic test mode delays marking until finish-test', () => {
+
 +test('arithmetic practice blank submissions do not count as attempts or adaptive failures', () => {
 +  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
 +  const started = engine.apply({
@@ -244,6 +155,25 @@
 +  assert.equal(blank.data.recentAttempts.length, 0);
 +  assert.equal(blank.data.retryQueue.length, 0);
 +  assert.equal(blank.events.length, 0);
++
++  const workingOnly = engine.apply({
++    learnerId: 'learner-blank-practice',
++    subjectRecord: { ui: blank.state, data: blank.data },
++    command: 'submit-answer',
++    payload: {
++      expectedSessionId: blank.state.session.id,
++      expectedQuestionId: publicQuestionId(blank.state.session),
++      response: { answer: '', working: 'I tried a column method here.' },
++    },
++    requestId: 'blank-practice-working-only',
++  });
++
++  assert.match(workingOnly.state.error, /enter an answer/i);
++  assert.equal(workingOnly.state.feedback, null);
++  assert.equal(workingOnly.state.session.answered, 0);
++  assert.equal(workingOnly.data.recentAttempts.length, 0);
++  assert.equal(workingOnly.data.retryQueue.length, 0);
++  assert.equal(workingOnly.events.length, 0);
 +});
 +
 +test('arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery', () => {
@@ -264,7 +194,8 @@
 +      expectedSessionId: started.state.session.id,
 +      expectedQuestionId: publicQuestionId(started.state.session, started.state.session.currentIndex),
 +      index: started.state.session.currentIndex,
-+      response: {},
++      response: { answer: '', working: 'rough notes only' },
++      working: 'rough notes only',
 +    },
 +    requestId: 'blank-test-finish',
 +  });
@@ -277,12 +208,10 @@
 +  assert.equal(finished.data.retryQueue.length, 0);
 +  assert.equal(Object.values(finished.data.skills).reduce((sum, node) => sum + (node.wrong || 0), 0), 0);
 +  assert.deepEqual(finished.events.map((event) => event.type), [ARITHMETIC_EVENT_TYPES.SESSION_COMPLETED]);
- });
- 
++});
++
  test('arithmetic rejects stale session and question submissions without mutating state', () => {
-@@ -349,3 +438,44 @@
-   assert.ok(projected.rewardEvents.every((rewardEvent) => rewardEvent.subjectId === 'arithmetic'));
-   assert.ok(projected.gameState['monster-codex'].sumkrab || projected.gameState['monster-codex'].arithon);
+@@ -351 +460,42 @@ test('arithmetic reward projection updates the shared monster codex without touc
  });
 +
 +
@@ -325,4 +254,51 @@
 +  assert.equal(appState.subjectUi.arithmetic.error, 'Enter an answer before marking.');
 +  assert.equal(appState.subjectUi.arithmetic.pendingCommand, '');
 +});
+diff --git a/worker/src/subjects/arithmetic/engine.js b/worker/src/subjects/arithmetic/engine.js
+index 37ad0bc4..7ba0aaee 100644
+--- a/worker/src/subjects/arithmetic/engine.js
++++ b/worker/src/subjects/arithmetic/engine.js
+@@ -400,2 +400,6 @@ function goalComplete(session, data, now) {
 
++function responseHasAnswerContent(response = {}) {
++  return ['answer', 'value'].some((key) => String(response?.[key] ?? '').trim() !== '');
++}
++
+ function sessionSummary(session) {
+@@ -605,2 +609,9 @@ function submitPractice({ learnerId, state, data, payload, requestId, now }) {
+   const response = payload?.response || {};
++  if (!responseHasAnswerContent(response)) {
++    state.error = 'Enter an answer before marking.';
++    state.feedback = null;
++    session.waitingForContinue = false;
++    state.phase = 'session';
++    return [];
++  }
+   const question = session.currentQuestion;
+@@ -613,2 +624,3 @@ function submitPractice({ learnerId, state, data, payload, requestId, now }) {
+   session.maxScore += result.maxScore;
++  state.error = '';
+   state.feedback = { questionId: question.id, result, response, solutionLines: question.solutionLines || [], checkLine: question.checkLine || '' };
+@@ -631,3 +643,3 @@ function submitTestSave({ state, payload }) {
+     entry.working = String(payload?.working || '');
+-    entry.status = Object.values(entry.response || {}).some((v) => String(v || '').trim()) ? 'saved' : 'blank';
++    entry.status = responseHasAnswerContent(entry.response || {}) ? 'saved' : 'blank';
+   }
+@@ -648,10 +660,13 @@ function finishTest({ learnerId, state, data, payload, requestId, now }) {
+   for (const entry of session.paper) {
++    const answered = responseHasAnswerContent(entry.response || {});
+     const result = evaluateArithmeticQuestion(entry.question, entry.response || {});
+     entry.result = result;
+-    entry.status = result.correct ? 'correct' : result.score > 0 ? 'partial' : 'wrong';
+-    session.answered += Object.values(entry.response || {}).some((v) => String(v || '').trim()) ? 1 : 0;
+-    if (result.correct) session.correct += 1;
++    entry.status = answered ? (result.correct ? 'correct' : result.score > 0 ? 'partial' : 'wrong') : 'blank';
++    if (answered) {
++      session.answered += 1;
++      if (result.correct) session.correct += 1;
++      events.push(...applyLearning({ learnerId, data, question: entry.question, result, response: entry.response || {}, now, requestId, sessionQuestion: { attempts: 0 } }));
++    }
+     session.score += result.score;
+     session.maxScore += result.maxScore;
+-    events.push(...applyLearning({ learnerId, data, question: entry.question, result, response: entry.response || {}, now, requestId, sessionQuestion: { attempts: 0 } }));
+   }

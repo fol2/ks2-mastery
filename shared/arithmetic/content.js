@@ -111,12 +111,17 @@ const VULGAR = Object.freeze({
   '½': '1/2', '¼': '1/4', '¾': '3/4', '⅓': '1/3', '⅔': '2/3', '⅕': '1/5', '⅖': '2/5', '⅗': '3/5', '⅘': '4/5', '⅙': '1/6', '⅚': '5/6', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8',
 });
 
+const VULGAR_GLYPHS = Object.freeze(Object.keys(VULGAR));
+const VULGAR_GLYPH_CLASS = VULGAR_GLYPHS.join('');
+const VULGAR_AFTER_WHOLE_RE = new RegExp(`(\\d)\\s*([${VULGAR_GLYPH_CLASS}])`, 'g');
+const VULGAR_AFTER_SIGN_RE = new RegExp(`([+\\-])\\s*([${VULGAR_GLYPH_CLASS}])`, 'g');
+const VULGAR_RE = new RegExp(`[${VULGAR_GLYPH_CLASS}]`, 'g');
+
 function expandVulgarFractions(value) {
   let text = String(value || '');
-  for (const [glyph, ascii] of Object.entries(VULGAR)) {
-    text = text.replaceAll(glyph, ascii);
-  }
-  return text;
+  text = text.replace(VULGAR_AFTER_WHOLE_RE, (_match, whole, glyph) => `${whole} ${VULGAR[glyph] || glyph}`);
+  text = text.replace(VULGAR_AFTER_SIGN_RE, (_match, sign, glyph) => `${sign}${VULGAR[glyph] || glyph}`);
+  return text.replace(VULGAR_RE, (glyph) => VULGAR[glyph] || glyph);
 }
 
 export function parseNumberInput(value) {
@@ -256,7 +261,18 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(part)} + □ = ${formatNumber(target)}`, inputSpec: { type: 'number', label: 'Missing number' }, expected: { kind: 'number', value: answer, misconception: 'fact_recall' }, solutionLines: [`Find the part that completes ${formatNumber(target)}.`, `${formatNumber(target)} − ${formatNumber(part)} = ${formatNumber(answer)}.`] });
   } }),
   template({ id: 'place_value_partition', label: 'Place value partitioning', domain: 'Place value', strand: 'facts_place_value', skillIds: ['place_value_partition'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
-    const rng = seededRng(seed); const digits = difficulty === 0 ? 4 : difficulty === 1 ? 5 : 6; const parts = Array.from({ length: digits }, (_, i) => i ? randInt(rng, 0, 9) : randInt(rng, 1, 9)); const values = parts.map((digit, i) => digit * (10 ** (digits - i - 1))); const indexes = values.map((v, i) => v ? i : -1).filter((i) => i >= 0); const missing = pick(rng, indexes.slice(1)); const expanded = values.map((v, i) => i === missing ? '□' : formatNumber(v));
+    const rng = seededRng(seed);
+    const digits = difficulty === 0 ? 4 : difficulty === 1 ? 5 : 6;
+    let parts;
+    let values;
+    let indexes;
+    do {
+      parts = Array.from({ length: digits }, (_, i) => i ? randInt(rng, 0, 9) : randInt(rng, 1, 9));
+      values = parts.map((digit, i) => digit * (10 ** (digits - i - 1)));
+      indexes = values.map((v, i) => v ? i : -1).filter((i) => i >= 0);
+    } while (indexes.length < 3);
+    const missing = pick(rng, indexes.slice(1));
+    const expanded = values.map((v, i) => i === missing ? '□' : formatNumber(v));
     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(Number(parts.join('')))} = ${expanded.join(' + ')}`, inputSpec: { type: 'number', label: 'Missing place-value part' }, expected: { kind: 'number', value: values[missing], misconception: 'place_value_confusion' }, solutionLines: ['Read the number one place at a time.', `The missing part is ${formatNumber(values[missing])}.`] });
   } }),
   template({ id: 'powers_of_ten_shift', label: 'Multiply and divide by powers of 10', domain: 'Place value', strand: 'facts_place_value', skillIds: ['powers_of_10_shift'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
@@ -324,7 +340,18 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
     return makeQuestion(this, seed, difficulty, { stem: `${fractionText(num, den)} of ${formatNumber(total)} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'fraction_method_error' }, solutionLines: [`Find one part: ${formatNumber(total)} ÷ ${den} = ${formatNumber(onePart)}.`, `Then ${num} part(s): ${formatNumber(onePart)} × ${num} = ${formatNumber(answer)}.`] });
   } }),
   template({ id: 'fraction_add_sub', label: 'Fraction calculations', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_calc'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
-    const rng = seededRng(seed); const op = pick(rng, ['+', '−']); let [aN, aD, bN, bD] = pick(rng, difficulty === 0 ? [[1,4,2,4],[2,5,1,5],[3,8,1,8]] : [[1,3,1,9],[2,5,1,10],[3,4,1,8],[1,6,2,3],[5,8,3,4]]); if (op === '−' && aN / aD < bN / bD) [aN, aD, bN, bD] = [bN, bD, aN, aD]; const lcm = Math.abs(aD * bD) / gcd(aD, bD); const n = op === '+' ? aN * (lcm / aD) + bN * (lcm / bD) : aN * (lcm / aD) - bN * (lcm / bD); const f = normaliseFraction(n, lcm);
+    const rng = seededRng(seed);
+    const op = pick(rng, ['+', '−']);
+    const pools = [
+      [[1,4,2,4],[2,5,1,5],[3,8,1,8],[1,6,4,6],[5,10,3,10],[2,7,3,7],[3,12,5,12],[7,9,2,9]],
+      [[1,3,1,9],[2,5,1,10],[3,4,1,8],[1,6,2,3],[5,8,3,4],[3,5,7,10],[5,6,1,3],[7,12,1,4],[4,9,1,3],[3,10,2,5],[5,12,1,6],[7,15,1,5]],
+      [[5,6,2,3],[7,8,3,4],[5,8,7,12],[11,12,5,6],[9,10,3,5],[7,9,2,3],[11,15,2,5],[13,20,7,10],[5,12,7,18],[4,7,5,14],[7,16,3,8],[9,14,5,7],[8,15,7,10],[11,18,5,12]],
+    ];
+    let [aN, aD, bN, bD] = pick(rng, pools[Math.max(0, Math.min(2, difficulty))]);
+    if (op === '−' && aN / aD < bN / bD) [aN, aD, bN, bD] = [bN, bD, aN, aD];
+    const lcm = Math.abs(aD * bD) / gcd(aD, bD);
+    const n = op === '+' ? aN * (lcm / aD) + bN * (lcm / bD) : aN * (lcm / aD) - bN * (lcm / bD);
+    const f = normaliseFraction(n, lcm);
     return makeQuestion(this, seed, difficulty, { stem: `${fractionText(aN, aD)} ${op} ${fractionText(bN, bD)} =`, inputSpec: { type: 'text', label: 'Answer as a fraction or mixed number' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: true }, solutionLines: [aD === bD ? 'The denominators match, so keep the denominator.' : `Change both fractions to denominator ${lcm}.`, `The answer is ${mixedFractionText(f.n, f.d, true)}.`] });
   } }),
   template({ id: 'mixed_number_add_sub', label: 'Mixed-number calculations', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_calc'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
@@ -350,7 +377,22 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
     return makeQuestion(this, seed, difficulty, { stem: `Write ${e.pct}% as a fraction in simplest form.`, inputSpec: { type: 'text', label: 'Fraction' }, expected: { kind: 'fraction', n: e.n, d: e.d, preferMixed: false }, solutionLines: [`${e.pct}% = ${e.pct}/100 = ${fractionText(e.n,e.d)}.`] });
   } }),
   template({ id: 'order_of_operations', label: 'Order of operations', domain: 'Mixed arithmetic', strand: 'percentages_mixed', skillIds: ['order_of_operations'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
-    const rng = seededRng(seed); const a = randInt(rng, 30, 120); const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const d = randInt(rng, 10, 30); const expression = difficulty === 0 ? `(${a} + ${c}) − ${b} × 2` : difficulty === 1 ? `${a} − ${b} × ${c} + ${d}` : `(${a} − ${b * c}) ÷ ${c} + ${d}`; const answer = difficulty === 0 ? (a + c) - b * 2 : difficulty === 1 ? a - b * c + d : (a - b * c) / c + d;
+    const rng = seededRng(seed);
+    let expression;
+    let answer;
+    if (difficulty === 0) {
+      const a = randInt(rng, 30, 120); const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9);
+      expression = `(${a} + ${c}) − ${b} × 2`;
+      answer = (a + c) - b * 2;
+    } else if (difficulty === 1) {
+      const a = randInt(rng, 30, 120); const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const d = randInt(rng, 10, 30);
+      expression = `${a} − ${b} × ${c} + ${d}`;
+      answer = a - b * c + d;
+    } else {
+      const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const quotient = randInt(rng, 5, 24); const d = randInt(rng, 10, 30); const minuend = (b * c) + (quotient * c);
+      expression = `(${minuend} − ${b * c}) ÷ ${c} + ${d}`;
+      answer = quotient + d;
+    }
     return makeQuestion(this, seed, difficulty, { stem: `${expression} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'order_of_operations_error' }, solutionLines: ['Do brackets first, then multiplication or division, then addition or subtraction.', `${expression} = ${formatNumber(answer)}.`] });
   } }),
 

@@ -6,12 +6,14 @@ Source ZIP SHA-256:
 
 `596ac6308b01dc16150d584123f9c00303bd102e73b3b977aea034ef852d108b`
 
-Patch target: extracted ZIP root. Apply from repository root with:
+Patch target: production repository root. Apply from repository root with:
 
 ```bash
-patch -p1 < patches/001-arithmetic-post-review-hardening.patch
+git apply patches/001-arithmetic-post-review-hardening.patch
 ```
 
-GitHub was only used as a repository-identity supplement in this session. The patch and validation are ZIP-primary. Production deployment is not certified by this package.
+Production repository target after post-review hardening: `origin/main` at `7bbf968601d84b6f72d6ad5f1c4eaa6bb95ce20e` before applying this package.
+
+The refreshed patch was dry-run and applied against a clean worktree at that commit. The package now includes production-ready validation, deployment, and live-smoke artefacts in `validation/logs/production-ready-*-2026-05-11.log` and `validation/production-ready-*.json`.
 
 The uploaded Arithmetic PoC HTML was used as the behaviour reference for answer-form tolerance, especially mixed-number and Unicode fraction entry forms.

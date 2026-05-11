@@ -6,12 +6,14 @@ import {
   arithmeticPublicQuestionId,
   evaluateArithmeticQuestion,
   generateArithmeticQuestion,
+  parseFractionInput,
 } from '../shared/arithmetic/content.js';
 import {
   ARITHMETIC_EVENT_TYPES,
   createServerArithmeticEngine,
 } from '../worker/src/subjects/arithmetic/engine.js';
 import { buildArithmeticReadModel } from '../worker/src/subjects/arithmetic/read-models.js';
+import { applyArithmeticCommandResponse } from '../src/subjects/arithmetic/command-actions.js';
 import { projectArithmeticRewards } from '../worker/src/projections/rewards.js';
 
 function publicQuestionId(session, index = session?.currentIndex || 0) {
@@ -33,6 +35,29 @@ test('arithmetic content generates and marks every template across difficulty ba
       const result = evaluateArithmeticQuestion(question, { answer: correctAnswer });
       assert.equal(result.correct, true, `${template.id} d${difficulty} accepts its generated answer`);
     }
+  }
+});
+
+test('arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms', () => {
+  const parsed = parseFractionInput('2½');
+  assert.equal(parsed.value, 2.5);
+  assert.equal(parsed.normalN, 5);
+  assert.equal(parsed.normalD, 2);
+
+  const question = { marks: 1, expected: { kind: 'fraction', n: 5, d: 2, preferMixed: true } };
+  assert.equal(evaluateArithmeticQuestion(question, { answer: '2½' }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(question, { answer: '2 1 / 2' }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(question, { answer: '2 and 1/2' }).correct, true);
+});
+
+test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
+  const placeValue = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty: 2, seed: 96433 });
+  assert.ok(placeValue.stem.includes('□'), 'place-value item contains a missing-value box');
+  assert.ok(Number.isFinite(placeValue.expected.value), 'place-value expected value is finite');
+
+  for (let seed = 1; seed <= 500; seed += 1) {
+    const order = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 2, seed });
+    assert.equal(Number.isInteger(order.expected.value), true, `seed ${seed} should produce a whole-number result`);
   }
 });
 
@@ -124,6 +149,90 @@ test('arithmetic test mode delays marking until finish-test', () => {
   assert.equal(finished.state.phase, 'summary');
   assert.ok(finished.state.session.paper[0].result);
   assert.ok(finished.events.some((event) => event.type === ARITHMETIC_EVENT_TYPES.SESSION_COMPLETED));
+});
+
+test('arithmetic practice blank submissions do not count as attempts or adaptive failures', () => {
+  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
+  const started = engine.apply({
+    learnerId: 'learner-blank-practice',
+    subjectRecord: { ui: {}, data: {} },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: '10q' },
+    requestId: 'blank-practice-start',
+  });
+
+  const blank = engine.apply({
+    learnerId: 'learner-blank-practice',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: started.state.session.id,
+      expectedQuestionId: publicQuestionId(started.state.session),
+      response: { answer: '   ' },
+    },
+    requestId: 'blank-practice-submit',
+  });
+
+  assert.equal(blank.changed, true, 'UI error state is written so the learner gets a visible prompt');
+  assert.match(blank.state.error, /enter an answer/i);
+  assert.equal(blank.state.feedback, null);
+  assert.equal(blank.state.session.answered, 0);
+  assert.equal(blank.data.recentAttempts.length, 0);
+  assert.equal(blank.data.retryQueue.length, 0);
+  assert.equal(blank.events.length, 0);
+
+  const workingOnly = engine.apply({
+    learnerId: 'learner-blank-practice',
+    subjectRecord: { ui: blank.state, data: blank.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: blank.state.session.id,
+      expectedQuestionId: publicQuestionId(blank.state.session),
+      response: { answer: '', working: 'I tried a column method here.' },
+    },
+    requestId: 'blank-practice-working-only',
+  });
+
+  assert.match(workingOnly.state.error, /enter an answer/i);
+  assert.equal(workingOnly.state.feedback, null);
+  assert.equal(workingOnly.state.session.answered, 0);
+  assert.equal(workingOnly.data.recentAttempts.length, 0);
+  assert.equal(workingOnly.data.retryQueue.length, 0);
+  assert.equal(workingOnly.events.length, 0);
+});
+
+test('arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery', () => {
+  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
+  const started = engine.apply({
+    learnerId: 'learner-blank-test',
+    subjectRecord: { ui: {}, data: {} },
+    command: 'start-session',
+    payload: { mode: 'test', testForm: 'short' },
+    requestId: 'blank-test-start',
+  });
+
+  const finished = engine.apply({
+    learnerId: 'learner-blank-test',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'finish-test',
+    payload: {
+      expectedSessionId: started.state.session.id,
+      expectedQuestionId: publicQuestionId(started.state.session, started.state.session.currentIndex),
+      index: started.state.session.currentIndex,
+      response: { answer: '', working: 'rough notes only' },
+      working: 'rough notes only',
+    },
+    requestId: 'blank-test-finish',
+  });
+
+  assert.equal(finished.state.summary.answered, 0);
+  assert.equal(finished.state.summary.score, 0);
+  assert.equal(finished.state.summary.maxScore, 14);
+  assert.equal(finished.state.session.paper.every((entry) => entry.status === 'blank' && entry.result), true);
+  assert.equal(finished.data.recentAttempts.length, 0);
+  assert.equal(finished.data.retryQueue.length, 0);
+  assert.equal(Object.values(finished.data.skills).reduce((sum, node) => sum + (node.wrong || 0), 0), 0);
+  assert.deepEqual(finished.events.map((event) => event.type), [ARITHMETIC_EVENT_TYPES.SESSION_COMPLETED]);
 });
 
 test('arithmetic rejects stale session and question submissions without mutating state', () => {
@@ -348,4 +457,45 @@ test('arithmetic reward projection updates the shared monster codex without touc
   assert.ok(projected.rewardEvents.length >= 1);
   assert.ok(projected.rewardEvents.every((rewardEvent) => rewardEvent.subjectId === 'arithmetic'));
   assert.ok(projected.gameState['monster-codex'].sumkrab || projected.gameState['monster-codex'].arithon);
+});
+
+
+test('arithmetic command response preserves server-side validation errors in subject UI', () => {
+  const appState = {
+    learners: { selectedId: 'learner-1' },
+    subjectUi: { arithmetic: {} },
+  };
+  const store = {
+    getState() {
+      return appState;
+    },
+    updateSubjectUi(subjectId, nextUi) {
+      assert.equal(subjectId, 'arithmetic');
+      appState.subjectUi.arithmetic = nextUi;
+    },
+    pushToasts() {},
+    pushMonsterCelebrations() {},
+    deferMonsterCelebrations() {},
+    releaseMonsterCelebrations() {},
+  };
+  const applyResponse = applyArithmeticCommandResponse({ store });
+
+  applyResponse({
+    learnerId: 'learner-1',
+    subjectReadModel: {
+      version: 1,
+      subjectId: 'arithmetic',
+      learnerId: 'learner-1',
+      phase: 'session',
+      prefs: {},
+      error: 'Enter an answer before marking.',
+      session: null,
+      feedback: null,
+      summary: null,
+    },
+    projections: { rewards: { events: [], toastEvents: [] } },
+  });
+
+  assert.equal(appState.subjectUi.arithmetic.error, 'Enter an answer before marking.');
+  assert.equal(appState.subjectUi.arithmetic.pendingCommand, '');
 });

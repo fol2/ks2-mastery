@@ -1,0 +1,31 @@
+{
+  "templateCount": 30,
+  "glyphValue": 2.5,
+  "glyphCorrect": true,
+  "nonIntegerOrder": 0,
+  "placeValueStem": "563,740 = 500,000 + 60,000 + 3,000 + □ + 40 + 0",
+  "placeValueExpected": 700,
+  "practiceBlank": {
+    "changed": true,
+    "answered": 0,
+    "attempts": 0,
+    "events": 0,
+    "error": "Enter an answer before marking."
+  },
+  "practiceWorkingOnly": {
+    "changed": true,
+    "answered": 0,
+    "attempts": 0,
+    "events": 0,
+    "error": "Enter an answer before marking."
+  },
+  "testBlank": {
+    "answered": 0,
+    "attempts": 0,
+    "retries": 0,
+    "wrongs": 0,
+    "eventTypes": [
+      "arithmetic.session-completed"
+    ]
+  }
+}

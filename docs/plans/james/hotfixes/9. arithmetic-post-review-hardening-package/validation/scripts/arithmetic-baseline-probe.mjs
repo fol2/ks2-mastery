@@ -1,5 +1,11 @@
-import { ARITHMETIC_TEMPLATES, evaluateArithmeticQuestion, generateArithmeticQuestion, parseFractionInput, arithmeticPublicQuestionId } from '/mnt/data/arithmetic-review-base/shared/arithmetic/content.js';
-import { createServerArithmeticEngine } from '/mnt/data/arithmetic-review-base/worker/src/subjects/arithmetic/engine.js';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+
+const repoRoot = process.env.ARITHMETIC_REPO_ROOT || process.cwd();
+const contentModule = await import(pathToFileURL(path.join(repoRoot, 'shared/arithmetic/content.js')).href);
+const engineModule = await import(pathToFileURL(path.join(repoRoot, 'worker/src/subjects/arithmetic/engine.js')).href);
+const { ARITHMETIC_TEMPLATES, evaluateArithmeticQuestion, generateArithmeticQuestion, parseFractionInput, arithmeticPublicQuestionId } = contentModule;
+const { createServerArithmeticEngine } = engineModule;
 const glyph = parseFractionInput('2½');
 const glyphResult = evaluateArithmeticQuestion({ expected: { kind: 'fraction', n: 5, d: 2, preferMixed: true }, marks: 1 }, {answer:'2½'});
 let nonIntegerOrder = 0;

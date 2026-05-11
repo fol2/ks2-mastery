@@ -8,6 +8,9 @@ Files:
 - patches/001-arithmetic-post-review-hardening.patch
 - validation/validation-summary.md
 - validation/arithmetic-content-audit-postfix.json
+- validation/production-ready-arithmetic-content-audit-2026-05-11.json
+- validation/production-ready-arithmetic-post-probe-2026-05-11.json
+- validation/production-ready-arithmetic-live-smoke-2026-05-11.json
 - validation/probes/arithmetic-baseline-probe.json
 - validation/probes/arithmetic-post-probe.json
 - validation/scripts/arithmetic-baseline-probe.mjs
@@ -21,3 +24,15 @@ Files:
 - validation/logs/worker-arithmetic-runtime-test.log
 - validation/logs/arithmetic-targeted-cross-test.log
 - validation/logs/npm-test-limitation.log
+- validation/logs/production-ready-patch-dry-run-2026-05-11.log
+- validation/logs/production-ready-patch-apply-2026-05-11.log
+- validation/logs/production-ready-git-diff-check-2026-05-11.log
+- validation/logs/production-ready-node-check-shared-arithmetic-content-2026-05-11.log
+- validation/logs/production-ready-node-check-worker-arithmetic-engine-2026-05-11.log
+- validation/logs/production-ready-node-check-arithmetic-command-actions-2026-05-11.log
+- validation/logs/production-ready-worker-arithmetic-runtime-test-2026-05-11.log
+- validation/logs/production-ready-arithmetic-cross-test-2026-05-11.log
+- validation/logs/production-ready-npm-test-2026-05-11.log
+- validation/logs/production-ready-npm-run-check-2026-05-11.log
+- validation/logs/production-ready-npm-run-deploy-2026-05-11.log
+- validation/logs/production-ready-arithmetic-live-smoke-2026-05-11.log
