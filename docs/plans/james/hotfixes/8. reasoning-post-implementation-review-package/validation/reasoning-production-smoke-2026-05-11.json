@@ -1,0 +1,85 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "sourceCommit": "1ad7703026487bbcbe5e90b24d7835a84e6009df",
+  "startedAt": "2026-05-11T17:03:12.894Z",
+  "finishedAt": "2026-05-11T17:03:16.981Z",
+  "learnerId": "learner-demo-hWVpG6Vfr1HbOw",
+  "finalRevision": 2,
+  "contentReleaseId": "reasoning-poc-promoted-2026-05-11",
+  "content": {
+    "releaseId": "reasoning-poc-promoted-2026-05-11",
+    "templateCount": 110,
+    "skillCount": 17,
+    "misconceptionCount": 20,
+    "satsFriendlyCount": 110,
+    "domains": {
+      "Number and place value": 10,
+      "Calculation": 10,
+      "Fractions": 10,
+      "Fractions, decimals and percentages": 10,
+      "Ratio and proportion": 10,
+      "Measure": 10,
+      "Geometry and measure": 10,
+      "Geometry": 10,
+      "Statistics": 10,
+      "Reasoning and checking": 10,
+      "Measure and money": 10
+    },
+    "skills": {
+      "pv_rounding": 6,
+      "reasonableness": 16,
+      "pv_compare": 8,
+      "inverse_missing": 11,
+      "mul_div_structure": 15,
+      "add_sub_multistep": 34,
+      "fractions_quantity": 6,
+      "fractions_compare": 4,
+      "percent_number": 4,
+      "fdp_equiv": 9,
+      "ratio_scale": 10,
+      "unit_conversion": 5,
+      "time_elapsed": 5,
+      "perimeter_area": 10,
+      "error_analysis": 18,
+      "geometry_angles": 10,
+      "statistics_reading": 10
+    },
+    "modes": [
+      "smart",
+      "skill",
+      "trouble",
+      "worked",
+      "faded",
+      "sats",
+      "satsset"
+    ]
+  },
+  "session": {
+    "id": "reasoning_session_mp1gaggv_pusvu7cx",
+    "mode": "sats",
+    "questionId": "ratio_exact_groups_check:354985558",
+    "templateId": "ratio_exact_groups_check",
+    "seed": 354985558,
+    "score": 2,
+    "maxScore": 2
+  },
+  "rewardProjection": {
+    "domainEvents": [
+      "reasoning.answer-submitted",
+      "reasoning.evidence-earned",
+      "reasoning.session-completed"
+    ],
+    "reactionSubjects": [
+      "reasoning",
+      "reasoning"
+    ],
+    "reactionCount": 2
+  },
+  "heroReadModel": {
+    "checked": true,
+    "available": false,
+    "status": 404,
+    "reason": "hero_shadow_disabled"
+  }
+}

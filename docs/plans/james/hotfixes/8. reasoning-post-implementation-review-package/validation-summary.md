@@ -73,4 +73,8 @@ The original package did not include live production deployment smoke. This work
 - `npm run check`: Cloudflare dry-run deploy passed; client bundle audit passed; main bundle `204,397 / 232,000` bytes gzip; `--dry-run: exiting now.` Evidence: `validation/production-ready-npm-run-check-2026-05-11.log`.
 - `git apply --unidiff-zero --reverse --check patches/002-reasoning-post-implementation-review.patch`: passed against the patched worktree, proving the package patch matches the current code diff. Evidence: `validation/production-ready-patch-reverse-check-2026-05-11.log`.
 
-Live production deployment and smoke evidence are still required before final closure.
+Live production deployment and smoke evidence:
+
+- `npm run deploy`: passed against commit `1ad7703026487bbcbe5e90b24d7835a84e6009df`; Worker Version ID `73dbedaf-f3cd-4421-abd9-f3ba6fbad056`; production bundle audit passed for `https://ks2.eugnel.uk/`.
+- `node ./scripts/reasoning-production-smoke.mjs --out validation/reasoning-production-smoke-2026-05-11.json`: `ok: true`; production content release `reasoning-poc-promoted-2026-05-11`; `110` templates; SATs session completed with reward projection.
+- `node ./scripts/reasoning-production-ui-smoke.mjs --out validation/reasoning-production-ui-smoke-2026-05-11.json --screenshot-dir validation/screenshots`: `ok: true`; desktop and mobile setup rendered with no page errors, console errors, request failures, or HTTP failures; desktop session rendered active form.
