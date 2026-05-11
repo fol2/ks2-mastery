@@ -1,0 +1,73 @@
+TAP version 13
+# Subtest: Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+ok 1 - Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+  ---
+  duration_ms: 597.846
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+ok 2 - Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+  ---
+  duration_ms: 0.8727
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 templates are runtime-certified and safe to schedule
+ok 3 - Grammar QG P21 templates are runtime-certified and safe to schedule
+  ---
+  duration_ms: 0.1626
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 selected-response cases mark exactly one visible option correct
+ok 4 - Grammar QG P21 selected-response cases mark exactly one visible option correct
+  ---
+  duration_ms: 12.3488
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 explanation templates use concept-specific misconception options
+ok 5 - Grammar QG P21 explanation templates use concept-specific misconception options
+  ---
+  duration_ms: 4.8546
+  type: 'test'
+  ...
+# Template count exceeds 80 — reassess R6 per docs/contracts/ci-shard-balance.md Scale Horizon
+# Subtest: R6 tripwire: buildGrammarPracticeQueue p95 under ceiling
+    # Subtest: wall-clock ceiling skipped because template catalogue exceeds the R6 calibration horizon
+    ok 1 - wall-clock ceiling skipped because template catalogue exceeds the R6 calibration horizon # SKIP
+      ---
+      duration_ms: 0.3283
+      type: 'test'
+      ...
+    1..1
+ok 6 - R6 tripwire: buildGrammarPracticeQueue p95 under ceiling
+  ---
+  duration_ms: 1.0768
+  type: 'test'
+  ...
+# Subtest: R6 kill-switch: post-opt p95 shows >=30% improvement vs baseline
+    # Subtest: wall-clock kill-switch skipped because template catalogue exceeds the R6 calibration horizon
+    ok 1 - wall-clock kill-switch skipped because template catalogue exceeds the R6 calibration horizon # SKIP
+      ---
+      duration_ms: 0.065
+      type: 'test'
+      ...
+    1..1
+ok 7 - R6 kill-switch: post-opt p95 shows >=30% improvement vs baseline
+  ---
+  duration_ms: 0.1803
+  type: 'test'
+  ...
+# Subtest: R6.AC5 — createGrammarQuestion call count stays below baseline / ratio
+ok 8 - R6.AC5 — createGrammarQuestion call count stays below baseline / ratio
+  ---
+  duration_ms: 260.015
+  type: 'test'
+  ...
+1..8
+# tests 10
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 729.5161

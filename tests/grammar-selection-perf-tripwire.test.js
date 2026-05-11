@@ -183,4 +183,25 @@ test('R6.AC5 — createGrammarQuestion call count stays below baseline / ratio',
     calls <= ceiling,
     `R6.AC5 call-count ceiling: ${calls} > ${ceiling} (baseline ${baselineCount}, ceiling = baseline / ${CALL_COUNT_CEILING_RATIO}, measured ${ratio.toFixed(2)}x reduction)`,
   );
+
+  // P22: P21 prompt-freshness must not materialise every Grammar template on
+  // every pick. With 546 templates, the pre-P22 implementation still passed
+  // the old R6 ratio but made 3,687 createGrammarQuestion calls per queue
+  // build. Keep a catalogue-scale deterministic ceiling so local-pool growth
+  // does not silently turn selection into O(all templates × queue size).
+  const p21CatalogueScaleCeiling = 1200;
+  assert.ok(
+    calls <= p21CatalogueScaleCeiling,
+    `P22 prompt-freshness call-count ceiling: ${calls} > ${p21CatalogueScaleCeiling}; prompt/variant freshness should only materialise recent families/templates, not the whole ${parsed?.templateCount || 'unknown'}-template catalogue`,
+  );
+
+  const priorityRecentMissCalls = Number(parsed?.priorityRecentMissCalls);
+  assert.ok(
+    Number.isFinite(priorityRecentMissCalls) && priorityRecentMissCalls > 0,
+    `P22 priority-urgent count probe returned invalid calls: ${lastLine}`,
+  );
+  assert.ok(
+    priorityRecentMissCalls <= p21CatalogueScaleCeiling,
+    `P22 priority-urgent call-count ceiling: ${priorityRecentMissCalls} > ${p21CatalogueScaleCeiling}; priority lane pickTemplate should reuse recent family pre-checks`,
+  );
 });

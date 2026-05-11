@@ -54,28 +54,47 @@ function buildFortyEntryRecent() {
 
 const recentAttempts = buildFortyEntryRecent();
 
-// Warm any module-load side effects so the count reflects only the build.
-selection.buildGrammarPracticeQueue({
-  mode: 'smart',
-  mastery: null,
-  recentAttempts,
-  seed: 1,
-  size: 10,
-  now: SIM_NOW_MS,
-});
+const weakMastery = {
+  concepts: {
+    adverbials: {
+      attempts: 10,
+      correct: 2,
+      wrong: 8,
+      strength: 0.15,
+      intervalDays: 0,
+      dueAt: 0,
+      correctStreak: 0,
+    },
+  },
+};
 
-calls = 0;
-selection.buildGrammarPracticeQueue({
+function countQueueBuild(config) {
+  selection.buildGrammarPracticeQueue(config);
+  calls = 0;
+  selection.buildGrammarPracticeQueue(config);
+  return calls;
+}
+
+const defaultConfig = {
   mode: 'smart',
   mastery: null,
   recentAttempts,
   seed: 1,
   size: 10,
   now: SIM_NOW_MS,
-});
+};
+
+const priorityRecentMissConfig = {
+  ...defaultConfig,
+  mastery: weakMastery,
+};
+
+const defaultCalls = countQueueBuild(defaultConfig);
+const priorityRecentMissCalls = countQueueBuild(priorityRecentMissConfig);
 
 process.stdout.write(`${JSON.stringify({
-  calls,
+  calls: defaultCalls,
+  priorityRecentMissCalls,
   templateCount: GRAMMAR_TEMPLATE_METADATA.length,
   node: process.version,
   config: { mode: 'smart', seed: 1, size: 10 },

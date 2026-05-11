@@ -12174,11 +12174,111 @@ function buildManualExpansionQuestion(template, seed, family) {
 // without confusing it with the certification pack.
 const GRAMMAR_P21_EXPANSION_RELEASE_ID = 'grammar-qg-p21-2026-05-11';
 
-const P21_EXPLANATION_DISTRACTORS = Object.freeze([
+const P21_DEFAULT_EXPLANATION_DISTRACTORS = Object.freeze([
   'It only depends on the final punctuation mark.',
   'It is correct because it is the shortest option.',
   'It is correct because it sounds more exciting.',
 ]);
+
+const P21_EXPLANATION_DISTRACTORS_BY_CONCEPT = Object.freeze({
+  sentence_functions: Object.freeze([
+    'It is correct because the sentence has a capital letter.',
+    'It is correct because the sentence mentions a person or thing.',
+    'Any sentence with strong feeling is automatically an exclamation.',
+  ]),
+  word_classes: Object.freeze([
+    'The word class is decided only by where the word appears in the sentence.',
+    'Every describing word is a noun.',
+    'A word keeps the same class in every sentence.',
+  ]),
+  noun_phrases: Object.freeze([
+    'A noun phrase must always be a whole sentence.',
+    'The head noun is always the first word in the phrase.',
+    'Any phrase with an adjective is automatically a clause.',
+  ]),
+  adverbials: Object.freeze([
+    'A fronted adverbial is correct without a comma.',
+    'Only single words can be adverbials.',
+    'An adverbial must always come at the end of a sentence.',
+  ]),
+  clauses: Object.freeze([
+    'A subordinate clause can always stand alone as a full sentence.',
+    'A clause does not need a verb.',
+    'The longest part of the sentence is always the main clause.',
+  ]),
+  relative_clauses: Object.freeze([
+    'Any clause beginning with which is a question.',
+    'Relative clauses never need commas.',
+    'Who and which can be swapped for any noun.',
+  ]),
+  tense_aspect: Object.freeze([
+    'The tense is decided only by the last word.',
+    'Has and had mean exactly the same thing.',
+    'Progressive forms are the same as simple past forms.',
+  ]),
+  standard_english: Object.freeze([
+    'It is Standard English because it sounds casual.',
+    'Any spoken form is correct in formal writing.',
+    'The verb form does not need to match the subject.',
+  ]),
+  pronouns_cohesion: Object.freeze([
+    'A pronoun is clear as long as it appears after a noun.',
+    'Using more pronouns always makes writing clearer.',
+    'It does not matter if a pronoun could refer to two people.',
+  ]),
+  formality: Object.freeze([
+    'Formal writing should always use slang.',
+    'The meaning is formal just because the sentence is longer.',
+    'A contraction is always the best choice in formal writing.',
+  ]),
+  active_passive: Object.freeze([
+    'Passive voice means the action is in the future.',
+    'The first noun is always the doer.',
+    'Adding by always makes a sentence active.',
+  ]),
+  subject_object: Object.freeze([
+    'The subject is always the first word.',
+    'The object is the person doing the action.',
+    'In passive sentences, the doer must be the subject.',
+  ]),
+  modal_verbs: Object.freeze([
+    'All modal verbs show the same certainty.',
+    'A modal verb is any word that comes before a noun.',
+    'Will and might mean exactly the same thing.',
+  ]),
+  parenthesis_commas: Object.freeze([
+    'Parenthesis always changes the main meaning of the sentence.',
+    'Only brackets can show parenthesis.',
+    'Commas for parenthesis are the same as list commas.',
+  ]),
+  speech_punctuation: Object.freeze([
+    'Speech marks go around the whole sentence, including the report.',
+    'A reporting clause never needs punctuation.',
+    'Direct speech can be punctuated like ordinary narration.',
+  ]),
+  apostrophes_possession: Object.freeze([
+    'Every plural noun needs an apostrophe.',
+    'An apostrophe always means a contraction.',
+    'The apostrophe goes wherever the word sounds paused.',
+  ]),
+  boundary_punctuation: Object.freeze([
+    'A colon can be used after any short phrase.',
+    'A semicolon joins two unrelated ideas.',
+    'A comma can always replace a full stop.',
+  ]),
+  hyphen_ambiguity: Object.freeze([
+    'A hyphen is just a longer dash.',
+    'Hyphens are only used to make words look shorter.',
+    'The meaning stays the same whether or not the hyphen is used.',
+  ]),
+});
+
+function p21ExplanationDistractors(conceptId) {
+  const distractors = P21_EXPLANATION_DISTRACTORS_BY_CONCEPT[conceptId];
+  return Array.isArray(distractors) && distractors.length >= 3
+    ? distractors
+    : P21_DEFAULT_EXPLANATION_DISTRACTORS;
+}
 
 function p21ExpansionTemplateId(familyId) {
   return `qg_${String(familyId || '').replace(/[^a-zA-Z0-9_]+/g, '_')}`;
@@ -12421,6 +12521,9 @@ function p21MergedConceptCases(conceptId, baseCases) {
 }
 
 function p21SelectedCaseFromBank(conceptId, familyKind, caseItem, index) {
+  const distractors = familyKind === 'explain'
+    ? p21ExplanationDistractors(conceptId)
+    : caseItem.distractors;
   return {
     id: `${GRAMMAR_P21_EXPANSION_RELEASE_ID}:${conceptId}:${familyKind}:${caseItem.id}`,
     sourcePack: GRAMMAR_P21_EXPANSION_RELEASE_ID,
@@ -12435,8 +12538,8 @@ function p21SelectedCaseFromBank(conceptId, familyKind, caseItem, index) {
     feedbackLong: caseItem.feedback,
     correctAnswer: familyKind === 'explain' ? caseItem.feedback : caseItem.correct,
     acceptedAnswers: [],
-    nearMisses: familyKind === 'explain' ? P21_EXPLANATION_DISTRACTORS.slice() : caseItem.distractors.slice(),
-    options: (familyKind === 'explain' ? P21_EXPLANATION_DISTRACTORS : caseItem.distractors)
+    nearMisses: distractors.slice(),
+    options: distractors
       .map((value) => ({ value, label: value, rationale: 'Misconception option.' })),
   };
 }

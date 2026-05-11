@@ -11,6 +11,13 @@ import { isTemplateBlocked } from '../worker/src/subjects/grammar/certification-
 
 const P21_TEMPLATES = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.tags.includes('qg-p21'));
 
+const P21_GENERIC_EXPLANATION_FILLERS = new Set([
+  'It only depends on the final punctuation mark.',
+  'It is correct because it is the shortest option.',
+  'It is correct because it sounds more exciting.',
+]);
+
+
 function p21TemplatesForConcept(conceptId) {
   return P21_TEMPLATES.filter((template) => template.skillIds.includes(conceptId));
 }
@@ -57,6 +64,30 @@ test('Grammar QG P21 selected-response cases mark exactly one visible option cor
       assert.equal(correctOptions.length, 1, `${template.id}:${seed} should have exactly one correct option`);
       for (const option of options.filter((candidate) => candidate.value !== correctOptions[0].value)) {
         assert.equal(question.evaluate({ answer: option.value }).correct, false, `${template.id}:${seed} should reject distractor ${option.value}`);
+      }
+    }
+  }
+});
+
+
+test('Grammar QG P21 explanation templates use concept-specific misconception options', () => {
+  const explanationTemplates = P21_TEMPLATES.filter((template) => template.questionType === 'explain');
+  assert.equal(explanationTemplates.length, 18);
+
+  for (const template of explanationTemplates) {
+    for (let seed = 1; seed <= 8; seed += 1) {
+      const question = createGrammarQuestion({ templateId: template.id, seed });
+      const options = question.inputSpec?.options || [];
+      const correct = options.find((option) => question.evaluate({ answer: option.value }).correct === true);
+      assert.ok(correct, `${template.id}:${seed} should expose one correct explanation option`);
+      const distractors = options.filter((option) => option.value !== correct.value).map((option) => option.value);
+      assert.equal(distractors.length, 3, `${template.id}:${seed} should expose three distractors`);
+      for (const distractor of distractors) {
+        assert.equal(
+          P21_GENERIC_EXPLANATION_FILLERS.has(distractor),
+          false,
+          `${template.id}:${seed} should not use generic explanation filler: ${distractor}`,
+        );
       }
     }
   }

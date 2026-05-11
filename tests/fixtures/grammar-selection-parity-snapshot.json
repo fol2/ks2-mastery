@@ -266,9 +266,10 @@
           "reason": "fallback"
         },
         {
-          "templateId": "word_class_underlined_choice",
+          "templateId": "question_mark_select",
           "skillIds": [
-            "word_classes"
+            "sentence_functions",
+            "speech_punctuation"
           ],
           "questionType": "identify",
           "generative": false,
@@ -536,9 +537,10 @@
           "reason": "fallback"
         },
         {
-          "templateId": "word_class_underlined_choice",
+          "templateId": "question_mark_select",
           "skillIds": [
-            "word_classes"
+            "sentence_functions",
+            "speech_punctuation"
           ],
           "questionType": "identify",
           "generative": false,
@@ -763,12 +765,11 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "question_mark_select",
+          "templateId": "sentence_type_table",
           "skillIds": [
-            "sentence_functions",
-            "speech_punctuation"
+            "sentence_functions"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": false,
           "satsFriendly": true,
           "reason": "spaced-retrieval"
@@ -817,31 +818,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_rank_certainty_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
+          "skillIds": [
+            "modal_verbs"
+          ],
+          "questionType": "classify",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p21_speech_punctuation_explanation_choice_variety",
+          "skillIds": [
+            "speech_punctuation"
+          ],
+          "questionType": "explain",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p21_modal_verbs_closed_choice_variety",
           "skillIds": [
             "modal_verbs"
           ],
           "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p21_speech_punctuation_closed_choice_variety",
-          "skillIds": [
-            "speech_punctuation"
-          ],
-          "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p21_subject_object_explanation_choice_variety",
-          "skillIds": [
-            "subject_object"
-          ],
-          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -1077,9 +1078,10 @@
           "reason": "fallback"
         },
         {
-          "templateId": "word_class_underlined_choice",
+          "templateId": "question_mark_select",
           "skillIds": [
-            "word_classes"
+            "sentence_functions",
+            "speech_punctuation"
           ],
           "questionType": "identify",
           "generative": false,
@@ -1347,9 +1349,10 @@
           "reason": "fallback"
         },
         {
-          "templateId": "word_class_underlined_choice",
+          "templateId": "question_mark_select",
           "skillIds": [
-            "word_classes"
+            "sentence_functions",
+            "speech_punctuation"
           ],
           "questionType": "identify",
           "generative": false,
@@ -1564,12 +1567,11 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "question_mark_select",
+          "templateId": "sentence_type_table",
           "skillIds": [
-            "sentence_functions",
-            "speech_punctuation"
+            "sentence_functions"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": false,
           "satsFriendly": true,
           "reason": "spaced-retrieval"
@@ -1628,31 +1630,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_rank_certainty_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
+          "skillIds": [
+            "modal_verbs"
+          ],
+          "questionType": "classify",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p21_speech_punctuation_explanation_choice_variety",
+          "skillIds": [
+            "speech_punctuation"
+          ],
+          "questionType": "explain",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p21_modal_verbs_closed_choice_variety",
           "skillIds": [
             "modal_verbs"
           ],
           "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p21_speech_punctuation_closed_choice_variety",
-          "skillIds": [
-            "speech_punctuation"
-          ],
-          "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p21_subject_object_explanation_choice_variety",
-          "skillIds": [
-            "subject_object"
-          ],
-          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -1887,9 +1889,10 @@
           "reason": "fallback"
         },
         {
-          "templateId": "word_class_underlined_choice",
+          "templateId": "question_mark_select",
           "skillIds": [
-            "word_classes"
+            "sentence_functions",
+            "speech_punctuation"
           ],
           "questionType": "identify",
           "generative": false,
@@ -2156,9 +2159,10 @@
           "reason": "fallback"
         },
         {
-          "templateId": "word_class_underlined_choice",
+          "templateId": "question_mark_select",
           "skillIds": [
-            "word_classes"
+            "sentence_functions",
+            "speech_punctuation"
           ],
           "questionType": "identify",
           "generative": false,
@@ -2436,31 +2440,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_rank_certainty_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
+          "skillIds": [
+            "modal_verbs"
+          ],
+          "questionType": "classify",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p21_speech_punctuation_explanation_choice_variety",
+          "skillIds": [
+            "speech_punctuation"
+          ],
+          "questionType": "explain",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p21_modal_verbs_closed_choice_variety",
           "skillIds": [
             "modal_verbs"
           ],
           "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p21_speech_punctuation_closed_choice_variety",
-          "skillIds": [
-            "speech_punctuation"
-          ],
-          "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p21_subject_object_explanation_choice_variety",
-          "skillIds": [
-            "subject_object"
-          ],
-          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -2695,9 +2699,10 @@
           "reason": "fallback"
         },
         {
-          "templateId": "word_class_underlined_choice",
+          "templateId": "question_mark_select",
           "skillIds": [
-            "word_classes"
+            "sentence_functions",
+            "speech_punctuation"
           ],
           "questionType": "identify",
           "generative": false,
@@ -2964,9 +2969,10 @@
           "reason": "fallback"
         },
         {
-          "templateId": "word_class_underlined_choice",
+          "templateId": "question_mark_select",
           "skillIds": [
-            "word_classes"
+            "sentence_functions",
+            "speech_punctuation"
           ],
           "questionType": "identify",
           "generative": false,
@@ -3244,31 +3250,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_rank_certainty_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
+          "skillIds": [
+            "modal_verbs"
+          ],
+          "questionType": "classify",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p21_speech_punctuation_explanation_choice_variety",
+          "skillIds": [
+            "speech_punctuation"
+          ],
+          "questionType": "explain",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p21_modal_verbs_closed_choice_variety",
           "skillIds": [
             "modal_verbs"
           ],
           "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p21_speech_punctuation_closed_choice_variety",
-          "skillIds": [
-            "speech_punctuation"
-          ],
-          "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p21_subject_object_explanation_choice_variety",
-          "skillIds": [
-            "subject_object"
-          ],
-          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -3502,11 +3508,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_tense_aspect_choice",
+          "templateId": "proc2_standard_english_choice",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
           ],
-          "questionType": "fill",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -3532,11 +3538,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+          "templateId": "qg_p18_p16_modal_verbs_choose_modal_meaning",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "fill",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -3748,13 +3754,13 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_speech_punctuation_precision_choice",
+          "templateId": "qg_p18_p17_speech_punctuation_misconception_repair",
           "skillIds": [
             "speech_punctuation"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
-          "satsFriendly": true,
+          "satsFriendly": false,
           "reason": "fallback"
         }
       ],
@@ -3996,12 +4002,13 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "proc3_sentence_function_choice",
+          "templateId": "question_mark_select",
           "skillIds": [
-            "sentence_functions"
+            "sentence_functions",
+            "speech_punctuation"
           ],
-          "questionType": "choose",
-          "generative": true,
+          "questionType": "identify",
+          "generative": false,
           "satsFriendly": true,
           "reason": "spaced-retrieval"
         },
@@ -4038,19 +4045,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_tense_aspect_choice",
+          "templateId": "proc2_standard_english_choice",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
           ],
-          "questionType": "fill",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p21_parenthesis_commas_explanation_choice_variety",
+          "templateId": "qg_p21_modal_verbs_explanation_choice_variety",
           "skillIds": [
-            "parenthesis_commas"
+            "modal_verbs"
           ],
           "questionType": "explain",
           "generative": true,
@@ -4058,9 +4065,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_sentence_functions_table_classify",
+          "templateId": "qg_p18_p18_active_passive_sat_table_classification",
           "skillIds": [
-            "sentence_functions"
+            "active_passive"
           ],
           "questionType": "classify",
           "generative": true,
@@ -4068,11 +4075,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -4275,7 +4282,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_speech_punctuation_precision_choice",
+          "templateId": "qg_p18_p17_speech_punctuation_examiner_trap_contrast",
           "skillIds": [
             "speech_punctuation"
           ],
@@ -4285,11 +4292,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_expanded_or_not_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
           "skillIds": [
-            "noun_phrases"
+            "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -4307,11 +4314,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_tense_aspect_choice",
+          "templateId": "proc2_standard_english_choice",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
           ],
-          "questionType": "fill",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -4337,11 +4344,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+          "templateId": "qg_p18_p16_modal_verbs_choose_modal_meaning",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "fill",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -4554,11 +4561,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
+          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -4824,11 +4831,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_rank_certainty_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -4846,19 +4853,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_tense_aspect_choice",
+          "templateId": "proc2_standard_english_choice",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
           ],
-          "questionType": "fill",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p21_parenthesis_commas_explanation_choice_variety",
+          "templateId": "qg_p21_modal_verbs_explanation_choice_variety",
           "skillIds": [
-            "parenthesis_commas"
+            "modal_verbs"
           ],
           "questionType": "explain",
           "generative": true,
@@ -4866,9 +4873,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_sentence_functions_table_classify",
+          "templateId": "qg_p18_p18_active_passive_sat_table_classification",
           "skillIds": [
-            "sentence_functions"
+            "active_passive"
           ],
           "questionType": "classify",
           "generative": true,
@@ -4876,11 +4883,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -5114,11 +5121,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_tense_aspect_choice",
+          "templateId": "proc2_standard_english_choice",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
           ],
-          "questionType": "fill",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -5144,11 +5151,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+          "templateId": "qg_p18_p16_modal_verbs_choose_modal_meaning",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "fill",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -5650,19 +5657,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_tense_aspect_choice",
+          "templateId": "proc2_standard_english_choice",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
           ],
-          "questionType": "fill",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p21_parenthesis_commas_explanation_choice_variety",
+          "templateId": "qg_p21_modal_verbs_explanation_choice_variety",
           "skillIds": [
-            "parenthesis_commas"
+            "modal_verbs"
           ],
           "questionType": "explain",
           "generative": true,
@@ -5670,9 +5677,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_sentence_functions_table_classify",
+          "templateId": "qg_p18_p18_active_passive_sat_table_classification",
           "skillIds": [
-            "sentence_functions"
+            "active_passive"
           ],
           "questionType": "classify",
           "generative": true,
@@ -5680,11 +5687,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -5918,11 +5925,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_tense_aspect_choice",
+          "templateId": "proc2_standard_english_choice",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
           ],
-          "questionType": "fill",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -5948,11 +5955,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+          "templateId": "qg_p18_p16_modal_verbs_choose_modal_meaning",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "fill",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -6454,19 +6461,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_tense_aspect_choice",
+          "templateId": "proc2_standard_english_choice",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
           ],
-          "questionType": "fill",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p21_parenthesis_commas_explanation_choice_variety",
+          "templateId": "qg_p21_modal_verbs_explanation_choice_variety",
           "skillIds": [
-            "parenthesis_commas"
+            "modal_verbs"
           ],
           "questionType": "explain",
           "generative": true,
@@ -6474,9 +6481,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_sentence_functions_table_classify",
+          "templateId": "qg_p18_p18_active_passive_sat_table_classification",
           "skillIds": [
-            "sentence_functions"
+            "active_passive"
           ],
           "questionType": "classify",
           "generative": true,
@@ -6484,11 +6491,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+          "templateId": "qg_p18_p16_modal_verbs_modal_or_adverb",
           "skillIds": [
             "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -6690,21 +6697,21 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "proc2_boundary_punctuation_explain",
+          "templateId": "proc2_fronted_adverbial_build",
           "skillIds": [
-            "boundary_punctuation"
+            "adverbials"
           ],
-          "questionType": "explain",
+          "questionType": "build",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "proc_speech_punctuation_fix",
+          "templateId": "proc_hyphen_ambiguity_choice",
           "skillIds": [
-            "speech_punctuation"
+            "hyphen_ambiguity"
           ],
-          "questionType": "fix",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -6732,9 +6739,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_formality_choice",
+          "templateId": "proc2_modal_choice",
           "skillIds": [
-            "formality"
+            "modal_verbs"
+          ],
+          "questionType": "fill",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "proc_semicolon_choice",
+          "skillIds": [
+            "boundary_punctuation"
           ],
           "questionType": "choose",
           "generative": true,
@@ -6742,22 +6759,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_colon_list_fix",
+          "templateId": "speech_punctuation_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "speech_punctuation"
           ],
           "questionType": "fix",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "explain_reason_choice",
-          "skillIds": [
-            "adverbials",
-            "standard_english"
-          ],
-          "questionType": "explain",
           "generative": false,
           "satsFriendly": true,
           "reason": "fallback"
@@ -6959,21 +6965,21 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "proc2_boundary_punctuation_explain",
+          "templateId": "proc2_relative_clause_choice",
           "skillIds": [
-            "boundary_punctuation"
+            "relative_clauses"
           ],
-          "questionType": "explain",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "proc_hyphen_ambiguity_choice",
+          "templateId": "proc_dash_boundary_fix",
           "skillIds": [
-            "hyphen_ambiguity"
+            "boundary_punctuation"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -6991,11 +6997,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_pronouns_cohesion_pronoun_referent",
+          "templateId": "qg_p18_p15_pronouns_cohesion_explain_cohesion",
           "skillIds": [
             "pronouns_cohesion"
           ],
-          "questionType": "identify",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -7011,11 +7017,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_semicolon_choice",
+          "templateId": "proc_fronted_adverbial_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -7217,11 +7223,11 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "qg_p18_p16_sentence_functions_choose_matching_function_for_context",
+          "templateId": "qg_p18_p15_sentence_functions_sat_style_function",
           "skillIds": [
             "sentence_functions"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "spaced-retrieval"
@@ -7237,11 +7243,11 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "proc_speech_punctuation_fix",
+          "templateId": "proc_hyphen_ambiguity_choice",
           "skillIds": [
-            "speech_punctuation"
+            "hyphen_ambiguity"
           ],
-          "questionType": "fix",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -7269,9 +7275,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_formality_choice",
+          "templateId": "proc2_modal_choice",
           "skillIds": [
-            "formality"
+            "modal_verbs"
+          ],
+          "questionType": "fill",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "proc_semicolon_choice",
+          "skillIds": [
+            "boundary_punctuation"
           ],
           "questionType": "choose",
           "generative": true,
@@ -7279,19 +7295,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_colon_list_fix",
+          "templateId": "parenthesis_fix_sentence",
           "skillIds": [
-            "boundary_punctuation"
-          ],
-          "questionType": "fix",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "speech_punctuation_fix",
-          "skillIds": [
-            "speech_punctuation"
+            "parenthesis_commas"
           ],
           "questionType": "fix",
           "generative": false,
@@ -7485,29 +7491,29 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "proc2_formality_choice",
+          "templateId": "proc2_modal_choice",
           "skillIds": [
-            "formality"
+            "modal_verbs"
           ],
-          "questionType": "choose",
+          "questionType": "fill",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "proc_semicolon_choice",
+          "templateId": "proc_fronted_adverbial_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "speech_punctuation_fix",
+          "templateId": "parenthesis_fix_sentence",
           "skillIds": [
-            "speech_punctuation"
+            "parenthesis_commas"
           ],
           "questionType": "fix",
           "generative": false,
@@ -7537,9 +7543,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_formality_choice",
+          "templateId": "proc2_modal_choice",
           "skillIds": [
-            "formality"
+            "modal_verbs"
+          ],
+          "questionType": "fill",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "proc_semicolon_choice",
+          "skillIds": [
+            "boundary_punctuation"
           ],
           "questionType": "choose",
           "generative": true,
@@ -7547,22 +7563,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_colon_list_fix",
+          "templateId": "speech_punctuation_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "speech_punctuation"
           ],
           "questionType": "fix",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "explain_reason_choice",
-          "skillIds": [
-            "adverbials",
-            "standard_english"
-          ],
-          "questionType": "explain",
           "generative": false,
           "satsFriendly": true,
           "reason": "fallback"
@@ -7755,9 +7760,9 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "proc2_modal_choice",
+          "templateId": "proc2_tense_aspect_choice",
           "skillIds": [
-            "modal_verbs"
+            "tense_aspect"
           ],
           "questionType": "fill",
           "generative": true,
@@ -7775,11 +7780,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "parenthesis_fix_sentence",
+          "templateId": "parenthesis_replace_choice",
           "skillIds": [
             "parenthesis_commas"
           ],
-          "questionType": "fix",
+          "questionType": "choose",
           "generative": false,
           "satsFriendly": true,
           "reason": "fallback"
@@ -7797,11 +7802,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_pronouns_cohesion_pronoun_referent",
+          "templateId": "qg_p18_p15_pronouns_cohesion_explain_cohesion",
           "skillIds": [
             "pronouns_cohesion"
           ],
-          "questionType": "identify",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -7817,11 +7822,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_semicolon_choice",
+          "templateId": "proc_fronted_adverbial_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -8014,11 +8019,11 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "qg_p18_p15_sentence_functions_identify_function",
+          "templateId": "qg_p18_p15_sentence_functions_function_contrast",
           "skillIds": [
             "sentence_functions"
           ],
-          "questionType": "identify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "spaced-retrieval"
@@ -8034,21 +8039,21 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "proc_semicolon_choice",
+          "templateId": "proc_fronted_adverbial_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "parenthesis_fix_sentence",
+          "templateId": "parenthesis_replace_choice",
           "skillIds": [
             "parenthesis_commas"
           ],
-          "questionType": "fix",
+          "questionType": "choose",
           "generative": false,
           "satsFriendly": true,
           "reason": "fallback"
@@ -8076,9 +8081,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_formality_choice",
+          "templateId": "proc2_modal_choice",
           "skillIds": [
-            "formality"
+            "modal_verbs"
+          ],
+          "questionType": "fill",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "proc_semicolon_choice",
+          "skillIds": [
+            "boundary_punctuation"
           ],
           "questionType": "choose",
           "generative": true,
@@ -8086,19 +8101,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_colon_list_fix",
+          "templateId": "parenthesis_fix_sentence",
           "skillIds": [
-            "boundary_punctuation"
-          ],
-          "questionType": "fix",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "speech_punctuation_fix",
-          "skillIds": [
-            "speech_punctuation"
+            "parenthesis_commas"
           ],
           "questionType": "fix",
           "generative": false,
@@ -8344,9 +8349,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_formality_choice",
+          "templateId": "proc2_modal_choice",
           "skillIds": [
-            "formality"
+            "modal_verbs"
+          ],
+          "questionType": "fill",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "proc_semicolon_choice",
+          "skillIds": [
+            "boundary_punctuation"
           ],
           "questionType": "choose",
           "generative": true,
@@ -8354,22 +8369,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_colon_list_fix",
+          "templateId": "speech_punctuation_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "speech_punctuation"
           ],
           "questionType": "fix",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "explain_reason_choice",
-          "skillIds": [
-            "adverbials",
-            "standard_english"
-          ],
-          "questionType": "explain",
           "generative": false,
           "satsFriendly": true,
           "reason": "fallback"
@@ -8603,11 +8607,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_pronouns_cohesion_pronoun_referent",
+          "templateId": "qg_p18_p15_pronouns_cohesion_explain_cohesion",
           "skillIds": [
             "pronouns_cohesion"
           ],
-          "questionType": "identify",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -8623,11 +8627,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_semicolon_choice",
+          "templateId": "proc_fronted_adverbial_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -8881,9 +8885,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_formality_choice",
+          "templateId": "proc2_modal_choice",
           "skillIds": [
-            "formality"
+            "modal_verbs"
+          ],
+          "questionType": "fill",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "proc_semicolon_choice",
+          "skillIds": [
+            "boundary_punctuation"
           ],
           "questionType": "choose",
           "generative": true,
@@ -8891,19 +8905,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_colon_list_fix",
+          "templateId": "parenthesis_fix_sentence",
           "skillIds": [
-            "boundary_punctuation"
-          ],
-          "questionType": "fix",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "speech_punctuation_fix",
-          "skillIds": [
-            "speech_punctuation"
+            "parenthesis_commas"
           ],
           "questionType": "fix",
           "generative": false,
@@ -9149,9 +9153,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_formality_choice",
+          "templateId": "proc2_modal_choice",
           "skillIds": [
-            "formality"
+            "modal_verbs"
+          ],
+          "questionType": "fill",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "proc_semicolon_choice",
+          "skillIds": [
+            "boundary_punctuation"
           ],
           "questionType": "choose",
           "generative": true,
@@ -9159,22 +9173,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_colon_list_fix",
+          "templateId": "speech_punctuation_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "speech_punctuation"
           ],
           "questionType": "fix",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "explain_reason_choice",
-          "skillIds": [
-            "adverbials",
-            "standard_english"
-          ],
-          "questionType": "explain",
           "generative": false,
           "satsFriendly": true,
           "reason": "fallback"
@@ -9408,11 +9411,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_pronouns_cohesion_pronoun_referent",
+          "templateId": "qg_p18_p15_pronouns_cohesion_explain_cohesion",
           "skillIds": [
             "pronouns_cohesion"
           ],
-          "questionType": "identify",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -9428,11 +9431,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_semicolon_choice",
+          "templateId": "proc_fronted_adverbial_fix",
           "skillIds": [
-            "boundary_punctuation"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -9686,9 +9689,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc2_formality_choice",
+          "templateId": "proc2_modal_choice",
           "skillIds": [
-            "formality"
+            "modal_verbs"
+          ],
+          "questionType": "fill",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "proc_semicolon_choice",
+          "skillIds": [
+            "boundary_punctuation"
           ],
           "questionType": "choose",
           "generative": true,
@@ -9696,19 +9709,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "proc_colon_list_fix",
+          "templateId": "parenthesis_fix_sentence",
           "skillIds": [
-            "boundary_punctuation"
-          ],
-          "questionType": "fix",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "speech_punctuation_fix",
-          "skillIds": [
-            "speech_punctuation"
+            "parenthesis_commas"
           ],
           "questionType": "fix",
           "generative": false,
@@ -9922,13 +9925,13 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_pronouns_cohesion_precision_choice",
+          "templateId": "qg_p18_p17_pronouns_cohesion_misconception_repair",
           "skillIds": [
             "pronouns_cohesion"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
-          "satsFriendly": true,
+          "satsFriendly": false,
           "reason": "fallback"
         }
       ],
@@ -10212,7 +10215,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_active_passive_voice_error_spot",
+          "templateId": "qg_p18_p16_active_passive_same_meaning_choice",
           "skillIds": [
             "active_passive"
           ],
@@ -10438,11 +10441,11 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "qg_p18_p16_sentence_functions_exclamation_not_excited_statement",
+          "templateId": "qg_p18_p16_sentence_functions_direct_indirect_question_contrast",
           "skillIds": [
             "sentence_functions"
           ],
-          "questionType": "choose",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "spaced-retrieval"
@@ -10510,9 +10513,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p3_apostrophe_possession_explain",
+          "templateId": "qg_p3_speech_punctuation_explain",
           "skillIds": [
-            "apostrophes_possession"
+            "speech_punctuation"
           ],
           "questionType": "explain",
           "generative": true,
@@ -10706,11 +10709,11 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p18_p18_sentence_functions_precision_repair_or_rewrite",
+          "templateId": "qg_p18_p18_sentence_functions_explain_reasoning",
           "skillIds": [
             "sentence_functions"
           ],
-          "questionType": "fix",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -10726,11 +10729,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_standard_english_explain_why",
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
           "skillIds": [
             "standard_english"
           ],
-          "questionType": "explain",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -11016,7 +11019,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_active_passive_voice_error_spot",
+          "templateId": "qg_p18_p16_active_passive_same_meaning_choice",
           "skillIds": [
             "active_passive"
           ],
@@ -11232,11 +11235,11 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "qg_p18_p15_sentence_functions_sat_style_function",
+          "templateId": "qg_p18_p15_sentence_functions_punctuate_by_function",
           "skillIds": [
             "sentence_functions"
           ],
-          "questionType": "classify",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "spaced-retrieval"
@@ -11262,7 +11265,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_standard_english_constructed_rewrite",
+          "templateId": "qg_p14_standard_english_diagnostic_choice",
           "skillIds": [
             "standard_english"
           ],
@@ -11314,9 +11317,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p3_apostrophe_possession_explain",
+          "templateId": "qg_p3_speech_punctuation_explain",
           "skillIds": [
-            "apostrophes_possession"
+            "speech_punctuation"
           ],
           "questionType": "explain",
           "generative": true,
@@ -11820,7 +11823,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_active_passive_voice_error_spot",
+          "templateId": "qg_p18_p16_active_passive_same_meaning_choice",
           "skillIds": [
             "active_passive"
           ],
@@ -12118,9 +12121,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p3_apostrophe_possession_explain",
+          "templateId": "qg_p3_speech_punctuation_explain",
           "skillIds": [
-            "apostrophes_possession"
+            "speech_punctuation"
           ],
           "questionType": "explain",
           "generative": true,
@@ -12624,7 +12627,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_active_passive_voice_error_spot",
+          "templateId": "qg_p18_p16_active_passive_same_meaning_choice",
           "skillIds": [
             "active_passive"
           ],
@@ -12922,9 +12925,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p3_apostrophe_possession_explain",
+          "templateId": "qg_p3_speech_punctuation_explain",
           "skillIds": [
-            "apostrophes_possession"
+            "speech_punctuation"
           ],
           "questionType": "explain",
           "generative": true,
@@ -13170,31 +13173,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_noun_phrase_vs_clause",
+          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
           "skillIds": [
             "noun_phrases"
           ],
-          "questionType": "classify",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p18_tense_aspect_explain_reasoning",
+          "templateId": "qg_p18_p18_tense_aspect_diagnostic_identify",
           "skillIds": [
             "tense_aspect"
           ],
-          "questionType": "explain",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_pronouns_cohesion_too_many_pronouns",
+          "templateId": "qg_p18_p16_speech_punctuation_reporting_clause_position",
           "skillIds": [
-            "pronouns_cohesion"
+            "speech_punctuation"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -13406,11 +13409,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
+          "templateId": "qg_p18_p18_speech_punctuation_explain_reasoning",
           "skillIds": [
             "speech_punctuation"
           ],
-          "questionType": "fix",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -13428,21 +13431,21 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_choice",
           "skillIds": [
             "hyphen_ambiguity"
           ],
-          "questionType": "fix",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_expanded_or_not_choice",
+          "templateId": "qg_p18_p16_parenthesis_commas_choose_parenthetical_part",
           "skillIds": [
-            "noun_phrases"
+            "parenthesis_commas"
           ],
-          "questionType": "choose",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -13458,11 +13461,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_sentence_functions_direct_indirect_question_contrast",
+          "templateId": "qg_p18_p16_relative_clauses_relative_or_time_clause",
           "skillIds": [
-            "sentence_functions"
+            "relative_clauses"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -13674,11 +13677,11 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p18_p18_speech_punctuation_sat_table_classification",
+          "templateId": "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite",
           "skillIds": [
             "speech_punctuation"
           ],
-          "questionType": "classify",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -13974,31 +13977,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_noun_phrase_vs_clause",
+          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
           "skillIds": [
             "noun_phrases"
           ],
-          "questionType": "classify",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p18_tense_aspect_explain_reasoning",
+          "templateId": "qg_p18_p18_tense_aspect_diagnostic_identify",
           "skillIds": [
             "tense_aspect"
           ],
-          "questionType": "explain",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_pronouns_cohesion_too_many_pronouns",
+          "templateId": "qg_p18_p16_speech_punctuation_reporting_clause_position",
           "skillIds": [
-            "pronouns_cohesion"
+            "speech_punctuation"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -14190,11 +14193,11 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+          "templateId": "qg_p18_p16_noun_phrases_noun_phrase_vs_clause",
           "skillIds": [
-            "parenthesis_commas"
+            "noun_phrases"
           ],
-          "questionType": "fix",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -14210,11 +14213,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_relative_clauses_noun_linked_by_relative",
+          "templateId": "qg_p18_p16_relative_clauses_complete_with_relative_clause",
           "skillIds": [
             "relative_clauses"
           ],
-          "questionType": "identify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -14232,21 +14235,21 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_choice",
           "skillIds": [
             "hyphen_ambiguity"
           ],
-          "questionType": "fix",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_expanded_or_not_choice",
+          "templateId": "qg_p18_p16_parenthesis_commas_choose_parenthetical_part",
           "skillIds": [
-            "noun_phrases"
+            "parenthesis_commas"
           ],
-          "questionType": "choose",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -14262,11 +14265,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_sentence_functions_direct_indirect_question_contrast",
+          "templateId": "qg_p18_p16_relative_clauses_relative_or_time_clause",
           "skillIds": [
-            "sentence_functions"
+            "relative_clauses"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -14450,11 +14453,11 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "qg_p18_p15_sentence_functions_function_contrast",
+          "templateId": "qg_p18_p15_sentence_functions_explain_function",
           "skillIds": [
             "sentence_functions"
           ],
-          "questionType": "choose",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "spaced-retrieval"
@@ -14780,31 +14783,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_noun_phrase_vs_clause",
+          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
           "skillIds": [
             "noun_phrases"
           ],
-          "questionType": "classify",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p18_tense_aspect_explain_reasoning",
+          "templateId": "qg_p18_p18_tense_aspect_diagnostic_identify",
           "skillIds": [
             "tense_aspect"
           ],
-          "questionType": "explain",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_pronouns_cohesion_too_many_pronouns",
+          "templateId": "qg_p18_p16_speech_punctuation_reporting_clause_position",
           "skillIds": [
-            "pronouns_cohesion"
+            "speech_punctuation"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -15038,21 +15041,21 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_choice",
           "skillIds": [
             "hyphen_ambiguity"
           ],
-          "questionType": "fix",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_expanded_or_not_choice",
+          "templateId": "qg_p18_p16_parenthesis_commas_choose_parenthetical_part",
           "skillIds": [
-            "noun_phrases"
+            "parenthesis_commas"
           ],
-          "questionType": "choose",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -15068,11 +15071,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_sentence_functions_direct_indirect_question_contrast",
+          "templateId": "qg_p18_p16_relative_clauses_relative_or_time_clause",
           "skillIds": [
-            "sentence_functions"
+            "relative_clauses"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -15584,31 +15587,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_noun_phrase_vs_clause",
+          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
           "skillIds": [
             "noun_phrases"
           ],
-          "questionType": "classify",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p18_tense_aspect_explain_reasoning",
+          "templateId": "qg_p18_p18_tense_aspect_diagnostic_identify",
           "skillIds": [
             "tense_aspect"
           ],
-          "questionType": "explain",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_pronouns_cohesion_too_many_pronouns",
+          "templateId": "qg_p18_p16_speech_punctuation_reporting_clause_position",
           "skillIds": [
-            "pronouns_cohesion"
+            "speech_punctuation"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -15842,21 +15845,21 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_fix",
+          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_choice",
           "skillIds": [
             "hyphen_ambiguity"
           ],
-          "questionType": "fix",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_expanded_or_not_choice",
+          "templateId": "qg_p18_p16_parenthesis_commas_choose_parenthetical_part",
           "skillIds": [
-            "noun_phrases"
+            "parenthesis_commas"
           ],
-          "questionType": "choose",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -15872,11 +15875,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_sentence_functions_direct_indirect_question_contrast",
+          "templateId": "qg_p18_p16_relative_clauses_relative_or_time_clause",
           "skillIds": [
-            "sentence_functions"
+            "relative_clauses"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -16346,19 +16349,19 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p18_p15_active_passive_voice_transfer",
+          "templateId": "qg_p18_p15_active_passive_voice_roles_table",
           "skillIds": [
             "active_passive"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_speech_punctuation_diagnostic_choice",
+          "templateId": "qg_p14_tense_aspect_mixed_transfer",
           "skillIds": [
-            "speech_punctuation"
+            "tense_aspect"
           ],
           "questionType": "choose",
           "generative": true,
@@ -16388,19 +16391,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
             "tense_aspect"
-          ],
-          "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p3_apostrophe_possession_explain",
-          "skillIds": [
-            "apostrophes_possession"
           ],
           "questionType": "explain",
           "generative": true,
@@ -16408,9 +16401,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_tense_aspect_table_classify",
+          "templateId": "qg_p14_standard_english_explain_why",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
+          ],
+          "questionType": "explain",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p18_p17_clauses_table_classify",
+          "skillIds": [
+            "clauses"
           ],
           "questionType": "classify",
           "generative": true,
@@ -16624,13 +16627,13 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
+          "templateId": "qg_p14_tense_aspect_constructed_rewrite",
           "skillIds": [
             "tense_aspect"
           ],
-          "questionType": "explain",
+          "questionType": "rewrite",
           "generative": true,
-          "satsFriendly": true,
+          "satsFriendly": false,
           "reason": "fallback"
         }
       ],
@@ -16656,31 +16659,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
-          "skillIds": [
-            "tense_aspect"
-          ],
-          "questionType": "explain",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p14_standard_english_explain_why",
-          "skillIds": [
-            "standard_english"
-          ],
-          "questionType": "explain",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p18_p17_clauses_precision_choice",
+          "templateId": "qg_p14_subordinate_clauses_mixed_transfer",
           "skillIds": [
             "clauses"
           ],
           "questionType": "choose",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
+          "skillIds": [
+            "standard_english"
+          ],
+          "questionType": "choose",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p18_p17_tense_aspect_table_classify",
+          "skillIds": [
+            "tense_aspect"
+          ],
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -16892,11 +16895,11 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
             "tense_aspect"
           ],
-          "questionType": "choose",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -16924,7 +16927,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_diagnostic_choice",
           "skillIds": [
             "tense_aspect"
           ],
@@ -16934,9 +16937,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p3_apostrophe_possession_explain",
+          "templateId": "qg_p3_speech_punctuation_explain",
           "skillIds": [
-            "apostrophes_possession"
+            "speech_punctuation"
           ],
           "questionType": "explain",
           "generative": true,
@@ -17140,21 +17143,21 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p14_speech_punctuation_diagnostic_choice",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
-            "speech_punctuation"
+            "tense_aspect"
           ],
-          "questionType": "choose",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_standard_english_mixed_transfer",
+          "templateId": "qg_p14_standard_english_explain_why",
           "skillIds": [
             "standard_english"
           ],
-          "questionType": "choose",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -17192,19 +17195,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
             "tense_aspect"
-          ],
-          "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p3_apostrophe_possession_explain",
-          "skillIds": [
-            "apostrophes_possession"
           ],
           "questionType": "explain",
           "generative": true,
@@ -17212,9 +17205,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_tense_aspect_table_classify",
+          "templateId": "qg_p14_standard_english_explain_why",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
+          ],
+          "questionType": "explain",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p18_p17_clauses_table_classify",
+          "skillIds": [
+            "clauses"
           ],
           "questionType": "classify",
           "generative": true,
@@ -17408,11 +17411,11 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
+          "templateId": "qg_p14_tense_aspect_diagnostic_choice",
           "skillIds": [
             "tense_aspect"
           ],
-          "questionType": "explain",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -17460,31 +17463,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
-          "skillIds": [
-            "tense_aspect"
-          ],
-          "questionType": "explain",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p14_standard_english_explain_why",
-          "skillIds": [
-            "standard_english"
-          ],
-          "questionType": "explain",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p18_p17_clauses_precision_choice",
+          "templateId": "qg_p14_subordinate_clauses_mixed_transfer",
           "skillIds": [
             "clauses"
           ],
           "questionType": "choose",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
+          "skillIds": [
+            "standard_english"
+          ],
+          "questionType": "choose",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p18_p17_tense_aspect_table_classify",
+          "skillIds": [
+            "tense_aspect"
+          ],
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -17686,21 +17689,21 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p14_standard_english_explain_why",
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
           "skillIds": [
             "standard_english"
           ],
-          "questionType": "explain",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_pronouns_cohesion_precision_choice",
+          "templateId": "qg_p18_p17_parenthesis_commas_table_classify",
           "skillIds": [
-            "pronouns_cohesion"
+            "parenthesis_commas"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -17728,7 +17731,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_diagnostic_choice",
           "skillIds": [
             "tense_aspect"
           ],
@@ -17738,9 +17741,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p3_apostrophe_possession_explain",
+          "templateId": "qg_p3_speech_punctuation_explain",
           "skillIds": [
-            "apostrophes_possession"
+            "speech_punctuation"
           ],
           "questionType": "explain",
           "generative": true,
@@ -17996,19 +17999,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
             "tense_aspect"
-          ],
-          "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p3_apostrophe_possession_explain",
-          "skillIds": [
-            "apostrophes_possession"
           ],
           "questionType": "explain",
           "generative": true,
@@ -18016,9 +18009,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_tense_aspect_table_classify",
+          "templateId": "qg_p14_standard_english_explain_why",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
+          ],
+          "questionType": "explain",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p18_p17_clauses_table_classify",
+          "skillIds": [
+            "clauses"
           ],
           "questionType": "classify",
           "generative": true,
@@ -18264,31 +18267,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
-          "skillIds": [
-            "tense_aspect"
-          ],
-          "questionType": "explain",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p14_standard_english_explain_why",
-          "skillIds": [
-            "standard_english"
-          ],
-          "questionType": "explain",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p18_p17_clauses_precision_choice",
+          "templateId": "qg_p14_subordinate_clauses_mixed_transfer",
           "skillIds": [
             "clauses"
           ],
           "questionType": "choose",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
+          "skillIds": [
+            "standard_english"
+          ],
+          "questionType": "choose",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p18_p17_tense_aspect_table_classify",
+          "skillIds": [
+            "tense_aspect"
+          ],
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -18532,7 +18535,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_diagnostic_choice",
           "skillIds": [
             "tense_aspect"
           ],
@@ -18542,9 +18545,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p3_apostrophe_possession_explain",
+          "templateId": "qg_p3_speech_punctuation_explain",
           "skillIds": [
-            "apostrophes_possession"
+            "speech_punctuation"
           ],
           "questionType": "explain",
           "generative": true,
@@ -18800,19 +18803,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
             "tense_aspect"
-          ],
-          "questionType": "choose",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p3_apostrophe_possession_explain",
-          "skillIds": [
-            "apostrophes_possession"
           ],
           "questionType": "explain",
           "generative": true,
@@ -18820,9 +18813,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_tense_aspect_table_classify",
+          "templateId": "qg_p14_standard_english_explain_why",
           "skillIds": [
-            "tense_aspect"
+            "standard_english"
+          ],
+          "questionType": "explain",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p18_p17_clauses_table_classify",
+          "skillIds": [
+            "clauses"
           ],
           "questionType": "classify",
           "generative": true,
@@ -19068,31 +19071,31 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
-          "skillIds": [
-            "tense_aspect"
-          ],
-          "questionType": "explain",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p14_standard_english_explain_why",
-          "skillIds": [
-            "standard_english"
-          ],
-          "questionType": "explain",
-          "generative": true,
-          "satsFriendly": true,
-          "reason": "fallback"
-        },
-        {
-          "templateId": "qg_p18_p17_clauses_precision_choice",
+          "templateId": "qg_p14_subordinate_clauses_mixed_transfer",
           "skillIds": [
             "clauses"
           ],
           "questionType": "choose",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p14_standard_english_constructed_rewrite",
+          "skillIds": [
+            "standard_english"
+          ],
+          "questionType": "choose",
+          "generative": true,
+          "satsFriendly": true,
+          "reason": "fallback"
+        },
+        {
+          "templateId": "qg_p18_p17_tense_aspect_table_classify",
+          "skillIds": [
+            "tense_aspect"
+          ],
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -19336,7 +19339,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_diagnostic_choice",
           "skillIds": [
             "tense_aspect"
           ],
@@ -19346,9 +19349,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p3_apostrophe_possession_explain",
+          "templateId": "qg_p3_speech_punctuation_explain",
           "skillIds": [
-            "apostrophes_possession"
+            "speech_punctuation"
           ],
           "questionType": "explain",
           "generative": true,
@@ -19562,21 +19565,21 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p18_p17_standard_english_precision_choice",
+          "templateId": "qg_p18_p17_standard_english_misconception_repair",
           "skillIds": [
             "standard_english"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
-          "satsFriendly": true,
+          "satsFriendly": false,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_adverbials_explain_fronted_adv",
+          "templateId": "qg_p18_p15_adverbials_adverbial_transfer",
           "skillIds": [
             "adverbials"
           ],
-          "questionType": "explain",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -19594,19 +19597,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_clauses_table_classify",
+          "templateId": "qg_p18_p17_clauses_precision_choice",
           "skillIds": [
             "clauses"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_speech_punctuation_table_classify",
+          "templateId": "qg_p18_p18_adverbials_sat_table_classification",
           "skillIds": [
-            "speech_punctuation"
+            "adverbials"
           ],
           "questionType": "classify",
           "generative": true,
@@ -19614,9 +19617,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_subject_object_explain_why",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
-            "subject_object"
+            "tense_aspect"
           ],
           "questionType": "explain",
           "generative": true,
@@ -19624,11 +19627,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_boundary_punctuation_match_mark_to_purpose",
+          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
           "skillIds": [
-            "boundary_punctuation"
+            "noun_phrases"
           ],
-          "questionType": "choose",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -19840,9 +19843,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_adverbials_adverbial_transfer",
+          "templateId": "qg_p18_p15_active_passive_voice_transfer",
           "skillIds": [
-            "adverbials"
+            "active_passive"
           ],
           "questionType": "choose",
           "generative": true,
@@ -19882,9 +19885,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
+          "templateId": "qg_p14_subordinate_clauses_explain_why",
           "skillIds": [
-            "tense_aspect"
+            "clauses"
           ],
           "questionType": "explain",
           "generative": true,
@@ -20088,13 +20091,13 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "qg_p18_p17_sentence_functions_transfer_apply",
+          "templateId": "qg_p18_p17_sentence_functions_table_classify",
           "skillIds": [
             "sentence_functions"
           ],
-          "questionType": "build",
+          "questionType": "classify",
           "generative": true,
-          "satsFriendly": false,
+          "satsFriendly": true,
           "reason": "spaced-retrieval"
         },
         {
@@ -20108,9 +20111,9 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p18_p15_adverbials_adverbial_transfer",
+          "templateId": "qg_p18_p15_active_passive_voice_transfer",
           "skillIds": [
-            "adverbials"
+            "active_passive"
           ],
           "questionType": "choose",
           "generative": true,
@@ -20150,21 +20153,21 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_speech_punctuation_diagnostic_choice",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
-            "speech_punctuation"
+            "tense_aspect"
           ],
-          "questionType": "choose",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
+          "templateId": "qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table",
           "skillIds": [
-            "noun_phrases"
+            "hyphen_ambiguity"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -20366,9 +20369,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_speech_punctuation_constructed_rewrite",
+          "templateId": "qg_p14_tense_aspect_mixed_transfer",
           "skillIds": [
-            "speech_punctuation"
+            "tense_aspect"
           ],
           "questionType": "choose",
           "generative": true,
@@ -20376,11 +20379,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_modal_verbs_choose_modal_meaning",
+          "templateId": "qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading",
           "skillIds": [
-            "modal_verbs"
+            "hyphen_ambiguity"
           ],
-          "questionType": "fill",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -20398,19 +20401,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_clauses_table_classify",
+          "templateId": "qg_p18_p17_clauses_precision_choice",
           "skillIds": [
             "clauses"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_speech_punctuation_table_classify",
+          "templateId": "qg_p18_p18_adverbials_sat_table_classification",
           "skillIds": [
-            "speech_punctuation"
+            "adverbials"
           ],
           "questionType": "classify",
           "generative": true,
@@ -20418,9 +20421,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_subject_object_explain_why",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
-            "subject_object"
+            "tense_aspect"
           ],
           "questionType": "explain",
           "generative": true,
@@ -20428,11 +20431,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_boundary_punctuation_match_mark_to_purpose",
+          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
           "skillIds": [
-            "boundary_punctuation"
+            "noun_phrases"
           ],
-          "questionType": "choose",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -20634,21 +20637,21 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_mixed_transfer",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
             "tense_aspect"
           ],
-          "questionType": "choose",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table",
+          "templateId": "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase",
           "skillIds": [
             "hyphen_ambiguity"
           ],
-          "questionType": "classify",
+          "questionType": "fix",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -20686,9 +20689,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
+          "templateId": "qg_p14_subordinate_clauses_explain_why",
           "skillIds": [
-            "tense_aspect"
+            "clauses"
           ],
           "questionType": "explain",
           "generative": true,
@@ -20884,7 +20887,7 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "qg_p18_p17_sentence_functions_precision_choice",
+          "templateId": "qg_p18_p16_sentence_functions_exclamation_not_excited_statement",
           "skillIds": [
             "sentence_functions"
           ],
@@ -20904,9 +20907,9 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p14_speech_punctuation_diagnostic_choice",
+          "templateId": "qg_p14_tense_aspect_mixed_transfer",
           "skillIds": [
-            "speech_punctuation"
+            "tense_aspect"
           ],
           "questionType": "choose",
           "generative": true,
@@ -20956,21 +20959,21 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_speech_punctuation_diagnostic_choice",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
-            "speech_punctuation"
+            "tense_aspect"
           ],
-          "questionType": "choose",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
+          "templateId": "qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table",
           "skillIds": [
-            "noun_phrases"
+            "hyphen_ambiguity"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -21204,19 +21207,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_clauses_table_classify",
+          "templateId": "qg_p18_p17_clauses_precision_choice",
           "skillIds": [
             "clauses"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_speech_punctuation_table_classify",
+          "templateId": "qg_p18_p18_adverbials_sat_table_classification",
           "skillIds": [
-            "speech_punctuation"
+            "adverbials"
           ],
           "questionType": "classify",
           "generative": true,
@@ -21224,9 +21227,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_subject_object_explain_why",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
-            "subject_object"
+            "tense_aspect"
           ],
           "questionType": "explain",
           "generative": true,
@@ -21234,11 +21237,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_boundary_punctuation_match_mark_to_purpose",
+          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
           "skillIds": [
-            "boundary_punctuation"
+            "noun_phrases"
           ],
-          "questionType": "choose",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -21492,9 +21495,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
+          "templateId": "qg_p14_subordinate_clauses_explain_why",
           "skillIds": [
-            "tense_aspect"
+            "clauses"
           ],
           "questionType": "explain",
           "generative": true,
@@ -21760,21 +21763,21 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_speech_punctuation_diagnostic_choice",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
-            "speech_punctuation"
+            "tense_aspect"
           ],
-          "questionType": "choose",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
+          "templateId": "qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table",
           "skillIds": [
-            "noun_phrases"
+            "hyphen_ambiguity"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -22008,19 +22011,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_clauses_table_classify",
+          "templateId": "qg_p18_p17_clauses_precision_choice",
           "skillIds": [
             "clauses"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_speech_punctuation_table_classify",
+          "templateId": "qg_p18_p18_adverbials_sat_table_classification",
           "skillIds": [
-            "speech_punctuation"
+            "adverbials"
           ],
           "questionType": "classify",
           "generative": true,
@@ -22028,9 +22031,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_subject_object_explain_why",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
-            "subject_object"
+            "tense_aspect"
           ],
           "questionType": "explain",
           "generative": true,
@@ -22038,11 +22041,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_boundary_punctuation_match_mark_to_purpose",
+          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
           "skillIds": [
-            "boundary_punctuation"
+            "noun_phrases"
           ],
-          "questionType": "choose",
+          "questionType": "identify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -22296,9 +22299,9 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_tense_aspect_explain_why",
+          "templateId": "qg_p14_subordinate_clauses_explain_why",
           "skillIds": [
-            "tense_aspect"
+            "clauses"
           ],
           "questionType": "explain",
           "generative": true,
@@ -22564,21 +22567,21 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p14_speech_punctuation_diagnostic_choice",
+          "templateId": "qg_p14_tense_aspect_explain_why",
           "skillIds": [
-            "speech_punctuation"
+            "tense_aspect"
           ],
-          "questionType": "choose",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p16_noun_phrases_head_noun_identify",
+          "templateId": "qg_p18_p16_hyphen_ambiguity_hyphen_or_no_hyphen_table",
           "skillIds": [
-            "noun_phrases"
+            "hyphen_ambiguity"
           ],
-          "questionType": "identify",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -22780,13 +22783,13 @@
           "reason": "priority-urgent"
         },
         {
-          "templateId": "qg_p18_p18_pronouns_cohesion_application_transfer",
+          "templateId": "qg_p18_p18_parenthesis_commas_sat_table_classification",
           "skillIds": [
-            "pronouns_cohesion"
+            "parenthesis_commas"
           ],
-          "questionType": "explain",
+          "questionType": "classify",
           "generative": true,
-          "satsFriendly": false,
+          "satsFriendly": true,
           "reason": "fallback"
         },
         {
@@ -22842,11 +22845,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_subject_object_identify_object",
+          "templateId": "qg_p18_p15_subject_object_explain_roles",
           "skillIds": [
             "subject_object"
           ],
-          "questionType": "identify",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -23058,13 +23061,13 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_hyphen_ambiguity_precision_choice",
+          "templateId": "qg_p18_p17_hyphen_ambiguity_misconception_repair",
           "skillIds": [
             "hyphen_ambiguity"
           ],
-          "questionType": "choose",
+          "questionType": "fix",
           "generative": true,
-          "satsFriendly": true,
+          "satsFriendly": false,
           "reason": "fallback"
         }
       ],
@@ -23100,19 +23103,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_adverbials_table_classify",
+          "templateId": "qg_p18_p17_adverbials_precision_choice",
           "skillIds": [
             "adverbials"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_relative_clauses_explain_relative_clause",
+          "templateId": "qg_p18_p15_subject_object_explain_roles",
           "skillIds": [
-            "relative_clauses"
+            "subject_object"
           ],
           "questionType": "explain",
           "generative": true,
@@ -23306,11 +23309,11 @@
           "reason": "similar-problem"
         },
         {
-          "templateId": "qg_p18_p16_sentence_functions_choose_matching_function_for_context",
+          "templateId": "qg_p18_p15_sentence_functions_sat_style_function",
           "skillIds": [
             "sentence_functions"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "spaced-retrieval"
@@ -23368,19 +23371,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_apostrophes_possession_examiner_trap_contrast",
+          "templateId": "qg_p18_p17_adverbials_table_classify",
           "skillIds": [
-            "apostrophes_possession"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_subject_object_identify_object",
+          "templateId": "qg_p18_p15_relative_clauses_identify_relative_clause",
           "skillIds": [
-            "subject_object"
+            "relative_clauses"
           ],
           "questionType": "identify",
           "generative": true,
@@ -23584,11 +23587,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_apostrophes_possession_table_classify",
+          "templateId": "qg_p18_p17_apostrophes_possession_precision_choice",
           "skillIds": [
             "apostrophes_possession"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -23646,11 +23649,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_subject_object_identify_object",
+          "templateId": "qg_p18_p15_subject_object_explain_roles",
           "skillIds": [
             "subject_object"
           ],
-          "questionType": "identify",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -23852,7 +23855,7 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_apostrophes_possession_precision_choice",
+          "templateId": "qg_p18_p17_apostrophes_possession_examiner_trap_contrast",
           "skillIds": [
             "apostrophes_possession"
           ],
@@ -23904,19 +23907,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_adverbials_table_classify",
+          "templateId": "qg_p18_p17_adverbials_precision_choice",
           "skillIds": [
             "adverbials"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_relative_clauses_explain_relative_clause",
+          "templateId": "qg_p18_p15_subject_object_explain_roles",
           "skillIds": [
-            "relative_clauses"
+            "subject_object"
           ],
           "questionType": "explain",
           "generative": true,
@@ -24172,19 +24175,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_apostrophes_possession_examiner_trap_contrast",
+          "templateId": "qg_p18_p17_adverbials_table_classify",
           "skillIds": [
-            "apostrophes_possession"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_subject_object_identify_object",
+          "templateId": "qg_p18_p15_relative_clauses_identify_relative_clause",
           "skillIds": [
-            "subject_object"
+            "relative_clauses"
           ],
           "questionType": "identify",
           "generative": true,
@@ -24450,11 +24453,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_subject_object_identify_object",
+          "templateId": "qg_p18_p15_subject_object_explain_roles",
           "skillIds": [
             "subject_object"
           ],
-          "questionType": "identify",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -24708,19 +24711,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_adverbials_table_classify",
+          "templateId": "qg_p18_p17_adverbials_precision_choice",
           "skillIds": [
             "adverbials"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_relative_clauses_explain_relative_clause",
+          "templateId": "qg_p18_p15_subject_object_explain_roles",
           "skillIds": [
-            "relative_clauses"
+            "subject_object"
           ],
           "questionType": "explain",
           "generative": true,
@@ -24976,19 +24979,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_apostrophes_possession_examiner_trap_contrast",
+          "templateId": "qg_p18_p17_adverbials_table_classify",
           "skillIds": [
-            "apostrophes_possession"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_subject_object_identify_object",
+          "templateId": "qg_p18_p15_relative_clauses_identify_relative_clause",
           "skillIds": [
-            "subject_object"
+            "relative_clauses"
           ],
           "questionType": "identify",
           "generative": true,
@@ -25254,11 +25257,11 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_subject_object_identify_object",
+          "templateId": "qg_p18_p15_subject_object_explain_roles",
           "skillIds": [
             "subject_object"
           ],
-          "questionType": "identify",
+          "questionType": "explain",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
@@ -25512,19 +25515,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_adverbials_table_classify",
+          "templateId": "qg_p18_p17_adverbials_precision_choice",
           "skillIds": [
             "adverbials"
           ],
-          "questionType": "classify",
+          "questionType": "choose",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_relative_clauses_explain_relative_clause",
+          "templateId": "qg_p18_p15_subject_object_explain_roles",
           "skillIds": [
-            "relative_clauses"
+            "subject_object"
           ],
           "questionType": "explain",
           "generative": true,
@@ -25780,19 +25783,19 @@
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p17_apostrophes_possession_examiner_trap_contrast",
+          "templateId": "qg_p18_p17_adverbials_table_classify",
           "skillIds": [
-            "apostrophes_possession"
+            "adverbials"
           ],
-          "questionType": "choose",
+          "questionType": "classify",
           "generative": true,
           "satsFriendly": true,
           "reason": "fallback"
         },
         {
-          "templateId": "qg_p18_p15_subject_object_identify_object",
+          "templateId": "qg_p18_p15_relative_clauses_identify_relative_clause",
           "skillIds": [
-            "subject_object"
+            "relative_clauses"
           ],
           "questionType": "identify",
           "generative": true,

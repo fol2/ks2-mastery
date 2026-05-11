@@ -252,6 +252,17 @@ function recentVariantIndex(recentAttempts) {
   return index;
 }
 
+function recentVariantFamilyIndex(recentVariants) {
+  const families = new Set();
+  if (!recentVariants || typeof recentVariants.keys !== 'function') return families;
+  for (const key of recentVariants.keys()) {
+    const text = String(key || '');
+    const separatorIndex = text.indexOf(':');
+    if (separatorIndex > 0) families.add(text.slice(0, separatorIndex));
+  }
+  return families;
+}
+
 function recentPromptIndex(recentAttempts, variantMemo) {
   const index = new Map();
   const attempts = normaliseRecentAttempts(recentAttempts);
@@ -275,10 +286,11 @@ function recentPromptIndex(recentAttempts, variantMemo) {
   return index;
 }
 
-function addPlannedGeneratedVariant(index, template, seed, variantMemo) {
+function addPlannedGeneratedVariant(index, template, seed, variantMemo, familyIndex = null) {
   const candidateVariant = candidateVariantMetadata(template, seed, variantMemo);
   const key = variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature);
   if (!key) return;
+  if (familyIndex && candidateVariant.generatorFamilyId) familyIndex.add(candidateVariant.generatorFamilyId);
   const entry = index.get(key) || { lastDistance: Infinity, count: 0, lastMissDistance: Infinity };
   index.set(key, {
     ...entry,
@@ -298,14 +310,21 @@ function addPlannedPrompt(index, template, seed, variantMemo) {
   });
 }
 
-function hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo) {
+function hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo, recentVariantFamilies = null) {
+  const generatorFamilyId = grammarTemplateGeneratorFamilyId(template);
+  if (recentVariantFamilies && !recentVariantFamilies.has(generatorFamilyId)) return false;
   const candidateVariant = candidateVariantMetadata(template, candidateSeed, variantMemo);
   if (!candidateVariant.variantSignature) return false;
   const recentVariant = recentVariants?.get(variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature));
   return Boolean(recentVariant && recentVariant.lastDistance <= GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW);
 }
 
-function hasRecentPromptRhythm(template, recentPrompts, candidateSeed, variantMemo) {
+function hasRecentPromptRhythm(template, recentPrompts, candidateSeed, variantMemo, recentTemplates = null) {
+  // Cross-template prompt collisions are guarded by the release-window surface
+  // audit. At scheduling time we only need to materialise candidate prompts
+  // for templates the learner has actually seen recently; otherwise P21's
+  // prompt-freshness guard scales as O(all templates) per pick.
+  if (recentTemplates && !recentTemplates.has(template?.id)) return false;
   const promptKey = candidateVariantMetadata(template, candidateSeed, variantMemo).promptKey;
   if (!promptKey) return false;
   const recentPrompt = recentPrompts?.get(promptKey);
@@ -322,8 +341,8 @@ function hasRecentTemplate(template, recentTemplates) {
   return recentTemplate.lastDistance <= window;
 }
 
-function variantFreshTemplates(pool, recentVariants, candidateSeed, variantMemo) {
-  const fresh = pool.filter((template) => !hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo));
+function variantFreshTemplates(pool, recentVariants, candidateSeed, variantMemo, recentVariantFamilies = null) {
+  const fresh = pool.filter((template) => !hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo, recentVariantFamilies));
   return fresh.length > 0 ? fresh : pool;
 }
 
@@ -342,6 +361,7 @@ function weightFor(template, context) {
     recentTemplates,
     recentConcepts,
     recentVariants,
+    recentVariantFamilies,
     candidateSeed,
     nowTs,
     variantMemo,
@@ -381,14 +401,17 @@ function weightFor(template, context) {
   // Generated variant freshness penalty. The signature is derived from visible
   // prompt/input surface data only, so it avoids repeating the same generated
   // variant without storing hidden answers in learner-facing read models.
-  const candidateVariant = candidateVariantMetadata(template, candidateSeed, variantMemo);
-  const recentVariant = recentVariants?.get(variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature));
-  if (recentVariant) {
-    if (recentVariant.lastDistance <= GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW) {
-      const closeRepeatPenalty = Math.max(0, 7 - recentVariant.lastDistance);
-      weight /= (SELECTION_WEIGHTS.variantFreshness + 0.25 * closeRepeatPenalty);
-    } else {
-      weight /= SELECTION_WEIGHTS.variantFreshness;
+  const templateFamilyId = grammarTemplateGeneratorFamilyId(template);
+  if (!recentVariantFamilies || recentVariantFamilies.has(templateFamilyId)) {
+    const candidateVariant = candidateVariantMetadata(template, candidateSeed, variantMemo);
+    const recentVariant = recentVariants?.get(variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature));
+    if (recentVariant) {
+      if (recentVariant.lastDistance <= GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW) {
+        const closeRepeatPenalty = Math.max(0, 7 - recentVariant.lastDistance);
+        weight /= (SELECTION_WEIGHTS.variantFreshness + 0.25 * closeRepeatPenalty);
+      } else {
+        weight /= SELECTION_WEIGHTS.variantFreshness;
+      }
     }
   }
 
@@ -428,14 +451,15 @@ function normaliseFocus(focusConceptId) {
   return typeof focusConceptId === 'string' && GRAMMAR_CONCEPT_IDS.has(focusConceptId) ? focusConceptId : '';
 }
 
-function pickTemplate({ pool, rng, mastery, focusConceptId, recentTemplates, recentConcepts, recentVariants, candidateSeed, nowTs, variantMemo }) {
-  const candidatePool = variantFreshTemplates(pool, recentVariants, candidateSeed, variantMemo);
+function pickTemplate({ pool, rng, mastery, focusConceptId, recentTemplates, recentConcepts, recentVariants, recentVariantFamilies, candidateSeed, nowTs, variantMemo }) {
+  const candidatePool = variantFreshTemplates(pool, recentVariants, candidateSeed, variantMemo, recentVariantFamilies);
   const weighted = candidatePool.map((template) => [template, weightFor(template, {
     mastery,
     focusConceptId,
     recentTemplates,
     recentConcepts,
     recentVariants,
+    recentVariantFamilies,
     candidateSeed,
     nowTs,
     variantMemo,
@@ -555,6 +579,7 @@ export function buildGrammarPracticeQueue({
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
   const workingRecentVariants = recentVariantIndex(recentAttempts);
+  const workingRecentVariantFamilies = recentVariantFamilyIndex(workingRecentVariants);
   // Per-invocation memo. Key: "templateId:seed>>>0" (generative) or "templateId" (non-generative). Depends on I3 (createGrammarQuestion purity); remove if I3 violated. See R6 contract.
   const variantMemo = new Map();
   const workingRecentPrompts = recentPromptIndex(recentAttempts, variantMemo);
@@ -594,21 +619,22 @@ export function buildGrammarPracticeQueue({
 
   function variantFreshPoolWithBroadFallback(candidatePool, candidateSeed) {
     if (candidatePool.length === 0) return candidatePool;
+    const recentTemplates = recentTemplateIndex(workingRecent);
     const templateFresh = templateFreshPool(candidatePool);
     const variantFresh = templateFresh.filter(
-      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo),
+      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies),
     );
     const promptFresh = variantFresh.filter(
-      (template) => !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo),
+      (template) => !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo, recentTemplates),
     );
     if (promptFresh.length > 0) return promptFresh;
     const broadSurfaceFresh = unplannedTemplates(broadPool).filter(
-      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo)
-        && !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo),
+      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies)
+        && !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo, recentTemplates),
     );
     if (broadSurfaceFresh.length > 0) return broadSurfaceFresh;
     const broadVariantFresh = unplannedTemplates(broadPool).filter(
-      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo),
+      (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies),
     );
     return broadVariantFresh.length > 0 ? broadVariantFresh : templateFresh;
   }
@@ -617,7 +643,7 @@ export function buildGrammarPracticeQueue({
     queue.push(queueEntry(template, reason));
     plannedTemplateIds.add(template.id);
     workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed, variantMemo));
-    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo);
+    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo, workingRecentVariantFamilies);
     addPlannedPrompt(workingRecentPrompts, template, candidateSeed, variantMemo);
   }
 
@@ -638,7 +664,7 @@ export function buildGrammarPracticeQueue({
         if (queue.length >= safeSize) break;
         const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
         const recentVariants = workingRecentVariants;
-        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo)) continue;
+        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies)) continue;
         pushQueueEntry(template, candidateSeed, 'focus-saturation');
       }
     }
@@ -653,7 +679,7 @@ export function buildGrammarPracticeQueue({
       const retryTemplate = pool.find((template) => template.id === lastAttempt.templateId);
       if (retryTemplate && !plannedTemplateIds.has(retryTemplate.id)) {
         const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
-        if (!hasRecentGeneratedVariant(retryTemplate, workingRecentVariants, candidateSeed, variantMemo)) {
+        if (!hasRecentGeneratedVariant(retryTemplate, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies)) {
           pushQueueEntry(retryTemplate, candidateSeed, 'retry');
         }
       }
@@ -690,6 +716,7 @@ export function buildGrammarPracticeQueue({
           recentTemplates,
           recentConcepts,
           recentVariants: workingRecentVariants,
+          recentVariantFamilies: workingRecentVariantFamilies,
           candidateSeed,
           nowTs,
           variantMemo,
@@ -722,6 +749,7 @@ export function buildGrammarPracticeQueue({
           recentTemplates,
           recentConcepts,
           recentVariants: workingRecentVariants,
+          recentVariantFamilies: workingRecentVariantFamilies,
           candidateSeed,
           nowTs,
           variantMemo,
@@ -749,6 +777,7 @@ export function buildGrammarPracticeQueue({
         recentTemplates,
         recentConcepts,
         recentVariants,
+        recentVariantFamilies: workingRecentVariantFamilies,
         candidateSeed,
         nowTs,
         variantMemo,
@@ -775,6 +804,7 @@ export function buildGrammarPracticeQueue({
       recentTemplates,
       recentConcepts,
       recentVariants,
+      recentVariantFamilies: workingRecentVariantFamilies,
       candidateSeed,
       nowTs,
       variantMemo,
@@ -806,6 +836,7 @@ export function buildGrammarMiniPack({
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
   const workingRecentVariants = recentVariantIndex(recentAttempts);
+  const workingRecentVariantFamilies = recentVariantFamilyIndex(workingRecentVariants);
   // Per-invocation memo. Key: "templateId:seed>>>0" (generative) or "templateId" (non-generative). Depends on I3 (createGrammarQuestion purity); remove if I3 violated. See R6 contract.
   const variantMemo = new Map();
   const workingRecentPrompts = recentPromptIndex(recentAttempts, variantMemo);
@@ -824,12 +855,12 @@ export function buildGrammarMiniPack({
         if (pack.length >= safeSize) break;
         const candidateSeed = seeds[pack.length] || Number(seed) || 1;
         const recentVariants = workingRecentVariants;
-        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo)) continue;
+        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies)) continue;
         pack.push(queueEntry(template, 'focus-saturation'));
         usedTemplateIds.add(template.id);
         usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
         workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed, variantMemo));
-        addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo);
+        addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo, workingRecentVariantFamilies);
         addPlannedPrompt(workingRecentPrompts, template, candidateSeed, variantMemo);
       }
     }
@@ -856,7 +887,7 @@ export function buildGrammarMiniPack({
     const recentVariants = workingRecentVariants;
     const candidateSeed = seeds[pack.length] || Number(seed) || 1;
     const promptFreshRoundPool = roundPool.filter(
-      (template) => !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo),
+      (template) => !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo, recentTemplates),
     );
     const template = pickTemplate({
       pool: promptFreshRoundPool.length > 0 ? promptFreshRoundPool : roundPool,
@@ -866,6 +897,7 @@ export function buildGrammarMiniPack({
       recentTemplates,
       recentConcepts,
       recentVariants,
+      recentVariantFamilies: workingRecentVariantFamilies,
       candidateSeed,
       nowTs,
       variantMemo,
@@ -879,7 +911,7 @@ export function buildGrammarMiniPack({
     usedTemplateIds.add(template.id);
     usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
     workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed, variantMemo));
-    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo);
+    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed, variantMemo, workingRecentVariantFamilies);
     addPlannedPrompt(workingRecentPrompts, template, candidateSeed, variantMemo);
   }
 
