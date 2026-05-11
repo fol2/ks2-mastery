@@ -687,6 +687,28 @@ test('U8 view-model: buildGrammarBankModel filter=trouble narrows to needs-repai
   }
 });
 
+test('U8 view-model: buildGrammarBankModel uses nested confidence label before coarse status', () => {
+  const grammar = {
+    analytics: {
+      concepts: [
+        {
+          id: 'relative_clauses',
+          confidence: { label: 'secure', sampleSize: 12, intervalDays: 14, distinctTemplates: 4, recentMisses: 0 },
+          status: 'due',
+          name: 'Relative clauses',
+        },
+      ],
+    },
+  };
+
+  const model = buildGrammarBankModel(grammar, { statusFilter: 'secure' });
+  const card = model.cards.find((entry) => entry.id === 'relative_clauses');
+
+  assert.ok(card, 'secure confidence concept remains in the secure filter even when coarse status is due');
+  assert.equal(card.label, 'secure');
+  assert.equal(card.childLabel, 'Secure');
+});
+
 test('U8 view-model: buildGrammarBankModel search clause narrows to matching concepts', () => {
   const model = buildGrammarBankModel({}, { query: 'clause' });
   assert.ok(model.cards.length >= 2);

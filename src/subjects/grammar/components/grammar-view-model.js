@@ -584,10 +584,11 @@ export function grammarMonsterImageVisual(monsterId, stage, visualConfig = null,
 // --- Grammar Bank model builder ---------------------------------------------
 
 function childLabelForConcept(concept) {
-  // Analytics concept shape carries an internal `confidenceLabel` after the
-  // Worker projects it. Older fixtures may only carry a coarse `status` —
-  // `'new' | 'learning' | 'weak' | 'due' | 'secured'`. We map status → label
-  // so the bank renders a child label even on first boot.
+  // Analytics concept shape carries the canonical nested `confidence.label`.
+  // Older fixtures may only carry `confidenceLabel`, or just a coarse
+  // `status` — `'new' | 'learning' | 'weak' | 'due' | 'secured'`. We map
+  // status → label only as a last-resort first-boot fallback.
+  if (isGrammarConfidenceLabel(concept?.confidence?.label)) return concept.confidence.label;
   if (typeof concept?.confidenceLabel === 'string') return concept.confidenceLabel;
   switch (concept?.status) {
     case 'secured': return 'secure';
