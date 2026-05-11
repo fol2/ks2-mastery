@@ -176,6 +176,12 @@ function markActionHint(session) {
   return 'Checks your saved answer now and then shows feedback.';
 }
 
+function primarySubmitLabel(session, result) {
+  if (result) return 'Next question';
+  if (!session?.delayedFeedback) return 'Submit answer';
+  return canGoNext(session) ? 'Save and next' : 'Save answer';
+}
+
 function readingHeroTone(learnerId = '') {
   const source = String(learnerId || 'reading');
   let hash = 0;
@@ -646,7 +652,7 @@ function QuestionPanel({ ui, actions }) {
   const pending = isPending(ui);
   const formId = `reading-question-form-${session.id}`;
   const feedback = ui.feedback || (result ? { result } : null);
-  const primarySubmitLabel = session.delayedFeedback ? 'Save and next' : 'Submit answer';
+  const primaryLabel = primarySubmitLabel(session, result);
   const showDraftNextButton = !session.delayedFeedback || disabled;
   function submit(event) {
     event.preventDefault();
@@ -698,7 +704,7 @@ function QuestionPanel({ ui, actions }) {
         <p className="question-stem">{question.stem}</p>
         <QuestionInput question={question} response={response} disabled={disabled} />
         <div className="actions reading-actions-spaced">
-          {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{primarySubmitLabel}</button> : null}
+          {!disabled ? <button className="btn primary" type="submit" disabled={pending}>{primaryLabel}</button> : null}
           <button className="btn ghost" type="button" onClick={(event) => saveAndMove(event, { delta: -1 })} disabled={pending || !canGoPrevious(session)}>Previous</button>
           {showDraftNextButton ? <button className="btn secondary" type="button" onClick={(event) => saveAndMove(event, { delta: 1 })} disabled={pending || !canGoNext(session)}>{disabled ? 'Next question' : 'Save draft and next'}</button> : null}
           {session.delayedFeedback || session.strict ? <button className="btn warn" type="button" onClick={finish} disabled={pending}>{markActionLabel(session)}</button> : null}

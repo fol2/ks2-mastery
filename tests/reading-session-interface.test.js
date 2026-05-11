@@ -94,6 +94,8 @@ test('reading one-question delayed-feedback surface has one save-and-next path',
   assert.equal(saveAndNextCount, 1);
   assert.match(ui, /showDraftNextButton/);
   assert.match(ui, /Save draft and next/);
+  assert.match(ui, /function primarySubmitLabel/);
+  assert.match(ui, /Save answer/);
 });
 
 test('reading command actions serialise section responses and preserve stale guards', () => {

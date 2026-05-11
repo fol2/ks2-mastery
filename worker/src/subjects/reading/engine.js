@@ -133,12 +133,87 @@ function bridgeLooksLikeLocalNegation(tokens, cueIndex, startIndex) {
   return bridge.length <= 5 && !bridge.some((token) => CONTRADICTION_BREAK_TOKENS.has(token));
 }
 
+const POST_SPAN_NEGATION_BRIDGE_TOKENS = new Set([
+  'am',
+  'is',
+  'are',
+  'was',
+  'were',
+  'be',
+  'been',
+  'being',
+  'do',
+  'does',
+  'did',
+  'has',
+  'have',
+  'had',
+  'would',
+  'should',
+  'could',
+  'might',
+  'must',
+]);
+
+const POST_SPAN_NEGATION_PREDICATE_TOKENS = new Set([
+  'answer',
+  'answers',
+  'correct',
+  'right',
+  'true',
+  'needed',
+  'need',
+  'used',
+  'use',
+  'inside',
+  'there',
+  'shown',
+  'showed',
+  'included',
+  'include',
+  'present',
+  'happen',
+  'happened',
+  'occur',
+  'occurred',
+]);
+
+function bridgeLooksLikePostSpanNegation(tokens, spanEndIndex, cueIndex) {
+  const bridge = tokens.slice(spanEndIndex, cueIndex);
+  if (bridge.length > 5 || bridge.some((token) => CONTRADICTION_BREAK_TOKENS.has(token))) return false;
+  if (bridge.some((token) => POST_SPAN_NEGATION_BRIDGE_TOKENS.has(token))) return true;
+  if (['false', 'wrong', 'incorrect', 'opposite'].includes(tokens[cueIndex])) return bridge.length <= 2;
+  const afterCue = tokens.slice(cueIndex + 1, cueIndex + 4);
+  return afterCue.some((token) => POST_SPAN_NEGATION_PREDICATE_TOKENS.has(token));
+}
+
+function spanContainsInternalContradiction(tokens, startIndex, spanEndIndex, phraseTokens = []) {
+  for (let index = startIndex; index < spanEndIndex; index += 1) {
+    if (!LOCAL_CONTRADICTION_CUES.has(tokens[index])) continue;
+    const phraseToken = phraseTokens[index - startIndex];
+    if (phraseToken && phraseToken === tokens[index]) continue;
+    if (cueIsSoftened(tokens, index)) continue;
+    return true;
+  }
+  return false;
+}
+
 function spanIsLocallyContradicted(tokens, startIndex, phraseTokens = []) {
   const lookBehindStart = Math.max(0, startIndex - 7);
   for (let index = startIndex - 1; index >= lookBehindStart; index -= 1) {
     if (!LOCAL_CONTRADICTION_CUES.has(tokens[index])) continue;
     if (cueIsSoftened(tokens, index)) continue;
     if (bridgeLooksLikeLocalNegation(tokens, index, startIndex)) return true;
+  }
+
+  const spanEndIndex = startIndex + Math.max(1, phraseTokens.length || 1);
+  if (spanContainsInternalContradiction(tokens, startIndex, spanEndIndex, phraseTokens)) return true;
+  const lookAheadEnd = Math.min(tokens.length, spanEndIndex + 7);
+  for (let index = spanEndIndex; index < lookAheadEnd; index += 1) {
+    if (CONTRADICTION_BREAK_TOKENS.has(tokens[index])) break;
+    if (!LOCAL_CONTRADICTION_CUES.has(tokens[index])) continue;
+    if (cueIsSoftened(tokens, index)) continue;
+    if (bridgeLooksLikePostSpanNegation(tokens, spanEndIndex, index)) return true;
   }
   return false;
 }
@@ -218,9 +293,13 @@ function overlapIsLocallyContradicted(text, snippet) {
     if (clauseOverlap < 0.55) return false;
     const positions = snippetTokens
       .flatMap((snippetToken) => stemPositions(textTokens, snippetToken))
-      .filter((position) => position >= start && position < end);
+      .filter((position) => position >= start && position < end)
+      .sort((a, b) => a - b);
     if (!positions.length) return false;
-    return !positions.some((position) => spanIsLocallyContradicted(textTokens, position, snippetTokens));
+    const spanStart = positions[0];
+    const spanEnd = positions[positions.length - 1] + 1;
+    const spanTokens = new Array(Math.max(1, spanEnd - spanStart)).fill('span');
+    return !spanIsLocallyContradicted(textTokens, spanStart, spanTokens);
   });
 }
 

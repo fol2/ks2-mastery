@@ -3,7 +3,7 @@
 // browser may render its safe metadata but never performs production marking.
 
 export const READING_CONTENT_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
-export const READING_CONTENT_VERSION = 2;
+export const READING_CONTENT_VERSION = 3;
 
 export const READING_SKILLS = Object.freeze({
   "2a": {
@@ -8869,7 +8869,1243 @@ export const READING_PASSAGES = Object.freeze([
         "hint": "Read the line in two parts: the time phrase, then the main idea."
       }
     ]
-  }
+  },
+
+  {
+    "id": "lantern_map",
+    "title": "The Lantern Map",
+    "genre": "fiction",
+    "difficulty": 3,
+    "isLong": false,
+    "blocks": [
+      "The storm had pushed the harbour museum's door until it rattled like a drum. Mara was helping Aunt Lio mop the tiled floor when a brass lantern rolled from a shelf and tapped her boot. Its glass was fogged with salt, and a crack ran across the wooden frame behind it.",
+      "As Mara lifted the lantern, a folded map slid from the split in the frame. The paper was soft with damp, but the ink still showed the harbour in careful blue lines. Tiny red stars marked twelve windows above the quay.",
+      "\"Those were the guide lights,\" Aunt Lio said. \"When the lighthouse broke during the winter fog, families kept lamps burning in those windows. The map showed safe paths through fog for fishing boats coming home.\" Mara had imagined treasure or a secret tunnel; instead, the map held a chain of ordinary rooms.",
+      "At first the discovery disappointed her. Then she traced the red stars with one wet finger and pictured people waiting in kitchens, lifting lamps when they heard a bell from the dark water. The streets no longer looked like a maze of alleys. They looked like a maze of promises.",
+      "That evening, Aunt Lio pinned the map in the meeting hall. An old fisherman pointed to one red star and whispered that his grandmother had kept that window bright. Mara stood beside him, suddenly careful with the torn corner in her hand, as if the small map was still helping someone find their way."
+    ],
+    "questions": [
+      {
+        "id": "lm_q1",
+        "type": "short",
+        "skill": "2b",
+        "marks": 1,
+        "stem": "What slid from the split in the lantern frame?",
+        "check": {
+          "keywordAny": [
+            [
+              "fold",
+              "map"
+            ],
+            [
+              "map"
+            ]
+          ]
+        },
+        "modelAnswer": "A folded map slid from the split in the frame.",
+        "explanation": "The detail is stated directly in paragraph 2.",
+        "hint": "Look at what happens when Mara lifts the lantern."
+      },
+      {
+        "id": "lm_q2",
+        "type": "mcq",
+        "skill": "2a",
+        "marks": 1,
+        "stem": "In paragraph 3, what does the phrase \"a chain of ordinary rooms\" suggest about the guide lights?",
+        "options": [
+          "The rooms worked together to help boats reach the harbour.",
+          "The rooms were locked and difficult to enter.",
+          "The rooms contained expensive treasure.",
+          "The rooms were all in one long building."
+        ],
+        "correct": 0,
+        "modelAnswer": "The rooms worked together to help boats reach the harbour.",
+        "explanation": "The phrase links separate homes into one helpful system.",
+        "hint": "Think about how the windows were connected by their job."
+      },
+      {
+        "id": "lm_q3",
+        "type": "evidenceShort",
+        "skill": "2d",
+        "marks": 2,
+        "answerMarks": 1,
+        "evidenceMarks": 1,
+        "stem": "Why was the lantern map important to the harbour? Give one piece of evidence.",
+        "answerCheck": {
+          "keywordAny": [
+            [
+              "safe",
+              "path"
+            ],
+            [
+              "help",
+              "boat"
+            ],
+            [
+              "guide",
+              "light"
+            ],
+            [
+              "fishing",
+              "home"
+            ]
+          ]
+        },
+        "evidenceCheck": {
+          "containsAny": [
+            "safe paths through fog",
+            "families kept lamps burning in those windows"
+          ]
+        },
+        "modelAnswer": "It mattered because it showed how families guided boats safely home; evidence could include \"safe paths through fog\".",
+        "explanation": "The map is important because it records a system that protected people, not because it is valuable treasure.",
+        "hint": "Use Aunt Lio's explanation of the red stars."
+      },
+      {
+        "id": "lm_q4",
+        "type": "open",
+        "skill": "2g",
+        "marks": 2,
+        "stem": "Explain the effect of the phrase \"a maze of promises\".",
+        "rubric": [
+          {
+            "label": "Explains the maze image",
+            "check": {
+              "keywordAny": [
+                [
+                  "maze"
+                ],
+                [
+                  "streets"
+                ],
+                [
+                  "path"
+                ],
+                [
+                  "alleys"
+                ],
+                [
+                  "confusing"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Links promises to help or safety",
+            "check": {
+              "keywordAny": [
+                [
+                  "promise"
+                ],
+                [
+                  "help"
+                ],
+                [
+                  "safe"
+                ],
+                [
+                  "guide"
+                ],
+                [
+                  "hope"
+                ],
+                [
+                  "people"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "The phrase makes the harbour streets seem like a network of routes, but the word \"promises\" changes the feeling from confusing to hopeful because families used those streets to help boats home.",
+        "explanation": "A strong answer explains both parts of the image and its effect on the reader.",
+        "hint": "Ask how Mara sees the same streets differently after understanding the map."
+      },
+      {
+        "id": "lm_q5",
+        "type": "short",
+        "skill": "2b",
+        "marks": 1,
+        "stem": "Who said that his grandmother had kept one of the guide-light windows bright?",
+        "check": {
+          "keywordAny": [
+            [
+              "old",
+              "fisherman"
+            ],
+            [
+              "fisherman"
+            ]
+          ]
+        },
+        "modelAnswer": "An old fisherman said it.",
+        "explanation": "This detail appears in the final paragraph at the meeting hall.",
+        "hint": "Look at who points to one of the red stars."
+      },
+      {
+        "id": "lm_q6",
+        "type": "open",
+        "skill": "2c",
+        "marks": 2,
+        "stem": "Summarise how Mara's view of the map changes during the story.",
+        "rubric": [
+          {
+            "label": "Begins with disappointment or treasure expectation",
+            "check": {
+              "keywordAny": [
+                [
+                  "treasure"
+                ],
+                [
+                  "secret",
+                  "tunnel"
+                ],
+                [
+                  "disappointed"
+                ],
+                [
+                  "expected"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Ends with respect for community help",
+            "check": {
+              "keywordAny": [
+                [
+                  "help"
+                ],
+                [
+                  "guide"
+                ],
+                [
+                  "careful"
+                ],
+                [
+                  "families"
+                ],
+                [
+                  "important"
+                ],
+                [
+                  "respect"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "At first Mara expects treasure and feels disappointed, but she comes to understand that the map records how ordinary families helped boats through fog, so she treats it carefully and respectfully.",
+        "explanation": "The summary should track the change from personal excitement to understanding the map's meaning.",
+        "hint": "Use one detail from the discovery and one from the final paragraph."
+      },
+      {
+        "id": "lm_q7",
+        "type": "mcq",
+        "skill": "P2",
+        "marks": 1,
+        "stem": "What do the quotation marks around Aunt Lio's words help the reader follow?",
+        "options": [
+          "They show exactly what Aunt Lio says aloud.",
+          "They mark the title of the map.",
+          "They show that Mara is reading a label silently.",
+          "They separate items in a list of windows."
+        ],
+        "correct": 0,
+        "modelAnswer": "They show exactly what Aunt Lio says aloud.",
+        "explanation": "The quotation marks help the reader identify Aunt Lio's spoken explanation.",
+        "hint": "Look at the words immediately before Aunt Lio said."
+      },
+      {
+        "id": "lm_q8",
+        "type": "match",
+        "skill": "2h",
+        "marks": 2,
+        "stem": "Match each viewpoint to the best description.",
+        "prompts": [
+          "Mara's first reaction",
+          "Aunt Lio's explanation",
+          "Mara after the meeting"
+        ],
+        "options": [
+          "She is disappointed because it is not treasure.",
+          "The map showed how guide lights helped fishing boats.",
+          "She handles the map carefully because it still feels important."
+        ],
+        "correctMap": {
+          "0": "0",
+          "1": "1",
+          "2": "2"
+        },
+        "modelAnswer": "Mara first feels disappointed; Aunt Lio explains the guide lights; after the meeting Mara handles the map carefully.",
+        "explanation": "The comparison follows how different people understand the same object.",
+        "hint": "Use the order of the story: discovery, explanation, meeting."
+      },
+      {
+        "id": "lm_q9",
+        "type": "open",
+        "skill": "2e",
+        "marks": 2,
+        "stem": "What is Mara likely to want to do with the map next? Use clues from the ending.",
+        "rubric": [
+          {
+            "label": "Makes a sensible prediction",
+            "check": {
+              "keywordAny": [
+                [
+                  "display"
+                ],
+                [
+                  "repair"
+                ],
+                [
+                  "protect"
+                ],
+                [
+                  "share"
+                ],
+                [
+                  "keep"
+                ],
+                [
+                  "museum"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Uses ending clues",
+            "check": {
+              "keywordAny": [
+                [
+                  "meeting"
+                ],
+                [
+                  "careful"
+                ],
+                [
+                  "fisherman"
+                ],
+                [
+                  "grandmother"
+                ],
+                [
+                  "helping"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "Mara is likely to help protect or display the map, because the meeting shows it matters to local people and she becomes careful with the torn corner.",
+        "explanation": "A prediction should come from clues in the final paragraph, not from a new event invented at random.",
+        "hint": "Look at Mara's behaviour after the old fisherman speaks."
+      },
+      {
+        "id": "lm_q10",
+        "type": "open",
+        "skill": "2f",
+        "marks": 3,
+        "stem": "How does the structure of the story build from discovery to community memory?",
+        "rubric": [
+          {
+            "label": "Identifies the discovery",
+            "check": {
+              "keywordAny": [
+                [
+                  "lantern"
+                ],
+                [
+                  "map"
+                ],
+                [
+                  "discovery"
+                ],
+                [
+                  "frame"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Explains the middle revelation",
+            "check": {
+              "keywordAny": [
+                [
+                  "Aunt"
+                ],
+                [
+                  "guide",
+                  "lights"
+                ],
+                [
+                  "safe",
+                  "paths"
+                ],
+                [
+                  "lighthouse"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Explains the final community link",
+            "check": {
+              "keywordAny": [
+                [
+                  "meeting"
+                ],
+                [
+                  "fisherman"
+                ],
+                [
+                  "grandmother"
+                ],
+                [
+                  "community"
+                ],
+                [
+                  "memory"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "The story begins with a physical discovery in the museum, then explains what the red stars meant, and finally connects the map to living community memory through the old fisherman's family story.",
+        "explanation": "The structure moves from object, to explanation, to shared meaning.",
+        "hint": "Divide the story into beginning, middle and ending jobs."
+      }
+    ]
+  },
+  {
+    "id": "seed_vault_guardians",
+    "title": "The Seed Vault Guardians",
+    "genre": "non-fiction",
+    "difficulty": 4,
+    "isLong": true,
+    "blocks": [
+      "A seed bank is not a museum of dead things. It is a living library, built to keep future harvests possible. Inside its cold rooms are packets of wheat, beans, rice, grasses and wild relatives of crops. Each packet is dried, labelled and sealed before it is stored at a temperature low enough to slow time down.",
+      "The work starts far from the freezer. Collectors visit farms, forests and mountain slopes to find plants with useful differences: one bean may survive dry soil, while another resists a disease. A few seeds are kept locally, and duplicate samples are sent to another seed bank so one accident cannot erase a variety.",
+      "Before a packet enters long-term storage, scientists test whether the seeds can still germinate. Some seeds are placed on damp paper in a warm cabinet; if too few sprout, the collection must be grown again and refreshed. The careful record is as important as the seed itself: without the right name, place and date, a packet becomes a mystery.",
+      "Seed banks also work with farmers. When floods, heat or new pests damage harvests, stored varieties can be searched for helpful traits. If flood, fire or conflict damages one collection, a duplicate sample in another country may protect years of patient work.",
+      "This does not mean seed banks can solve every food problem. Seeds need soil, water, skilled growers and fair sharing. Still, they give scientists and farmers more choices when weather becomes less predictable.",
+      "The guardians of a seed vault often speak quietly about patience. A packet may sleep for decades before it is needed. Yet when it wakes, it may carry an answer to a question nobody had thought to ask."
+    ],
+    "questions": [
+      {
+        "id": "svg_q1",
+        "type": "short",
+        "skill": "2b",
+        "marks": 1,
+        "stem": "Name two kinds of seeds or plants stored in the seed bank.",
+        "check": {
+          "keywordAny": [
+            [
+              "wheat",
+              "bean"
+            ],
+            [
+              "rice",
+              "grass"
+            ],
+            [
+              "crop",
+              "wild"
+            ],
+            [
+              "wheat",
+              "rice"
+            ],
+            [
+              "beans",
+              "rice"
+            ]
+          ]
+        },
+        "modelAnswer": "Examples include wheat, beans, rice, grasses and wild relatives of crops.",
+        "explanation": "The first paragraph lists several examples from the cold rooms.",
+        "hint": "Look for the list in the opening paragraph."
+      },
+      {
+        "id": "svg_q2",
+        "type": "mcq",
+        "skill": "2a",
+        "marks": 1,
+        "stem": "In paragraph 2, what does \"duplicate samples\" mean?",
+        "options": [
+          "Extra copies of the same seeds",
+          "Seeds that have already failed",
+          "Labels with missing dates",
+          "Plants that grow twice as fast"
+        ],
+        "correct": 0,
+        "modelAnswer": "Duplicate samples are extra copies of the same seeds.",
+        "explanation": "The duplicate sample protects the variety if one collection is damaged.",
+        "hint": "Use the next part of the sentence to help you."
+      },
+      {
+        "id": "svg_q3",
+        "type": "evidenceShort",
+        "skill": "2d",
+        "marks": 2,
+        "answerMarks": 1,
+        "evidenceMarks": 1,
+        "stem": "Why are seeds sometimes stored in more than one country? Give evidence.",
+        "answerCheck": {
+          "keywordAny": [
+            [
+              "accident",
+              "erase"
+            ],
+            [
+              "protect",
+              "collection"
+            ],
+            [
+              "damage",
+              "one"
+            ],
+            [
+              "duplicate",
+              "protect"
+            ]
+          ]
+        },
+        "evidenceCheck": {
+          "containsAny": [
+            "one accident cannot erase a variety",
+            "a duplicate sample in another country may protect years of patient work"
+          ]
+        },
+        "modelAnswer": "They are stored in more than one country so a disaster in one place does not destroy a variety; the text says \"one accident cannot erase a variety\".",
+        "explanation": "The evidence explains the risk of relying on a single collection.",
+        "hint": "Find the sentence about accidents or damaged collections."
+      },
+      {
+        "id": "svg_q4",
+        "type": "open",
+        "skill": "2c",
+        "marks": 2,
+        "stem": "What is the main idea of the first two paragraphs?",
+        "rubric": [
+          {
+            "label": "Explains seed-bank purpose",
+            "check": {
+              "keywordAny": [
+                [
+                  "future",
+                  "harvest"
+                ],
+                [
+                  "keep",
+                  "seeds"
+                ],
+                [
+                  "living",
+                  "library"
+                ],
+                [
+                  "protect"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Mentions collecting/storing variety",
+            "check": {
+              "keywordAny": [
+                [
+                  "collect"
+                ],
+                [
+                  "farms"
+                ],
+                [
+                  "forests"
+                ],
+                [
+                  "duplicate"
+                ],
+                [
+                  "differences"
+                ],
+                [
+                  "variety"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "The first two paragraphs explain that seed banks protect future harvests by collecting, drying and storing many different varieties of seeds, including duplicate samples for safety.",
+        "explanation": "A summary should include both the purpose and the collecting/storage process.",
+        "hint": "Use the opening definition and the collector paragraph."
+      },
+      {
+        "id": "svg_q5",
+        "type": "multiSelect",
+        "skill": "2b",
+        "marks": 2,
+        "stem": "Which tasks does the passage say scientists or collectors do before or during storage? Choose all that apply.",
+        "options": [
+          "Dry, label and seal packets",
+          "Paint the seeds different colours",
+          "Test whether seeds can germinate",
+          "Replace every seed with a plastic model"
+        ],
+        "correctSet": [
+          0,
+          2
+        ],
+        "modelAnswer": "They dry, label and seal packets, and they test whether seeds can germinate.",
+        "explanation": "Both details are stated in paragraphs 1 and 3.",
+        "hint": "Check each option against the exact process described."
+      },
+      {
+        "id": "svg_q6",
+        "type": "open",
+        "skill": "2f",
+        "marks": 2,
+        "stem": "How does the order of the paragraphs help the reader understand seed banks?",
+        "rubric": [
+          {
+            "label": "Identifies broad-to-specific movement",
+            "check": {
+              "keywordAny": [
+                [
+                  "first"
+                ],
+                [
+                  "purpose"
+                ],
+                [
+                  "what",
+                  "is"
+                ],
+                [
+                  "definition"
+                ],
+                [
+                  "overview"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Identifies process/use/limits later",
+            "check": {
+              "keywordAny": [
+                [
+                  "collect"
+                ],
+                [
+                  "test"
+                ],
+                [
+                  "farmers"
+                ],
+                [
+                  "limits"
+                ],
+                [
+                  "then"
+                ],
+                [
+                  "later"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "The text starts by explaining what a seed bank is, then moves through collecting, testing and storing seeds before explaining how farmers may use them and what the limits are.",
+        "explanation": "The structure builds understanding step by step, from purpose to process to use.",
+        "hint": "Track the job of each paragraph rather than one detail."
+      },
+      {
+        "id": "svg_q7",
+        "type": "mcq",
+        "skill": "P1",
+        "marks": 1,
+        "stem": "In the sentence \"Before a packet enters long-term storage, scientists test whether the seeds can still germinate\", what does the comma help do?",
+        "options": [
+          "It separates the opening time phrase from the main action.",
+          "It shows a speaker has changed.",
+          "It proves the seeds have already sprouted.",
+          "It replaces a missing full stop."
+        ],
+        "correct": 0,
+        "modelAnswer": "The comma separates the opening time phrase from the main action.",
+        "explanation": "The comma marks a pause after the phrase that tells when the testing happens.",
+        "hint": "Read the sentence in two parts: when, then what happens."
+      },
+      {
+        "id": "svg_q8",
+        "type": "open",
+        "skill": "2g",
+        "marks": 2,
+        "stem": "Why is \"living library\" an effective phrase for a seed bank?",
+        "rubric": [
+          {
+            "label": "Explains library idea",
+            "check": {
+              "keywordAny": [
+                [
+                  "library"
+                ],
+                [
+                  "stored"
+                ],
+                [
+                  "collection"
+                ],
+                [
+                  "record"
+                ],
+                [
+                  "many"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Explains living/future use",
+            "check": {
+              "keywordAny": [
+                [
+                  "living"
+                ],
+                [
+                  "grow"
+                ],
+                [
+                  "future"
+                ],
+                [
+                  "harvest"
+                ],
+                [
+                  "germinate"
+                ],
+                [
+                  "wake"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "It is effective because a seed bank is a collection like a library, but the seeds are alive and may grow into future crops when they are needed.",
+        "explanation": "The phrase combines the idea of organised knowledge with living material.",
+        "hint": "Explain both words in the phrase, not just one."
+      },
+      {
+        "id": "svg_q9",
+        "type": "short",
+        "skill": "2b",
+        "marks": 1,
+        "stem": "What do scientists do if too few tested seeds sprout?",
+        "check": {
+          "keywordAny": [
+            [
+              "grown",
+              "again"
+            ],
+            [
+              "refreshed"
+            ],
+            [
+              "grow",
+              "again"
+            ],
+            [
+              "collection",
+              "refreshed"
+            ]
+          ]
+        },
+        "modelAnswer": "The collection must be grown again and refreshed.",
+        "explanation": "This is stated in paragraph 3 after the germination test.",
+        "hint": "Look at what happens after too few seeds sprout."
+      },
+      {
+        "id": "svg_q10",
+        "type": "evidenceShort",
+        "skill": "2h",
+        "marks": 2,
+        "answerMarks": 1,
+        "evidenceMarks": 1,
+        "stem": "How is a seed bank different from an ordinary museum? Give evidence.",
+        "answerCheck": {
+          "keywordAny": [
+            [
+              "living"
+            ],
+            [
+              "grow"
+            ],
+            [
+              "future"
+            ],
+            [
+              "not",
+              "dead"
+            ],
+            [
+              "harvest"
+            ]
+          ]
+        },
+        "evidenceCheck": {
+          "containsAny": [
+            "not a museum of dead things",
+            "It is a living library",
+            "future harvests possible"
+          ]
+        },
+        "modelAnswer": "Unlike an ordinary museum, a seed bank stores living seeds that may be grown for future harvests; the text calls it \"a living library\".",
+        "explanation": "The comparison needs both the museum contrast and the living/future purpose.",
+        "hint": "Use the first two sentences of the passage."
+      },
+      {
+        "id": "svg_q11",
+        "type": "open",
+        "skill": "2e",
+        "marks": 1,
+        "stem": "Why might seed banks become more important as weather becomes less predictable?",
+        "rubric": [
+          {
+            "label": "Links weather change to useful stored traits",
+            "check": {
+              "keywordAny": [
+                [
+                  "weather"
+                ],
+                [
+                  "flood"
+                ],
+                [
+                  "heat"
+                ],
+                [
+                  "pests"
+                ],
+                [
+                  "choices"
+                ],
+                [
+                  "traits"
+                ],
+                [
+                  "harvest"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "They may become more important because stored varieties can give farmers more choices when floods, heat or pests damage harvests.",
+        "explanation": "The prediction is based on the passage's explanation of changing conditions.",
+        "hint": "Use paragraph 4 or 5."
+      },
+      {
+        "id": "svg_q12",
+        "type": "open",
+        "skill": "2d",
+        "marks": 2,
+        "stem": "Why is patience as important as technology in a seed vault?",
+        "rubric": [
+          {
+            "label": "Uses long-term storage/testing details",
+            "check": {
+              "keywordAny": [
+                [
+                  "decades"
+                ],
+                [
+                  "sleep"
+                ],
+                [
+                  "test"
+                ],
+                [
+                  "germinate"
+                ],
+                [
+                  "refresh"
+                ],
+                [
+                  "patient"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Explains why waiting matters",
+            "check": {
+              "keywordAny": [
+                [
+                  "needed"
+                ],
+                [
+                  "future"
+                ],
+                [
+                  "answer"
+                ],
+                [
+                  "choices"
+                ],
+                [
+                  "weather"
+                ],
+                [
+                  "harvest"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "Patience matters because seeds may sleep for decades and need careful testing and records before they are useful. They may only become important when a future problem appears.",
+        "explanation": "The answer should connect the quiet, long-term work with future usefulness.",
+        "hint": "Use details from the testing paragraph and the final paragraph."
+      }
+    ]
+  },
+  {
+    "id": "rooftop_rain",
+    "title": "Rooftop Rain",
+    "genre": "poetry",
+    "difficulty": 3,
+    "isLong": false,
+    "blocks": [
+      "Rain taps the corrugated roof / in silver stitches, quick and thin; / pigeons shuffle under pipes / and pull their grey coats in.",
+      "The guttering gargles at the lane, / a bottle filling, then overfull; / each puddle catches traffic lights / and shakes them into wool.",
+      "On windows high above the shops / a thousand beads begin to race; / the roof replies — tin-bright, drum-light — / to every cloud that changes place.",
+      "By dusk the storm has spent its coins; / the chimneys breathe a softer steam. / In cracks beside the rooftop door, / small seeds lift green heads from a dream.",
+      "The city has not disappeared; / it stands rinsed, bright and ready. / The rain has written on the roofs / and left the noisy morning steady."
+    ],
+    "questions": [
+      {
+        "id": "rr_q1",
+        "type": "short",
+        "skill": "2b",
+        "marks": 1,
+        "stem": "Where does the rain tap at the start of the poem?",
+        "check": {
+          "keywordAny": [
+            [
+              "corrugated",
+              "roof"
+            ],
+            [
+              "roof"
+            ]
+          ]
+        },
+        "modelAnswer": "It taps the corrugated roof.",
+        "explanation": "The answer is in the first line of the poem.",
+        "hint": "Read the first two lines."
+      },
+      {
+        "id": "rr_q2",
+        "type": "mcq",
+        "skill": "2a",
+        "marks": 1,
+        "stem": "What does \"silver stitches\" suggest about the rain?",
+        "options": [
+          "It falls in thin bright lines.",
+          "It is making clothes for the pigeons.",
+          "It has stopped completely.",
+          "It is heavy enough to break the roof."
+        ],
+        "correct": 0,
+        "modelAnswer": "It suggests thin, bright lines of rain.",
+        "explanation": "The image links rain to small shining stitches.",
+        "hint": "Think about what stitches look like."
+      },
+      {
+        "id": "rr_q3",
+        "type": "open",
+        "skill": "2g",
+        "marks": 2,
+        "stem": "What is the effect of the phrase \"The guttering gargles\"?",
+        "rubric": [
+          {
+            "label": "Explains sound",
+            "check": {
+              "keywordAny": [
+                [
+                  "sound"
+                ],
+                [
+                  "noise"
+                ],
+                [
+                  "gargle"
+                ],
+                [
+                  "water"
+                ],
+                [
+                  "gutter"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Explains lively/personified effect",
+            "check": {
+              "keywordAny": [
+                [
+                  "person"
+                ],
+                [
+                  "alive"
+                ],
+                [
+                  "lively"
+                ],
+                [
+                  "funny"
+                ],
+                [
+                  "mouth"
+                ],
+                [
+                  "full"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "The phrase makes the gutter sound noisy and almost alive, as if it has a mouth full of water.",
+        "explanation": "The alliteration and verb make an ordinary drain feel active and audible.",
+        "hint": "Say what sound you imagine and how the object seems to behave."
+      },
+      {
+        "id": "rr_q4",
+        "type": "evidenceShort",
+        "skill": "2d",
+        "marks": 2,
+        "answerMarks": 1,
+        "evidenceMarks": 1,
+        "stem": "How do you know the poem's mood becomes hopeful by the end? Give evidence.",
+        "answerCheck": {
+          "keywordAny": [
+            [
+              "hope"
+            ],
+            [
+              "bright"
+            ],
+            [
+              "ready"
+            ],
+            [
+              "green"
+            ],
+            [
+              "steady"
+            ],
+            [
+              "fresh"
+            ]
+          ]
+        },
+        "evidenceCheck": {
+          "containsAny": [
+            "small seeds lift green heads",
+            "rinsed, bright and ready",
+            "left the noisy morning steady"
+          ]
+        },
+        "modelAnswer": "The mood becomes hopeful because the city is refreshed and new growth appears; evidence could include \"small seeds lift green heads\" or \"rinsed, bright and ready\".",
+        "explanation": "The ending changes the rain from noise into renewal.",
+        "hint": "Look at the last two stanzas."
+      },
+      {
+        "id": "rr_q5",
+        "type": "open",
+        "skill": "2c",
+        "marks": 2,
+        "stem": "Summarise the main change described in the poem.",
+        "rubric": [
+          {
+            "label": "Starts with busy rain/noise",
+            "check": {
+              "keywordAny": [
+                [
+                  "rain"
+                ],
+                [
+                  "taps"
+                ],
+                [
+                  "gargles"
+                ],
+                [
+                  "noise"
+                ],
+                [
+                  "storm"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Ends with calm or renewal",
+            "check": {
+              "keywordAny": [
+                [
+                  "steady"
+                ],
+                [
+                  "rinsed"
+                ],
+                [
+                  "bright"
+                ],
+                [
+                  "green"
+                ],
+                [
+                  "seeds"
+                ],
+                [
+                  "calm"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "The poem moves from busy, noisy rain on the rooftops to a calmer, brighter city where small seeds begin to grow.",
+        "explanation": "A good summary follows the change across the whole poem.",
+        "hint": "Compare the opening sounds with the final image."
+      },
+      {
+        "id": "rr_q6",
+        "type": "order",
+        "skill": "2f",
+        "marks": 2,
+        "stem": "Put these images from the poem in the order they appear.",
+        "items": [
+          "Seeds lift green heads",
+          "Rain taps the roof",
+          "Traffic lights shake in puddles",
+          "The roof replies to clouds"
+        ],
+        "correctPositions": [
+          4,
+          1,
+          2,
+          3
+        ],
+        "modelAnswer": "1 rain taps the roof, 2 traffic lights shake in puddles, 3 the roof replies to clouds, 4 seeds lift green heads.",
+        "explanation": "The order follows the poem from the roof, to the lane, to high windows, to the ending.",
+        "hint": "Work stanza by stanza."
+      },
+      {
+        "id": "rr_q7",
+        "type": "mcq",
+        "skill": "P3",
+        "marks": 1,
+        "stem": "In the line \"the roof replies — tin-bright, drum-light —\", what do the dashes help do?",
+        "options": [
+          "They tuck in extra descriptive detail about the roof's sound.",
+          "They show the poem has ended.",
+          "They mark a list of people speaking.",
+          "They turn the line into a question."
+        ],
+        "correct": 0,
+        "modelAnswer": "The dashes tuck in extra descriptive detail about the roof's sound.",
+        "explanation": "The words between the dashes add a vivid description without changing the main sentence.",
+        "hint": "Read the line once with the dashed words, then once without them."
+      },
+      {
+        "id": "rr_q8",
+        "type": "open",
+        "skill": "2h",
+        "marks": 3,
+        "stem": "Compare the rain at the start of the poem with its effect by the end.",
+        "rubric": [
+          {
+            "label": "Describes start as noisy/active",
+            "check": {
+              "keywordAny": [
+                [
+                  "tap"
+                ],
+                [
+                  "gargle"
+                ],
+                [
+                  "noisy"
+                ],
+                [
+                  "quick"
+                ],
+                [
+                  "storm"
+                ],
+                [
+                  "drum"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Describes end as fresh/calm/growth",
+            "check": {
+              "keywordAny": [
+                [
+                  "rinsed"
+                ],
+                [
+                  "bright"
+                ],
+                [
+                  "ready"
+                ],
+                [
+                  "steady"
+                ],
+                [
+                  "green"
+                ],
+                [
+                  "seeds"
+                ]
+              ]
+            }
+          },
+          {
+            "label": "Makes a direct comparison across the poem",
+            "check": {
+              "keywordAny": [
+                [
+                  "start",
+                  "end"
+                ],
+                [
+                  "beginning",
+                  "end"
+                ],
+                [
+                  "changes"
+                ],
+                [
+                  "different"
+                ],
+                [
+                  "by",
+                  "end"
+                ]
+              ]
+            }
+          }
+        ],
+        "modelAnswer": "At the start the rain is noisy and active, tapping and gargling around the roofs. By the end it has refreshed the city and helped create a calmer, brighter feeling with green seeds appearing.",
+        "explanation": "The comparison needs both the beginning and the ending, not just one image.",
+        "hint": "Use one image from the first half and one from the final stanza."
+      }
+    ]
+
+  },
 
 
 ]);
@@ -9448,7 +10684,60 @@ export const READING_TEST_PAPERS = Object.freeze([
         ]
       }
     ]
-  }
+  },
+{
+  "id": "paper_m",
+  "title": "Original KS2-style Paper M",
+  "timeLimitMin": 60,
+  "totalMarks": 50,
+  "sections": [
+    {
+      "passageId": "lantern_map",
+      "questionIds": [
+        "lm_q1",
+        "lm_q2",
+        "lm_q3",
+        "lm_q4",
+        "lm_q5",
+        "lm_q6",
+        "lm_q7",
+        "lm_q8",
+        "lm_q9",
+        "lm_q10"
+      ]
+    },
+    {
+      "passageId": "seed_vault_guardians",
+      "questionIds": [
+        "svg_q1",
+        "svg_q2",
+        "svg_q3",
+        "svg_q4",
+        "svg_q5",
+        "svg_q6",
+        "svg_q7",
+        "svg_q8",
+        "svg_q9",
+        "svg_q10",
+        "svg_q11",
+        "svg_q12"
+      ]
+    },
+    {
+      "passageId": "rooftop_rain",
+      "questionIds": [
+        "rr_q1",
+        "rr_q2",
+        "rr_q3",
+        "rr_q4",
+        "rr_q5",
+        "rr_q6",
+        "rr_q7",
+        "rr_q8"
+      ]
+    }
+  ]
+}
 
 
 ]);

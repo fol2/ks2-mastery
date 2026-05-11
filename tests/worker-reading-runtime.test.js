@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { checkMatches, createServerReadingEngine, evaluateReadingQuestion } from '../worker/src/subjects/reading/engine.js';
 import { buildReadingReadModel } from '../worker/src/subjects/reading/read-models.js';
 import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
+import { READING_PASSAGES } from '../shared/reading/content.js';
 
 function fakeContext() {
   let subjectRecord = null;
@@ -85,6 +86,13 @@ test('reading phrase checks reject locally negated correct phrases', () => {
   assert.equal(checkMatches('It was folded; not slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), false);
   assert.equal(checkMatches('not folded slips of paper, but folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), true);
   assert.equal(checkMatches('not only speech marks', { containsAny: ['speech marks'] }), true);
+  assert.equal(checkMatches('speech marks are not needed', { containsAny: ['speech marks'] }), false);
+  assert.equal(checkMatches('speech marks not needed', { containsAny: ['speech marks'] }), false);
+  assert.equal(checkMatches('folded slips of paper were not inside', { keywordAny: [['fold', 'slip', 'paper']] }), false);
+  assert.equal(checkMatches('the house around her seemed to change did not happen', { containsAny: ['the house around her seemed to change'] }), false);
+  assert.equal(checkMatches('the house around her seemed to change was false', { containsAny: ['the house around her seemed to change'] }), false);
+  assert.equal(checkMatches('It had folded slips of paper, not coins.', { keywordAny: [['fold', 'slip', 'paper']] }), true);
+  assert.equal(checkMatches('folded slips of paper, but not coins', { keywordAny: [['fold', 'slip', 'paper']] }), true);
 });
 
 test('reading evidence fallback does not award marks for negated evidence quotes', () => {
@@ -121,6 +129,26 @@ test('reading evidence fallback does not award marks for negated evidence quotes
   assert.equal(negatedLaterToken.score, 1);
   assert.equal(negatedLaterToken.correct, false);
 
+  const negatedAfterPhrase = evaluateReadingQuestion(question, {
+    answer: 'the house changes',
+    evidence: 'the house around her seemed to change did not happen',
+  });
+  assert.equal(negatedAfterPhrase.score, 1);
+  assert.equal(negatedAfterPhrase.correct, false);
+
+  const negatedAfterOverlap = evaluateReadingQuestion(question, {
+    answer: 'the house changes',
+    evidence: 'house around her seemed to change did not happen',
+  });
+  assert.equal(negatedAfterOverlap.score, 1);
+  assert.equal(negatedAfterOverlap.correct, false);
+
+  const contrastAfterPhrase = evaluateReadingQuestion(question, {
+    answer: 'the house changes',
+    evidence: 'the house around her seemed to change, not the tin box',
+  });
+  assert.equal(contrastAfterPhrase.score, 2);
+
   const corrected = evaluateReadingQuestion(question, {
     answer: 'the house changes',
     evidence: 'not the house around her seemed to change, but the house around her seemed to change',
@@ -132,6 +160,21 @@ test('reading evidence fallback does not award marks for negated evidence quotes
     evidence: 'wrong: the house around her seemed. However, house around her seemed to change',
   });
   assert.equal(partialCorrected.score, 2);
+});
+
+test('reading evidence checks accept source-affirmed negation snippets', () => {
+  const seedVault = READING_PASSAGES.find((passage) => passage.id === 'seed_vault_guardians');
+  const svgQ3 = seedVault.questions.find((question) => question.id === 'svg_q3');
+  const svgQ10 = seedVault.questions.find((question) => question.id === 'svg_q10');
+
+  assert.equal(checkMatches('A few seeds are kept locally, and duplicate samples are sent to another seed bank so one accident cannot erase a variety.', svgQ3.evidenceCheck), true);
+  assert.equal(checkMatches('A seed bank is not a museum of dead things.', svgQ10.evidenceCheck), true);
+
+  const marked = evaluateReadingQuestion(svgQ10, {
+    answer: 'It is not dead; it is living and can grow for future harvests.',
+    evidence: 'A seed bank is not a museum of dead things.',
+  });
+  assert.equal(marked.score, 2);
 });
 
 test('reading save-response rejects stale expected session or question ids', () => {

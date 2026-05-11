@@ -16,14 +16,14 @@ function norm(value) {
 
 test('reading content bank has varied original passages, papers and KS2 domains', () => {
   const summary = readingContentSummary();
-  assert.equal(summary.passageCount, 21);
-  assert.equal(summary.paperCount, 12);
-  assert.ok(summary.questionCount >= 180);
+  assert.ok(summary.passageCount >= 24);
+  assert.ok(summary.paperCount >= 13);
+  assert.ok(summary.questionCount >= 210);
   assert.ok(Object.keys(READING_SKILLS).includes('2d'));
-  assert.ok(summary.genres.fiction >= 8);
-  assert.ok(summary.genres['non-fiction'] >= 8);
-  assert.ok(summary.genres.poetry >= 5);
-  assert.ok(summary.longPassageCount >= 7);
+  assert.ok(summary.genres.fiction >= 9);
+  assert.ok(summary.genres['non-fiction'] >= 9);
+  assert.ok(summary.genres.poetry >= 6);
+  assert.ok(summary.longPassageCount >= 8);
 });
 
 test('reading ids are unique and evidence quotes exist in their source passage', () => {
@@ -61,6 +61,32 @@ test('reading question stems avoid noticeable repetition after normalisation', (
   }
   const duplicates = [...seen.entries()].filter(([, rows]) => rows.length > 1);
   assert.deepEqual(duplicates, []);
+});
+
+test('reading model answers and stem shapes avoid repeated-question feel', () => {
+  const answerGroups = new Map();
+  const stemShapeGroups = new Map();
+  for (const passage of READING_PASSAGES) {
+    for (const question of passage.questions || []) {
+      if (question.modelAnswer) {
+        const answerKey = norm(question.modelAnswer);
+        const answers = answerGroups.get(answerKey) || [];
+        answers.push(`${passage.id}:${question.id}`);
+        answerGroups.set(answerKey, answers);
+      }
+      const stemShape = norm(question.stem)
+        .replace(/\b(paragraph|section) [0-9]+\b/g, '$1 #')
+        .replace(/\b(red tin box|lantern map|seed bank|seed vault|rooftop rain|poem|passage|story|text)\b/g, 'TEXT')
+        .replace(/\b(nia|mara|aunt lio|grandad)\b/g, 'PERSON');
+      const stems = stemShapeGroups.get(stemShape) || [];
+      stems.push(`${passage.id}:${question.id}`);
+      stemShapeGroups.set(stemShape, stems);
+    }
+  }
+  const duplicateAnswers = [...answerGroups.entries()].filter(([, rows]) => rows.length > 1);
+  const duplicateStemShapes = [...stemShapeGroups.entries()].filter(([, rows]) => rows.length > 2);
+  assert.deepEqual(duplicateAnswers, []);
+  assert.deepEqual(duplicateStemShapes, []);
 });
 
 test('reading test papers only reference existing passages and questions and sum to 50 marks', () => {
