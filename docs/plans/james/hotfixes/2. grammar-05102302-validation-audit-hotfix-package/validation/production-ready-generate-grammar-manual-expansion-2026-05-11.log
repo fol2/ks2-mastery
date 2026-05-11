@@ -1,0 +1,2 @@
+Error: Generated manual expansion file is stale. Run: node scripts/generate-grammar-manual-expansion.mjs
+    at main (file:///D:/Coding/ks2-mastery/.worktrees/grammar-05102302-hotfix/scripts/generate-grammar-manual-expansion.mjs:613:13)

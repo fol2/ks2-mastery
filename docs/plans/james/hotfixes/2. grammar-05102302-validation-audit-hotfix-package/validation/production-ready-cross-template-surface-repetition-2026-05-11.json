@@ -1,0 +1,10 @@
+{
+  "repoRoot": ".",
+  "summary": {
+    "templateCount": 510,
+    "seedCount": 30,
+    "totalCases": 15300,
+    "crossTemplateDuplicateSurfaceCount": 0
+  },
+  "crossTemplateDuplicates": []
+}

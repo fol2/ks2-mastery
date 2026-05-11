@@ -21,6 +21,7 @@ import {
   grammarSessionInfoChips,
   grammarSessionFooterNote,
   grammarFeedbackTone,
+  grammarFeedbackNextStepCopy,
 } from '../src/subjects/grammar/session-ui.js';
 import {
   GRAMMAR_PRIMARY_MODE_CARDS,
@@ -267,6 +268,21 @@ test('U8 session-ui: grammarFeedbackTone neutral returns neutral', () => {
 
 test('P2 session-ui: grammarFeedbackTone treats non-scored manual-review feedback as neutral', () => {
   assert.equal(grammarFeedbackTone({ correct: false, nonScored: true, manualReviewOnly: true }), 'neutral');
+});
+
+test('U8 session-ui: grammarFeedbackNextStepCopy gives clear post-marking actions', () => {
+  assert.equal(
+    grammarFeedbackNextStepCopy({ correct: true }),
+    'Great — move to the next question.',
+  );
+  assert.equal(
+    grammarFeedbackNextStepCopy({ correct: false }),
+    'Fix it now: retry, see a worked solution, or try a similar question.',
+  );
+  assert.equal(
+    grammarFeedbackNextStepCopy({ nonScored: true }),
+    'Saved — keep going when you are ready.',
+  );
 });
 
 // -----------------------------------------------------------------------------

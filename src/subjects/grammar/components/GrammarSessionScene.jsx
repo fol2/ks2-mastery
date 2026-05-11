@@ -12,6 +12,7 @@ import {
   grammarSessionProgressLabel,
   grammarSessionInfoChips,
   grammarFeedbackTone,
+  grammarFeedbackNextStepCopy,
 } from '../session-ui.js';
 import { dispatchGrammarAnswerFormSubmit } from '../form-submit.js';
 import { translateGrammarSessionError } from '../module.js';
@@ -247,6 +248,7 @@ function FeedbackPanel({ feedback }) {
   const result = feedback.result;
   const tone = grammarFeedbackTone(result);
   const toneClass = tone === 'good' ? 'good' : tone === 'bad' ? 'warn' : 'neutral';
+  const nextStepCopy = grammarFeedbackNextStepCopy(result);
   // SH2-U7 review follow-up (FIX-3): `data-grammar-session-feedback-live`
   // mirrors Punctuation's `data-punctuation-session-feedback-live` anchor
   // so agent-native / a11y scenes can query the live region deterministically
@@ -261,7 +263,8 @@ function FeedbackPanel({ feedback }) {
     >
       <strong>{result.feedbackShort || (tone === 'good' ? 'Correct.' : tone === 'bad' ? 'Not quite.' : 'Saved for review')}</strong>
       <div>{result.feedbackLong || result.minimalHint || ''}</div>
-      {result.answerText ? <div className="small muted">Answer: {result.answerText}</div> : null}
+      {nextStepCopy ? <div className="small muted" data-grammar-feedback-next-step>{nextStepCopy}</div> : null}
+      {result.answerText ? <div className="small muted">Correct answer: {result.answerText}</div> : null}
     </div>
   );
 }

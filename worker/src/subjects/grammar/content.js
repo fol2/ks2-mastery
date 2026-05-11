@@ -5655,7 +5655,7 @@ const TEMPLATES = [
             answerSpec,
             nonScored:true,
             manualReviewOnly:true,
-            stemHtml:`<p>Rewrite the sentence in Standard English.</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
+            stemHtml:`<p>Correct this sentence into Standard English.</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Write the corrected sentence (saved for adult review)." },
             solutionLines:[
               "Find the non-standard spoken form.",
@@ -5875,7 +5875,7 @@ const TEMPLATES = [
           const item = generateRelativeClauseCase(rng);
           return makeBaseQuestion(this, seed, {
             marks:1,
-            stemHtml:`<p>Which sentence contains a relative clause?</p>`,
+            stemHtml:`<p>Choose the sentence where a relative clause adds information about a noun.</p>`,
             inputSpec:{ type:"single_choice", label:"Choose one", options:buildChoiceOptions(rng, item.correct, item.distractors) },
             solutionLines:[
               "A relative clause adds information about a noun.",
@@ -11811,10 +11811,72 @@ function manualExpansionReadableRowLabel(label) {
   return `Target “${target}” in sentence: ${sentence}`;
 }
 
-function manualExpansionReadablePromptText(caseItem, fallback = '') {
+function manualExpansionTableClassificationPrompt(conceptId) {
+  switch (conceptId) {
+    case 'active_passive': return 'Classify each sentence as active or passive.';
+    case 'adverbials': return 'Classify each adverbial by how it works.';
+    case 'apostrophes_possession': return 'Classify each possessive apostrophe example.';
+    case 'boundary_punctuation': return 'Classify each boundary punctuation choice.';
+    case 'clauses': return 'Classify each clause target.';
+    case 'formality': return 'Classify each phrase by formality.';
+    case 'hyphen_ambiguity': return 'Classify each hyphen example.';
+    case 'modal_verbs': return 'Classify each modal verb by meaning.';
+    case 'noun_phrases': return 'Classify each noun-phrase target.';
+    case 'parenthesis_commas': return 'Classify each parenthesis punctuation target.';
+    case 'pronouns_cohesion': return 'Classify each pronoun-cohesion choice.';
+    case 'relative_clauses': return 'Classify each relative-clause target.';
+    case 'sentence_functions': return 'Classify each sentence by function.';
+    case 'speech_punctuation': return 'Classify each speech-punctuation target.';
+    case 'standard_english': return 'Classify each Standard English example.';
+    case 'subject_object': return 'Classify each subject or object target.';
+    case 'tense_aspect': return 'Classify each tense or aspect example.';
+    case 'word_classes': return 'Classify each word-class target.';
+    default: return 'Classify each row for this Grammar target.';
+  }
+}
+
+function manualExpansionReadablePromptText(caseItem, fallback = '', family = null) {
   const raw = manualExpansionSafeText(caseItem?.promptText || fallback);
+  const familyId = manualExpansionSafeText(family?.id || family?.templateId || family?.generatorFamilyId);
+  const caseId = manualExpansionSafeText(caseItem?.id);
+  const sourcePack = manualExpansionSafeText(caseItem?.sourcePack);
+  const conceptId = manualExpansionPrimaryConcept(family);
   if (caseItem?.inputType === 'table_choice' && /^Classify the grammar feature shown in this row:/i.test(raw)) {
-    return 'Classify the target word or phrase by its grammar role.';
+    return manualExpansionTableClassificationPrompt(conceptId);
+  }
+  if (caseId.includes(':noun_phrases:identify_expanded_np:')) {
+    return raw.replace(/^Which\s+option\s+is\s+an\s+expanded\s+noun\s+phrase\?/i, 'Choose the expanded noun phrase from the options.');
+  }
+  if (caseId.includes(':adverbials:fronted_adverbial_comma:')) {
+    return raw.replace(/^Copy\s+the\s+sentence\s+and\s+add\s+the\s+comma\s+after\s+the\s+fronted\s+adverbial\.\s*/i, 'Add the missing comma after the fronted adverbial, then copy the sentence. ');
+  }
+  if (caseId.includes(':sentence_functions:explain_function:')) {
+    return raw.replace(/^Why\s+is\s+this\s+sentence\s+(a|an)\s+([^?]+)\?\s*/i, 'Choose the best reason this sentence is $1 $2: ');
+  }
+  if (caseId.includes(':clauses:subordinate_clause_identify:')) {
+    return raw.replace(/^Which\s+option\s+is\s+the\s+subordinate\s+clause\?\s*/i, 'Choose the subordinate clause from this sentence: ');
+  }
+  if (caseId.includes(':modal_verbs:choose_modal_meaning:')) {
+    return `Choose the modal verb that best fits: ${raw}`;
+  }
+  if (caseId.includes(':standard_english:choose_standard_sentence:')) {
+    return raw.replace(/^Which\s+sentence\s+uses\s+Standard\s+English\?/i, 'Choose the sentence written in Standard English.');
+  }
+  if (caseId.includes(':subject_object:find_object:')) {
+    return raw.replace(/^What\s+is\s+the\s+object\s+of\s+this\s+sentence\?\s*/i, 'Find the object in this sentence: ');
+  }
+  if (caseId.includes(':subject_object:find_subject:')) {
+    return raw.replace(/^What\s+is\s+the\s+subject\s+of\s+this\s+sentence\?\s*/i, 'Find the subject in this sentence: ');
+  }
+  const isP18PossessivePrecisionRewrite = familyId === 'qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite'
+    || caseId.includes(':apostrophes_possession:precision_repair_or_rewrite:')
+    || (sourcePack === 'grammar-qg-p18-manual-expansion-delta-100-families'
+      && caseId.includes('precision_repair_or_rewrite'));
+  if (isP18PossessivePrecisionRewrite && /^Write\s+the\s+possessive\s+phrase\s+for\b/i.test(raw)) {
+    return raw.replace(
+      /\bWrite\s+the\s+possessive\s+phrase\s+for:?\s+((?:one|several)\s+[^.?!]+?\s+own(?:s)?\s+[^.?!]+)([.?!])/gi,
+      'Rewrite as a precise possessive phrase: $1$2'
+    );
   }
   // P20b: Manual-expansion possessive prompts sometimes read like
   // "Write the possessive phrase for one dog owns a bowl.". Add a colon
@@ -11902,7 +11964,7 @@ function buildManualExpansionSelectedQuestion(template, seed, caseItem, family) 
     sourcePack: caseItem.sourcePack,
     depthTier: caseItem.depthTier,
     answerSpec,
-    stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
+    stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem, '', family))}</p>`,
     inputSpec: { type: "single_choice", label: "Choose one", options: options.map(({ value, label }) => ({ value, label })) },
     solutionLines: [
       manualExpansionSafeText(caseItem.feedbackLong) || `The correct option is: ${correct}`,
@@ -11951,7 +12013,7 @@ function buildManualExpansionConstructedQuestion(template, seed, caseItem, famil
       depthTier: caseItem.depthTier,
       answerSpec,
       p20ClosedAutoMark: true,
-      stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
+      stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem, '', family))}</p>`,
       inputSpec: {
         type: caseItem.inputType === "textarea" ? "textarea" : "text",
         label: "Your answer",
@@ -11986,7 +12048,7 @@ function buildManualExpansionConstructedQuestion(template, seed, caseItem, famil
       answerSpec,
       nonScored: true,
       manualReviewOnly: true,
-      stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
+      stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem, '', family))}</p>`,
       inputSpec: {
         type: caseItem.inputType === "textarea" ? "textarea" : "text",
         label: "Your answer",
@@ -12021,7 +12083,7 @@ function buildManualExpansionConstructedQuestion(template, seed, caseItem, famil
     sourcePack: caseItem.sourcePack,
     depthTier: caseItem.depthTier,
     answerSpec,
-    stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
+    stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem, '', family))}</p>`,
     inputSpec: {
       type: caseItem.inputType === "textarea" ? "textarea" : "text",
       label: "Your answer",
@@ -12079,7 +12141,7 @@ function buildManualExpansionTableQuestion(template, seed, caseItem, family) {
     sourcePack: caseItem.sourcePack,
     depthTier: caseItem.depthTier,
     answerSpec,
-    stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem))}</p>`,
+    stemHtml: `<p>${escapeHtml(manualExpansionReadablePromptText(caseItem, '', family))}</p>`,
     inputSpec: {
       type: "table_choice",
       columns: displayColumns,

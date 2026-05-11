@@ -151,3 +151,17 @@ export function grammarFeedbackTone(result) {
   if (result.correct === false) return 'bad';
   return 'neutral';
 }
+
+/**
+ * One short next-step cue for the feedback panel. This keeps the marked
+ * question surface easy to act on without adding another primary CTA or
+ * exposing engine/internal terms. Correct answers point forward; incorrect
+ * answers point to the existing repair actions; non-scored/manual-review
+ * answers tell the learner the answer has been saved.
+ */
+export function grammarFeedbackNextStepCopy(result) {
+  const tone = grammarFeedbackTone(result);
+  if (tone === 'good') return 'Great — move to the next question.';
+  if (tone === 'bad') return 'Fix it now: retry, see a worked solution, or try a similar question.';
+  return 'Saved — keep going when you are ready.';
+}

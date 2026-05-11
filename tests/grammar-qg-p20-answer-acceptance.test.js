@@ -162,7 +162,7 @@ test('P20 serialised learner prompts remove legacy tag spacing and awkward table
     seed: 1,
   });
   const tableSerialised = serialiseGrammarQuestion(tableQuestion);
-  assert.equal(tableSerialised.promptText, 'Classify the target word or phrase by its grammar role.');
+  assert.equal(tableSerialised.promptText, 'Classify each word-class target.');
   assert.doesNotMatch(JSON.stringify(tableSerialised.inputSpec), /Classify the grammar feature shown in this row:/);
   assert.match(JSON.stringify(tableSerialised.inputSpec), /Target “carefully” in sentence:/);
 });
@@ -242,7 +242,6 @@ test('P20b internal punctuation rewrites accept omission of only the incidental 
 test('P20b possessive scenario prompts show the scenario after a colon', () => {
   for (const templateId of [
     'qg_p18_p18_apostrophes_possession_diagnostic_identify',
-    'qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite',
     'qg_p18_p18_apostrophes_possession_explain_reasoning',
   ]) {
     const question = createGrammarQuestion({ templateId, seed: 1 });
@@ -250,6 +249,16 @@ test('P20b possessive scenario prompts show the scenario after a colon', () => {
     assert.match(serialised.promptText, /for:\s+one dog owns a bowl/i);
     assert.doesNotMatch(serialised.promptText, /for\s+one dog owns a bowl/i);
   }
+});
+
+test('P20d possessive precision rewrite prompt is distinct from the base possessive rewrite family', () => {
+  const question = createGrammarQuestion({
+    templateId: 'qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite',
+    seed: 1,
+  });
+  const serialised = serialiseGrammarQuestion(question);
+  assert.match(serialised.promptText, /precise possessive phrase:\s+one dog owns a bowl/i);
+  assert.doesNotMatch(serialised.promptText, /^Write the possessive phrase for:/i);
 });
 
 test('P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking', () => {

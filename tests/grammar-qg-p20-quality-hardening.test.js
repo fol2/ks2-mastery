@@ -82,3 +82,42 @@ test('P20c generated source compaction preserves manual-review fairness flags', 
   assert.equal(compacted.manualReviewOnly, true);
   assert.equal(compacted.nonScored, true);
 });
+
+test('P20d apostrophes possession rewrite families do not share identical learner prompts', () => {
+  const rewriteTemplateId = 'qg_p18_p15_apostrophes_possession_possessive_rewrite';
+  const precisionTemplateId = 'qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite';
+  for (let seed = 1; seed <= 30; seed += 1) {
+    const rewritePrompt = serialiseGrammarQuestion(createGrammarQuestion({ templateId: rewriteTemplateId, seed })).promptText;
+    const precisionPrompt = serialiseGrammarQuestion(createGrammarQuestion({ templateId: precisionTemplateId, seed })).promptText;
+    assert.notEqual(
+      precisionPrompt,
+      rewritePrompt,
+      `seed ${seed} must not repeat the same learner-facing possessive prompt across rewrite families`,
+    );
+  }
+});
+
+test('P20d learner-facing surfaces do not collide across Grammar templates in the release window', () => {
+  const seen = new Map();
+  for (const template of GRAMMAR_TEMPLATE_METADATA) {
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const question = createGrammarQuestion({ templateId: template.id, seed });
+      if (!question) continue;
+      const serialised = serialiseGrammarQuestion(question);
+      const prompt = String(serialised.promptText || '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+      const inputType = serialised.inputSpec?.type || '';
+      const key = `${inputType}\t${prompt}`;
+      const previous = seen.get(key);
+      if (previous && previous.templateId !== template.id) {
+        assert.fail(
+          `learner-facing surface repeats across templates: ${previous.templateId}:${previous.seed} and ${template.id}:${seed} -> ${serialised.promptText}`,
+        );
+      }
+      if (!previous) seen.set(key, { templateId: template.id, seed });
+    }
+  }
+});

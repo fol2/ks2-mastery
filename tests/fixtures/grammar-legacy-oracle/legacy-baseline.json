@@ -2794,7 +2794,7 @@
         "seed": 10578,
         "itemId": "proc2_standard_english_fix:10578",
         "marks": 2,
-        "promptText": "Rewrite the sentence in Standard English. Amira seen the comet after school.",
+        "promptText": "Correct this sentence into Standard English. Amira seen the comet after school.",
         "inputSpec": {
           "type": "textarea",
           "label": "Corrected sentence",
@@ -3301,7 +3301,7 @@
         "seed": 10697,
         "itemId": "proc2_relative_clause_choice:10697",
         "marks": 1,
-        "promptText": "Which sentence contains a relative clause?",
+        "promptText": "Choose the sentence where a relative clause adds information about a noun.",
         "inputSpec": {
           "type": "single_choice",
           "label": "Choose one",
