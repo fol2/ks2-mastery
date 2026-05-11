@@ -2,8 +2,8 @@
   "ok": true,
   "smokeType": "reasoning-production-ui",
   "origin": "https://ks2.eugnel.uk",
-  "sourceCommit": "ffcea7781ab9a65dc2f3b2b94ff9f2b1675b5463",
-  "generatedAt": "2026-05-11T13:42:21.942Z",
+  "sourceCommit": "fde9b7c14e1aff33dbb602e6c290a8d0294057e9",
+  "generatedAt": "2026-05-11T14:37:20.684Z",
   "viewports": [
     {
       "viewport": {
@@ -78,7 +78,7 @@
         "hasSetupGrid": true,
         "hasSetupMain": true,
         "hasHeroBackdrop": true,
-        "heroBg": "url('/assets/regions/paradox-spires/paradox-spires-a2.1280.webp')",
+        "heroBg": "url('/assets/regions/paradox-spires/paradox-spires-a3.1280.webp')",
         "primaryModes": [
           {
             "mode": "smart",

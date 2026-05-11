@@ -1,10 +1,10 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "sourceCommit": "ffcea7781ab9a65dc2f3b2b94ff9f2b1675b5463",
-  "startedAt": "2026-05-11T13:32:51.236Z",
-  "finishedAt": "2026-05-11T13:32:53.291Z",
-  "learnerId": "learner-demo-jgQuJT0znus_VQ",
+  "sourceCommit": "fde9b7c14e1aff33dbb602e6c290a8d0294057e9",
+  "startedAt": "2026-05-11T14:36:57.339Z",
+  "finishedAt": "2026-05-11T14:37:00.309Z",
+  "learnerId": "learner-demo-YnoNIQTqyb5SFw",
   "finalRevision": 2,
   "contentReleaseId": "reasoning-poc-promoted-2026-05-11",
   "content": {
@@ -56,11 +56,11 @@
     ]
   },
   "session": {
-    "id": "reasoning_session_mp18rvjd_yi75fkf6",
+    "id": "reasoning_session_mp1b2caa_6u6ny5p7",
     "mode": "sats",
-    "questionId": "strategy_choice_boxes:500938972",
-    "templateId": "strategy_choice_boxes",
-    "seed": 500938972,
+    "questionId": "fdp_compare_percent_amounts:793519401",
+    "templateId": "fdp_compare_percent_amounts",
+    "seed": 793519401,
     "score": 2,
     "maxScore": 2
   },
