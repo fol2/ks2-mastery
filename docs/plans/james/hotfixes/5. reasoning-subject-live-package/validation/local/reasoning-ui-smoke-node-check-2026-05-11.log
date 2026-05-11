@@ -1,0 +1,2 @@
+Command: node --check scripts/reasoning-production-ui-smoke.mjs
+Result: pass

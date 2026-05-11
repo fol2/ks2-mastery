@@ -727,7 +727,7 @@ function maybeFinishSession({ state, data, session, nowValue }) {
   data.sessions = data.sessions.slice(-100);
 }
 
-function currentPracticeSessionRecord(state, data) {
+function currentPracticeSessionRecord(state, data, nowValue) {
   const session = state.session;
   if (!session) return null;
   const completed = state.phase === 'summary' || sessionComplete(session);
@@ -736,8 +736,8 @@ function currentPracticeSessionRecord(state, data) {
     subjectId: 'reasoning',
     status: completed ? 'completed' : 'active',
     mode: session.mode,
-    startedAt: new Date(session.startedAt || Date.now()).toISOString(),
-    updatedAt: new Date().toISOString(),
+    startedAt: new Date(session.startedAt || nowValue).toISOString(),
+    updatedAt: new Date(nowValue).toISOString(),
     summary: completed ? state.summary || summariseSession(session) : null,
     state: { sessionId: session.id, questionCount: session.questionRefs?.length || 0 },
     data: { releaseId: data.releaseId || REASONING_CONTENT_RELEASE_ID },
@@ -867,12 +867,12 @@ function applyMarkSession({ learnerId, state, data, payload, requestId, nowValue
   return events;
 }
 
-function applySupport({ state, payload }) {
+function applySupport({ state, payload, nowValue }) {
   const session = state.session;
   const ref = currentQuestionRef(session);
   if (!session || !ref) return;
   const level = payload?.kind === 'worked' ? 2 : 1;
-  session.support[ref.itemId] = { level, requestedAt: Date.now() };
+  session.support[ref.itemId] = { level, requestedAt: nowValue };
   state.feedback = { questionRef: ref, result: null, final: false, supportLevel: level };
 }
 
@@ -906,7 +906,7 @@ export function createServerReasoningEngine({ now = () => Date.now(), random = M
     else if (command === 'submit-answer') events = applySubmit({ learnerId, state, data, payload, requestId, nowValue });
     else if (command === 'move-question') moveIndex(state.session, payload || {});
     else if (command === 'mark-section' || command === 'mark-session') events = applyMarkSession({ learnerId, state, data, payload, requestId, nowValue });
-    else if (command === 'request-support') applySupport({ state, payload });
+    else if (command === 'request-support') applySupport({ state, payload, nowValue });
     else if (command === 'continue-session') applyContinue({ state });
     else if (command === 'end-session') {
       if (state.session) {
@@ -938,7 +938,7 @@ export function createServerReasoningEngine({ now = () => Date.now(), random = M
       analytics,
       content: reasoningContentSummary(),
       events,
-      practiceSession: currentPracticeSessionRecord(state, data),
+      practiceSession: currentPracticeSessionRecord(state, data, nowValue),
       readModel: buildReadModel({ learnerId, state, data, nowValue }),
     };
   }

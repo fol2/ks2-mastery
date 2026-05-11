@@ -1,0 +1,125 @@
+{
+  "ok": true,
+  "smokeType": "reasoning-production-ui",
+  "origin": "https://ks2.eugnel.uk",
+  "sourceCommit": "ffcea7781ab9a65dc2f3b2b94ff9f2b1675b5463",
+  "generatedAt": "2026-05-11T13:42:21.942Z",
+  "viewports": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "setupState": {
+        "title": "Reasoning missions",
+        "lede": "Read the problem, choose the structure, work accurately, then check whether the answer makes sense.",
+        "hasSetupGrid": true,
+        "hasSetupMain": true,
+        "hasHeroBackdrop": true,
+        "heroBg": "url('/assets/regions/paradox-spires/paradox-spires-a2.1280.webp')",
+        "primaryModes": [
+          {
+            "mode": "smart",
+            "pressed": true,
+            "text": "SSmart ReviewMixed due, weak and new reasoning structures.RECOMMENDED"
+          },
+          {
+            "mode": "trouble",
+            "pressed": false,
+            "text": "TTrouble DrillRecent misses and weak templates first."
+          },
+          {
+            "mode": "satsset",
+            "pressed": false,
+            "text": "PSATs Mini-SetTimed mixed practice with delayed feedback."
+          }
+        ],
+        "selectNames": [
+          "focusSkillId",
+          "roundLength",
+          "setSize",
+          "viewMode"
+        ],
+        "startLabel": "Start Smart Review",
+        "companionText": "Where you standOpen codex →Start practising to discover your Reasoning creatures.Marked0Accuracy0%Independent0%Due today0No Reasoning practice has been logged yet.",
+        "morePracticeText": "More Reasoning practiceSkill PracticeFocus on one selected KS2 reasoning domain while still varying question families.Worked ExamplesUse a modelled structure first, then solve a close sibling problem.Faded GuidancePartly worked support after the learner has seen the structure.SATs SingleOne strict SATs-style reasoning item with no early hints.",
+        "analyticsText": "Reasoning strength",
+        "bodyWidth": 1280,
+        "viewportWidth": 1280
+      },
+      "sessionState": {
+        "hasHud": true,
+        "hasQuestionCard": true,
+        "hasActiveForm": true,
+        "title": "Solve the reasoning problem",
+        "guidance": "Try independently first. Support appears only after effort.",
+        "bodyWidth": 1280,
+        "viewportWidth": 1280
+      },
+      "screenshots": {
+        "setup": "C:\\Users\\fol2h\\.codex\\worktrees\\e7bc\\ks2-mastery\\docs\\plans\\james\\hotfixes\\5. reasoning-subject-live-package\\validation\\production\\screenshots\\reasoning-setup-1280x800.png",
+        "session": "C:\\Users\\fol2h\\.codex\\worktrees\\e7bc\\ks2-mastery\\docs\\plans\\james\\hotfixes\\5. reasoning-subject-live-package\\validation\\production\\screenshots\\reasoning-session-1280x800.png"
+      },
+      "failures": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "requestFailures": [],
+        "httpFailures": []
+      }
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "setupState": {
+        "title": "Reasoning missions",
+        "lede": "Read the problem, choose the structure, work accurately, then check whether the answer makes sense.",
+        "hasSetupGrid": true,
+        "hasSetupMain": true,
+        "hasHeroBackdrop": true,
+        "heroBg": "url('/assets/regions/paradox-spires/paradox-spires-a2.1280.webp')",
+        "primaryModes": [
+          {
+            "mode": "smart",
+            "pressed": true,
+            "text": "SSmart ReviewMixed due, weak and new reasoning structures.RECOMMENDED"
+          },
+          {
+            "mode": "trouble",
+            "pressed": false,
+            "text": "TTrouble DrillRecent misses and weak templates first."
+          },
+          {
+            "mode": "satsset",
+            "pressed": false,
+            "text": "PSATs Mini-SetTimed mixed practice with delayed feedback."
+          }
+        ],
+        "selectNames": [
+          "focusSkillId",
+          "roundLength",
+          "setSize",
+          "viewMode"
+        ],
+        "startLabel": "Start Smart Review",
+        "companionText": "Where you standOpen codex →Start practising to discover your Reasoning creatures.Marked0Accuracy0%Independent0%Due today0No Reasoning practice has been logged yet.",
+        "morePracticeText": "More Reasoning practiceSkill PracticeFocus on one selected KS2 reasoning domain while still varying question families.Worked ExamplesUse a modelled structure first, then solve a close sibling problem.Faded GuidancePartly worked support after the learner has seen the structure.SATs SingleOne strict SATs-style reasoning item with no early hints.",
+        "analyticsText": "Reasoning strength",
+        "bodyWidth": 390,
+        "viewportWidth": 390
+      },
+      "sessionState": null,
+      "screenshots": {
+        "setup": "C:\\Users\\fol2h\\.codex\\worktrees\\e7bc\\ks2-mastery\\docs\\plans\\james\\hotfixes\\5. reasoning-subject-live-package\\validation\\production\\screenshots\\reasoning-setup-390x844.png",
+        "session": null
+      },
+      "failures": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "requestFailures": [],
+        "httpFailures": []
+      }
+    }
+  ]
+}

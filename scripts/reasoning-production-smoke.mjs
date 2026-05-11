@@ -204,12 +204,18 @@ async function optionalHeroReadModel({ origin, cookie, learnerId }) {
   }
   assert.ok(result.response.ok, `Hero read model failed with ${result.response.status}: ${JSON.stringify(result.payload)}`);
   const eligibleSubjects = result.payload?.hero?.eligibleSubjects || [];
+  const reasoningEligible = eligibleSubjects.some((entry) => entry?.subjectId === 'reasoning');
+  assert.equal(
+    reasoningEligible,
+    true,
+    `Hero read model is available, but Reasoning is not eligible: ${JSON.stringify(eligibleSubjects)}`,
+  );
   return {
     checked: true,
     available: true,
     status: result.response.status,
     eligibleSubjects,
-    reasoningEligible: eligibleSubjects.some((entry) => entry?.subjectId === 'reasoning'),
+    reasoningEligible,
   };
 }
 

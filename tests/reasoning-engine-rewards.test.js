@@ -70,6 +70,34 @@ test('reasoning reward projection updates direct and grand monsters with indepen
   assert.ok(projected.rewardEvents.every((event) => event.subjectId === 'reasoning'));
 });
 
+test('server reasoning engine uses the injected command clock for support and session records', () => {
+  let nowValue = 1_700_000_000_000;
+  const engine = createServerReasoningEngine({ now: () => nowValue, random: () => 0.2 });
+  const started = engine.apply({
+    learnerId: 'learner-clock',
+    subjectRecord: null,
+    command: 'start-session',
+    payload: { mode: 'smart', roundLength: 3 },
+    requestId: 'clock-start',
+  });
+  assert.equal(started.practiceSession.startedAt, new Date(1_700_000_000_000).toISOString());
+  assert.equal(started.practiceSession.updatedAt, new Date(1_700_000_000_000).toISOString());
+
+  nowValue = 1_700_000_060_000;
+  const supported = engine.apply({
+    learnerId: 'learner-clock',
+    subjectRecord: { state: started.state, data: started.data },
+    command: 'request-support',
+    payload: { kind: 'faded' },
+    requestId: 'clock-support',
+  });
+
+  const itemId = supported.state.session.questionRefs[0].itemId;
+  assert.equal(supported.state.session.support[itemId].requestedAt, 1_700_000_060_000);
+  assert.equal(supported.practiceSession.startedAt, new Date(1_700_000_000_000).toISOString());
+  assert.equal(supported.practiceSession.updatedAt, new Date(1_700_000_060_000).toISOString());
+});
+
 
 test('worker subject runtime wires reasoning command handlers', async () => {
   const runtime = createWorkerSubjectRuntime({ reasoning: { now: () => 1000, random: () => 0 } });

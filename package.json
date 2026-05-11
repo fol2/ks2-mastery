@@ -60,6 +60,7 @@
     "smoke:production:punctuation-round-length": "node ./scripts/punctuation-round-length-production-smoke.mjs",
     "smoke:production:punctuation-guidance-options": "node ./scripts/punctuation-guidance-options-production-smoke.mjs",
     "smoke:production:reasoning": "node ./scripts/reasoning-production-smoke.mjs",
+    "smoke:production:reasoning-ui": "node ./scripts/reasoning-production-ui-smoke.mjs",
     "smoke:production:admin-ops": "node ./scripts/admin-ops-production-smoke.mjs",
     "smoke:production:spelling-dense": "node ./scripts/spelling-dense-history-smoke.mjs",
     "smoke:production:spelling-audio": "node ./scripts/spelling-audio-production-smoke.mjs",
