@@ -1,0 +1,38 @@
+{
+  "baselineVersion3": {
+    "passageCount": 24,
+    "questionCount": 212,
+    "paperCount": 13,
+    "longPassageCount": 8,
+    "genres": {
+      "fiction": 9,
+      "non-fiction": 9,
+      "poetry": 6
+    }
+  },
+  "patchedVersion4": {
+    "releaseId": "reading-poc-promoted-2026-05-05",
+    "version": 4,
+    "passageCount": 108,
+    "questionCount": 1052,
+    "paperCount": 41,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 37,
+      "non-fiction": 37,
+      "poetry": 34
+    },
+    "longPassageCount": 64
+  },
+  "delta": {
+    "passages": 84,
+    "questions": 840,
+    "papers": 28,
+    "longPassages": 56,
+    "genres": {
+      "fiction": 28,
+      "non-fiction": 28,
+      "poetry": 28
+    }
+  }
+}

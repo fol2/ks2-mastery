@@ -46,13 +46,13 @@ function expectedContentSummary() {
   const summary = readingContentSummary();
   assert.equal(summary.releaseId, READING_CONTENT_RELEASE_ID);
   assert.equal(summary.version, READING_CONTENT_VERSION);
-  assert.equal(summary.passageCount, 24);
-  assert.equal(summary.questionCount, 212);
-  assert.equal(summary.paperCount, 13);
-  assert.equal(summary.genres.fiction, 9);
-  assert.equal(summary.genres['non-fiction'], 9);
-  assert.equal(summary.genres.poetry, 6);
-  assert.equal(summary.longPassageCount, 8);
+  assert.equal(summary.passageCount, 108);
+  assert.equal(summary.questionCount, 1052);
+  assert.equal(summary.paperCount, 41);
+  assert.equal(summary.genres.fiction, 37);
+  assert.equal(summary.genres['non-fiction'], 37);
+  assert.equal(summary.genres.poetry, 34);
+  assert.equal(summary.longPassageCount, 64);
   return summary;
 }
 
@@ -253,6 +253,54 @@ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
   };
 }
 
+async function smokeStaleWriteGuard({ origin, cookie, learnerId, revision }) {
+  let step = await subjectCommand({
+    origin,
+    cookie,
+    subjectId: 'reading',
+    learnerId,
+    revision,
+    command: 'start-session',
+    payload: { mode: 'guided', viewMode: 'one' },
+  });
+  revision = step.revision;
+  const startModel = step.payload.subjectReadModel;
+  const sessionId = startModel?.session?.id;
+  const questionId = startModel?.session?.currentQuestion?.id;
+  assert.ok(sessionId, 'Reading stale-write guard did not start a session.');
+  assert.ok(questionId, 'Reading stale-write guard did not expose a current question.');
+
+  step = await subjectCommand({
+    origin,
+    cookie,
+    subjectId: 'reading',
+    learnerId,
+    revision,
+    command: 'save-response',
+    payload: {
+      expectedSessionId: sessionId,
+      expectedQuestionId: 'stale-question-id',
+      response: { answer: 'this stale write must not persist' },
+    },
+  });
+  const guardedModel = step.payload.subjectReadModel;
+  const persistedResponse = guardedModel?.session?.responses?.[questionId]
+    || guardedModel?.session?.currentSection?.responses?.[questionId]
+    || null;
+  assert.equal(step.payload?.changed, false, 'Reading stale question save unexpectedly changed learner state.');
+  assert.equal(step.revision, revision, 'Reading stale question save unexpectedly advanced learner revision.');
+  assert.equal(persistedResponse, null, 'Reading stale question save persisted a response.');
+
+  return {
+    expectedSessionId: sessionId,
+    expectedQuestionId: 'stale-question-id',
+    protectedQuestionId: questionId,
+    changed: step.payload?.changed,
+    revisionUnchanged: step.revision === revision,
+    persistedResponse: false,
+  };
+}
+
 async function main() {
   const origin = configuredOrigin();
   const demo = await createDemoSession(origin);
@@ -269,6 +317,12 @@ async function main() {
     learnerId: bootstrap.learnerId,
     revision: immediate.revision,
   });
+  const staleWriteGuard = await smokeStaleWriteGuard({
+    origin,
+    cookie: demo.cookie,
+    learnerId: bootstrap.learnerId,
+    revision: delayedPaper.revision,
+  });
 
   const evidence = {
     ok: true,
@@ -284,6 +338,7 @@ async function main() {
     learnerId: bootstrap.learnerId,
     immediate,
     delayedPaper,
+    staleWriteGuard,
     finishedAt: new Date().toISOString(),
   };
 

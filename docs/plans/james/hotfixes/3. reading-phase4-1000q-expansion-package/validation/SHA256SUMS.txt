@@ -1,0 +1,12 @@
+ee4dedd98367f7515b40dcbdbaddbcee6f4ab3eb8ae2869305379d5162b3bcbd  ./contract/reading-phase4-1000q-expansion-contract.md
+2659190631fdd4e4e14b99192a129e63343c90b59a73e83a5a55884f01ba59f9  ./patches/001-reading-phase4-1000q-expansion.patch
+8f9604faed56268cf68fe1262076d58e4c76482746ca049b3e9f4059736cf25d  ./validation-summary.md
+83d4126e3b11849fa83a876bd92b0dcfa217f6daefc48b956d7da6ceacc3d793  ./validation/content-expansion-derived-counts.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/node-check-phase4-expansion.log
+a83d412acaf1b5d09b4bb87f4bfcd832bc2847e65e2fbc34872a771ef377b3af  ./validation/patch-apply-check.log
+3f2a8bd093c7063e2573183e82bfe308f05cfe5e7448a311c352a3f9a80d11db  ./validation/patched-content-summary.json
+05c07ba405efed29f3e818ef3c80951cfaed059cff67a348f40554b5debe888b  ./validation/reading-content-quality-audit.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/reading-content-quality-audit.stdout.log
+e4c4d8f939578ed9d3b3da670984e16c7c77a1088f367450f76bbbc221feec33  ./validation/reading-focused-tests.log
+3f2f7873b0a215ac6fd4da228ae15aadd54c46939b2aa84ab9dff9376740534b  ./validation/reading-session-interface-env-limit.log
+820fea4c19f7fbc5d95154eec04940a7a02d0cca24987b87de5cfcc0702f9ac8  ./validation/source-boundary.md

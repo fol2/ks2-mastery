@@ -16,14 +16,16 @@ function norm(value) {
 
 test('reading content bank has varied original passages, papers and KS2 domains', () => {
   const summary = readingContentSummary();
-  assert.ok(summary.passageCount >= 24);
-  assert.ok(summary.paperCount >= 13);
-  assert.ok(summary.questionCount >= 210);
+  assert.equal(summary.releaseId, 'reading-poc-promoted-2026-05-05');
+  assert.equal(summary.version, 4);
+  assert.ok(summary.passageCount >= 100);
+  assert.ok(summary.paperCount >= 40);
+  assert.ok(summary.questionCount >= 1000);
   assert.ok(Object.keys(READING_SKILLS).includes('2d'));
-  assert.ok(summary.genres.fiction >= 9);
-  assert.ok(summary.genres['non-fiction'] >= 9);
-  assert.ok(summary.genres.poetry >= 6);
-  assert.ok(summary.longPassageCount >= 8);
+  assert.ok(summary.genres.fiction >= 30);
+  assert.ok(summary.genres['non-fiction'] >= 30);
+  assert.ok(summary.genres.poetry >= 30);
+  assert.ok(summary.longPassageCount >= 50);
 });
 
 test('reading ids are unique and evidence quotes exist in their source passage', () => {

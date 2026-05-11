@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-05-11T10:07:45.616Z",
+  "content": {
+    "releaseId": "reading-poc-promoted-2026-05-05",
+    "version": 4,
+    "passageCount": 108,
+    "questionCount": 1052,
+    "paperCount": 41,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 37,
+      "non-fiction": 37,
+      "poetry": 34
+    },
+    "longPassageCount": 64
+  },
+  "skillCounts": {
+    "2a": 108,
+    "2b": 179,
+    "2c": 105,
+    "2d": 119,
+    "2e": 98,
+    "2f": 136,
+    "2g": 109,
+    "2h": 102,
+    "P1": 24,
+    "P2": 23,
+    "P3": 26,
+    "P4": 23
+  },
+  "typeCounts": {
+    "short": 203,
+    "mcq": 303,
+    "evidenceShort": 104,
+    "open": 168,
+    "match": 93,
+    "order": 90,
+    "multiSelect": 91
+  },
+  "genreCounts": {
+    "fiction": 37,
+    "non-fiction": 37,
+    "poetry": 34
+  },
+  "duplicateNormalisedStemGroups": 0,
+  "duplicateModelAnswerGroups": 0,
+  "repeatedStemShapeAdvisories": 0,
+  "failures": [],
+  "advisories": []
+}

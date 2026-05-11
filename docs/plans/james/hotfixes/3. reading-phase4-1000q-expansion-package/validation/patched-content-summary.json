@@ -1,0 +1,14 @@
+{
+  "releaseId": "reading-poc-promoted-2026-05-05",
+  "version": 4,
+  "passageCount": 108,
+  "questionCount": 1052,
+  "paperCount": 41,
+  "skillCount": 12,
+  "genres": {
+    "fiction": 37,
+    "non-fiction": 37,
+    "poetry": 34
+  },
+  "longPassageCount": 64
+}
