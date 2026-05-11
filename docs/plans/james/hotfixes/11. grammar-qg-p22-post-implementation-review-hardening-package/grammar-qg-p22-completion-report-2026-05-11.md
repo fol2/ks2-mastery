@@ -16,10 +16,13 @@ No Reading, Spelling, Punctuation, Hero, D1, R2, learner-state, or deployment-au
 ## Repository state
 
 - Runtime commit deployed first: `13d8851fe9a803dcf128724b996221d191b7cd5b`
+- Evidence commit smoked after the first production evidence commit: `73daaf6c53ab6d5a26e65ded701fad27ff44624a`
 - Remote branch: `origin/main`
 - Production URL: `https://ks2.eugnel.uk`
 - Cloudflare Worker version: `093f5d94-ae65-4ce6-9769-c6cbe84535d9`
 - Content release served by live Grammar smoke: `grammar-qg-p21-2026-05-11`
+
+The commit after the runtime deployment is evidence-only. No runtime files changed after `13d8851fe9a803dcf128724b996221d191b7cd5b`; the follow-up commit records the deploy, production smoke, and completion report artefacts.
 
 ## Verification evidence
 
@@ -37,7 +40,8 @@ All evidence is stored beside this package under `validation/final-2026-05-11/`.
 | Full local test suite | `npm-test.log` | 111453 pass, 0 fail, 12 skipped |
 | Production build/check | `npm-run-check.log` | Pass |
 | Production deploy | `npm-run-deploy-initial.log` | Pass, Worker version `093f5d94-ae65-4ce6-9769-c6cbe84535d9` |
-| Live Grammar smoke | `grammar-production-smoke-p22-initial.json` | Pass, release assertion pass, commit `13d8851fe9a803dcf128724b996221d191b7cd5b` |
+| Live Grammar smoke | `grammar-production-smoke-p22-initial.json` | Pass, release assertion pass, runtime commit `13d8851fe9a803dcf128724b996221d191b7cd5b` |
+| Final-repository live Grammar smoke | `grammar-production-smoke-p22-final-repo.json` | Pass, release assertion pass, evidence commit `73daaf6c53ab6d5a26e65ded701fad27ff44624a` |
 
 The first production smoke stdout file shows the same live flow passed without JSON forwarding; `grammar-production-smoke-p22-initial-json.stdout` and `grammar-production-smoke-p22-initial.json` are the recorded JSON evidence from the corrected direct script invocation.
 
@@ -50,4 +54,4 @@ The first Code Reviewer and Contract Auditor passes were red. Their blockers wer
 - The performance probe and tripwire now cover `priorityRecentMissCalls`.
 - Final validation, deploy, and live smoke evidence has been recorded in this package folder.
 
-Final Code Reviewer and Contract Auditor re-review are pending and this report will be updated with their final outcome before closure.
+The final Code Reviewer pass initially found an evidence-labelling blocker because the first live smoke was tied to the runtime commit instead of the pushed evidence commit. That blocker was addressed by `grammar-production-smoke-p22-final-repo.json`, which records a fresh live Grammar smoke against `origin/main@73daaf6c53ab6d5a26e65ded701fad27ff44624a`.
