@@ -303,6 +303,75 @@ test.describe('U9 Flow 2: Grammar Bank filter + concept detail + Practise 5', ()
     await applyDeterminism(page);
   });
 
+  test('Grammar Bank renders nested secure confidence ahead of coarse due status', async ({ page }) => {
+    const runtimeErrors = [];
+    page.on('pageerror', (error) => runtimeErrors.push(error?.message || String(error)));
+    page.on('console', (message) => {
+      if (message.type() === 'error') runtimeErrors.push(message.text());
+    });
+
+    await page.route('**/api/subjects/grammar/command', async (route) => {
+      const response = await route.fetch();
+      const contentType = response.headers()['content-type'] || '';
+      if (!contentType.includes('application/json')) {
+        await route.fulfill({ response });
+        return;
+      }
+
+      const json = await response.json();
+      const concepts = json?.subjectReadModel?.analytics?.concepts;
+      if (Array.isArray(concepts)) {
+        json.subjectReadModel.analytics.concepts = concepts.map((concept) => (
+          concept?.id === 'relative_clauses'
+            ? {
+              ...concept,
+              status: 'due',
+              confidence: {
+                ...(concept.confidence || {}),
+                label: 'secure',
+                sampleSize: 10,
+                intervalDays: 14,
+                distinctTemplates: 5,
+                recentMisses: 0,
+              },
+            }
+            : concept
+        ));
+      }
+
+      await route.fulfill({ response, json });
+    });
+
+    await seedFreshLearner(page);
+    await openGrammarDashboard(page);
+    await primeGrammarReadModel(page);
+
+    const bankCard = page.locator('[data-action="grammar-open-concept-bank"]').first();
+    await expect(bankCard).toBeVisible();
+    await bankCard.click();
+
+    const bankRoot = page.locator('[data-grammar-phase-root="bank"]');
+    await expect(bankRoot).toBeVisible({ timeout: 15_000 });
+
+    const relativeClausesCard = page.locator('.grammar-bank-card[data-concept-id="relative_clauses"]');
+    await expect(relativeClausesCard).toBeVisible();
+    await expect(relativeClausesCard).toHaveAttribute('data-status-label', 'secure');
+    await expect(relativeClausesCard.locator('.grammar-bank-card-status-chip')).toHaveText('Secure');
+    await expect(relativeClausesCard).not.toContainText('Trouble spot');
+
+    const secureChip = page.locator('[data-action="grammar-concept-bank-filter"][data-value="secure"]');
+    await secureChip.click();
+    await expect(secureChip).toHaveAttribute('aria-pressed', 'true');
+    await expect(relativeClausesCard).toBeVisible();
+
+    const troubleChip = page.locator('[data-action="grammar-concept-bank-filter"][data-value="trouble"]');
+    await troubleChip.click();
+    await expect(troubleChip).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.grammar-bank-card[data-concept-id="relative_clauses"]')).toHaveCount(0);
+
+    expect(runtimeErrors, 'Grammar Bank confidence regression should not emit browser errors').toEqual([]);
+  });
+
   test('Grammar Bank filter affects visible cards, modal Esc closes with focus return, Practise 5 starts focused round', async ({ page }, testInfo) => {
     await seedFreshLearner(page);
     await openGrammarDashboard(page);
