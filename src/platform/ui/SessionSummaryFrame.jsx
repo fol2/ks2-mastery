@@ -1,7 +1,7 @@
 /* Platform SessionSummaryFrame primitive (P3 U6).
  *
- * Shared summary engine adopted by all three ready subjects (Spelling,
- * Punctuation, Grammar). Presents session outcomes — highlights,
+ * Shared summary engine adopted by the ready subjects (Spelling,
+ * Punctuation, Grammar, Reading, Reasoning). Presents session outcomes — highlights,
  * misconceptions, progress deltas, and next-action affordances — without
  * claiming unearned mastery.
  *
@@ -16,7 +16,7 @@
  *   - Forbidden copy patterns never appear in frame-authored text.
  *
  * Props:
- *   subjectId        — string: 'spelling' | 'punctuation' | 'grammar'
+ *   subjectId        — ready subject id
  *   outcome          — string: 'secure' | 'improving' | 'needs-practice' | 'review-complete'
  *   title            — string: session headline
  *   subtitle         — optional string/node: session support copy

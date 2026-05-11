@@ -43,10 +43,10 @@ test('Spelling/Grammar/Punctuation with available providers resolve as eligible'
   assert.equal(grammarEntry.reason, 'weak-repair');
 });
 
-// ── 2. Placeholder subjects resolve as locked ─────────────────────────
+// ── 2. Locked placeholder subjects resolve as locked ─────────────────
 
-test('Arithmetic/Reasoning/Reading resolve as locked with placeholder-engine-not-ready', () => {
-  // No snapshots provided at all — placeholders lock with specific reason.
+test('Locked placeholder subjects resolve as placeholder-engine-not-ready', () => {
+  // No snapshots provided at all — locked placeholders keep a specific reason.
   const result = resolveEligibility({});
 
   for (const subjectId of HERO_LOCKED_SUBJECT_IDS) {

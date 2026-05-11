@@ -236,6 +236,72 @@ export const MONSTERS = {
     nameByStage: ['Lorequill Egg', 'Lorequill', 'Pagewing', 'Storycrest', 'Grand Lorequill'],
     masteredMax: 8,
   },
+  numdrake: {
+    id: 'numdrake',
+    assetId: 'colisk',
+    name: 'Numdrake',
+    blurb: 'Hatches as number, place-value and calculation reasoning evidence becomes secure.',
+    accent: '#C06B3E',
+    secondary: '#EAB08A',
+    pale: '#FBEEE4',
+    nameByStage: ['Numdrake Egg', 'Numdrake', 'Placewyrm', 'Calcidrake', 'Mega Calcidrake'],
+    masteredMax: 100,
+  },
+  fractalon: {
+    id: 'fractalon',
+    assetId: 'hyphang',
+    name: 'Fractalon',
+    blurb: 'Sharpens fractions, decimals, percentages and ratio reasoning.',
+    accent: '#8A5A9D',
+    secondary: '#CDAFE1',
+    pale: '#F1E9F4',
+    nameByStage: ['Fractalon Egg', 'Fractalon', 'Partwing', 'Scaleclaw', 'Mega Scaleclaw'],
+    masteredMax: 100,
+  },
+  measuron: {
+    id: 'measuron',
+    assetId: 'curlune',
+    name: 'Measuron',
+    blurb: 'Grows with measures, time, conversion and money reasoning.',
+    accent: '#4B7A4A',
+    secondary: '#AACF93',
+    pale: '#E8F0E6',
+    nameByStage: ['Measuron Egg', 'Measuron', 'Unitling', 'Metricrest', 'Mega Metricrest'],
+    masteredMax: 100,
+  },
+  georune: {
+    id: 'georune',
+    assetId: 'carillon',
+    name: 'Georune',
+    blurb: 'Rings clearly as geometry, area, angles and statistics become secure.',
+    accent: '#D08A2C',
+    secondary: '#E8C45A',
+    pale: '#F6EED7',
+    nameByStage: ['Georune Egg', 'Georune', 'Anglechord', 'Shapebell', 'Mega Shapebell'],
+    masteredMax: 100,
+  },
+  proofwyrm: {
+    id: 'proofwyrm',
+    assetId: 'mirrane',
+    name: 'Proofwyrm',
+    blurb: 'Reflects checking, explaining mistakes and reasonableness habits.',
+    accent: '#6F7D86',
+    secondary: '#B8C7CF',
+    pale: '#EDF2F4',
+    nameByStage: ['Proofwyrm Egg', 'Proofwyrm', 'Checkglint', 'Reasonclaw', 'Mega Reasonclaw'],
+    masteredMax: 100,
+  },
+  strategon: {
+    id: 'strategon',
+    assetId: 'phaeton',
+    name: 'Strategon',
+    blurb: 'The Reasoning legendary that rises from broad, retained KS2 maths evidence.',
+    accent: '#2F70B8',
+    secondary: '#9FC7F2',
+    pale: '#E8F2FF',
+    nameByStage: ['Strategon Egg', 'Strategon', 'Methodwing', 'Proofcrest', 'Grand Strategon'],
+    masteredMax: 100,
+  },
 };
 
 export const MONSTERS_BY_SUBJECT = {
@@ -258,6 +324,10 @@ export const MONSTERS_BY_SUBJECT = {
   // Reading owns separate state ids while reusing existing reserve art via
   // each monster's assetId. This avoids Grammar/Punctuation state collision.
   reading: ['readbloom', 'readrill', 'inferane', 'structurillon', 'lorequill'],
+  // Reasoning also owns separate state ids while reusing existing reserve art.
+  // That keeps the maths-reasoning monster layer independent from Grammar,
+  // Punctuation and Reading even when the visual asset family is shared.
+  reasoning: ['numdrake', 'fractalon', 'measuron', 'georune', 'proofwyrm', 'strategon'],
 };
 
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);

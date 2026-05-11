@@ -527,6 +527,13 @@ test('button labels: every statically extractable label is classified', () => {
     // opens a new incident from the error-centre context.
     'Add note',
     'Create incident',
+    // Reasoning launch: delayed SATs-style sets use "Mark set" and "Save
+    // answers" to distinguish full-set marking from single-question submit.
+    // "Partly worked support" is the child-facing scaffold request, matching
+    // the Reasoning contract's faded-guidance mode.
+    'Mark set',
+    'Save answers',
+    'Partly worked support',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

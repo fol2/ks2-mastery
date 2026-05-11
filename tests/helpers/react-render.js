@@ -866,7 +866,9 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
       ? 'expansion-fixture'
       : selected === 'broken'
         ? 'broken-react'
-        : 'reasoning';
+        : selected === 'placeholder'
+          ? 'arithmetic'
+          : 'reasoning';
     controller.dispatch('open-subject', { subjectId });
     const appState = controller.store.getState();
     const context = controller.contextFor(subjectId);

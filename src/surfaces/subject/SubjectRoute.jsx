@@ -6,6 +6,7 @@ import { SubjectRuntimeFallback } from './SubjectRuntimeFallback.jsx';
 import { PunctuationPracticeSurface } from '../../subjects/punctuation/components/PunctuationPracticeSurface.jsx';
 import { GrammarPracticeSurface } from '../../subjects/grammar/components/GrammarPracticeSurface.jsx';
 import { ReadingPracticeSurface } from '../../subjects/reading/components/ReadingPracticeSurface.jsx';
+import { ReasoningPracticeSurface } from '../../subjects/reasoning/components/ReasoningPracticeSurface.jsx';
 import { SpellingPracticeSurface } from '../../subjects/spelling/components/SpellingPracticeSurface.jsx';
 import { isSubjectExposed } from '../../platform/core/subject-availability.js';
 
@@ -13,6 +14,7 @@ const REACT_SUBJECT_COMPONENTS = Object.freeze({
   grammar: GrammarPracticeSurface,
   punctuation: PunctuationPracticeSurface,
   reading: ReadingPracticeSurface,
+  reasoning: ReasoningPracticeSurface,
   spelling: SpellingPracticeSurface,
 });
 

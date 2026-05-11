@@ -42,6 +42,7 @@ export {
   GRAMMAR_MONSTER_IDS,
   GRAMMAR_RESERVED_MONSTER_IDS,
   READING_MONSTER_IDS,
+  REASONING_MONSTER_IDS,
 } from './shared.js';
 export {
   READING_DIRECT_STAR_THRESHOLDS,
@@ -54,3 +55,17 @@ export {
   readingMasteryKey,
   recordReadingSkillMastery,
 } from './reading.js';
+
+export {
+  REASONING_DIRECT_STAR_THRESHOLDS,
+  REASONING_GRAND_MONSTER_ID,
+  REASONING_GRAND_STAR_THRESHOLDS,
+  REASONING_REWARD_RELEASE_ID,
+  REASONING_SKILL_TO_MONSTER,
+  activeReasoningMonsterSummaryFromState,
+  monsterIdForReasoningSkill,
+  progressForReasoningMonster,
+  reasoningCoreSkillIds,
+  reasoningMasteryKey,
+  recordReasoningEvidenceMastery,
+} from './reasoning.js';

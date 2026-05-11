@@ -47,11 +47,17 @@ import {
   punctuationSubjectCommandActions,
 } from './subjects/punctuation/command-actions.js';
 import { createReadingReadModelService } from './subjects/reading/client-read-models.js';
+import { createReasoningReadModelService } from './subjects/reasoning/client-read-models.js';
 import {
   applyReadingCommandResponse,
   readingSubjectCommandActions,
   setReadingRuntimeError,
 } from './subjects/reading/command-actions.js';
+import {
+  applyReasoningCommandResponse,
+  reasoningSubjectCommandActions,
+  setReasoningRuntimeError,
+} from './subjects/reasoning/command-actions.js';
 import { createRemoteSpellingActionHandler } from './subjects/spelling/remote-actions.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import {
@@ -270,6 +276,7 @@ await repositories.hydrate();
 const services = {
   punctuation: null,
   reading: null,
+  reasoning: null,
   spelling: null,
 };
 let store = null;
@@ -1407,8 +1414,16 @@ function rebuildReadingService() {
   return services.reading;
 }
 
+function rebuildReasoningService() {
+  services.reasoning = createReasoningReadModelService({
+    getState: () => store?.getState?.() || null,
+  });
+  return services.reasoning;
+}
+
 rebuildPunctuationService();
 rebuildReadingService();
+rebuildReasoningService();
 rebuildSpellingService();
 
 function buildSignedInHubModels(appState) {
@@ -1467,6 +1482,7 @@ const controller = createAppController({
     session: { ...boot.session, platformRole: shellPlatformRole },
     handleRemoteSpellingAction,
     handleRemoteReadingAction,
+    handleRemoteReasoningAction,
   }),
   tts,
   services,
@@ -2509,6 +2525,7 @@ function contextFor(subjectId = null) {
     session: { ...boot.session, platformRole: shellPlatformRole },
     handleRemoteSpellingAction,
     handleRemoteReadingAction,
+    handleRemoteReasoningAction,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
     // P3 U10: hero auto-claim hook — subjects call this when their session ends.
     notifyHeroSubjectSessionEnded,
@@ -3687,6 +3704,10 @@ function setReadingRuntimeErrorMessage(message) {
   setReadingRuntimeError(store, message);
 }
 
+function setReasoningRuntimeErrorMessage(message) {
+  setReasoningRuntimeError(store, message);
+}
+
 function applyPunctuationCommandResponse(response) {
   const previousPunctuationUi = store.getState().subjectUi?.punctuation || null;
   const subjectReadModel = response?.subjectReadModel;
@@ -3765,6 +3786,26 @@ const readingCommandActions = createSubjectCommandActionHandler({
   actions: readingSubjectCommandActions,
 });
 
+const pendingReasoningCommandKeys = new Set();
+
+const reasoningCommandActions = createSubjectCommandActionHandler({
+  subjectId: 'reasoning',
+  subjectCommands,
+  getState: () => store.getState(),
+  isReadOnly: runtimeIsReadOnly,
+  setSubjectError: setReasoningRuntimeErrorMessage,
+  pendingKeys: pendingReasoningCommandKeys,
+  onBeforeCommand: ({ command }) => store.updateSubjectUi('reasoning', { pendingCommand: command, error: '' }),
+  onCommandResult: applyReasoningCommandResponse({
+    store,
+    shouldDelayMonsterCelebrations,
+    subjectSessionEnded,
+    notifyHeroSubjectSessionEnded,
+  }),
+  onCommandSettled: () => store.updateSubjectUi('reasoning', { pendingCommand: '' }),
+  actions: reasoningSubjectCommandActions,
+});
+
 function handleRemoteSpellingAction(action, data = {}) {
   return remoteSpellingActions?.handle(action, data) || false;
 }
@@ -3796,6 +3837,19 @@ function handleRemoteReadingAction(action, data = {}) {
     return true;
   }
   return readingCommandActions.handle(action, data);
+}
+
+function handleRemoteReasoningAction(action, data = {}) {
+  if (!action || !action.startsWith('reasoning-')) return false;
+  if (!isSubjectExposed(getSubject('reasoning'), subjectExposureGates)) {
+    store.goHome();
+    return true;
+  }
+  if (action === 'reasoning-back') {
+    store.updateSubjectUi('reasoning', { phase: 'setup', session: null, feedback: null, summary: null, error: '' });
+    return true;
+  }
+  return reasoningCommandActions.handle(action, data);
 }
 
 function handleSubjectAction(action, data) {
@@ -3837,7 +3891,7 @@ function handleSubjectAction(action, data) {
 function dispatchAction(action, data = {}) {
   controller.autoAdvance.clear();
   captureWordDetailTrigger(action, data);
-  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data) && !handleRemotePunctuationAction(action, data) && !handleRemoteReadingAction(action, data)) {
+  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data) && !handleRemotePunctuationAction(action, data) && !handleRemoteReadingAction(action, data) && !handleRemoteReasoningAction(action, data)) {
     handleSubjectAction(action, data);
   }
   ensureSpellingAutoAdvanceFromCurrentState();

@@ -35,9 +35,16 @@ test('monster celebration timing defers Grammar session overlays until session e
   assert.equal(subjectSessionEnded('grammar', { phase: 'setup' }, { phase: 'summary' }), false);
 });
 
-test('monster celebration timing leaves unknown subjects immediate', () => {
-  assert.equal(shouldDelayMonsterCelebrations('reading', { phase: 'session' }, { phase: 'session' }), false);
-  assert.equal(subjectSessionEnded('reading', { phase: 'session' }, { phase: 'summary' }), false);
+test('monster celebration timing defers Reading and Reasoning session overlays until session end', () => {
+  assert.equal(shouldDelayMonsterCelebrations('reading', { phase: 'question' }, { phase: 'feedback' }), true);
+  assert.equal(subjectSessionEnded('reading', { phase: 'question' }, { phase: 'summary' }), true);
+  assert.equal(shouldDelayMonsterCelebrations('reasoning', { phase: 'session' }, { phase: 'session' }), true);
+  assert.equal(subjectSessionEnded('reasoning', { phase: 'session' }, { phase: 'summary' }), true);
+});
+
+test('monster celebration timing leaves subjects without live engines immediate', () => {
+  assert.equal(shouldDelayMonsterCelebrations('arithmetic', { phase: 'session' }, { phase: 'session' }), false);
+  assert.equal(subjectSessionEnded('arithmetic', { phase: 'session' }, { phase: 'summary' }), false);
 });
 
 test('reward.presentation celebration intents can enter the legacy monster celebration queue', () => {

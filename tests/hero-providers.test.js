@@ -10,6 +10,7 @@ import {
   grammarProvider,
   punctuationProvider,
   readingProvider,
+  reasoningProvider,
   spellingProvider,
 } from '../worker/src/hero/providers/index.js';
 
@@ -28,13 +29,23 @@ test('registry: runProvider returns null for unregistered subjects', () => {
   assert.equal(runProvider('arithmetic', {}), null);
 });
 
-test('registry: registeredSubjectIds lists exactly four subjects', () => {
+test('registry: registeredSubjectIds lists all five ready subjects', () => {
   const ids = registeredSubjectIds();
-  assert.equal(ids.length, 4);
+  assert.equal(ids.length, 5);
   assert.ok(ids.includes('grammar'));
   assert.ok(ids.includes('punctuation'));
   assert.ok(ids.includes('reading'));
+  assert.ok(ids.includes('reasoning'));
   assert.ok(ids.includes('spelling'));
+});
+
+
+test('reasoning: missing readable signals returns available:false', () => {
+  const result = reasoningProvider({});
+  assert.equal(result.subjectId, 'reasoning');
+  assert.equal(result.available, false);
+  assert.equal(result.unavailableReason, 'missing-hero-readable-signals');
+  assert.deepEqual(result.envelopes, []);
 });
 
 test('reading: missing readable signals returns available:false', () => {

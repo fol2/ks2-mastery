@@ -1,12 +1,10 @@
 import { buildSubjectRegistry } from './subject-contract.js';
 import { punctuationModule } from '../../subjects/punctuation/module.js';
 import { readingModule } from '../../subjects/reading/module.js';
+import { reasoningModule } from '../../subjects/reasoning/module.js';
 import { spellingModule } from '../../subjects/spelling/module.js';
 import { grammarModule } from '../../subjects/grammar/module.js';
-import {
-  arithmeticModule,
-  reasoningModule,
-} from '../../subjects/placeholders/index.js';
+import { arithmeticModule } from '../../subjects/placeholders/index.js';
 
 const RAW_SUBJECTS = [
   spellingModule,

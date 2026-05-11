@@ -2,6 +2,7 @@ import { NotFoundError } from '../errors.js';
 import { createGrammarCommandHandlers } from './grammar/commands.js';
 import { createPunctuationCommandHandlers } from './punctuation/commands.js';
 import { createReadingCommandHandlers } from './reading/commands.js';
+import { createReasoningCommandHandlers } from './reasoning/commands.js';
 import { createSpellingCommandHandlers } from './spelling/commands.js';
 
 function handlerFor(handlers, subjectId, command) {
@@ -38,6 +39,7 @@ export function createWorkerSubjectRuntime(options = {}) {
       grammar: createGrammarCommandHandlers(options.grammar || {}),
       punctuation: createPunctuationCommandHandlers(options.punctuation || {}),
       reading: createReadingCommandHandlers(options.reading || {}),
+      reasoning: createReasoningCommandHandlers(options.reasoning || {}),
       spelling: createSpellingCommandHandlers(options.spelling || {}),
       ...(options.handlers || {}),
     },

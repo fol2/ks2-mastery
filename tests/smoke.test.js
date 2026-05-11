@@ -516,18 +516,16 @@ test('word-bank tooltip uses durable outcome metrics', () => {
   assert.match(html, new RegExp(`title="${escapedAnswer}[^"]*Correct: 0[^"]*Wrong: 1[^"]*Attempts: 1[^"]*Accuracy: 0%[^"]*Next due: Today"`));
 });
 
-test('golden-path smoke covers placeholder-subject navigation through the setup scene', () => {
+test('golden-path smoke covers live Reasoning navigation through the setup scene', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
 
   harness.dispatch('open-subject', { subjectId: 'reasoning' });
-  /* Placeholders render the same "future subject foundation" card for every
-     phase because they have no engine yet — the subject shell is exercised
-     by the fact that opening succeeds without a runtime error. */
   const html = harness.render();
   assert.match(html, /class="app-shell subject-entry-shell"/);
   assert.match(html, /class="subject-entry-content"/);
   assert.match(html, /class="subject-breadcrumb-current" data-action="navigate-home">Reasoning<\/button>/);
-  assert.match(html, /Reasoning foundation/);
-  assert.match(html, /Extension points already reserved/);
+  assert.match(html, /Reasoning missions/);
+  assert.match(html, /Start Smart Review/);
+  assert.match(html, /Reasoning strength/);
 });
