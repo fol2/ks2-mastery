@@ -8,7 +8,7 @@ const CURRENT_REPORT = resolve(import.meta.dirname, '..', 'reports/punctuation/p
 const BASELINE_DUPLICATE_REPORT = resolve(
   import.meta.dirname,
   '..',
-  'docs/plans/james/hotfixes/3. punctuation-p20-hotfix-redelivery-0508/validation/baseline-p20-expansion-audit.json',
+  'docs/plans/james/hotfixes/archive/3. punctuation-p20-hotfix-redelivery-0508/validation/baseline-p20-expansion-audit.json',
 );
 
 function runValidator(reportPath) {
