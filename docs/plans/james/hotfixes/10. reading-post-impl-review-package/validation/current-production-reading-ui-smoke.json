@@ -1,0 +1,120 @@
+{
+  "ok": true,
+  "smokeType": "reading-landing-production",
+  "origin": "https://ks2.eugnel.uk",
+  "commitSha": "99eadddcd5870cb7d77b7d87c2337ed90a10182c",
+  "generatedAt": "2026-05-11T17:24:01.679Z",
+  "viewports": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "landingState": {
+        "title": "Reading missions",
+        "lede": "Pick the routine, read the text carefully, and answer from evidence.",
+        "hasSetupGrid": true,
+        "hasSetupMain": true,
+        "hasHeroBackdrop": true,
+        "heroBg": "url('/assets/regions/the-moonleaf-archive/the-moonleaf-archive-a3.1280.webp')",
+        "primaryModes": [
+          {
+            "mode": "smart",
+            "pressed": "true",
+            "text": "SRECOMMENDEDSmart ReviewWeak, due and under-practised domains chosen for today."
+          },
+          {
+            "mode": "guided",
+            "pressed": "false",
+            "text": "GGuided PracticeA shorter passage with immediate feedback after each answer."
+          },
+          {
+            "mode": "test",
+            "pressed": "false",
+            "text": "PSATs PaperThree texts, delayed feedback, and a full 50-mark routine."
+          }
+        ],
+        "selectNames": [
+          "difficulty",
+          "focusSkillId",
+          "genre",
+          "viewMode"
+        ],
+        "startLabel": "Start Smart review",
+        "companionText": "Where you standOpen codex →Start practising to discover your Reading creatures.Marked0Accuracy0%Independent0%Due today0No Reading practice has been logged yet.",
+        "morePracticeText": "More Reading practiceCore practiceRead one full passage, then answer a balanced question set.Evidence huntInference and explanation questions that demand exact evidence.Vocabulary in contextWord meanings from sentence and paragraph clues.Inference labInference, author choice, comparison and structure practice.Punctuation lensPunctuation only where it supports meaning, voice and phrasing.Stamina builderLonger texts and delayed feedback for sustained reading.",
+        "bodyWidth": 1280,
+        "viewportWidth": 1280
+      },
+      "sessionState": {
+        "hasList": true,
+        "hasQuestionCard": true,
+        "hasActiveForm": true,
+        "title": "Answer this text's question list"
+      },
+      "screenshots": {
+        "landing": "D:\\Coding\\ks2-mastery\\.worktrees\\reading-post-review-20260511\\docs\\plans\\james\\hotfixes\\10. reading-post-impl-review-package\\validation\\current-production-reading-screenshots\\reading-landing-1280x800.png",
+        "session": "D:\\Coding\\ks2-mastery\\.worktrees\\reading-post-review-20260511\\docs\\plans\\james\\hotfixes\\10. reading-post-impl-review-package\\validation\\current-production-reading-screenshots\\reading-session-1280x800.png"
+      },
+      "failures": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "requestFailures": [],
+        "httpFailures": []
+      }
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "landingState": {
+        "title": "Reading missions",
+        "lede": "Pick the routine, read the text carefully, and answer from evidence.",
+        "hasSetupGrid": true,
+        "hasSetupMain": true,
+        "hasHeroBackdrop": true,
+        "heroBg": "url('/assets/regions/the-moonleaf-archive/the-moonleaf-archive-a3.1280.webp')",
+        "primaryModes": [
+          {
+            "mode": "smart",
+            "pressed": "true",
+            "text": "SRECOMMENDEDSmart ReviewWeak, due and under-practised domains chosen for today."
+          },
+          {
+            "mode": "guided",
+            "pressed": "false",
+            "text": "GGuided PracticeA shorter passage with immediate feedback after each answer."
+          },
+          {
+            "mode": "test",
+            "pressed": "false",
+            "text": "PSATs PaperThree texts, delayed feedback, and a full 50-mark routine."
+          }
+        ],
+        "selectNames": [
+          "difficulty",
+          "focusSkillId",
+          "genre",
+          "viewMode"
+        ],
+        "startLabel": "Start Smart review",
+        "companionText": "Where you standOpen codex →Start practising to discover your Reading creatures.Marked0Accuracy0%Independent0%Due today0No Reading practice has been logged yet.",
+        "morePracticeText": "More Reading practiceCore practiceRead one full passage, then answer a balanced question set.Evidence huntInference and explanation questions that demand exact evidence.Vocabulary in contextWord meanings from sentence and paragraph clues.Inference labInference, author choice, comparison and structure practice.Punctuation lensPunctuation only where it supports meaning, voice and phrasing.Stamina builderLonger texts and delayed feedback for sustained reading.",
+        "bodyWidth": 390,
+        "viewportWidth": 390
+      },
+      "sessionState": null,
+      "screenshots": {
+        "landing": "D:\\Coding\\ks2-mastery\\.worktrees\\reading-post-review-20260511\\docs\\plans\\james\\hotfixes\\10. reading-post-impl-review-package\\validation\\current-production-reading-screenshots\\reading-landing-390x844.png",
+        "session": null
+      },
+      "failures": {
+        "pageErrors": [],
+        "consoleErrors": [],
+        "requestFailures": [],
+        "httpFailures": []
+      }
+    }
+  ]
+}

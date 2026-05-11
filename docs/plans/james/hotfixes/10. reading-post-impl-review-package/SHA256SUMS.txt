@@ -1,9 +1,10 @@
 a656deda566240dc5b56cb8e189468385203df71fb36cd69948d11ac01fd98d2  ./contract/reading-post-implementation-hardening-contract.md
 704045e5e90726913ead9ff15bffaecc704c6111ddd44c6c8e597b78368d306c  ./patches/001-reading-post-implementation-hardening.patch
+0ef523daef9a0d337660bd35f2b7a1d081f4d54227cc38fefd995aa7e8b7933e  ./reading-post-implementation-hardening-completion-report-2026-05-11.md
 6d51308a6c7696d24ebecf13eaa68eabfcb8ceaef2a3a4c8c3e520b8221ccddd  ./README.md
 9e6ca697ee8cad51fd6551b0d987334cfc53ebff59c44d59239ee900af158c81  ./review/reading-post-implementation-review.md
 e756a9bdd319b24a7a010da4d1d9fff752031c59526ba3ffd845f64d1a83d4b8  ./scripts/reading-deep-audit.mjs
-12300cff79cb56d2253f1b7b8597e1c0dd60b44c491383459b5c856359f32458  ./validation-summary.md
+07a70f6803a413675e87959f5f0cb704d4d18b11ad923863e97491b56e4a6f1f  ./validation-summary.md
 9c1af2fca67d894ba0d9dfbb93109d525e93af7943cf56e2379257b93c846fdb  ./validation/applycheck-focused-reading-tests.log
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/applycheck-node-check-phase5-expansion.log
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/applycheck-node-check-reading-audit.log
@@ -16,7 +17,13 @@ cce609ad71037660ea0d2e86b3fef9968d48fef5bad2ec53d03d0669f0fec5fd  ./validation/b
 00b7d86def72428b5c3439e483788a9963f19351d7aaa08c26c36b8aae6ed539  ./validation/baseline-reading-deep-audit.json
 764bf674b215ad4a4728033433b6c9daaa7922145ea8004a722aaac5d8c96b83  ./validation/current-focused-reading-tests.log
 1d055e4e80fb1c11138041c9f5c636a2a319875b0ac6d03b04356527643a3236  ./validation/current-npm-run-check.log
+a35bc243d6f40944167f0f1486c60fdfa9632a9c2ce25d0c3e08d0018bc6b3fd  ./validation/current-npm-run-deploy.log
 912185d66aaf476c830ec57f07cd90c582628a0f0c64bbddecb1ac5fd65f9c76  ./validation/current-npm-test.log
+afd57c68c454afb44ef451b1128fb7b201d7c7e36c0832d3be75308576a7f0ea  ./validation/current-production-reading-screenshots/reading-landing-1280x800.png
+db2a94483180512ae3fdb92fe19bcd865a1c74e30c840053f011d51dc1ab4515  ./validation/current-production-reading-screenshots/reading-landing-390x844.png
+2d77bb32c0ace8a29a8c644a865cfd2ea959ff9f611fdebaa262571b8fb35e0f  ./validation/current-production-reading-screenshots/reading-session-1280x800.png
+408ca65dc0a5cd6b9a8518796915d99029877c3554a0dbafe5b893567f09c2d0  ./validation/current-production-reading-smoke.json
+f8935d3ee92c2746de30a9acdac7f39cb9d2ff642626ddabfbb6a2190a91c44c  ./validation/current-production-reading-ui-smoke.json
 6ea0d2450c5da4ace4fd06ef788345c3bf39aeda76b391a92674c0f1e16543bf  ./validation/current-reading-content-quality-audit.json
 7d1350ff0086d6faebfb746186266c7e88a6c739ef45a44b824865d909056421  ./validation/current-reading-deep-audit.json
 81fc02553c9d5dbb2948094a66fb3f7a4f8fa207a1e53922ac7082d9a621c6f0  ./validation/lean-session-interface-env-limit.log

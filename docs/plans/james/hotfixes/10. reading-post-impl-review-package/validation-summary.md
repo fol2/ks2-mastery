@@ -106,6 +106,39 @@ Current full repository gates:
 - full failure count: 0
 - skipped count: 12
 
+## Current production deployment validation
+
+The Reading hardening change was deployed from commit `99eadddcd5870cb7d77b7d87c2337ed90a10182c` on 2026-05-11.
+
+Deployment evidence:
+
+- command: `npm run deploy`
+- evidence: `validation/current-npm-run-deploy.log`
+- Worker version id: `81885897-4cf0-4d78-843c-5978406454f9`
+- production bundle audit: passed for `https://ks2.eugnel.uk/`
+
+Production Reading API smoke:
+
+- command: `npm run smoke:production:reading -- --expected-content-version 5 --commit-sha 99eadddcd5870cb7d77b7d87c2337ed90a10182c --smoke-type reading-post-impl-review-production --out docs/plans/james/hotfixes/10. reading-post-impl-review-package/validation/current-production-reading-smoke.json`
+- evidence: `validation/current-production-reading-smoke.json`
+- result: passed
+- content version: 5
+- passages: 210
+- questions: 2072
+- papers: 75
+- immediate answer acceptance: full score
+- delayed paper marking: `paper_i`, 26 questions, 50 max score
+- stale write guard: rejected without changing learner state
+
+Production Reading UI smoke:
+
+- command: `npm run smoke:production:reading-landing -- --origin https://ks2.eugnel.uk --out docs/plans/james/hotfixes/10. reading-post-impl-review-package/validation/current-production-reading-ui-smoke.json --screenshot-dir docs/plans/james/hotfixes/10. reading-post-impl-review-package/validation/current-production-reading-screenshots`
+- evidence: `validation/current-production-reading-ui-smoke.json`
+- screenshots: `validation/current-production-reading-screenshots/`
+- desktop viewport: 1280 x 800 setup and list-mode session passed
+- mobile viewport: 390 x 844 setup passed
+- browser failures: 0 page errors, 0 console errors, 0 request failures, 0 HTTP failures
+
 ## Performance review
 
 Patched start-session benchmark used 200 session starts per mode. P95 timings stayed low:
