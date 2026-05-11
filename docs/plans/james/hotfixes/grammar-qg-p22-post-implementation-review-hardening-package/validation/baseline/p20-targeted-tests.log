@@ -1,0 +1,328 @@
+TAP version 13
+# Subtest: audit doc exists on disk
+ok 1 - audit doc exists on disk
+  ---
+  duration_ms: 1.647494
+  type: 'test'
+  ...
+# Subtest: classification table has one row per template
+ok 2 - classification table has one row per template
+  ---
+  duration_ms: 3.451671
+  type: 'test'
+  ...
+# Subtest: every proposed answerSpec.kind is in ANSWER_SPEC_KINDS
+ok 3 - every proposed answerSpec.kind is in ANSWER_SPEC_KINDS
+  ---
+  duration_ms: 3.332295
+  type: 'test'
+  ...
+# Subtest: new opt-in generated templates must emit validated answerSpec data
+ok 4 - new opt-in generated templates must emit validated answerSpec data
+  ---
+  duration_ms: 119.346415
+  type: 'test'
+  ...
+# Subtest: every template id in the audit doc exists in GRAMMAR_TEMPLATES
+ok 5 - every template id in the audit doc exists in GRAMMAR_TEMPLATES
+  ---
+  duration_ms: 3.269664
+  type: 'test'
+  ...
+# Subtest: no duplicate template ids in the audit doc
+ok 6 - no duplicate template ids in the audit doc
+  ---
+  duration_ms: 2.730349
+  type: 'test'
+  ...
+# Subtest: audit lists at least 5 manual-review-only candidates in section 3
+ok 7 - audit lists at least 5 manual-review-only candidates in section 3
+  ---
+  duration_ms: 1.687626
+  type: 'test'
+  ...
+# Subtest: audit lists all 6 P1 focus concepts as high-priority in section 4
+ok 8 - audit lists all 6 P1 focus concepts as high-priority in section 4
+  ---
+  duration_ms: 1.478583
+  type: 'test'
+  ...
+# Subtest: every template carrying a P1 focus concept is priority=high
+ok 9 - every template carrying a P1 focus concept is priority=high
+  ---
+  duration_ms: 4.269354
+  type: 'test'
+  ...
+# Subtest: release-id bump is YES for every constructed-response row
+ok 10 - release-id bump is YES for every constructed-response row
+  ---
+  duration_ms: 4.107907
+  type: 'test'
+  ...
+# Subtest: release-id bump is NO for every selected-response row
+ok 11 - release-id bump is NO for every selected-response row
+  ---
+  duration_ms: 6.320262
+  type: 'test'
+  ...
+# Subtest: audit table proposes the expected current answer-spec distribution
+ok 12 - audit table proposes the expected current answer-spec distribution
+  ---
+  duration_ms: 3.262389
+  type: 'test'
+  ...
+# Subtest: ANSWER_SPEC_KINDS lists all six declarative types
+ok 13 - ANSWER_SPEC_KINDS lists all six declarative types
+  ---
+  duration_ms: 1.667739
+  type: 'test'
+  ...
+# Subtest: exact: rejects near-miss punctuation, accepts byte-identical
+ok 14 - exact: rejects near-miss punctuation, accepts byte-identical
+  ---
+  duration_ms: 0.765333
+  type: 'test'
+  ...
+# Subtest: normalisedText: accepts whitespace + case variants, preserves the golden
+ok 15 - normalisedText: accepts whitespace + case variants, preserves the golden
+  ---
+  duration_ms: 0.626579
+  type: 'test'
+  ...
+# Subtest: normalisedText: preserves grammar-critical terminal apostrophes while stripping real wrapper quotes
+ok 16 - normalisedText: preserves grammar-critical terminal apostrophes while stripping real wrapper quotes
+  ---
+  duration_ms: 0.312326
+  type: 'test'
+  ...
+# Subtest: normalisedText: accepts semicolon spelling aliases for punctuation mark labels
+ok 17 - normalisedText: accepts semicolon spelling aliases for punctuation mark labels
+  ---
+  duration_ms: 0.296985
+  type: 'test'
+  ...
+# Subtest: acceptedSet: two equivalent clause-combine sentences both score full marks
+ok 18 - acceptedSet: two equivalent clause-combine sentences both score full marks
+  ---
+  duration_ms: 0.445526
+  type: 'test'
+  ...
+# Subtest: acceptedSet: near-miss punctuation gets partial credit when maxScore > 1
+ok 19 - acceptedSet: near-miss punctuation gets partial credit when maxScore > 1
+  ---
+  duration_ms: 0.314334
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: optionalCommas accepts variant without surrounding commas
+ok 20 - punctuationPattern: optionalCommas accepts variant without surrounding commas
+  ---
+  duration_ms: 0.416329
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: optionalCommas=false rejects comma-free variant
+ok 21 - punctuationPattern: optionalCommas=false rejects comma-free variant
+  ---
+  duration_ms: 0.356375
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: optionalTerminalFullStop accepts only incidental final full-stop differences
+ok 22 - punctuationPattern: optionalTerminalFullStop accepts only incidental final full-stop differences
+  ---
+  duration_ms: 0.522896
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: keeps hyphen and dash distinct in punctuation-sensitive tasks
+ok 23 - punctuationPattern: keeps hyphen and dash distinct in punctuation-sensitive tasks
+  ---
+  duration_ms: 1.716716
+  type: 'test'
+  ...
+# Subtest: multiField: scores each sub-field independently and aggregates
+ok 24 - multiField: scores each sub-field independently and aggregates
+  ---
+  duration_ms: 0.537634
+  type: 'test'
+  ...
+# Subtest: manualReviewOnly: never auto-scores correct
+ok 25 - manualReviewOnly: never auto-scores correct
+  ---
+  duration_ms: 0.239689
+  type: 'test'
+  ...
+# Subtest: markByAnswerSpec preserves spec-owned answer text and hint metadata
+ok 26 - markByAnswerSpec preserves spec-owned answer text and hint metadata
+  ---
+  duration_ms: 0.157008
+  type: 'test'
+  ...
+# Subtest: markByAnswerSpec tolerates missing/malformed input gracefully
+ok 27 - markByAnswerSpec tolerates missing/malformed input gracefully
+  ---
+  duration_ms: 0.189765
+  type: 'test'
+  ...
+# Subtest: validateAnswerSpec: all kinds with golden + nearMiss pass
+ok 28 - validateAnswerSpec: all kinds with golden + nearMiss pass
+  ---
+  duration_ms: 0.21956
+  type: 'test'
+  ...
+# Subtest: validateAnswerSpec: rejects missing golden (except manualReviewOnly)
+ok 29 - validateAnswerSpec: rejects missing golden (except manualReviewOnly)
+  ---
+  duration_ms: 0.536098
+  type: 'test'
+  ...
+# Subtest: validateAnswerSpec: multiField recursively validates subfields
+ok 30 - validateAnswerSpec: multiField recursively validates subfields
+  ---
+  duration_ms: 0.195133
+  type: 'test'
+  ...
+# Subtest: Backcompat: acceptedSet answerSpec still scores correctly through markByAnswerSpec
+ok 31 - Backcompat: acceptedSet answerSpec still scores correctly through markByAnswerSpec
+  ---
+  duration_ms: 0.232673
+  type: 'test'
+  ...
+# Subtest: P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+ok 32 - P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+  ---
+  duration_ms: 3.411817
+  type: 'test'
+  ...
+# Subtest: P20 accepts harmless learner formatting around deterministic subject/object answers
+ok 33 - P20 accepts harmless learner formatting around deterministic subject/object answers
+  ---
+  duration_ms: 0.875175
+  type: 'test'
+  ...
+# Subtest: P20 acceptedSet answers accept harmless terminal sentence punctuation
+ok 34 - P20 acceptedSet answers accept harmless terminal sentence punctuation
+  ---
+  duration_ms: 0.554428
+  type: 'test'
+  ...
+# Subtest: P20 recovered punctuation rewrites still require the grammar-critical punctuation
+ok 35 - P20 recovered punctuation rewrites still require the grammar-critical punctuation
+  ---
+  duration_ms: 1.047112
+  type: 'test'
+  ...
+# Subtest: P20 recovered punctuation rewrites allow incidental final full-stop omission without dropping the target comma
+ok 36 - P20 recovered punctuation rewrites allow incidental final full-stop omission without dropping the target comma
+  ---
+  duration_ms: 0.688757
+  type: 'test'
+  ...
+# Subtest: P20 recovered modal-verb blanks accept the modal answer as well as the full sentence
+ok 37 - P20 recovered modal-verb blanks accept the modal answer as well as the full sentence
+  ---
+  duration_ms: 1.672354
+  type: 'test'
+  ...
+# Subtest: P20 recovered tense-form fixes accept the corrected verb phrase as well as the full sentence
+ok 38 - P20 recovered tense-form fixes accept the corrected verb phrase as well as the full sentence
+  ---
+  duration_ms: 0.688274
+  type: 'test'
+  ...
+# Subtest: P20 boundary punctuation labels accept semicolon spelling variants
+ok 39 - P20 boundary punctuation labels accept semicolon spelling variants
+  ---
+  duration_ms: 0.410328
+  type: 'test'
+  ...
+# Subtest: P20 keeps genuinely open clause-combine writing as manual-review-only
+ok 40 - P20 keeps genuinely open clause-combine writing as manual-review-only
+  ---
+  duration_ms: 0.70316
+  type: 'test'
+  ...
+# Subtest: P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+ok 41 - P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+  ---
+  duration_ms: 1.922664
+  type: 'test'
+  ...
+# Subtest: P20b punctuation-mark label prompts accept the mark symbol as well as the word label
+ok 42 - P20b punctuation-mark label prompts accept the mark symbol as well as the word label
+  ---
+  duration_ms: 1.479999
+  type: 'test'
+  ...
+# Subtest: P20b internal punctuation rewrites accept omission of only the incidental final full stop
+ok 43 - P20b internal punctuation rewrites accept omission of only the incidental final full stop
+  ---
+  duration_ms: 3.136444
+  type: 'test'
+  ...
+# Subtest: P20b possessive scenario prompts show the scenario after a colon
+ok 44 - P20b possessive scenario prompts show the scenario after a colon
+  ---
+  duration_ms: 0.991058
+  type: 'test'
+  ...
+# Subtest: P20d possessive precision rewrite prompt is distinct from the base possessive rewrite family
+ok 45 - P20d possessive precision rewrite prompt is distinct from the base possessive rewrite family
+  ---
+  duration_ms: 0.532886
+  type: 'test'
+  ...
+# Subtest: P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking
+ok 46 - P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking
+  ---
+  duration_ms: 0.244182
+  type: 'test'
+  ...
+# Subtest: P20 quality-hardening audit passes a reviewer smoke window across all five phases
+ok 47 - P20 quality-hardening audit passes a reviewer smoke window across all five phases
+  ---
+  duration_ms: 4656.798041
+  type: 'test'
+  ...
+# Subtest: P20 metadata keeps recovered closed families visible for reviewers
+ok 48 - P20 metadata keeps recovered closed families visible for reviewers
+  ---
+  duration_ms: 0.559604
+  type: 'test'
+  ...
+# Subtest: P20 does not hide learner-facing prompt defects behind HTML stripping
+ok 49 - P20 does not hide learner-facing prompt defects behind HTML stripping
+  ---
+  duration_ms: 120.684104
+  type: 'test'
+  ...
+# Subtest: P20c generated source compaction preserves manual-review fairness flags
+ok 50 - P20c generated source compaction preserves manual-review fairness flags
+  ---
+  duration_ms: 8.838005
+  type: 'test'
+  ...
+# Subtest: P20c manual expansion freshness check tolerates Windows line endings
+ok 51 - P20c manual expansion freshness check tolerates Windows line endings
+  ---
+  duration_ms: 0.34732
+  type: 'test'
+  ...
+# Subtest: P20d apostrophes possession rewrite families do not share identical learner prompts
+ok 52 - P20d apostrophes possession rewrite families do not share identical learner prompts
+  ---
+  duration_ms: 5.985992
+  type: 'test'
+  ...
+# Subtest: P20d learner-facing surfaces do not collide across Grammar templates in the release window
+ok 53 - P20d learner-facing surfaces do not collide across Grammar templates in the release window
+  ---
+  duration_ms: 1031.137067
+  type: 'test'
+  ...
+1..53
+# tests 53
+# suites 0
+# pass 53
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6190.768746

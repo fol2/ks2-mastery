@@ -1,0 +1,33 @@
+Source ZIP reviewed: /mnt/data/ks2-mastery-lean-05111651.zip
+Source ZIP SHA-256: 38146270e2edc1305d67375d775494e4954a15e7ce40f6d52d2f6fa054745c7f
+Source ZIP role: primary implemented snapshot for this post-implementation review.
+GitHub role: supplementary only; recent Grammar commit metadata was used to orient the P21 implementation lineage.
+Runtime: Node v22.16.0; ZIP .nvmrc expects Node 22.
+
+Grammar P21 identity from ZIP:
+- release id: grammar-qg-p21-2026-05-11
+- total templates: 546
+- P21 templates: 36
+- Grammar concepts covered: 18/18
+- per-concept template counts:
+  active_passive: 30
+  adverbials: 34
+  apostrophes_possession: 30
+  boundary_punctuation: 30
+  clauses: 35
+  formality: 30
+  hyphen_ambiguity: 29
+  modal_verbs: 28
+  noun_phrases: 34
+  parenthesis_commas: 33
+  pronouns_cohesion: 29
+  relative_clauses: 29
+  sentence_functions: 29
+  speech_punctuation: 35
+  standard_english: 34
+  subject_object: 34
+  tense_aspect: 34
+  word_classes: 31
+
+Patch SHA-256: cc2cd8cde01941515253c57a19bffe5adf64f8b69d467a3df8da407e99853c1c
+Patch lines: 463

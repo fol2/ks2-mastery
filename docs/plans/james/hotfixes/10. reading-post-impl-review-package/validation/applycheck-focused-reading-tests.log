@@ -1,0 +1,256 @@
+TAP version 13
+# Subtest: reading content bank has varied original passages, papers and KS2 domains
+ok 1 - reading content bank has varied original passages, papers and KS2 domains
+  ---
+  duration_ms: 2.33758
+  type: 'test'
+  ...
+# Subtest: reading ids are unique and evidence quotes exist in their source passage
+ok 2 - reading ids are unique and evidence quotes exist in their source passage
+  ---
+  duration_ms: 46.520168
+  type: 'test'
+  ...
+# Subtest: reading question stems avoid noticeable repetition after normalisation
+ok 3 - reading question stems avoid noticeable repetition after normalisation
+  ---
+  duration_ms: 28.324579
+  type: 'test'
+  ...
+# Subtest: reading model answers and stem shapes avoid repeated-question feel
+ok 4 - reading model answers and stem shapes avoid repeated-question feel
+  ---
+  duration_ms: 72.17655
+  type: 'test'
+  ...
+# Subtest: reading learner-facing copy does not leak unresolved template placeholders
+ok 5 - reading learner-facing copy does not leak unresolved template placeholders
+  ---
+  duration_ms: 6.3877
+  type: 'test'
+  ...
+# Subtest: reading test papers only reference existing passages and questions and sum to 50 marks
+ok 6 - reading test papers only reference existing passages and questions and sum to 50 marks
+  ---
+  duration_ms: 2.276414
+  type: 'test'
+  ...
+# Subtest: browser Reading metadata stays answer-safe and summary-compatible
+ok 7 - browser Reading metadata stays answer-safe and summary-compatible
+  ---
+  duration_ms: 15.730242
+  type: 'test'
+  ...
+# Subtest: public Reading events preserve subject identity after redaction
+ok 8 - public Reading events preserve subject identity after redaction
+  ---
+  duration_ms: 0.802791
+  type: 'test'
+  ...
+# Subtest: Reading Phase 5 adds the second 1000-question wave after Phase 4
+ok 9 - Reading Phase 5 adds the second 1000-question wave after Phase 4
+  ---
+  duration_ms: 1.716764
+  type: 'test'
+  ...
+# Subtest: Reading Phase 5 papers are strict 50-mark three-text papers
+ok 10 - Reading Phase 5 papers are strict 50-mark three-text papers
+  ---
+  duration_ms: 2.191685
+  type: 'test'
+  ...
+# Subtest: Reading Phase 5 passages retain broad question-shape and skill variety
+ok 11 - Reading Phase 5 passages retain broad question-shape and skill variety
+  ---
+  duration_ms: 1.137071
+  type: 'test'
+  ...
+# Subtest: Reading Phase 5 passages avoid a single repeated structural scaffold per genre
+ok 12 - Reading Phase 5 passages avoid a single repeated structural scaffold per genre
+  ---
+  duration_ms: 2.028687
+  type: 'test'
+  ...
+# Subtest: Reading Phase 5 fiction retrieval stems are natural and avoid unresolved state placeholders
+ok 13 - Reading Phase 5 fiction retrieval stems are natural and avoid unresolved state placeholders
+  ---
+  duration_ms: 3.045938
+  type: 'test'
+  ...
+# Subtest: reading module is ready and not a placeholder
+ok 14 - reading module is ready and not a placeholder
+  ---
+  duration_ms: 1.553584
+  type: 'test'
+  ...
+# Subtest: hero mode includes reading as a ready subject with provider and launch adapter
+ok 15 - hero mode includes reading as a ready subject with provider and launch adapter
+  ---
+  duration_ms: 0.760731
+  type: 'test'
+  ...
+# Subtest: reading engine starts a passage-first session and hides answer metadata before attempt
+ok 16 - reading engine starts a passage-first session and hides answer metadata before attempt
+  ---
+  duration_ms: 13.117621
+  type: 'test'
+  ...
+# Subtest: reading engine marks deterministically and then exposes feedback safely
+ok 17 - reading engine marks deterministically and then exposes feedback safely
+  ---
+  duration_ms: 17.871216
+  type: 'test'
+  ...
+# Subtest: reading exact match checks reject learner substrings of the correct answer
+ok 18 - reading exact match checks reject learner substrings of the correct answer
+  ---
+  duration_ms: 1.27479
+  type: 'test'
+  ...
+# Subtest: reading contains checks use phrase boundaries rather than character substrings
+ok 19 - reading contains checks use phrase boundaries rather than character substrings
+  ---
+  duration_ms: 0.698166
+  type: 'test'
+  ...
+# Subtest: reading keyword checks accept hyphenated compound components without weakening negation guards
+ok 20 - reading keyword checks accept hyphenated compound components without weakening negation guards
+  ---
+  duration_ms: 0.725169
+  type: 'test'
+  ...
+# Subtest: reading phrase checks reject locally negated correct phrases
+ok 21 - reading phrase checks reject locally negated correct phrases
+  ---
+  duration_ms: 1.1303
+  type: 'test'
+  ...
+# Subtest: reading evidence fallback does not award marks for negated evidence quotes
+ok 22 - reading evidence fallback does not award marks for negated evidence quotes
+  ---
+  duration_ms: 1.864638
+  type: 'test'
+  ...
+# Subtest: reading evidence checks accept source-affirmed negation snippets
+ok 23 - reading evidence checks accept source-affirmed negation snippets
+  ---
+  duration_ms: 0.587163
+  type: 'test'
+  ...
+# Subtest: reading save-response rejects stale expected session or question ids
+ok 24 - reading save-response rejects stale expected session or question ids
+  ---
+  duration_ms: 3.444383
+  type: 'test'
+  ...
+# Subtest: reading marked answers cannot be overwritten by duplicate or stale submissions
+ok 25 - reading marked answers cannot be overwritten by duplicate or stale submissions
+  ---
+  duration_ms: 7.061926
+  type: 'test'
+  ...
+# Subtest: reading engine reloads persisted ui state for follow-up commands
+ok 26 - reading engine reloads persisted ui state for follow-up commands
+  ---
+  duration_ms: 3.200543
+  type: 'test'
+  ...
+# Subtest: reading due stats and review queue use the injected command clock
+ok 27 - reading due stats and review queue use the injected command clock
+  ---
+  duration_ms: 0.72277
+  type: 'test'
+  ...
+# Subtest: reading avoids immediate passage repeats after a started session is ended without answers
+ok 28 - reading avoids immediate passage repeats after a started session is ended without answers
+  ---
+  duration_ms: 3.685443
+  type: 'test'
+  ...
+# Subtest: reading guided mode uses weakness and variety rather than always taking the first four questions
+ok 29 - reading guided mode uses weakness and variety rather than always taking the first four questions
+  ---
+  duration_ms: 2.312893
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reading command handlers
+ok 30 - worker subject runtime wires reading command handlers
+  ---
+  duration_ms: 4.867063
+  type: 'test'
+  ...
+# Subtest: reading secured skill events project into reading-owned monster rewards
+ok 31 - reading secured skill events project into reading-owned monster rewards
+  ---
+  duration_ms: 1.812358
+  type: 'test'
+  ...
+# Subtest: reading secured skill event carries deep secure evidence and mastery key
+ok 32 - reading secured skill event carries deep secure evidence and mastery key
+  ---
+  duration_ms: 13.486102
+  type: 'test'
+  ...
+# Subtest: reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+ok 33 - reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+  ---
+  duration_ms: 5.691333
+  type: 'test'
+  ...
+# Subtest: reading reward state exposes release-scoped 100-star high-water progress
+ok 34 - reading reward state exposes release-scoped 100-star high-water progress
+  ---
+  duration_ms: 1.487437
+  type: 'test'
+  ...
+# Subtest: reading reward thresholds use direct clusters plus a full-domain aggregate monster
+ok 35 - reading reward thresholds use direct clusters plus a full-domain aggregate monster
+  ---
+  duration_ms: 1.896326
+  type: 'test'
+  ...
+# Subtest: reading list-view read model exposes a safe current-section question list
+ok 36 - reading list-view read model exposes a safe current-section question list
+  ---
+  duration_ms: 2.842939
+  type: 'test'
+  ...
+# Subtest: reading save-response can persist visible section drafts and navigate without marking
+ok 37 - reading save-response can persist visible section drafts and navigate without marking
+  ---
+  duration_ms: 3.900559
+  type: 'test'
+  ...
+# Subtest: reading mark-section accepts current visible section drafts before deterministic marking
+ok 38 - reading mark-section accepts current visible section drafts before deterministic marking
+  ---
+  duration_ms: 3.03022
+  type: 'test'
+  ...
+# Subtest: reading section response merge does not blank previously saved one-question drafts
+ok 39 - reading section response merge does not blank previously saved one-question drafts
+  ---
+  duration_ms: 5.839707
+  type: 'test'
+  ...
+# Subtest: reading list-mode section save can explicitly clear a previously saved draft
+ok 40 - reading list-mode section save can explicitly clear a previously saved draft
+  ---
+  duration_ms: 5.019357
+  type: 'test'
+  ...
+# Subtest: reading save and mark commands reject stale expected section indexes
+ok 41 - reading save and mark commands reject stale expected section indexes
+  ---
+  duration_ms: 5.611753
+  type: 'test'
+  ...
+1..41
+# tests 41
+# suites 0
+# pass 41
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1781.236013

@@ -1,0 +1,8 @@
+scripts/audit-reading-content-quality.mjs	+19	-1
+shared/reading/content.js	+53	-0
+shared/reading/phase5-expansion.js	+25	-10
+worker/src/subjects/reading/engine.js	+10	-4
+tests/worker-reading-runtime.test.js	+7	-0
+tests/reading-content-contract.test.js	+16	-0
+tests/reading-phase5-next1000-contract.test.js	+19	-0
+total	+149	-15

@@ -1,0 +1,810 @@
+{
+  "summary": {
+    "releaseId": "reading-poc-promoted-2026-05-05",
+    "version": 5,
+    "passageCount": 210,
+    "questionCount": 2072,
+    "paperCount": 75,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 71,
+      "non-fiction": 71,
+      "poetry": 68
+    },
+    "longPassageCount": 166
+  },
+  "failures": [
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_winter_market",
+      "field": "block.3",
+      "text": "By midday, the compass needle settled beside the flower stall. People who had been hurrying began to speak more quietly, because the place f"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_winter_market",
+      "questionId": "phase5_fiction_winter_market_q3",
+      "field": "stem",
+      "text": "How does Amina move from feeling undefined to feeling undefined while solving a missing stall sign? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_winter_market",
+      "questionId": "phase5_fiction_winter_market_q6",
+      "field": "explanation",
+      "text": "The ending shows Amina becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_river_theatre",
+      "field": "block.3",
+      "text": "When the crown flashed under the orchestra steps, the place seemed to breathe again. Jonah found the crown before the curtain rose. By the e"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_river_theatre",
+      "questionId": "phase5_fiction_river_theatre_q3",
+      "field": "stem",
+      "text": "How does Jonah move from feeling undefined to feeling undefined while solving a missing prop crown? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_river_theatre",
+      "questionId": "phase5_fiction_river_theatre_q6",
+      "field": "explanation",
+      "text": "The ending shows Jonah becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_hill_beacon",
+      "field": "block.3",
+      "text": "The proof came when the beacon flame lifted straight in the still air. After that, Leah lit the warning beacon safely. The change from undef"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_hill_beacon",
+      "questionId": "phase5_fiction_hill_beacon_q3",
+      "field": "stem",
+      "text": "How does Leah move from feeling undefined to feeling undefined while solving a wrongly stacked fire basket? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_hill_beacon",
+      "questionId": "phase5_fiction_hill_beacon_q6",
+      "field": "explanation",
+      "text": "The ending shows Leah becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_glasshouse_seed",
+      "field": "block.3",
+      "text": "the rare seed packet matched the green label, and the earlier worry changed into relief. Owen replanted the seed in the correct tray. The en"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_glasshouse_seed",
+      "questionId": "phase5_fiction_glasshouse_seed_q3",
+      "field": "stem",
+      "text": "How does Owen move from feeling undefined to feeling undefined while solving a locked propagator tray? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_glasshouse_seed",
+      "questionId": "phase5_fiction_glasshouse_seed_q6",
+      "field": "explanation",
+      "text": "The ending shows Owen becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_quarry_echo",
+      "field": "block.3",
+      "text": "The investigation ended when the echo returned from the safe ledge. Priya guided the walkers away from loose rock. The story's final feeling"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_quarry_echo",
+      "questionId": "phase5_fiction_quarry_echo_q3",
+      "field": "stem",
+      "text": "How does Priya move from feeling undefined to feeling undefined while solving a cracked safety rope? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_quarry_echo",
+      "questionId": "phase5_fiction_quarry_echo_q6",
+      "field": "explanation",
+      "text": "The ending shows Priya becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_bakery_clock",
+      "field": "block.0",
+      "text": "Felix began the day feeling undefined. At the bakery kitchen, a batch of unsold loaves had turned a simple morning into a puzzle. warm yeast"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_bakery_clock",
+      "field": "block.3",
+      "text": "By the time the timer rang exactly as the crusts turned gold, the puzzle had changed into proof. Felix rescued the morning bake. Felix ended"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_bakery_clock",
+      "questionId": "phase5_fiction_bakery_clock_q3",
+      "field": "stem",
+      "text": "How does Felix move from feeling undefined to feeling undefined while solving a batch of unsold loaves? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_bakery_clock",
+      "questionId": "phase5_fiction_bakery_clock_q6",
+      "field": "explanation",
+      "text": "The ending shows Felix becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_marsh_hide",
+      "field": "block.3",
+      "text": "By midday, the marker bobbed beside the willow stump. People who had been hurrying began to speak more quietly, because the place felt prope"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_marsh_hide",
+      "questionId": "phase5_fiction_marsh_hide_q3",
+      "field": "stem",
+      "text": "How does Nora move from feeling undefined to feeling undefined while solving a vanished nest marker? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_marsh_hide",
+      "questionId": "phase5_fiction_marsh_hide_q6",
+      "field": "explanation",
+      "text": "The ending shows Nora becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_rooftop_garden",
+      "field": "block.3",
+      "text": "When the water gauge showed yesterday's storm had missed the bed, the place seemed to breathe again. Cass rigged a calmer watering line. By "
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_rooftop_garden",
+      "questionId": "phase5_fiction_rooftop_garden_q3",
+      "field": "stem",
+      "text": "How does Cass move from feeling undefined to feeling undefined while solving wilting tomato plants? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_rooftop_garden",
+      "questionId": "phase5_fiction_rooftop_garden_q6",
+      "field": "explanation",
+      "text": "The ending shows Cass becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_cavern_lantern",
+      "field": "block.3",
+      "text": "The proof came when the lantern glow found the narrow side passage. After that, Milo helped the group find the safe route. The change from u"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_cavern_lantern",
+      "questionId": "phase5_fiction_cavern_lantern_q3",
+      "field": "stem",
+      "text": "How does Milo move from feeling undefined to feeling undefined while solving a hidden side passage? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_cavern_lantern",
+      "questionId": "phase5_fiction_cavern_lantern_q6",
+      "field": "explanation",
+      "text": "The ending shows Milo becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_archive_key",
+      "field": "block.3",
+      "text": "key seven opened the drawer marked waterways, and the earlier worry changed into relief. Sofia restored the map to its proper drawer. The en"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_archive_key",
+      "questionId": "phase5_fiction_archive_key_q3",
+      "field": "stem",
+      "text": "How does Sofia move from feeling undefined to feeling undefined while solving a misfiled map drawer? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_archive_key",
+      "questionId": "phase5_fiction_archive_key_q6",
+      "field": "explanation",
+      "text": "The ending shows Sofia becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_sea_pool",
+      "field": "block.3",
+      "text": "The investigation ended when the crab followed the shallow channel. Ben released the crab before the gulls returned. The story's final feeli"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_sea_pool",
+      "questionId": "phase5_fiction_sea_pool_q3",
+      "field": "stem",
+      "text": "How does Ben move from feeling undefined to feeling undefined while solving a stranded crab? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_sea_pool",
+      "questionId": "phase5_fiction_sea_pool_q6",
+      "field": "explanation",
+      "text": "The ending shows Ben becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_observatory_door",
+      "field": "block.0",
+      "text": "Clara began the day feeling undefined. At the school observatory, a door that stuck before viewing night had turned a simple morning into a "
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_observatory_door",
+      "field": "block.3",
+      "text": "By the time Orion's three stars matched the latch marks, the puzzle had changed into proof. Clara opened the dome for the viewing night. Cla"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_observatory_door",
+      "questionId": "phase5_fiction_observatory_door_q3",
+      "field": "stem",
+      "text": "How does Clara move from feeling undefined to feeling undefined while solving a door that stuck before viewing night? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_observatory_door",
+      "questionId": "phase5_fiction_observatory_door_q6",
+      "field": "explanation",
+      "text": "The ending shows Clara becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_festival_bridge",
+      "field": "block.3",
+      "text": "By midday, the blue flags marked the missing hook. People who had been hurrying began to speak more quietly, because the place felt properly"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_festival_bridge",
+      "questionId": "phase5_fiction_festival_bridge_q3",
+      "field": "stem",
+      "text": "How does Ravi move from feeling undefined to feeling undefined while solving a gap in the lantern line? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_festival_bridge",
+      "questionId": "phase5_fiction_festival_bridge_q6",
+      "field": "explanation",
+      "text": "The ending shows Ravi becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_train_yard",
+      "field": "block.3",
+      "text": "When the grease mark circled the loose bolt, the place seemed to breathe again. Elise reported the fault before the wagon moved. By the end,"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_train_yard",
+      "questionId": "phase5_fiction_train_yard_q3",
+      "field": "stem",
+      "text": "How does Elise move from feeling undefined to feeling undefined while solving a delayed maintenance wagon? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_train_yard",
+      "questionId": "phase5_fiction_train_yard_q6",
+      "field": "explanation",
+      "text": "The ending shows Elise becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_meadow_gate",
+      "field": "block.3",
+      "text": "The proof came when the peg fitted the hidden hinge hole. After that, Kiran secured the meadow gate. The change from undefined to undefined "
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_meadow_gate",
+      "questionId": "phase5_fiction_meadow_gate_q3",
+      "field": "stem",
+      "text": "How does Kiran move from feeling undefined to feeling undefined while solving a gate left swinging? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_meadow_gate",
+      "questionId": "phase5_fiction_meadow_gate_q6",
+      "field": "explanation",
+      "text": "The ending shows Kiran becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_lighthouse_step",
+      "field": "block.3",
+      "text": "the rope held steady as the step was repaired, and the earlier worry changed into relief. Mara made the stair safe before sunset. The ending"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_lighthouse_step",
+      "questionId": "phase5_fiction_lighthouse_step_q3",
+      "field": "stem",
+      "text": "How does Mara move from feeling undefined to feeling undefined while solving a loose step before inspection? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_lighthouse_step",
+      "questionId": "phase5_fiction_lighthouse_step_q6",
+      "field": "explanation",
+      "text": "The ending shows Mara becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_museum_courtyard",
+      "field": "block.3",
+      "text": "The investigation ended when the rubbing matched the fossil by the north wall. Talia restored the chain around the fossil bed. The story's f"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_museum_courtyard",
+      "questionId": "phase5_fiction_museum_courtyard_q3",
+      "field": "stem",
+      "text": "How does Talia move from feeling undefined to feeling undefined while solving a broken display chain? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_museum_courtyard",
+      "questionId": "phase5_fiction_museum_courtyard_q6",
+      "field": "explanation",
+      "text": "The ending shows Talia becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_school_radio",
+      "field": "block.0",
+      "text": "Dylan began the day feeling undefined. At the radio room, a crackling broadcast had turned a simple morning into a puzzle. red lights blinke"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_school_radio",
+      "field": "block.3",
+      "text": "By the time the signal cleared when the cable was clipped, the puzzle had changed into proof. Dylan restored the lunchtime broadcast. Dylan "
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_school_radio",
+      "questionId": "phase5_fiction_school_radio_q3",
+      "field": "stem",
+      "text": "How does Dylan move from feeling undefined to feeling undefined while solving a crackling broadcast? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_school_radio",
+      "questionId": "phase5_fiction_school_radio_q6",
+      "field": "explanation",
+      "text": "The ending shows Dylan becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_forest_steps",
+      "field": "block.3",
+      "text": "By midday, clear water ran down the freed groove. People who had been hurrying began to speak more quietly, because the place felt properly "
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_forest_steps",
+      "questionId": "phase5_fiction_forest_steps_q3",
+      "field": "stem",
+      "text": "How does Ivy move from feeling undefined to feeling undefined while solving a blocked drainage runnel? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_forest_steps",
+      "questionId": "phase5_fiction_forest_steps_q6",
+      "field": "explanation",
+      "text": "The ending shows Ivy becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_pottery_shed",
+      "field": "block.3",
+      "text": "When the square imprint matched the missing shelf brace, the place seemed to breathe again. Luca fixed the shelf before the bowls dried. By "
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_pottery_shed",
+      "questionId": "phase5_fiction_pottery_shed_q3",
+      "field": "stem",
+      "text": "How does Luca move from feeling undefined to feeling undefined while solving a cracked drying shelf? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_pottery_shed",
+      "questionId": "phase5_fiction_pottery_shed_q6",
+      "field": "explanation",
+      "text": "The ending shows Luca becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_weather_kiosk",
+      "field": "block.3",
+      "text": "The proof came when the west-side stain matched the broken seal. After that, Mina corrected the forecast board. The change from undefined to"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_weather_kiosk",
+      "questionId": "phase5_fiction_weather_kiosk_q3",
+      "field": "stem",
+      "text": "How does Mina move from feeling undefined to feeling undefined while solving a confusing forecast board? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_weather_kiosk",
+      "questionId": "phase5_fiction_weather_kiosk_q6",
+      "field": "explanation",
+      "text": "The ending shows Mina becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_underground_stream",
+      "field": "block.3",
+      "text": "the stick picked up the stream's soft tapping, and the earlier worry changed into relief. Arun replaced the water marker accurately. The end"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_underground_stream",
+      "questionId": "phase5_fiction_underground_stream_q3",
+      "field": "stem",
+      "text": "How does Arun move from feeling undefined to feeling undefined while solving a missing water marker? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_underground_stream",
+      "questionId": "phase5_fiction_underground_stream_q6",
+      "field": "explanation",
+      "text": "The ending shows Arun becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_carousel_paint",
+      "field": "block.3",
+      "text": "The investigation ended when the old brushstroke guided the new blue line. Jude repaired the horse without hiding its age. The story's final"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_carousel_paint",
+      "questionId": "phase5_fiction_carousel_paint_q3",
+      "field": "stem",
+      "text": "How does Jude move from feeling undefined to feeling undefined while solving a chipped horse panel? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_carousel_paint",
+      "questionId": "phase5_fiction_carousel_paint_q6",
+      "field": "explanation",
+      "text": "The ending shows Jude becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_maple_square",
+      "field": "block.0",
+      "text": "Sana began the day feeling undefined. At Maple Square, a young tree leaning sideways had turned a simple morning into a puzzle. red leaves t"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_maple_square",
+      "field": "block.3",
+      "text": "By the time the tag number matched the care-list warning, the puzzle had changed into proof. Sana helped brace the young maple. Sana ended t"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_maple_square",
+      "questionId": "phase5_fiction_maple_square_q3",
+      "field": "stem",
+      "text": "How does Sana move from feeling undefined to feeling undefined while solving a young tree leaning sideways? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_maple_square",
+      "questionId": "phase5_fiction_maple_square_q6",
+      "field": "explanation",
+      "text": "The ending shows Sana becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_harp_room",
+      "field": "block.3",
+      "text": "By midday, the loose peg tightened and the chord settled. People who had been hurrying began to speak more quietly, because the place felt p"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_harp_room",
+      "questionId": "phase5_fiction_harp_room_q3",
+      "field": "stem",
+      "text": "How does Ada move from feeling undefined to feeling undefined while solving a rehearsal that sounded wrong? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_harp_room",
+      "questionId": "phase5_fiction_harp_room_q6",
+      "field": "explanation",
+      "text": "The ending shows Ada becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_castle_drain",
+      "field": "block.3",
+      "text": "When the hidden drain gurgled when the moss was cleared, the place seemed to breathe again. Kai uncovered the blocked drain. By the end, Kai"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_castle_drain",
+      "questionId": "phase5_fiction_castle_drain_q3",
+      "field": "stem",
+      "text": "How does Kai move from feeling undefined to feeling undefined while solving a puddle that would not drain? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_castle_drain",
+      "questionId": "phase5_fiction_castle_drain_q6",
+      "field": "explanation",
+      "text": "The ending shows Kai becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_basket_workshop",
+      "field": "block.3",
+      "text": "The proof came when the pale strip showed where the weave had slipped. After that, Mae repaired the rim before it dried. The change from und"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_basket_workshop",
+      "questionId": "phase5_fiction_basket_workshop_q3",
+      "field": "stem",
+      "text": "How does Mae move from feeling undefined to feeling undefined while solving a lopsided basket rim? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_basket_workshop",
+      "questionId": "phase5_fiction_basket_workshop_q6",
+      "field": "explanation",
+      "text": "The ending shows Mae becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_desert_gallery",
+      "field": "block.3",
+      "text": "the shade cloth cooled the ink panel, and the earlier worry changed into relief. Omar protected the display from strong light. The ending le"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_desert_gallery",
+      "questionId": "phase5_fiction_desert_gallery_q3",
+      "field": "stem",
+      "text": "How does Omar move from feeling undefined to feeling undefined while solving a sunlit display case? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_desert_gallery",
+      "questionId": "phase5_fiction_desert_gallery_q6",
+      "field": "explanation",
+      "text": "The ending shows Omar becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_orchard_bees",
+      "field": "block.3",
+      "text": "The investigation ended when the bees streamed straight once the grass was trimmed. Lena opened the hive entrance safely. The story's final "
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_orchard_bees",
+      "questionId": "phase5_fiction_orchard_bees_q3",
+      "field": "stem",
+      "text": "How does Lena move from feeling undefined to feeling undefined while solving a hive entrance blocked by grass? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_orchard_bees",
+      "questionId": "phase5_fiction_orchard_bees_q6",
+      "field": "explanation",
+      "text": "The ending shows Lena becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_canopy_walk",
+      "field": "block.0",
+      "text": "Tom began the day feeling undefined. At the treetop walkway, a sagging handrail had turned a simple morning into a puzzle. leaves flickered "
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_canopy_walk",
+      "field": "block.3",
+      "text": "By the time the rubbed bolt tightened the sagging rail, the puzzle had changed into proof. Tom made the walkway safe for visitors. Tom ended"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_canopy_walk",
+      "questionId": "phase5_fiction_canopy_walk_q3",
+      "field": "stem",
+      "text": "How does Tom move from feeling undefined to feeling undefined while solving a sagging handrail? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_canopy_walk",
+      "questionId": "phase5_fiction_canopy_walk_q6",
+      "field": "explanation",
+      "text": "The ending shows Tom becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_printing_press",
+      "field": "block.3",
+      "text": "By midday, the upside-down letter explained the smudge. People who had been hurrying began to speak more quietly, because the place felt pro"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_printing_press",
+      "questionId": "phase5_fiction_printing_press_q3",
+      "field": "stem",
+      "text": "How does Eve move from feeling undefined to feeling undefined while solving a smudged festival poster? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_printing_press",
+      "questionId": "phase5_fiction_printing_press_q6",
+      "field": "explanation",
+      "text": "The ending shows Eve becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_planetarium_mat",
+      "field": "block.3",
+      "text": "When the curled corner lay flat under the safety strip, the place seemed to breathe again. Zara fixed the mat before the next group entered."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_planetarium_mat",
+      "questionId": "phase5_fiction_planetarium_mat_q3",
+      "field": "stem",
+      "text": "How does Zara move from feeling undefined to feeling undefined while solving a queue slipping on wet tiles? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_planetarium_mat",
+      "questionId": "phase5_fiction_planetarium_mat_q6",
+      "field": "explanation",
+      "text": "The ending shows Zara becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_reed_boat",
+      "field": "block.3",
+      "text": "The proof came when the stern seam tightened after the reed was woven back. After that, Hugo helped seal the boat before launch. The change "
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_reed_boat",
+      "questionId": "phase5_fiction_reed_boat_q3",
+      "field": "stem",
+      "text": "How does Hugo move from feeling undefined to feeling undefined while solving a boat seam opening? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_reed_boat",
+      "questionId": "phase5_fiction_reed_boat_q6",
+      "field": "explanation",
+      "text": "The ending shows Hugo becoming undefined after solving the problem by noticing details."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_stone_circle",
+      "field": "block.3",
+      "text": "the dew track led to the fallen marker, and the earlier worry changed into relief. Nell replaced the marker before visitors arrived. The end"
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_stone_circle",
+      "questionId": "phase5_fiction_stone_circle_q3",
+      "field": "stem",
+      "text": "How does Nell move from feeling undefined to feeling undefined while solving a missing path marker? Use a short quotation or phrase as evidence."
+    },
+    {
+      "type": "unresolved-copy",
+      "passageId": "phase5_fiction_stone_circle",
+      "questionId": "phase5_fiction_stone_circle_q6",
+      "field": "explanation",
+      "text": "The ending shows Nell becoming undefined after solving the problem by noticing details."
+    }
+  ],
+  "warnings": [
+    {
+      "type": "open-model-under-rubric",
+      "passageId": "how_beavers_rebuild_wetlands",
+      "questionId": "hb_q10",
+      "score": 2,
+      "maxScore": 3,
+      "modelAnswer": "A likely result is that a dam could flood a path or part of a field, causing conflict with landowners, because paragraph 5 explains that beavers are not helpful in every location and need planning and management.",
+      "matched": [
+        "Predicts a plausible problem",
+        "Roots the prediction in the text"
+      ]
+    },
+    {
+      "type": "open-model-under-rubric",
+      "passageId": "glass_roof_station",
+      "questionId": "gs_q5",
+      "score": 1,
+      "maxScore": 2,
+      "modelAnswer": "The writer makes the station sound as if it can gather feelings like objects. This shows that lots of little worries are building as passengers wait for the delayed train.",
+      "matched": [
+        "Links to many passengers becoming uneasy"
+      ]
+    },
+    {
+      "type": "open-model-under-rubric",
+      "passageId": "rain_gardeners",
+      "questionId": "rg_q5",
+      "score": 1,
+      "maxScore": 2,
+      "modelAnswer": "Paragraph 4 balances the explanation by admitting rain gardens do not solve every flood problem, especially if they are badly designed, but showing that several together can still change how a street handles water.",
+      "matched": [
+        "Mentions wider benefit when several are used"
+      ]
+    },
+    {
+      "type": "open-model-under-rubric",
+      "passageId": "copper_weathercock",
+      "questionId": "wc_q13",
+      "score": 3,
+      "maxScore": 4,
+      "modelAnswer": "I agree. The weathercock does not shout or make a dramatic alarm; it simply changes direction after being freed. Tara notices that quiet change and connects it to the fog on the lower road. The ending makes the idea explicit: a warning does not need to be dramatic to be useful, but it needs someone willing to notice when it changes.",
+      "matched": [
+        "States view clearly",
+        "Uses evidence about weathercock/wind/fog",
+        "Uses evidence about final lesson"
+      ]
+    },
+    {
+      "type": "open-model-under-rubric",
+      "passageId": "lantern_map",
+      "questionId": "lm_q10",
+      "score": 2,
+      "maxScore": 3,
+      "modelAnswer": "The story begins with a physical discovery in the museum, then explains what the red stars meant, and finally connects the map to living community memory through the old fisherman's family story.",
+      "matched": [
+        "Identifies the discovery",
+        "Explains the final community link"
+      ]
+    },
+    {
+      "type": "model-plus-first-evidence-not-full-score",
+      "passageId": "seed_vault_guardians",
+      "questionId": "svg_q3",
+      "score": 1,
+      "maxScore": 2,
+      "modelAnswer": "They are stored in more than one country so a disaster in one place does not destroy a variety; the text says \"one accident cannot erase a variety\".",
+      "evidence": "one accident cannot erase a variety"
+    },
+    {
+      "type": "model-answer-not-accepted-by-short-check",
+      "passageId": "phase5_fiction_planetarium_mat",
+      "questionId": "phase5_fiction_planetarium_mat_q1",
+      "modelAnswer": "Zara carries a star-patterned mat."
+    }
+  ],
+  "counts": {
+    "failureCount": 107,
+    "warningCount": 7,
+    "questionCount": 2072,
+    "paperQuestionRefs": 2055
+  }
+}

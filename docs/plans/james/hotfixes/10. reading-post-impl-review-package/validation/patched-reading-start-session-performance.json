@@ -1,0 +1,64 @@
+{
+  "content": {
+    "releaseId": "reading-poc-promoted-2026-05-05",
+    "version": 5,
+    "passageCount": 210,
+    "questionCount": 2072,
+    "paperCount": 75,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 71,
+      "non-fiction": 71,
+      "poetry": 68
+    },
+    "longPassageCount": 166
+  },
+  "iterationsPerMode": 200,
+  "results": {
+    "guided": {
+      "meanMs": 1.215,
+      "p95Ms": 1.989,
+      "maxMs": 10.356
+    },
+    "core": {
+      "meanMs": 2.313,
+      "p95Ms": 3.286,
+      "maxMs": 8.759
+    },
+    "smart": {
+      "meanMs": 2.213,
+      "p95Ms": 3.183,
+      "maxMs": 5.997
+    },
+    "evidence": {
+      "meanMs": 1.465,
+      "p95Ms": 2.032,
+      "maxMs": 4.168
+    },
+    "vocab": {
+      "meanMs": 1.169,
+      "p95Ms": 1.637,
+      "maxMs": 2.019
+    },
+    "inference": {
+      "meanMs": 1.45,
+      "p95Ms": 1.904,
+      "maxMs": 3.483
+    },
+    "punct": {
+      "meanMs": 1.259,
+      "p95Ms": 1.756,
+      "maxMs": 3.861
+    },
+    "stamina": {
+      "meanMs": 1.731,
+      "p95Ms": 2.358,
+      "maxMs": 3.437
+    },
+    "test": {
+      "meanMs": 0.289,
+      "p95Ms": 0.476,
+      "maxMs": 1.289
+    }
+  }
+}
