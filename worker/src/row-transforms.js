@@ -48,6 +48,9 @@ export const PUBLIC_EVENT_TYPES = new Set([
   'reading.session-started',
   'reading.session-completed',
   'reading.skill-secured',
+  'arithmetic.session-started',
+  'arithmetic.session-completed',
+  'arithmetic.reward-unit-secured',
   'reward.monster',
   'platform.practice-streak-hit',
 ]);
@@ -68,11 +71,17 @@ export const PUBLIC_READING_MONSTER_IDS = Object.freeze(
     ? [...MONSTERS_BY_SUBJECT.reading]
     : ['readbloom', 'readrill', 'inferane', 'structurillon'],
 );
+export const PUBLIC_ARITHMETIC_MONSTER_IDS = Object.freeze(
+  Array.isArray(MONSTERS_BY_SUBJECT?.arithmetic)
+    ? [...MONSTERS_BY_SUBJECT.arithmetic]
+    : ['sumkrab', 'carryfin', 'fractail', 'perciva', 'arithon'],
+);
 export const PUBLIC_MONSTER_IDS = new Set([
   ...PUBLIC_SPELLING_MONSTER_IDS,
   ...PUBLIC_PUNCTUATION_MONSTER_IDS,
   ...PUBLIC_GRAMMAR_MONSTER_IDS,
   ...PUBLIC_READING_MONSTER_IDS,
+  ...PUBLIC_ARITHMETIC_MONSTER_IDS,
 ]);
 export const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
 export const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
@@ -396,7 +405,7 @@ export function publicEventRowToRecord(row) {
   if (!event) return null;
   const type = safePublicEventType(safePublicEventText(event.type) || safePublicEventText(row.event_type));
   if (!type) return null;
-  const publicSubjectIds = new Set(['spelling', 'punctuation', 'reading']);
+  const publicSubjectIds = new Set(['spelling', 'punctuation', 'reading', 'arithmetic']);
   const output = {
     type,
     learnerId: safePublicEventText(event.learnerId),

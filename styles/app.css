@@ -534,6 +534,41 @@ textarea:focus-visible {
 .btn.good { background: var(--good-soft); border-color: #b8dfca; color: var(--good); }
 .btn.warn { background: var(--warn-soft); border-color: #edd9ae; color: var(--warn-strong); }
 .btn.bad { background: var(--bad-soft); border-color: #f0c8c5; color: var(--bad); }
+
+.arithmetic-question-tags {
+  margin-bottom: 12px;
+}
+
+.arithmetic-visual {
+  white-space: pre-wrap;
+}
+
+.arithmetic-method-note,
+.arithmetic-question-actions {
+  margin-top: 12px;
+}
+
+.arithmetic-answer-form,
+.arithmetic-summary-actions,
+.arithmetic-strand-list {
+  margin-top: 14px;
+}
+
+.arithmetic-working-field {
+  margin-top: 10px;
+}
+
+.arithmetic-setup-actions {
+  margin-top: 16px;
+}
+
+.arithmetic-strength {
+  width: 100%;
+  min-width: 96px;
+  height: 10px;
+  accent-color: var(--btn-accent, var(--brand));
+}
+
 .btn.lg { padding: 12px 16px; }
 .btn.xl {
   display: inline-flex;

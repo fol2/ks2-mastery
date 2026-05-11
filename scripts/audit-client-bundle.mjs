@@ -35,6 +35,7 @@ const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/data\/word-data\.js$/, reason: 'derived word dataset' },
   { pattern: /^shared\/reading\/content\.js$/, reason: 'server-side Reading passages, questions, answer keys and marking content' },
   { pattern: /^shared\/punctuation\/(content|context-packs|generators|marking|scheduler|service)\.js$/, reason: 'server-side punctuation engine and content' },
+  { pattern: /^shared\/arithmetic\/content\.js$/, reason: 'server-side Arithmetic question generators, answer keys and marking content' },
   { pattern: /^worker\/src\/subjects\/punctuation\//, reason: 'server-side punctuation command runtime' },
   { pattern: /^src\/subjects\/punctuation\/(service|repository)\.js$/, reason: 'browser-side import of punctuation runtime service' },
   { pattern: /^worker\/src\/subjects\/grammar\//, reason: 'server-authoritative Grammar runtime, engine, content, and enrichment code' },
@@ -83,6 +84,9 @@ const FORBIDDEN_TEXT = [
   { token: 'correctResponse', reason: 'Grammar hidden answer oracle field' },
   { token: 'grammar-legacy-oracle', reason: 'Grammar legacy oracle fixture path' },
   { token: 'extract-grammar-legacy-oracle', reason: 'Grammar legacy oracle extraction helper' },
+  { token: 'ARITHMETIC_TEMPLATES', reason: 'server-authoritative Arithmetic template dataset' },
+  { token: 'generateArithmeticQuestion', reason: 'server-authoritative Arithmetic question generation' },
+  { token: 'evaluateArithmeticAnswer', reason: 'server-authoritative Arithmetic marking' },
   // U9 (sys-hardening p1): named export from tests/helpers/fault-injection.mjs.
   // The fault-injection middleware is test-only; if a future import accidentally
   // drags the module into a shipped bundle, this token lands in the client

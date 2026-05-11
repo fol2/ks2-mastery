@@ -48,8 +48,8 @@ export function readySubjectsOnly() {
 }
 
 /**
- * Locked placeholders (arithmetic, reasoning, reading) — empty read-models.
- * These subjects are in HERO_LOCKED_SUBJECT_IDS and should not produce tasks.
+ * Unavailable subject slots — empty read-models.
+ * Reasoning is still a placeholder; ready subjects with null read-models should not produce tasks.
  */
 export function lockedPlaceholders() {
   return {

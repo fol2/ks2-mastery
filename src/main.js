@@ -48,6 +48,7 @@ import {
 } from './subjects/punctuation/command-actions.js';
 import { createReadingReadModelService } from './subjects/reading/client-read-models.js';
 import { createReasoningReadModelService } from './subjects/reasoning/client-read-models.js';
+import { createArithmeticReadModelService } from './subjects/arithmetic/client-read-models.js';
 import {
   applyReadingCommandResponse,
   readingSubjectCommandActions,
@@ -58,6 +59,11 @@ import {
   reasoningSubjectCommandActions,
   setReasoningRuntimeError,
 } from './subjects/reasoning/command-actions.js';
+import {
+  applyArithmeticCommandResponse,
+  arithmeticSubjectCommandActions,
+  setArithmeticRuntimeError,
+} from './subjects/arithmetic/command-actions.js';
 import { createRemoteSpellingActionHandler } from './subjects/spelling/remote-actions.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import {
@@ -274,6 +280,7 @@ const subjectExposureGates = normaliseSubjectExposureGates(boot.session.subjectE
 await repositories.hydrate();
 
 const services = {
+  arithmetic: null,
   punctuation: null,
   reading: null,
   reasoning: null,
@@ -1421,6 +1428,14 @@ function rebuildReasoningService() {
   return services.reasoning;
 }
 
+function rebuildArithmeticService() {
+  services.arithmetic = createArithmeticReadModelService({
+    getState: () => store?.getState?.() || null,
+  });
+  return services.arithmetic;
+}
+
+rebuildArithmeticService();
 rebuildPunctuationService();
 rebuildReadingService();
 rebuildReasoningService();
@@ -1483,6 +1498,7 @@ const controller = createAppController({
     handleRemoteSpellingAction,
     handleRemoteReadingAction,
     handleRemoteReasoningAction,
+    handleRemoteArithmeticAction,
   }),
   tts,
   services,
@@ -2526,6 +2542,7 @@ function contextFor(subjectId = null) {
     handleRemoteSpellingAction,
     handleRemoteReadingAction,
     handleRemoteReasoningAction,
+    handleRemoteArithmeticAction,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
     // P3 U10: hero auto-claim hook — subjects call this when their session ends.
     notifyHeroSubjectSessionEnded,
@@ -3708,6 +3725,10 @@ function setReasoningRuntimeErrorMessage(message) {
   setReasoningRuntimeError(store, message);
 }
 
+function setArithmeticRuntimeErrorMessage(message) {
+  setArithmeticRuntimeError(store, message);
+}
+
 function applyPunctuationCommandResponse(response) {
   const previousPunctuationUi = store.getState().subjectUi?.punctuation || null;
   const subjectReadModel = response?.subjectReadModel;
@@ -3806,6 +3827,26 @@ const reasoningCommandActions = createSubjectCommandActionHandler({
   actions: reasoningSubjectCommandActions,
 });
 
+const pendingArithmeticCommandKeys = new Set();
+
+const arithmeticCommandActions = createSubjectCommandActionHandler({
+  subjectId: 'arithmetic',
+  subjectCommands,
+  getState: () => store.getState(),
+  isReadOnly: runtimeIsReadOnly,
+  setSubjectError: setArithmeticRuntimeErrorMessage,
+  pendingKeys: pendingArithmeticCommandKeys,
+  onBeforeCommand: ({ command }) => store.updateSubjectUi('arithmetic', { pendingCommand: command, error: '' }),
+  onCommandResult: applyArithmeticCommandResponse({
+    store,
+    shouldDelayMonsterCelebrations,
+    subjectSessionEnded,
+    notifyHeroSubjectSessionEnded,
+  }),
+  onCommandSettled: () => store.updateSubjectUi('arithmetic', { pendingCommand: '' }),
+  actions: arithmeticSubjectCommandActions,
+});
+
 function handleRemoteSpellingAction(action, data = {}) {
   return remoteSpellingActions?.handle(action, data) || false;
 }
@@ -3852,6 +3893,19 @@ function handleRemoteReasoningAction(action, data = {}) {
   return reasoningCommandActions.handle(action, data);
 }
 
+function handleRemoteArithmeticAction(action, data = {}) {
+  if (!action || !action.startsWith('arithmetic-')) return false;
+  if (!isSubjectExposed(getSubject('arithmetic'), subjectExposureGates)) {
+    store.goHome();
+    return true;
+  }
+  if (action === 'arithmetic-back') {
+    store.updateSubjectUi('arithmetic', { phase: 'setup', session: null, feedback: null, summary: null, error: '' });
+    return true;
+  }
+  return arithmeticCommandActions.handle(action, data);
+}
+
 function handleSubjectAction(action, data) {
   const appState = store.getState();
   const learnerId = appState.learners.selectedId;
@@ -3891,7 +3945,12 @@ function handleSubjectAction(action, data) {
 function dispatchAction(action, data = {}) {
   controller.autoAdvance.clear();
   captureWordDetailTrigger(action, data);
-  if (!handleGlobalAction(action, data) && !handleRemoteSpellingAction(action, data) && !handleRemotePunctuationAction(action, data) && !handleRemoteReadingAction(action, data) && !handleRemoteReasoningAction(action, data)) {
+  if (!handleGlobalAction(action, data)
+    && !handleRemoteSpellingAction(action, data)
+    && !handleRemotePunctuationAction(action, data)
+    && !handleRemoteReadingAction(action, data)
+    && !handleRemoteReasoningAction(action, data)
+    && !handleRemoteArithmeticAction(action, data)) {
     handleSubjectAction(action, data);
   }
   ensureSpellingAutoAdvanceFromCurrentState();

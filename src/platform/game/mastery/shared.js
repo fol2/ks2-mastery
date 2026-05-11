@@ -34,6 +34,9 @@ export const READING_MONSTER_IDS = Object.freeze(
 export const REASONING_MONSTER_IDS = Object.freeze(
   (MONSTERS_BY_SUBJECT.reasoning || []).filter((monsterId) => MONSTERS[monsterId]),
 );
+export const ARITHMETIC_MONSTER_IDS = Object.freeze(
+  (MONSTERS_BY_SUBJECT.arithmetic || []).filter((monsterId) => MONSTERS[monsterId]),
+);
 export const DIRECT_SPELLING_MONSTER_IDS = Object.freeze(
   SPELLING_MONSTER_IDS.filter((monsterId) => monsterId !== 'phaeton'),
 );

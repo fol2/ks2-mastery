@@ -22,6 +22,7 @@ import { derivePhaeton, PHAETON_SOURCE_MONSTER_IDS } from './phaeton.js';
 import { activePunctuationMonsterSummaryFromState } from './punctuation.js';
 import { activeGrammarMonsterSummaryFromState, normaliseGrammarRewardState } from './grammar.js';
 import { activeReadingMonsterSummaryFromState } from './reading.js';
+import { activeArithmeticMonsterSummaryFromState } from './arithmetic.js';
 
 function hasMonsterMasteryProgress(state) {
   if (!isPlainObject(state)) return false;
@@ -154,6 +155,7 @@ export function monsterSummaryFromState(state = {}, { punctuationStarView = null
     ...activePunctuationMonsterSummaryFromState(state, { starView: punctuationStarView }),
     ...activeGrammarMonsterSummaryFromState(normalisedGrammarState),
     ...activeReadingMonsterSummaryFromState(state),
+    ...activeArithmeticMonsterSummaryFromState(state),
   ];
 }
 
@@ -192,5 +194,6 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
     ...activePunctuationMonsterSummaryFromState(branchState, { starView: punctuationStarView }),
     ...activeGrammarMonsterSummaryFromState(normalisedBranchState),
     ...activeReadingMonsterSummaryFromState(branchState),
+    ...activeArithmeticMonsterSummaryFromState(branchState),
   ];
 }

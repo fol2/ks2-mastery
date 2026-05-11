@@ -181,8 +181,8 @@ function baseModel(overrides = {}) {
         {
           subjectKey: 'arithmetic',
           displayName: 'Arithmetic',
-          status: 'placeholder',
-          releaseVersion: null,
+          status: 'live',
+          releaseVersion: 'arithmetic-ks2-worker-v1-2026-05-11',
           validationErrors: 0,
           errorCount7d: 0,
           supportLoadSignal: 'none',
@@ -294,7 +294,7 @@ test('buildSubjectContentOverview normalises subjects from payload', async () =>
     const overview = buildSubjectContentOverview({
       subjects: [
         { subjectKey: 'spelling', displayName: 'Spelling', status: 'live', releaseVersion: '2', validationErrors: 0, errorCount7d: 1, supportLoadSignal: 'low' },
-        { subjectKey: 'arithmetic', displayName: 'Arithmetic', status: 'placeholder', releaseVersion: null, validationErrors: 0, errorCount7d: 0, supportLoadSignal: 'none' },
+        { subjectKey: 'arithmetic', displayName: 'Arithmetic', status: 'live', releaseVersion: 'arithmetic-ks2-worker-v1-2026-05-11', validationErrors: 0, errorCount7d: 0, supportLoadSignal: 'none' },
       ],
     });
     process.stdout.write(JSON.stringify(overview));
@@ -307,7 +307,7 @@ test('buildSubjectContentOverview normalises subjects from payload', async () =>
   assert.equal(result[0].releaseVersion, '2');
   assert.equal(result[0].errorCount7d, 1);
   assert.equal(result[1].subjectKey, 'arithmetic');
-  assert.equal(result[1].status, 'placeholder');
+  assert.equal(result[1].status, 'live');
 });
 
 // =================================================================
@@ -347,7 +347,8 @@ test('buildSubjectContentOverview sorts live before placeholder', async () => {
       subjects: [
         { subjectKey: 'reading', displayName: 'Reading', status: 'live', errorCount7d: 0 },
         { subjectKey: 'spelling', displayName: 'Spelling', status: 'live', errorCount7d: 0 },
-        { subjectKey: 'arithmetic', displayName: 'Arithmetic', status: 'placeholder', errorCount7d: 0 },
+        { subjectKey: 'arithmetic', displayName: 'Arithmetic', status: 'live', errorCount7d: 0 },
+        { subjectKey: 'reasoning', displayName: 'Reasoning', status: 'placeholder', errorCount7d: 0 },
         { subjectKey: 'grammar', displayName: 'Grammar', status: 'live', errorCount7d: 0 },
       ],
     });
@@ -357,7 +358,8 @@ test('buildSubjectContentOverview sorts live before placeholder', async () => {
   assert.equal(result[0].status, 'live');
   assert.equal(result[1].status, 'live');
   assert.equal(result[2].status, 'live');
-  assert.equal(result[3].status, 'placeholder');
+  assert.equal(result[3].status, 'live');
+  assert.equal(result[4].status, 'placeholder');
 });
 
 // =================================================================
@@ -421,7 +423,7 @@ test('live subjects show Live badge with good class', async () => {
 test('placeholder subjects show Placeholder badge', async () => {
   const html = await renderContentSection();
 
-  assert.match(html, /data-testid="status-badge-arithmetic"[^>]*>Placeholder</, 'Arithmetic has Placeholder badge');
+  assert.match(html, /data-testid="status-badge-reasoning"[^>]*>Placeholder</, 'Reasoning has Placeholder badge');
   assert.match(html, /data-subject-status="placeholder"/, 'Placeholder data attribute renders');
 });
 

@@ -1,8 +1,8 @@
 // Hero Mode P0 — Provider registry.
 //
-// Maps subjectId to provider function for ready subjects. Arithmetic remains
-// locked until its Worker engine is implemented.
+// Maps subjectId to provider function for ready subjects.
 
+import { arithmeticProvider } from './arithmetic.js';
 import { grammarProvider } from './grammar.js';
 import { punctuationProvider } from './punctuation.js';
 import { readingProvider } from './reading.js';
@@ -10,6 +10,7 @@ import { reasoningProvider } from './reasoning.js';
 import { spellingProvider } from './spelling.js';
 
 const PROVIDER_MAP = Object.freeze({
+  arithmetic: arithmeticProvider,
   grammar: grammarProvider,
   punctuation: punctuationProvider,
   reading: readingProvider,
@@ -47,3 +48,4 @@ export { punctuationProvider } from './punctuation.js';
 export { readingProvider } from './reading.js';
 export { reasoningProvider } from './reasoning.js';
 export { spellingProvider } from './spelling.js';
+export { arithmeticProvider } from './arithmetic.js';

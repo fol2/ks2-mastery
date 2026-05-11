@@ -7,7 +7,7 @@
 //   1. Happy path: overview returns status for all 6 subjects
 //   2. Happy path: spelling live with release version and error count
 //   3. Happy path: grammar and punctuation live with error counts
-//   4. Happy path: arithmetic/reasoning/reading are placeholder
+//   4. Happy path: arithmetic/reading live, reasoning placeholder
 //   5. Edge case: subject with zero errors shows 0 not N/A
 //   6. Edge case: no content release shows null releaseVersion
 //   7. Error path: non-admin account receives 403
@@ -146,10 +146,10 @@ test('spelling, grammar, punctuation are live', async () => {
 });
 
 // =================================================================
-// 3. Happy path: placeholder subjects
+// 3. Happy path: newly-live and placeholder subjects
 // =================================================================
 
-test('arithmetic, reasoning, reading are placeholder', async () => {
+test('arithmetic and reading are live while reasoning remains placeholder', async () => {
   const server = createWorkerRepositoryServer();
   try {
     seedAdultAccount(server, {
@@ -165,13 +165,12 @@ test('arithmetic, reasoning, reading are placeholder', async () => {
     const reasoning = body.subjects.find((s) => s.subjectKey === 'reasoning');
     const reading = body.subjects.find((s) => s.subjectKey === 'reading');
 
-    assert.equal(arithmetic.status, 'placeholder');
+    assert.equal(arithmetic.status, 'live');
+    assert.equal(reading.status, 'live');
     assert.equal(reasoning.status, 'placeholder');
-    assert.equal(reading.status, 'placeholder');
 
-    // Placeholder subjects have zero runtime data
+    assert.match(arithmetic.releaseVersion, /^arithmetic-ks2-worker-v1/);
     assert.equal(arithmetic.errorCount7d, 0);
-    assert.equal(arithmetic.releaseVersion, null);
     assert.equal(arithmetic.supportLoadSignal, 'none');
   } finally {
     server.close();

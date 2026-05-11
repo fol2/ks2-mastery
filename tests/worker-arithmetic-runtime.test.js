@@ -1,0 +1,351 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  ARITHMETIC_TEMPLATES,
+  arithmeticPublicQuestionId,
+  evaluateArithmeticQuestion,
+  generateArithmeticQuestion,
+} from '../shared/arithmetic/content.js';
+import {
+  ARITHMETIC_EVENT_TYPES,
+  createServerArithmeticEngine,
+} from '../worker/src/subjects/arithmetic/engine.js';
+import { buildArithmeticReadModel } from '../worker/src/subjects/arithmetic/read-models.js';
+import { projectArithmeticRewards } from '../worker/src/projections/rewards.js';
+
+function publicQuestionId(session, index = session?.currentIndex || 0) {
+  const question = session?.mode === 'test' ? session?.paper?.[index]?.question : session?.currentQuestion;
+  return arithmeticPublicQuestionId({ sessionId: session?.id || '', question, index });
+}
+
+test('arithmetic content generates and marks every template across difficulty bands', () => {
+  for (const template of ARITHMETIC_TEMPLATES) {
+    for (const difficulty of [0, 1, 2]) {
+      const question = generateArithmeticQuestion({ templateId: template.id, difficulty, seed: 1000 + difficulty });
+      assert.equal(question.templateId, template.id);
+      assert.equal(question.difficulty, difficulty);
+      assert.ok(question.stem, `${template.id} has a stem`);
+      assert.ok(question.expected, `${template.id} has expected answer data`);
+      const correctAnswer = question.expected.kind === 'fraction'
+        ? `${question.expected.n}/${question.expected.d}`
+        : String(question.expected.value);
+      const result = evaluateArithmeticQuestion(question, { answer: correctAnswer });
+      assert.equal(result.correct, true, `${template.id} d${difficulty} accepts its generated answer`);
+    }
+  }
+});
+
+test('arithmetic practice session keeps question isolated and emits reward unit evidence on clean win', () => {
+  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
+  const started = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: {}, data: {} },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: '10q' },
+    requestId: 'req-start',
+  });
+  assert.equal(started.state.subjectId, 'arithmetic');
+  assert.equal(started.state.session.mode, 'smart');
+  assert.equal(started.events[0].type, ARITHMETIC_EVENT_TYPES.SESSION_STARTED);
+
+  const question = started.state.session.currentQuestion;
+  const answer = question.expected.kind === 'fraction' ? `${question.expected.n}/${question.expected.d}` : String(question.expected.value);
+  const submitted = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: started.state.session.id,
+      expectedQuestionId: publicQuestionId(started.state.session),
+      response: { answer },
+    },
+    requestId: 'req-submit',
+  });
+  assert.equal(submitted.state.feedback.result.correct, true);
+  assert.equal(submitted.state.session.currentQuestion.id, question.id, 'current question stays visible while feedback is displayed');
+  assert.ok(submitted.events.some((event) => event.type === ARITHMETIC_EVENT_TYPES.REWARD_UNIT_SECURED));
+
+  const continued = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: submitted.state, data: submitted.data },
+    command: 'continue-session',
+    payload: {
+      expectedSessionId: submitted.state.session.id,
+      expectedQuestionId: publicQuestionId(submitted.state.session),
+    },
+    requestId: 'req-continue',
+  });
+  assert.notEqual(continued.state.session.currentQuestion.id, question.id, 'continue creates a fresh item');
+  assert.equal(continued.state.feedback, null);
+});
+
+test('arithmetic test mode delays marking until finish-test', () => {
+  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
+  const started = engine.apply({
+    learnerId: 'learner-test',
+    subjectRecord: { ui: {}, data: {} },
+    command: 'start-session',
+    payload: { mode: 'test', testForm: 'short' },
+    requestId: 'test-start',
+  });
+  assert.equal(started.state.phase, 'test');
+  assert.equal(started.state.session.paper.length, 12);
+  const q = started.state.session.currentQuestion;
+  const answer = q.expected.kind === 'fraction' ? `${q.expected.n}/${q.expected.d}` : String(q.expected.value);
+  const saved = engine.apply({
+    learnerId: 'learner-test',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: started.state.session.id,
+      expectedQuestionId: publicQuestionId(started.state.session, started.state.session.currentIndex),
+      index: started.state.session.currentIndex,
+      response: { answer },
+      advance: true,
+    },
+    requestId: 'test-save',
+  });
+  assert.equal(saved.state.feedback, null);
+  assert.equal(saved.state.session.paper[0].result, null);
+
+  const finished = engine.apply({
+    learnerId: 'learner-test',
+    subjectRecord: { ui: saved.state, data: saved.data },
+    command: 'finish-test',
+    payload: {
+      expectedSessionId: saved.state.session.id,
+      expectedQuestionId: publicQuestionId(saved.state.session, saved.state.session.currentIndex),
+      index: saved.state.session.currentIndex,
+      response: {},
+    },
+    requestId: 'test-finish',
+  });
+  assert.equal(finished.state.phase, 'summary');
+  assert.ok(finished.state.session.paper[0].result);
+  assert.ok(finished.events.some((event) => event.type === ARITHMETIC_EVENT_TYPES.SESSION_COMPLETED));
+});
+
+test('arithmetic rejects stale session and question submissions without mutating state', () => {
+  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
+  const started = engine.apply({
+    learnerId: 'learner-stale',
+    subjectRecord: { ui: {}, data: {} },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: '10q' },
+    requestId: 'stale-start',
+  });
+  const sessionId = started.state.session.id;
+  const questionId = publicQuestionId(started.state.session);
+
+  const staleSession = engine.apply({
+    learnerId: 'learner-stale',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: 'wrong-session',
+      expectedQuestionId: questionId,
+      response: { answer: '999' },
+    },
+    requestId: 'stale-session',
+  });
+  assert.equal(staleSession.changed, false);
+  assert.equal(staleSession.events.length, 0);
+  assert.equal(staleSession.state.session.answered, 0);
+
+  const staleQuestion = engine.apply({
+    learnerId: 'learner-stale',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: sessionId,
+      expectedQuestionId: 'wrong-question',
+      response: { answer: '999' },
+    },
+    requestId: 'stale-question',
+  });
+  assert.equal(staleQuestion.changed, false);
+  assert.equal(staleQuestion.events.length, 0);
+  assert.equal(staleQuestion.state.session.answered, 0);
+});
+
+test('arithmetic requires fresh session and question ids for active write commands', () => {
+  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
+  const started = engine.apply({
+    learnerId: 'learner-required-ids',
+    subjectRecord: { ui: {}, data: {} },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: '10q' },
+    requestId: 'required-start',
+  });
+  const question = started.state.session.currentQuestion;
+  const answer = question.expected.kind === 'fraction' ? `${question.expected.n}/${question.expected.d}` : String(question.expected.value);
+
+  const missingIds = engine.apply({
+    learnerId: 'learner-required-ids',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: { response: { answer } },
+    requestId: 'required-missing-submit',
+  });
+  assert.equal(missingIds.changed, false);
+  assert.equal(missingIds.state.session.answered, 0);
+
+  const submitted = engine.apply({
+    learnerId: 'learner-required-ids',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: started.state.session.id,
+      expectedQuestionId: publicQuestionId(started.state.session),
+      response: { answer },
+    },
+    requestId: 'required-submit',
+  });
+  assert.equal(submitted.changed, true);
+
+  const staleContinue = engine.apply({
+    learnerId: 'learner-required-ids',
+    subjectRecord: { ui: submitted.state, data: submitted.data },
+    command: 'continue-session',
+    payload: {
+      expectedSessionId: submitted.state.session.id,
+      expectedQuestionId: 'wrong-question',
+    },
+    requestId: 'required-stale-continue',
+  });
+  assert.equal(staleContinue.changed, false);
+  assert.equal(staleContinue.state.session.currentQuestion.id, submitted.state.session.currentQuestion.id);
+
+  const continued = engine.apply({
+    learnerId: 'learner-required-ids',
+    subjectRecord: { ui: submitted.state, data: submitted.data },
+    command: 'continue-session',
+    payload: {
+      expectedSessionId: submitted.state.session.id,
+      expectedQuestionId: publicQuestionId(submitted.state.session),
+    },
+    requestId: 'required-continue',
+  });
+  assert.equal(continued.changed, true);
+
+  const missingEnd = engine.apply({
+    learnerId: 'learner-required-ids',
+    subjectRecord: { ui: continued.state, data: continued.data },
+    command: 'end-session',
+    payload: {},
+    requestId: 'required-missing-end',
+  });
+  assert.equal(missingEnd.changed, false);
+  assert.equal(missingEnd.state.session.status, 'active');
+
+  const ended = engine.apply({
+    learnerId: 'learner-required-ids',
+    subjectRecord: { ui: continued.state, data: continued.data },
+    command: 'end-session',
+    payload: {
+      expectedSessionId: continued.state.session.id,
+      expectedQuestionId: publicQuestionId(continued.state.session),
+    },
+    requestId: 'required-end',
+  });
+  assert.equal(ended.changed, true);
+  assert.equal(ended.state.session.status, 'completed');
+});
+
+test('arithmetic prefs ignore untrusted payload keys', () => {
+  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
+  const started = engine.apply({
+    learnerId: 'learner-prefs',
+    subjectRecord: { ui: {}, data: {} },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: '10q', injected: 'bad', prefs: { leaked: true } },
+    requestId: 'prefs-start',
+  });
+  assert.deepEqual(Object.keys(started.state.prefs).sort(), ['focusSkillId', 'goal', 'mode', 'testForm']);
+  assert.equal(started.state.prefs.injected, undefined);
+  assert.equal(started.data.prefs.injected, undefined);
+
+  const saved = engine.apply({
+    learnerId: 'learner-prefs',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'save-prefs',
+    payload: { prefs: { mode: 'test', unknown: 'x', testForm: 'full' } },
+    requestId: 'prefs-save',
+  });
+  assert.deepEqual(Object.keys(saved.state.prefs).sort(), ['focusSkillId', 'goal', 'mode', 'testForm']);
+  assert.equal(saved.state.prefs.mode, 'test');
+  assert.equal(saved.state.prefs.testForm, 'full');
+  assert.equal(saved.state.prefs.unknown, undefined);
+});
+
+test('arithmetic duplicate practice submissions cannot mark the same current question twice', () => {
+  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
+  const started = engine.apply({
+    learnerId: 'learner-dup',
+    subjectRecord: { ui: {}, data: {} },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: '10q' },
+    requestId: 'dup-start',
+  });
+  const question = started.state.session.currentQuestion;
+  const answer = question.expected.kind === 'fraction' ? `${question.expected.n}/${question.expected.d}` : String(question.expected.value);
+  const first = engine.apply({
+    learnerId: 'learner-dup',
+    subjectRecord: { ui: started.state, data: started.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: started.state.session.id,
+      expectedQuestionId: publicQuestionId(started.state.session),
+      response: { answer },
+    },
+    requestId: 'dup-first',
+  });
+  assert.equal(first.changed, true);
+  assert.equal(first.state.session.answered, 1);
+
+  const duplicate = engine.apply({
+    learnerId: 'learner-dup',
+    subjectRecord: { ui: first.state, data: first.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: first.state.session.id,
+      expectedQuestionId: publicQuestionId(first.state.session),
+      response: { answer },
+    },
+    requestId: 'dup-second',
+  });
+  assert.equal(duplicate.changed, false);
+  assert.equal(duplicate.events.length, 0);
+  assert.equal(duplicate.state.session.answered, 1);
+});
+
+test('arithmetic read model redacts answer data before the browser sees current questions', () => {
+  const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
+  const started = engine.apply({ learnerId: 'learner-rm', subjectRecord: { ui: {}, data: {} }, command: 'start-session', payload: {}, requestId: 'rm-start' });
+  const readModel = buildArithmeticReadModel({ learnerId: 'learner-rm', state: started.state, data: started.data, stats: started.stats, analytics: started.analytics });
+  assert.equal(readModel.session.currentQuestion.expected, undefined);
+  assert.equal(readModel.session.currentQuestion.answerText, undefined);
+  assert.equal(readModel.session.currentQuestion.solutionLines, undefined);
+  assert.equal(readModel.session.currentQuestion.templateId, undefined);
+  assert.equal(readModel.session.currentQuestion.seed, undefined);
+  assert.equal(readModel.session.currentQuestion.difficulty, undefined);
+  assert.notEqual(readModel.session.currentQuestion.id, started.state.session.currentQuestion.id);
+  assert.match(readModel.session.currentQuestion.id, /^arith_q_/);
+  assert.ok(readModel.content.rewardUnitCount >= 70);
+});
+
+test('arithmetic reward projection updates the shared monster codex without touching other subjects', () => {
+  const event = {
+    id: 'event-1',
+    type: ARITHMETIC_EVENT_TYPES.REWARD_UNIT_SECURED,
+    learnerId: 'learner-reward',
+    rewardUnitId: 'bonds_missing:d0',
+    contentReleaseId: 'arithmetic-ks2-worker-v1-2026-05-11',
+    createdAt: '2026-05-11T00:00:00.000Z',
+  };
+  const projected = projectArithmeticRewards({ learnerId: 'learner-reward', domainEvents: [event], gameState: {} });
+  assert.ok(projected.rewardEvents.length >= 1);
+  assert.ok(projected.rewardEvents.every((rewardEvent) => rewardEvent.subjectId === 'arithmetic'));
+  assert.ok(projected.gameState['monster-codex'].sumkrab || projected.gameState['monster-codex'].arithon);
+});

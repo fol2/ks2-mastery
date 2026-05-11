@@ -409,7 +409,7 @@ test('determineLaunchStatus: not-launchable for unknown launcher on known subjec
 });
 
 test('determineLaunchStatus: subject-unavailable for unknown subject', () => {
-  const result = determineLaunchStatus('arithmetic', 'smart-practice', FIXTURE_REGISTRY);
+  const result = determineLaunchStatus('reasoning', 'smart-practice', FIXTURE_REGISTRY);
   assert.equal(result.launchable, false);
   assert.equal(result.status, 'subject-unavailable');
   assert.ok(result.reason.includes('no capability entry'));

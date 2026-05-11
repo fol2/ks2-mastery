@@ -88,6 +88,28 @@ test('Punctuation gps-check maps to { mode: "gps" }', () => {
   assert.deepStrictEqual(result.payload, { mode: 'gps' });
 });
 
+// ── Arithmetic happy paths ───────────────────────────────────────
+
+test('Arithmetic smart-practice maps to smart mode', () => {
+  const envelope = { subjectId: 'arithmetic', launcher: 'smart-practice' };
+  const result = mapHeroEnvelopeToSubjectPayload(envelope);
+  assert.equal(result.launchable, true);
+  assert.equal(result.subjectId, 'arithmetic');
+  assert.equal(result.payload.mode, 'smart');
+  assert.equal(result.payload.goal, '10q');
+  assert.equal(result.payload.testForm, 'short');
+});
+
+test('Arithmetic trouble-practice maps to clinic mode', () => {
+  const envelope = { subjectId: 'arithmetic', launcher: 'trouble-practice' };
+  const result = mapHeroEnvelopeToSubjectPayload(envelope);
+  assert.equal(result.launchable, true);
+  assert.equal(result.subjectId, 'arithmetic');
+  assert.equal(result.payload.mode, 'clinic');
+  assert.equal(result.payload.goal, '10q');
+  assert.equal(result.payload.testForm, 'short');
+});
+
 // ── Edge case: unsupported launcher ────────────────────────────────
 
 test('unsupported launcher returns not-launchable with reason', () => {
@@ -100,7 +122,7 @@ test('unsupported launcher returns not-launchable with reason', () => {
 // ── Edge case: unknown subjectId ───────────────────────────────────
 
 test('unknown subjectId returns not-launchable with subject-adapter-not-found', () => {
-  const envelope = { subjectId: 'arithmetic', launcher: 'smart-practice' };
+  const envelope = { subjectId: 'ancient-history', launcher: 'smart-practice' };
   const result = mapHeroEnvelopeToSubjectPayload(envelope);
   assert.equal(result.launchable, false);
   assert.equal(result.reason, 'subject-adapter-not-found');

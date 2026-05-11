@@ -43,21 +43,23 @@ test('Spelling/Grammar/Punctuation with available providers resolve as eligible'
   assert.equal(grammarEntry.reason, 'weak-repair');
 });
 
-// ── 2. Locked placeholder subjects resolve as locked ─────────────────
+// ── 2. Missing ready subjects resolve as locked ──────────────────────
 
-test('Locked placeholder subjects resolve as placeholder-engine-not-ready', () => {
-  // No snapshots provided at all — locked placeholders keep a specific reason.
+test('No placeholder subjects remain locked by constants', () => {
+  assert.deepEqual(HERO_LOCKED_SUBJECT_IDS, []);
+});
+
+test('Missing ready subject snapshots resolve as no-provider-registered', () => {
   const result = resolveEligibility({});
 
-  for (const subjectId of HERO_LOCKED_SUBJECT_IDS) {
+  for (const subjectId of HERO_READY_SUBJECT_IDS) {
     const entry = result.locked.find((l) => l.subjectId === subjectId);
     assert.ok(entry, `${subjectId} must appear in locked list`);
-    assert.equal(entry.reason, 'placeholder-engine-not-ready');
+    assert.equal(entry.reason, 'no-provider-registered');
   }
 });
 
-test('Placeholder subjects with an explicit available provider become eligible', () => {
-  // If a future engine is wired up, the placeholder lock lifts.
+test('Arithmetic with an explicit available provider becomes eligible', () => {
   const snapshots = {
     arithmetic: makeSnapshot({ envelopes: [{ intent: 'starter-growth' }] }),
   };

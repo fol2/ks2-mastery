@@ -188,8 +188,8 @@ function baseModel(overrides = {}) {
         {
           subjectKey: 'arithmetic',
           displayName: 'Arithmetic',
-          status: 'placeholder',
-          releaseVersion: null,
+          status: 'live',
+          releaseVersion: 'arithmetic-ks2-worker-v1-2026-05-11',
           validationErrors: 0,
           errorCount7d: 0,
           supportLoadSignal: 'none',
@@ -378,7 +378,7 @@ test('drilldownPanelSelector returns null for none and placeholder', async () =>
   const result = await runAdapterScript(`
     import { drilldownPanelSelector } from ${ADAPTER_PATH};
     const none = drilldownPanelSelector({ subjectKey: 'punctuation', drilldownAction: 'none' });
-    const placeholder = drilldownPanelSelector({ subjectKey: 'arithmetic', drilldownAction: 'placeholder' });
+    const placeholder = drilldownPanelSelector({ subjectKey: 'reasoning', drilldownAction: 'placeholder' });
     process.stdout.write(JSON.stringify({ none, placeholder }));
   `);
 
@@ -398,7 +398,7 @@ test('buildSubjectContentOverview attaches drilldownAction to each subject', asy
         { subjectKey: 'spelling', displayName: 'Spelling', status: 'live', errorCount7d: 0 },
         { subjectKey: 'grammar', displayName: 'Grammar', status: 'live', errorCount7d: 0 },
         { subjectKey: 'punctuation', displayName: 'Punctuation', status: 'live', errorCount7d: 0 },
-        { subjectKey: 'arithmetic', displayName: 'Arithmetic', status: 'placeholder', errorCount7d: 0 },
+        { subjectKey: 'arithmetic', displayName: 'Arithmetic', status: 'live', errorCount7d: 0 },
       ],
     });
     process.stdout.write(JSON.stringify(overview.map(s => ({ key: s.subjectKey, action: s.drilldownAction }))));
@@ -412,7 +412,7 @@ test('buildSubjectContentOverview attaches drilldownAction to each subject', asy
   assert.equal(result[2].key, 'punctuation');
   assert.equal(result[2].action, 'none');
   assert.equal(result[3].key, 'arithmetic');
-  assert.equal(result[3].action, 'placeholder');
+  assert.equal(result[3].action, 'none');
 });
 
 // =================================================================
@@ -431,7 +431,7 @@ test('clickable subjects (spelling, grammar) have data-clickable="true"', async 
 // 9. SSR: non-clickable subjects omit data-clickable attribute
 // =================================================================
 
-test('non-clickable subjects (punctuation, arithmetic) omit data-clickable', async () => {
+test('non-clickable live subjects (punctuation, arithmetic) omit data-clickable', async () => {
   const html = await renderContentSection();
 
   // Punctuation is live but has no panel → not clickable
@@ -439,7 +439,7 @@ test('non-clickable subjects (punctuation, arithmetic) omit data-clickable', asy
   assert.ok(punctRow, 'Punctuation row exists');
   assert.doesNotMatch(punctRow[0], /data-clickable/, 'Punctuation is not clickable');
 
-  // Arithmetic is placeholder → not clickable
+  // Arithmetic is live but has no admin drilldown panel yet → not clickable
   const arithRow = html.match(/data-subject-key="arithmetic"[^>]*/);
   assert.ok(arithRow, 'Arithmetic row exists');
   assert.doesNotMatch(arithRow[0], /data-clickable/, 'Arithmetic is not clickable');
@@ -473,19 +473,16 @@ test('action column shows "No drilldown yet" for punctuation', async () => {
 });
 
 // =================================================================
-// 13. SSR: action column renders "Placeholder — not live" for placeholders
+// 13. SSR: action column renders placeholder copy only for reasoning
 // =================================================================
 
 test('action column shows "Placeholder — not live" for placeholder subjects', async () => {
   const html = await renderContentSection();
-  // Use a looser match to handle HTML entity encoding of the em dash
-  assert.match(html, /data-testid="action-arithmetic"/, 'Arithmetic action label exists');
-  // The actual text may use &mdash; or — or a literal em dash
-  const arithAction = html.match(/data-testid="action-arithmetic"[^>]*>([^<]*)</);
-  assert.ok(arithAction, 'Arithmetic action text found');
+  const reasoningAction = html.match(/data-testid="action-reasoning"[^>]*>([^<]*)</);
+  assert.ok(reasoningAction, 'Reasoning action text found');
   assert.ok(
-    arithAction[1].includes('Placeholder') && arithAction[1].includes('not live'),
-    `Arithmetic action text is honest: "${arithAction[1]}"`,
+    reasoningAction[1].includes('Placeholder') && reasoningAction[1].includes('not live'),
+    `Reasoning action text is honest: "${reasoningAction[1]}"`,
   );
 });
 

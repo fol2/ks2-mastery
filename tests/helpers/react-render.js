@@ -842,8 +842,18 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
     import { SUBJECTS } from ${JSON.stringify(absoluteSpecifier('src/platform/core/subject-registry.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
     import { createExpansionFixtureHarness } from ${JSON.stringify(absoluteSpecifier('tests/helpers/expansion-fixture-subject.js'))};
+    import { createPlaceholderSubject } from ${JSON.stringify(absoluteSpecifier('src/subjects/placeholders/module-factory.js'))};
 
     installMemoryStorage();
+    const placeholderSubject = createPlaceholderSubject({
+      id: 'placeholder-fixture',
+      name: 'Placeholder Fixture',
+      blurb: 'Placeholder fixture subject.',
+      accent: '#7C3AED',
+      accentSoft: '#EDE9FE',
+      accentTint: '#F5F3FF',
+      icon: 'circle',
+    });
     const brokenSubject = {
       id: 'broken-react',
       name: 'Broken React',
@@ -860,14 +870,18 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
       ? createExpansionFixtureHarness({ storage: globalThis.localStorage })
       : null;
     const controller = harness || createLocalAppController({
-      subjects: selected === 'broken' ? [...SUBJECTS, brokenSubject] : SUBJECTS,
+      subjects: selected === 'broken'
+        ? [...SUBJECTS, brokenSubject]
+        : selected === 'placeholder'
+          ? [...SUBJECTS, placeholderSubject]
+          : SUBJECTS,
     });
     const subjectId = selected === 'expansion'
       ? 'expansion-fixture'
       : selected === 'broken'
         ? 'broken-react'
         : selected === 'placeholder'
-          ? 'arithmetic'
+          ? 'placeholder-fixture'
           : 'reasoning';
     controller.dispatch('open-subject', { subjectId });
     const appState = controller.store.getState();

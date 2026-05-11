@@ -43,6 +43,7 @@ export {
   GRAMMAR_RESERVED_MONSTER_IDS,
   READING_MONSTER_IDS,
   REASONING_MONSTER_IDS,
+  ARITHMETIC_MONSTER_IDS,
 } from './shared.js';
 export {
   READING_DIRECT_STAR_THRESHOLDS,
@@ -69,3 +70,11 @@ export {
   reasoningMasteryKey,
   recordReasoningEvidenceMastery,
 } from './reasoning.js';
+
+export {
+  ARITHMETIC_REWARD_RELEASE_ID,
+  activeArithmeticMonsterSummaryFromState,
+  arithmeticMasteryKey,
+  progressForArithmeticMonster,
+  recordArithmeticRewardUnitMastery,
+} from './arithmetic.js';

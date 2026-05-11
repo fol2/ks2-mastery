@@ -4,7 +4,7 @@ import { readingModule } from '../../subjects/reading/module.js';
 import { reasoningModule } from '../../subjects/reasoning/module.js';
 import { spellingModule } from '../../subjects/spelling/module.js';
 import { grammarModule } from '../../subjects/grammar/module.js';
-import { arithmeticModule } from '../../subjects/placeholders/index.js';
+import { arithmeticModule } from '../../subjects/arithmetic/module.js';
 
 const RAW_SUBJECTS = [
   spellingModule,

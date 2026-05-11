@@ -64,10 +64,10 @@ export const HERO_READY_SUBJECT_IDS = Object.freeze([
   'punctuation',
   'reading',
   'reasoning',
+  'arithmetic',
 ]);
 
 export const HERO_LOCKED_SUBJECT_IDS = Object.freeze([
-  'arithmetic',
 ]);
 
 export const HERO_INTENT_WEIGHTS = Object.freeze({

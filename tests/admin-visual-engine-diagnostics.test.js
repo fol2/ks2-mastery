@@ -204,7 +204,9 @@ test('P5 U5: AdminVisualEngineSection displays adapter and evidence-pack status 
   assert.ok(html.includes('data-testid="visual-evidence-deployment-table"'));
   assert.ok(html.includes('data-testid="visual-smoke-files-table"'));
   assert.ok(html.includes('data-visual-adapter-status="ready"'));
-  assert.ok(html.includes('data-visual-adapter-status="unavailable"'));
+  assert.ok(!html.includes('data-visual-adapter-status="unavailable"'));
+  assert.ok(html.includes('Arithmetic'));
+  assert.ok(html.includes('Reasoning'));
   assert.ok(html.includes('data-screenshot="home"'));
   assert.ok(html.includes('data-screenshot-status="captured"'));
   assert.ok(!html.includes('data-screenshot-status="omitted"'));

@@ -534,6 +534,14 @@ test('button labels: every statically extractable label is classified', () => {
     'Mark set',
     'Save answers',
     'Partly worked support',
+    // Arithmetic live integration: subject-specific learner controls.
+    // These labels carry paper/session nouns so children can tell immediate
+    // practice, delayed-marking test mode, and session escape actions apart.
+    'Submit answer',
+    'Finish paper',
+    'Next question',
+    'End session',
+    'Start Arithmetic',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

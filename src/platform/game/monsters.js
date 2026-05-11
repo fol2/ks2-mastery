@@ -302,6 +302,61 @@ export const MONSTERS = {
     nameByStage: ['Strategon Egg', 'Strategon', 'Methodwing', 'Proofcrest', 'Grand Strategon'],
     masteredMax: 100,
   },
+  sumkrab: {
+    id: 'sumkrab',
+    assetId: 'colisk',
+    name: 'Sumkrab',
+    blurb: 'Finds arithmetic eggs through number facts, place value and powers of ten.',
+    accent: '#C06B3E',
+    secondary: '#EAB08A',
+    pale: '#FBEEE4',
+    nameByStage: ['Sumkrab Egg', 'Sumkrab', 'Bondclaw', 'Placekrab', 'Mega Placekrab'],
+    masteredMax: 12,
+  },
+  carryfin: {
+    id: 'carryfin',
+    assetId: 'hyphang',
+    name: 'Carryfin',
+    blurb: 'Grows when written methods, exchanges and inverses become reliable.',
+    accent: '#8A5A9D',
+    secondary: '#CDAFE1',
+    pale: '#F1E9F4',
+    nameByStage: ['Carryfin Egg', 'Carryfin', 'Methodfin', 'Columnray', 'Mega Columnray'],
+    masteredMax: 39,
+  },
+  fractail: {
+    id: 'fractail',
+    assetId: 'glossbloom',
+    name: 'Fractail',
+    blurb: 'Blooms as decimals, fractions and written fraction methods settle.',
+    accent: '#B45C83',
+    secondary: '#E6A8C7',
+    pale: '#F8E9F1',
+    nameByStage: ['Fractail Egg', 'Fractail', 'Decimalleaf', 'Fractionbloom', 'Mega Fractionbloom'],
+    masteredMax: 30,
+  },
+  perciva: {
+    id: 'perciva',
+    assetId: 'carillon',
+    name: 'Perciva',
+    blurb: 'Rings clearly when percentages, FDP links and mixed arithmetic are secure.',
+    accent: '#D08A2C',
+    secondary: '#E8C45A',
+    pale: '#F6EED7',
+    nameByStage: ['Perciva Egg', 'Perciva', 'Percentchime', 'Mixedbell', 'Mega Mixedbell'],
+    masteredMax: 9,
+  },
+  arithon: {
+    id: 'arithon',
+    assetId: 'phaeton',
+    name: 'Arithon',
+    blurb: 'The Arithmetic legendary that grows only through broad, spaced KS2 arithmetic evidence.',
+    accent: '#2F70B8',
+    secondary: '#9FC7F2',
+    pale: '#E8F2FF',
+    nameByStage: ['Arithon Egg', 'Arithon', 'Fluencywing', 'Methodcrest', 'Grand Arithon'],
+    masteredMax: 90,
+  },
 };
 
 export const MONSTERS_BY_SUBJECT = {
@@ -328,6 +383,8 @@ export const MONSTERS_BY_SUBJECT = {
   // That keeps the maths-reasoning monster layer independent from Grammar,
   // Punctuation and Reading even when the visual asset family is shared.
   reasoning: ['numdrake', 'fractalon', 'measuron', 'georune', 'proofwyrm', 'strategon'],
+  // Arithmetic owns separate state ids while reusing reserve art via assetId.
+  arithmetic: ['sumkrab', 'carryfin', 'fractail', 'perciva', 'arithon'],
 };
 
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);

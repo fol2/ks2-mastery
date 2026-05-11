@@ -9,6 +9,7 @@ import {
   registeredSubjectIds,
   grammarProvider,
   punctuationProvider,
+  arithmeticProvider,
   readingProvider,
   reasoningProvider,
   spellingProvider,
@@ -26,17 +27,21 @@ function loadFixture(name) {
 // ── Provider registry ─────────────────────────────────────────────
 
 test('registry: runProvider returns null for unregistered subjects', () => {
-  assert.equal(runProvider('arithmetic', {}), null);
+  assert.equal(runProvider('unknown-subject', {}), null);
 });
 
-test('registry: registeredSubjectIds lists all five ready subjects', () => {
+test('registry: registeredSubjectIds lists all ready subjects', () => {
   const ids = registeredSubjectIds();
-  assert.equal(ids.length, 5);
-  assert.ok(ids.includes('grammar'));
-  assert.ok(ids.includes('punctuation'));
-  assert.ok(ids.includes('reading'));
-  assert.ok(ids.includes('reasoning'));
-  assert.ok(ids.includes('spelling'));
+  assert.deepEqual(ids.sort(), ['arithmetic', 'grammar', 'punctuation', 'reading', 'reasoning', 'spelling']);
+});
+
+
+test('arithmetic: missing readable signals returns available:false', () => {
+  const result = arithmeticProvider({});
+  assert.equal(result.subjectId, 'arithmetic');
+  assert.equal(result.available, false);
+  assert.equal(result.unavailableReason, 'missing-hero-readable-signals');
+  assert.deepEqual(result.envelopes, []);
 });
 
 

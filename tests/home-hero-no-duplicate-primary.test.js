@@ -15,7 +15,7 @@ const SUBJECTS = Object.freeze([
   { id: 'grammar', name: 'Grammar', blurb: 'Grammar practice', available: true },
   { id: 'reading', name: 'Reading', blurb: 'Reading practice', available: false },
   { id: 'reasoning', name: 'Reasoning', blurb: 'Reasoning practice', available: false },
-  { id: 'arithmetic', name: 'Arithmetic', blurb: 'Arithmetic practice', available: false },
+  { id: 'arithmetic', name: 'Arithmetic', blurb: 'Arithmetic practice', available: true },
 ]);
 
 function modelWithSubjects(subjects) {

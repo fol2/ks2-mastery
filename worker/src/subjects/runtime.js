@@ -1,4 +1,5 @@
 import { NotFoundError } from '../errors.js';
+import { createArithmeticCommandHandlers } from './arithmetic/commands.js';
 import { createGrammarCommandHandlers } from './grammar/commands.js';
 import { createPunctuationCommandHandlers } from './punctuation/commands.js';
 import { createReadingCommandHandlers } from './reading/commands.js';
@@ -36,6 +37,7 @@ export function createSubjectRuntime({ handlers = {} } = {}) {
 export function createWorkerSubjectRuntime(options = {}) {
   return createSubjectRuntime({
     handlers: {
+      arithmetic: createArithmeticCommandHandlers(options.arithmetic || {}),
       grammar: createGrammarCommandHandlers(options.grammar || {}),
       punctuation: createPunctuationCommandHandlers(options.punctuation || {}),
       reading: createReadingCommandHandlers(options.reading || {}),

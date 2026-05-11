@@ -13,7 +13,7 @@ import {
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 test('ready subjects expose a complete SubjectVisualAdapter', () => {
-  for (const subjectId of ['spelling', 'grammar', 'punctuation', 'reading', 'reasoning']) {
+  for (const subjectId of ['spelling', 'grammar', 'punctuation', 'reading', 'reasoning', 'arithmetic']) {
     const subject = SUBJECTS.find((entry) => entry.id === subjectId);
     assert.ok(subject, `${subjectId} must be registered`);
     assert.equal(isSubjectVisualAdapter(subject.visualAdapter), true);
@@ -28,7 +28,11 @@ test('ready subjects expose a complete SubjectVisualAdapter', () => {
 });
 
 test('placeholder subjects expose unavailable adapters without production practice controls', () => {
-  for (const subjectId of ['arithmetic']) {
+  const placeholderSubjectIds = SUBJECTS
+    .filter((entry) => entry.visualAdapter?.status === 'unavailable')
+    .map((entry) => entry.id);
+  assert.deepEqual(placeholderSubjectIds, []);
+  for (const subjectId of placeholderSubjectIds) {
     const subject = SUBJECTS.find((entry) => entry.id === subjectId);
     assert.ok(subject, `${subjectId} must be registered`);
     assert.equal(isSubjectVisualAdapter(subject.visualAdapter), true);

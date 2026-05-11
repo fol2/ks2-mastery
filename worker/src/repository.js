@@ -157,8 +157,12 @@ import {
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
 import { buildGrammarReadModel } from './subjects/grammar/read-models.js';
+import { ARITHMETIC_CONTENT_RELEASE_ID } from '../../shared/arithmetic/content.js';
+import { READING_CONTENT_RELEASE_ID } from '../../shared/reading/metadata.js';
 import { buildReadingReadModel } from './subjects/reading/read-models.js';
 import { __readingEngineInternals } from './subjects/reading/engine.js';
+import { buildArithmeticReadModel } from './subjects/arithmetic/read-models.js';
+import { __arithmeticEngineInternals } from './subjects/arithmetic/engine.js';
 import { listPunctuationEvents } from './subjects/punctuation/events.js';
 import { createPunctuationService } from '../../shared/punctuation/service.js';
 import {
@@ -364,6 +368,18 @@ function redactReadingUiForClient(ui, data = {}, learnerId = '') {
   });
 }
 
+function redactArithmeticUiForClient(ui, data = {}, learnerId = '') {
+  const runtimeData = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+  const runtimeState = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
+  return buildArithmeticReadModel({
+    learnerId,
+    state: runtimeState,
+    data: runtimeData,
+    stats: __arithmeticEngineInternals.buildStats(runtimeData),
+    analytics: __arithmeticEngineInternals.buildAnalytics(runtimeData),
+  });
+}
+
 const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
   async spelling({ record, row, spellingContentSnapshot, now }) {
     const audio = await buildSpellingAudioCue({
@@ -384,6 +400,9 @@ const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
   },
   reading({ record, row }) {
     return redactReadingUiForClient(record.ui, record.data, row.learner_id);
+  },
+  arithmetic({ record, row }) {
+    return redactArithmeticUiForClient(record.ui, record.data, row.learner_id);
   },
 });
 
@@ -1816,10 +1835,9 @@ async function listRecentMutationReceipts(db, { now, actorAccountId, actor = nul
 }
 
 // U9 (P3): cross-subject content overview query. Returns a status
-// envelope per subject WITHOUT importing subject engines or content
-// datasets. The live subjects (spelling, grammar, punctuation) are
-// probed via lightweight table queries; future subjects are returned
-// as placeholders with static metadata.
+// envelope per subject WITHOUT importing subject engines. The live subjects
+// are probed via lightweight table queries where they have ops-signal data;
+// future subjects are returned as placeholders with static metadata.
 //
 // R16 compliance: this function performs zero mastery mutations —
 // every statement is a SELECT or a COUNT.
@@ -1827,7 +1845,7 @@ const CONTENT_OVERVIEW_SUBJECTS = [
   { subjectKey: 'spelling', displayName: 'Spelling', queryLive: true },
   { subjectKey: 'grammar', displayName: 'Grammar', queryLive: true },
   { subjectKey: 'punctuation', displayName: 'Punctuation', queryLive: true },
-  { subjectKey: 'arithmetic', displayName: 'Arithmetic', queryLive: false },
+  { subjectKey: 'arithmetic', displayName: 'Arithmetic', queryLive: true },
   { subjectKey: 'reasoning', displayName: 'Reasoning', queryLive: false },
   { subjectKey: 'reading', displayName: 'Reading', queryLive: true },
 ];
@@ -1877,16 +1895,38 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
       AND status <> 'resolved' AND status <> 'ignored'
   `, [cutoff7d], 'ops_error_events');
 
+  // Arithmetic: errors from ops_error_events
+  const arithmeticErrorsP = scalarCountSafe(db, `
+    SELECT COUNT(*) AS value
+    FROM ops_error_events
+    WHERE (lower(route_name) LIKE '%arithmetic%' OR lower(message_first_line) LIKE '%arithmetic%')
+      AND last_seen > ?
+      AND status <> 'resolved' AND status <> 'ignored'
+  `, [cutoff7d], 'ops_error_events');
+
+  // Reading: errors from ops_error_events
+  const readingErrorsP = scalarCountSafe(db, `
+    SELECT COUNT(*) AS value
+    FROM ops_error_events
+    WHERE (lower(route_name) LIKE '%reading%' OR lower(message_first_line) LIKE '%reading%')
+      AND last_seen > ?
+      AND status <> 'resolved' AND status <> 'ignored'
+  `, [cutoff7d], 'ops_error_events');
+
   const [
     spellingContentRow,
     spellingErrors,
     grammarErrors,
     punctuationErrors,
+    arithmeticErrors,
+    readingErrors,
   ] = await Promise.all([
     spellingContentRowP,
     spellingErrorsP,
     grammarErrorsP,
     punctuationErrorsP,
+    arithmeticErrorsP,
+    readingErrorsP,
   ]);
 
   // Derive spelling release version and validation errors from content_json.
@@ -1971,6 +2011,36 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
         validationWarnings: [],
         hasRealDiagnostics: true,
         recentErrorCount7d: punctuationErrors,
+      };
+    }
+    if (subject.subjectKey === 'arithmetic') {
+      return {
+        subjectKey: 'arithmetic',
+        displayName: 'Arithmetic',
+        status: 'live',
+        releaseVersion: ARITHMETIC_CONTENT_RELEASE_ID,
+        validationErrors: 0,
+        errorCount7d: arithmeticErrors,
+        supportLoadSignal: supportSignal(arithmeticErrors),
+        validationBlockers: [],
+        validationWarnings: [],
+        hasRealDiagnostics: true,
+        recentErrorCount7d: arithmeticErrors,
+      };
+    }
+    if (subject.subjectKey === 'reading') {
+      return {
+        subjectKey: 'reading',
+        displayName: 'Reading',
+        status: 'live',
+        releaseVersion: READING_CONTENT_RELEASE_ID,
+        validationErrors: 0,
+        errorCount7d: readingErrors,
+        supportLoadSignal: supportSignal(readingErrors),
+        validationBlockers: [],
+        validationWarnings: [],
+        hasRealDiagnostics: true,
+        recentErrorCount7d: readingErrors,
       };
     }
     // Placeholder subjects: static metadata, no runtime queries

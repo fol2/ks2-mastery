@@ -75,8 +75,8 @@ test('hero read-model: flag on returns eligibleSubjects and lockedSubjects array
   assert.ok(Array.isArray(payload.hero.lockedSubjects));
 
   // With no subject state written, providers return unavailable, so
-  // all ready subjects end up locked. The three placeholder subjects
-  // (arithmetic, reasoning, reading) are always locked.
+  // ready subjects can still appear locked until their subject state exists.
+  // Reasoning remains the only placeholder subject.
   const lockedIds = payload.hero.lockedSubjects.map((s) => s.subjectId);
   assert.ok(lockedIds.includes('arithmetic'));
   assert.ok(lockedIds.includes('reasoning'));

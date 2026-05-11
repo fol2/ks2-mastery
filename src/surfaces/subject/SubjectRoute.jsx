@@ -7,10 +7,12 @@ import { PunctuationPracticeSurface } from '../../subjects/punctuation/component
 import { GrammarPracticeSurface } from '../../subjects/grammar/components/GrammarPracticeSurface.jsx';
 import { ReadingPracticeSurface } from '../../subjects/reading/components/ReadingPracticeSurface.jsx';
 import { ReasoningPracticeSurface } from '../../subjects/reasoning/components/ReasoningPracticeSurface.jsx';
+import { ArithmeticPracticeSurface } from '../../subjects/arithmetic/components/ArithmeticPracticeSurface.jsx';
 import { SpellingPracticeSurface } from '../../subjects/spelling/components/SpellingPracticeSurface.jsx';
 import { isSubjectExposed } from '../../platform/core/subject-availability.js';
 
 const REACT_SUBJECT_COMPONENTS = Object.freeze({
+  arithmetic: ArithmeticPracticeSurface,
   grammar: GrammarPracticeSurface,
   punctuation: PunctuationPracticeSurface,
   reading: ReadingPracticeSurface,
