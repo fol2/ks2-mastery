@@ -25,6 +25,9 @@ Default exclude glob:
 - `assets/**`
 - `worktrees/**`
 - `.worktrees/**`
+- `reports/**`
+- `output/**`
+- `docs/plans/**/archive/**`
 
 Default mode:
 
@@ -126,6 +129,7 @@ The script:
 
 - reads tracked files via `git ls-files`,
 - applies default excludes for large assets and local worktree folders (`assets/**`, `worktrees/**`, `.worktrees/**`),
+- also excludes generated validation artefacts and historical planning archives (`reports/**`, `output/**`, `docs/plans/**/archive/**`),
 - stages a temporary lean tree,
 - creates a ZIP,
 - cleans temporary files.

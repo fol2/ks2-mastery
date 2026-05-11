@@ -5,7 +5,16 @@ import { spawnSync } from 'node:child_process';
 
 const repoRoot = process.cwd();
 const repoName = path.basename(repoRoot);
-const DEFAULT_EXCLUDES = ['assets/**', 'worktrees/**', '.worktrees/**'];
+const DEFAULT_EXCLUDES = [
+  'assets/**',
+  'worktrees/**',
+  '.worktrees/**',
+  // Generated validation artefacts: useful in-repo, not required in lean runtime/share bundles.
+  'reports/**',
+  'output/**',
+  // Historical planning archives frequently contain heavy screenshots/log bundles.
+  'docs/plans/**/archive/**',
+];
 
 function pad2(value) {
   return String(value).padStart(2, '0');
