@@ -1,0 +1,35 @@
+{
+  "phase5PassageCount": 102,
+  "phase5QuestionCount": 1020,
+  "phase5PaperCount": 34,
+  "phase5LongPassageCount": 102,
+  "genreCounts": {
+    "fiction": 34,
+    "non-fiction": 34,
+    "poetry": 34
+  },
+  "skillCounts": {
+    "2b": 136,
+    "2a": 102,
+    "2d": 136,
+    "2c": 102,
+    "2g": 136,
+    "2e": 68,
+    "2h": 102,
+    "2f": 136,
+    "P1": 25,
+    "P2": 26,
+    "P3": 26,
+    "P4": 25
+  },
+  "typeCounts": {
+    "short": 170,
+    "mcq": 306,
+    "evidenceShort": 102,
+    "open": 136,
+    "match": 102,
+    "order": 102,
+    "multiSelect": 102
+  },
+  "allPapersDeclared50": true
+}

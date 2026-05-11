@@ -1,0 +1,45 @@
+Validation log — Arithmetic live integration
+
+Environment:
+- Node: v22.16.0
+- ZIP primary snapshot: /mnt/data/lean-after.zip
+- ZIP SHA-256: 87ac1268ace44ed4a37a786ad9268b9d7a56ad63048240471d6e2f99988b686c
+- PoC HTML: /mnt/data/ks2_arithmetic_fluency_trainer_v6.html
+- PoC SHA-256: 1d2e7b237c0b78bcb41116947535353f89114f576155f976af9c405476c09226
+
+Syntax checks:
+- 34 modified/new non-JSX JS files passed `node --check`.
+
+Content smoke:
+- `ARITHMETIC_TEMPLATES.length` = 30
+- `arithmeticContentSummary().rewardUnitCount` = 90
+- Strand totals = { facts_place_value: 12, operations_methods: 39, decimals_fractions: 30, percentages_mixed: 9 }
+
+Targeted tests:
+Command:
+node --test tests/worker-arithmetic-runtime.test.js tests/hero-providers.test.js tests/hero-launch-adapters.test.js tests/hero-launch-contract.test.js tests/hero-eligibility.test.js tests/worker-admin-content-overview.test.js tests/reading-subject-registry.test.js
+
+Result:
+- tests: 122
+- pass: 122
+- fail: 0
+
+Runtime import smoke:
+- `createWorkerSubjectRuntime` imports successfully.
+- `projectArithmeticRewards` imports successfully.
+- Arithmetic Hero launch adapter returns launchable for smart-practice.
+- Arithmetic provider returns starter-growth when given a valid Arithmetic read model with content.
+
+React/admin SSR test limitation:
+Command attempted:
+node --test tests/react-admin-content-overview.test.js tests/react-admin-content-subject-drilldown.test.js
+
+Result:
+- Not executable in the extracted ZIP because package `esbuild` is missing.
+- Source syntax for those tests passed `node --check`.
+
+Full production build limitation:
+- Not executed because the extracted ZIP does not include `node_modules`.
+
+Patch application validation:
+- `patch -p1 --dry-run < arithmetic-live-integration.patch` passed on a fresh copy of `lean-after-baseline`.

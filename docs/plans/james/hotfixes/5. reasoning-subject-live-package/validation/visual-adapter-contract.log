@@ -1,0 +1,102 @@
+
+> ks2-mastery@0.1.0 pretest
+> node ./scripts/preflight-test.mjs
+
+
+> ks2-mastery@0.1.0 test
+> node ./scripts/run-node-tests.mjs tests/ui-subject-visual-adapter-contract.test.js tests/subject-contract.test.js
+
+TAP version 13
+# Subtest: subject registry rejects modules missing required contract functions
+ok 1 - subject registry rejects modules missing required contract functions
+  ---
+  duration_ms: 1.732581
+  type: 'test'
+  ...
+# Subtest: subject registry accepts a React practice component during subject migration
+ok 2 - subject registry accepts a React practice component during subject migration
+  ---
+  duration_ms: 0.273713
+  type: 'test'
+  ...
+# Subtest: subject registry accepts a mapped React practice surface without importing JSX in the module
+ok 3 - subject registry accepts a mapped React practice surface without importing JSX in the module
+  ---
+  duration_ms: 0.262731
+  type: 'test'
+  ...
+# Subtest: subject registry rejects modules without React practice rendering
+ok 4 - subject registry rejects modules without React practice rendering
+  ---
+  duration_ms: 0.32061
+  type: 'test'
+  ...
+# Subtest: subject registry rejects retired legacy practice rendering
+ok 5 - subject registry rejects retired legacy practice rendering
+  ---
+  duration_ms: 0.313162
+  type: 'test'
+  ...
+# Subtest: subject registry rejects duplicate subject ids
+ok 6 - subject registry rejects duplicate subject ids
+  ---
+  duration_ms: 0.370433
+  type: 'test'
+  ...
+# Subtest: subject registry preserves explicit rollout exposure gates
+ok 7 - subject registry preserves explicit rollout exposure gates
+  ---
+  duration_ms: 0.392681
+  type: 'test'
+  ...
+# Subtest: subject registry rejects malformed rollout exposure gates
+ok 8 - subject registry rejects malformed rollout exposure gates
+  ---
+  duration_ms: 0.259198
+  type: 'test'
+  ...
+# Subtest: store rejects subject modules whose initState does not return an object
+ok 9 - store rejects subject modules whose initState does not return an object
+  ---
+  duration_ms: 4.865301
+  type: 'test'
+  ...
+# Subtest: spelling practice dashboard renders without service UI metadata
+ok 10 - spelling practice dashboard renders without service UI metadata
+  ---
+  duration_ms: 2446.909497
+  type: 'test'
+  ...
+# Subtest: ready subjects expose a complete SubjectVisualAdapter
+ok 11 - ready subjects expose a complete SubjectVisualAdapter
+  ---
+  duration_ms: 1.551335
+  type: 'test'
+  ...
+# Subtest: placeholder subjects expose unavailable adapters without production practice controls
+ok 12 - placeholder subjects expose unavailable adapters without production practice controls
+  ---
+  duration_ms: 0.272358
+  type: 'test'
+  ...
+# Subtest: placeholder adapter module does not import Worker command handlers or browser engines
+ok 13 - placeholder adapter module does not import Worker command handlers or browser engines
+  ---
+  duration_ms: 0.81404
+  type: 'test'
+  ...
+# Subtest: subject expansion documentation references the visual adapter contract
+ok 14 - subject expansion documentation references the visual adapter contract
+  ---
+  duration_ms: 0.789548
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2757.141743

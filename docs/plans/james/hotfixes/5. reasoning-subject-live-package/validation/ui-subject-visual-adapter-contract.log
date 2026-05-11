@@ -1,0 +1,42 @@
+
+> ks2-mastery@0.1.0 pretest
+> node ./scripts/preflight-test.mjs
+
+
+> ks2-mastery@0.1.0 test
+> node ./scripts/run-node-tests.mjs tests/ui-subject-visual-adapter-contract.test.js
+
+TAP version 13
+# Subtest: ready subjects expose a complete SubjectVisualAdapter
+ok 1 - ready subjects expose a complete SubjectVisualAdapter
+  ---
+  duration_ms: 1.355678
+  type: 'test'
+  ...
+# Subtest: placeholder subjects expose unavailable adapters without production practice controls
+ok 2 - placeholder subjects expose unavailable adapters without production practice controls
+  ---
+  duration_ms: 0.232715
+  type: 'test'
+  ...
+# Subtest: placeholder adapter module does not import Worker command handlers or browser engines
+ok 3 - placeholder adapter module does not import Worker command handlers or browser engines
+  ---
+  duration_ms: 0.907544
+  type: 'test'
+  ...
+# Subtest: subject expansion documentation references the visual adapter contract
+ok 4 - subject expansion documentation references the visual adapter contract
+  ---
+  duration_ms: 0.731095
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 261.410985

@@ -1,0 +1,16 @@
+4876c72cc12bd6242c54b1c339fbdafe9892b890225fa8064c0a38c65e57c664  ./contract/reading-phase5-next-1000q-expansion-contract.md
+f3c4b87aea06976cbe804e3e3579194df357dbb809ef29f225601ed0d44736fa  ./patches/001-reading-phase5-next-1000q-expansion.patch
+196a583ca669b92735dd93fbc187a9095721215890d7034b4dbaf950a497771e  ./validation-summary.md
+40b55246c068cb7d1c8f02663cc38dae8d5fb8c10db80e341fc19efabb4ad582  ./validation/applycheck-phase5-focused-reading-tests.log
+1264573a696b715b5f3383c28442ee9f035cb41c80a591d2b0e15e2bc1b9ecdd  ./validation/applycheck-phase5-reading-content-quality-audit.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/node-check-phase5-expansion.log
+89db8da13f32fef6f96dc303f24c91456dc8dda95220247a31c25041f2757694  ./validation/npm-test-lean-env-limit.log
+1df1f88ecf39cab6b1d54b1c8ea7499e199820efc03f4cfebd0afad365a13e62  ./validation/patch-apply-check.log
+ca62bb73cff1bc4c2969861ebd0bd652be6e2cb7246f3539e6aeb1f24d649997  ./validation/patch-diffstat.txt
+4b8af76232dd5690a8897b28a838e6c71b427a4b00204a538b2da10ca2969446  ./validation/phase5-evidence-markability-probe.json
+aa162dfc375f394f7ef88b77e523c19ddac983459799cfdd1a9284197a667064  ./validation/phase5-expansion-derived-counts.json
+516a8caa88efebce114dcac82eafbb62c7a922c70e0c2b855b87ac2080fdbb42  ./validation/phase5-focused-reading-tests.log
+c44c75d6fa93e51c67b96238a27b5b49d9be194634d9f44a149dff9068743269  ./validation/phase5-patched-content-summary.json
+19d0dbb39feeb190cf64afdd5ea46092a5fde920963da69f0b325788dda0deef  ./validation/phase5-reading-content-quality-audit.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/phase5-reading-content-quality-audit.stdout.log
+59e51823cc5335dbff1c5d1cc1230f101f1ffc4b9201f07c2186dc4a6a3dc399  ./validation/source-boundary.md

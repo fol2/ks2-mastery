@@ -1,0 +1,34 @@
+TAP version 13
+# Subtest: Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+ok 1 - Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+  ---
+  duration_ms: 1994.087614
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+ok 2 - Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+  ---
+  duration_ms: 2.258905
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 templates are runtime-certified and safe to schedule
+ok 3 - Grammar QG P21 templates are runtime-certified and safe to schedule
+  ---
+  duration_ms: 0.532779
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 selected-response cases mark exactly one visible option correct
+ok 4 - Grammar QG P21 selected-response cases mark exactly one visible option correct
+  ---
+  duration_ms: 95.030095
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3008.860151

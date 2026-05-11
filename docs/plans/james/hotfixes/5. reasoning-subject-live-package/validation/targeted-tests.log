@@ -1,0 +1,1087 @@
+
+> ks2-mastery@0.1.0 pretest
+> node ./scripts/preflight-test.mjs
+
+
+> ks2-mastery@0.1.0 test
+> node ./scripts/run-node-tests.mjs tests/reasoning-content-contract.test.js tests/reasoning-engine-rewards.test.js tests/reasoning-subject-registry.test.js tests/hero-reasoning-integration.test.js tests/hero-providers.test.js tests/hero-launch-adapters.test.js tests/hero-eligibility.test.js tests/worker-subject-runtime.test.js tests/worker-reading-runtime.test.js tests/reading-subject-registry.test.js tests/main-runtime.test.js tests/react-subject-contract.test.js tests/ui-visual-journey-ready-subjects.test.js tests/ui-subject-visual-adapter-contract.test.js tests/hero-pool-registry.test.js tests/subject-contract.test.js
+
+TAP version 13
+# Subtest: Spelling/Grammar/Punctuation with available providers resolve as eligible
+ok 1 - Spelling/Grammar/Punctuation with available providers resolve as eligible
+  ---
+  duration_ms: 1.696186
+  type: 'test'
+  ...
+# Subtest: Locked placeholder subjects resolve as placeholder-engine-not-ready
+ok 2 - Locked placeholder subjects resolve as placeholder-engine-not-ready
+  ---
+  duration_ms: 0.624087
+  type: 'test'
+  ...
+# Subtest: Placeholder subjects with an explicit available provider become eligible
+ok 3 - Placeholder subjects with an explicit available provider become eligible
+  ---
+  duration_ms: 0.343463
+  type: 'test'
+  ...
+# Subtest: Punctuation provider returns available:false → locked list
+ok 4 - Punctuation provider returns available:false → locked list
+  ---
+  duration_ms: 0.257281
+  type: 'test'
+  ...
+# Subtest: Provider available:false with no unavailableReason uses fallback
+ok 5 - Provider available:false with no unavailableReason uses fallback
+  ---
+  duration_ms: 0.208561
+  type: 'test'
+  ...
+# Subtest: Zero eligible subjects returns { eligible: [], locked: [...] } without throwing
+ok 6 - Zero eligible subjects returns { eligible: [], locked: [...] } without throwing
+  ---
+  duration_ms: 0.169934
+  type: 'test'
+  ...
+# Subtest: All six subjects explicitly unavailable produces zero eligible
+ok 7 - All six subjects explicitly unavailable produces zero eligible
+  ---
+  duration_ms: 0.840117
+  type: 'test'
+  ...
+# Subtest: Provider snapshot is null → locked with no-provider-registered
+ok 8 - Provider snapshot is null → locked with no-provider-registered
+  ---
+  duration_ms: 0.359112
+  type: 'test'
+  ...
+# Subtest: Provider snapshot is undefined → locked with no-provider-registered
+ok 9 - Provider snapshot is undefined → locked with no-provider-registered
+  ---
+  duration_ms: 0.695597
+  type: 'test'
+  ...
+# Subtest: Missing key entirely → locked with no-provider-registered for ready subjects
+ok 10 - Missing key entirely → locked with no-provider-registered for ready subjects
+  ---
+  duration_ms: 0.585169
+  type: 'test'
+  ...
+# Subtest: Future subject addition requires provider snapshot, not eligibility code change
+ok 11 - Future subject addition requires provider snapshot, not eligibility code change
+  ---
+  duration_ms: 0.297225
+  type: 'test'
+  ...
+# Subtest: Provider returns available:true but zero envelopes → locked with no-envelopes-available
+ok 12 - Provider returns available:true but zero envelopes → locked with no-envelopes-available
+  ---
+  duration_ms: 0.205554
+  type: 'test'
+  ...
+# Subtest: Provider returns available:true with non-array envelopes → locked
+ok 13 - Provider returns available:true with non-array envelopes → locked
+  ---
+  duration_ms: 0.227279
+  type: 'test'
+  ...
+# Subtest: resolveEligibility with null input does not throw
+ok 14 - resolveEligibility with null input does not throw
+  ---
+  duration_ms: 0.126195
+  type: 'test'
+  ...
+# Subtest: resolveEligibility with undefined input does not throw
+ok 15 - resolveEligibility with undefined input does not throw
+  ---
+  duration_ms: 0.102241
+  type: 'test'
+  ...
+# Subtest: Result objects are frozen
+ok 16 - Result objects are frozen
+  ---
+  duration_ms: 0.120522
+  type: 'test'
+  ...
+# Subtest: Eligible reason falls back to worker-command-ready when envelope has no intent
+ok 17 - Eligible reason falls back to worker-command-ready when envelope has no intent
+  ---
+  duration_ms: 0.398283
+  type: 'test'
+  ...
+# Subtest: Output entries contain exactly subjectId and reason keys
+ok 18 - Output entries contain exactly subjectId and reason keys
+  ---
+  duration_ms: 1.333085
+  type: 'test'
+  ...
+# Subtest: Full snapshot with mix of eligible and locked subjects
+ok 19 - Full snapshot with mix of eligible and locked subjects
+  ---
+  duration_ms: 0.292862
+  type: 'test'
+  ...
+# Subtest: Spelling smart-practice maps to { mode: "smart" }
+ok 20 - Spelling smart-practice maps to { mode: "smart" }
+  ---
+  duration_ms: 3.245146
+  type: 'test'
+  ...
+# Subtest: Spelling trouble-practice maps to { mode: "trouble" }
+ok 21 - Spelling trouble-practice maps to { mode: "trouble" }
+  ---
+  duration_ms: 0.228011
+  type: 'test'
+  ...
+# Subtest: Spelling guardian-check maps to { mode: "guardian" }
+ok 22 - Spelling guardian-check maps to { mode: "guardian" }
+  ---
+  duration_ms: 0.355674
+  type: 'test'
+  ...
+# Subtest: Grammar smart-practice maps to { mode: "smart" }
+ok 23 - Grammar smart-practice maps to { mode: "smart" }
+  ---
+  duration_ms: 0.315299
+  type: 'test'
+  ...
+# Subtest: Grammar trouble-practice maps to { mode: "trouble" }
+ok 24 - Grammar trouble-practice maps to { mode: "trouble" }
+  ---
+  duration_ms: 0.266376
+  type: 'test'
+  ...
+# Subtest: Grammar mini-test maps to { mode: "satsset" } (pA2 U3)
+ok 25 - Grammar mini-test maps to { mode: "satsset" } (pA2 U3)
+  ---
+  duration_ms: 0.276781
+  type: 'test'
+  ...
+# Subtest: Punctuation smart-practice maps to { mode: "smart" }
+ok 26 - Punctuation smart-practice maps to { mode: "smart" }
+  ---
+  duration_ms: 0.281182
+  type: 'test'
+  ...
+# Subtest: Punctuation trouble-practice maps to { mode: "weak" }
+ok 27 - Punctuation trouble-practice maps to { mode: "weak" }
+  ---
+  duration_ms: 0.163732
+  type: 'test'
+  ...
+# Subtest: Punctuation gps-check maps to { mode: "gps" }
+ok 28 - Punctuation gps-check maps to { mode: "gps" }
+  ---
+  duration_ms: 70.68264
+  type: 'test'
+  ...
+# Subtest: unsupported launcher returns not-launchable with reason
+ok 29 - unsupported launcher returns not-launchable with reason
+  ---
+  duration_ms: 0.938048
+  type: 'test'
+  ...
+# Subtest: unknown subjectId returns not-launchable with subject-adapter-not-found
+ok 30 - unknown subjectId returns not-launchable with subject-adapter-not-found
+  ---
+  duration_ms: 0.349624
+  type: 'test'
+  ...
+# Subtest: adapters do not mutate the input envelope
+ok 31 - adapters do not mutate the input envelope
+  ---
+  duration_ms: 0.260108
+  type: 'test'
+  ...
+# Subtest: no launch adapter file contains subjects/runtime import
+ok 32 - no launch adapter file contains subjects/runtime import
+  ---
+  duration_ms: 3.055157
+  type: 'test'
+  ...
+# Subtest: HERO_POOL_REGISTRY
+    # Subtest: contains exactly 6 unique monster IDs
+    ok 1 - contains exactly 6 unique monster IDs
+      ---
+      duration_ms: 1.019212
+      type: 'test'
+      ...
+    # Subtest: initial monster IDs array matches registry keys in display order
+    ok 2 - initial monster IDs array matches registry keys in display order
+      ---
+      duration_ms: 1.400533
+      type: 'test'
+      ...
+    # Subtest: all definitions have complete required fields
+    ok 3 - all definitions have complete required fields
+      ---
+      duration_ms: 0.69251
+      type: 'test'
+      ...
+    1..3
+ok 33 - HERO_POOL_REGISTRY
+  ---
+  duration_ms: 5.312503
+  type: 'suite'
+  ...
+# Subtest: Cost contract
+    # Subtest: invite cost is a positive integer
+    ok 1 - invite cost is a positive integer
+      ---
+      duration_ms: 0.572293
+      type: 'test'
+      ...
+    # Subtest: grow costs are positive integers that strictly increase by stage
+    ok 2 - grow costs are positive integers that strictly increase by stage
+      ---
+      duration_ms: 0.262058
+      type: 'test'
+      ...
+    # Subtest: getInviteCost() returns the invite cost constant
+    ok 3 - getInviteCost() returns the invite cost constant
+      ---
+      duration_ms: 0.199099
+      type: 'test'
+      ...
+    # Subtest: getGrowCost(targetStage) returns correct costs
+    ok 4 - getGrowCost(targetStage) returns correct costs
+      ---
+      duration_ms: 2.375124
+      type: 'test'
+      ...
+    # Subtest: getGrowCost(5) returns undefined (beyond max stage)
+    ok 5 - getGrowCost(5) returns undefined (beyond max stage)
+      ---
+      duration_ms: 0.448955
+      type: 'test'
+      ...
+    1..5
+ok 34 - Cost contract
+  ---
+  duration_ms: 4.573212
+  type: 'suite'
+  ...
+# Subtest: Stage and branch contract
+    # Subtest: max stage is 4 for all monsters
+    ok 1 - max stage is 4 for all monsters
+      ---
+      duration_ms: 0.333386
+      type: 'test'
+      ...
+    # Subtest: branch options are b1 and b2 for all monsters
+    ok 2 - branch options are b1 and b2 for all monsters
+      ---
+      duration_ms: 0.509502
+      type: 'test'
+      ...
+    # Subtest: isValidBranch accepts b1 and b2
+    ok 3 - isValidBranch accepts b1 and b2
+      ---
+      duration_ms: 0.142378
+      type: 'test'
+      ...
+    # Subtest: isValidBranch rejects b3
+    ok 4 - isValidBranch rejects b3
+      ---
+      duration_ms: 0.085344
+      type: 'test'
+      ...
+    # Subtest: isValidBranch rejects non-strings
+    ok 5 - isValidBranch rejects non-strings
+      ---
+      duration_ms: 0.079457
+      type: 'test'
+      ...
+    # Subtest: isValidHeroMonsterBranch is the same function
+    ok 6 - isValidHeroMonsterBranch is the same function
+      ---
+      duration_ms: 0.080803
+      type: 'test'
+      ...
+    1..6
+ok 35 - Stage and branch contract
+  ---
+  duration_ms: 1.578218
+  type: 'suite'
+  ...
+# Subtest: Lookup helpers
+    # Subtest: getHeroMonsterDefinition returns correct definition
+    ok 1 - getHeroMonsterDefinition returns correct definition
+      ---
+      duration_ms: 0.188718
+      type: 'test'
+      ...
+    # Subtest: getHeroMonsterDefinition returns undefined for unknown ID
+    ok 2 - getHeroMonsterDefinition returns undefined for unknown ID
+      ---
+      duration_ms: 0.080314
+      type: 'test'
+      ...
+    # Subtest: isValidHeroMonsterId validates known IDs
+    ok 3 - isValidHeroMonsterId validates known IDs
+      ---
+      duration_ms: 0.107647
+      type: 'test'
+      ...
+    # Subtest: isValidHeroMonsterId rejects unknown strings
+    ok 4 - isValidHeroMonsterId rejects unknown strings
+      ---
+      duration_ms: 0.076393
+      type: 'test'
+      ...
+    # Subtest: isValidHeroMonsterId rejects non-strings
+    ok 5 - isValidHeroMonsterId rejects non-strings
+      ---
+      duration_ms: 0.074854
+      type: 'test'
+      ...
+    1..5
+ok 36 - Lookup helpers
+  ---
+  duration_ms: 0.678178
+  type: 'suite'
+  ...
+# Subtest: Freeze contract
+    # Subtest: HERO_POOL_REGISTRY is frozen — mutations throw in strict mode
+    ok 1 - HERO_POOL_REGISTRY is frozen — mutations throw in strict mode
+      ---
+      duration_ms: 0.683522
+      type: 'test'
+      ...
+    # Subtest: individual monster definitions are frozen
+    ok 2 - individual monster definitions are frozen
+      ---
+      duration_ms: 0.134358
+      type: 'test'
+      ...
+    # Subtest: HERO_POOL_INITIAL_MONSTER_IDS is frozen
+    ok 3 - HERO_POOL_INITIAL_MONSTER_IDS is frozen
+      ---
+      duration_ms: 0.135035
+      type: 'test'
+      ...
+    # Subtest: HERO_MONSTER_GROW_COSTS is frozen
+    ok 4 - HERO_MONSTER_GROW_COSTS is frozen
+      ---
+      duration_ms: 0.108405
+      type: 'test'
+      ...
+    1..4
+ok 37 - Freeze contract
+  ---
+  duration_ms: 1.2881
+  type: 'suite'
+  ...
+# Subtest: Purity contract
+    # Subtest: hero-pool.js has zero imports from worker/, src/, or subject modules
+    ok 1 - hero-pool.js has zero imports from worker/, src/, or subject modules
+      ---
+      duration_ms: 71.729948
+      type: 'test'
+      ...
+    1..1
+ok 38 - Purity contract
+  ---
+  duration_ms: 71.860445
+  type: 'suite'
+  ...
+# Subtest: registry: runProvider returns null for unregistered subjects
+ok 39 - registry: runProvider returns null for unregistered subjects
+  ---
+  duration_ms: 1.902335
+  type: 'test'
+  ...
+# Subtest: registry: registeredSubjectIds lists all five ready subjects
+ok 40 - registry: registeredSubjectIds lists all five ready subjects
+  ---
+  duration_ms: 0.329293
+  type: 'test'
+  ...
+# Subtest: reasoning: missing readable signals returns available:false
+ok 41 - reasoning: missing readable signals returns available:false
+  ---
+  duration_ms: 1.220049
+  type: 'test'
+  ...
+# Subtest: reading: missing readable signals returns available:false
+ok 42 - reading: missing readable signals returns available:false
+  ---
+  duration_ms: 0.567124
+  type: 'test'
+  ...
+# Subtest: provider registry covers all ready subject IDs
+ok 43 - provider registry covers all ready subject IDs
+  ---
+  duration_ms: 0.265239
+  type: 'test'
+  ...
+# Subtest: grammar: weak concepts emit weak-repair envelope
+ok 44 - grammar: weak concepts emit weak-repair envelope
+  ---
+  duration_ms: 1.292222
+  type: 'test'
+  ...
+# Subtest: grammar: due concepts emit due-review envelope
+ok 45 - grammar: due concepts emit due-review envelope
+  ---
+  duration_ms: 0.776902
+  type: 'test'
+  ...
+# Subtest: grammar: secured concepts with consolidating confidence emit retention-after-secure
+ok 46 - grammar: secured concepts with consolidating confidence emit retention-after-secure
+  ---
+  duration_ms: 0.870777
+  type: 'test'
+  ...
+# Subtest: grammar: absent signals falls back to generic smart-practice
+ok 47 - grammar: absent signals falls back to generic smart-practice
+  ---
+  duration_ms: 0.721308
+  type: 'test'
+  ...
+# Subtest: grammar: totally missing stats returns available:false
+ok 48 - grammar: totally missing stats returns available:false
+  ---
+  duration_ms: 0.733436
+  type: 'test'
+  ...
+# Subtest: grammar: null input returns available:false
+ok 49 - grammar: null input returns available:false
+  ---
+  duration_ms: 0.323873
+  type: 'test'
+  ...
+# Subtest: grammar: breadth-maintenance mini-test when secured >= 3
+ok 50 - grammar: breadth-maintenance mini-test when secured >= 3
+  ---
+  duration_ms: 0.614976
+  type: 'test'
+  ...
+# Subtest: punctuation: due items emit due-review envelope
+ok 51 - punctuation: due items emit due-review envelope
+  ---
+  duration_ms: 0.910428
+  type: 'test'
+  ...
+# Subtest: punctuation: weak items emit weak-repair envelope
+ok 52 - punctuation: weak items emit weak-repair envelope
+  ---
+  duration_ms: 0.598096
+  type: 'test'
+  ...
+# Subtest: punctuation: null read model returns available:false
+ok 53 - punctuation: null read model returns available:false
+  ---
+  duration_ms: 0.160408
+  type: 'test'
+  ...
+# Subtest: punctuation: availability not ready returns available:false
+ok 54 - punctuation: availability not ready returns available:false
+  ---
+  duration_ms: 0.197237
+  type: 'test'
+  ...
+# Subtest: punctuation: absent signals falls back to generic
+ok 55 - punctuation: absent signals falls back to generic
+  ---
+  duration_ms: 0.198088
+  type: 'test'
+  ...
+# Subtest: punctuation: breadth-maintenance gps-check when secured >= 3
+ok 56 - punctuation: breadth-maintenance gps-check when secured >= 3
+  ---
+  duration_ms: 0.683953
+  type: 'test'
+  ...
+# Subtest: spelling: due words emit due-review envelope
+ok 57 - spelling: due words emit due-review envelope
+  ---
+  duration_ms: 1.032799
+  type: 'test'
+  ...
+# Subtest: spelling: trouble words emit weak-repair envelope
+ok 58 - spelling: trouble words emit weak-repair envelope
+  ---
+  duration_ms: 74.006688
+  type: 'test'
+  ...
+# Subtest: spelling: post-mega signals emit post-mega-maintenance guardian-check
+ok 59 - spelling: post-mega signals emit post-mega-maintenance guardian-check
+  ---
+  duration_ms: 1.041007
+  type: 'test'
+  ...
+# Subtest: spelling: absent post-mega signals emit only generic Smart Review envelopes
+ok 60 - spelling: absent post-mega signals emit only generic Smart Review envelopes
+  ---
+  duration_ms: 3.384412
+  type: 'test'
+  ...
+# Subtest: spelling: Mega fixture produces only maintenance envelopes for spelling
+ok 61 - spelling: Mega fixture produces only maintenance envelopes for spelling
+  ---
+  duration_ms: 0.939645
+  type: 'test'
+  ...
+# Subtest: spelling: null stats returns available:false
+ok 62 - spelling: null stats returns available:false
+  ---
+  duration_ms: 0.188975
+  type: 'test'
+  ...
+# Subtest: providers do not mutate input read-model objects
+ok 63 - providers do not mutate input read-model objects
+  ---
+  duration_ms: 0.777807
+  type: 'test'
+  ...
+# Subtest: providers return available:false with reason instead of throwing on missing fields
+ok 64 - providers return available:false with reason instead of throwing on missing fields
+  ---
+  duration_ms: 0.180339
+  type: 'test'
+  ...
+# Subtest: provider modules do not import runtime.js or any command handler (structural grep)
+ok 65 - provider modules do not import runtime.js or any command handler (structural grep)
+  ---
+  duration_ms: 3.328011
+  type: 'test'
+  ...
+# Subtest: each fixture produces valid provider output with valid envelopes
+ok 66 - each fixture produces valid provider output with valid envelopes
+  ---
+  duration_ms: 3.924699
+  type: 'test'
+  ...
+# Subtest: zero-eligible fixture: all providers return available:false
+ok 67 - zero-eligible fixture: all providers return available:false
+  ---
+  duration_ms: 0.459392
+  type: 'test'
+  ...
+# Subtest: punctuation-disabled fixture: punctuation returns available:false, others work
+ok 68 - punctuation-disabled fixture: punctuation returns available:false, others work
+  ---
+  duration_ms: 0.599882
+  type: 'test'
+  ...
+# Subtest: provider signals always contain all required fields
+ok 69 - provider signals always contain all required fields
+  ---
+  duration_ms: 0.819181
+  type: 'test'
+  ...
+# Subtest: grammar provider reads stats.concepts counts (actual read-model field)
+ok 70 - grammar provider reads stats.concepts counts (actual read-model field)
+  ---
+  duration_ms: 0.586674
+  type: 'test'
+  ...
+# Subtest: punctuation provider reads stats.due/weak/secure (actual read-model field)
+ok 71 - punctuation provider reads stats.due/weak/secure (actual read-model field)
+  ---
+  duration_ms: 0.598458
+  type: 'test'
+  ...
+# Subtest: spelling provider reads stats.core pool (actual read-model field)
+ok 72 - spelling provider reads stats.core pool (actual read-model field)
+  ---
+  duration_ms: 0.589621
+  type: 'test'
+  ...
+# Subtest: hero mode treats reasoning as a ready subject with provider and launch adapter
+ok 73 - hero mode treats reasoning as a ready subject with provider and launch adapter
+  ---
+  duration_ms: 3.668414
+  type: 'test'
+  ...
+# Subtest: hero reasoning provider returns task envelopes from the reasoning read model
+ok 74 - hero reasoning provider returns task envelopes from the reasoning read model
+  ---
+  duration_ms: 0.622446
+  type: 'test'
+  ...
+# Subtest: createMonsterEffectConfigGetter: returns a function on the runtime
+ok 75 - createMonsterEffectConfigGetter: returns a function on the runtime
+  ---
+  duration_ms: 1.601798
+  type: 'test'
+  ...
+# Subtest: createMonsterEffectConfigGetter: surfaces inner effect when read returns the bundled shape
+ok 76 - createMonsterEffectConfigGetter: surfaces inner effect when read returns the bundled shape
+  ---
+  duration_ms: 1.671765
+  type: 'test'
+  ...
+# Subtest: createMonsterEffectConfigGetter: returns null when read() returns null
+ok 77 - createMonsterEffectConfigGetter: returns null when read() returns null
+  ---
+  duration_ms: 0.176185
+  type: 'test'
+  ...
+# Subtest: createMonsterEffectConfigGetter: returns null when read() returns row without effect
+ok 78 - createMonsterEffectConfigGetter: returns null when read() returns row without effect
+  ---
+  duration_ms: 0.160852
+  type: 'test'
+  ...
+# Subtest: createMonsterEffectConfigGetter: returns null when monsterVisualConfig repository is missing
+ok 79 - createMonsterEffectConfigGetter: returns null when monsterVisualConfig repository is missing
+  ---
+  duration_ms: 0.160116
+  type: 'test'
+  ...
+# Subtest: createMonsterEffectConfigGetter: structurally identical reads return the SAME reference (memoisation)
+ok 80 - createMonsterEffectConfigGetter: structurally identical reads return the SAME reference (memoisation)
+  ---
+  duration_ms: 0.286231
+  type: 'test'
+  ...
+# Subtest: createMonsterEffectConfigGetter: content change yields a NEW reference (cache busts)
+ok 81 - createMonsterEffectConfigGetter: content change yields a NEW reference (cache busts)
+  ---
+  duration_ms: 0.420029
+  type: 'test'
+  ...
+# Subtest: createMonsterEffectConfigGetter: null-then-effect-then-null preserves expected refs
+ok 82 - createMonsterEffectConfigGetter: null-then-effect-then-null preserves expected refs
+  ---
+  duration_ms: 0.332319
+  type: 'test'
+  ...
+# Subtest: runtime getter + runtimeRegistration: identical content keeps registry stable; content change refreshes
+ok 83 - runtime getter + runtimeRegistration: identical content keeps registry stable; content change refreshes
+  ---
+  duration_ms: 79.145137
+  type: 'test'
+  ...
+# Subtest: React subject route renders placeholder subjects through PracticeComponent
+ok 84 - React subject route renders placeholder subjects through PracticeComponent
+  ---
+  duration_ms: 5993.176865
+  type: 'test'
+  ...
+# Subtest: React subject route renders the expansion fixture through the React practice component
+ok 85 - React subject route renders the expansion fixture through the React practice component
+  ---
+  duration_ms: 2552.249291
+  type: 'test'
+  ...
+# Subtest: React subject route contains renderPracticeComponent failures inside the subject fallback
+ok 86 - React subject route contains renderPracticeComponent failures inside the subject fallback
+  ---
+  duration_ms: 2066.039055
+  type: 'test'
+  ...
+# Subtest: reading module is ready and not a placeholder
+ok 87 - reading module is ready and not a placeholder
+  ---
+  duration_ms: 81.599865
+  type: 'test'
+  ...
+# Subtest: hero mode includes reading as a ready subject with provider and launch adapter
+ok 88 - hero mode includes reading as a ready subject with provider and launch adapter
+  ---
+  duration_ms: 0.75751
+  type: 'test'
+  ...
+# Subtest: reasoning content bank exposes 110 safe template families without leaking markers to the browser metadata
+ok 89 - reasoning content bank exposes 110 safe template families without leaking markers to the browser metadata
+  ---
+  duration_ms: 3.063573
+  type: 'test'
+  ...
+# Subtest: reasoning templates generate, mark and serialise cleanly across smoke seeds
+ok 90 - reasoning templates generate, mark and serialise cleanly across smoke seeds
+  ---
+  duration_ms: 386.530032
+  type: 'test'
+  ...
+# Subtest: server reasoning engine returns exact due retry questions and emits evidence on independent success
+ok 91 - server reasoning engine returns exact due retry questions and emits evidence on independent success
+  ---
+  duration_ms: 68.967233
+  type: 'test'
+  ...
+# Subtest: reasoning reward projection updates direct and grand monsters with independent state ids
+ok 92 - reasoning reward projection updates direct and grand monsters with independent state ids
+  ---
+  duration_ms: 2.039303
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reasoning command handlers
+ok 93 - worker subject runtime wires reasoning command handlers
+  ---
+  duration_ms: 5.232501
+  type: 'test'
+  ...
+# Subtest: reasoning module is live and not a placeholder
+ok 94 - reasoning module is live and not a placeholder
+  ---
+  duration_ms: 1.204094
+  type: 'test'
+  ...
+# Subtest: subject registry rejects modules missing required contract functions
+ok 95 - subject registry rejects modules missing required contract functions
+  ---
+  duration_ms: 83.049216
+  type: 'test'
+  ...
+# Subtest: subject registry accepts a React practice component during subject migration
+ok 96 - subject registry accepts a React practice component during subject migration
+  ---
+  duration_ms: 0.305782
+  type: 'test'
+  ...
+# Subtest: subject registry accepts a mapped React practice surface without importing JSX in the module
+ok 97 - subject registry accepts a mapped React practice surface without importing JSX in the module
+  ---
+  duration_ms: 0.309363
+  type: 'test'
+  ...
+# Subtest: subject registry rejects modules without React practice rendering
+ok 98 - subject registry rejects modules without React practice rendering
+  ---
+  duration_ms: 0.453587
+  type: 'test'
+  ...
+# Subtest: subject registry rejects retired legacy practice rendering
+ok 99 - subject registry rejects retired legacy practice rendering
+  ---
+  duration_ms: 0.459756
+  type: 'test'
+  ...
+# Subtest: subject registry rejects duplicate subject ids
+ok 100 - subject registry rejects duplicate subject ids
+  ---
+  duration_ms: 0.440284
+  type: 'test'
+  ...
+# Subtest: subject registry preserves explicit rollout exposure gates
+ok 101 - subject registry preserves explicit rollout exposure gates
+  ---
+  duration_ms: 0.441069
+  type: 'test'
+  ...
+# Subtest: subject registry rejects malformed rollout exposure gates
+ok 102 - subject registry rejects malformed rollout exposure gates
+  ---
+  duration_ms: 0.714857
+  type: 'test'
+  ...
+# Subtest: store rejects subject modules whose initState does not return an object
+ok 103 - store rejects subject modules whose initState does not return an object
+  ---
+  duration_ms: 6.778502
+  type: 'test'
+  ...
+# Subtest: spelling practice dashboard renders without service UI metadata
+ok 104 - spelling practice dashboard renders without service UI metadata
+  ---
+  duration_ms: 5297.904041
+  type: 'test'
+  ...
+# Subtest: ready subjects expose a complete SubjectVisualAdapter
+ok 105 - ready subjects expose a complete SubjectVisualAdapter
+  ---
+  duration_ms: 1.75246
+  type: 'test'
+  ...
+# Subtest: placeholder subjects expose unavailable adapters without production practice controls
+ok 106 - placeholder subjects expose unavailable adapters without production practice controls
+  ---
+  duration_ms: 0.271894
+  type: 'test'
+  ...
+# Subtest: placeholder adapter module does not import Worker command handlers or browser engines
+ok 107 - placeholder adapter module does not import Worker command handlers or browser engines
+  ---
+  duration_ms: 0.992239
+  type: 'test'
+  ...
+# Subtest: subject expansion documentation references the visual adapter contract
+ok 108 - subject expansion documentation references the visual adapter contract
+  ---
+  duration_ms: 1.36862
+  type: 'test'
+  ...
+# Subtest: Home to recommended subject route has one primary CTA and no duplicate setup route
+ok 109 - Home to recommended subject route has one primary CTA and no duplicate setup route
+  ---
+  duration_ms: 2.704977
+  type: 'test'
+  ...
+# Subtest: ready subject journeys expose setup, session HUD, summary, and home return actions
+ok 110 - ready subject journeys expose setup, session HUD, summary, and home return actions
+  ---
+  duration_ms: 12.304687
+  type: 'test'
+  ...
+# Subtest: ready subject journey contract is backed by Worker summary read-model preservation tests
+ok 111 - ready subject journey contract is backed by Worker summary read-model preservation tests
+  ---
+  duration_ms: 1.312141
+  type: 'test'
+  ...
+# Subtest: reading engine starts a passage-first session and hides answer metadata before attempt
+ok 112 - reading engine starts a passage-first session and hides answer metadata before attempt
+  ---
+  duration_ms: 7.607918
+  type: 'test'
+  ...
+# Subtest: reading engine marks deterministically and then exposes feedback safely
+ok 113 - reading engine marks deterministically and then exposes feedback safely
+  ---
+  duration_ms: 4.664121
+  type: 'test'
+  ...
+# Subtest: reading exact match checks reject learner substrings of the correct answer
+ok 114 - reading exact match checks reject learner substrings of the correct answer
+  ---
+  duration_ms: 0.864429
+  type: 'test'
+  ...
+# Subtest: reading contains checks use phrase boundaries rather than character substrings
+ok 115 - reading contains checks use phrase boundaries rather than character substrings
+  ---
+  duration_ms: 0.498685
+  type: 'test'
+  ...
+# Subtest: reading phrase checks reject locally negated correct phrases
+ok 116 - reading phrase checks reject locally negated correct phrases
+  ---
+  duration_ms: 1.306604
+  type: 'test'
+  ...
+# Subtest: reading evidence fallback does not award marks for negated evidence quotes
+ok 117 - reading evidence fallback does not award marks for negated evidence quotes
+  ---
+  duration_ms: 2.048885
+  type: 'test'
+  ...
+# Subtest: reading evidence checks accept source-affirmed negation snippets
+ok 118 - reading evidence checks accept source-affirmed negation snippets
+  ---
+  duration_ms: 0.519696
+  type: 'test'
+  ...
+# Subtest: reading save-response rejects stale expected session or question ids
+ok 119 - reading save-response rejects stale expected session or question ids
+  ---
+  duration_ms: 1.187422
+  type: 'test'
+  ...
+# Subtest: reading marked answers cannot be overwritten by duplicate or stale submissions
+ok 120 - reading marked answers cannot be overwritten by duplicate or stale submissions
+  ---
+  duration_ms: 3.939075
+  type: 'test'
+  ...
+# Subtest: reading engine reloads persisted ui state for follow-up commands
+ok 121 - reading engine reloads persisted ui state for follow-up commands
+  ---
+  duration_ms: 1.545542
+  type: 'test'
+  ...
+# Subtest: reading due stats and review queue use the injected command clock
+ok 122 - reading due stats and review queue use the injected command clock
+  ---
+  duration_ms: 0.761925
+  type: 'test'
+  ...
+# Subtest: reading avoids immediate passage repeats after a started session is ended without answers
+ok 123 - reading avoids immediate passage repeats after a started session is ended without answers
+  ---
+  duration_ms: 1.743855
+  type: 'test'
+  ...
+# Subtest: reading guided mode uses weakness and variety rather than always taking the first four questions
+ok 124 - reading guided mode uses weakness and variety rather than always taking the first four questions
+  ---
+  duration_ms: 1.200194
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reading command handlers
+ok 125 - worker subject runtime wires reading command handlers
+  ---
+  duration_ms: 3.325266
+  type: 'test'
+  ...
+# Subtest: reading secured skill events project into reading-owned monster rewards
+ok 126 - reading secured skill events project into reading-owned monster rewards
+  ---
+  duration_ms: 1.794759
+  type: 'test'
+  ...
+# Subtest: reading secured skill event carries deep secure evidence and mastery key
+ok 127 - reading secured skill event carries deep secure evidence and mastery key
+  ---
+  duration_ms: 1.503391
+  type: 'test'
+  ...
+# Subtest: reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+ok 128 - reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+  ---
+  duration_ms: 4.84195
+  type: 'test'
+  ...
+# Subtest: reading reward state exposes release-scoped 100-star high-water progress
+ok 129 - reading reward state exposes release-scoped 100-star high-water progress
+  ---
+  duration_ms: 1.372045
+  type: 'test'
+  ...
+# Subtest: reading reward thresholds use direct clusters plus a full-domain aggregate monster
+ok 130 - reading reward thresholds use direct clusters plus a full-domain aggregate monster
+  ---
+  duration_ms: 2.351748
+  type: 'test'
+  ...
+# Subtest: reading list-view read model exposes a safe current-section question list
+ok 131 - reading list-view read model exposes a safe current-section question list
+  ---
+  duration_ms: 0.860492
+  type: 'test'
+  ...
+# Subtest: reading save-response can persist visible section drafts and navigate without marking
+ok 132 - reading save-response can persist visible section drafts and navigate without marking
+  ---
+  duration_ms: 0.924245
+  type: 'test'
+  ...
+# Subtest: reading mark-section accepts current visible section drafts before deterministic marking
+ok 133 - reading mark-section accepts current visible section drafts before deterministic marking
+  ---
+  duration_ms: 0.967293
+  type: 'test'
+  ...
+# Subtest: reading section response merge does not blank previously saved one-question drafts
+ok 134 - reading section response merge does not blank previously saved one-question drafts
+  ---
+  duration_ms: 1.359629
+  type: 'test'
+  ...
+# Subtest: reading list-mode section save can explicitly clear a previously saved draft
+ok 135 - reading list-mode section save can explicitly clear a previously saved draft
+  ---
+  duration_ms: 1.303478
+  type: 'test'
+  ...
+# Subtest: reading save and mark commands reject stale expected section indexes
+ok 136 - reading save and mark commands reject stale expected section indexes
+  ---
+  duration_ms: 0.753031
+  type: 'test'
+  ...
+# (node:10395) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_402fd7ea-9dfd-47a5-9f83-584c02aa23b7","endpoint":"/api/subjects/spelling/command","method":"POST","status":401,"phase":"pre-route","queryCount":0,"d1RowsRead":0,"d1RowsWritten":0,"d1DurationMs":0,"wallMs":7.539622000000236,"responseBytes":87,"statements":[],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.218Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_abf1c578-4270-4a25-9ff5-10b10ae6c58e","endpoint":"/api/subjects/spelling/command","method":"POST","status":403,"phase":null,"queryCount":2,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.38455399999929796,"wallMs":56.08037500000046,"responseBytes":110,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.17783699999927194},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.20671700000002602}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.278Z"}
+# [ks2-worker] {"event":"mutation.applied","kind":"subject_command.spelling.start-session","scopeType":"learner","scopeId":"learner-a","requestId":"cmd-2","correlationId":"cmd-2","expectedRevision":0,"appliedRevision":1,"at":"2026-05-11T10:47:18.284Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_a2d09da5-3db4-42b6-af9d-1330bfd56312","endpoint":"/api/subjects/spelling/command","method":"POST","status":200,"phase":null,"queryCount":6,"d1RowsRead":4,"d1RowsWritten":2,"d1DurationMs":0.5212779999992563,"wallMs":4.933282000000872,"responseBytes":537,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.06750899999951798},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.0785359999999855},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":1,"rowsWritten":null,"durationMs":0.08210700000017823},{"name":"first:SELECT l.id AS learner_id, l.state_revision AS learner_state_revision, r.acco...","rowsRead":1,"rowsWritten":null,"durationMs":0.06779800000003888},{"name":"batch:INSERT INTO mutation_receipts ( account_id, request_id, scope_type, scope_id,...","rowsRead":0,"rowsWritten":1,"durationMs":0.11378499999955238},{"name":"batch:UPDATE learner_profiles SET state_revision = state_revision + 1, updated_at =...","rowsRead":0,"rowsWritten":1,"durationMs":0.1115429999999833}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.285Z"}
+# [ks2-worker] {"event":"mutation.replayed","kind":"subject_command.spelling.start-session","scopeType":"learner","scopeId":"learner-a","requestId":"cmd-2","correlationId":"cmd-2","at":"2026-05-11T10:47:18.289Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_2a0eb6ca-9d0e-4ff3-b30d-7a2e6f0f0f59","endpoint":"/api/subjects/spelling/command","method":"POST","status":200,"phase":null,"queryCount":4,"d1RowsRead":4,"d1RowsWritten":0,"d1DurationMs":0.3997980000003736,"wallMs":2.723743999999897,"responseBytes":536,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.10210499999993772},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.1250849999996717},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":1,"rowsWritten":null,"durationMs":0.09760300000016287},{"name":"first:SELECT l.id AS learner_id, l.state_revision AS learner_state_revision, r.acco...","rowsRead":1,"rowsWritten":null,"durationMs":0.07500500000060129}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.290Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_75dfb1a1-c55a-4310-bed3-6ba9eec41211","endpoint":"/api/subjects/spelling/command","method":"POST","status":404,"phase":null,"queryCount":4,"d1RowsRead":4,"d1RowsWritten":0,"d1DurationMs":0.4191019999989294,"wallMs":2.5245829999994385,"responseBytes":136,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.17606599999999162},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.12005499999941094},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":1,"rowsWritten":null,"durationMs":0.06375200000002224},{"name":"first:SELECT l.id AS learner_id, l.state_revision AS learner_state_revision, r.acco...","rowsRead":1,"rowsWritten":null,"durationMs":0.059228999999504595}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.296Z"}
+# [ks2-worker] {"event":"mutation.applied","kind":"subject_command.spelling.start-session","scopeType":"learner","scopeId":"learner-a","requestId":"cmd-replay-access","correlationId":"cmd-replay-access","expectedRevision":0,"appliedRevision":1,"at":"2026-05-11T10:47:18.377Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_98b66453-25b9-4f17-9152-0bdede7d02ac","endpoint":"/api/subjects/spelling/command","method":"POST","status":200,"phase":null,"queryCount":6,"d1RowsRead":4,"d1RowsWritten":2,"d1DurationMs":0.49374900000020716,"wallMs":2.949040000000423,"responseBytes":561,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.17701000000033673},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.08740699999998469},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":1,"rowsWritten":null,"durationMs":0.049904000000424276},{"name":"first:SELECT l.id AS learner_id, l.state_revision AS learner_state_revision, r.acco...","rowsRead":1,"rowsWritten":null,"durationMs":0.06016799999997602},{"name":"batch:INSERT INTO mutation_receipts ( account_id, request_id, scope_type, scope_id,...","rowsRead":0,"rowsWritten":1,"durationMs":0.06183649999911722},{"name":"batch:UPDATE learner_profiles SET state_revision = state_revision + 1, updated_at =...","rowsRead":0,"rowsWritten":1,"durationMs":0.05742350000036822}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.378Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_26911845-ba76-4030-841b-54f9b58e0286","endpoint":"/api/subjects/spelling/command","method":"POST","status":403,"phase":null,"queryCount":3,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.20951999999942927,"wallMs":1.48996999999963,"responseBytes":119,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.06397500000002765},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.10606399999960558},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":0,"rowsWritten":null,"durationMs":0.03948099999979604}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.381Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_71778e90-e8d4-4e7b-9af8-10386a3f22e3","endpoint":"/api/subjects/spelling/command","method":"POST","status":500,"phase":null,"queryCount":5,"d1RowsRead":6,"d1RowsWritten":0,"d1DurationMs":0.5064540000003035,"wallMs":4.385824999999386,"responseBytes":78,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.12513099999978294},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.06894999999985885},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":1,"rowsWritten":null,"durationMs":0.043777000000773114},{"name":"first:SELECT l.id AS learner_id, l.state_revision AS learner_state_revision, r.acco...","rowsRead":1,"rowsWritten":null,"durationMs":0.06330199999956676},{"name":"all:SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (?, ?)","rowsRead":2,"rowsWritten":0,"durationMs":0.20529400000032183}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.402Z"}
+# Subtest: subject command contract requires command identity and revision metadata
+ok 137 - subject command contract requires command identity and revision metadata
+  ---
+  duration_ms: 3.393656
+  type: 'test'
+  ...
+# Subtest: subject runtime dispatches to subject-owned handlers
+ok 138 - subject runtime dispatches to subject-owned handlers
+  ---
+  duration_ms: 0.475437
+  type: 'test'
+  ...
+# Subtest: repository reuses cached spelling runtime content for hot subject paths
+ok 139 - repository reuses cached spelling runtime content for hot subject paths
+  ---
+  duration_ms: 355.409528
+  type: 'test'
+  ...
+# Subtest: spelling command runtime prefers repository runtime content over raw content reads
+ok 140 - spelling command runtime prefers repository runtime content over raw content reads
+  ---
+  duration_ms: 99.908534
+  type: 'test'
+  ...
+# Subtest: worker subject command route validates auth, same-origin, and handler availability
+ok 141 - worker subject command route validates auth, same-origin, and handler availability
+  ---
+  duration_ms: 161.602672
+  type: 'test'
+  ...
+# Subtest: subject command replay requires current learner write access
+ok 142 - subject command replay requires current learner write access
+  ---
+  duration_ms: 85.181074
+  type: 'test'
+  ...
+# Subtest: subject command writes roll back as one D1 batch without a transaction feature flag
+ok 143 - subject command writes roll back as one D1 batch without a transaction feature flag
+  ---
+  duration_ms: 20.713088
+  type: 'test'
+  ...
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_a54ea6ff-448a-4beb-bf33-21f424d4c0f9","endpoint":"/api/demo/session","method":"POST","status":201,"phase":null,"queryCount":8,"d1RowsRead":1,"d1RowsWritten":6,"d1DurationMs":0.6739480000023832,"wallMs":19.87734999999975,"responseBytes":155,"statements":[{"name":"first:INSERT INTO request_limits (limiter_key, window_started_at, request_count, up...","rowsRead":1,"rowsWritten":null,"durationMs":0.11256200000025274},{"name":"all:SELECT id FROM adult_accounts WHERE account_type = 'demo' AND demo_expires_at...","rowsRead":0,"rowsWritten":0,"durationMs":0.08799799999997049},{"name":"run:INSERT INTO adult_accounts ( id, email, display_name, platform_role, selected...","rowsRead":0,"rowsWritten":1,"durationMs":0.06133299999964947},{"name":"batch:INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily...","rowsRead":0,"rowsWritten":1,"durationMs":0.11598400000093534},{"name":"batch:INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_i...","rowsRead":0,"rowsWritten":1,"durationMs":0.11488000000099419},{"name":"batch:UPDATE adult_accounts SET selected_learner_id = ?, updated_at = ? WHERE id = ?","rowsRead":0,"rowsWritten":1,"durationMs":0.11477900000045338},{"name":"run:INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at) VAL...","rowsRead":0,"rowsWritten":1,"durationMs":0.038523999999597436},{"name":"run:INSERT INTO demo_operation_metrics (metric_key, metric_count, updated_at) VAL...","rowsRead":0,"rowsWritten":1,"durationMs":0.027888000000530155}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.500Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_ab4147c1-a351-492d-83a9-7493806d1c7f","endpoint":"/api/child-subject-state","method":"PUT","status":403,"phase":null,"queryCount":2,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.19984399999975722,"wallMs":6.617248999999902,"responseBytes":112,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.0921120000002702},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.10773199999948702}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.510Z"}
+# Subtest: demo sessions cannot use legacy broad learner runtime write routes
+ok 144 - demo sessions cannot use legacy broad learner runtime write routes
+  ---
+  duration_ms: 108.252301
+  type: 'test'
+  ...
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_37143642-c882-450b-b949-9484f459591e","endpoint":"/api/auth/register","method":"POST","status":201,"phase":null,"queryCount":0,"d1RowsRead":0,"d1RowsWritten":0,"d1DurationMs":0,"wallMs":131.2099019999996,"responseBytes":92,"statements":[],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.719Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_29afbb12-48da-4f0a-bfb4-0182b4cedb64","endpoint":"/api/child-subject-state","method":"PUT","status":403,"phase":null,"queryCount":2,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.13623800000095798,"wallMs":1.8956049999997049,"responseBytes":112,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.06854800000019168},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.0676900000007663}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.722Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_3b43a27e-4a91-4cd6-9b32-2c5c955b2854","endpoint":"/api/practice-sessions","method":"PUT","status":403,"phase":null,"queryCount":2,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.22834700000021257,"wallMs":4.347449999999299,"responseBytes":112,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.06955000000016298},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.1587970000000496}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.727Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_ab6de853-a62c-4ff2-8309-cd29b6d5e756","endpoint":"/api/child-game-state","method":"PUT","status":403,"phase":null,"queryCount":2,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.17192599999998492,"wallMs":4.239599000000453,"responseBytes":112,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.06318499999997584},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.10874100000000908}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.733Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_dc256c69-71d3-4e0a-adfe-c254803c0477","endpoint":"/api/event-log","method":"POST","status":403,"phase":null,"queryCount":2,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.11665499999980966,"wallMs":1.2076450000004115,"responseBytes":112,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.05653799999981857},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.060116999999991094}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.735Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_d9d491ec-7fb0-409a-aac9-9623d8a757f4","endpoint":"/api/debug/reset","method":"POST","status":403,"phase":null,"queryCount":2,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.1203060000016194,"wallMs":1.2921690000002855,"responseBytes":112,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.05705400000078953},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.06325200000082987}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.737Z"}
+# Subtest: production real sessions cannot use legacy broad learner runtime write routes
+ok 145 - production real sessions cannot use legacy broad learner runtime write routes
+  ---
+  duration_ms: 226.078027
+  type: 'test'
+  ...
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_e6640acc-6eba-4076-bebc-f46e9c307621","endpoint":"/api/auth/register","method":"POST","status":201,"phase":null,"queryCount":0,"d1RowsRead":0,"d1RowsWritten":0,"d1DurationMs":0,"wallMs":144.04276300000038,"responseBytes":92,"statements":[],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.896Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_0540f5ee-ff15-4334-a1ad-1d6d8be20d41","endpoint":"/api/subjects/spelling/command","method":"POST","status":403,"phase":null,"queryCount":2,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.158820999999989,"wallMs":1.3767330000000584,"responseBytes":110,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.09332499999982247},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.06549600000016653}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.899Z"}
+# [ks2-worker] {"event":"mutation.applied","kind":"subject_command.spelling.start-session","scopeType":"learner","scopeId":"learner-origin","requestId":"subject-origin-1","correlationId":"subject-origin-1","expectedRevision":0,"appliedRevision":1,"at":"2026-05-11T10:47:18.935Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_975b1d47-3347-48fc-a51f-9b7a1bd0cc29","endpoint":"/api/subjects/spelling/command","method":"POST","status":200,"phase":null,"queryCount":17,"d1RowsRead":6,"d1RowsWritten":5,"d1DurationMs":1.0401219999985187,"wallMs":35.75174500000048,"responseBytes":3996,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.05975499999931344},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.05798499999946216},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":1,"rowsWritten":null,"durationMs":0.04098100000010163},{"name":"first:SELECT l.id AS learner_id, l.state_revision AS learner_state_revision, r.acco...","rowsRead":1,"rowsWritten":null,"durationMs":0.03947500000049331},{"name":"first:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...","rowsRead":0,"rowsWritten":null,"durationMs":0.02667199999996228},{"name":"first:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...","rowsRead":0,"rowsWritten":null,"durationMs":0.011209999999664433},{"name":"first:SELECT account_id, subject_id, content_json, updated_at FROM account_subject_...","rowsRead":0,"rowsWritten":null,"durationMs":0.04796199999964301},{"name":"first:SELECT learner_id, model_key, model_json, source_revision, generated_at, upda...","rowsRead":0,"rowsWritten":null,"durationMs":0.07226300000002084},{"name":"all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...","rowsRead":0,"rowsWritten":0,"durationMs":0.05555700000059005},{"name":"all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...","rowsRead":0,"rowsWritten":0,"durationMs":0.06096400000024005},{"name":"all:SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (?, ?)","rowsRead":2,"rowsWritten":0,"durationMs":0.0943409999999858},{"name":"batch:INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, ...","rowsRead":0,"rowsWritten":1,"durationMs":0.07428516666641372},{"name":"batch:UPDATE practice_sessions SET status = 'abandoned', updated_at = ?, updated_by...","rowsRead":0,"rowsWritten":0,"durationMs":0.07165616666679853},{"name":"batch:INSERT INTO practice_sessions ( id, learner_id, subject_id, session_kind, sta...","rowsRead":0,"rowsWritten":1,"durationMs":0.07134516666701529},{"name":"batch:INSERT INTO learner_read_models (learner_id, model_key, model_json, source_re...","rowsRead":0,"rowsWritten":1,"durationMs":0.07115616666669666},{"name":"batch:INSERT INTO mutation_receipts ( account_id, request_id, scope_type, scope_id,...","rowsRead":0,"rowsWritten":1,"durationMs":0.11317716666599154},{"name":"batch:UPDATE learner_profiles SET state_revision = state_revision + 1, updated_at =...","rowsRead":0,"rowsWritten":1,"durationMs":0.071337166666126}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":"miss-rehydrated","derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:18.936Z"}
+# Subtest: production subject commands require same-origin headers
+ok 146 - production subject commands require same-origin headers
+  ---
+  duration_ms: 199.314758
+  type: 'test'
+  ...
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_1d4ac282-77ac-47be-b8d6-7299c85d39fa","endpoint":"/api/auth/register","method":"POST","status":201,"phase":null,"queryCount":0,"d1RowsRead":0,"d1RowsWritten":0,"d1DurationMs":0,"wallMs":90.83536599999934,"responseBytes":92,"statements":[],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:19.042Z"}
+# [ks2-worker] {"event":"mutation.applied","kind":"learner_runtime.reset","scopeType":"learner","scopeId":"learner-reset","requestId":"reset-progress-1","correlationId":"reset-progress-1","expectedRevision":0,"appliedRevision":1,"at":"2026-05-11T10:47:19.046Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_cda9de38-7038-4df9-8fdf-df982a994a4a","endpoint":"/api/learners/reset-progress","method":"POST","status":200,"phase":null,"queryCount":13,"d1RowsRead":4,"d1RowsWritten":6,"d1DurationMs":0.4529740000025413,"wallMs":3.2211809999998877,"responseBytes":286,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.08307599999989179},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.070107000000462},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":1,"rowsWritten":null,"durationMs":0.05290100000001985},{"name":"first:SELECT account_id, request_id, scope_type, scope_id, mutation_kind, request_h...","rowsRead":0,"rowsWritten":null,"durationMs":0.020081000000573113},{"name":"first:SELECT id FROM learner_profiles WHERE id = ?","rowsRead":1,"rowsWritten":null,"durationMs":0.020938999999998487},{"name":"run:UPDATE learner_profiles SET state_revision = state_revision + 1, updated_at =...","rowsRead":0,"rowsWritten":1,"durationMs":0.04093600000032893},{"name":"batch:DELETE FROM child_subject_state WHERE learner_id = ?","rowsRead":0,"rowsWritten":1,"durationMs":0.021441833333483373},{"name":"batch:DELETE FROM practice_sessions WHERE learner_id = ?","rowsRead":0,"rowsWritten":1,"durationMs":0.020750833333295304},{"name":"batch:DELETE FROM child_game_state WHERE learner_id = ?","rowsRead":0,"rowsWritten":1,"durationMs":0.020667833333391172},{"name":"batch:DELETE FROM event_log WHERE learner_id = ?","rowsRead":0,"rowsWritten":1,"durationMs":0.020505833334027557},{"name":"batch:DELETE FROM learner_activity_feed WHERE learner_id = ?","rowsRead":0,"rowsWritten":0,"durationMs":0.020356833332698443},{"name":"batch:DELETE FROM learner_read_models WHERE learner_id = ?","rowsRead":0,"rowsWritten":0,"durationMs":0.020554833334244904},{"name":"run:INSERT INTO mutation_receipts ( account_id, request_id, scope_type, scope_id,...","rowsRead":0,"rowsWritten":1,"durationMs":0.04065600000012637}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:19.046Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_0f3257f3-2d08-4bfc-88db-22de08deda23","endpoint":"/api/learners/reset-progress","method":"POST","status":403,"phase":null,"queryCount":3,"d1RowsRead":2,"d1RowsWritten":0,"d1DurationMs":0.15306299999974726,"wallMs":1.4590829999997368,"responseBytes":123,"statements":[{"name":"first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...","rowsRead":1,"rowsWritten":null,"durationMs":0.06927399999949557},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.06268000000000029},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":0,"rowsWritten":null,"durationMs":0.0211090000002514}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:19.049Z"}
+# [ks2-worker] {"event":"mutation.observed","kind":"subject_command.spelling.check-word-bank-drill","scopeType":"learner","scopeId":"learner-a","requestId":"drill-check-1","correlationId":"drill-check-1","expectedRevision":1,"appliedRevision":3,"at":"2026-05-11T10:47:19.067Z"}
+# [ks2-worker] {"event":"capacity.request","requestId":"ks2_req_cdbc6dc1-c492-440f-b658-4c71f0d2a7c1","endpoint":"/api/subjects/spelling/command","method":"POST","status":200,"phase":null,"queryCount":7,"d1RowsRead":4,"d1RowsWritten":0,"d1DurationMs":0.3285989999994854,"wallMs":2.3597420000005513,"responseBytes":865,"statements":[{"name":"first:SELECT COALESCE(m.ops_status, 'active') AS ops_status, COALESCE(m.status_revi...","rowsRead":1,"rowsWritten":null,"durationMs":0.12418600000000879},{"name":"first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...","rowsRead":1,"rowsWritten":null,"durationMs":0.08273199999985081},{"name":"first:SELECT account_id, learner_id, role, sort_index, created_at, updated_at FROM ...","rowsRead":1,"rowsWritten":null,"durationMs":0.0446139999994557},{"name":"first:SELECT l.id AS learner_id, l.state_revision AS learner_state_revision, r.acco...","rowsRead":1,"rowsWritten":null,"durationMs":0.0364159999999174},{"name":"first:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...","rowsRead":0,"rowsWritten":null,"durationMs":0.01698800000031042},{"name":"first:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...","rowsRead":0,"rowsWritten":null,"durationMs":0.00885299999936251},{"name":"first:SELECT account_id, subject_id, content_json, updated_at FROM account_subject_...","rowsRead":0,"rowsWritten":null,"durationMs":0.014810000000579748}],"statementsTruncated":false,"bootstrapCapacity":null,"projectionFallback":null,"derivedWriteSkipped":null,"bootstrapMode":null,"signals":[],"at":"2026-05-11T10:47:19.068Z"}
+# Subtest: server-owned learner progress reset clears runtime collections in production
+ok 147 - server-owned learner progress reset clears runtime collections in production
+  ---
+  duration_ms: 113.025017
+  type: 'test'
+  ...
+# Subtest: word-bank drill checks go through the subject command boundary without writing scheduler state
+ok 148 - word-bank drill checks go through the subject command boundary without writing scheduler state
+  ---
+  duration_ms: 18.282689
+  type: 'test'
+  ...
+1..148
+# tests 166
+# suites 6
+# pass 166
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11365.293936

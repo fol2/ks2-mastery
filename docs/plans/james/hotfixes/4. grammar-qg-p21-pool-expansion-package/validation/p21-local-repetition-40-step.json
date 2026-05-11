@@ -1,0 +1,4423 @@
+{
+  "release": "grammar-qg-p21-local-repetition",
+  "generatedAt": "2026-05-11T10:52:04.620Z",
+  "steps": 40,
+  "seedBase": 210521,
+  "repeatWindow": 40,
+  "scenarioCount": 54,
+  "status": "pass",
+  "summary": {
+    "violationCount": 0,
+    "warningCount": 147,
+    "minUniqueTemplates": 18,
+    "minUniquePrompts": 29,
+    "minUniqueVariants": 40
+  },
+  "scenarios": [
+    {
+      "mode": "smart",
+      "focusConceptId": "sentence_functions",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_sentence_functions_function_contrast": 3,
+        "qg_p18_p15_sentence_functions_explain_function": 2,
+        "qg_p18_p15_sentence_functions_identify_function": 2,
+        "qg_p18_p16_sentence_functions_choose_matching_function_for_context": 2,
+        "qg_p18_p16_sentence_functions_direct_indirect_question_contrast": 2,
+        "qg_p18_p16_sentence_functions_exclamation_not_excited_statement": 2,
+        "qg_p18_p16_sentence_functions_punctuation_vs_function_table": 2,
+        "qg_p18_p16_sentence_functions_repair_wrong_function_punctuation": 2,
+        "qg_p18_p17_sentence_functions_misconception_repair": 2,
+        "qg_p18_p18_sentence_functions_application_transfer": 2,
+        "qg_p18_p18_sentence_functions_speech_punctuation_function_speech_boundary": 2,
+        "qg_p4_sentence_speech_transfer": 2
+      },
+      "questionTypeCounts": {
+        "choose": 12,
+        "classify": 6,
+        "explain": 11,
+        "fix": 6,
+        "identify": 5
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 22,
+          "mode": "smart",
+          "focusConceptId": "sentence_functions",
+          "distance": 13,
+          "templateId": "qg_p18_p16_sentence_functions_punctuation_vs_function_table",
+          "promptKey": "tick one box in each row to classify the sentence function."
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "word_classes",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_word_classes_explain_word_class": 3,
+        "qg_p18_p15_word_classes_target_word_class": 2,
+        "qg_p18_p15_word_classes_underline_word_class": 2,
+        "qg_p18_p16_word_classes_build_word_class_sentence": 2,
+        "qg_p18_p16_word_classes_distractor_reason_choice": 2,
+        "qg_p18_p16_word_classes_edge_word_class_transfer": 2,
+        "qg_p18_p17_word_classes_examiner_trap_contrast": 2,
+        "qg_p18_p17_word_classes_precision_choice": 2,
+        "qg_p18_p17_word_classes_written_reason": 2,
+        "qg_p18_p18_word_classes_explain_reasoning": 2,
+        "qg_p18_p18_word_classes_noun_phrases_word_class_np_roles": 2,
+        "qg_p18_p18_word_classes_sat_table_classification": 2
+      },
+      "questionTypeCounts": {
+        "build": 3,
+        "choose": 9,
+        "classify": 6,
+        "explain": 14,
+        "fix": 1,
+        "identify": 7
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 27,
+          "mode": "smart",
+          "focusConceptId": "word_classes",
+          "distance": 19,
+          "templateId": "qg_p18_p18_word_classes_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "noun_phrases",
+      "steps": 40,
+      "uniqueTemplates": 30,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p18_noun_phrases_explain_reasoning": 3,
+        "qg_p14_expanded_noun_phrases_constructed_rewrite": 2,
+        "qg_p14_expanded_noun_phrases_diagnostic_choice": 2,
+        "qg_p14_expanded_noun_phrases_explain_why": 2,
+        "qg_p14_expanded_noun_phrases_mixed_transfer": 2,
+        "qg_p18_p15_noun_phrases_head_noun": 2,
+        "qg_p18_p15_noun_phrases_identify_expanded_np": 2,
+        "qg_p18_p15_noun_phrases_np_not_clause": 2,
+        "qg_p18_p18_word_classes_noun_phrases_word_class_np_roles": 2,
+        "build_noun_phrase": 1,
+        "expanded_noun_phrase_choice": 1,
+        "proc3_noun_phrase_build": 1
+      },
+      "questionTypeCounts": {
+        "build": 4,
+        "choose": 14,
+        "classify": 4,
+        "explain": 12,
+        "fix": 1,
+        "identify": 3,
+        "rewrite": 2
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 20,
+          "mode": "smart",
+          "focusConceptId": "noun_phrases",
+          "distance": 13,
+          "templateId": "qg_p18_p15_noun_phrases_identify_expanded_np",
+          "promptKey": "which option is an expanded noun phrase?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 23,
+          "mode": "smart",
+          "focusConceptId": "noun_phrases",
+          "distance": 18,
+          "templateId": "qg_p18_p15_noun_phrases_np_not_clause",
+          "promptKey": "which answer is a noun phrase rather than a clause?"
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "adverbials",
+      "steps": 40,
+      "uniqueTemplates": 26,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p14_fronted_adverbials_constructed_rewrite": 2,
+        "qg_p14_fronted_adverbials_explain_why": 2,
+        "qg_p18_p15_adverbials_explain_fronted_adv": 2,
+        "qg_p18_p15_adverbials_fronted_adverbial_comma": 2,
+        "qg_p18_p15_adverbials_identify_fronted_adv": 2,
+        "qg_p18_p16_adverbials_choose_best_opening_adverbial": 2,
+        "qg_p18_p16_adverbials_explain_fronted_comma": 2,
+        "qg_p18_p16_adverbials_move_adverbial_to_front": 2,
+        "qg_p18_p17_adverbials_precision_choice": 2,
+        "qg_p18_p17_adverbials_table_classify": 2,
+        "qg_p18_p17_adverbials_transfer_apply": 2,
+        "qg_p18_p18_adverbials_explain_reasoning": 2
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 10,
+        "classify": 5,
+        "explain": 13,
+        "fix": 5,
+        "identify": 2,
+        "rewrite": 3
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 17,
+          "mode": "smart",
+          "focusConceptId": "adverbials",
+          "distance": 14,
+          "templateId": "qg_p18_p17_adverbials_table_classify",
+          "promptKey": "classify each row for the adverbials focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "smart",
+          "focusConceptId": "adverbials",
+          "distance": 26,
+          "templateId": "qg_p18_p18_adverbials_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "clauses",
+      "steps": 40,
+      "uniqueTemplates": 30,
+      "uniquePrompts": 40,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p18_adverbials_clauses_adverbial_clause_join": 3,
+        "proc3_clause_join_rewrite": 2,
+        "qg_p14_subordinate_clauses_constructed_rewrite": 2,
+        "qg_p14_subordinate_clauses_explain_why": 2,
+        "qg_p14_subordinate_clauses_mixed_transfer": 2,
+        "qg_p18_p15_clauses_repair_sub_fragment": 2,
+        "qg_p18_p16_clauses_explain_subordination": 2,
+        "qg_p18_p17_clauses_precision_choice": 2,
+        "qg_p21_clauses_closed_choice_variety": 2,
+        "combine_clauses_rewrite": 1,
+        "qg_p14_subordinate_clauses_diagnostic_choice": 1,
+        "qg_p18_p15_clauses_clause_transfer": 1
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 11,
+        "classify": 2,
+        "explain": 13,
+        "fix": 5,
+        "identify": 2,
+        "rewrite": 6
+      },
+      "violationCount": 0,
+      "warningCount": 0,
+      "violations": [],
+      "warnings": []
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "relative_clauses",
+      "steps": 40,
+      "uniqueTemplates": 26,
+      "uniquePrompts": 35,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_relative_clause_choice": 3,
+        "qg_p18_p15_relative_clauses_identify_relative_clause": 2,
+        "qg_p18_p15_relative_clauses_relative_transfer": 2,
+        "qg_p18_p16_relative_clauses_add_commas_non_defining": 2,
+        "qg_p18_p16_relative_clauses_relative_or_time_clause": 2,
+        "qg_p18_p17_relative_clauses_table_classify": 2,
+        "qg_p18_p17_relative_clauses_transfer_apply": 2,
+        "qg_p18_p17_relative_clauses_written_reason": 2,
+        "qg_p18_p18_relative_clauses_application_transfer": 2,
+        "qg_p18_p18_relative_clauses_explain_reasoning": 2,
+        "qg_p21_relative_clauses_closed_choice_variety": 2,
+        "qg_p21_relative_clauses_explanation_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "build": 3,
+        "choose": 9,
+        "classify": 5,
+        "explain": 11,
+        "fill": 1,
+        "fix": 5,
+        "identify": 6
+      },
+      "violationCount": 0,
+      "warningCount": 5,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 16,
+          "mode": "smart",
+          "focusConceptId": "relative_clauses",
+          "distance": 15,
+          "templateId": "proc2_relative_clause_choice",
+          "promptKey": "which sentence contains a relative clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 17,
+          "mode": "smart",
+          "focusConceptId": "relative_clauses",
+          "distance": 13,
+          "templateId": "qg_p18_p17_relative_clauses_table_classify",
+          "promptKey": "classify each row for the relative clauses focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 36,
+          "mode": "smart",
+          "focusConceptId": "relative_clauses",
+          "distance": 27,
+          "templateId": "qg_p18_p15_relative_clauses_relative_transfer",
+          "promptKey": "which sentence uses a relative clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 37,
+          "mode": "smart",
+          "focusConceptId": "relative_clauses",
+          "distance": 21,
+          "templateId": "proc2_relative_clause_choice",
+          "promptKey": "which sentence contains a relative clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "smart",
+          "focusConceptId": "relative_clauses",
+          "distance": 2,
+          "templateId": "relative_clause_identify",
+          "promptKey": "which sentence contains a relative clause?"
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "tense_aspect",
+      "steps": 40,
+      "uniqueTemplates": 30,
+      "uniquePrompts": 40,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p18_tense_aspect_explain_reasoning": 3,
+        "qg_p14_tense_aspect_constructed_rewrite": 2,
+        "qg_p14_tense_aspect_diagnostic_choice": 2,
+        "qg_p14_tense_aspect_explain_why": 2,
+        "qg_p14_tense_aspect_mixed_transfer": 2,
+        "qg_p18_p15_tense_aspect_tense_editing": 2,
+        "qg_p18_p15_tense_aspect_tense_near_miss": 2,
+        "qg_p18_p15_tense_aspect_tense_rewrite": 2,
+        "qg_p18_p18_tense_aspect_standard_english_tense_standard_register": 2,
+        "proc2_tense_aspect_choice": 1,
+        "qg_p18_p15_tense_aspect_explain_tense": 1,
+        "qg_p18_p16_tense_aspect_choose_best_verb_form": 1
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 12,
+        "classify": 2,
+        "explain": 13,
+        "fill": 4,
+        "fix": 3,
+        "rewrite": 5
+      },
+      "violationCount": 0,
+      "warningCount": 0,
+      "violations": [],
+      "warnings": []
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "standard_english",
+      "steps": 40,
+      "uniqueTemplates": 33,
+      "uniquePrompts": 37,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_standard_english_choice": 2,
+        "qg_p14_standard_english_explain_why": 2,
+        "qg_p18_p15_standard_english_standard_fix": 2,
+        "qg_p18_p17_standard_english_table_classify": 2,
+        "qg_p18_p17_standard_english_transfer_apply": 2,
+        "qg_p18_p17_standard_english_written_reason": 2,
+        "qg_p18_p18_tense_aspect_standard_english_tense_standard_register": 2,
+        "explain_reason_choice": 1,
+        "proc2_standard_english_fix": 1,
+        "qg_p14_standard_english_constructed_rewrite": 1,
+        "qg_p14_standard_english_diagnostic_choice": 1,
+        "qg_p14_standard_english_mixed_transfer": 1
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 12,
+        "classify": 5,
+        "explain": 12,
+        "fix": 6,
+        "rewrite": 3
+      },
+      "violationCount": 0,
+      "warningCount": 3,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 27,
+          "mode": "smart",
+          "focusConceptId": "standard_english",
+          "distance": 27,
+          "templateId": "qg_p21_standard_english_closed_choice_variety",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 37,
+          "mode": "smart",
+          "focusConceptId": "standard_english",
+          "distance": 19,
+          "templateId": "proc2_standard_english_choice",
+          "promptKey": "which sentence is written in standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "smart",
+          "focusConceptId": "standard_english",
+          "distance": 35,
+          "templateId": "qg_p18_p17_standard_english_table_classify",
+          "promptKey": "classify each row for the standard english focus."
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "pronouns_cohesion",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 35,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_pronoun_cohesion_choice": 3,
+        "qg_p18_p15_pronouns_cohesion_pronoun_referent": 3,
+        "qg_p18_p15_pronouns_cohesion_explain_cohesion": 2,
+        "qg_p18_p16_pronouns_cohesion_choose_cohesive_sentence": 2,
+        "qg_p18_p16_pronouns_cohesion_reduce_repetition_rewrite": 2,
+        "qg_p18_p17_pronouns_cohesion_precision_choice": 2,
+        "qg_p18_p17_pronouns_cohesion_table_classify": 2,
+        "qg_p18_p18_pronouns_cohesion_diagnostic_identify": 2,
+        "qg_p18_p18_pronouns_cohesion_explain_reasoning": 2,
+        "qg_p21_pronouns_cohesion_explanation_choice_variety": 2,
+        "qg_pronoun_referent_identify": 2,
+        "pronoun_cohesion_choice": 1
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 14,
+        "classify": 3,
+        "explain": 11,
+        "fix": 1,
+        "identify": 6,
+        "rewrite": 4
+      },
+      "violationCount": 0,
+      "warningCount": 5,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 22,
+          "mode": "smart",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 18,
+          "templateId": "qg_p18_p18_pronouns_cohesion_diagnostic_identify",
+          "promptKey": "which version has the clearest pronoun cohesion?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 25,
+          "mode": "smart",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 24,
+          "templateId": "proc2_pronoun_cohesion_choice",
+          "promptKey": "which version keeps the meaning clearest?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 27,
+          "mode": "smart",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 19,
+          "templateId": "qg_p18_p16_pronouns_cohesion_choose_cohesive_sentence",
+          "promptKey": "which version is clearer and uses pronouns correctly?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 31,
+          "mode": "smart",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 19,
+          "templateId": "qg_p18_p17_pronouns_cohesion_table_classify",
+          "promptKey": "classify each row for the pronouns cohesion focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "smart",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 14,
+          "templateId": "proc2_pronoun_cohesion_choice",
+          "promptKey": "which version keeps the meaning clearest?"
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "formality",
+      "steps": 40,
+      "uniqueTemplates": 25,
+      "uniquePrompts": 36,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p17_formality_transfer_apply": 3,
+        "proc2_formality_choice": 2,
+        "qg_p18_p15_formality_formal_rewrite": 2,
+        "qg_p18_p15_formality_formality_transfer": 2,
+        "qg_p18_p16_formality_choose_formal_word": 2,
+        "qg_p18_p16_formality_explain_formality_effect": 2,
+        "qg_p18_p16_formality_formal_sentence_rewrite": 2,
+        "qg_p18_p16_formality_least_formal_choice": 2,
+        "qg_p18_p17_formality_table_classify": 2,
+        "qg_p18_p18_formality_explain_reasoning": 2,
+        "qg_p18_p18_formality_precision_repair_or_rewrite": 2,
+        "qg_p18_p18_formality_sat_table_classification": 2
+      },
+      "questionTypeCounts": {
+        "build": 3,
+        "choose": 13,
+        "classify": 6,
+        "explain": 11,
+        "fix": 1,
+        "rewrite": 6
+      },
+      "violationCount": 0,
+      "warningCount": 4,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 25,
+          "mode": "smart",
+          "focusConceptId": "formality",
+          "distance": 22,
+          "templateId": "qg_p18_p17_formality_table_classify",
+          "promptKey": "classify each row for the formality focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "smart",
+          "focusConceptId": "formality",
+          "distance": 23,
+          "templateId": "qg_p18_p16_formality_least_formal_choice",
+          "promptKey": "which option is least formal?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "smart",
+          "focusConceptId": "formality",
+          "distance": 26,
+          "templateId": "qg_p18_p18_formality_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "smart",
+          "focusConceptId": "formality",
+          "distance": 13,
+          "templateId": "qg_p18_p15_formality_formality_transfer",
+          "promptKey": "for a letter to the council, which wording is best?"
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "active_passive",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_active_passive_voice_transfer": 3,
+        "qg_p18_p17_active_passive_precision_choice": 3,
+        "proc2_passive_to_active": 2,
+        "qg_p18_p15_active_passive_explain_voice": 2,
+        "qg_p18_p15_active_passive_voice_roles_table": 2,
+        "qg_p18_p16_active_passive_voice_error_spot": 2,
+        "qg_p18_p17_active_passive_transfer_apply": 2,
+        "qg_p18_p17_active_passive_written_reason": 2,
+        "qg_p18_p18_active_passive_diagnostic_identify": 2,
+        "qg_p18_p18_active_passive_explain_reasoning": 2,
+        "qg_p4_voice_roles_transfer": 2,
+        "active_passive_rewrite": 1
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 15,
+        "classify": 6,
+        "explain": 9,
+        "fix": 1,
+        "rewrite": 7
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 16,
+          "mode": "smart",
+          "focusConceptId": "active_passive",
+          "distance": 14,
+          "templateId": "qg_p18_p15_active_passive_voice_transfer",
+          "promptKey": "which option has passive voice?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 31,
+          "mode": "smart",
+          "focusConceptId": "active_passive",
+          "distance": 15,
+          "templateId": "qg_p18_p15_active_passive_voice_transfer",
+          "promptKey": "which option has passive voice?"
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "subject_object",
+      "steps": 40,
+      "uniqueTemplates": 28,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_subject_object_identify_object": 3,
+        "qg_p14_subject_object_constructed_rewrite": 2,
+        "qg_p14_subject_object_diagnostic_choice": 2,
+        "qg_p14_subject_object_explain_why": 2,
+        "qg_p18_p16_subject_object_find_subject": 2,
+        "qg_p18_p16_subject_object_subject_object_table": 2,
+        "qg_p18_p17_subject_object_examiner_trap_contrast": 2,
+        "qg_p18_p17_subject_object_precision_choice": 2,
+        "qg_p18_p18_active_passive_subject_object_voice_subject_object_roles": 2,
+        "qg_p18_p18_subject_object_application_transfer": 2,
+        "qg_subject_object_classify_table": 2,
+        "proc2_subject_object_identify": 1
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 8,
+        "classify": 7,
+        "explain": 11,
+        "fix": 1,
+        "identify": 9,
+        "rewrite": 3
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 27,
+          "mode": "smart",
+          "focusConceptId": "subject_object",
+          "distance": 13,
+          "templateId": "qg_subject_object_classify_table",
+          "promptKey": "classify each named noun phrase as the subject or object."
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "modal_verbs",
+      "steps": 40,
+      "uniqueTemplates": 25,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p16_modal_verbs_modal_context_explain": 3,
+        "qg_p18_p18_modal_verbs_explain_reasoning": 3,
+        "qg_p18_p15_modal_verbs_modal_gap": 2,
+        "qg_p18_p16_modal_verbs_change_force_rewrite": 2,
+        "qg_p18_p16_modal_verbs_choose_modal_meaning": 2,
+        "qg_p18_p16_modal_verbs_rank_certainty_choice": 2,
+        "qg_p18_p17_modal_verbs_misconception_repair": 2,
+        "qg_p18_p17_modal_verbs_precision_choice": 2,
+        "qg_p18_p17_modal_verbs_table_classify": 2,
+        "qg_p18_p17_modal_verbs_written_reason": 2,
+        "qg_p18_p18_modal_verbs_precision_repair_or_rewrite": 2,
+        "qg_p21_modal_verbs_explanation_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 10,
+        "classify": 4,
+        "explain": 13,
+        "fill": 5,
+        "fix": 4,
+        "identify": 1,
+        "rewrite": 2
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 27,
+          "mode": "smart",
+          "focusConceptId": "modal_verbs",
+          "distance": 19,
+          "templateId": "qg_p18_p17_modal_verbs_table_classify",
+          "promptKey": "classify each row for the modal verbs focus."
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "parenthesis_commas",
+      "steps": 40,
+      "uniqueTemplates": 28,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p14_parenthesis_commas_constructed_rewrite": 3,
+        "qg_p18_p16_parenthesis_commas_punctuation_for_parenthesis": 3,
+        "qg_p14_parenthesis_commas_explain_why": 2,
+        "qg_p14_parenthesis_commas_mixed_transfer": 2,
+        "qg_p18_p15_parenthesis_commas_parenthesis_transfer": 2,
+        "qg_p18_p16_parenthesis_commas_explain_parenthesis": 2,
+        "qg_p18_p16_parenthesis_commas_parenthesis_or_not": 2,
+        "qg_p18_p17_parenthesis_commas_transfer_apply": 2,
+        "qg_p18_p18_relative_clauses_parenthesis_commas_relative_parenthesis_punctuation": 2,
+        "qg_p4_relative_parenthesis_transfer": 2,
+        "parenthesis_fix_sentence": 1,
+        "parenthesis_replace_choice": 1
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 19,
+        "classify": 1,
+        "explain": 10,
+        "fix": 6,
+        "identify": 1,
+        "rewrite": 1
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 23,
+          "mode": "smart",
+          "focusConceptId": "parenthesis_commas",
+          "distance": 20,
+          "templateId": "qg_p18_p15_parenthesis_commas_parenthesis_transfer",
+          "promptKey": "which sentence uses parenthesis correctly?"
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "speech_punctuation",
+      "steps": 40,
+      "uniqueTemplates": 28,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_speech_punctuation_explain_speech": 3,
+        "qg_p18_p16_speech_punctuation_punctuate_direct_speech": 3,
+        "qg_p14_speech_punctuation_constructed_rewrite": 2,
+        "qg_p14_speech_punctuation_explain_why": 2,
+        "qg_p18_p16_speech_punctuation_explain_speech_rule": 2,
+        "qg_p18_p16_speech_punctuation_reporting_clause_position": 2,
+        "qg_p18_p16_speech_punctuation_speech_or_indirect": 2,
+        "qg_p18_p17_speech_punctuation_transfer_apply": 2,
+        "qg_p18_p18_speech_punctuation_sat_table_classification": 2,
+        "qg_p4_sentence_speech_transfer": 2,
+        "proc_speech_punctuation_fix": 1,
+        "qg_p14_speech_punctuation_diagnostic_choice": 1
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 12,
+        "classify": 5,
+        "explain": 12,
+        "fix": 8,
+        "identify": 1
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 18,
+          "mode": "smart",
+          "focusConceptId": "speech_punctuation",
+          "distance": 16,
+          "templateId": "qg_p18_p18_speech_punctuation_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 21,
+          "mode": "smart",
+          "focusConceptId": "speech_punctuation",
+          "distance": 15,
+          "templateId": "qg_p18_p16_speech_punctuation_speech_or_indirect",
+          "promptKey": "which sentence is direct speech?"
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "apostrophes_possession",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc3_apostrophe_rewrite": 2,
+        "qg_p18_p15_apostrophes_possession_possession_transfer": 2,
+        "qg_p18_p15_apostrophes_possession_possessive_choice": 2,
+        "qg_p18_p16_apostrophes_possession_choose_possessive_phrase": 2,
+        "qg_p18_p16_apostrophes_possession_meaning_change_choice": 2,
+        "qg_p18_p16_apostrophes_possession_possession_not_contraction": 2,
+        "qg_p18_p17_apostrophes_possession_examiner_trap_contrast": 2,
+        "qg_p18_p17_apostrophes_possession_misconception_repair": 2,
+        "qg_p18_p18_apostrophes_possession_application_transfer": 2,
+        "qg_p18_p18_apostrophes_possession_explain_reasoning": 2,
+        "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite": 2,
+        "qg_p21_apostrophes_possession_explanation_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 17,
+        "classify": 3,
+        "explain": 11,
+        "fix": 5,
+        "rewrite": 3
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "smart",
+          "focusConceptId": "apostrophes_possession",
+          "distance": 30,
+          "templateId": "qg_p18_p16_apostrophes_possession_meaning_change_choice",
+          "promptKey": "which option changes the meaning from one owner to many owners?"
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "boundary_punctuation",
+      "steps": 40,
+      "uniqueTemplates": 28,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_boundary_punctuation_explain": 3,
+        "qg_p18_p16_boundary_punctuation_semicolon_or_comma_splice": 3,
+        "qg_p18_p17_boundary_punctuation_misconception_repair": 3,
+        "proc_colon_list_fix": 2,
+        "qg_p18_p15_boundary_punctuation_boundary_transfer": 2,
+        "qg_p18_p16_boundary_punctuation_insert_boundary_mark": 2,
+        "qg_p18_p17_boundary_punctuation_written_reason": 2,
+        "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite": 2,
+        "qg_p18_p18_boundary_punctuation_sat_table_classification": 2,
+        "proc_dash_boundary_fix": 1,
+        "proc_semicolon_choice": 1,
+        "qg_p18_p15_boundary_punctuation_boundary_fix": 1
+      },
+      "questionTypeCounts": {
+        "choose": 15,
+        "classify": 3,
+        "explain": 10,
+        "fix": 11,
+        "identify": 1
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 23,
+          "mode": "smart",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 14,
+          "templateId": "qg_p18_p15_boundary_punctuation_boundary_transfer",
+          "promptKey": "which sentence uses boundary punctuation most precisely?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "smart",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 18,
+          "templateId": "qg_p18_p18_boundary_punctuation_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        }
+      ]
+    },
+    {
+      "mode": "smart",
+      "focusConceptId": "hyphen_ambiguity",
+      "steps": 40,
+      "uniqueTemplates": 26,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc3_hyphen_fix_meaning": 3,
+        "qg_hyphen_ambiguity_explain": 2,
+        "qg_p18_p15_hyphen_ambiguity_explain_hyphen": 2,
+        "qg_p18_p15_hyphen_ambiguity_hyphen_fix": 2,
+        "qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning": 2,
+        "qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning": 2,
+        "qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading": 2,
+        "qg_p18_p17_hyphen_ambiguity_table_classify": 2,
+        "qg_p18_p17_hyphen_ambiguity_transfer_apply": 2,
+        "qg_p18_p17_hyphen_ambiguity_written_reason": 2,
+        "qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision": 2,
+        "qg_p18_p18_hyphen_ambiguity_diagnostic_identify": 2
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 13,
+        "classify": 4,
+        "explain": 13,
+        "fix": 7,
+        "identify": 1
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 17,
+          "mode": "smart",
+          "focusConceptId": "hyphen_ambiguity",
+          "distance": 13,
+          "templateId": "qg_p18_p17_hyphen_ambiguity_table_classify",
+          "promptKey": "classify each row for the hyphen ambiguity focus."
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "sentence_functions",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc3_sentence_function_choice": 2,
+        "qg_p18_p15_sentence_functions_identify_function": 2,
+        "qg_p18_p15_sentence_functions_punctuate_by_function": 2,
+        "qg_p18_p15_sentence_functions_sat_style_function": 2,
+        "qg_p18_p16_sentence_functions_exclamation_not_excited_statement": 2,
+        "qg_p18_p17_sentence_functions_precision_choice": 2,
+        "qg_p18_p17_sentence_functions_transfer_apply": 2,
+        "qg_p18_p18_sentence_functions_application_transfer": 2,
+        "qg_p18_p18_sentence_functions_diagnostic_identify": 2,
+        "qg_p18_p18_sentence_functions_precision_repair_or_rewrite": 2,
+        "qg_p18_p18_sentence_functions_sat_table_classification": 2,
+        "qg_p21_sentence_functions_closed_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 10,
+        "classify": 6,
+        "explain": 10,
+        "fix": 6,
+        "identify": 6
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 29,
+          "mode": "trouble",
+          "focusConceptId": "sentence_functions",
+          "distance": 23,
+          "templateId": "proc3_sentence_function_choice",
+          "promptKey": "which sentence is a statement?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "trouble",
+          "focusConceptId": "sentence_functions",
+          "distance": 16,
+          "templateId": "qg_p18_p18_sentence_functions_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "word_classes",
+      "steps": 40,
+      "uniqueTemplates": 25,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p16_word_classes_build_word_class_sentence": 3,
+        "qg_p18_p16_word_classes_pick_all_target_class": 3,
+        "qg_p18_p17_word_classes_transfer_apply": 3,
+        "qg_p18_p18_word_classes_diagnostic_identify": 3,
+        "qg_p18_p15_word_classes_explain_word_class": 2,
+        "qg_p18_p16_word_classes_distractor_reason_choice": 2,
+        "qg_p18_p16_word_classes_edge_word_class_transfer": 2,
+        "qg_p18_p16_word_classes_multi_token_classify_table": 2,
+        "qg_p18_p17_word_classes_examiner_trap_contrast": 2,
+        "qg_p18_p18_word_classes_precision_repair_or_rewrite": 2,
+        "qg_p4_word_class_noun_phrase_transfer": 2,
+        "identify_words_in_sentence": 1
+      },
+      "questionTypeCounts": {
+        "build": 6,
+        "choose": 5,
+        "classify": 7,
+        "explain": 8,
+        "fix": 3,
+        "identify": 11
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 29,
+          "mode": "trouble",
+          "focusConceptId": "word_classes",
+          "distance": 15,
+          "templateId": "qg_p18_p16_word_classes_multi_token_classify_table",
+          "promptKey": "classify each underlined word by its job in the sentence."
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "noun_phrases",
+      "steps": 40,
+      "uniqueTemplates": 28,
+      "uniquePrompts": 36,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p14_expanded_noun_phrases_constructed_rewrite": 2,
+        "qg_p14_expanded_noun_phrases_explain_why": 2,
+        "qg_p18_p15_noun_phrases_head_noun": 2,
+        "qg_p18_p15_noun_phrases_identify_expanded_np": 2,
+        "qg_p18_p15_noun_phrases_np_not_clause": 2,
+        "qg_p18_p16_noun_phrases_build_with_given_head": 2,
+        "qg_p18_p16_noun_phrases_explain_expansion": 2,
+        "qg_p18_p16_noun_phrases_head_noun_identify": 2,
+        "qg_p18_p17_noun_phrases_precision_choice": 2,
+        "qg_p18_p17_noun_phrases_table_classify": 2,
+        "qg_p18_p18_noun_phrases_diagnostic_identify": 2,
+        "qg_p18_p18_noun_phrases_sat_table_classification": 2
+      },
+      "questionTypeCounts": {
+        "build": 5,
+        "choose": 12,
+        "classify": 5,
+        "explain": 10,
+        "fix": 1,
+        "identify": 4,
+        "rewrite": 3
+      },
+      "violationCount": 0,
+      "warningCount": 4,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 21,
+          "mode": "trouble",
+          "focusConceptId": "noun_phrases",
+          "distance": 15,
+          "templateId": "qg_p18_p17_noun_phrases_table_classify",
+          "promptKey": "classify each row for the noun phrases focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 29,
+          "mode": "trouble",
+          "focusConceptId": "noun_phrases",
+          "distance": 26,
+          "templateId": "qg_p18_p15_noun_phrases_np_not_clause",
+          "promptKey": "which answer is a noun phrase rather than a clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 31,
+          "mode": "trouble",
+          "focusConceptId": "noun_phrases",
+          "distance": 14,
+          "templateId": "qg_p18_p15_noun_phrases_identify_expanded_np",
+          "promptKey": "which option is an expanded noun phrase?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "trouble",
+          "focusConceptId": "noun_phrases",
+          "distance": 14,
+          "templateId": "qg_p18_p18_noun_phrases_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "adverbials",
+      "steps": 40,
+      "uniqueTemplates": 29,
+      "uniquePrompts": 40,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc_fronted_adverbial_fix": 2,
+        "qg_p14_fronted_adverbials_constructed_rewrite": 2,
+        "qg_p18_p15_adverbials_move_adverbial": 2,
+        "qg_p18_p16_adverbials_adverbial_or_not": 2,
+        "qg_p18_p16_adverbials_explain_fronted_comma": 2,
+        "qg_p18_p16_adverbials_fronted_adverbial_type": 2,
+        "qg_p18_p17_adverbials_precision_choice": 2,
+        "qg_p18_p18_adverbials_precision_repair_or_rewrite": 2,
+        "qg_p21_adverbials_closed_choice_variety": 2,
+        "qg_p21_adverbials_explanation_choice_variety": 2,
+        "qg_p4_adverbial_clause_boundary_transfer": 2,
+        "fronted_adverbial_choose": 1
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 16,
+        "classify": 4,
+        "explain": 8,
+        "fix": 6,
+        "identify": 1,
+        "rewrite": 3
+      },
+      "violationCount": 0,
+      "warningCount": 0,
+      "violations": [],
+      "warnings": []
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "clauses",
+      "steps": 40,
+      "uniqueTemplates": 30,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p14_subordinate_clauses_diagnostic_choice": 2,
+        "qg_p18_p15_clauses_explain_sub_clause": 2,
+        "qg_p18_p15_clauses_identify_sub_clause": 2,
+        "qg_p18_p15_clauses_repair_sub_fragment": 2,
+        "qg_p18_p16_clauses_explain_subordination": 2,
+        "qg_p18_p17_clauses_precision_choice": 2,
+        "qg_p18_p17_clauses_table_classify": 2,
+        "qg_p18_p17_clauses_transfer_apply": 2,
+        "qg_p18_p18_clauses_diagnostic_identify": 2,
+        "qg_p21_clauses_explanation_choice_variety": 2,
+        "combine_clauses_rewrite": 1,
+        "proc3_clause_join_rewrite": 1
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 11,
+        "classify": 4,
+        "explain": 11,
+        "fix": 5,
+        "identify": 3,
+        "rewrite": 4
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 36,
+          "mode": "trouble",
+          "focusConceptId": "clauses",
+          "distance": 21,
+          "templateId": "qg_p18_p17_clauses_table_classify",
+          "promptKey": "classify each row for the clauses focus."
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "relative_clauses",
+      "steps": 40,
+      "uniqueTemplates": 26,
+      "uniquePrompts": 37,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_relative_clause_choice": 2,
+        "qg_p18_p15_relative_clauses_explain_relative_clause": 2,
+        "qg_p18_p15_relative_clauses_punctuate_relative_clause": 2,
+        "qg_p18_p16_relative_clauses_add_commas_non_defining": 2,
+        "qg_p18_p16_relative_clauses_noun_linked_by_relative": 2,
+        "qg_p18_p16_relative_clauses_relative_clause_identify_span": 2,
+        "qg_p18_p17_relative_clauses_misconception_repair": 2,
+        "qg_p18_p17_relative_clauses_transfer_apply": 2,
+        "qg_p18_p18_relative_clauses_application_transfer": 2,
+        "qg_p18_p18_relative_clauses_diagnostic_identify": 2,
+        "qg_p18_p18_relative_clauses_explain_reasoning": 2,
+        "qg_p21_relative_clauses_closed_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 9,
+        "classify": 3,
+        "explain": 12,
+        "fill": 1,
+        "fix": 7,
+        "identify": 6
+      },
+      "violationCount": 0,
+      "warningCount": 3,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 19,
+          "mode": "trouble",
+          "focusConceptId": "relative_clauses",
+          "distance": 17,
+          "templateId": "proc2_relative_clause_choice",
+          "promptKey": "which sentence contains a relative clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 35,
+          "mode": "trouble",
+          "focusConceptId": "relative_clauses",
+          "distance": 16,
+          "templateId": "proc2_relative_clause_choice",
+          "promptKey": "which sentence contains a relative clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "trouble",
+          "focusConceptId": "relative_clauses",
+          "distance": 29,
+          "templateId": "qg_p21_relative_clauses_closed_choice_variety",
+          "promptKey": "which sentence uses commas for extra relative-clause information?"
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "tense_aspect",
+      "steps": 40,
+      "uniqueTemplates": 28,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p14_tense_aspect_constructed_rewrite": 2,
+        "qg_p14_tense_aspect_explain_why": 2,
+        "qg_p18_p15_tense_aspect_tense_editing": 2,
+        "qg_p18_p15_tense_aspect_tense_near_miss": 2,
+        "qg_p18_p15_tense_aspect_tense_rewrite": 2,
+        "qg_p18_p16_tense_aspect_choose_best_verb_form": 2,
+        "qg_p18_p16_tense_aspect_rewrite_to_named_form": 2,
+        "qg_p18_p16_tense_aspect_spot_tense_shift_error": 2,
+        "qg_p18_p17_tense_aspect_precision_choice": 2,
+        "qg_p18_p17_tense_aspect_table_classify": 2,
+        "qg_p18_p18_tense_aspect_diagnostic_identify": 2,
+        "qg_p18_p18_tense_aspect_sat_table_classification": 2
+      },
+      "questionTypeCounts": {
+        "choose": 11,
+        "classify": 4,
+        "explain": 9,
+        "fill": 5,
+        "fix": 3,
+        "rewrite": 8
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 21,
+          "mode": "trouble",
+          "focusConceptId": "tense_aspect",
+          "distance": 15,
+          "templateId": "qg_p18_p17_tense_aspect_table_classify",
+          "promptKey": "classify each row for the tense aspect focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "trouble",
+          "focusConceptId": "tense_aspect",
+          "distance": 14,
+          "templateId": "qg_p18_p18_tense_aspect_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "standard_english",
+      "steps": 40,
+      "uniqueTemplates": 31,
+      "uniquePrompts": 33,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p21_standard_english_closed_choice_variety": 3,
+        "proc2_standard_english_choice": 2,
+        "qg_p18_p15_standard_english_standard_choice": 2,
+        "qg_p18_p16_standard_english_choose_standard_sentence": 2,
+        "qg_p18_p16_standard_english_rewrite_standard_english": 2,
+        "qg_p18_p17_standard_english_misconception_repair": 2,
+        "qg_p18_p17_standard_english_transfer_apply": 2,
+        "qg_p18_p18_standard_english_application_transfer": 2,
+        "explain_reason_choice": 1,
+        "proc2_standard_english_fix": 1,
+        "qg_p14_standard_english_constructed_rewrite": 1,
+        "qg_p14_standard_english_diagnostic_choice": 1
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 16,
+        "classify": 4,
+        "explain": 9,
+        "fix": 6,
+        "rewrite": 3
+      },
+      "violationCount": 0,
+      "warningCount": 7,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 14,
+          "mode": "trouble",
+          "focusConceptId": "standard_english",
+          "distance": 5,
+          "templateId": "qg_p18_p15_standard_english_standard_choice",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 15,
+          "mode": "trouble",
+          "focusConceptId": "standard_english",
+          "distance": 1,
+          "templateId": "qg_p18_p16_standard_english_choose_standard_sentence",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 23,
+          "mode": "trouble",
+          "focusConceptId": "standard_english",
+          "distance": 8,
+          "templateId": "qg_p21_standard_english_closed_choice_variety",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "trouble",
+          "focusConceptId": "standard_english",
+          "distance": 7,
+          "templateId": "qg_p18_p16_standard_english_choose_standard_sentence",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 32,
+          "mode": "trouble",
+          "focusConceptId": "standard_english",
+          "distance": 2,
+          "templateId": "qg_p18_p15_standard_english_standard_choice",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 35,
+          "mode": "trouble",
+          "focusConceptId": "standard_english",
+          "distance": 23,
+          "templateId": "proc2_standard_english_choice",
+          "promptKey": "which sentence is written in standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "trouble",
+          "focusConceptId": "standard_english",
+          "distance": 6,
+          "templateId": "qg_p21_standard_english_closed_choice_variety",
+          "promptKey": "which sentence uses standard english?"
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "pronouns_cohesion",
+      "steps": 40,
+      "uniqueTemplates": 26,
+      "uniquePrompts": 36,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_pronoun_cohesion_choice": 2,
+        "qg_p18_p15_pronouns_cohesion_cohesion_transfer": 2,
+        "qg_p18_p15_pronouns_cohesion_pronoun_referent": 2,
+        "qg_p18_p16_pronouns_cohesion_fix_pronoun_reference": 2,
+        "qg_p18_p16_pronouns_cohesion_reduce_repetition_rewrite": 2,
+        "qg_p18_p16_pronouns_cohesion_referent_identify": 2,
+        "qg_p18_p17_pronouns_cohesion_misconception_repair": 2,
+        "qg_p18_p17_pronouns_cohesion_precision_choice": 2,
+        "qg_p18_p18_pronouns_cohesion_diagnostic_identify": 2,
+        "qg_p18_p18_pronouns_cohesion_formality_cohesion_formality_choice": 2,
+        "qg_p18_p18_pronouns_cohesion_sat_table_classification": 2,
+        "qg_p21_pronouns_cohesion_closed_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 15,
+        "classify": 3,
+        "explain": 8,
+        "fix": 4,
+        "identify": 5,
+        "rewrite": 4
+      },
+      "violationCount": 0,
+      "warningCount": 4,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "trouble",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 26,
+          "templateId": "qg_p18_p18_pronouns_cohesion_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "trouble",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 18,
+          "templateId": "qg_p18_p18_pronouns_cohesion_diagnostic_identify",
+          "promptKey": "which version has the clearest pronoun cohesion?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "trouble",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 15,
+          "templateId": "proc2_pronoun_cohesion_choice",
+          "promptKey": "which version keeps the meaning clearest?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "trouble",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 37,
+          "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_transfer",
+          "promptKey": "which sentence keeps the meaning clearest?"
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "formality",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 36,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_formality_formal_rewrite": 2,
+        "qg_p18_p15_formality_formality_pair_table": 2,
+        "qg_p18_p16_formality_choose_formal_word": 2,
+        "qg_p18_p16_formality_formal_sentence_rewrite": 2,
+        "qg_p18_p16_formality_least_formal_choice": 2,
+        "qg_p18_p16_formality_register_context_choice": 2,
+        "qg_p18_p17_formality_misconception_repair": 2,
+        "qg_p18_p17_formality_table_classify": 2,
+        "qg_p18_p17_formality_transfer_apply": 2,
+        "qg_p18_p17_formality_written_reason": 2,
+        "qg_p18_p18_formality_application_transfer": 2,
+        "qg_p18_p18_formality_diagnostic_identify": 2
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 15,
+        "classify": 6,
+        "explain": 10,
+        "fix": 2,
+        "rewrite": 5
+      },
+      "violationCount": 0,
+      "warningCount": 4,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 17,
+          "mode": "trouble",
+          "focusConceptId": "formality",
+          "distance": 15,
+          "templateId": "qg_p18_p16_formality_least_formal_choice",
+          "promptKey": "which option is least formal?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 20,
+          "mode": "trouble",
+          "focusConceptId": "formality",
+          "distance": 15,
+          "templateId": "qg_p18_p16_formality_register_context_choice",
+          "promptKey": "which phrase suits a formal letter?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 24,
+          "mode": "trouble",
+          "focusConceptId": "formality",
+          "distance": 20,
+          "templateId": "qg_p18_p15_formality_formality_pair_table",
+          "promptKey": "classify each version as formal or informal."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 36,
+          "mode": "trouble",
+          "focusConceptId": "formality",
+          "distance": 29,
+          "templateId": "qg_p18_p17_formality_table_classify",
+          "promptKey": "classify each row for the formality focus."
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "active_passive",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p18_active_passive_application_transfer": 3,
+        "proc2_passive_to_active": 2,
+        "qg_active_passive_choice": 2,
+        "qg_p18_p15_active_passive_voice_rewrite": 2,
+        "qg_p18_p15_active_passive_voice_roles_table": 2,
+        "qg_p18_p16_active_passive_agent_object_explain": 2,
+        "qg_p18_p16_active_passive_voice_identify": 2,
+        "qg_p18_p17_active_passive_misconception_repair": 2,
+        "qg_p18_p17_active_passive_precision_choice": 2,
+        "qg_p18_p17_active_passive_transfer_apply": 2,
+        "qg_p18_p18_active_passive_diagnostic_identify": 2,
+        "qg_p18_p18_active_passive_precision_repair_or_rewrite": 2
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 11,
+        "classify": 6,
+        "explain": 11,
+        "fix": 2,
+        "rewrite": 8
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "trouble",
+          "focusConceptId": "active_passive",
+          "distance": 28,
+          "templateId": "qg_active_passive_choice",
+          "promptKey": "which sentence is written in the passive voice?"
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "subject_object",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p16_subject_object_rewrite_preserve_roles": 3,
+        "qg_p18_p17_subject_object_examiner_trap_contrast": 3,
+        "proc2_subject_object_identify": 2,
+        "qg_p14_subject_object_mixed_transfer": 2,
+        "qg_p18_p15_subject_object_identify_subject": 2,
+        "qg_p18_p15_subject_object_role_table": 2,
+        "qg_p18_p17_subject_object_precision_choice": 2,
+        "qg_p18_p17_subject_object_written_reason": 2,
+        "qg_p18_p18_active_passive_subject_object_voice_subject_object_roles": 2,
+        "qg_p18_p18_subject_object_diagnostic_identify": 2,
+        "qg_subject_object_classify_table": 2,
+        "qg_p14_subject_object_constructed_rewrite": 1
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 10,
+        "classify": 7,
+        "explain": 8,
+        "fix": 1,
+        "identify": 9,
+        "rewrite": 4
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "trouble",
+          "focusConceptId": "subject_object",
+          "distance": 28,
+          "templateId": "qg_subject_object_classify_table",
+          "promptKey": "classify each named noun phrase as the subject or object."
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "modal_verbs",
+      "steps": 40,
+      "uniqueTemplates": 26,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_modal_choice": 3,
+        "qg_p18_p15_modal_verbs_explain_modal": 2,
+        "qg_p18_p15_modal_verbs_modal_meaning": 2,
+        "qg_p18_p15_modal_verbs_modal_transfer": 2,
+        "qg_p18_p16_modal_verbs_change_force_rewrite": 2,
+        "qg_p18_p16_modal_verbs_choose_modal_meaning": 2,
+        "qg_p18_p16_modal_verbs_meaning_transfer_choice": 2,
+        "qg_p18_p17_modal_verbs_precision_choice": 2,
+        "qg_p18_p17_modal_verbs_table_classify": 2,
+        "qg_p18_p17_modal_verbs_written_reason": 2,
+        "qg_p18_p18_modal_verbs_explain_reasoning": 2,
+        "qg_p21_modal_verbs_closed_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 13,
+        "classify": 4,
+        "explain": 11,
+        "fill": 5,
+        "fix": 2,
+        "identify": 2,
+        "rewrite": 2
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 24,
+          "mode": "trouble",
+          "focusConceptId": "modal_verbs",
+          "distance": 17,
+          "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+          "promptKey": "which sentence best shows possibility?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 32,
+          "mode": "trouble",
+          "focusConceptId": "modal_verbs",
+          "distance": 13,
+          "templateId": "qg_p18_p17_modal_verbs_table_classify",
+          "promptKey": "classify each row for the modal verbs focus."
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "parenthesis_commas",
+      "steps": 40,
+      "uniqueTemplates": 29,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p14_parenthesis_commas_constructed_rewrite": 2,
+        "qg_p14_parenthesis_commas_explain_why": 2,
+        "qg_p18_p15_parenthesis_commas_explain_parenthesis": 2,
+        "qg_p18_p15_parenthesis_commas_parenthesis_choice": 2,
+        "qg_p18_p15_parenthesis_commas_parenthesis_fix": 2,
+        "qg_p18_p16_parenthesis_commas_replace_brackets_with_commas": 2,
+        "qg_p18_p17_parenthesis_commas_precision_choice": 2,
+        "qg_p18_p17_parenthesis_commas_written_reason": 2,
+        "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite": 2,
+        "qg_p21_parenthesis_commas_closed_choice_variety": 2,
+        "qg_p4_relative_parenthesis_transfer": 2,
+        "parenthesis_fix_sentence": 1
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 15,
+        "classify": 2,
+        "explain": 11,
+        "fix": 7,
+        "identify": 1,
+        "rewrite": 3
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 19,
+          "mode": "trouble",
+          "focusConceptId": "parenthesis_commas",
+          "distance": 18,
+          "templateId": "qg_p18_p15_parenthesis_commas_parenthesis_choice",
+          "promptKey": "which version correctly marks the parenthesis?"
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "speech_punctuation",
+      "steps": 40,
+      "uniqueTemplates": 29,
+      "uniquePrompts": 36,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc_speech_punctuation_fix": 2,
+        "qg_p14_speech_punctuation_explain_why": 2,
+        "qg_p14_speech_punctuation_mixed_transfer": 2,
+        "qg_p18_p15_speech_punctuation_speech_choice": 2,
+        "qg_p18_p15_speech_punctuation_speech_fix": 2,
+        "qg_p18_p15_speech_punctuation_speech_transfer": 2,
+        "qg_p18_p17_speech_punctuation_examiner_trap_contrast": 2,
+        "qg_p18_p17_speech_punctuation_table_classify": 2,
+        "qg_p18_p18_boundary_punctuation_speech_punctuation_boundary_speech_punctuation": 2,
+        "qg_p18_p18_speech_punctuation_diagnostic_identify": 2,
+        "qg_p18_p18_speech_punctuation_sat_table_classification": 2,
+        "qg_p18_p15_speech_punctuation_explain_speech": 1
+      },
+      "questionTypeCounts": {
+        "choose": 15,
+        "classify": 6,
+        "explain": 11,
+        "fix": 7,
+        "identify": 1
+      },
+      "violationCount": 0,
+      "warningCount": 4,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "trouble",
+          "focusConceptId": "speech_punctuation",
+          "distance": 29,
+          "templateId": "qg_p18_p15_speech_punctuation_speech_choice",
+          "promptKey": "which version punctuates direct speech correctly?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 31,
+          "mode": "trouble",
+          "focusConceptId": "speech_punctuation",
+          "distance": 16,
+          "templateId": "qg_p18_p17_speech_punctuation_table_classify",
+          "promptKey": "classify each row for the speech punctuation focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 33,
+          "mode": "trouble",
+          "focusConceptId": "speech_punctuation",
+          "distance": 17,
+          "templateId": "qg_p18_p18_speech_punctuation_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 36,
+          "mode": "trouble",
+          "focusConceptId": "speech_punctuation",
+          "distance": 13,
+          "templateId": "qg_p18_p15_speech_punctuation_speech_transfer",
+          "promptKey": "which answer keeps the speaker/reporter and punctuation correct?"
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "apostrophes_possession",
+      "steps": 40,
+      "uniqueTemplates": 27,
+      "uniquePrompts": 40,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p16_apostrophes_possession_singular_plural_possession": 3,
+        "qg_p18_p17_apostrophes_possession_misconception_repair": 3,
+        "qg_p18_p17_apostrophes_possession_precision_choice": 3,
+        "qg_p18_p15_apostrophes_possession_possession_table": 2,
+        "qg_p18_p17_apostrophes_possession_transfer_apply": 2,
+        "qg_p18_p17_apostrophes_possession_written_reason": 2,
+        "qg_p18_p18_apostrophes_possession_application_transfer": 2,
+        "qg_p18_p18_apostrophes_possession_diagnostic_identify": 2,
+        "qg_p18_p18_apostrophes_possession_explain_reasoning": 2,
+        "qg_p3_apostrophe_possession_explain": 2,
+        "apostrophe_possession_choice": 1,
+        "proc_apostrophe_possession_choice": 1
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 14,
+        "classify": 5,
+        "explain": 12,
+        "fix": 5,
+        "rewrite": 2
+      },
+      "violationCount": 0,
+      "warningCount": 0,
+      "violations": [],
+      "warnings": []
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "boundary_punctuation",
+      "steps": 40,
+      "uniqueTemplates": 25,
+      "uniquePrompts": 36,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_boundary_punctuation_boundary_transfer": 3,
+        "proc_colon_list_fix": 2,
+        "qg_p18_p15_boundary_punctuation_boundary_fix": 2,
+        "qg_p18_p15_boundary_punctuation_boundary_label": 2,
+        "qg_p18_p16_boundary_punctuation_choose_correct_boundary_sentence": 2,
+        "qg_p18_p16_boundary_punctuation_semicolon_or_comma_splice": 2,
+        "qg_p18_p17_boundary_punctuation_misconception_repair": 2,
+        "qg_p18_p17_boundary_punctuation_precision_choice": 2,
+        "qg_p18_p17_boundary_punctuation_transfer_apply": 2,
+        "qg_p18_p18_boundary_punctuation_application_transfer": 2,
+        "qg_p18_p18_boundary_punctuation_explain_reasoning": 2,
+        "qg_p18_p18_boundary_punctuation_sat_table_classification": 2
+      },
+      "questionTypeCounts": {
+        "build": 2,
+        "choose": 13,
+        "classify": 3,
+        "explain": 11,
+        "fix": 9,
+        "identify": 2
+      },
+      "violationCount": 0,
+      "warningCount": 4,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 20,
+          "mode": "trouble",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 17,
+          "templateId": "qg_p18_p15_boundary_punctuation_boundary_transfer",
+          "promptKey": "which sentence uses boundary punctuation most precisely?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 26,
+          "mode": "trouble",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 15,
+          "templateId": "qg_p18_p18_boundary_punctuation_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 33,
+          "mode": "trouble",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 13,
+          "templateId": "qg_p18_p15_boundary_punctuation_boundary_transfer",
+          "promptKey": "which sentence uses boundary punctuation most precisely?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 37,
+          "mode": "trouble",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 27,
+          "templateId": "qg_p18_p16_boundary_punctuation_choose_correct_boundary_sentence",
+          "promptKey": "which sentence uses a colon correctly?"
+        }
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focusConceptId": "hyphen_ambiguity",
+      "steps": 40,
+      "uniqueTemplates": 24,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p16_hyphen_ambiguity_hyphen_function_choice": 3,
+        "proc3_hyphen_fix_meaning": 2,
+        "qg_p18_p15_hyphen_ambiguity_hyphen_choice": 2,
+        "qg_p18_p15_hyphen_ambiguity_hyphen_transfer": 2,
+        "qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning": 2,
+        "qg_p18_p16_hyphen_ambiguity_explain_hyphen_meaning": 2,
+        "qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading": 2,
+        "qg_p18_p17_hyphen_ambiguity_misconception_repair": 2,
+        "qg_p18_p17_hyphen_ambiguity_precision_choice": 2,
+        "qg_p18_p18_apostrophes_possession_hyphen_ambiguity_possession_hyphen_precision": 2,
+        "qg_p18_p18_hyphen_ambiguity_application_transfer": 2,
+        "qg_p18_p18_hyphen_ambiguity_diagnostic_identify": 2
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 20,
+        "classify": 3,
+        "explain": 10,
+        "fix": 6
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 37,
+          "mode": "trouble",
+          "focusConceptId": "hyphen_ambiguity",
+          "distance": 34,
+          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_transfer",
+          "promptKey": "which phrase avoids ambiguity?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "sentence_functions",
+      "steps": 40,
+      "uniqueTemplates": 22,
+      "uniquePrompts": 36,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc3_sentence_function_choice": 3,
+        "qg_p18_p15_sentence_functions_explain_function": 3,
+        "qg_p18_p15_sentence_functions_function_contrast": 3,
+        "qg_p18_p18_sentence_functions_diagnostic_identify": 3,
+        "qg_p18_p18_sentence_functions_precision_repair_or_rewrite": 3,
+        "qg_p18_p15_sentence_functions_punctuate_by_function": 2,
+        "qg_p18_p15_sentence_functions_sat_style_function": 2,
+        "qg_p18_p16_sentence_functions_exclamation_not_excited_statement": 2,
+        "qg_p18_p16_sentence_functions_punctuation_vs_function_table": 2,
+        "qg_p18_p17_sentence_functions_precision_choice": 2,
+        "qg_p18_p18_sentence_functions_explain_reasoning": 2,
+        "qg_p18_p18_sentence_functions_sat_table_classification": 2
+      },
+      "questionTypeCounts": {
+        "choose": 13,
+        "classify": 8,
+        "explain": 8,
+        "fix": 5,
+        "identify": 6
+      },
+      "violationCount": 0,
+      "warningCount": 4,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 20,
+          "mode": "satsset",
+          "focusConceptId": "sentence_functions",
+          "distance": 14,
+          "templateId": "proc3_sentence_function_choice",
+          "promptKey": "which sentence is a statement?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 26,
+          "mode": "satsset",
+          "focusConceptId": "sentence_functions",
+          "distance": 17,
+          "templateId": "qg_p18_p16_sentence_functions_punctuation_vs_function_table",
+          "promptKey": "tick one box in each row to classify the sentence function."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "satsset",
+          "focusConceptId": "sentence_functions",
+          "distance": 22,
+          "templateId": "qg_p18_p18_sentence_functions_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "satsset",
+          "focusConceptId": "sentence_functions",
+          "distance": 18,
+          "templateId": "proc3_sentence_function_choice",
+          "promptKey": "which sentence is a statement?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "word_classes",
+      "steps": 40,
+      "uniqueTemplates": 21,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_word_classes_word_class_sort": 3,
+        "qg_p18_p16_word_classes_edge_word_class_transfer": 3,
+        "qg_p18_p17_word_classes_precision_choice": 3,
+        "qg_p18_p18_word_classes_explain_reasoning": 3,
+        "proc3_word_class_contrast_choice": 2,
+        "qg_p18_p15_word_classes_explain_word_class": 2,
+        "qg_p18_p15_word_classes_target_word_class": 2,
+        "qg_p18_p15_word_classes_word_class_transfer": 2,
+        "qg_p18_p16_word_classes_distractor_reason_choice": 2,
+        "qg_p18_p16_word_classes_multi_token_classify_table": 2,
+        "qg_p18_p16_word_classes_pick_all_target_class": 2,
+        "qg_p18_p17_word_classes_examiner_trap_contrast": 2
+      },
+      "questionTypeCounts": {
+        "choose": 14,
+        "classify": 8,
+        "explain": 8,
+        "fix": 2,
+        "identify": 8
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "satsset",
+          "focusConceptId": "word_classes",
+          "distance": 34,
+          "templateId": "qg_p18_p16_word_classes_multi_token_classify_table",
+          "promptKey": "classify each underlined word by its job in the sentence."
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "noun_phrases",
+      "steps": 40,
+      "uniqueTemplates": 21,
+      "uniquePrompts": 34,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p14_expanded_noun_phrases_mixed_transfer": 3,
+        "qg_p18_p15_noun_phrases_np_not_clause": 3,
+        "qg_p4_word_class_noun_phrase_transfer": 3,
+        "qg_p14_expanded_noun_phrases_diagnostic_choice": 2,
+        "qg_p18_p15_noun_phrases_explain_np": 2,
+        "qg_p18_p15_noun_phrases_head_noun": 2,
+        "qg_p18_p15_noun_phrases_identify_expanded_np": 2,
+        "qg_p18_p16_noun_phrases_expanded_or_not_choice": 2,
+        "qg_p18_p16_noun_phrases_head_noun_identify": 2,
+        "qg_p18_p16_noun_phrases_noun_phrase_vs_clause": 2,
+        "qg_p18_p17_noun_phrases_precision_choice": 2,
+        "qg_p18_p17_noun_phrases_table_classify": 2
+      },
+      "questionTypeCounts": {
+        "choose": 19,
+        "classify": 9,
+        "explain": 8,
+        "identify": 4
+      },
+      "violationCount": 0,
+      "warningCount": 6,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 7,
+          "mode": "satsset",
+          "focusConceptId": "noun_phrases",
+          "distance": 4,
+          "templateId": "expanded_noun_phrase_choice",
+          "promptKey": "which option is an expanded noun phrase?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 17,
+          "mode": "satsset",
+          "focusConceptId": "noun_phrases",
+          "distance": 13,
+          "templateId": "qg_p18_p15_noun_phrases_np_not_clause",
+          "promptKey": "which answer is a noun phrase rather than a clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "satsset",
+          "focusConceptId": "noun_phrases",
+          "distance": 15,
+          "templateId": "qg_p18_p18_noun_phrases_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 31,
+          "mode": "satsset",
+          "focusConceptId": "noun_phrases",
+          "distance": 24,
+          "templateId": "qg_p18_p15_noun_phrases_identify_expanded_np",
+          "promptKey": "which option is an expanded noun phrase?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 35,
+          "mode": "satsset",
+          "focusConceptId": "noun_phrases",
+          "distance": 14,
+          "templateId": "qg_p18_p17_noun_phrases_table_classify",
+          "promptKey": "classify each row for the noun phrases focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 37,
+          "mode": "satsset",
+          "focusConceptId": "noun_phrases",
+          "distance": 20,
+          "templateId": "qg_p18_p15_noun_phrases_np_not_clause",
+          "promptKey": "which answer is a noun phrase rather than a clause?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "adverbials",
+      "steps": 40,
+      "uniqueTemplates": 23,
+      "uniquePrompts": 37,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_adverbials_explain_fronted_adv": 3,
+        "qg_p18_p15_adverbials_identify_fronted_adv": 3,
+        "qg_p18_p18_adverbials_sat_table_classification": 3,
+        "proc_fronted_adverbial_fix": 2,
+        "qg_p14_fronted_adverbials_diagnostic_choice": 2,
+        "qg_p14_fronted_adverbials_explain_why": 2,
+        "qg_p18_p15_adverbials_adverbial_transfer": 2,
+        "qg_p18_p15_adverbials_fronted_adverbial_comma": 2,
+        "qg_p18_p16_adverbials_adverbial_or_not": 2,
+        "qg_p18_p16_adverbials_fronted_adverbial_type": 2,
+        "qg_p18_p16_adverbials_fronted_comma_fix": 2,
+        "qg_p21_adverbials_closed_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "choose": 16,
+        "classify": 6,
+        "explain": 9,
+        "fix": 6,
+        "identify": 3
+      },
+      "violationCount": 0,
+      "warningCount": 3,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 22,
+          "mode": "satsset",
+          "focusConceptId": "adverbials",
+          "distance": 22,
+          "templateId": "qg_p18_p18_adverbials_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 29,
+          "mode": "satsset",
+          "focusConceptId": "adverbials",
+          "distance": 16,
+          "templateId": "qg_p18_p15_adverbials_adverbial_transfer",
+          "promptKey": "which sentence uses a fronted adverbial correctly?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "satsset",
+          "focusConceptId": "adverbials",
+          "distance": 17,
+          "templateId": "qg_p18_p18_adverbials_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "clauses",
+      "steps": 40,
+      "uniqueTemplates": 22,
+      "uniquePrompts": 36,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_clauses_clause_transfer": 3,
+        "qg_p18_p15_clauses_explain_sub_clause": 3,
+        "qg_p18_p15_clauses_identify_sub_clause": 3,
+        "qg_p14_subordinate_clauses_diagnostic_choice": 2,
+        "qg_p14_subordinate_clauses_explain_why": 2,
+        "qg_p14_subordinate_clauses_mixed_transfer": 2,
+        "qg_p18_p17_clauses_precision_choice": 2,
+        "qg_p18_p17_clauses_table_classify": 2,
+        "qg_p18_p18_clauses_diagnostic_identify": 2,
+        "qg_p18_p18_clauses_explain_reasoning": 2,
+        "qg_p18_p18_clauses_precision_repair_or_rewrite": 2,
+        "qg_p18_p18_clauses_sat_table_classification": 2
+      },
+      "questionTypeCounts": {
+        "choose": 17,
+        "classify": 5,
+        "explain": 11,
+        "fix": 2,
+        "identify": 5
+      },
+      "violationCount": 0,
+      "warningCount": 4,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 25,
+          "mode": "satsset",
+          "focusConceptId": "clauses",
+          "distance": 19,
+          "templateId": "qg_p18_p15_clauses_clause_transfer",
+          "promptKey": "which sentence has a subordinate clause followed by a main clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 29,
+          "mode": "satsset",
+          "focusConceptId": "clauses",
+          "distance": 16,
+          "templateId": "qg_p18_p18_clauses_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 32,
+          "mode": "satsset",
+          "focusConceptId": "clauses",
+          "distance": 28,
+          "templateId": "qg_p18_p17_clauses_table_classify",
+          "promptKey": "classify each row for the clauses focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "satsset",
+          "focusConceptId": "clauses",
+          "distance": 13,
+          "templateId": "qg_p18_p15_clauses_clause_transfer",
+          "promptKey": "which sentence has a subordinate clause followed by a main clause?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "relative_clauses",
+      "steps": 40,
+      "uniqueTemplates": 21,
+      "uniquePrompts": 37,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_relative_clauses_explain_relative_clause": 3,
+        "qg_p18_p16_relative_clauses_complete_with_relative_clause": 3,
+        "qg_p18_p16_relative_clauses_relative_or_time_clause": 3,
+        "qg_p18_p18_relative_clauses_explain_reasoning": 3,
+        "qg_p21_relative_clauses_explanation_choice_variety": 3,
+        "proc2_relative_clause_choice": 2,
+        "qg_p18_p15_relative_clauses_identify_relative_clause": 2,
+        "qg_p18_p16_relative_clauses_noun_linked_by_relative": 2,
+        "qg_p18_p17_relative_clauses_table_classify": 2,
+        "qg_p18_p18_relative_clauses_diagnostic_identify": 2,
+        "qg_p18_p18_relative_clauses_precision_repair_or_rewrite": 2,
+        "qg_p21_relative_clauses_closed_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "build": 1,
+        "choose": 12,
+        "classify": 6,
+        "explain": 11,
+        "fill": 1,
+        "fix": 2,
+        "identify": 7
+      },
+      "violationCount": 0,
+      "warningCount": 3,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 12,
+          "mode": "satsset",
+          "focusConceptId": "relative_clauses",
+          "distance": 10,
+          "templateId": "proc2_relative_clause_choice",
+          "promptKey": "which sentence contains a relative clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 33,
+          "mode": "satsset",
+          "focusConceptId": "relative_clauses",
+          "distance": 21,
+          "templateId": "proc2_relative_clause_choice",
+          "promptKey": "which sentence contains a relative clause?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "satsset",
+          "focusConceptId": "relative_clauses",
+          "distance": 26,
+          "templateId": "qg_p18_p17_relative_clauses_table_classify",
+          "promptKey": "classify each row for the relative clauses focus."
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "tense_aspect",
+      "steps": 40,
+      "uniqueTemplates": 21,
+      "uniquePrompts": 40,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_tense_aspect_choose_tense_form": 3,
+        "qg_p18_p18_tense_aspect_diagnostic_identify": 3,
+        "proc2_tense_aspect_choice": 2,
+        "qg_p14_tense_aspect_explain_why": 2,
+        "qg_p14_tense_aspect_mixed_transfer": 2,
+        "qg_p18_p15_tense_aspect_explain_tense": 2,
+        "qg_p18_p15_tense_aspect_tense_editing": 2,
+        "qg_p18_p15_tense_aspect_tense_near_miss": 2,
+        "qg_p18_p16_tense_aspect_choose_best_verb_form": 2,
+        "qg_p18_p16_tense_aspect_spot_tense_shift_error": 2,
+        "qg_p18_p16_tense_aspect_timeline_order_choice": 2,
+        "qg_p18_p17_tense_aspect_examiner_trap_contrast": 2
+      },
+      "questionTypeCounts": {
+        "choose": 18,
+        "classify": 2,
+        "explain": 8,
+        "fill": 10,
+        "fix": 2
+      },
+      "violationCount": 0,
+      "warningCount": 0,
+      "violations": [],
+      "warnings": []
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "standard_english",
+      "steps": 40,
+      "uniqueTemplates": 23,
+      "uniquePrompts": 33,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_standard_english_standard_pairs": 3,
+        "qg_p18_p18_standard_english_diagnostic_identify": 3,
+        "qg_p21_standard_english_explanation_choice_variety": 3,
+        "proc2_standard_english_choice": 2,
+        "qg_p14_standard_english_constructed_rewrite": 2,
+        "qg_p14_standard_english_diagnostic_choice": 2,
+        "qg_p14_standard_english_mixed_transfer": 2,
+        "qg_p18_p15_standard_english_explain_standard": 2,
+        "qg_p18_p15_standard_english_standard_choice": 2,
+        "qg_p18_p15_standard_english_standard_fix": 2,
+        "qg_p18_p16_standard_english_context_formal_standard": 2,
+        "qg_p18_p17_standard_english_table_classify": 2
+      },
+      "questionTypeCounts": {
+        "choose": 21,
+        "classify": 7,
+        "explain": 8,
+        "fix": 2,
+        "rewrite": 2
+      },
+      "violationCount": 0,
+      "warningCount": 7,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 9,
+          "mode": "satsset",
+          "focusConceptId": "standard_english",
+          "distance": 8,
+          "templateId": "qg_p21_standard_english_closed_choice_variety",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 21,
+          "mode": "satsset",
+          "focusConceptId": "standard_english",
+          "distance": 14,
+          "templateId": "qg_p18_p16_standard_english_context_formal_standard",
+          "promptKey": "which version should be used in a school report?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 23,
+          "mode": "satsset",
+          "focusConceptId": "standard_english",
+          "distance": 14,
+          "templateId": "qg_p21_standard_english_closed_choice_variety",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 26,
+          "mode": "satsset",
+          "focusConceptId": "standard_english",
+          "distance": 3,
+          "templateId": "qg_p18_p16_standard_english_choose_standard_sentence",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "satsset",
+          "focusConceptId": "standard_english",
+          "distance": 4,
+          "templateId": "qg_p18_p15_standard_english_standard_choice",
+          "promptKey": "which sentence uses standard english?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 31,
+          "mode": "satsset",
+          "focusConceptId": "standard_english",
+          "distance": 25,
+          "templateId": "qg_p18_p17_standard_english_table_classify",
+          "promptKey": "classify each row for the standard english focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 35,
+          "mode": "satsset",
+          "focusConceptId": "standard_english",
+          "distance": 23,
+          "templateId": "proc2_standard_english_choice",
+          "promptKey": "which sentence is written in standard english?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "pronouns_cohesion",
+      "steps": 40,
+      "uniqueTemplates": 19,
+      "uniquePrompts": 33,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_pronoun_cohesion_choice": 3,
+        "qg_p18_p15_pronouns_cohesion_cohesion_choice": 3,
+        "qg_p18_p15_pronouns_cohesion_pronoun_referent": 3,
+        "qg_p18_p18_pronouns_cohesion_explain_reasoning": 3,
+        "qg_p21_pronouns_cohesion_explanation_choice_variety": 3,
+        "qg_p18_p15_pronouns_cohesion_cohesion_transfer": 2,
+        "qg_p18_p15_pronouns_cohesion_explain_cohesion": 2,
+        "qg_p18_p16_pronouns_cohesion_referent_identify": 2,
+        "qg_p18_p16_pronouns_cohesion_too_many_pronouns": 2,
+        "qg_p18_p17_pronouns_cohesion_precision_choice": 2,
+        "qg_p18_p18_pronouns_cohesion_diagnostic_identify": 2,
+        "qg_p18_p18_pronouns_cohesion_sat_table_classification": 2
+      },
+      "questionTypeCounts": {
+        "choose": 20,
+        "classify": 3,
+        "explain": 10,
+        "identify": 7
+      },
+      "violationCount": 0,
+      "warningCount": 7,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 23,
+          "mode": "satsset",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 14,
+          "templateId": "proc2_pronoun_cohesion_choice",
+          "promptKey": "which version keeps the meaning clearest?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 24,
+          "mode": "satsset",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 22,
+          "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_choice",
+          "promptKey": "which version is clearer and avoids awkward repetition?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 28,
+          "mode": "satsset",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 21,
+          "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_transfer",
+          "promptKey": "which sentence keeps the meaning clearest?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "satsset",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 15,
+          "templateId": "qg_p18_p18_pronouns_cohesion_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "satsset",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 15,
+          "templateId": "qg_p18_p18_pronouns_cohesion_diagnostic_identify",
+          "promptKey": "which version has the clearest pronoun cohesion?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "satsset",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 15,
+          "templateId": "proc2_pronoun_cohesion_choice",
+          "promptKey": "which version keeps the meaning clearest?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "satsset",
+          "focusConceptId": "pronouns_cohesion",
+          "distance": 15,
+          "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_choice",
+          "promptKey": "which version is clearer and avoids awkward repetition?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "steps": 40,
+      "uniqueTemplates": 20,
+      "uniquePrompts": 29,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p15_formality_formal_choice": 3,
+        "qg_p18_p16_formality_choose_formal_word": 3,
+        "qg_p18_p16_formality_least_formal_choice": 3,
+        "qg_p18_p16_formality_register_context_choice": 3,
+        "qg_p18_p17_formality_table_classify": 3,
+        "qg_formality_classify_table": 2,
+        "qg_p18_p15_formality_explain_formality": 2,
+        "qg_p18_p15_formality_formality_pair_table": 2,
+        "qg_p18_p16_formality_informal_to_formal_pair_table": 2,
+        "qg_p18_p17_formality_precision_choice": 2,
+        "qg_p18_p18_formality_diagnostic_identify": 2,
+        "qg_p21_formality_closed_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "choose": 23,
+        "classify": 10,
+        "explain": 7
+      },
+      "violationCount": 0,
+      "warningCount": 11,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 16,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 16,
+          "templateId": "qg_p18_p15_formality_formality_pair_table",
+          "promptKey": "classify each version as formal or informal."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 19,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 13,
+          "templateId": "qg_p18_p17_formality_table_classify",
+          "promptKey": "classify each row for the formality focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 20,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 15,
+          "templateId": "qg_p18_p16_formality_least_formal_choice",
+          "promptKey": "which option is least formal?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 21,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 14,
+          "templateId": "qg_p18_p16_formality_register_context_choice",
+          "promptKey": "which phrase suits a formal letter?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 24,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 23,
+          "templateId": "qg_p18_p15_formality_formal_choice",
+          "promptKey": "which version is more formal?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 16,
+          "templateId": "qg_formality_classify_table",
+          "promptKey": "classify each sentence as formal or informal."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 33,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 14,
+          "templateId": "qg_p18_p17_formality_table_classify",
+          "promptKey": "classify each row for the formality focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 35,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 15,
+          "templateId": "qg_p18_p16_formality_least_formal_choice",
+          "promptKey": "which option is least formal?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 36,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 15,
+          "templateId": "qg_p18_p16_formality_register_context_choice",
+          "promptKey": "which phrase suits a formal letter?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 38,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 14,
+          "templateId": "qg_p18_p15_formality_formal_choice",
+          "promptKey": "which version is more formal?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "satsset",
+          "focusConceptId": "formality",
+          "distance": 17,
+          "templateId": "qg_p18_p16_formality_informal_to_formal_pair_table",
+          "promptKey": "classify the word choices by register."
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "active_passive",
+      "steps": 40,
+      "uniqueTemplates": 18,
+      "uniquePrompts": 34,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_active_passive_choice": 3,
+        "qg_p18_p16_active_passive_voice_error_spot": 3,
+        "qg_p18_p17_active_passive_examiner_trap_contrast": 3,
+        "qg_p18_p17_active_passive_precision_choice": 3,
+        "qg_p18_p18_active_passive_explain_reasoning": 3,
+        "qg_p18_p18_active_passive_sat_table_classification": 3,
+        "qg_p18_p15_active_passive_explain_voice": 2,
+        "qg_p18_p15_active_passive_voice_choice": 2,
+        "qg_p18_p15_active_passive_voice_roles_table": 2,
+        "qg_p18_p15_active_passive_voice_transfer": 2,
+        "qg_p18_p16_active_passive_voice_identify": 2,
+        "qg_p18_p17_active_passive_table_classify": 2
+      },
+      "questionTypeCounts": {
+        "choose": 21,
+        "classify": 11,
+        "explain": 8
+      },
+      "violationCount": 0,
+      "warningCount": 6,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 14,
+          "mode": "satsset",
+          "focusConceptId": "active_passive",
+          "distance": 14,
+          "templateId": "qg_active_passive_choice",
+          "promptKey": "which sentence is written in the passive voice?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 22,
+          "mode": "satsset",
+          "focusConceptId": "active_passive",
+          "distance": 19,
+          "templateId": "qg_p18_p18_active_passive_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 27,
+          "mode": "satsset",
+          "focusConceptId": "active_passive",
+          "distance": 15,
+          "templateId": "qg_p18_p17_active_passive_table_classify",
+          "promptKey": "classify each row for the active passive focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "satsset",
+          "focusConceptId": "active_passive",
+          "distance": 16,
+          "templateId": "qg_active_passive_choice",
+          "promptKey": "which sentence is written in the passive voice?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 35,
+          "mode": "satsset",
+          "focusConceptId": "active_passive",
+          "distance": 13,
+          "templateId": "qg_p18_p18_active_passive_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "satsset",
+          "focusConceptId": "active_passive",
+          "distance": 23,
+          "templateId": "qg_p18_p15_active_passive_voice_transfer",
+          "promptKey": "which option has passive voice?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "subject_object",
+      "steps": 40,
+      "uniqueTemplates": 26,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p16_subject_object_find_object": 3,
+        "qg_p18_p18_subject_object_explain_reasoning": 3,
+        "proc2_subject_object_identify": 2,
+        "qg_p14_subject_object_explain_why": 2,
+        "qg_p14_subject_object_mixed_transfer": 2,
+        "qg_p18_p15_subject_object_identify_object": 2,
+        "qg_p18_p16_subject_object_opening_adverbial_trap": 2,
+        "qg_p18_p16_subject_object_subject_object_table": 2,
+        "qg_p18_p17_subject_object_examiner_trap_contrast": 2,
+        "qg_p18_p17_subject_object_table_classify": 2,
+        "qg_p18_p18_subject_object_diagnostic_identify": 2,
+        "qg_subject_object_classify_table": 2
+      },
+      "questionTypeCounts": {
+        "choose": 10,
+        "classify": 9,
+        "explain": 8,
+        "fix": 1,
+        "identify": 12
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "satsset",
+          "focusConceptId": "subject_object",
+          "distance": 24,
+          "templateId": "qg_subject_object_classify_table",
+          "promptKey": "classify each named noun phrase as the subject or object."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 31,
+          "mode": "satsset",
+          "focusConceptId": "subject_object",
+          "distance": 30,
+          "templateId": "qg_p18_p17_subject_object_table_classify",
+          "promptKey": "classify each row for the subject object focus."
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "modal_verbs",
+      "steps": 40,
+      "uniqueTemplates": 21,
+      "uniquePrompts": 39,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_modal_choice": 3,
+        "qg_modal_verb_explain": 3,
+        "qg_p18_p16_modal_verbs_choose_modal_meaning": 3,
+        "qg_p18_p17_modal_verbs_precision_choice": 3,
+        "qg_p18_p15_modal_verbs_modal_gap": 2,
+        "qg_p18_p15_modal_verbs_modal_meaning": 2,
+        "qg_p18_p15_modal_verbs_modal_strength_order": 2,
+        "qg_p18_p15_modal_verbs_modal_transfer": 2,
+        "qg_p18_p16_modal_verbs_modal_or_adverb": 2,
+        "qg_p18_p16_modal_verbs_rank_certainty_choice": 2,
+        "qg_p18_p18_modal_verbs_diagnostic_identify": 2,
+        "qg_p18_p18_modal_verbs_explain_reasoning": 2
+      },
+      "questionTypeCounts": {
+        "choose": 14,
+        "classify": 7,
+        "explain": 8,
+        "fill": 8,
+        "fix": 1,
+        "identify": 2
+      },
+      "violationCount": 0,
+      "warningCount": 1,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 30,
+          "mode": "satsset",
+          "focusConceptId": "modal_verbs",
+          "distance": 18,
+          "templateId": "qg_p18_p18_modal_verbs_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "parenthesis_commas",
+      "steps": 40,
+      "uniqueTemplates": 23,
+      "uniquePrompts": 36,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p14_parenthesis_commas_constructed_rewrite": 3,
+        "qg_p18_p18_parenthesis_commas_precision_repair_or_rewrite": 3,
+        "proc3_parenthesis_commas_fix": 2,
+        "qg_p14_parenthesis_commas_diagnostic_choice": 2,
+        "qg_p14_parenthesis_commas_explain_why": 2,
+        "qg_p14_parenthesis_commas_mixed_transfer": 2,
+        "qg_p18_p15_parenthesis_commas_parenthesis_choice": 2,
+        "qg_p18_p16_parenthesis_commas_choose_parenthetical_part": 2,
+        "qg_p18_p16_parenthesis_commas_parenthesis_or_not": 2,
+        "qg_p18_p16_parenthesis_commas_punctuation_for_parenthesis": 2,
+        "qg_p18_p17_parenthesis_commas_table_classify": 2,
+        "qg_p18_p18_parenthesis_commas_diagnostic_identify": 2
+      },
+      "questionTypeCounts": {
+        "choose": 20,
+        "classify": 4,
+        "explain": 7,
+        "fix": 7,
+        "identify": 2
+      },
+      "violationCount": 0,
+      "warningCount": 4,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 21,
+          "mode": "satsset",
+          "focusConceptId": "parenthesis_commas",
+          "distance": 18,
+          "templateId": "qg_p14_parenthesis_commas_diagnostic_choice",
+          "promptKey": "which sentence uses commas for parenthesis correctly around 'which everyone recognised at once'?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 24,
+          "mode": "satsset",
+          "focusConceptId": "parenthesis_commas",
+          "distance": 20,
+          "templateId": "qg_p18_p17_parenthesis_commas_table_classify",
+          "promptKey": "classify each row for the parenthesis commas focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "satsset",
+          "focusConceptId": "parenthesis_commas",
+          "distance": 16,
+          "templateId": "qg_p18_p18_parenthesis_commas_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 39,
+          "mode": "satsset",
+          "focusConceptId": "parenthesis_commas",
+          "distance": 16,
+          "templateId": "qg_p18_p15_parenthesis_commas_parenthesis_choice",
+          "promptKey": "which version correctly marks the parenthesis?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "speech_punctuation",
+      "steps": 40,
+      "uniqueTemplates": 25,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p14_speech_punctuation_constructed_rewrite": 3,
+        "qg_p18_p18_speech_punctuation_precision_repair_or_rewrite": 3,
+        "proc_speech_punctuation_fix": 2,
+        "qg_p14_speech_punctuation_explain_why": 2,
+        "qg_p14_speech_punctuation_mixed_transfer": 2,
+        "qg_p18_p15_speech_punctuation_explain_speech": 2,
+        "qg_p18_p16_speech_punctuation_reporting_clause_position": 2,
+        "qg_p18_p16_speech_punctuation_speech_or_indirect": 2,
+        "qg_p18_p17_speech_punctuation_examiner_trap_contrast": 2,
+        "qg_p18_p17_speech_punctuation_table_classify": 2,
+        "qg_p18_p18_speech_punctuation_diagnostic_identify": 2,
+        "qg_p21_speech_punctuation_closed_choice_variety": 2
+      },
+      "questionTypeCounts": {
+        "choose": 18,
+        "classify": 6,
+        "explain": 8,
+        "fix": 7,
+        "identify": 1
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 18,
+          "mode": "satsset",
+          "focusConceptId": "speech_punctuation",
+          "distance": 14,
+          "templateId": "qg_p18_p17_speech_punctuation_table_classify",
+          "promptKey": "classify each row for the speech punctuation focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 27,
+          "mode": "satsset",
+          "focusConceptId": "speech_punctuation",
+          "distance": 14,
+          "templateId": "qg_p18_p16_speech_punctuation_speech_or_indirect",
+          "promptKey": "which sentence is direct speech?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "apostrophes_possession",
+      "steps": 40,
+      "uniqueTemplates": 23,
+      "uniquePrompts": 37,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "qg_p18_p16_apostrophes_possession_possession_not_contraction": 3,
+        "qg_p18_p16_apostrophes_possession_singular_plural_possession": 3,
+        "qg_p18_p18_apostrophes_possession_diagnostic_identify": 3,
+        "proc_apostrophe_possession_choice": 2,
+        "qg_p18_p15_apostrophes_possession_explain_possession": 2,
+        "qg_p18_p15_apostrophes_possession_possession_transfer": 2,
+        "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe": 2,
+        "qg_p18_p16_apostrophes_possession_meaning_change_choice": 2,
+        "qg_p18_p17_apostrophes_possession_examiner_trap_contrast": 2,
+        "qg_p18_p17_apostrophes_possession_precision_choice": 2,
+        "qg_p18_p17_apostrophes_possession_table_classify": 2,
+        "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite": 2
+      },
+      "questionTypeCounts": {
+        "choose": 21,
+        "classify": 8,
+        "explain": 6,
+        "fix": 4,
+        "rewrite": 1
+      },
+      "violationCount": 0,
+      "warningCount": 3,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 18,
+          "mode": "satsset",
+          "focusConceptId": "apostrophes_possession",
+          "distance": 17,
+          "templateId": "qg_p18_p17_apostrophes_possession_table_classify",
+          "promptKey": "classify each row for the apostrophes possession focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 25,
+          "mode": "satsset",
+          "focusConceptId": "apostrophes_possession",
+          "distance": 13,
+          "templateId": "qg_p18_p16_apostrophes_possession_meaning_change_choice",
+          "promptKey": "which option changes the meaning from one owner to many owners?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 35,
+          "mode": "satsset",
+          "focusConceptId": "apostrophes_possession",
+          "distance": 30,
+          "templateId": "qg_p18_p18_apostrophes_possession_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "boundary_punctuation",
+      "steps": 40,
+      "uniqueTemplates": 21,
+      "uniquePrompts": 35,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc2_boundary_punctuation_explain": 3,
+        "qg_p18_p18_boundary_punctuation_sat_table_classification": 3,
+        "proc_colon_list_fix": 2,
+        "proc_semicolon_choice": 2,
+        "qg_p18_p15_boundary_punctuation_boundary_label": 2,
+        "qg_p18_p15_boundary_punctuation_boundary_mark_choice": 2,
+        "qg_p18_p15_boundary_punctuation_boundary_transfer": 2,
+        "qg_p18_p16_boundary_punctuation_choose_boundary_mark": 2,
+        "qg_p18_p16_boundary_punctuation_choose_correct_boundary_sentence": 2,
+        "qg_p18_p16_boundary_punctuation_semicolon_or_comma_splice": 2,
+        "qg_p18_p17_boundary_punctuation_examiner_trap_contrast": 2,
+        "qg_p18_p17_boundary_punctuation_precision_choice": 2
+      },
+      "questionTypeCounts": {
+        "choose": 22,
+        "classify": 5,
+        "explain": 7,
+        "fix": 4,
+        "identify": 2
+      },
+      "violationCount": 0,
+      "warningCount": 5,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 21,
+          "mode": "satsset",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 15,
+          "templateId": "qg_p18_p18_boundary_punctuation_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 27,
+          "mode": "satsset",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 19,
+          "templateId": "qg_p18_p17_boundary_punctuation_table_classify",
+          "promptKey": "classify each row for the boundary punctuation focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 34,
+          "mode": "satsset",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 13,
+          "templateId": "qg_p18_p18_boundary_punctuation_sat_table_classification",
+          "promptKey": "classify the target word or phrase by its grammar role."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 35,
+          "mode": "satsset",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 21,
+          "templateId": "qg_p18_p16_boundary_punctuation_choose_correct_boundary_sentence",
+          "promptKey": "which sentence uses a semicolon correctly?"
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 37,
+          "mode": "satsset",
+          "focusConceptId": "boundary_punctuation",
+          "distance": 30,
+          "templateId": "qg_p18_p15_boundary_punctuation_boundary_transfer",
+          "promptKey": "which sentence uses boundary punctuation most precisely?"
+        }
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focusConceptId": "hyphen_ambiguity",
+      "steps": 40,
+      "uniqueTemplates": 21,
+      "uniquePrompts": 38,
+      "uniqueVariants": 40,
+      "templateCounts": {
+        "proc_hyphen_ambiguity_choice": 3,
+        "qg_p18_p18_hyphen_ambiguity_diagnostic_identify": 3,
+        "qg_p21_hyphen_ambiguity_explanation_choice_variety": 3,
+        "qg_hyphen_ambiguity_explain": 2,
+        "qg_p18_p15_hyphen_ambiguity_explain_hyphen": 2,
+        "qg_p18_p15_hyphen_ambiguity_hyphen_fix": 2,
+        "qg_p18_p15_hyphen_ambiguity_hyphen_meaning": 2,
+        "qg_p18_p15_hyphen_ambiguity_hyphen_transfer": 2,
+        "qg_p18_p16_hyphen_ambiguity_choose_hyphenated_meaning": 2,
+        "qg_p18_p16_hyphen_ambiguity_fix_ambiguous_phrase": 2,
+        "qg_p18_p16_hyphen_ambiguity_hyphen_function_choice": 2,
+        "qg_p18_p16_hyphen_ambiguity_spot_ambiguous_reading": 2
+      },
+      "questionTypeCounts": {
+        "choose": 20,
+        "classify": 4,
+        "explain": 9,
+        "fix": 5,
+        "identify": 2
+      },
+      "violationCount": 0,
+      "warningCount": 2,
+      "violations": [],
+      "warnings": [
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 31,
+          "mode": "satsset",
+          "focusConceptId": "hyphen_ambiguity",
+          "distance": 25,
+          "templateId": "qg_p18_p17_hyphen_ambiguity_table_classify",
+          "promptKey": "classify each row for the hyphen ambiguity focus."
+        },
+        {
+          "type": "prompt-rhythm-repeat",
+          "step": 32,
+          "mode": "satsset",
+          "focusConceptId": "hyphen_ambiguity",
+          "distance": 18,
+          "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_transfer",
+          "promptKey": "which phrase avoids ambiguity?"
+        }
+      ]
+    }
+  ],
+  "violations": [],
+  "warnings": [
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 22,
+      "mode": "smart",
+      "focusConceptId": "sentence_functions",
+      "distance": 13,
+      "templateId": "qg_p18_p16_sentence_functions_punctuation_vs_function_table",
+      "promptKey": "tick one box in each row to classify the sentence function.",
+      "scenario": "smart:sentence_functions"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 27,
+      "mode": "smart",
+      "focusConceptId": "word_classes",
+      "distance": 19,
+      "templateId": "qg_p18_p18_word_classes_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "smart:word_classes"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 20,
+      "mode": "smart",
+      "focusConceptId": "noun_phrases",
+      "distance": 13,
+      "templateId": "qg_p18_p15_noun_phrases_identify_expanded_np",
+      "promptKey": "which option is an expanded noun phrase?",
+      "scenario": "smart:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 23,
+      "mode": "smart",
+      "focusConceptId": "noun_phrases",
+      "distance": 18,
+      "templateId": "qg_p18_p15_noun_phrases_np_not_clause",
+      "promptKey": "which answer is a noun phrase rather than a clause?",
+      "scenario": "smart:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 17,
+      "mode": "smart",
+      "focusConceptId": "adverbials",
+      "distance": 14,
+      "templateId": "qg_p18_p17_adverbials_table_classify",
+      "promptKey": "classify each row for the adverbials focus.",
+      "scenario": "smart:adverbials"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 34,
+      "mode": "smart",
+      "focusConceptId": "adverbials",
+      "distance": 26,
+      "templateId": "qg_p18_p18_adverbials_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "smart:adverbials"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 16,
+      "mode": "smart",
+      "focusConceptId": "relative_clauses",
+      "distance": 15,
+      "templateId": "proc2_relative_clause_choice",
+      "promptKey": "which sentence contains a relative clause?",
+      "scenario": "smart:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 17,
+      "mode": "smart",
+      "focusConceptId": "relative_clauses",
+      "distance": 13,
+      "templateId": "qg_p18_p17_relative_clauses_table_classify",
+      "promptKey": "classify each row for the relative clauses focus.",
+      "scenario": "smart:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 36,
+      "mode": "smart",
+      "focusConceptId": "relative_clauses",
+      "distance": 27,
+      "templateId": "qg_p18_p15_relative_clauses_relative_transfer",
+      "promptKey": "which sentence uses a relative clause?",
+      "scenario": "smart:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 37,
+      "mode": "smart",
+      "focusConceptId": "relative_clauses",
+      "distance": 21,
+      "templateId": "proc2_relative_clause_choice",
+      "promptKey": "which sentence contains a relative clause?",
+      "scenario": "smart:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 39,
+      "mode": "smart",
+      "focusConceptId": "relative_clauses",
+      "distance": 2,
+      "templateId": "relative_clause_identify",
+      "promptKey": "which sentence contains a relative clause?",
+      "scenario": "smart:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 27,
+      "mode": "smart",
+      "focusConceptId": "standard_english",
+      "distance": 27,
+      "templateId": "qg_p21_standard_english_closed_choice_variety",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "smart:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 37,
+      "mode": "smart",
+      "focusConceptId": "standard_english",
+      "distance": 19,
+      "templateId": "proc2_standard_english_choice",
+      "promptKey": "which sentence is written in standard english?",
+      "scenario": "smart:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 38,
+      "mode": "smart",
+      "focusConceptId": "standard_english",
+      "distance": 35,
+      "templateId": "qg_p18_p17_standard_english_table_classify",
+      "promptKey": "classify each row for the standard english focus.",
+      "scenario": "smart:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 22,
+      "mode": "smart",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 18,
+      "templateId": "qg_p18_p18_pronouns_cohesion_diagnostic_identify",
+      "promptKey": "which version has the clearest pronoun cohesion?",
+      "scenario": "smart:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 25,
+      "mode": "smart",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 24,
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "promptKey": "which version keeps the meaning clearest?",
+      "scenario": "smart:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 27,
+      "mode": "smart",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 19,
+      "templateId": "qg_p18_p16_pronouns_cohesion_choose_cohesive_sentence",
+      "promptKey": "which version is clearer and uses pronouns correctly?",
+      "scenario": "smart:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 31,
+      "mode": "smart",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 19,
+      "templateId": "qg_p18_p17_pronouns_cohesion_table_classify",
+      "promptKey": "classify each row for the pronouns cohesion focus.",
+      "scenario": "smart:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 39,
+      "mode": "smart",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 14,
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "promptKey": "which version keeps the meaning clearest?",
+      "scenario": "smart:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 25,
+      "mode": "smart",
+      "focusConceptId": "formality",
+      "distance": 22,
+      "templateId": "qg_p18_p17_formality_table_classify",
+      "promptKey": "classify each row for the formality focus.",
+      "scenario": "smart:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "smart",
+      "focusConceptId": "formality",
+      "distance": 23,
+      "templateId": "qg_p18_p16_formality_least_formal_choice",
+      "promptKey": "which option is least formal?",
+      "scenario": "smart:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 38,
+      "mode": "smart",
+      "focusConceptId": "formality",
+      "distance": 26,
+      "templateId": "qg_p18_p18_formality_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "smart:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 39,
+      "mode": "smart",
+      "focusConceptId": "formality",
+      "distance": 13,
+      "templateId": "qg_p18_p15_formality_formality_transfer",
+      "promptKey": "for a letter to the council, which wording is best?",
+      "scenario": "smart:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 16,
+      "mode": "smart",
+      "focusConceptId": "active_passive",
+      "distance": 14,
+      "templateId": "qg_p18_p15_active_passive_voice_transfer",
+      "promptKey": "which option has passive voice?",
+      "scenario": "smart:active_passive"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 31,
+      "mode": "smart",
+      "focusConceptId": "active_passive",
+      "distance": 15,
+      "templateId": "qg_p18_p15_active_passive_voice_transfer",
+      "promptKey": "which option has passive voice?",
+      "scenario": "smart:active_passive"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 27,
+      "mode": "smart",
+      "focusConceptId": "subject_object",
+      "distance": 13,
+      "templateId": "qg_subject_object_classify_table",
+      "promptKey": "classify each named noun phrase as the subject or object.",
+      "scenario": "smart:subject_object"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 27,
+      "mode": "smart",
+      "focusConceptId": "modal_verbs",
+      "distance": 19,
+      "templateId": "qg_p18_p17_modal_verbs_table_classify",
+      "promptKey": "classify each row for the modal verbs focus.",
+      "scenario": "smart:modal_verbs"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 23,
+      "mode": "smart",
+      "focusConceptId": "parenthesis_commas",
+      "distance": 20,
+      "templateId": "qg_p18_p15_parenthesis_commas_parenthesis_transfer",
+      "promptKey": "which sentence uses parenthesis correctly?",
+      "scenario": "smart:parenthesis_commas"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 18,
+      "mode": "smart",
+      "focusConceptId": "speech_punctuation",
+      "distance": 16,
+      "templateId": "qg_p18_p18_speech_punctuation_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "smart:speech_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 21,
+      "mode": "smart",
+      "focusConceptId": "speech_punctuation",
+      "distance": 15,
+      "templateId": "qg_p18_p16_speech_punctuation_speech_or_indirect",
+      "promptKey": "which sentence is direct speech?",
+      "scenario": "smart:speech_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 34,
+      "mode": "smart",
+      "focusConceptId": "apostrophes_possession",
+      "distance": 30,
+      "templateId": "qg_p18_p16_apostrophes_possession_meaning_change_choice",
+      "promptKey": "which option changes the meaning from one owner to many owners?",
+      "scenario": "smart:apostrophes_possession"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 23,
+      "mode": "smart",
+      "focusConceptId": "boundary_punctuation",
+      "distance": 14,
+      "templateId": "qg_p18_p15_boundary_punctuation_boundary_transfer",
+      "promptKey": "which sentence uses boundary punctuation most precisely?",
+      "scenario": "smart:boundary_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 39,
+      "mode": "smart",
+      "focusConceptId": "boundary_punctuation",
+      "distance": 18,
+      "templateId": "qg_p18_p18_boundary_punctuation_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "smart:boundary_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 17,
+      "mode": "smart",
+      "focusConceptId": "hyphen_ambiguity",
+      "distance": 13,
+      "templateId": "qg_p18_p17_hyphen_ambiguity_table_classify",
+      "promptKey": "classify each row for the hyphen ambiguity focus.",
+      "scenario": "smart:hyphen_ambiguity"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 29,
+      "mode": "trouble",
+      "focusConceptId": "sentence_functions",
+      "distance": 23,
+      "templateId": "proc3_sentence_function_choice",
+      "promptKey": "which sentence is a statement?",
+      "scenario": "trouble:sentence_functions"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 34,
+      "mode": "trouble",
+      "focusConceptId": "sentence_functions",
+      "distance": 16,
+      "templateId": "qg_p18_p18_sentence_functions_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "trouble:sentence_functions"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 29,
+      "mode": "trouble",
+      "focusConceptId": "word_classes",
+      "distance": 15,
+      "templateId": "qg_p18_p16_word_classes_multi_token_classify_table",
+      "promptKey": "classify each underlined word by its job in the sentence.",
+      "scenario": "trouble:word_classes"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 21,
+      "mode": "trouble",
+      "focusConceptId": "noun_phrases",
+      "distance": 15,
+      "templateId": "qg_p18_p17_noun_phrases_table_classify",
+      "promptKey": "classify each row for the noun phrases focus.",
+      "scenario": "trouble:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 29,
+      "mode": "trouble",
+      "focusConceptId": "noun_phrases",
+      "distance": 26,
+      "templateId": "qg_p18_p15_noun_phrases_np_not_clause",
+      "promptKey": "which answer is a noun phrase rather than a clause?",
+      "scenario": "trouble:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 31,
+      "mode": "trouble",
+      "focusConceptId": "noun_phrases",
+      "distance": 14,
+      "templateId": "qg_p18_p15_noun_phrases_identify_expanded_np",
+      "promptKey": "which option is an expanded noun phrase?",
+      "scenario": "trouble:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 34,
+      "mode": "trouble",
+      "focusConceptId": "noun_phrases",
+      "distance": 14,
+      "templateId": "qg_p18_p18_noun_phrases_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "trouble:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 36,
+      "mode": "trouble",
+      "focusConceptId": "clauses",
+      "distance": 21,
+      "templateId": "qg_p18_p17_clauses_table_classify",
+      "promptKey": "classify each row for the clauses focus.",
+      "scenario": "trouble:clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 19,
+      "mode": "trouble",
+      "focusConceptId": "relative_clauses",
+      "distance": 17,
+      "templateId": "proc2_relative_clause_choice",
+      "promptKey": "which sentence contains a relative clause?",
+      "scenario": "trouble:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 35,
+      "mode": "trouble",
+      "focusConceptId": "relative_clauses",
+      "distance": 16,
+      "templateId": "proc2_relative_clause_choice",
+      "promptKey": "which sentence contains a relative clause?",
+      "scenario": "trouble:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 38,
+      "mode": "trouble",
+      "focusConceptId": "relative_clauses",
+      "distance": 29,
+      "templateId": "qg_p21_relative_clauses_closed_choice_variety",
+      "promptKey": "which sentence uses commas for extra relative-clause information?",
+      "scenario": "trouble:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 21,
+      "mode": "trouble",
+      "focusConceptId": "tense_aspect",
+      "distance": 15,
+      "templateId": "qg_p18_p17_tense_aspect_table_classify",
+      "promptKey": "classify each row for the tense aspect focus.",
+      "scenario": "trouble:tense_aspect"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 34,
+      "mode": "trouble",
+      "focusConceptId": "tense_aspect",
+      "distance": 14,
+      "templateId": "qg_p18_p18_tense_aspect_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "trouble:tense_aspect"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 14,
+      "mode": "trouble",
+      "focusConceptId": "standard_english",
+      "distance": 5,
+      "templateId": "qg_p18_p15_standard_english_standard_choice",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "trouble:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 15,
+      "mode": "trouble",
+      "focusConceptId": "standard_english",
+      "distance": 1,
+      "templateId": "qg_p18_p16_standard_english_choose_standard_sentence",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "trouble:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 23,
+      "mode": "trouble",
+      "focusConceptId": "standard_english",
+      "distance": 8,
+      "templateId": "qg_p21_standard_english_closed_choice_variety",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "trouble:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "trouble",
+      "focusConceptId": "standard_english",
+      "distance": 7,
+      "templateId": "qg_p18_p16_standard_english_choose_standard_sentence",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "trouble:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 32,
+      "mode": "trouble",
+      "focusConceptId": "standard_english",
+      "distance": 2,
+      "templateId": "qg_p18_p15_standard_english_standard_choice",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "trouble:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 35,
+      "mode": "trouble",
+      "focusConceptId": "standard_english",
+      "distance": 23,
+      "templateId": "proc2_standard_english_choice",
+      "promptKey": "which sentence is written in standard english?",
+      "scenario": "trouble:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 38,
+      "mode": "trouble",
+      "focusConceptId": "standard_english",
+      "distance": 6,
+      "templateId": "qg_p21_standard_english_closed_choice_variety",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "trouble:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "trouble",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 26,
+      "templateId": "qg_p18_p18_pronouns_cohesion_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "trouble:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 34,
+      "mode": "trouble",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 18,
+      "templateId": "qg_p18_p18_pronouns_cohesion_diagnostic_identify",
+      "promptKey": "which version has the clearest pronoun cohesion?",
+      "scenario": "trouble:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 38,
+      "mode": "trouble",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 15,
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "promptKey": "which version keeps the meaning clearest?",
+      "scenario": "trouble:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 39,
+      "mode": "trouble",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 37,
+      "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_transfer",
+      "promptKey": "which sentence keeps the meaning clearest?",
+      "scenario": "trouble:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 17,
+      "mode": "trouble",
+      "focusConceptId": "formality",
+      "distance": 15,
+      "templateId": "qg_p18_p16_formality_least_formal_choice",
+      "promptKey": "which option is least formal?",
+      "scenario": "trouble:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 20,
+      "mode": "trouble",
+      "focusConceptId": "formality",
+      "distance": 15,
+      "templateId": "qg_p18_p16_formality_register_context_choice",
+      "promptKey": "which phrase suits a formal letter?",
+      "scenario": "trouble:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 24,
+      "mode": "trouble",
+      "focusConceptId": "formality",
+      "distance": 20,
+      "templateId": "qg_p18_p15_formality_formality_pair_table",
+      "promptKey": "classify each version as formal or informal.",
+      "scenario": "trouble:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 36,
+      "mode": "trouble",
+      "focusConceptId": "formality",
+      "distance": 29,
+      "templateId": "qg_p18_p17_formality_table_classify",
+      "promptKey": "classify each row for the formality focus.",
+      "scenario": "trouble:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "trouble",
+      "focusConceptId": "active_passive",
+      "distance": 28,
+      "templateId": "qg_active_passive_choice",
+      "promptKey": "which sentence is written in the passive voice?",
+      "scenario": "trouble:active_passive"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "trouble",
+      "focusConceptId": "subject_object",
+      "distance": 28,
+      "templateId": "qg_subject_object_classify_table",
+      "promptKey": "classify each named noun phrase as the subject or object.",
+      "scenario": "trouble:subject_object"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 24,
+      "mode": "trouble",
+      "focusConceptId": "modal_verbs",
+      "distance": 17,
+      "templateId": "qg_p18_p16_modal_verbs_meaning_transfer_choice",
+      "promptKey": "which sentence best shows possibility?",
+      "scenario": "trouble:modal_verbs"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 32,
+      "mode": "trouble",
+      "focusConceptId": "modal_verbs",
+      "distance": 13,
+      "templateId": "qg_p18_p17_modal_verbs_table_classify",
+      "promptKey": "classify each row for the modal verbs focus.",
+      "scenario": "trouble:modal_verbs"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 19,
+      "mode": "trouble",
+      "focusConceptId": "parenthesis_commas",
+      "distance": 18,
+      "templateId": "qg_p18_p15_parenthesis_commas_parenthesis_choice",
+      "promptKey": "which version correctly marks the parenthesis?",
+      "scenario": "trouble:parenthesis_commas"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "trouble",
+      "focusConceptId": "speech_punctuation",
+      "distance": 29,
+      "templateId": "qg_p18_p15_speech_punctuation_speech_choice",
+      "promptKey": "which version punctuates direct speech correctly?",
+      "scenario": "trouble:speech_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 31,
+      "mode": "trouble",
+      "focusConceptId": "speech_punctuation",
+      "distance": 16,
+      "templateId": "qg_p18_p17_speech_punctuation_table_classify",
+      "promptKey": "classify each row for the speech punctuation focus.",
+      "scenario": "trouble:speech_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 33,
+      "mode": "trouble",
+      "focusConceptId": "speech_punctuation",
+      "distance": 17,
+      "templateId": "qg_p18_p18_speech_punctuation_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "trouble:speech_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 36,
+      "mode": "trouble",
+      "focusConceptId": "speech_punctuation",
+      "distance": 13,
+      "templateId": "qg_p18_p15_speech_punctuation_speech_transfer",
+      "promptKey": "which answer keeps the speaker/reporter and punctuation correct?",
+      "scenario": "trouble:speech_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 20,
+      "mode": "trouble",
+      "focusConceptId": "boundary_punctuation",
+      "distance": 17,
+      "templateId": "qg_p18_p15_boundary_punctuation_boundary_transfer",
+      "promptKey": "which sentence uses boundary punctuation most precisely?",
+      "scenario": "trouble:boundary_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 26,
+      "mode": "trouble",
+      "focusConceptId": "boundary_punctuation",
+      "distance": 15,
+      "templateId": "qg_p18_p18_boundary_punctuation_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "trouble:boundary_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 33,
+      "mode": "trouble",
+      "focusConceptId": "boundary_punctuation",
+      "distance": 13,
+      "templateId": "qg_p18_p15_boundary_punctuation_boundary_transfer",
+      "promptKey": "which sentence uses boundary punctuation most precisely?",
+      "scenario": "trouble:boundary_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 37,
+      "mode": "trouble",
+      "focusConceptId": "boundary_punctuation",
+      "distance": 27,
+      "templateId": "qg_p18_p16_boundary_punctuation_choose_correct_boundary_sentence",
+      "promptKey": "which sentence uses a colon correctly?",
+      "scenario": "trouble:boundary_punctuation"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 37,
+      "mode": "trouble",
+      "focusConceptId": "hyphen_ambiguity",
+      "distance": 34,
+      "templateId": "qg_p18_p15_hyphen_ambiguity_hyphen_transfer",
+      "promptKey": "which phrase avoids ambiguity?",
+      "scenario": "trouble:hyphen_ambiguity"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 20,
+      "mode": "satsset",
+      "focusConceptId": "sentence_functions",
+      "distance": 14,
+      "templateId": "proc3_sentence_function_choice",
+      "promptKey": "which sentence is a statement?",
+      "scenario": "satsset:sentence_functions"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 26,
+      "mode": "satsset",
+      "focusConceptId": "sentence_functions",
+      "distance": 17,
+      "templateId": "qg_p18_p16_sentence_functions_punctuation_vs_function_table",
+      "promptKey": "tick one box in each row to classify the sentence function.",
+      "scenario": "satsset:sentence_functions"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 34,
+      "mode": "satsset",
+      "focusConceptId": "sentence_functions",
+      "distance": 22,
+      "templateId": "qg_p18_p18_sentence_functions_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "satsset:sentence_functions"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 38,
+      "mode": "satsset",
+      "focusConceptId": "sentence_functions",
+      "distance": 18,
+      "templateId": "proc3_sentence_function_choice",
+      "promptKey": "which sentence is a statement?",
+      "scenario": "satsset:sentence_functions"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 38,
+      "mode": "satsset",
+      "focusConceptId": "word_classes",
+      "distance": 34,
+      "templateId": "qg_p18_p16_word_classes_multi_token_classify_table",
+      "promptKey": "classify each underlined word by its job in the sentence.",
+      "scenario": "satsset:word_classes"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 7,
+      "mode": "satsset",
+      "focusConceptId": "noun_phrases",
+      "distance": 4,
+      "templateId": "expanded_noun_phrase_choice",
+      "promptKey": "which option is an expanded noun phrase?",
+      "scenario": "satsset:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 17,
+      "mode": "satsset",
+      "focusConceptId": "noun_phrases",
+      "distance": 13,
+      "templateId": "qg_p18_p15_noun_phrases_np_not_clause",
+      "promptKey": "which answer is a noun phrase rather than a clause?",
+      "scenario": "satsset:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "satsset",
+      "focusConceptId": "noun_phrases",
+      "distance": 15,
+      "templateId": "qg_p18_p18_noun_phrases_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "satsset:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 31,
+      "mode": "satsset",
+      "focusConceptId": "noun_phrases",
+      "distance": 24,
+      "templateId": "qg_p18_p15_noun_phrases_identify_expanded_np",
+      "promptKey": "which option is an expanded noun phrase?",
+      "scenario": "satsset:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 35,
+      "mode": "satsset",
+      "focusConceptId": "noun_phrases",
+      "distance": 14,
+      "templateId": "qg_p18_p17_noun_phrases_table_classify",
+      "promptKey": "classify each row for the noun phrases focus.",
+      "scenario": "satsset:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 37,
+      "mode": "satsset",
+      "focusConceptId": "noun_phrases",
+      "distance": 20,
+      "templateId": "qg_p18_p15_noun_phrases_np_not_clause",
+      "promptKey": "which answer is a noun phrase rather than a clause?",
+      "scenario": "satsset:noun_phrases"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 22,
+      "mode": "satsset",
+      "focusConceptId": "adverbials",
+      "distance": 22,
+      "templateId": "qg_p18_p18_adverbials_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "satsset:adverbials"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 29,
+      "mode": "satsset",
+      "focusConceptId": "adverbials",
+      "distance": 16,
+      "templateId": "qg_p18_p15_adverbials_adverbial_transfer",
+      "promptKey": "which sentence uses a fronted adverbial correctly?",
+      "scenario": "satsset:adverbials"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 39,
+      "mode": "satsset",
+      "focusConceptId": "adverbials",
+      "distance": 17,
+      "templateId": "qg_p18_p18_adverbials_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "satsset:adverbials"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 25,
+      "mode": "satsset",
+      "focusConceptId": "clauses",
+      "distance": 19,
+      "templateId": "qg_p18_p15_clauses_clause_transfer",
+      "promptKey": "which sentence has a subordinate clause followed by a main clause?",
+      "scenario": "satsset:clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 29,
+      "mode": "satsset",
+      "focusConceptId": "clauses",
+      "distance": 16,
+      "templateId": "qg_p18_p18_clauses_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "satsset:clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 32,
+      "mode": "satsset",
+      "focusConceptId": "clauses",
+      "distance": 28,
+      "templateId": "qg_p18_p17_clauses_table_classify",
+      "promptKey": "classify each row for the clauses focus.",
+      "scenario": "satsset:clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 38,
+      "mode": "satsset",
+      "focusConceptId": "clauses",
+      "distance": 13,
+      "templateId": "qg_p18_p15_clauses_clause_transfer",
+      "promptKey": "which sentence has a subordinate clause followed by a main clause?",
+      "scenario": "satsset:clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 12,
+      "mode": "satsset",
+      "focusConceptId": "relative_clauses",
+      "distance": 10,
+      "templateId": "proc2_relative_clause_choice",
+      "promptKey": "which sentence contains a relative clause?",
+      "scenario": "satsset:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 33,
+      "mode": "satsset",
+      "focusConceptId": "relative_clauses",
+      "distance": 21,
+      "templateId": "proc2_relative_clause_choice",
+      "promptKey": "which sentence contains a relative clause?",
+      "scenario": "satsset:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 39,
+      "mode": "satsset",
+      "focusConceptId": "relative_clauses",
+      "distance": 26,
+      "templateId": "qg_p18_p17_relative_clauses_table_classify",
+      "promptKey": "classify each row for the relative clauses focus.",
+      "scenario": "satsset:relative_clauses"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 9,
+      "mode": "satsset",
+      "focusConceptId": "standard_english",
+      "distance": 8,
+      "templateId": "qg_p21_standard_english_closed_choice_variety",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "satsset:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 21,
+      "mode": "satsset",
+      "focusConceptId": "standard_english",
+      "distance": 14,
+      "templateId": "qg_p18_p16_standard_english_context_formal_standard",
+      "promptKey": "which version should be used in a school report?",
+      "scenario": "satsset:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 23,
+      "mode": "satsset",
+      "focusConceptId": "standard_english",
+      "distance": 14,
+      "templateId": "qg_p21_standard_english_closed_choice_variety",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "satsset:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 26,
+      "mode": "satsset",
+      "focusConceptId": "standard_english",
+      "distance": 3,
+      "templateId": "qg_p18_p16_standard_english_choose_standard_sentence",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "satsset:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "satsset",
+      "focusConceptId": "standard_english",
+      "distance": 4,
+      "templateId": "qg_p18_p15_standard_english_standard_choice",
+      "promptKey": "which sentence uses standard english?",
+      "scenario": "satsset:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 31,
+      "mode": "satsset",
+      "focusConceptId": "standard_english",
+      "distance": 25,
+      "templateId": "qg_p18_p17_standard_english_table_classify",
+      "promptKey": "classify each row for the standard english focus.",
+      "scenario": "satsset:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 35,
+      "mode": "satsset",
+      "focusConceptId": "standard_english",
+      "distance": 23,
+      "templateId": "proc2_standard_english_choice",
+      "promptKey": "which sentence is written in standard english?",
+      "scenario": "satsset:standard_english"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 23,
+      "mode": "satsset",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 14,
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "promptKey": "which version keeps the meaning clearest?",
+      "scenario": "satsset:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 24,
+      "mode": "satsset",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 22,
+      "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_choice",
+      "promptKey": "which version is clearer and avoids awkward repetition?",
+      "scenario": "satsset:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 28,
+      "mode": "satsset",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 21,
+      "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_transfer",
+      "promptKey": "which sentence keeps the meaning clearest?",
+      "scenario": "satsset:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "satsset",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 15,
+      "templateId": "qg_p18_p18_pronouns_cohesion_sat_table_classification",
+      "promptKey": "classify the target word or phrase by its grammar role.",
+      "scenario": "satsset:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 34,
+      "mode": "satsset",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 15,
+      "templateId": "qg_p18_p18_pronouns_cohesion_diagnostic_identify",
+      "promptKey": "which version has the clearest pronoun cohesion?",
+      "scenario": "satsset:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 38,
+      "mode": "satsset",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 15,
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "promptKey": "which version keeps the meaning clearest?",
+      "scenario": "satsset:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 39,
+      "mode": "satsset",
+      "focusConceptId": "pronouns_cohesion",
+      "distance": 15,
+      "templateId": "qg_p18_p15_pronouns_cohesion_cohesion_choice",
+      "promptKey": "which version is clearer and avoids awkward repetition?",
+      "scenario": "satsset:pronouns_cohesion"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 16,
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "distance": 16,
+      "templateId": "qg_p18_p15_formality_formality_pair_table",
+      "promptKey": "classify each version as formal or informal.",
+      "scenario": "satsset:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 19,
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "distance": 13,
+      "templateId": "qg_p18_p17_formality_table_classify",
+      "promptKey": "classify each row for the formality focus.",
+      "scenario": "satsset:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 20,
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "distance": 15,
+      "templateId": "qg_p18_p16_formality_least_formal_choice",
+      "promptKey": "which option is least formal?",
+      "scenario": "satsset:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 21,
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "distance": 14,
+      "templateId": "qg_p18_p16_formality_register_context_choice",
+      "promptKey": "which phrase suits a formal letter?",
+      "scenario": "satsset:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 24,
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "distance": 23,
+      "templateId": "qg_p18_p15_formality_formal_choice",
+      "promptKey": "which version is more formal?",
+      "scenario": "satsset:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 30,
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "distance": 16,
+      "templateId": "qg_formality_classify_table",
+      "promptKey": "classify each sentence as formal or informal.",
+      "scenario": "satsset:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 33,
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "distance": 14,
+      "templateId": "qg_p18_p17_formality_table_classify",
+      "promptKey": "classify each row for the formality focus.",
+      "scenario": "satsset:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 35,
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "distance": 15,
+      "templateId": "qg_p18_p16_formality_least_formal_choice",
+      "promptKey": "which option is least formal?",
+      "scenario": "satsset:formality"
+    },
+    {
+      "type": "prompt-rhythm-repeat",
+      "step": 36,
+      "mode": "satsset",
+      "focusConceptId": "formality",
+      "distance": 15,
+      "templateId": "qg_p18_p16_formality_register_context_choice",
+      "promptKey": "which phrase suits a formal letter?",
+      "scenario": "satsset:formality"
+    }
+  ]
+}

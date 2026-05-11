@@ -1,0 +1,5 @@
+ shared/reading/content.js                      |    9 +-
+ shared/reading/metadata.js                     |   16 +-
+ shared/reading/phase5-expansion.js             | 1472 ++++++++++++++++++++++++
+ tests/reading-phase5-next1000-contract.test.js |   66 ++
+ 4 files changed, 1552 insertions(+), 11 deletions(-)

@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+ok 1 - Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+  ---
+  duration_ms: 2076.774393
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+ok 2 - Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+  ---
+  duration_ms: 1.942755
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 templates are runtime-certified and safe to schedule
+ok 3 - Grammar QG P21 templates are runtime-certified and safe to schedule
+  ---
+  duration_ms: 0.430847
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 selected-response cases mark exactly one visible option correct
+ok 4 - Grammar QG P21 selected-response cases mark exactly one visible option correct
+  ---
+  duration_ms: 162.882094
+  type: 'test'
+  ...
+# Subtest: Grammar question-generator audit covers the current template inventory
+ok 5 - Grammar question-generator audit covers the current template inventory
+  ---
+  duration_ms: 629.332113
+  type: 'test'
+  ...
+# Subtest: Grammar generated variants have stable answer-safe signatures
+ok 6 - Grammar generated variants have stable answer-safe signatures
+  ---
+  duration_ms: 514.25585
+  type: 'test'
+  ...
+# Subtest: Grammar question-generator P20 quality-recovery denominator assertions
+ok 7 - Grammar question-generator P20 quality-recovery denominator assertions
+  ---
+  duration_ms: 2304.597574
+  type: 'test'
+  ...
+# Subtest: Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+ok 8 - Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+  ---
+  duration_ms: 2161.849944
+  type: 'test'
+  ...
+# Subtest: Grammar generated variant signatures ignore choice shuffle order only
+ok 9 - Grammar generated variant signatures ignore choice shuffle order only
+  ---
+  duration_ms: 1.494565
+  type: 'test'
+  ...
+# Subtest: Grammar variant signatures are learner-visible, not internal-template, signatures
+ok 10 - Grammar variant signatures are learner-visible, not internal-template, signatures
+  ---
+  duration_ms: 0.48706
+  type: 'test'
+  ...
+# Subtest: P20E apostrophe precision repair prompt is visibly distinct from core rewrite prompt
+ok 11 - P20E apostrophe precision repair prompt is visibly distinct from core rewrite prompt
+  ---
+  duration_ms: 1.221156
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6666.700781

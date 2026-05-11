@@ -1,0 +1,132 @@
+
+> ks2-mastery@0.1.0 pretest
+> node ./scripts/preflight-test.mjs
+
+
+> ks2-mastery@0.1.0 test
+> node ./scripts/run-node-tests.mjs tests/hero-eligibility.test.js
+
+TAP version 13
+# Subtest: Spelling/Grammar/Punctuation with available providers resolve as eligible
+ok 1 - Spelling/Grammar/Punctuation with available providers resolve as eligible
+  ---
+  duration_ms: 1.758772
+  type: 'test'
+  ...
+# Subtest: Locked placeholder subjects resolve as placeholder-engine-not-ready
+ok 2 - Locked placeholder subjects resolve as placeholder-engine-not-ready
+  ---
+  duration_ms: 0.62966
+  type: 'test'
+  ...
+# Subtest: Placeholder subjects with an explicit available provider become eligible
+ok 3 - Placeholder subjects with an explicit available provider become eligible
+  ---
+  duration_ms: 0.288076
+  type: 'test'
+  ...
+# Subtest: Punctuation provider returns available:false → locked list
+ok 4 - Punctuation provider returns available:false → locked list
+  ---
+  duration_ms: 0.244206
+  type: 'test'
+  ...
+# Subtest: Provider available:false with no unavailableReason uses fallback
+ok 5 - Provider available:false with no unavailableReason uses fallback
+  ---
+  duration_ms: 0.40318
+  type: 'test'
+  ...
+# Subtest: Zero eligible subjects returns { eligible: [], locked: [...] } without throwing
+ok 6 - Zero eligible subjects returns { eligible: [], locked: [...] } without throwing
+  ---
+  duration_ms: 0.220306
+  type: 'test'
+  ...
+# Subtest: All six subjects explicitly unavailable produces zero eligible
+ok 7 - All six subjects explicitly unavailable produces zero eligible
+  ---
+  duration_ms: 0.766858
+  type: 'test'
+  ...
+# Subtest: Provider snapshot is null → locked with no-provider-registered
+ok 8 - Provider snapshot is null → locked with no-provider-registered
+  ---
+  duration_ms: 0.285545
+  type: 'test'
+  ...
+# Subtest: Provider snapshot is undefined → locked with no-provider-registered
+ok 9 - Provider snapshot is undefined → locked with no-provider-registered
+  ---
+  duration_ms: 0.78942
+  type: 'test'
+  ...
+# Subtest: Missing key entirely → locked with no-provider-registered for ready subjects
+ok 10 - Missing key entirely → locked with no-provider-registered for ready subjects
+  ---
+  duration_ms: 0.831866
+  type: 'test'
+  ...
+# Subtest: Future subject addition requires provider snapshot, not eligibility code change
+ok 11 - Future subject addition requires provider snapshot, not eligibility code change
+  ---
+  duration_ms: 0.482274
+  type: 'test'
+  ...
+# Subtest: Provider returns available:true but zero envelopes → locked with no-envelopes-available
+ok 12 - Provider returns available:true but zero envelopes → locked with no-envelopes-available
+  ---
+  duration_ms: 0.298976
+  type: 'test'
+  ...
+# Subtest: Provider returns available:true with non-array envelopes → locked
+ok 13 - Provider returns available:true with non-array envelopes → locked
+  ---
+  duration_ms: 2.033529
+  type: 'test'
+  ...
+# Subtest: resolveEligibility with null input does not throw
+ok 14 - resolveEligibility with null input does not throw
+  ---
+  duration_ms: 0.128939
+  type: 'test'
+  ...
+# Subtest: resolveEligibility with undefined input does not throw
+ok 15 - resolveEligibility with undefined input does not throw
+  ---
+  duration_ms: 0.091676
+  type: 'test'
+  ...
+# Subtest: Result objects are frozen
+ok 16 - Result objects are frozen
+  ---
+  duration_ms: 0.104857
+  type: 'test'
+  ...
+# Subtest: Eligible reason falls back to worker-command-ready when envelope has no intent
+ok 17 - Eligible reason falls back to worker-command-ready when envelope has no intent
+  ---
+  duration_ms: 0.12708
+  type: 'test'
+  ...
+# Subtest: Output entries contain exactly subjectId and reason keys
+ok 18 - Output entries contain exactly subjectId and reason keys
+  ---
+  duration_ms: 0.860722
+  type: 'test'
+  ...
+# Subtest: Full snapshot with mix of eligible and locked subjects
+ok 19 - Full snapshot with mix of eligible and locked subjects
+  ---
+  duration_ms: 0.187569
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 163.894263
