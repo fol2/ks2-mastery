@@ -1,0 +1,158 @@
+
+> ks2-mastery@0.1.0 smoke:production:grammar
+> node ./scripts/grammar-production-smoke.mjs --out=docs\plans\james\hotfixes\2. grammar-05102302-validation-audit-hotfix-package\validation\production-ready-grammar-production-smoke-2026-05-11.json
+
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "accountId": "demo-Izh-mhjTr56kkA",
+  "learnerId": "learner-demo-nt2lxIYjT4THug",
+  "grammar": {
+    "templateId": "qg_modal_verb_explain",
+    "summaryAnswered": 1,
+    "miniTestAnswered": 1,
+    "miniTestReviewSize": 8,
+    "repairSupportKind": "faded",
+    "aiKind": "explanation",
+    "answerSpecFamilies": [
+      "exact",
+      "multiField",
+      "punctuationPattern",
+      "manualReviewOnly"
+    ],
+    "cueAssertions": {
+      "revision": 25,
+      "targetSentenceTemplateId": "identify_words_in_sentence",
+      "nounPhraseTemplateId": "qg_p4_voice_roles_transfer"
+    },
+    "p20aHotfixCases": [
+      {
+        "id": "modal-fill-only-should",
+        "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "modal-fill-only-must-not",
+        "templateId": "qg_p18_p18_modal_verbs_precision_repair_or_rewrite",
+        "seed": 7,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "tense-verb-phrase",
+        "templateId": "qg_p18_p15_tense_aspect_tense_editing",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "semicolon-label-alias",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "parenthesis-final-full-stop-omission",
+        "templateId": "qg_p18_p16_parenthesis_commas_add_parenthesis_commas",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "possessive-terminal-apostrophe-required",
+        "templateId": "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+        "seed": 11,
+        "expectedCorrect": false,
+        "observedCorrect": false
+      }
+    ],
+    "p20bHotfixCases": [
+      {
+        "id": "semicolon-mark-for-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "colon-mark-for-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 2,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "semicolon-mark-rejected-for-colon",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 2,
+        "expectedCorrect": false,
+        "observedCorrect": false
+      },
+      {
+        "id": "em-dash-mark-for-dash-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 3,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "en-dash-mark-for-dash-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 3,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "keyboard-hyphen-mark-for-dash-label",
+        "templateId": "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "seed": 3,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "fronted-adverbial-incidental-final-full-stop-omission",
+        "templateId": "fix_fronted_adverbial",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "possessive-precision-rewrite-distinct-copy",
+        "templateId": "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      }
+    ],
+    "p20cHotfixCases": [
+      {
+        "id": "hyphen-rewrite-correct-hyphen",
+        "templateId": "proc3_hyphen_fix_meaning",
+        "seed": 1,
+        "expectedCorrect": true,
+        "observedCorrect": true
+      },
+      {
+        "id": "hyphen-rewrite-em-dash-rejected",
+        "templateId": "proc3_hyphen_fix_meaning",
+        "seed": 1,
+        "expectedCorrect": false,
+        "observedCorrect": false
+      },
+      {
+        "id": "hyphen-rewrite-en-dash-rejected",
+        "templateId": "proc3_hyphen_fix_meaning",
+        "seed": 1,
+        "expectedCorrect": false,
+        "observedCorrect": false
+      }
+    ]
+  },
+  "spelling": {
+    "progressTotal": 1,
+    "hasPromptToken": true
+  }
+}

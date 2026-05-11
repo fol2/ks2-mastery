@@ -159,13 +159,13 @@ const GRAMMAR_P20B_HOTFIX_SMOKE_ITEMS = Object.freeze([
     expectedCorrect: true,
   }),
   Object.freeze({
-    id: 'possessive-scenario-colon-copy',
+    id: 'possessive-precision-rewrite-distinct-copy',
     templateId: 'qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite',
     seed: 1,
     responseFromQuestion: true,
     expectedCorrect: true,
-    promptIncludes: 'for: one dog owns a bowl',
-    promptExcludes: 'for one dog owns a bowl',
+    promptIncludes: 'Rewrite as a precise possessive phrase: one dog owns a bowl.',
+    promptExcludes: 'Write the possessive phrase for:',
   }),
 ]);
 
