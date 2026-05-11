@@ -1,6 +1,6 @@
 a656deda566240dc5b56cb8e189468385203df71fb36cd69948d11ac01fd98d2  ./contract/reading-post-implementation-hardening-contract.md
 704045e5e90726913ead9ff15bffaecc704c6111ddd44c6c8e597b78368d306c  ./patches/001-reading-post-implementation-hardening.patch
-0ef523daef9a0d337660bd35f2b7a1d081f4d54227cc38fefd995aa7e8b7933e  ./reading-post-implementation-hardening-completion-report-2026-05-11.md
+c6f851406f55db17d423016f803cca78cb6baedc5e2ea25081e7a4d528416498  ./reading-post-implementation-hardening-completion-report-2026-05-11.md
 6d51308a6c7696d24ebecf13eaa68eabfcb8ceaef2a3a4c8c3e520b8221ccddd  ./README.md
 9e6ca697ee8cad51fd6551b0d987334cfc53ebff59c44d59239ee900af158c81  ./review/reading-post-implementation-review.md
 e756a9bdd319b24a7a010da4d1d9fff752031c59526ba3ffd845f64d1a83d4b8  ./scripts/reading-deep-audit.mjs

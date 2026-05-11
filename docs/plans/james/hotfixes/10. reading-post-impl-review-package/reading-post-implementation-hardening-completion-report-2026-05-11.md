@@ -15,7 +15,8 @@ Implemented scope:
 
 ## Commits
 
-- Runtime and evidence commit: `99eadddcd5870cb7d77b7d87c2337ed90a10182c` (`Harden Reading post-implementation review fixes`)
+- Runtime hardening commit: `99eadddcd5870cb7d77b7d87c2337ed90a10182c` (`Harden Reading post-implementation review fixes`)
+- Production evidence commit: `67e6d23e3fb8a7c1654b6b55b9a34fcbe64709d6` (`Record Reading production evidence`)
 
 ## Local Verification
 
