@@ -79,7 +79,7 @@ Logs:
 
 ## Repository integration certification
 
-The repository integration on 2026-05-11 adds live deployment certification for commit `ffcea7781ab9a65dc2f3b2b94ff9f2b1675b5463`.
+The repository integration on 2026-05-11 adds live deployment certification for runtime commit `fde9b7c14e1aff33dbb602e6c290a8d0294057e9`. The final Reasoning evidence/report packet is committed in `b3518e4a5c43900183355b8abdfdacacba9cc0e3`, which is present in `origin/main`.
 
 Additional checks run:
 
@@ -87,8 +87,13 @@ Additional checks run:
 - `npm test` — passed, 109250 tests, 0 failures, 12 skipped after review fixes and rebase onto the latest `origin/main`.
 - `npm run build` — passed after review fixes.
 - `npm run check` — passed after review fixes.
-- `git push origin HEAD:main` pre-push `npm test` — passed, 109245 tests, 0 failures, 12 skipped.
-- `npm run deploy` — passed, Cloudflare version `d6d8dc67-d893-43c7-8c18-a645f0c95029`.
+- `npm test -- tests/worker-subject-runtime.test.js tests/worker-punctuation-runtime.test.js tests/reasoning-engine-rewards.test.js tests/reasoning-production-smoke.test.js` — passed after the startup fix, 193 tests.
+- `npm test` — passed after the startup fix, 109251 tests, 0 failures, 12 skipped.
+- `npm run build` — passed after the startup fix.
+- `npm run check` — passed after the startup fix and latest-main rebase.
+- `git push origin HEAD:main` pre-push `npm test` for the runtime push — passed, 109266 tests, 0 failures, 12 skipped.
+- `git push origin HEAD:main` pre-push for the evidence/report push — docs-only hook path, tests skipped because the commit only changed documentation and evidence files.
+- `npm run deploy` — passed, Cloudflare version `f639eadf-2573-4321-94ef-6ca5ecee8368`, Worker startup time `810 ms`, production bundle audit passed.
 - `node ./scripts/reasoning-production-smoke.mjs --origin https://ks2.eugnel.uk --out "docs/plans/james/hotfixes/5. reasoning-subject-live-package/validation/production/reasoning-production-smoke-2026-05-11.json"` — passed.
 - `node ./scripts/reasoning-production-ui-smoke.mjs --origin https://ks2.eugnel.uk --out "docs/plans/james/hotfixes/5. reasoning-subject-live-package/validation/production/reasoning-production-ui-smoke-2026-05-11.json" --screenshot-dir "docs/plans/james/hotfixes/5. reasoning-subject-live-package/validation/production/screenshots"` — passed.
 
@@ -96,6 +101,7 @@ Live evidence:
 
 - `validation/production/reasoning-production-smoke-2026-05-11.json`
 - `validation/production/reasoning-production-ui-smoke-2026-05-11.json`
+- `validation/production/deploy-final-2026-05-11.log`
 - `validation/production/screenshots/reasoning-setup-1280x800.png`
 - `validation/production/screenshots/reasoning-session-1280x800.png`
 - `validation/production/screenshots/reasoning-setup-390x844.png`
@@ -106,5 +112,9 @@ Local evidence logs:
 - `validation/local/npm-test-review-fixes-2026-05-11.log`
 - `validation/local/build-review-fixes-2026-05-11.log`
 - `validation/local/check-review-fixes-2026-05-11.log`
+- `validation/local/targeted-tests-startup-fix-2026-05-11.log`
+- `validation/local/npm-test-startup-fix-2026-05-11.log`
+- `validation/local/build-startup-fix-2026-05-11.log`
+- `validation/local/check-startup-fix-2026-05-11.log`
 
 The earlier "Not certified here" section describes the original lean package only. The repository integration certification above is the live production certification for the completed repo work.

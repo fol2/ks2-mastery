@@ -4,6 +4,7 @@ Date: 2026-05-11
 Production origin: `https://ks2.eugnel.uk`
 Implementation baseline commit: `ffcea7781ab9a65dc2f3b2b94ff9f2b1675b5463`
 Reviewed runtime delivery commit: `fde9b7c14e1aff33dbb602e6c290a8d0294057e9`
+Evidence/report commit: `b3518e4a5c43900183355b8abdfdacacba9cc0e3`
 Cloudflare version: `f639eadf-2573-4321-94ef-6ca5ecee8368`
 
 ## Scope
@@ -82,8 +83,8 @@ First-pass Contract Auditor blockers were:
 - Hero live evidence was ambiguous.
 - Raw logs for the verification and deploy path were missing.
 
-The final evidence packet resolves those blockers with committed local logs, a raw deploy log, refreshed production API/UI smoke evidence, screenshots, explicit Hero disabled-state handling, and a deployed runtime commit on `origin/main`.
+The final evidence packet resolves those blockers with committed local logs, a raw deploy log, refreshed production API/UI smoke evidence, screenshots, explicit Hero disabled-state handling, and a deployed runtime commit on `origin/main`. The first final auditor re-check found two documentation consistency blockers only: `validation-summary.md` still named stale production certification values, and this report did not record evidence/report commit `b3518e4a5c43900183355b8abdfdacacba9cc0e3`. Both documentation blockers are corrected in this follow-up evidence consistency update.
 
 ## Sync Status
 
-Before this evidence-only report update, local `HEAD` and `origin/main` both resolved to `fde9b7c14e1aff33dbb602e6c290a8d0294057e9`. The production runtime is deployed from that commit. This report and refreshed evidence are documentation/evidence-only changes and do not alter runtime behaviour.
+The production runtime is deployed from `fde9b7c14e1aff33dbb602e6c290a8d0294057e9`. The final Reasoning production evidence/report packet was pushed to `origin/main` in `b3518e4a5c43900183355b8abdfdacacba9cc0e3`; local `HEAD` and `origin/main` were verified equal at that commit immediately after the push. The later evidence consistency update only corrects documentation labels and does not alter runtime behaviour or production evidence.
