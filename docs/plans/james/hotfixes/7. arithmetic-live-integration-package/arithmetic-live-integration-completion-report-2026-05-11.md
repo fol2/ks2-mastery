@@ -44,4 +44,9 @@ Key smoke fields:
 
 ## Independent review
 
-Initial independent Code Reviewer and Contract Auditor re-review found no remaining runtime blocker after the production smoke. Their closure blockers were that this evidence/report package was still untracked, the report still said review was pending, and the original Reasoning placeholder line needed an explicit rebase supersession note. This tracked revision resolves those package blockers and is being submitted for final green review before closure.
+Initial independent Code Reviewer and Contract Auditor re-review found no remaining runtime blocker after the production smoke. Their closure blockers were that this evidence/report package was still untracked, the report still said review was pending, and the original Reasoning placeholder line needed an explicit rebase supersession note.
+
+Final independent review status:
+
+- Code Reviewer: green. No blockers or advisories remained after the evidence/report package was tracked and the report/contract rebase notes were added.
+- Contract Auditor: green. No contract, evidence, or report advisories remained after the package closure artefacts were pushed.
