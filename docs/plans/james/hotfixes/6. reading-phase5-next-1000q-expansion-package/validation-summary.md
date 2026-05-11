@@ -1,12 +1,12 @@
-# Reading Phase 5 Next-1000 Expansion — Validation Summary
+# Reading Phase 5 Next-1000 Expansion - Validation Summary
 
 ## Verdict
 
-Patch is ready as a follow-on package after Reading v3 + the Phase 4 1000-question expansion.
+The Reading Phase 5 expansion is now implemented in the repository, deployed to production, and smoke-tested on `https://ks2.eugnel.uk` as Reading content version 5.
 
-It adds the next massive Reading wave while keeping the content in the shared/Worker answer-key layer and browser metadata answer-safe.
+The original package was a follow-on patch after Reading v3 and Phase 4. This repo rollout completed the production certification work that the source package explicitly left outstanding: dependency-complete verification, deployment, and live Reading production smoke evidence.
 
-## Final content counts after Phase 5
+## Final Content Counts After Phase 5
 
 ```json
 {
@@ -23,7 +23,7 @@ It adds the next massive Reading wave while keeping the content in the shared/Wo
 }
 ```
 
-## Phase 5 contribution
+## Phase 5 Contribution
 
 ```json
 {
@@ -39,7 +39,7 @@ It adds the next massive Reading wave while keeping the content in the shared/Wo
 }
 ```
 
-## Quality audit
+## Quality Audit
 
 `node scripts/audit-reading-content-quality.mjs` passed with:
 
@@ -47,29 +47,66 @@ It adds the next massive Reading wave while keeping the content in the shared/Wo
 - advisories: 0
 - duplicate normalised stem groups: 0
 - duplicate model answer groups: 0
-- repeated stem-shape advisories: 0
+- repeated Phase 5 stem-shape advisories: 0
 - missing evidence snippets: 0
 - unmarkable evidence snippets: 0
 
-The separate Phase 5 markability probe checked all Phase 5 evidence snippets against the Reading matcher and found 0 failures.
+The Phase 5 contract test also checks passage contribution counts, markability, metadata parity, browser-safe metadata, generated stem-shape diversity, and structural variety across fiction, non-fiction, and poetry entries.
 
-## Tests run
+## Local Verification
+
+Evidence logs in this package:
+
+- `validation/production-ready-node-check-phase5-expansion-2026-05-11.log`
+- `validation/production-ready-reading-content-quality-audit-2026-05-11.log`
+- `validation/production-ready-reading-focused-tests-2026-05-11.log`
+- `validation/production-ready-npm-test-2026-05-11.log`
+- `validation/production-ready-npm-check-2026-05-11.log`
+- `validation/production-ready-reading-summary-2026-05-11.json`
+
+Commands run:
 
 ```bash
 node --check shared/reading/phase5-expansion.js
-node scripts/audit-reading-content-quality.mjs --out=/mnt/data/reading-phase5-next-1000q-expansion-package/validation/phase5-reading-content-quality-audit.json
-node --test \
-  tests/reading-content-contract.test.js \
-  tests/worker-reading-runtime.test.js \
-  tests/reading-reward-events.test.js \
-  tests/hero-reading-provider.test.js \
-  tests/reading-phase5-next1000-contract.test.js
+npm run audit:reading-content
+node --test tests/reading-content-contract.test.js tests/worker-reading-runtime.test.js tests/reading-reward-events.test.js tests/hero-reading-provider.test.js tests/reading-phase5-next1000-contract.test.js
+npm test
+npm run check
 ```
 
-Focused Reading tests passed: 34/34.
+Results:
 
-Fresh apply-check from a clean ZIP extraction also passed after applying the prerequisite v3 and Phase 4 patches first.
+- Focused Reading tests: 36 passed, 0 failed.
+- Full `npm test`: 109237 passed, 0 failed, 12 skipped.
+- `npm run check`: passed, including production bundle dry-run and client bundle audit.
 
-## Known limit
+## Production Evidence
 
-This is not production-certified. GitHub production evidence currently covers Reading v3. Phase 5 still needs dependency-complete repo CI, `npm test`, `npm run check`, deployment, and a fresh Reading production smoke for content version 5.
+Deployment evidence:
+
+- `validation/production-ready-npm-deploy-2026-05-11.log`
+- Cloudflare version ID: `2de6f127-c763-4aac-b313-e79027511c3c`
+- Deployed Worker: `https://ks2-mastery.fol2hk.workers.dev`
+- Production origin audited: `https://ks2.eugnel.uk`
+
+Production smoke evidence:
+
+- `validation/production/reading-phase5-production-smoke-2026-05-11.json`
+
+Live smoke result:
+
+- `ok: true`
+- `origin: https://ks2.eugnel.uk`
+- `contentVersion: 5`
+- `passageCount: 210`
+- `questionCount: 2072`
+- `paperCount: 75`
+- `genres: fiction 71, non-fiction 71, poetry 68`
+- `longPassageCount: 166`
+- `commitSha: a6dca8dd68aa62c6dc778319f1233caa627ccc10`
+
+## Scope Expansion
+
+The package contract named content, metadata, Phase 5 expansion, and contract tests. The rollout also updated the Reading content quality audit and production smoke runner because the reviewers treated production-readiness, exact version 5 assertions, generated-content quality, and non-misleading deployment evidence as part of the same contract boundary.
+
+No unrelated feature work was added.
