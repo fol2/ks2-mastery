@@ -81,9 +81,16 @@ function tokeniseWithBoundaries(value) {
     .filter(Boolean);
 }
 
-function hasStem(tokens, stem) {
+function tokenHasStem(token, stem) {
   const s = String(stem || '').toLowerCase();
-  return tokens.some((token) => token === s || token.startsWith(s));
+  const t = String(token || '').toLowerCase();
+  if (!s || !t) return false;
+  if (t === s || t.startsWith(s)) return true;
+  return t.split('-').some((part) => part === s || part.startsWith(s));
+}
+
+function hasStem(tokens, stem) {
+  return tokens.some((token) => tokenHasStem(token, stem));
 }
 
 const LOCAL_CONTRADICTION_CUES = new Set([
@@ -240,9 +247,8 @@ function containsPhraseWithoutContradiction(text, phrase) {
 }
 
 function stemPositions(tokens, stem) {
-  const s = String(stem || '').toLowerCase();
   return tokens
-    .map((token, index) => (token === s || token.startsWith(s) ? index : -1))
+    .map((token, index) => (tokenHasStem(token, stem) ? index : -1))
     .filter((index) => index >= 0);
 }
 

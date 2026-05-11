@@ -4823,6 +4823,10 @@ export const READING_PASSAGES = Object.freeze([
                 ],
                 [
                   "season"
+                ],
+                [
+                  "planning",
+                  "management"
                 ]
               ]
             }
@@ -5346,6 +5350,14 @@ export const READING_PASSAGES = Object.freeze([
                 ],
                 [
                   "image"
+                ],
+                [
+                  "gather",
+                  "feeling"
+                ],
+                [
+                  "feel",
+                  "object"
                 ]
               ]
             }
@@ -5613,6 +5625,14 @@ export const READING_PASSAGES = Object.freeze([
                 [
                   "water",
                   "escape"
+                ],
+                [
+                  "badly",
+                  "design"
+                ],
+                [
+                  "flood",
+                  "problem"
                 ]
               ]
             }
@@ -5638,6 +5658,15 @@ export const READING_PASSAGES = Object.freeze([
                 [
                   "more",
                   "useful"
+                ],
+                [
+                  "several",
+                  "together"
+                ],
+                [
+                  "street",
+                  "handle",
+                  "water"
                 ]
               ]
             }
@@ -7836,6 +7865,12 @@ export const READING_PASSAGES = Object.freeze([
                 ],
                 [
                   "lesson"
+                ],
+                [
+                  "connect"
+                ],
+                [
+                  "explicit"
                 ]
               ]
             }
@@ -9245,6 +9280,13 @@ export const READING_PASSAGES = Object.freeze([
                 ],
                 [
                   "lighthouse"
+                ],
+                [
+                  "red",
+                  "star"
+                ],
+                [
+                  "meant"
                 ]
               ]
             }
@@ -9369,6 +9411,17 @@ export const READING_PASSAGES = Object.freeze([
             [
               "duplicate",
               "protect"
+            ],
+            [
+              "disaster",
+              "one",
+              "place"
+            ],
+            [
+              "more",
+              "than",
+              "one",
+              "country"
             ]
           ]
         },

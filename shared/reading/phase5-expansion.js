@@ -1065,6 +1065,17 @@ const PHASE5_POETRY_SETTINGS = [
 
 const PUNCT_SKILLS = ['P1', 'P2', 'P3', 'P4'];
 
+const FICTION_START_STATES = ['rushed', 'uncertain', 'worried', 'distracted', 'hesitant', 'puzzled'];
+const FICTION_END_STATES = ['patient', 'confident', 'relieved', 'focused', 'thoughtful', 'ready to help'];
+
+function fictionStart(unit, index) {
+  return unit.start || FICTION_START_STATES[index % FICTION_START_STATES.length];
+}
+
+function fictionEnd(unit, index) {
+  return unit.end || FICTION_END_STATES[index % FICTION_END_STATES.length];
+}
+
 function deepFreeze(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
     Object.freeze(value);
@@ -1091,42 +1102,44 @@ function compactId(value) {
 }
 
 function makeFictionBlocks(unit, index) {
+  const start = fictionStart(unit, index);
+  const end = fictionEnd(unit, index);
   const variants = [
     [
       `${unit.name} reached ${unit.place} before the morning had properly begun. ${unit.image}. In one pocket sat ${unit.object}; in the other was a list of jobs that should have been simple. Instead, everyone was talking about ${unit.challenge}.`,
       `At first ${unit.name} wanted to rush towards the loudest complaint, but ${unit.helper} raised one hand and said, "${unit.advice}." That made ${unit.name} slow down. Near the edge of ${unit.place}, ${unit.clue}.`,
       `The small clue changed the whole problem. ${unit.name} compared it with ${unit.object}, checked the nearby marks and asked two careful questions. The answer was not hidden far away; it had been waiting in the ordinary details that most people had stepped around.`,
-      `By midday, ${unit.evidence}. People who had been hurrying began to speak more quietly, because the place felt properly understood again. ${unit.outcome}. ${unit.name} left feeling ${unit.end}, no longer ${unit.start}.`
+      `By midday, ${unit.evidence}. People who had been hurrying began to speak more quietly, because the place felt properly understood again. ${unit.outcome}. ${unit.name} left feeling ${end}, no longer ${start}.`
     ],
     [
       `Everyone at ${unit.place} was already talking about ${unit.challenge} when ${unit.name} arrived with ${unit.object}. ${unit.image}. The morning felt ${unit.vibe}, and the easiest answer sounded too quick to be trusted.`,
       `"${unit.advice}," warned ${unit.helper}, so ${unit.name} stopped and listened to the quieter parts of the scene. The important sign was not in the crowd; it was ${unit.clue}.`,
       `${unit.name} tested the clue against ${unit.object}, checked the nearby marks and asked two careful questions. Each answer made the problem smaller. The solution had been waiting in the ordinary details, not in the loudest complaint.`,
-      `When ${unit.evidence}, the place seemed to breathe again. ${unit.outcome}. By the end, ${unit.name} felt ${unit.end} rather than ${unit.start}, and understood more about ${unit.theme}.`
+      `When ${unit.evidence}, the place seemed to breathe again. ${unit.outcome}. By the end, ${unit.name} felt ${end} rather than ${start}, and understood more about ${unit.theme}.`
     ],
     [
       `${unit.image}. That was the first thing ${unit.name} noticed at ${unit.place}, even before anyone explained ${unit.challenge}. ${unit.object} felt ordinary in one pocket, but it soon became useful.`,
       `${unit.helper} did not give the answer away. Instead, ${unit.helper} said, "${unit.advice}." The advice made ${unit.name} look again until ${unit.clue}.`,
       `The clue gave the investigation a new shape. ${unit.name} compared it with ${unit.object}, checked the nearby marks and asked two careful questions. What looked confusing had been waiting in the ordinary details all along.`,
-      `The proof came when ${unit.evidence}. After that, ${unit.outcome}. The change from ${unit.start} to ${unit.end} shows why ${unit.theme} matters in the story.`
+      `The proof came when ${unit.evidence}. After that, ${unit.outcome}. The change from ${start} to ${end} shows why ${unit.theme} matters in the story.`
     ],
     [
       `${unit.challenge} should have made ${unit.place} noisy and muddled, but ${unit.name} noticed ${unit.image}. ${unit.object} was the only thing ${unit.name} had brought that seemed useful.`,
       `A hurried search would have missed the clue. ${unit.helper} said, "${unit.advice}," and ${unit.name} began again, more slowly. Soon, ${unit.clue}.`,
       `That detail made ${unit.name} compare what was seen with ${unit.object}. After checking the nearby marks, ${unit.name} asked two careful questions. The answer was waiting in the ordinary details, where patient eyes could find it.`,
-      `${unit.evidence}, and the earlier worry changed into relief. ${unit.outcome}. The ending leaves ${unit.name} ${unit.end}, no longer ${unit.start}.`
+      `${unit.evidence}, and the earlier worry changed into relief. ${unit.outcome}. The ending leaves ${unit.name} ${end}, no longer ${start}.`
     ],
     [
       `At ${unit.place}, ${unit.name} carried ${unit.object} and tried to understand why ${unit.challenge} had unsettled everyone. ${unit.image}. The scene looked busy, but one detail did not fit.`,
       `${unit.helper}'s advice was brief: "${unit.advice}." It sent ${unit.name} away from the noise and towards the edge of the problem, where ${unit.clue}.`,
       `From there, ${unit.name} worked carefully. ${unit.object} was compared with the marks nearby, and ${unit.name} asked two careful questions. The answer was waiting in the ordinary details, held inside what others had overlooked.`,
-      `The investigation ended when ${unit.evidence}. ${unit.outcome}. The story's final feeling is ${unit.end} because ${unit.theme} has been understood.`
+      `The investigation ended when ${unit.evidence}. ${unit.outcome}. The story's final feeling is ${end} because ${unit.theme} has been understood.`
     ],
     [
-      `${unit.name} began the day feeling ${unit.start}. At ${unit.place}, ${unit.challenge} had turned a simple morning into a puzzle. ${unit.image}, and ${unit.object} rested ready in ${unit.name}'s pocket.`,
+      `${unit.name} began the day feeling ${start}. At ${unit.place}, ${unit.challenge} had turned a simple morning into a puzzle. ${unit.image}, and ${unit.object} rested ready in ${unit.name}'s pocket.`,
       `Instead of solving the problem for ${unit.name}, ${unit.helper} offered a rule: "${unit.advice}." Following it, ${unit.name} found that ${unit.clue}.`,
       `The discovery mattered because it connected to ${unit.object}. ${unit.name} checked the nearby marks and asked two careful questions. The truth had been waiting in the ordinary details, close enough for a careful reader to notice.`,
-      `By the time ${unit.evidence}, the puzzle had changed into proof. ${unit.outcome}. ${unit.name} ended the episode feeling ${unit.end}, with a clearer sense of ${unit.theme}.`
+      `By the time ${unit.evidence}, the puzzle had changed into proof. ${unit.outcome}. ${unit.name} ended the episode feeling ${end}, with a clearer sense of ${unit.theme}.`
     ]
   ];
   return variants[index % variants.length];
@@ -1214,6 +1227,8 @@ function makeFictionPassage(unit, index) {
   const baseId = `phase5_fiction_${unit.id}`;
   const q = (n) => `${baseId}_q${n}`;
   const punctSkill = PUNCT_SKILLS[index % PUNCT_SKILLS.length];
+  const start = fictionStart(unit, index);
+  const end = fictionEnd(unit, index);
   const objectWords = tokenWords(unit.object);
   const clueWords = tokenWords(unit.clue);
   const outcomeWords = tokenWords(unit.outcome);
@@ -1227,7 +1242,7 @@ function makeFictionPassage(unit, index) {
     questions: [
       {
         id: q(1), type: 'short', skill: '2b', marks: 1,
-        stem: `Before ${unit.challenge}, which pocket object helps ${unit.name} investigate ${unit.theme}?`,
+        stem: `Which pocket object does ${unit.name} carry while investigating ${unit.challenge} at ${unit.place}?`,
         check: { keywordAny: [objectWords] },
         modelAnswer: `${unit.name} carries ${unit.object}.`,
         explanation: `The opening paragraph says that ${unit.object} is in ${unit.name}'s pocket.`,
@@ -1244,7 +1259,7 @@ function makeFictionPassage(unit, index) {
       },
       {
         id: q(3), type: 'evidenceShort', skill: '2d', marks: 2,
-        stem: `How does ${unit.name} move from feeling ${unit.start} to feeling ${unit.end} while solving ${unit.challenge}? Use a short quotation or phrase as evidence.`,
+        stem: `How does ${unit.name} move from feeling ${start} to feeling ${end} while solving ${unit.challenge}? Use a short quotation or phrase as evidence.`,
         answerCheck: { keywordAny: [['slow', 'down'], ['small', 'clue'], ['careful', 'question'], clueWords] },
         evidenceCheck: { containsAny: [unit.clue, 'asked two careful questions', 'waiting in the ordinary details'] },
         answerMarks: 1,
@@ -1278,7 +1293,7 @@ function makeFictionPassage(unit, index) {
         stem: `After ${unit.outcome}, what is ${unit.name} most likely to do next when another small clue appears?`,
         check: { keywordAny: [['notice'], ['careful'], ['help'], ['check'], ['small', 'clue'], outcomeWords] },
         modelAnswer: `${unit.name} is likely to keep noticing small clues carefully when helping again.`,
-        explanation: `The ending shows ${unit.name} becoming ${unit.end} after solving the problem by noticing details.`,
+        explanation: `The ending shows ${unit.name} becoming ${end} after solving the problem by noticing details.`,
         hint: 'Base your prediction on how the character changes by the end.'
       },
       {

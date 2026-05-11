@@ -71,6 +71,13 @@ test('reading contains checks use phrase boundaries rather than character substr
   assert.equal(checkMatches('red tin', check), false);
 });
 
+test('reading keyword checks accept hyphenated compound components without weakening negation guards', () => {
+  const check = { keywordAny: [['star', 'patterned', 'mat']] };
+  assert.equal(checkMatches('Zara carries a star-patterned mat.', check), true);
+  assert.equal(checkMatches('Zara carries a star patterned mat.', check), true);
+  assert.equal(checkMatches('not a star-patterned mat', check), false);
+});
+
 test('reading phrase checks reject locally negated correct phrases', () => {
   assert.equal(checkMatches('speech marks', { containsAny: ['speech marks'] }), true);
   assert.equal(checkMatches('The answer is speech marks.', { containsAny: ['speech marks'] }), true);

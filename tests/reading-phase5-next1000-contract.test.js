@@ -105,3 +105,22 @@ test('Reading Phase 5 passages avoid a single repeated structural scaffold per g
     assert.ok(structures.size >= 6, `${genre} should use at least six opening structures`);
   }
 });
+
+
+test('Reading Phase 5 fiction retrieval stems are natural and avoid unresolved state placeholders', () => {
+  const unresolved = [];
+  for (const passage of READING_PHASE5_PASSAGES.filter((item) => item.genre === 'fiction')) {
+    (passage.blocks || []).forEach((block, index) => {
+      if (/\b(undefined|null|NaN)\b/.test(String(block || ''))) unresolved.push(`${passage.id}:block:${index}`);
+    });
+    const firstQuestion = passage.questions[0];
+    assert.match(firstQuestion.stem, /^Which pocket object does /, `${passage.id} q1 natural stem`);
+    assert.doesNotMatch(firstQuestion.stem, /^Before .* which pocket object/i, `${passage.id} q1 avoids clipped scaffold`);
+    for (const question of passage.questions || []) {
+      for (const field of ['stem', 'modelAnswer', 'explanation', 'hint']) {
+        if (/\b(undefined|null|NaN)\b/.test(String(question[field] || ''))) unresolved.push(`${passage.id}:${question.id}:${field}`);
+      }
+    }
+  }
+  assert.deepEqual(unresolved, []);
+});

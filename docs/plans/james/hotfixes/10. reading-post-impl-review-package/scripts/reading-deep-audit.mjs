@@ -1,5 +1,5 @@
-import { READING_PASSAGES, READING_TEST_PAPERS, readingContentSummary } from '../shared/reading/content.js';
-import { checkMatches, evaluateReadingQuestion } from '../worker/src/subjects/reading/engine.js';
+import { READING_PASSAGES, READING_TEST_PAPERS, readingContentSummary } from '../../../../../../shared/reading/content.js';
+import { checkMatches, evaluateReadingQuestion } from '../../../../../../worker/src/subjects/reading/engine.js';
 
 function norm(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();

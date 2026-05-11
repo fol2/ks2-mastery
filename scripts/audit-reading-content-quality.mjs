@@ -7,7 +7,7 @@ import {
   READING_SKILLS,
   readingContentSummary,
 } from '../shared/reading/content.js';
-import { checkMatches } from '../worker/src/subjects/reading/engine.js';
+import { checkMatches, evaluateReadingQuestion } from '../worker/src/subjects/reading/engine.js';
 
 function norm(value) {
   return String(value || '')
@@ -54,6 +54,7 @@ function sentenceContaining(source, snippet) {
 
 const failures = [];
 const advisories = [];
+const UNRESOLVED_TEMPLATE_RE = /\b(undefined|null|NaN)\b/;
 const questionRows = [];
 const passageIds = new Set();
 const questionIds = new Set();
@@ -71,6 +72,9 @@ for (const passage of READING_PASSAGES) {
   const sourceText = (passage.blocks || []).join(' ');
   const passageText = norm(sourceText);
   if (passageText.length < 100) failures.push({ type: 'short-passage', id: passage.id });
+  (passage.blocks || []).forEach((block, index) => {
+    if (UNRESOLVED_TEMPLATE_RE.test(String(block || ''))) failures.push({ type: 'unresolved-template-copy', id: passage.id, field: `blocks.${index}` });
+  });
   for (const question of passage.questions || []) {
     const rowId = `${passage.id}:${question.id}`;
     questionRows.push({ passage, question, rowId });
@@ -84,6 +88,20 @@ for (const passage of READING_PASSAGES) {
     if (question.modelAnswer) addGroup(duplicateModelAnswerGroups, norm(question.modelAnswer), rowId);
     const stemShape = stemShapeKey(question.stem, passage);
     addGroup(duplicateStemShapeGroups, stemShape, rowId);
+    for (const field of ['stem', 'modelAnswer', 'explanation', 'hint']) {
+      if (UNRESOLVED_TEMPLATE_RE.test(String(question[field] || ''))) failures.push({ type: 'unresolved-template-copy', rowId, field });
+    }
+    if (question.type === 'short' && question.modelAnswer && question.check && !checkMatches(question.modelAnswer, question.check)) {
+      failures.push({ type: 'model-answer-unmarkable', rowId, qType: question.type });
+    }
+    if (question.type === 'evidenceShort' && question.modelAnswer && question.evidenceCheck?.containsAny?.[0]) {
+      const result = evaluateReadingQuestion(question, { answer: question.modelAnswer, evidence: question.evidenceCheck.containsAny[0] });
+      if (result.score < question.marks) failures.push({ type: 'model-answer-unmarkable', rowId, qType: question.type, score: result.score, maxScore: question.marks });
+    }
+    if (question.type === 'open' && question.modelAnswer) {
+      const result = evaluateReadingQuestion(question, { answer: question.modelAnswer });
+      if (result.score < question.marks) failures.push({ type: 'model-answer-under-rubric', rowId, score: result.score, maxScore: question.marks });
+    }
     if (question.evidenceCheck?.containsAny) {
       for (const snippet of question.evidenceCheck.containsAny) {
         if (!passageText.includes(norm(snippet))) failures.push({ type: 'missing-evidence-snippet', rowId, snippet });

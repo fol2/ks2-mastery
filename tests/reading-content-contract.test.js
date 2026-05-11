@@ -110,6 +110,22 @@ test('reading model answers and stem shapes avoid repeated-question feel', () =>
   assert.deepEqual(duplicateStemShapes, []);
 });
 
+test('reading learner-facing copy does not leak unresolved template placeholders', () => {
+  const unresolved = [];
+  const pattern = /\b(undefined|null|NaN)\b/;
+  for (const passage of READING_PASSAGES) {
+    (passage.blocks || []).forEach((block, index) => {
+      if (pattern.test(String(block || ''))) unresolved.push(`${passage.id}:block:${index}`);
+    });
+    for (const question of passage.questions || []) {
+      for (const field of ['stem', 'modelAnswer', 'explanation', 'hint']) {
+        if (pattern.test(String(question[field] || ''))) unresolved.push(`${passage.id}:${question.id}:${field}`);
+      }
+    }
+  }
+  assert.deepEqual(unresolved, []);
+});
+
 test('reading test papers only reference existing passages and questions and sum to 50 marks', () => {
   const passageMap = new Map(READING_PASSAGES.map((passage) => [passage.id, passage]));
   for (const paper of READING_TEST_PAPERS) {
