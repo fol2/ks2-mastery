@@ -6,14 +6,15 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 4,
-  "commitSha": "a81c8692c72dc0ed975eca7b3a626aa1157a6acc",
+  "repositoryHeadSha": "5c72403c60a086b5ad02094877e9a0e3e64ef0d6",
+  "productionReportedCommitSha": null,
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-kSYEwdiMJE3OXQ",
-  "learnerId": "learner-demo-oJ7JTkJ8u2H6Yw",
+  "accountId": "demo-U5RKCDri7ga_pQ",
+  "learnerId": "learner-demo-beoZVi3xTe5pEQ",
   "immediate": {
     "revision": 2,
-    "questionId": "p4f25_underpass_violin_q2",
-    "passageId": "p4f25_underpass_violin",
+    "questionId": "p4n13_peat_bog_memory_q2",
+    "passageId": "p4n13_peat_bog_memory",
     "content": {
       "releaseId": "reading-poc-promoted-2026-05-05",
       "version": 4,
@@ -39,12 +40,13 @@
     "staleErrorCleared": true
   },
   "staleWriteGuard": {
-    "expectedSessionId": "reading_session_mp145c43_xem6w2ju",
+    "expectedSessionId": "reading_session_mp14liin_zmgnbzje",
     "expectedQuestionId": "stale-question-id",
-    "protectedQuestionId": "p4n10_cocoa_bean_route_q2",
+    "protectedQuestionId": "p4f13_compass_drawer_q2",
     "changed": false,
     "revisionUnchanged": true,
-    "persistedResponse": false
+    "staleResponsePersisted": false,
+    "protectedQuestionResponsePersisted": false
   },
-  "finishedAt": "2026-05-11T11:23:22.467Z"
+  "finishedAt": "2026-05-11T11:35:57.278Z"
 }
