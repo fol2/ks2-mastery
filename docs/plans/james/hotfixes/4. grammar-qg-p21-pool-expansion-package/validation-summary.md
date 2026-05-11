@@ -113,9 +113,9 @@ Result after CRLF normalisation fix: exit `0`, full smart-practice audit `0` fai
 
 Production deploy and smoke:
 
-- `npm run deploy`: exit `0`, Cloudflare version `af313454-1cb3-4a2e-9eb8-2edf7ab3c801`
+- `npm run deploy`: exit `0`, final Cloudflare version `5018852c-ebc9-4dc9-873d-cc0255662a67`
 - `npm run smoke:production:grammar -- --json --expected-release=grammar-qg-p21-2026-05-11 --out=reports/grammar/grammar-production-smoke-grammar-qg-p21-2026-05-11.json`: exit `0`
-- smoke result: `ok=true`, release `grammar-qg-p21-2026-05-11`, console/request/HTTP failures `0`
+- smoke result: `ok=true`, `evidenceOrigin=post-deploy`, release `grammar-qg-p21-2026-05-11`, `failureDetails=null`
 
 Grammar QG audit:
 
@@ -176,6 +176,9 @@ before comparison and is covered by `tests/grammar-qg-p20-quality-hardening.test
 - `validation/production-ready-npm-run-verify-grammar-qg-p21-after-reasoning-evidence-rebase-2026-05-11.log`
 - `validation/production-ready-npm-run-deploy-2026-05-11.log`
 - `validation/production-ready-grammar-production-smoke-p21-2026-05-11.log`
+- `validation/production-ready-npm-run-deploy-final-2026-05-11.log`
+- `validation/production-ready-grammar-production-smoke-p21-final-post-deploy-2026-05-11.log`
+- `validation/production-ready-npm-run-verify-grammar-qg-production-release-after-post-deploy-smoke-2026-05-11.log`
 - `validation/production-ready-npm-run-verify-grammar-qg-production-release-2026-05-11.log`
 - `validation/production-ready-generate-grammar-manual-expansion-after-production-release-blocker-2026-05-11.log`
 - `validation/production-ready-npm-run-verify-grammar-qg-production-release-after-manual-expansion-2026-05-11.log`

@@ -19,7 +19,7 @@ P21 release candidate:
 - local repetition audit: `0` violations, `0` warnings
 - full local suite after CRLF verifier fix: `111437` pass, `0` fail, `12` skipped
 - Cloudflare dry-run check: pass
-- production deploy: pass
+- production deploy: pass, final Cloudflare version `5018852c-ebc9-4dc9-873d-cc0255662a67`
 - production smoke: pass on `https://ks2.eugnel.uk`
 - production-release verifier: pass, `0` failures, `0` advisories
 

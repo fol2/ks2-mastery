@@ -1,3 +1,7 @@
+
+> ks2-mastery@0.1.0 smoke:production:grammar
+> node ./scripts/grammar-production-smoke.mjs --json --evidence-origin=post-deploy --expected-release=grammar-qg-p21-2026-05-11 --out=reports/grammar/grammar-production-smoke-grammar-qg-p21-2026-05-11.json
+
 {
   "ok": true,
   "releaseId": "grammar-qg-p21-2026-05-11",
