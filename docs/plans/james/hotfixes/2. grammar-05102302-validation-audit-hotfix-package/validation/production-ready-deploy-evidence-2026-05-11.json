@@ -1,0 +1,44 @@
+{
+  "ok": true,
+  "package": "grammar-05102302-validation-audit-hotfix-package",
+  "date": "2026-05-11",
+  "worktree": "D:\\Coding\\ks2-mastery\\.worktrees\\grammar-05102302-hotfix",
+  "branch": "codex/grammar-05102302-hotfix",
+  "commitSha": "421a584a3d86f7f1e5c7d49f0af1d7f0ae28e7b7",
+  "originMainShaAtDeploy": "421a584a3d86f7f1e5c7d49f0af1d7f0ae28e7b7",
+  "preDeployGates": [
+    {
+      "command": "npm test",
+      "ok": true,
+      "summaryPath": "docs/plans/james/hotfixes/2. grammar-05102302-validation-audit-hotfix-package/validation/production-ready-npm-test-final-rebased-2026-05-11.summary.log"
+    },
+    {
+      "command": "npm run check",
+      "ok": true,
+      "logPath": "docs/plans/james/hotfixes/2. grammar-05102302-validation-audit-hotfix-package/validation/production-ready-npm-run-check-final-rebased-2026-05-11.log"
+    }
+  ],
+  "deploy": {
+    "command": "npm run deploy",
+    "ok": true,
+    "cloudflareVersionId": "77de193c-f0c7-4d84-9835-d7af0edd344f",
+    "logPath": "docs/plans/james/hotfixes/2. grammar-05102302-validation-audit-hotfix-package/validation/production-ready-npm-run-deploy-final-after-gates-2026-05-11.log",
+    "productionBundleAudit": {
+      "ok": true,
+      "origin": "https://ks2.eugnel.uk",
+      "securityHeaderChecks": "5/5",
+      "cacheSplitChecks": "15/15"
+    }
+  },
+  "productionSmoke": {
+    "command": "node scripts/grammar-production-smoke.mjs --json \"--out=docs\\plans\\james\\hotfixes\\2. grammar-05102302-validation-audit-hotfix-package\\validation\\production-ready-grammar-production-smoke-final-2026-05-11.json\"",
+    "ok": true,
+    "jsonPath": "docs/plans/james/hotfixes/2. grammar-05102302-validation-audit-hotfix-package/validation/production-ready-grammar-production-smoke-final-2026-05-11.json",
+    "logPath": "docs/plans/james/hotfixes/2. grammar-05102302-validation-audit-hotfix-package/validation/production-ready-grammar-production-smoke-final-2026-05-11.log",
+    "commitSha": "421a584a3d86f7f1e5c7d49f0af1d7f0ae28e7b7"
+  },
+  "notes": [
+    "The initial final-smoke retry after deployment hit the production demo rate limit and was rerun after the retry window.",
+    "The passing production smoke evidence is the final JSON and log listed above."
+  ]
+}
