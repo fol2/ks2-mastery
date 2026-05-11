@@ -27,7 +27,9 @@ The Reading release ID remains `reading-poc-promoted-2026-05-05` while `READING_
 
 ## Deployment Evidence
 
-- Runtime commit deployed to GitHub `main`: `a81c8692c72dc0ed975eca7b3a626aa1157a6acc`.
+- GitHub `main` deployment: production-certified by live Reading behaviour on `https://ks2.eugnel.uk`.
+- Repository head used by the smoke runner: recorded in the production smoke JSON.
+- Production-reported commit SHA: not exposed by the deployed app; this report does not claim one.
 - Production smoke: `validation/production/reading-phase4-production-smoke-2026-05-11.json`.
 - Production origin: `https://ks2.eugnel.uk`.
 - Smoke result: `ok: true`.
@@ -35,7 +37,7 @@ The Reading release ID remains `reading-poc-promoted-2026-05-05` while `READING_
 - Content summary: 108 passages, 1052 questions, 41 papers, 37 fiction, 37 non-fiction, 34 poetry, 64 long passages.
 - Immediate round: full-score accepted answer.
 - Delayed paper: `paper_i`, 26 questions, 50 max score, stale section-mark error cleared.
-- Stale-write guard: stale question save did not mutate state, did not advance revision, and did not persist the stale response.
+- Stale-write guard: stale question save did not mutate state, did not advance revision, and persisted neither the stale key nor the active key.
 
 ## Review Closure
 
@@ -43,9 +45,9 @@ Initial independent code review and contract audit both returned RED. The blocke
 
 - adding production deployment and production smoke evidence;
 - updating the production smoke from version-3 counts to version-4 counts;
-- adding stale-write guard evidence to the production smoke;
+- adding stale-write guard evidence to the production smoke and tightening it to check the stale key directly;
 - documenting the release-ID decision and pinning it in the content contract test;
 - replacing stale lean-ZIP limitation wording with dependency-complete repository validation;
 - adding this completion report beside the source package.
 
-Final independent review rerun is required after this evidence commit is pushed so reviewers can validate the final repository state.
+Final independent review rerun is required after the corrected evidence commit is pushed so reviewers can validate the final repository state.

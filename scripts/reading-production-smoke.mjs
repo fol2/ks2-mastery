@@ -31,7 +31,7 @@ function argValue(name, fallback = '') {
   return found ? found.slice(prefix.length) : fallback;
 }
 
-function readSafeGitCommitSha() {
+function readSafeRepositoryHeadSha() {
   try {
     return execSync('git rev-parse HEAD', {
       encoding: 'utf8',
@@ -254,6 +254,7 @@ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
 }
 
 async function smokeStaleWriteGuard({ origin, cookie, learnerId, revision }) {
+  const staleQuestionId = 'stale-question-id';
   let step = await subjectCommand({
     origin,
     cookie,
@@ -279,25 +280,32 @@ async function smokeStaleWriteGuard({ origin, cookie, learnerId, revision }) {
     command: 'save-response',
     payload: {
       expectedSessionId: sessionId,
-      expectedQuestionId: 'stale-question-id',
+      expectedQuestionId: staleQuestionId,
       response: { answer: 'this stale write must not persist' },
     },
   });
   const guardedModel = step.payload.subjectReadModel;
-  const persistedResponse = guardedModel?.session?.responses?.[questionId]
-    || guardedModel?.session?.currentSection?.responses?.[questionId]
+  const sessionResponses = guardedModel?.session?.responses || {};
+  const sectionResponses = guardedModel?.session?.currentSection?.responses || {};
+  const stalePersistedResponse = sessionResponses[staleQuestionId]
+    || sectionResponses[staleQuestionId]
+    || null;
+  const protectedPersistedResponse = sessionResponses[questionId]
+    || sectionResponses[questionId]
     || null;
   assert.equal(step.payload?.changed, false, 'Reading stale question save unexpectedly changed learner state.');
   assert.equal(step.revision, revision, 'Reading stale question save unexpectedly advanced learner revision.');
-  assert.equal(persistedResponse, null, 'Reading stale question save persisted a response.');
+  assert.equal(stalePersistedResponse, null, 'Reading stale question save persisted a response under the stale key.');
+  assert.equal(protectedPersistedResponse, null, 'Reading stale question save persisted a response under the active key.');
 
   return {
     expectedSessionId: sessionId,
-    expectedQuestionId: 'stale-question-id',
+    expectedQuestionId: staleQuestionId,
     protectedQuestionId: questionId,
     changed: step.payload?.changed,
     revisionUnchanged: step.revision === revision,
-    persistedResponse: false,
+    staleResponsePersisted: false,
+    protectedQuestionResponsePersisted: false,
   };
 }
 
@@ -332,7 +340,8 @@ async function main() {
     origin,
     contentReleaseId: READING_CONTENT_RELEASE_ID,
     contentVersion: READING_CONTENT_VERSION,
-    commitSha: readSafeGitCommitSha(),
+    repositoryHeadSha: readSafeRepositoryHeadSha(),
+    productionReportedCommitSha: null,
     learnerFixtureType: 'demo-session',
     accountId: demo.session.accountId,
     learnerId: bootstrap.learnerId,

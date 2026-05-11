@@ -31,7 +31,7 @@ Delta:
 
 ## Quality audit
 
-`node scripts/audit-reading-content-quality.mjs --out=validation/reading-content-quality-audit.json`
+`node scripts/audit-reading-content-quality.mjs --out="docs/plans/james/hotfixes/3. reading-phase4-1000q-expansion-package/validation/production-ready-reading-content-quality-audit-2026-05-11.json"`
 
 Passed:
 
@@ -87,14 +87,15 @@ Current repository reconciliation:
 
 ## Production status
 
-Production-certified after GitHub `main` deployment:
+Production-certified after GitHub `main` deployment by live behaviour on the deployed origin:
 
-- Deployed code commit: `a81c8692c72dc0ed975eca7b3a626aa1157a6acc`
 - Production origin: `https://ks2.eugnel.uk`
 - Smoke evidence: `validation/production/reading-phase4-production-smoke-2026-05-11.json`
 - Smoke result: `ok: true`
+- Repository head used by the smoke runner: recorded in the smoke evidence as `repositoryHeadSha`
+- Production-reported commit SHA: not exposed by the deployed app; the smoke does not claim one
 - Content version: 4
 - Content summary: 108 passages, 1052 questions, 41 papers, 37 fiction, 37 non-fiction, 34 poetry, 64 long passages
 - Immediate-round result: accepted, full score
 - Delayed-paper result: `paper_i`, 26 questions, 50 max score, stale section-mark error cleared
-- Stale-write guard: stale question save changed no state, revision stayed unchanged, and no response persisted
+- Stale-write guard: stale question save changed no state, revision stayed unchanged, and persisted neither the stale key nor the active key
