@@ -43,6 +43,10 @@ const CONFIGURED_ORIGIN_VALUE = cliValue('--evidence-origin', 'repository');
 const CONFIGURED_RELEASE_ID = cliValue('--expected-release', cliValue('--release-id', GRAMMAR_CONTENT_RELEASE_ID));
 const CONFIGURED_OUT_PATH = cliValue('--out', '') || null;
 
+function shellQuoteForRecordedCommand(value) {
+  return /[\s"]/.test(value) ? `"${value.replace(/"/g, '\\"')}"` : value;
+}
+
 const GRAMMAR_SMOKE_ITEM = Object.freeze({
   templateId: 'qg_modal_verb_explain',
   seed: 7,
@@ -1234,7 +1238,7 @@ async function main() {
       'node scripts/grammar-production-smoke.mjs --json',
       `--evidence-origin=${CONFIGURED_ORIGIN_VALUE}`,
       `--expected-release=${CONFIGURED_RELEASE_ID}`,
-      ...(CONFIGURED_OUT_PATH ? [`--out=${CONFIGURED_OUT_PATH}`] : []),
+      ...(CONFIGURED_OUT_PATH ? [shellQuoteForRecordedCommand(`--out=${CONFIGURED_OUT_PATH}`)] : []),
     ].join(' ');
 
     const evidence = {

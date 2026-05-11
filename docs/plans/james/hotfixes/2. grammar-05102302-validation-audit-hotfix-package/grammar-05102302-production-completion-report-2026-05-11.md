@@ -38,7 +38,7 @@ Completed `docs/plans/james/hotfixes/2. grammar-05102302-validation-audit-hotfix
 
 - Command: `node scripts/grammar-production-smoke.mjs --json "--out=docs\plans\james\hotfixes\2. grammar-05102302-validation-audit-hotfix-package\validation\production-ready-grammar-production-smoke-final-2026-05-11.json"`
 - Result: PASS.
-- Smoke commit SHA: `421a584a3d86f7f1e5c7d49f0af1d7f0ae28e7b7`
+- Smoke runner commit SHA: `fdc707046dd2954fddfced64aaddf0ebba264576`
 - Covered normal Grammar round, mini-test, AI repair support, cue/read-aloud assertions, forbidden read-model keys, P20a/P20b/P20c hotfix cases, and Spelling smoke continuity.
   Evidence: `validation/production-ready-grammar-production-smoke-final-2026-05-11.json`
 
@@ -50,5 +50,5 @@ Completed `docs/plans/james/hotfixes/2. grammar-05102302-validation-audit-hotfix
 
 ## Sync
 
-- `origin/main` matched deployed commit `421a584a3d86f7f1e5c7d49f0af1d7f0ae28e7b7` before this evidence-only completion bundle was committed.
-- The completion bundle is documentation and evidence only; runtime deploy and production smoke evidence remain tied to `421a584a3d86f7f1e5c7d49f0af1d7f0ae28e7b7`.
+- `origin/main` matched deployed commit `421a584a3d86f7f1e5c7d49f0af1d7f0ae28e7b7` before the completion evidence bundle was committed.
+- The final production smoke was rerun from commit `fdc707046dd2954fddfced64aaddf0ebba264576` after the completion evidence bundle landed, and it passed against `https://ks2.eugnel.uk`.

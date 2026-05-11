@@ -35,7 +35,7 @@
     "ok": true,
     "jsonPath": "docs/plans/james/hotfixes/2. grammar-05102302-validation-audit-hotfix-package/validation/production-ready-grammar-production-smoke-final-2026-05-11.json",
     "logPath": "docs/plans/james/hotfixes/2. grammar-05102302-validation-audit-hotfix-package/validation/production-ready-grammar-production-smoke-final-2026-05-11.log",
-    "commitSha": "421a584a3d86f7f1e5c7d49f0af1d7f0ae28e7b7"
+    "commitSha": "fdc707046dd2954fddfced64aaddf0ebba264576"
   },
   "notes": [
     "The initial final-smoke retry after deployment hit the production demo rate limit and was rerun after the retry window.",
