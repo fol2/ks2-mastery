@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "smokeType": "reading-production",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "https://ks2.eugnel.uk",
+  "contentReleaseId": "reading-poc-promoted-2026-05-05",
+  "contentVersion": 4,
+  "commitSha": "a81c8692c72dc0ed975eca7b3a626aa1157a6acc",
+  "learnerFixtureType": "demo-session",
+  "accountId": "demo-kSYEwdiMJE3OXQ",
+  "learnerId": "learner-demo-oJ7JTkJ8u2H6Yw",
+  "immediate": {
+    "revision": 2,
+    "questionId": "p4f25_underpass_violin_q2",
+    "passageId": "p4f25_underpass_violin",
+    "content": {
+      "releaseId": "reading-poc-promoted-2026-05-05",
+      "version": 4,
+      "passageCount": 108,
+      "questionCount": 1052,
+      "paperCount": 41,
+      "skillCount": 12,
+      "genres": {
+        "fiction": 37,
+        "non-fiction": 37,
+        "poetry": 34
+      },
+      "longPassageCount": 64
+    },
+    "score": 1,
+    "maxScore": 1
+  },
+  "delayedPaper": {
+    "revision": 6,
+    "paperId": "paper_i",
+    "questionCount": 26,
+    "maxScore": 50,
+    "staleErrorCleared": true
+  },
+  "staleWriteGuard": {
+    "expectedSessionId": "reading_session_mp145c43_xem6w2ju",
+    "expectedQuestionId": "stale-question-id",
+    "protectedQuestionId": "p4n10_cocoa_bean_route_q2",
+    "changed": false,
+    "revisionUnchanged": true,
+    "persistedResponse": false
+  },
+  "finishedAt": "2026-05-11T11:23:22.467Z"
+}

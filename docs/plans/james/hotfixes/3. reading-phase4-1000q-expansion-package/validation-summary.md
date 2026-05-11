@@ -87,4 +87,14 @@ Current repository reconciliation:
 
 ## Production status
 
-Pending production certification until the merged main deployment is live and the Reading production smoke evidence is recorded.
+Production-certified after GitHub `main` deployment:
+
+- Deployed code commit: `a81c8692c72dc0ed975eca7b3a626aa1157a6acc`
+- Production origin: `https://ks2.eugnel.uk`
+- Smoke evidence: `validation/production/reading-phase4-production-smoke-2026-05-11.json`
+- Smoke result: `ok: true`
+- Content version: 4
+- Content summary: 108 passages, 1052 questions, 41 papers, 37 fiction, 37 non-fiction, 34 poetry, 64 long passages
+- Immediate-round result: accepted, full score
+- Delayed-paper result: `paper_i`, 26 questions, 50 max score, stale section-mark error cleared
+- Stale-write guard: stale question save changed no state, revision stayed unchanged, and no response persisted
