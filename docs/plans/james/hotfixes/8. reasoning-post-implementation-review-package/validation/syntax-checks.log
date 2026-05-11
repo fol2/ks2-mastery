@@ -1,0 +1,16 @@
+node --version: v22.16.0
+Checking shared/reasoning/content.js
+Checking shared/reasoning/metadata.js
+Checking worker/src/subjects/reasoning/engine.js
+Checking worker/src/subjects/reasoning/commands.js
+Checking worker/src/subjects/reasoning/read-models.js
+Checking src/subjects/reasoning/metadata.js
+Checking src/subjects/reasoning/client-read-models.js
+Checking src/subjects/reasoning/command-actions.js
+Checking src/subjects/reasoning/module.js
+Checking src/subjects/reasoning/event-hooks.js
+Checking src/platform/game/mastery/reasoning.js
+Checking worker/src/hero/providers/reasoning.js
+Checking worker/src/hero/launch-adapters/reasoning.js
+Checking tests/reasoning-content-contract.test.js
+Checking tests/reasoning-engine-rewards.test.js

@@ -1,0 +1,49 @@
+{
+  "templates": 110,
+  "checked": 2200,
+  "failures": [
+    {
+      "templateId": "fraction_error_analysis",
+      "seed": 8,
+      "type": "malformed-generated-text",
+      "itemId": "fraction_error_analysis:8"
+    },
+    {
+      "templateId": "fraction_error_analysis",
+      "seed": 9,
+      "type": "malformed-generated-text",
+      "itemId": "fraction_error_analysis:9"
+    },
+    {
+      "templateId": "reason_better_estimate",
+      "seed": 5,
+      "type": "unstable-item-id",
+      "itemId": "reason_better_estimate:28"
+    },
+    {
+      "templateId": "reason_better_estimate",
+      "seed": 10,
+      "type": "unstable-item-id",
+      "itemId": "reason_better_estimate:56"
+    },
+    {
+      "templateId": "reason_better_estimate",
+      "seed": 11,
+      "type": "unstable-item-id",
+      "itemId": "reason_better_estimate:57"
+    },
+    {
+      "templateId": "reason_better_estimate",
+      "seed": 13,
+      "type": "unstable-item-id",
+      "itemId": "reason_better_estimate:59"
+    },
+    {
+      "templateId": "reason_better_estimate",
+      "seed": 20,
+      "type": "unstable-item-id",
+      "itemId": "reason_better_estimate:43"
+    }
+  ],
+  "failureCount": 7
+}

@@ -1,0 +1,16 @@
+f72b0c7a35a92d3def9ccd276816b3499007ceb691eca270fdeb7782f5585d44  ./contract/reasoning-post-implementation-review-contract.md
+5a8cef3334d24f499702018b9a9dcd96ad6240502d6d195da19f008d3a5451c7  ./patches/002-reasoning-post-implementation-review.patch
+bcf9ad00fcb350ce8d6ea8530d4cbbab454f983f6045822ef2553fb46988dd17  ./review/reasoning-post-implementation-review.md
+8a5823018d99866f405e007e3a69a1a76d4ec90494d7760fdf1f6c3a7d870cba  ./validation-summary.md
+c4badcc7d01fe5e665c53befee7817bf4e3de37696a798e51e5ed27078a13f20  ./validation/baseline-content-audit.json
+6dd22cea97b598d54c44650f106c72a324664bee2667ab45ef8eb11a9718e135  ./validation/baseline-targeted-tests.log
+06d54d425e854ba74ca6570b7e4ba35ba8b88c1d2263f790478249250174ee36  ./validation/npm-test-runtime-note.log
+d751edc46720a7bc677d5850071d1fabff8296a64b8ca46de3cfa1649e023d40  ./validation/package-file-sha256-before-zip.txt
+e4ba00eb8fec365aa99d6c49506151c61fd53aaccc12e7a765f215697261e469  ./validation/patch-apply.log
+a92ea5beaecb6591a9411ec7681350a2d2df7aa236a69bc8d44a95de3d2a194a  ./validation/patch-dry-run.log
+1224746fe2b93d134d118376105c375e43f3b79ef7c1b744af1242fa2fa4ad09  ./validation/patchcheck-targeted-tests.log
+432fbef76fddce545dc8ab95a6f5699197d7cc026c2dc146f089dda0e46b8dcd  ./validation/patched-content-audit.json
+6292f29acb998d3caac97c1077eeaa1aecc36d7a07a3dc77c8a411489ae46f12  ./validation/patched-targeted-tests.log
+4821b3cef22b38b88790d1d1c88ab383d69c85f6d640dcad836f877ceadeafd4  ./validation/source-boundary.txt
+f99a8bebe17b100a5cb4cb4f1cf4503cc84d1d81871ff0acd5660ac20cbe0552  ./validation/syntax-checks.log
+d809912237d0d52220fe3d723fe9ba73de1c56165747be26696f9f1e191a2116  ./validation/zip-integrity.log

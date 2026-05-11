@@ -1,0 +1,23 @@
+arithmetic-post-review-hardening-package
+
+Files:
+- SOURCE_BOUNDARY.md
+- MANIFEST.txt
+- contract/arithmetic-post-review-hardening-contract.md
+- review/arithmetic-post-implementation-review.md
+- patches/001-arithmetic-post-review-hardening.patch
+- validation/validation-summary.md
+- validation/arithmetic-content-audit-postfix.json
+- validation/probes/arithmetic-baseline-probe.json
+- validation/probes/arithmetic-post-probe.json
+- validation/scripts/arithmetic-baseline-probe.mjs
+- validation/scripts/arithmetic-post-probe.mjs
+- validation/scripts/arithmetic-content-audit.mjs
+- validation/logs/patch-dry-run.log
+- validation/logs/patch-apply.log
+- validation/logs/node-check-shared-arithmetic-content.log
+- validation/logs/node-check-worker-arithmetic-engine.log
+- validation/logs/node-check-arithmetic-command-actions.log
+- validation/logs/worker-arithmetic-runtime-test.log
+- validation/logs/arithmetic-targeted-cross-test.log
+- validation/logs/npm-test-limitation.log

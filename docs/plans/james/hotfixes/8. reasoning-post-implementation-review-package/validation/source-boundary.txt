@@ -1,0 +1,8 @@
+ZIP path: /mnt/data/ks2-mastery-lean-05111556.zip
+ZIP size: 26922947 bytes
+596ac6308b01dc16150d584123f9c00303bd102e73b3b977aea034ef852d108b  /mnt/data/ks2-mastery-lean-05111556.zip
+Local node: v22.16.0
+Local npm: 10.9.2
+Original extracted snapshot: /mnt/data/ks2-reasoning-postreview-original
+nvmrc: 22
+No .git metadata in this ZIP extraction

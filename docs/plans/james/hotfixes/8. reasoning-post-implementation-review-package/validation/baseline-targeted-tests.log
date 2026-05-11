@@ -1,0 +1,88 @@
+TAP version 13
+# Subtest: hero mode treats reasoning as a ready subject with provider and launch adapter
+ok 1 - hero mode treats reasoning as a ready subject with provider and launch adapter
+  ---
+  duration_ms: 0.949165
+  type: 'test'
+  ...
+# Subtest: hero reasoning provider returns task envelopes from the reasoning read model
+ok 2 - hero reasoning provider returns task envelopes from the reasoning read model
+  ---
+  duration_ms: 0.323985
+  type: 'test'
+  ...
+# Subtest: reasoning content bank exposes 110 safe template families without leaking markers to the browser metadata
+ok 3 - reasoning content bank exposes 110 safe template families without leaking markers to the browser metadata
+  ---
+  duration_ms: 1.945031
+  type: 'test'
+  ...
+# Subtest: reasoning templates generate, mark and serialise cleanly across smoke seeds
+ok 4 - reasoning templates generate, mark and serialise cleanly across smoke seeds
+  ---
+  duration_ms: 42.173925
+  type: 'test'
+  ...
+# Subtest: server reasoning engine returns exact due retry questions and emits evidence on independent success
+ok 5 - server reasoning engine returns exact due retry questions and emits evidence on independent success
+  ---
+  duration_ms: 20.392517
+  type: 'test'
+  ...
+# Subtest: reasoning reward projection updates direct and grand monsters with independent state ids
+ok 6 - reasoning reward projection updates direct and grand monsters with independent state ids
+  ---
+  duration_ms: 1.363113
+  type: 'test'
+  ...
+# Subtest: server reasoning engine uses the injected command clock for support and session records
+ok 7 - server reasoning engine uses the injected command clock for support and session records
+  ---
+  duration_ms: 4.573604
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reasoning command handlers
+ok 8 - worker subject runtime wires reasoning command handlers
+  ---
+  duration_ms: 3.372462
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke helper derives correct responses for the promoted template bank
+ok 9 - reasoning production smoke helper derives correct responses for the promoted template bank
+  ---
+  duration_ms: 1718.517769
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke helper validates content summary and marker redaction
+ok 10 - reasoning production smoke helper validates content summary and marker redaction
+  ---
+  duration_ms: 1.810184
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke helper parses deterministic template ids
+ok 11 - reasoning production smoke helper parses deterministic template ids
+  ---
+  duration_ms: 0.294665
+  type: 'test'
+  ...
+# Subtest: reasoning reset-learner command resets state and data from an active session
+ok 12 - reasoning reset-learner command resets state and data from an active session
+  ---
+  duration_ms: 4.548752
+  type: 'test'
+  ...
+# Subtest: reasoning module is live and not a placeholder
+ok 13 - reasoning module is live and not a placeholder
+  ---
+  duration_ms: 0.862122
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1875.851272

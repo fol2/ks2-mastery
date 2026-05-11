@@ -1,0 +1,68 @@
+{
+  "templateCount": 30,
+  "glyphParsed": {
+    "value": 10.5,
+    "n": 21,
+    "d": 2,
+    "normalN": 21,
+    "normalD": 2,
+    "simplified": true,
+    "decimal": false,
+    "isFraction": true
+  },
+  "glyphCorrect": false,
+  "nonIntegerOrderInFirst200Seeds": 152,
+  "nonIntegerExamples": [
+    {
+      "seed": 1,
+      "stem": "(87 − 18) ÷ 6 + 30 =",
+      "expected": 41.5
+    },
+    {
+      "seed": 5,
+      "stem": "(92 − 30) ÷ 3 + 23 =",
+      "expected": 43.66666666666667
+    },
+    {
+      "seed": 7,
+      "stem": "(31 − 27) ÷ 9 + 24 =",
+      "expected": 24.444444444444443
+    }
+  ],
+  "placeValueSeed96433": {
+    "stem": "500,000 = 500,000 + 0 + 0 + 0 + 0 + 0",
+    "expected": {
+      "kind": "number",
+      "misconception": "place_value_confusion"
+    }
+  },
+  "practiceBlank": {
+    "changed": true,
+    "answered": 1,
+    "attempts": 1,
+    "events": 1,
+    "error": "",
+    "feedback": "Enter a fraction, mixed number, whole number or decimal where allowed."
+  },
+  "testBlank": {
+    "answered": 0,
+    "attempts": 12,
+    "retries": 12,
+    "wrongs": 13,
+    "eventTypes": [
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.answer-submitted",
+      "arithmetic.session-completed"
+    ]
+  }
+}
