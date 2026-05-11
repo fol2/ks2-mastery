@@ -66,9 +66,9 @@ const SCREENSHOT_DETERMINISM_CSS = `
 .grammar-hero > img,
 /* U5/U6/U7 (refactor ui-consolidation) — the three Punctuation scenes
    (Setup, Session, Summary, Map) all paint via the platform HeroBackdrop.
-   Hiding the `background-image` paints on HeroBackdrop layers so
+   Hiding the background-image paints on HeroBackdrop layers so
    deterministic screenshot diffs do not see per-phase bellstorm variance.
-   The `data-hero-layer="true"` anchors match every adopter wrapper. */
+   The data-hero-layer="true" anchors match every adopter wrapper. */
 .punctuation-hero-backdrop [data-hero-layer="true"],
 .punctuation-session-hero [data-hero-layer="true"],
 .punctuation-summary-hero [data-hero-layer="true"],
@@ -738,19 +738,26 @@ export async function returnToGrammarDashboard(page) {
  * populated in memory.
  */
 export async function primeGrammarReadModel(page) {
-  // Dashboard's round-length <select> dispatches
-  // `grammar-set-round-length` which the module routes to a
-  // `save-prefs` Worker command. The response carries the full read
-  // model; `applyRemoteReadModel` then hydrates the subject UI with
-  // transferLane.prompts.
-  const lengthSelect = page.locator('.grammar-round-controls select').first();
-  await expect(lengthSelect).toBeVisible({ timeout: 10_000 });
-  const initial = await lengthSelect.inputValue();
-  const options = await lengthSelect.evaluate((el) => Array.from(el.options).map((o) => o.value));
-  const other = options.find((v) => v !== initial) || options[0];
+  // Dashboard's round-length control dispatches `grammar-set-round-length`,
+  // which the module routes to a `save-prefs` Worker command. The response
+  // carries the full read model; `applyRemoteReadModel` then hydrates the
+  // subject UI with transferLane.prompts. The control used to be a <select>;
+  // it is now the platform LengthPicker radio-button group.
+  const lengthOptions = page.locator('[data-action="grammar-set-round-length"][data-pref="roundLength"]');
+  await expect(lengthOptions.first()).toBeVisible({ timeout: 10_000 });
+  const optionCount = await lengthOptions.count();
+  const optionValues = [];
+  let initial = '';
+  for (let i = 0; i < optionCount; i += 1) {
+    const option = lengthOptions.nth(i);
+    const value = await option.getAttribute('value');
+    if (value) optionValues.push(value);
+    if ((await option.getAttribute('aria-checked')) === 'true') initial = value || '';
+  }
+  const other = optionValues.find((value) => value !== initial) || optionValues[0];
   if (!other) return;
   // Toggle to a different length to trigger save-prefs.
-  await lengthSelect.selectOption(other);
+  await lengthOptions.filter({ hasText: new RegExp(`^${other}$`) }).first().click();
   // Wait for the command to complete. We watch for a response pattern
   // via the network - any grammar command response suffices.
   await page.waitForResponse(
@@ -762,7 +769,7 @@ export async function primeGrammarReadModel(page) {
   });
   // Flip back to the original value for a clean baseline.
   if (initial !== other) {
-    await lengthSelect.selectOption(initial);
+    await lengthOptions.filter({ hasText: new RegExp(`^${initial}$`) }).first().click();
     await page.waitForResponse(
       (resp) => resp.url().includes('/api/subjects/grammar/command') && resp.status() === 200,
       { timeout: 10_000 },
