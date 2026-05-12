@@ -13,6 +13,16 @@ const PASSAGE_MAP = readingPassageMap();
 const QUESTION_REF_MAP = readingQuestionRefMap();
 const SKILL_IDS = Object.freeze(Object.keys(READING_SKILLS));
 const PUNCTUATION_SKILL_IDS = new Set(['P1', 'P2', 'P3', 'P4']);
+const STRETCH_SKILL_IDS = new Set(['2a', '2c', '2d', '2e', '2f', '2g', '2h']);
+const STRETCH_TYPE_PRIORITY = Object.freeze({
+  open: 1.4,
+  evidenceShort: 1.2,
+  match: 0.8,
+  order: 0.7,
+  multiSelect: 0.55,
+  short: 0.25,
+  mcq: 0.15,
+});
 
 const DEFAULT_PREFS = Object.freeze({
   mode: 'smart',
@@ -402,9 +412,13 @@ function defaultState() {
 
 function normalisePrefs(raw = {}) {
   const mode = READING_MODES.includes(raw.mode) ? raw.mode : DEFAULT_PREFS.mode;
-  const focusSkillId = SKILL_IDS.includes(raw.focusSkillId || raw.skillId) ? (raw.focusSkillId || raw.skillId) : '';
+  const focusSkillId = mode === 'stretch'
+    ? ''
+    : SKILL_IDS.includes(raw.focusSkillId || raw.skillId) ? (raw.focusSkillId || raw.skillId) : '';
   const genre = ['fiction', 'non-fiction', 'poetry'].includes(raw.genre) ? raw.genre : '';
-  const difficulty = ['1', '2', '3', '4', '5'].includes(String(raw.difficulty || '')) ? String(raw.difficulty) : '';
+  const difficulty = mode === 'stretch'
+    ? ''
+    : ['1', '2', '3', '4', '5'].includes(String(raw.difficulty || '')) ? String(raw.difficulty) : '';
   const viewMode = raw.viewMode === 'list' ? 'list' : 'one';
   const paperId = raw.paperId && (raw.paperId === 'random' || READING_TEST_PAPERS.some((paper) => paper.id === raw.paperId))
     ? raw.paperId
@@ -652,13 +666,17 @@ export function evaluateReadingQuestion(question, response = {}) {
 
 function relevantQuestionsForMode(passage, mode, skillFilter, allowSkillFallback = true) {
   let questions = (passage.questions || []).slice();
-  if (skillFilter) questions = questions.filter((question) => question.skill === skillFilter);
+  if (skillFilter && mode !== 'stretch') questions = questions.filter((question) => question.skill === skillFilter);
   if (mode === 'guided') questions = questions.filter((question) => passage.difficulty <= 3 && !PUNCTUATION_SKILL_IDS.has(question.skill));
   if (mode === 'evidence') questions = questions.filter((question) => question.type === 'evidenceShort' || ['2d', '2g', '2h'].includes(question.skill));
   if (mode === 'vocab') questions = questions.filter((question) => question.skill === '2a');
   if (mode === 'inference') questions = questions.filter((question) => ['2d', '2g', '2h', '2f'].includes(question.skill));
   if (mode === 'punct') questions = questions.filter((question) => PUNCTUATION_SKILL_IDS.has(question.skill));
   if (mode === 'stamina') questions = passage.isLong ? questions.filter((question) => !PUNCTUATION_SKILL_IDS.has(question.skill)) : [];
+  if (mode === 'stretch') {
+    questions = questions.filter((question) => !PUNCTUATION_SKILL_IDS.has(question.skill)
+      && (STRETCH_SKILL_IDS.has(question.skill) || Number(question.marks || 0) >= 2));
+  }
   if (!questions.length && skillFilter && allowSkillFallback) questions = (passage.questions || []).filter((question) => !PUNCTUATION_SKILL_IDS.has(question.skill));
   return questions;
 }
@@ -686,9 +704,10 @@ function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
   const strictSkillMatch = hasStrictModeMatch(data, prefs);
   let candidates = READING_PASSAGES.filter((passage) => {
     if (prefs.genre && passage.genre !== prefs.genre) return false;
-    if (prefs.difficulty && Number(passage.difficulty) !== Number(prefs.difficulty)) return false;
+    if (prefs.mode !== 'stretch' && prefs.difficulty && Number(passage.difficulty) !== Number(prefs.difficulty)) return false;
     if (prefs.mode === 'guided' && passage.difficulty > 3) return false;
     if (prefs.mode === 'stamina' && !passage.isLong) return false;
+    if (prefs.mode === 'stretch' && !(passage.isLong || Number(passage.difficulty || 0) >= 4)) return false;
     return relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch).length > 0;
   });
   if (!candidates.length) return null;
@@ -733,15 +752,20 @@ function chooseQuestionIds(data, passage, prefs, nowValue = Date.now()) {
   let questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
   if (!questions.length) questions = (passage.questions || []).slice();
   if (prefs.mode === 'stamina') return questions.map((question) => question.id);
-  questions.sort((a, b) => questionWeakness(data, b, nowValue) - questionWeakness(data, a, nowValue));
-  const limit = (prefs.mode === 'smart' || prefs.mode === 'guided') ? 4 : prefs.mode === 'punct' ? 3 : 5;
+  const scoreQuestion = (question) => questionWeakness(data, question, nowValue)
+    + (prefs.mode === 'stretch' ? ((STRETCH_TYPE_PRIORITY[question.type] || 0) + Math.min(0.4, Number(question.marks || 0) * 0.08)) : 0);
+  questions.sort((a, b) => scoreQuestion(b) - scoreQuestion(a));
+  const limit = prefs.mode === 'stretch' ? 6 : (prefs.mode === 'smart' || prefs.mode === 'guided') ? 4 : prefs.mode === 'punct' ? 3 : 5;
   const picked = [];
   const seenSkills = new Set();
+  const seenTypes = new Set();
   for (const question of questions) {
     if (picked.length >= limit) break;
     if (seenSkills.has(question.skill) && picked.length < Math.min(3, questions.length)) continue;
+    if (prefs.mode === 'stretch' && seenTypes.has(question.type) && picked.length < Math.min(4, questions.length)) continue;
     picked.push(question);
     seenSkills.add(question.skill);
+    seenTypes.add(question.type);
   }
   for (const question of questions) {
     if (picked.length >= Math.min(limit, questions.length)) break;
@@ -802,7 +826,7 @@ function buildPracticeSession(data, prefs, { nowValue, random, heroContext } = {
     id: uid('reading_session'),
     mode: prefs.mode,
     strict: false,
-    delayedFeedback: prefs.mode === 'stamina' || prefs.viewMode === 'list',
+    delayedFeedback: prefs.mode === 'stamina' || prefs.mode === 'stretch' || prefs.viewMode === 'list',
     viewMode: prefs.viewMode,
     startedAt: nowValue,
     currentSectionIndex: 0,

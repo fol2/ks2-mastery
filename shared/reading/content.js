@@ -10803,7 +10803,7 @@ export const READING_TEST_PAPERS = Object.freeze([
 ]);
 
 export const READING_GENRES = Object.freeze(['fiction', 'non-fiction', 'poetry']);
-export const READING_MODES = Object.freeze(['guided', 'core', 'smart', 'evidence', 'vocab', 'inference', 'punct', 'stamina', 'test']);
+export const READING_MODES = Object.freeze(['guided', 'core', 'smart', 'evidence', 'vocab', 'inference', 'punct', 'stamina', 'stretch', 'test']);
 
 export function readingPassageMap(passages = READING_PASSAGES) {
   return Object.freeze(Object.fromEntries(passages.map((passage) => [passage.id, passage])));

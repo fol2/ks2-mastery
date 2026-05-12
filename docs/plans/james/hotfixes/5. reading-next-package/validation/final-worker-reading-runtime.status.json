@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "command": "node --test tests/worker-reading-runtime.test.js",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T13:20:02.469Z",
+  "log": "final-worker-reading-runtime.log",
+  "tests": 28,
+  "suites": 0,
+  "pass": 28,
+  "fail": 0,
+  "skipped": 0,
+  "todo": 0
+}

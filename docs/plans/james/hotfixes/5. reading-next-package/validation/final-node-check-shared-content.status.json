@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "command": "node --check shared/reading/content.js",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T13:05:12.7503456Z",
+  "log": "final-node-check-shared-content.log"
+}

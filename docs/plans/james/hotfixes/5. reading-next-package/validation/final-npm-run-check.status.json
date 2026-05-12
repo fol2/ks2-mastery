@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "command": "npm run check",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T13:38:54.142Z",
+  "log": "final-npm-run-check.log",
+  "note": "Wrangler deploy dry-run completed after build, public asset assertion, and client bundle audit."
+}

@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "command": "node --check worker/src/subjects/reading/engine.js",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T13:05:13.1415962Z",
+  "log": "final-node-check-reading-engine.log"
+}

@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "command": "node --test tests/reading-content-contract.test.js tests/worker-reading-runtime.test.js tests/reading-phase5-next1000-contract.test.js tests/reading-subject-registry.test.js",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T13:20:02.469Z",
+  "log": "final-focused-reading-contract-tests.log",
+  "tests": 45,
+  "suites": 0,
+  "pass": 45,
+  "fail": 0,
+  "skipped": 0,
+  "todo": 0
+}

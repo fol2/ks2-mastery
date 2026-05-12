@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "command": "npm run audit:reading-content",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T13:06:51.6473578Z",
+  "log": "final-reading-content-audit.log",
+  "report": "reports/reading/reading-content-quality-audit.json"
+}

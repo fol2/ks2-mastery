@@ -5,9 +5,13 @@ import {
   READING_PASSAGES,
   READING_TEST_PAPERS,
   READING_SKILLS,
+  READING_MODES,
   readingContentSummary,
 } from '../shared/reading/content.js';
-import { readingContentSummary as readingPublicContentSummary } from '../shared/reading/metadata.js';
+import {
+  READING_MODES as READING_PUBLIC_MODES,
+  readingContentSummary as readingPublicContentSummary,
+} from '../shared/reading/metadata.js';
 import { publicEventRowToRecord } from '../worker/src/row-transforms.js';
 
 function norm(value) {
@@ -46,6 +50,13 @@ test('reading content bank has varied original passages, papers and KS2 domains'
   assert.equal(summary.genres['non-fiction'], 71);
   assert.equal(summary.genres.poetry, 68);
   assert.equal(summary.longPassageCount, 166);
+});
+
+
+test('Reading exposes a stretch challenge mode consistently in server and browser metadata', () => {
+  assert.ok(READING_MODES.includes('stretch'));
+  assert.ok(READING_PUBLIC_MODES.includes('stretch'));
+  assert.deepEqual(READING_PUBLIC_MODES, READING_MODES);
 });
 
 test('reading ids are unique and evidence quotes exist in their source passage', () => {
@@ -145,6 +156,17 @@ test('reading test papers only reference existing passages and questions and sum
     }
     assert.equal(paperMarks, paper.totalMarks, `${paper.id} mark total`);
   }
+});
+
+
+test('reading setup source advertises stretch mode without duplicate hero-card attributes', async () => {
+  const ui = await readFile('src/subjects/reading/components/ReadingPracticeSurface.jsx', 'utf8');
+  const metadata = await readFile('src/subjects/reading/metadata.js', 'utf8');
+  assert.match(metadata, /id: 'stretch'/);
+  assert.match(metadata, /Stretch challenge/);
+  assert.match(ui, /stretch: 'e'/);
+  assert.match(ui, /Mark challenge/);
+  assert.equal((ui.match(/data-text-tone=\{textTone\}/g) || []).length, 1);
 });
 
 test('browser Reading metadata stays answer-safe and summary-compatible', async () => {

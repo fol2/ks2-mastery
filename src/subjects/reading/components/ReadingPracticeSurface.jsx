@@ -67,6 +67,7 @@ const READING_HERO_MODE_REGION = Object.freeze({
   inference: 'c',
   punct: 'd',
   stamina: 'e',
+  stretch: 'e',
   test: 'e',
 });
 
@@ -166,12 +167,14 @@ function hasMarkedQuestion(question) {
 
 function markActionLabel(session) {
   if (session?.strict) return 'Mark whole paper';
+  if (session?.mode === 'stretch') return 'Mark challenge';
   if (session?.viewMode === 'list') return 'Mark this section';
   return 'Mark now';
 }
 
 function markActionHint(session) {
   if (session?.strict) return 'Checks every saved answer in this paper and then shows feedback.';
+  if (session?.mode === 'stretch') return 'Checks the full stretch set after you have saved your answers, then shows feedback.';
   if (session?.viewMode === 'list') return 'Checks the visible question list and then shows feedback for this text.';
   return 'Checks your saved answer now and then shows feedback.';
 }
@@ -298,6 +301,7 @@ function ReadingSetup({ appState, ui, actions, repositories }) {
   const learner = learnerId ? appState?.learners?.byId?.[learnerId] || null : null;
   const learnerName = typeof learner?.name === 'string' ? learner.name.trim() : '';
   const setupDisabled = Boolean(ui.pendingCommand);
+  const stretchModeSelected = prefs.mode === 'stretch';
   const heroBg = readingHeroBgForMode(prefs.mode, learnerId);
   const heroContrast = useSetupHeroContrast(heroBg, prefs.mode, {
     staticContrastForBg: readingHeroContrastProfile,
@@ -371,11 +375,11 @@ function ReadingSetup({ appState, ui, actions, repositories }) {
 
             <div className="setup-control-stack reading-control-stack">
               <div className="tweak-row reading-preference-row">
-                <ReadingSetupSelect label="Reading focus" name="focusSkillId" value={prefs.focusSkillId} options={READING_SKILL_OPTIONS} disabled={setupDisabled} onChange={updatePref} />
+                <ReadingSetupSelect label="Reading focus" name="focusSkillId" value={prefs.focusSkillId} options={READING_SKILL_OPTIONS} disabled={setupDisabled || stretchModeSelected} onChange={updatePref} />
                 <ReadingSetupSelect label="Passage type" name="genre" value={prefs.genre} options={READING_GENRE_OPTIONS} disabled={setupDisabled} onChange={updatePref} />
               </div>
               <div className="tweak-row reading-preference-row">
-                <ReadingSetupSelect label="Difficulty" name="difficulty" value={prefs.difficulty} options={READING_DIFFICULTY_OPTIONS} disabled={setupDisabled} onChange={updatePref} />
+                <ReadingSetupSelect label="Difficulty" name="difficulty" value={prefs.difficulty} options={READING_DIFFICULTY_OPTIONS} disabled={setupDisabled || stretchModeSelected} onChange={updatePref} />
                 <ReadingSetupSelect
                   label="Question view"
                   name="viewMode"

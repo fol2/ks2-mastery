@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "command": "node --test tests/reading-session-interface.test.js",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T13:20:02.469Z",
+  "log": "final-reading-session-interface.log",
+  "tests": 14,
+  "suites": 0,
+  "pass": 14,
+  "fail": 0,
+  "skipped": 0,
+  "todo": 0
+}

@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "command": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --ignore-scripts",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T12:57:46.6167562Z",
+  "log": "final-npm-install-ignore-scripts.log",
+  "note": "Dependency-complete linked-worktree install without lifecycle hook mutation."
+}

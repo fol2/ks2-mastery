@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "command": "npm test",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T13:37:09.007Z",
+  "log": "final-npm-test.log",
+  "tests": 111477,
+  "suites": 819,
+  "pass": 111465,
+  "fail": 0,
+  "skipped": 12,
+  "todo": 0,
+  "note": "Status derived from completed command exit code and final test summary."
+}

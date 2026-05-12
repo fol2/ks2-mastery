@@ -35,6 +35,50 @@ test('reading engine starts a passage-first session and hides answer metadata be
   assert.equal(readModel.session.currentQuestion.explanation, undefined);
 });
 
+
+test('reading stretch challenge selects delayed high-depth long-text practice without punctuation-only items', () => {
+  for (const randomValue of [0, 0.05, 0.1, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95, 0.999]) {
+    const engine = createServerReadingEngine({ now: () => 1000, random: () => randomValue });
+    const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'stretch', viewMode: 'one' }, requestId: `stretch-${randomValue}` });
+    const session = started.state.session;
+    assert.equal(session.mode, 'stretch');
+    assert.equal(session.strict, false);
+    assert.equal(session.delayedFeedback, true);
+    assert.equal(session.sections.length, 1);
+    assert.equal(session.sections[0].questionIds.length, 6);
+    const passage = READING_PASSAGES.find((item) => item.id === session.sections[0].passageId);
+    assert.ok(passage?.isLong || passage?.difficulty >= 4, 'stretch should choose a long or high-difficulty passage');
+    const questions = session.sections[0].questionIds.map((qid) => passage.questions.find((question) => question.id === qid));
+    const types = new Set(questions.map((question) => question?.type));
+    assert.ok(types.size >= 3, 'stretch should not be only one repeated question type');
+    assert.equal(questions.some((question) => ['open', 'evidenceShort', 'match', 'order'].includes(question?.type)), true);
+    assert.equal(questions.some((question) => String(question?.skill || '').startsWith('P')), false);
+  }
+});
+
+test('reading stretch challenge is not narrowed below contract size by setup filters', () => {
+  const filteredPayloads = [
+    { mode: 'stretch', difficulty: '1', viewMode: 'one' },
+    { mode: 'stretch', focusSkillId: '2a', viewMode: 'one' },
+    { mode: 'stretch', focusSkillId: 'P1', viewMode: 'one' },
+    { mode: 'stretch', difficulty: '1', focusSkillId: 'P1', viewMode: 'one' },
+  ];
+
+  for (const payload of filteredPayloads) {
+    const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+    const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload, requestId: `stretch-filter-${payload.difficulty || payload.focusSkillId || 'base'}` });
+    const session = started.state.session;
+    assert.equal(started.state.error, '');
+    assert.equal(session.mode, 'stretch');
+    assert.equal(session.delayedFeedback, true);
+    assert.equal(session.sections[0].questionIds.length, 6);
+    const passage = READING_PASSAGES.find((item) => item.id === session.sections[0].passageId);
+    assert.ok(passage?.isLong || passage?.difficulty >= 4, 'filtered stretch should still choose a long or high-difficulty passage');
+    const questions = session.sections[0].questionIds.map((qid) => passage.questions.find((question) => question.id === qid));
+    assert.equal(questions.some((question) => String(question?.skill || '').startsWith('P')), false);
+  }
+});
+
 test('reading engine marks deterministically and then exposes feedback safely', () => {
   const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
   const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });

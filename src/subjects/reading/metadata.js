@@ -18,6 +18,7 @@ export const READING_MODE_OPTIONS = Object.freeze([
   { id: 'inference', label: 'Inference lab', description: 'Inference, author choice, comparison and structure practice.' },
   { id: 'punct', label: 'Punctuation lens', description: 'Punctuation only where it supports meaning, voice and phrasing.' },
   { id: 'stamina', label: 'Stamina builder', description: 'Longer texts and delayed feedback for sustained reading.' },
+  { id: 'stretch', label: 'Stretch challenge', description: 'Harder long-text questions with delayed feedback and extra-credit depth.' },
   { id: 'test', label: 'SATs-style paper', description: 'Three original texts with delayed feedback and paper-style timing.' },
 ]);
 
@@ -54,11 +55,12 @@ export function defaultReadingPrefs() {
 
 export function normaliseReadingPrefs(raw = {}) {
   const mode = READING_MODES.includes(raw.mode) ? raw.mode : 'smart';
-  const focusSkillId = Object.prototype.hasOwnProperty.call(READING_SKILLS, raw.focusSkillId || raw.skillId)
-    ? (raw.focusSkillId || raw.skillId)
+  const rawFocusSkillId = raw.focusSkillId || raw.skillId;
+  const focusSkillId = mode === 'stretch' ? '' : Object.prototype.hasOwnProperty.call(READING_SKILLS, rawFocusSkillId)
+    ? rawFocusSkillId
     : '';
   const genre = READING_GENRES.includes(raw.genre) ? raw.genre : '';
-  const difficulty = ['1', '2', '3', '4', '5'].includes(String(raw.difficulty || '')) ? String(raw.difficulty) : '';
+  const difficulty = mode === 'stretch' ? '' : ['1', '2', '3', '4', '5'].includes(String(raw.difficulty || '')) ? String(raw.difficulty) : '';
   return {
     ...defaultReadingPrefs(),
     mode,

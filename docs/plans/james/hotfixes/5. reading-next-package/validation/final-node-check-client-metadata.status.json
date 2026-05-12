@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "command": "node --check src/subjects/reading/metadata.js",
+  "exitCode": 0,
+  "generatedAt": "2026-05-12T13:05:12.9873783Z",
+  "log": "final-node-check-client-metadata.log"
+}

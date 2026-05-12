@@ -1,0 +1,639 @@
+{
+  "ok": true,
+  "generatedAt": "2026-05-12T13:06:30.798Z",
+  "head": "8cfdf2f6bfd4c965d32093846044ac73d9182ff1",
+  "workingTreeHasUncommittedChanges": true,
+  "content": {
+    "releaseId": "reading-poc-promoted-2026-05-05",
+    "version": 5,
+    "passageCount": 210,
+    "questionCount": 2072,
+    "paperCount": 75,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 71,
+      "non-fiction": 71,
+      "poetry": 68
+    },
+    "longPassageCount": 166
+  },
+  "modes": {
+    "server": [
+      "guided",
+      "core",
+      "smart",
+      "evidence",
+      "vocab",
+      "inference",
+      "punct",
+      "stamina",
+      "stretch",
+      "test"
+    ],
+    "browser": [
+      "guided",
+      "core",
+      "smart",
+      "evidence",
+      "vocab",
+      "inference",
+      "punct",
+      "stamina",
+      "stretch",
+      "test"
+    ],
+    "parity": true,
+    "includesStretch": true
+  },
+  "eligible": {
+    "passageCount": 182,
+    "questionCount": 1474
+  },
+  "samples": [
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "tide_clock",
+      "passageDifficulty": 5,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "mcq",
+        "evidenceShort",
+        "multiSelect",
+        "order",
+        "open"
+      ],
+      "questionSkills": [
+        "2a",
+        "2d",
+        "2b",
+        "2h"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 16
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0.05,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "seed_vault_guardians",
+      "passageDifficulty": 4,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "mcq",
+        "evidenceShort",
+        "open",
+        "multiSelect"
+      ],
+      "questionSkills": [
+        "2a",
+        "2d",
+        "2c",
+        "2b",
+        "2f",
+        "2g"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 11
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0.1,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "p4n04_roman_road_lines",
+      "passageDifficulty": 5,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "evidenceShort",
+        "open",
+        "short",
+        "match",
+        "order",
+        "multiSelect"
+      ],
+      "questionSkills": [
+        "2d",
+        "2f",
+        "2e",
+        "2h",
+        "2b"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 11
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0.2,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "p4p11_sea_wall_evening",
+      "passageDifficulty": 4,
+      "passageIsLong": false,
+      "questionCount": 6,
+      "questionTypes": [
+        "open",
+        "evidenceShort",
+        "short",
+        "match",
+        "order",
+        "multiSelect"
+      ],
+      "questionSkills": [
+        "2g",
+        "2d",
+        "2e",
+        "2h",
+        "2f"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 11
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0.35,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "p4p22_path_through_bluebells",
+      "passageDifficulty": 3,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "open",
+        "evidenceShort",
+        "short",
+        "match",
+        "order",
+        "multiSelect"
+      ],
+      "questionSkills": [
+        "2g",
+        "2d",
+        "2e",
+        "2h",
+        "2f"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 11
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0.5,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "phase5_nonfiction_seed_conservation",
+      "passageDifficulty": 3,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "evidenceShort",
+        "mcq",
+        "open",
+        "match",
+        "order",
+        "multiSelect"
+      ],
+      "questionSkills": [
+        "2d",
+        "2c",
+        "2f",
+        "2h",
+        "2b"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 12
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0.65,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "phase5_poetry_bridge_lanterns",
+      "passageDifficulty": 3,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "open",
+        "evidenceShort",
+        "short",
+        "match",
+        "order",
+        "multiSelect"
+      ],
+      "questionSkills": [
+        "2g",
+        "2d",
+        "2e",
+        "2h",
+        "2f"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 10
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0.8,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "phase5_poetry_hidden_stream",
+      "passageDifficulty": 3,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "open",
+        "evidenceShort",
+        "short",
+        "match",
+        "order",
+        "multiSelect"
+      ],
+      "questionSkills": [
+        "2g",
+        "2d",
+        "2e",
+        "2h",
+        "2f"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 10
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0.95,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "phase5_poetry_print_room",
+      "passageDifficulty": 3,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "open",
+        "evidenceShort",
+        "short",
+        "match",
+        "order",
+        "multiSelect"
+      ],
+      "questionSkills": [
+        "2g",
+        "2d",
+        "2e",
+        "2h",
+        "2f"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 10
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "viewMode": "one"
+      },
+      "randomValue": 0.999,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "phase5_poetry_stone_circle_dawn",
+      "passageDifficulty": 3,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "open",
+        "evidenceShort",
+        "short",
+        "match",
+        "order",
+        "multiSelect"
+      ],
+      "questionSkills": [
+        "2g",
+        "2d",
+        "2e",
+        "2h",
+        "2f"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 10
+    }
+  ],
+  "filteredSamples": [
+    {
+      "payload": {
+        "mode": "stretch",
+        "difficulty": "1",
+        "viewMode": "one"
+      },
+      "randomValue": 0,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "tide_clock",
+      "passageDifficulty": 5,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "mcq",
+        "evidenceShort",
+        "multiSelect",
+        "order",
+        "open"
+      ],
+      "questionSkills": [
+        "2a",
+        "2d",
+        "2b",
+        "2h"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 16
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "focusSkillId": "2a",
+        "viewMode": "one"
+      },
+      "randomValue": 0,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "tide_clock",
+      "passageDifficulty": 5,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "mcq",
+        "evidenceShort",
+        "multiSelect",
+        "order",
+        "open"
+      ],
+      "questionSkills": [
+        "2a",
+        "2d",
+        "2b",
+        "2h"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 16
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "focusSkillId": "P1",
+        "viewMode": "one"
+      },
+      "randomValue": 0,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "tide_clock",
+      "passageDifficulty": 5,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "mcq",
+        "evidenceShort",
+        "multiSelect",
+        "order",
+        "open"
+      ],
+      "questionSkills": [
+        "2a",
+        "2d",
+        "2b",
+        "2h"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 16
+    },
+    {
+      "payload": {
+        "mode": "stretch",
+        "difficulty": "1",
+        "focusSkillId": "P1",
+        "viewMode": "one"
+      },
+      "randomValue": 0,
+      "mode": "stretch",
+      "strict": false,
+      "delayedFeedback": true,
+      "viewMode": "one",
+      "prefs": {
+        "mode": "stretch",
+        "focusSkillId": "",
+        "genre": "",
+        "difficulty": "",
+        "viewMode": "one",
+        "paperId": "random",
+        "showParagraphNumbers": true
+      },
+      "passageId": "tide_clock",
+      "passageDifficulty": 5,
+      "passageIsLong": true,
+      "questionCount": 6,
+      "questionTypes": [
+        "mcq",
+        "evidenceShort",
+        "multiSelect",
+        "order",
+        "open"
+      ],
+      "questionSkills": [
+        "2a",
+        "2d",
+        "2b",
+        "2h"
+      ],
+      "containsPunctuationOnly": false,
+      "hasHighDepthType": true,
+      "maxScore": 16
+    }
+  ],
+  "failures": []
+}

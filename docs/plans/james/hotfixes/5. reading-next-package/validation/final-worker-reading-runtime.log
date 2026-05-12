@@ -1,0 +1,178 @@
+TAP version 13
+# Subtest: reading engine starts a passage-first session and hides answer metadata before attempt
+ok 1 - reading engine starts a passage-first session and hides answer metadata before attempt
+  ---
+  duration_ms: 8.2361
+  type: 'test'
+  ...
+# Subtest: reading stretch challenge selects delayed high-depth long-text practice without punctuation-only items
+ok 2 - reading stretch challenge selects delayed high-depth long-text practice without punctuation-only items
+  ---
+  duration_ms: 42.3904
+  type: 'test'
+  ...
+# Subtest: reading stretch challenge is not narrowed below contract size by setup filters
+ok 3 - reading stretch challenge is not narrowed below contract size by setup filters
+  ---
+  duration_ms: 13.3476
+  type: 'test'
+  ...
+# Subtest: reading engine marks deterministically and then exposes feedback safely
+ok 4 - reading engine marks deterministically and then exposes feedback safely
+  ---
+  duration_ms: 3.7923
+  type: 'test'
+  ...
+# Subtest: reading exact match checks reject learner substrings of the correct answer
+ok 5 - reading exact match checks reject learner substrings of the correct answer
+  ---
+  duration_ms: 0.8194
+  type: 'test'
+  ...
+# Subtest: reading contains checks use phrase boundaries rather than character substrings
+ok 6 - reading contains checks use phrase boundaries rather than character substrings
+  ---
+  duration_ms: 0.2793
+  type: 'test'
+  ...
+# Subtest: reading keyword checks accept hyphenated compound components without weakening negation guards
+ok 7 - reading keyword checks accept hyphenated compound components without weakening negation guards
+  ---
+  duration_ms: 0.4343
+  type: 'test'
+  ...
+# Subtest: reading phrase checks reject locally negated correct phrases
+ok 8 - reading phrase checks reject locally negated correct phrases
+  ---
+  duration_ms: 0.6084
+  type: 'test'
+  ...
+# Subtest: reading evidence fallback does not award marks for negated evidence quotes
+ok 9 - reading evidence fallback does not award marks for negated evidence quotes
+  ---
+  duration_ms: 1.5455
+  type: 'test'
+  ...
+# Subtest: reading evidence checks accept source-affirmed negation snippets
+ok 10 - reading evidence checks accept source-affirmed negation snippets
+  ---
+  duration_ms: 0.7436
+  type: 'test'
+  ...
+# Subtest: reading save-response rejects stale expected session or question ids
+ok 11 - reading save-response rejects stale expected session or question ids
+  ---
+  duration_ms: 2.6368
+  type: 'test'
+  ...
+# Subtest: reading marked answers cannot be overwritten by duplicate or stale submissions
+ok 12 - reading marked answers cannot be overwritten by duplicate or stale submissions
+  ---
+  duration_ms: 2.9441
+  type: 'test'
+  ...
+# Subtest: reading engine reloads persisted ui state for follow-up commands
+ok 13 - reading engine reloads persisted ui state for follow-up commands
+  ---
+  duration_ms: 1.2955
+  type: 'test'
+  ...
+# Subtest: reading due stats and review queue use the injected command clock
+ok 14 - reading due stats and review queue use the injected command clock
+  ---
+  duration_ms: 0.4209
+  type: 'test'
+  ...
+# Subtest: reading avoids immediate passage repeats after a started session is ended without answers
+ok 15 - reading avoids immediate passage repeats after a started session is ended without answers
+  ---
+  duration_ms: 2.2103
+  type: 'test'
+  ...
+# Subtest: reading guided mode uses weakness and variety rather than always taking the first four questions
+ok 16 - reading guided mode uses weakness and variety rather than always taking the first four questions
+  ---
+  duration_ms: 1.5963
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reading command handlers
+ok 17 - worker subject runtime wires reading command handlers
+  ---
+  duration_ms: 3.0252
+  type: 'test'
+  ...
+# Subtest: reading secured skill events project into reading-owned monster rewards
+ok 18 - reading secured skill events project into reading-owned monster rewards
+  ---
+  duration_ms: 1.2654
+  type: 'test'
+  ...
+# Subtest: reading secured skill event carries deep secure evidence and mastery key
+ok 19 - reading secured skill event carries deep secure evidence and mastery key
+  ---
+  duration_ms: 1.3851
+  type: 'test'
+  ...
+# Subtest: reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+ok 20 - reading delayed-feedback sessions do not expose answers through immediate submit or section mark
+  ---
+  duration_ms: 3.6221
+  type: 'test'
+  ...
+# Subtest: reading reward state exposes release-scoped 100-star high-water progress
+ok 21 - reading reward state exposes release-scoped 100-star high-water progress
+  ---
+  duration_ms: 1.054
+  type: 'test'
+  ...
+# Subtest: reading reward thresholds use direct clusters plus a full-domain aggregate monster
+ok 22 - reading reward thresholds use direct clusters plus a full-domain aggregate monster
+  ---
+  duration_ms: 1.4291
+  type: 'test'
+  ...
+# Subtest: reading list-view read model exposes a safe current-section question list
+ok 23 - reading list-view read model exposes a safe current-section question list
+  ---
+  duration_ms: 1.2455
+  type: 'test'
+  ...
+# Subtest: reading save-response can persist visible section drafts and navigate without marking
+ok 24 - reading save-response can persist visible section drafts and navigate without marking
+  ---
+  duration_ms: 1.3639
+  type: 'test'
+  ...
+# Subtest: reading mark-section accepts current visible section drafts before deterministic marking
+ok 25 - reading mark-section accepts current visible section drafts before deterministic marking
+  ---
+  duration_ms: 1.6418
+  type: 'test'
+  ...
+# Subtest: reading section response merge does not blank previously saved one-question drafts
+ok 26 - reading section response merge does not blank previously saved one-question drafts
+  ---
+  duration_ms: 3.9825
+  type: 'test'
+  ...
+# Subtest: reading list-mode section save can explicitly clear a previously saved draft
+ok 27 - reading list-mode section save can explicitly clear a previously saved draft
+  ---
+  duration_ms: 1.433
+  type: 'test'
+  ...
+# Subtest: reading save and mark commands reject stale expected section indexes
+ok 28 - reading save and mark commands reject stale expected section indexes
+  ---
+  duration_ms: 1.647
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 976.4689

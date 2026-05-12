@@ -65,7 +65,7 @@ export const READING_QUESTION_TYPE_LABELS = Object.freeze({
 });
 
 export const READING_GENRES = Object.freeze(['fiction', 'non-fiction', 'poetry']);
-export const READING_MODES = Object.freeze(['guided', 'core', 'smart', 'evidence', 'vocab', 'inference', 'punct', 'stamina', 'test']);
+export const READING_MODES = Object.freeze(['guided', 'core', 'smart', 'evidence', 'vocab', 'inference', 'punct', 'stamina', 'stretch', 'test']);
 
 export function readingContentSummary() {
   return {

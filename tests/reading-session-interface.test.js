@@ -9,6 +9,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
+import { normaliseReadingPrefs } from '../src/subjects/reading/metadata.js';
+
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function source(path) {
@@ -74,6 +76,36 @@ test('reading landing uses the shared subject setup shell used by mature subject
   assert.match(ui, /SetupMorePractice/);
   assert.match(ui, /dataAction="reading-start"/);
   assert.doesNotMatch(ui, /<form onSubmit=\{start\} className="setup-form reading-setup-form"/);
+});
+
+
+test('reading setup exposes stretch challenge without duplicate hero-card attributes', () => {
+  const ui = source('src/subjects/reading/components/ReadingPracticeSurface.jsx');
+  const metadata = source('src/subjects/reading/metadata.js');
+  assert.match(metadata, /id: 'stretch'/);
+  assert.match(metadata, /Stretch challenge/);
+  assert.match(ui, /stretch: 'e'/);
+  assert.match(ui, /Mark challenge/);
+  assert.match(ui, /const stretchModeSelected = prefs\.mode === 'stretch'/);
+  assert.match(ui, /disabled=\{setupDisabled \|\| stretchModeSelected\}/);
+  assert.equal((ui.match(/data-text-tone=\{textTone\}/g) || []).length, 1);
+});
+
+test('reading setup prefs do not let stretch inherit focus or difficulty filters', () => {
+  assert.deepEqual(normaliseReadingPrefs({
+    mode: 'stretch',
+    focusSkillId: '2a',
+    difficulty: '1',
+    genre: 'fiction',
+  }), {
+    mode: 'stretch',
+    focusSkillId: '',
+    genre: 'fiction',
+    difficulty: '',
+    viewMode: 'one',
+    paperId: 'random',
+    showParagraphNumbers: true,
+  });
 });
 
 test('reading marking controls use mode-specific labels instead of a generic finish action', () => {
