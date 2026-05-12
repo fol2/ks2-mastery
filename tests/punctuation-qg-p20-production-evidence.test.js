@@ -56,10 +56,11 @@ test('P20 live evidence validator accepts current-release production evidence sh
 });
 
 test('P20 live evidence validator CLI keeps flag values out of the smoke path', () => {
+  const impossibleReleaseId = 'punctuation-qg-p99-99999-2099-01-01';
   const result = spawnSync(process.execPath, [
     LIVE_VALIDATOR,
     '--expected-release-id',
-    PUNCTUATION_CURRENT_RELEASE_ID,
+    impossibleReleaseId,
     '--json',
   ], {
     cwd: ROOT,
@@ -67,9 +68,9 @@ test('P20 live evidence validator CLI keeps flag values out of the smoke path', 
   });
   const parsed = JSON.parse(result.stdout);
 
-  assert.notEqual(result.status, 0, 'stale checked-in live smoke should not pass before deployment regeneration');
+  assert.notEqual(result.status, 0, 'release mismatch should fail while preserving the default smoke path');
   assert.equal(parsed.smokePath, 'reports/punctuation/punctuation-qg-p20-production-smoke.json');
-  assert.equal(parsed.expectedReleaseId, PUNCTUATION_CURRENT_RELEASE_ID);
+  assert.equal(parsed.expectedReleaseId, impossibleReleaseId);
 });
 
 test('P20 live evidence validator rejects stale P20 smoke for the current P21 release', () => {

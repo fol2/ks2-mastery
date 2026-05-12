@@ -1,11 +1,11 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "accountId": "demo-ngiT3VCbUvPxXg",
-  "learnerId": "learner-demo-ThaUPtzGSWluUQ",
+  "accountId": "demo-4W4BlXEqs5MELQ",
+  "learnerId": "learner-demo-1mJVNXU0aTxQcg",
   "attestation": {
     "environment": "production",
-    "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+    "releaseId": "punctuation-qg-p21-15072-2026-05-12",
     "runtimeItemCount": 15072,
     "generatedDepth": 120,
     "generatedFamilyDepths": {
@@ -136,20 +136,20 @@
       "gen_speech_insert": 100,
       "gen_speech_transfer": 120
     },
-    "workerCommitSha": "ebd3a6029cf2db9594d44a98428a2ba1a982e98e",
-    "workerVersionId": "a94835b2-f3b4-41f9-a1b4-e8bf67f64d3d",
+    "workerCommitSha": "c6803f03c7c1e742bc44002de58712405ca9dc47",
+    "workerVersionId": "732b719e-2223-42ec-bc96-316da3d70696",
     "deploymentId": null,
-    "timestamp": "2026-05-08T18:34:22.445Z",
+    "timestamp": "2026-05-12T14:57:28.995Z",
     "authenticatedCoverage": true,
     "adminHubCoverage": true
   },
   "punctuation": {
     "productionObserved": {
-      "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+      "releaseId": "punctuation-qg-p21-15072-2026-05-12",
       "runtimeItems": 15072,
       "publishedRewardUnits": 14,
       "generatedItemCommandPathProbe": {
-        "itemId": "gen_p20_speech_fix_12sbvoq_43",
+        "itemId": "gen_p20_speech_fix_1mb3u3_93",
         "mode": "fix",
         "skillIds": [
           "speech"
@@ -168,12 +168,12 @@
       "runtimeItems": 15072,
       "publishedRewardUnits": 14
     },
-    "smartItemId": "gen_sentence_endings_insert_redq9q_19",
+    "smartItemId": "gen_apostrophe_possession_insert_1l4zby3_3",
     "smartSummaryTotal": 1,
     "smartSix": {
       "revision": 13,
       "observedRuntimeStats": {
-        "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+        "releaseId": "punctuation-qg-p21-15072-2026-05-12",
         "runtimeItems": 15072,
         "publishedRewardUnits": 14
       },
@@ -181,7 +181,7 @@
       "uniqueItems": 6,
       "immediateRepeats": 0
     },
-    "generatedIncorrectItemId": "gen_p20_speech_fix_12sbvoq_43",
+    "generatedIncorrectItemId": "gen_p20_speech_fix_1mb3u3_93",
     "generatedIncorrectMisconceptionTags": [
       "speech.reporting_comma_missing",
       "speech.terminal_inside_quotes_missing"
@@ -189,38 +189,38 @@
     "dashAcceptance": [
       {
         "variant": "spaced-hyphen",
-        "itemId": "gen_p20_dash_clause_insert_1ro7a2q_67",
+        "itemId": "gen_p20_dash_clause_insert_1ssbzuk_43",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
         ],
         "feedbackKind": "success",
-        "acceptedAnswer": "Felix opened the poster - the room fell silent - and read the note."
+        "acceptedAnswer": "Theo opened the tablet - the room fell silent - and read the note."
       },
       {
         "variant": "en-dash",
-        "itemId": "gen_p20_dash_clause_insert_1wzffyc_92",
+        "itemId": "gen_p20_dash_clause_insert_1j0tdql_101",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
         ],
         "feedbackKind": "success",
-        "acceptedAnswer": "Nia opened the score sheet – the room fell silent – and read the note."
+        "acceptedAnswer": "Noah opened the notebook – the room fell silent – and read the note."
       },
       {
         "variant": "em-dash",
-        "itemId": "gen_p20_dash_clause_insert_yjuzca_32",
+        "itemId": "gen_p20_dash_clause_insert_w1velk_25",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
         ],
         "feedbackKind": "success",
-        "acceptedAnswer": "Nia opened the score sheet — the room fell silent — and read the note."
+        "acceptedAnswer": "Noah opened the notebook — the room fell silent — and read the note."
       }
     ],
-    "oxfordCommaItemId": "gen_list_commas_insert_33whva_41",
+    "oxfordCommaItemId": "gen_list_commas_insert_17wmou3_88",
     "oxfordCommaAcceptance": {
-      "itemId": "gen_list_commas_insert_33whva_41",
+      "itemId": "gen_list_commas_insert_17wmou3_88",
       "mode": "insert",
       "skillIds": [
         "list_commas"
@@ -228,7 +228,7 @@
       "feedbackKind": "success"
     },
     "advancedMode": "gps",
-    "advancedItemId": "fx_ap_choose_boys_team",
+    "advancedItemId": "ac_choose_contractions",
     "advancedReviewItems": 1,
     "parentHubAttempts": 21,
     "parentHubEvidence": {
