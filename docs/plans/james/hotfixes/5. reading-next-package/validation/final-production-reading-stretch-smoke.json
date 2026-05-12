@@ -6,11 +6,11 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 5,
-  "commitSha": "168005ec4c17749920c4ca0ae8a4effc5e69aee2",
+  "commitSha": "7ca9ff6f42065aab287563d59297b2553b89e284",
   "commitShaSource": "cli-or-ci-expected",
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-pi5uzRDv80DudQ",
-  "learnerId": "learner-demo-vIEvunyyVvqVqA",
+  "accountId": "demo-Qzf248JhNVDpmA",
+  "learnerId": "learner-demo-bik4_lv1uXj-Pw",
   "staleSetupPayload": {
     "mode": "stretch",
     "viewMode": "one",
@@ -18,56 +18,56 @@
     "focusSkillId": "P1"
   },
   "session": {
-    "id": "reading_session_mp2r1kbs_8aetk3ki",
+    "id": "reading_session_mp2rr0cu_wiffav1f",
     "passage": {
-      "id": "phase5_nonfiction_quarry_safety",
-      "title": "How Quarry safety Works",
+      "id": "p4f19_lighthouse_radio",
+      "title": "The Lighthouse Radio",
       "difficulty": 4,
       "isLong": true,
-      "wordCount": 133
+      "wordCount": 147
     },
     "strict": false,
     "delayedFeedback": true,
     "questionCount": 6,
     "questionDetails": [
       {
-        "id": "phase5_nonfiction_quarry_safety_q3",
-        "passageId": "phase5_nonfiction_quarry_safety",
+        "id": "p4f19_lighthouse_radio_q3",
+        "passageId": "p4f19_lighthouse_radio",
         "type": "evidenceShort",
         "skill": "2d",
         "marks": 2
       },
       {
-        "id": "phase5_nonfiction_quarry_safety_q4",
-        "passageId": "phase5_nonfiction_quarry_safety",
-        "type": "mcq",
-        "skill": "2c",
-        "marks": 2
-      },
-      {
-        "id": "phase5_nonfiction_quarry_safety_q5",
-        "passageId": "phase5_nonfiction_quarry_safety",
+        "id": "p4f19_lighthouse_radio_q5",
+        "passageId": "p4f19_lighthouse_radio",
         "type": "open",
-        "skill": "2f",
+        "skill": "2g",
         "marks": 2
       },
       {
-        "id": "phase5_nonfiction_quarry_safety_q7",
-        "passageId": "phase5_nonfiction_quarry_safety",
+        "id": "p4f19_lighthouse_radio_q6",
+        "passageId": "p4f19_lighthouse_radio",
+        "type": "short",
+        "skill": "2e",
+        "marks": 1
+      },
+      {
+        "id": "p4f19_lighthouse_radio_q7",
+        "passageId": "p4f19_lighthouse_radio",
         "type": "match",
         "skill": "2h",
         "marks": 2
       },
       {
-        "id": "phase5_nonfiction_quarry_safety_q8",
-        "passageId": "phase5_nonfiction_quarry_safety",
+        "id": "p4f19_lighthouse_radio_q8",
+        "passageId": "p4f19_lighthouse_radio",
         "type": "order",
         "skill": "2f",
         "marks": 2
       },
       {
-        "id": "phase5_nonfiction_quarry_safety_q9",
-        "passageId": "phase5_nonfiction_quarry_safety",
+        "id": "p4f19_lighthouse_radio_q9",
+        "passageId": "p4f19_lighthouse_radio",
         "type": "multiSelect",
         "skill": "2b",
         "marks": 2
@@ -78,7 +78,7 @@
     "hasPunctuationOnlyQuestion": false
   },
   "submitted": {
-    "questionId": "phase5_nonfiction_quarry_safety_q3",
+    "questionId": "p4f19_lighthouse_radio_q3",
     "phase": "question",
     "answeredCount": 1,
     "markedCount": 0,
@@ -87,18 +87,18 @@
   "marked": {
     "phase": "summary",
     "summary": {
-      "sessionId": "reading_session_mp2r1kbs_8aetk3ki",
+      "sessionId": "reading_session_mp2rr0cu_wiffav1f",
       "mode": "stretch",
       "paperId": "",
       "paperTitle": "",
       "questionCount": 6,
       "score": 2,
-      "maxScore": 12,
-      "accuracy": 17,
-      "completedAt": 1778597524292
+      "maxScore": 11,
+      "accuracy": 18,
+      "completedAt": 1778598711253
     }
   },
   "finalRevision": 3,
-  "timestamp": "2026-05-12T14:52:04.420Z",
-  "finishedAt": "2026-05-12T14:52:04.420Z"
+  "timestamp": "2026-05-12T15:11:51.356Z",
+  "finishedAt": "2026-05-12T15:11:51.356Z"
 }

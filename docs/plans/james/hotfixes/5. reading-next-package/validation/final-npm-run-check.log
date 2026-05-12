@@ -21,7 +21,7 @@
 [custom build]   src\bundles\chunk-EE2UYWMZ.js              15.7kb
 [custom build]   ...and 3 more output files...
 [custom build] 
-[custom build] Done in 884ms
+[custom build] Done in 78ms
 [custom build] 
 [custom build] 
 [custom build] > ks2-mastery@0.1.0 assert:build-public
@@ -42,7 +42,7 @@
 [custom build] Client bundle audit passed (805 public files, 6 chunks scanned, main bundle 204441 / 232000 bytes gzip).
 [custom build] 
 ✨ Read 881 files from the assets directory D:\Coding\ks2-mastery\.worktrees\reading-next-package-20260512\dist\public
-Total Upload: 22335.99 KiB / gzip: 2074.79 KiB
+Total Upload: 23073.70 KiB / gzip: 2177.94 KiB
 Your Worker has access to the following bindings:
 Binding                                                     Resource                  
 env.LEARNER_LOCK (LearnerLock)                              Durable Object            

@@ -6,15 +6,15 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 5,
-  "commitSha": "168005ec4c17749920c4ca0ae8a4effc5e69aee2",
+  "commitSha": "7ca9ff6f42065aab287563d59297b2553b89e284",
   "commitShaSource": "cli-or-ci-expected",
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-aQnx4Oy7Mdy4SQ",
-  "learnerId": "learner-demo-LFKbxJnYkDbgeQ",
+  "accountId": "demo-iRZKHlbXwG-C3g",
+  "learnerId": "learner-demo-1MVjA3DOiX9Sbw",
   "immediate": {
     "revision": 2,
-    "questionId": "p4f26_sea_glass_shop_q2",
-    "passageId": "p4f26_sea_glass_shop",
+    "questionId": "p4p14_bicycle_shed_q1",
+    "passageId": "p4p14_bicycle_shed",
     "content": {
       "releaseId": "reading-poc-promoted-2026-05-05",
       "version": 5,
@@ -40,14 +40,14 @@
     "staleErrorCleared": true
   },
   "staleWriteGuard": {
-    "expectedSessionId": "reading_session_mp2r1kzp_mxydzg34",
+    "expectedSessionId": "reading_session_mp2rqg8v_8cpvdmmo",
     "expectedQuestionId": "stale-question-id",
-    "protectedQuestionId": "phase5_fiction_desert_gallery_q2",
+    "protectedQuestionId": "phase5_fiction_stone_circle_q2",
     "changed": false,
     "revisionUnchanged": true,
     "staleResponsePersisted": false,
     "protectedQuestionResponsePersisted": false
   },
-  "timestamp": "2026-05-12T14:52:04.690Z",
-  "finishedAt": "2026-05-12T14:52:04.690Z"
+  "timestamp": "2026-05-12T15:11:24.869Z",
+  "finishedAt": "2026-05-12T15:11:24.869Z"
 }
