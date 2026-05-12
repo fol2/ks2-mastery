@@ -1,0 +1,82 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "sourceCommit": "ed5ed1e05cc4587052f315920b5e17449e753b3f",
+  "startedAt": "2026-05-12T15:33:35.595Z",
+  "finishedAt": "2026-05-12T15:33:40.260Z",
+  "learnerId": "learner-demo-JEnu9ihnD1bcdg",
+  "finalRevision": 4,
+  "contentReleaseId": "reasoning-poc-promoted-2026-05-11",
+  "content": {
+    "releaseId": "reasoning-poc-promoted-2026-05-11",
+    "templateCount": 110,
+    "skillCount": 17,
+    "misconceptionCount": 20,
+    "satsFriendlyCount": 110,
+    "domains": {
+      "Number and place value": 10,
+      "Calculation": 10,
+      "Fractions": 10,
+      "Fractions, decimals and percentages": 10,
+      "Ratio and proportion": 10,
+      "Measure": 10,
+      "Geometry and measure": 10,
+      "Geometry": 10,
+      "Statistics": 10,
+      "Reasoning and checking": 10,
+      "Measure and money": 10
+    },
+    "skills": {
+      "pv_rounding": 6,
+      "reasonableness": 16,
+      "pv_compare": 8,
+      "inverse_missing": 11,
+      "mul_div_structure": 15,
+      "add_sub_multistep": 34,
+      "fractions_quantity": 6,
+      "fractions_compare": 4,
+      "percent_number": 4,
+      "fdp_equiv": 9,
+      "ratio_scale": 10,
+      "unit_conversion": 5,
+      "time_elapsed": 5,
+      "perimeter_area": 10,
+      "error_analysis": 18,
+      "geometry_angles": 10,
+      "statistics_reading": 10
+    },
+    "modes": [
+      "smart",
+      "skill",
+      "trouble",
+      "worked",
+      "faded",
+      "sats",
+      "satsset"
+    ]
+  },
+  "session": {
+    "id": "reasoning_session_mp2sj1ih_mnn3sntv",
+    "mode": "smart",
+    "questionId": "q1",
+    "publicQuestionIdOpaque": true,
+    "firstWrongFinal": false,
+    "supportLevel": 2,
+    "markedCorrect": false,
+    "score": 0,
+    "maxScore": 2
+  },
+  "rewardProjection": {
+    "domainEvents": [
+      "reasoning.answer-submitted"
+    ],
+    "reactionSubjects": [],
+    "reactionCount": 0
+  },
+  "heroReadModel": {
+    "checked": true,
+    "available": false,
+    "status": 404,
+    "reason": "hero_shadow_disabled"
+  }
+}
