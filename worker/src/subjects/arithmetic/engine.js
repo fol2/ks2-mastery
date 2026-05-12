@@ -404,11 +404,13 @@ function responseHasAnswerContent(response = {}) {
 
 function sessionSummary(session) {
   if (!session) return null;
+  const questionCount = Array.isArray(session.paper) ? session.paper.length : (session.answered || 0);
   return {
     id: session.id,
     mode: session.mode,
     goal: session.goal,
     answered: session.answered || 0,
+    questionCount,
     correct: session.correct || 0,
     score: session.score || 0,
     maxScore: session.maxScore || 0,

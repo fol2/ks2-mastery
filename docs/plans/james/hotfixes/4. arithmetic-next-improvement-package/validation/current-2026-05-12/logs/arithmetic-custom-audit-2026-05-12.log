@@ -1,0 +1,66 @@
+{
+  "templates": 30,
+  "rewardUnits": 90,
+  "cases": 45000,
+  "uniqueStemVisuals": 35106,
+  "duplicateStemVisuals": 9894,
+  "badPercentUnitAcceptances": 0,
+  "poundAccepted": 0,
+  "expectedPercentOutputCases": 537,
+  "expectedPercentOutputAcceptances": 537,
+  "malformedPercentOutputAcceptances": 0,
+  "blueprints": {
+    "short": {
+      "questions": 12,
+      "marks": 14
+    },
+    "full": {
+      "questions": 36,
+      "marks": 40
+    }
+  },
+  "findingCount": 0,
+  "findings": [],
+  "duplicateHotspots": [
+    {
+      "count": 27,
+      "key": "fdp_equivalent | 0 | Write 3/4 as a decimal. | "
+    },
+    {
+      "count": 23,
+      "key": "bonds_missing | 0 | 8 + □ = 10 | "
+    },
+    {
+      "count": 23,
+      "key": "fdp_equivalent | 0 | Write 1/10 as a decimal. | "
+    },
+    {
+      "count": 23,
+      "key": "fdp_equivalent | 0 | Write 0.4 as a percentage. | "
+    },
+    {
+      "count": 21,
+      "key": "fdp_equivalent | 0 | Write 60% as a fraction in simplest form. | "
+    },
+    {
+      "count": 21,
+      "key": "fdp_equivalent | 0 | Write 0.9 as a percentage. | "
+    },
+    {
+      "count": 20,
+      "key": "fdp_equivalent | 0 | Write 25% as a fraction in simplest form. | "
+    },
+    {
+      "count": 20,
+      "key": "fdp_equivalent | 0 | Write 0.1 as a percentage. | "
+    },
+    {
+      "count": 20,
+      "key": "fdp_equivalent | 0 | Write 75% as a fraction in simplest form. | "
+    },
+    {
+      "count": 19,
+      "key": "bonds_missing | 0 | 1 + □ = 10 | "
+    }
+  ]
+}

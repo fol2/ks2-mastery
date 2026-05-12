@@ -1,0 +1,64 @@
+TAP version 13
+# Subtest: globalThis.__ks2_capacityMeta__ is installed in test builds with expected shape
+ok 1 - globalThis.__ks2_capacityMeta__ is installed in test builds with expected shape
+  ---
+  duration_ms: 0.6264
+  type: 'test'
+  ...
+# Subtest: reset() zeros every counter without replacing the object identity
+ok 2 - reset() zeros every counter without replacing the object identity
+  ---
+  duration_ms: 0.0998
+  type: 'test'
+  ...
+# Subtest: leader tab hydrate acquires the coordination lease when a cache fallback is available
+ok 3 - leader tab hydrate acquires the coordination lease when a cache fallback is available
+  ---
+  duration_ms: 131.2294
+  type: 'test'
+  ...
+# Subtest: follower tab with an active foreign lease increments bootstrapFollowerWaited
+ok 4 - follower tab with an active foreign lease increments bootstrapFollowerWaited
+  ---
+  duration_ms: 1.4987
+  type: 'test'
+  ...
+# Subtest: bootstrapFallbackFullRefresh fires when there is no cache fallback and bootstrap throws
+ok 5 - bootstrapFallbackFullRefresh fires when there is no cache fallback and bootstrap throws
+  ---
+  duration_ms: 0.8339
+  type: 'test'
+  ...
+# Subtest: bootstrapFollowerTimedOut fires when a previously active foreign lease has expired
+ok 6 - bootstrapFollowerTimedOut fires when a previously active foreign lease has expired
+  ---
+  duration_ms: 107.1576
+  type: 'test'
+  ...
+# Subtest: cacheDivergence recursive hydrate bumps bootstrapLeaderAcquired exactly once
+ok 7 - cacheDivergence recursive hydrate bumps bootstrapLeaderAcquired exactly once
+  ---
+  duration_ms: 217.2464
+  type: 'test'
+  ...
+# Subtest: bootstrapCoordinationStorageUnavailable fires when the lease write throws
+ok 8 - bootstrapCoordinationStorageUnavailable fires when the lease write throws
+  ---
+  duration_ms: 1.8907
+  type: 'test'
+  ...
+# Subtest: reset() zeros bootstrapCoordinationStorageUnavailable alongside existing counters
+ok 9 - reset() zeros bootstrapCoordinationStorageUnavailable alongside existing counters
+  ---
+  duration_ms: 0.2053
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 535.9927

@@ -8,29 +8,45 @@ Source ZIP SHA-256:
 651bfb83e19046ff2c8807333a05e8968d5c9a5fbec1137d23557b4ac852fcb8
 ```
 
-Patch file: `arithmetic-next-improvement.patch`
+Patch file: `patches/001-arithmetic-next-improvement.patch`
 
 Patch SHA-256:
 
 ```text
-d92ae42b9e15f14278b0b06570ed9c511271167bbd9f8e63928c1c1e7146f310
+599fe82c7ec74840360d8a3e6e836531c5b2eb0d24bc1ca248807f73cf811dfb
 ```
 
 ## Environment
 
 ```text
-Node: v22.16.0
-npm: 10.9.2
+Node: v22.15.1
 .nvmrc: 22
 ```
 
-## Patch application
+## Patch consistency
 
-Fresh ZIP extraction:
+The final patch was regenerated from the actual repository diff for the contract runtime and regression files:
 
 ```text
-patch -p1 --dry-run: passed
-patch -p1: passed
+shared/arithmetic/content.js
+worker/src/subjects/arithmetic/engine.js
+src/subjects/arithmetic/components/ArithmeticPracticeSurface.jsx
+tests/worker-arithmetic-runtime.test.js
+tests/react-arithmetic-surface.test.js
+```
+
+Final base:
+
+```text
+origin/main: 58ca56f63550fa926a947beb2c73e10c641a5321
+```
+
+Patch checks:
+
+```text
+git apply --check against clean origin/main: passed
+git apply --check --cached against clean origin/main index: passed
+git apply --reverse --check against the patched worktree: passed
 ```
 
 ## Syntax checks
@@ -42,49 +58,46 @@ node --check worker/src/subjects/arithmetic/commands.js: passed
 node --check src/subjects/arithmetic/command-actions.js: passed
 ```
 
-The JSX file is not checked with `node --check` because JSX syntax is compiled by the app toolchain, not plain Node.
+The JSX surface is checked through the targeted React/jsdom regression, build, and repository test suite rather than `node --check`.
 
-## Runtime tests
+## Runtime and audit checks
 
-```text
-node --test tests/worker-arithmetic-runtime.test.js
-15/15 passed
-```
-
-## Baseline audit before patch
-
-The baseline custom audit found the unit-symbol marking bug:
+The audit helper change in `scripts/arithmetic-custom-audits.mjs` is validation-only: it makes the same-folder audit import the current repository module and adds malformed percentage-symbol checks. It does not change product runtime scope.
 
 ```text
-templates: 30
-rewardUnits: 90
-cases: 45,000
-uniqueStemVisuals: 31,630
-badPercentUnitAcceptances: 37,005
-poundAccepted: 37,005
-short paper: 12 questions / 14 marks
-full paper: 36 questions / 40 marks
+node --test tests/worker-arithmetic-runtime.test.js: 15/15 passed
+node --test tests/react-arithmetic-surface.test.js: 1/1 passed
+node docs/plans/james/hotfixes/4. arithmetic-next-improvement-package/scripts/arithmetic-custom-audits.mjs: passed (validation-only helper)
 ```
 
-## Patched audit after patch
+Final custom audit:
 
 ```text
 templates: 30
 rewardUnits: 90
 cases: 45,000
 uniqueStemVisuals: 35,106
-duplicateStemVisuals: 9,894
 badPercentUnitAcceptances: 0
 poundAccepted: 0
 expectedPercentOutputCases: 537
 expectedPercentOutputAcceptances: 537
+malformedPercentOutputAcceptances: 0
 short paper: 12 questions / 14 marks
 full paper: 36 questions / 40 marks
 findingCount: 0
 ```
 
-The patched audit improved generated stem/visual uniqueness from 31,630 to 35,106 in the same 45,000-case window while eliminating the unit-symbol marking bug.
+## Full repository gates
 
-## Limits
+Final authoritative logs are under `validation/current-2026-05-12/`.
 
-I did not certify live production deployment. I did not run the full React/Vite build or full repository test suite from this lean ZIP. The Arithmetic Worker runtime tests, syntax checks, patch-apply checks, and custom content/marking audits passed for the supplied snapshot.
+```text
+npm test: passed (111,480 passed / 0 failed / 12 skipped)
+npm run check: passed (Wrangler OAuth dry-run deploy path)
+npm run deploy: passed (Cloudflare Worker version 6cbf20f3-56e9-4f2d-ada0-71eba10a7b39)
+Arithmetic production smoke: passed against https://ks2.eugnel.uk (finished 2026-05-12T17:19:17.796Z)
+True Test production smoke: 12 questions / 14 marks, delayed feedback before finish
+Stale-write production guard: changed false, revision unchanged true
+```
+
+Earlier failed or pre-fix logs were moved to `validation/current-2026-05-12/superseded/` and are not authoritative closure evidence. The final pass is `validation/current-2026-05-12/logs/npm-test-final-rerun-2026-05-12.log`.

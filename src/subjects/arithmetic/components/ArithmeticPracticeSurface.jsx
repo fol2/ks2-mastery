@@ -65,10 +65,13 @@ function QuestionCard({ ui, actions }) {
     const actionName = submitterAction === 'finish-test' ? 'arithmetic-finish-test' : (isTest ? 'arithmetic-save-response' : 'arithmetic-submit-form');
     dispatch(actions, actionName, { formData: new FormData(event.currentTarget), advance: isTest && submitterAction !== 'finish-test' });
   };
-  const saved = ui.session?.paper?.[ui.session.currentIndex]?.response?.answer || '';
+  const currentPaperEntry = ui.session?.paper?.[ui.session.currentIndex] || null;
+  const saved = currentPaperEntry?.response?.answer || '';
+  const working = currentPaperEntry?.working || '';
+  const questionKey = `${ui.session?.id || 'session'}:${ui.session?.currentIndex || 0}:${question.id || 'question'}`;
 
   return (
-    <section className="card question-card">
+    <section className="card question-card" key={questionKey}>
       <div className="chips arithmetic-question-tags">
         <span className="chip neutral">{question.templateLabel}</span>
         <span className="chip neutral">{question.domain}</span>
@@ -82,14 +85,14 @@ function QuestionCard({ ui, actions }) {
           Official arithmetic papers can award a method mark on long multiplication and long division. This app auto-scores the final answer and leaves handwritten method quality for adult/self review.
         </div>
       ) : null}
-      <form className="arithmetic-answer-form" onSubmit={onSubmit}>
+      <form className="arithmetic-answer-form" onSubmit={onSubmit} key={questionKey}>
         <label className="field">
           <span>{question.inputSpec?.label || 'Answer'}</span>
           <input name="answer" type="text" defaultValue={saved} autoComplete="off" disabled={pending || ui.phase === 'summary' || awaitingNext} />
         </label>
         <label className="field arithmetic-working-field">
           <span>Working (optional)</span>
-          <textarea name="working" defaultValue={ui.session?.paper?.[ui.session.currentIndex]?.working || ''} disabled={pending || ui.phase === 'summary' || awaitingNext} />
+          <textarea name="working" defaultValue={working} disabled={pending || ui.phase === 'summary' || awaitingNext} />
         </label>
         <div className="actions arithmetic-question-actions">
           {!isTest && !ui.feedback ? <button className="btn primary" type="submit" disabled={pending}>Submit answer</button> : null}
@@ -137,11 +140,14 @@ function Setup({ ui, actions }) {
 
 function Summary({ ui, actions }) {
   if (!ui.summary) return null;
-  const accuracy = ui.summary.answered ? Math.round((ui.summary.correct / ui.summary.answered) * 100) : 0;
+  const paperCount = ui.session?.paper?.length || ui.summary.questionCount || 0;
+  const accuracyBase = paperCount || ui.summary.answered || 0;
+  const accuracy = accuracyBase ? Math.round((ui.summary.correct / accuracyBase) * 100) : 0;
+  const answeredLine = paperCount ? `Answered ${ui.summary.answered || 0}/${paperCount}. ` : '';
   return (
     <section className="card">
       <h2>Arithmetic session complete</h2>
-      <p><strong>{ui.summary.correct}/{ui.summary.answered}</strong> correct ({accuracy}%). Score: <strong>{ui.summary.score}/{ui.summary.maxScore}</strong>.</p>
+      <p><strong>{ui.summary.correct}/{accuracyBase}</strong> fully correct ({accuracy}%). {answeredLine}Score: <strong>{ui.summary.score}/{ui.summary.maxScore}</strong>.</p>
       {ui.session?.paper?.length ? (
         <div className="review-list">
           {ui.session.paper.map((entry) => (

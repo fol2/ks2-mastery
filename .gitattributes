@@ -1,2 +1,3 @@
 "docs/plans/james/hotfixes/5. reasoning-subject-live-package/patches/*.patch" text eol=lf
 "docs/plans/james/hotfixes/5. reasoning-subject-live-package/SHA256SUMS.txt" text eol=lf
+"docs/plans/james/hotfixes/4. arithmetic-next-improvement-package/patches/*.patch" text eol=lf whitespace=-blank-at-eol

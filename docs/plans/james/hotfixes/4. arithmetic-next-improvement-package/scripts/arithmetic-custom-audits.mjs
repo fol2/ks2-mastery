@@ -5,7 +5,7 @@ import {
   ARITHMETIC_TEST_BLUEPRINT_FULL,
   evaluateArithmeticQuestion,
   formatNumber,
-} from '/mnt/data/arithmetic-next-patch-fresh/shared/arithmetic/content.js';
+} from '../../../../../../shared/arithmetic/content.js';
 
 const templateById = new Map(ARITHMETIC_TEMPLATES.map((template) => [template.id, template]));
 const findings = [];
@@ -14,6 +14,7 @@ let cases = 0;
 let badPercentUnitAcceptances = 0;
 let poundAccepted = 0;
 let expectedPercentOutputAcceptances = 0;
+let malformedPercentOutputAcceptances = 0;
 let expectedPercentOutputCases = 0;
 
 function normaliseKey(question) {
@@ -57,6 +58,15 @@ for (const template of ARITHMETIC_TEMPLATES) {
           expectedPercentOutputCases += 1;
           if (withPercent.correct) expectedPercentOutputAcceptances += 1;
           else recordFinding('expected-percent-symbol-rejected', { template: template.id, difficulty, seed, stem: question.stem, answer: `${plainExpected}%`, withPercent });
+          const malformedPercentAnswers = [`%${plainExpected}`, `${plainExpected}%%`];
+          if (plainExpected.length > 1) malformedPercentAnswers.push(`${plainExpected.slice(0, 1)}%${plainExpected.slice(1)}`);
+          for (const malformedAnswer of malformedPercentAnswers) {
+            const malformed = evaluateArithmeticQuestion(question, { answer: malformedAnswer });
+            if (malformed.correct) {
+              malformedPercentOutputAcceptances += 1;
+              recordFinding('malformed-percent-symbol-accepted', { template: template.id, difficulty, seed, stem: question.stem, answer: malformedAnswer });
+            }
+          }
         } else if (withPercent.correct) {
           badPercentUnitAcceptances += 1;
           recordFinding('bad-percent-unit-accepted', { template: template.id, difficulty, seed, stem: question.stem, answer: `${plainExpected}%` });
@@ -103,6 +113,7 @@ const summary = {
   poundAccepted,
   expectedPercentOutputCases,
   expectedPercentOutputAcceptances,
+  malformedPercentOutputAcceptances,
   blueprints: blueprintSummary,
   findingCount: findings.length,
   findings,
@@ -110,4 +121,4 @@ const summary = {
 };
 
 console.log(JSON.stringify(summary, null, 2));
-if (findings.length || badPercentUnitAcceptances || poundAccepted || expectedPercentOutputAcceptances !== expectedPercentOutputCases) process.exitCode = 1;
+if (findings.length || badPercentUnitAcceptances || poundAccepted || malformedPercentOutputAcceptances || expectedPercentOutputAcceptances !== expectedPercentOutputCases) process.exitCode = 1;

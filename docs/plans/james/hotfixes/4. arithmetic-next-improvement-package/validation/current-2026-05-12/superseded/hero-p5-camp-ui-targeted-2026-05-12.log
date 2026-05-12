@@ -1,0 +1,257 @@
+TAP version 13
+# Subtest: Hero Camp routing from HomeSurface
+    # Subtest: camp panel does NOT render on HomeSurface when camp is enabled
+    ok 1 - camp panel does NOT render on HomeSurface when camp is enabled
+      ---
+      duration_ms: 611.0445
+      type: 'test'
+      ...
+    # Subtest: camp entry does NOT appear when camp is disabled
+    ok 2 - camp entry does NOT appear when camp is disabled
+      ---
+      duration_ms: 658.1431
+      type: 'test'
+      ...
+    # Subtest: camp entry does NOT appear when hero is not active
+    ok 3 - camp entry does NOT appear when hero is not active
+      ---
+      duration_ms: 798.6871
+      type: 'test'
+      ...
+    # Subtest: Hero Quest remains the dashboard hero action before the Camp entry
+    ok 4 - Hero Quest remains the dashboard hero action before the Camp entry
+      ---
+      duration_ms: 855.7461
+      type: 'test'
+      ...
+    # Subtest: Hero Camp page renders the camp panel when camp is enabled
+    ok 5 - Hero Camp page renders the camp panel when camp is enabled
+      ---
+      duration_ms: 491.7975
+      type: 'test'
+      ...
+    1..5
+ok 1 - Hero Camp routing from HomeSurface
+  ---
+  duration_ms: 3417.1419
+  type: 'suite'
+  ...
+# Subtest: HeroCampPanel
+    # Subtest: renders nothing when campModel is disabled
+    ok 1 - renders nothing when campModel is disabled
+      ---
+      duration_ms: 540.9981
+      type: 'test'
+      ...
+    # Subtest: renders six monster cards when camp model has 6 monsters
+    ok 2 - renders six monster cards when camp model has 6 monsters
+      ---
+      duration_ms: 388.5273
+      type: 'test'
+      ...
+    # Subtest: shows balance
+    ok 3 - shows balance
+      ---
+      duration_ms: 657.4131
+      type: 'test'
+      ...
+    # Subtest: shows invite prompt when no monsters are owned
+    ok 4 - shows invite prompt when no monsters are owned
+      ---
+      duration_ms: 675.1119
+      type: 'test'
+      ...
+    # Subtest: shows all-grown message when every monster is fully grown
+    ok 5 - shows all-grown message when every monster is fully grown
+      ---
+      duration_ms: 661.2467
+      type: 'test'
+      ...
+    # Subtest: has section role with aria-label
+    ok 6 - has section role with aria-label
+      ---
+      duration_ms: 513.6579
+      type: 'test'
+      ...
+    1..6
+ok 2 - HeroCampPanel
+  ---
+  duration_ms: 3437.8626
+  type: 'suite'
+  ...
+# Subtest: HeroCampMonsterCard
+    # Subtest: invite CTA shows correct cost
+    ok 1 - invite CTA shows correct cost
+      ---
+      duration_ms: 482.114
+      type: 'test'
+      ...
+    # Subtest: grow CTA shows correct cost and target stage
+    ok 2 - grow CTA shows correct cost and target stage
+      ---
+      duration_ms: 439.5331
+      type: 'test'
+      ...
+    # Subtest: fully grown shows "Fully grown" with no action button
+    ok 3 - fully grown shows "Fully grown" with no action button
+      ---
+      duration_ms: 526.8006
+      type: 'test'
+      ...
+    # Subtest: insufficient balance shows calm "Save more" copy
+    ok 4 - insufficient balance shows calm "Save more" copy
+      ---
+      duration_ms: 568.1668
+      type: 'test'
+      ...
+    # Subtest: shows monster name and blurb
+    ok 5 - shows monster name and blurb
+      ---
+      duration_ms: 883.118
+      type: 'test'
+      ...
+    # Subtest: does NOT show branch badge (P6 branch-choice policy: no child-facing branch UI)
+    ok 6 - does NOT show branch badge (P6 branch-choice policy: no child-facing branch UI)
+      ---
+      duration_ms: 454.3392
+      type: 'test'
+      ...
+    # Subtest: shows stage indicator when owned
+    ok 7 - shows stage indicator when owned
+      ---
+      duration_ms: 427.5802
+      type: 'test'
+      ...
+    1..7
+ok 3 - HeroCampMonsterCard
+  ---
+  duration_ms: 3782.3338
+  type: 'suite'
+  ...
+# Subtest: HeroCampConfirmation
+    # Subtest: renders nothing when not visible
+    ok 1 - renders nothing when not visible
+      ---
+      duration_ms: 409.8439
+      type: 'test'
+      ...
+    # Subtest: shows correct cost and balance-after
+    ok 2 - shows correct cost and balance-after
+      ---
+      duration_ms: 573.588
+      type: 'test'
+      ...
+    # Subtest: shows confirm and cancel buttons
+    ok 3 - shows confirm and cancel buttons
+      ---
+      duration_ms: 488.4147
+      type: 'test'
+      ...
+    # Subtest: has dialog role and aria-modal
+    ok 4 - has dialog role and aria-modal
+      ---
+      duration_ms: 238.9068
+      type: 'test'
+      ...
+    1..4
+ok 4 - HeroCampConfirmation
+  ---
+  duration_ms: 1711.1764
+  type: 'suite'
+  ...
+# Subtest: Hero Camp vocabulary boundary
+    # Subtest: panel output contains no shop/deal/loot/limited-time/streak vocabulary
+    ok 1 - panel output contains no shop/deal/loot/limited-time/streak vocabulary
+      ---
+      duration_ms: 245.5827
+      type: 'test'
+      ...
+    # Subtest: monster card output contains no forbidden vocabulary
+    ok 2 - monster card output contains no forbidden vocabulary
+      ---
+      duration_ms: 226.2505
+      type: 'test'
+      ...
+    # Subtest: confirmation dialog output contains no forbidden vocabulary
+    ok 3 - confirmation dialog output contains no forbidden vocabulary
+      ---
+      duration_ms: 188.5733
+      type: 'test'
+      ...
+    # Subtest: home surface with Hero Camp route entry contains no forbidden vocabulary
+    ok 4 - home surface with Hero Camp route entry contains no forbidden vocabulary
+      ---
+      duration_ms: 225.6457
+      type: 'test'
+      ...
+    1..4
+ok 5 - Hero Camp vocabulary boundary
+  ---
+  duration_ms: 886.5304
+  type: 'suite'
+  ...
+# Subtest: Hero Camp accessibility
+    # Subtest: monster card invite button has aria-label
+    ok 1 - monster card invite button has aria-label
+      ---
+      duration_ms: 167.2944
+      type: 'test'
+      ...
+    # Subtest: monster card grow button has aria-label
+    ok 2 - monster card grow button has aria-label
+      ---
+      duration_ms: 188.4242
+      type: 'test'
+      ...
+    # Subtest: confirmation confirm button has aria-label
+    ok 3 - confirmation confirm button has aria-label
+      ---
+      duration_ms: 178.6286
+      type: 'test'
+      ...
+    # Subtest: camp panel section has aria-label
+    ok 4 - camp panel section has aria-label
+      ---
+      duration_ms: 231.868
+      type: 'test'
+      ...
+    1..4
+ok 6 - Hero Camp accessibility
+  ---
+  duration_ms: 766.6783
+  type: 'suite'
+  ...
+# Subtest: buildHeroCampModel
+    # Subtest: returns disabled model when camp is not in read model
+    ok 1 - returns disabled model when camp is not in read model
+      ---
+      duration_ms: 0.2685
+      type: 'test'
+      ...
+    # Subtest: returns disabled model when camp.enabled is false
+    ok 2 - returns disabled model when camp.enabled is false
+      ---
+      duration_ms: 0.0837
+      type: 'test'
+      ...
+    # Subtest: returns enabled model with correct balance
+    ok 3 - returns enabled model with correct balance
+      ---
+      duration_ms: 0.1434
+      type: 'test'
+      ...
+    1..3
+ok 7 - buildHeroCampModel
+  ---
+  duration_ms: 0.6916
+  type: 'suite'
+  ...
+1..7
+# tests 33
+# suites 7
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14281.3964

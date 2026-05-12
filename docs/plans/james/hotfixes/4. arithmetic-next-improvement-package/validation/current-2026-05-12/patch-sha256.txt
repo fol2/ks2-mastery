@@ -1,0 +1,1 @@
+599fe82c7ec74840360d8a3e6e836531c5b2eb0d24bc1ca248807f73cf811dfb  patches/001-arithmetic-next-improvement.patch

@@ -1,6 +1,6 @@
 # Arithmetic post-hardening review and next improvement pass
 
-Source boundary: I used `ks2-mastery-lean-05121221.zip` as the primary implementation snapshot. GitHub was used only as a supplementary exact-file/reference check for Arithmetic source, not as a replacement for the uploaded ZIP. I did not certify live production deployment.
+Source boundary: I used `ks2-mastery-lean-05121221.zip` as the primary implementation snapshot. GitHub was used only as a supplementary exact-file/reference check for Arithmetic source, not as a replacement for the uploaded ZIP. This review identified the Arithmetic contract gaps; final production deployment evidence is recorded in `../arithmetic-next-improvement-completion-report-2026-05-12.md` and `../validation/current-2026-05-12/`.
 
 ## Review verdict
 
@@ -46,12 +46,14 @@ shared/arithmetic/content.js
 worker/src/subjects/arithmetic/engine.js
 src/subjects/arithmetic/components/ArithmeticPracticeSurface.jsx
 tests/worker-arithmetic-runtime.test.js
+tests/react-arithmetic-surface.test.js
 ```
 
 Changes made:
 
 - Made numeric answer parsing unit-aware.
-- Preserved acceptance of `50%` only for explicit percentage-output questions.
+- Preserved acceptance of a single trailing percentage symbol, such as `50%`, only for explicit percentage-output questions.
+- Rejected malformed percentage placements such as `%50`, `5%0`, and `50%%`.
 - Rejected `%` and `£` on ordinary number, digit, quotient, decimal, and written-method answers.
 - Expanded mental subtraction generator variety.
 - Expanded mental multiplication generator variety.
@@ -62,12 +64,25 @@ Changes made:
 - Added full-paper `questionCount` into Arithmetic test summaries.
 - Keyed the Arithmetic answer form by current question to avoid stale uncontrolled input during True Test navigation.
 - Added an Arithmetic runtime regression test for the unit-symbol marking bug.
+- Added a React/jsdom regression test proving True Test answer and working fields reload from the current paper entry when the learner moves between questions.
 - Strengthened the blank True Test regression test so it checks the full paper denominator.
 
 ## Scope deliberately not touched
 
 This patch does not change other subjects, monsters, Hero Mode, reward thresholds, global subject routing, platform commands, the database schema, or non-Arithmetic UI. Arithmetic reward units remain at 90 and the engine remains isolated from other subjects.
 
-## Remaining recommendations for the next pass
+## Independent reviewer closure
 
-The next highest-value Arithmetic-only pass would be a deeper written-method upgrade: richer two-mark long multiplication/long division variants, more missing-digit written-method puzzles, and a better parent-facing diagnostic split between fact-recall errors and written-method errors. I would also add a dedicated audit for “valid but unusual answer forms” across every fraction/decimal template, because that is where edge cases tend to hide.
+Final review target:
+
+```text
+origin/main: 58ca56f63550fa926a947beb2c73e10c641a5321
+```
+
+Code Reviewer: GREEN. No blockers or advisory-level blockers remained after adding the React/jsdom True Test answer-field remount regression, rerunning targeted gates, and confirming the rebased full-suite/deploy/smoke evidence.
+
+Contract Auditor: GREEN. No blockers or advisory-level blockers remained after confirming `git diff --check origin/main..HEAD`, patch SHA/apply/reverse evidence, same-folder validation artefacts, production deploy evidence, and live Arithmetic smoke evidence.
+
+## Out-of-contract future work
+
+No remaining blocker is carried for this contract after the 2026-05-12 closure pass. A deeper written-method upgrade, richer two-mark long multiplication or long division variants, more missing-digit written-method puzzles, and a parent-facing diagnostic split between fact-recall errors and written-method errors are separate future contract candidates only.

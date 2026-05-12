@@ -50,6 +50,38 @@ test('arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer
   assert.equal(evaluateArithmeticQuestion(question, { answer: '2 and 1/2' }).correct, true);
 });
 
+test('arithmetic marking rejects stray units except where the question asks for a percentage', () => {
+  const numberBond = generateArithmeticQuestion({ templateId: 'bonds_missing', difficulty: 0, seed: 1 });
+  const numberAnswer = String(numberBond.expected.value);
+  assert.equal(evaluateArithmeticQuestion(numberBond, { answer: numberAnswer }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `${numberAnswer}%` }).correct, false, 'plain number answers must not accept percent units');
+  assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `£${numberAnswer}` }).correct, false, 'plain number answers must not accept currency units');
+
+  const amountQuestion = generateArithmeticQuestion({ templateId: 'percentage_of_amount', difficulty: 1, seed: 3 });
+  const amountAnswer = String(amountQuestion.expected.value);
+  assert.equal(evaluateArithmeticQuestion(amountQuestion, { answer: amountAnswer }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(amountQuestion, { answer: `${amountAnswer}%` }).correct, false, 'percentage-of-amount answers are amounts, not percentages');
+
+  let percentageOutput = null;
+  for (let seed = 1; seed <= 100; seed += 1) {
+    const candidate = generateArithmeticQuestion({ templateId: 'fdp_equivalent', difficulty: 1, seed });
+    if (candidate.stem.includes('as a percentage')) {
+      percentageOutput = candidate;
+      break;
+    }
+  }
+  assert.ok(percentageOutput, 'found an FDP percentage-output question');
+  const percentAnswer = String(percentageOutput.expected.value);
+  assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: percentAnswer }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: `${percentAnswer}%` }).correct, true, 'percentage-output questions accept an explicit percent sign');
+  assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: `%${percentAnswer}` }).correct, false, 'percentage-output questions only accept percent as a trailing unit');
+  assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: `${percentAnswer}%%` }).correct, false, 'percentage-output questions reject duplicate percent units');
+  if (percentAnswer.length > 1) {
+    const malformedPercentAnswer = `${percentAnswer.slice(0, 1)}%${percentAnswer.slice(1)}`;
+    assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: malformedPercentAnswer }).correct, false, 'percentage-output questions reject embedded percent units');
+  }
+});
+
 test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
   const placeValue = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty: 2, seed: 96433 });
   assert.ok(placeValue.stem.includes('□'), 'place-value item contains a missing-value box');
@@ -226,6 +258,7 @@ test('arithmetic blank True Test questions are scored as blank but do not poison
   });
 
   assert.equal(finished.state.summary.answered, 0);
+  assert.equal(finished.state.summary.questionCount, 12);
   assert.equal(finished.state.summary.score, 0);
   assert.equal(finished.state.summary.maxScore, 14);
   assert.equal(finished.state.session.paper.every((entry) => entry.status === 'blank' && entry.result), true);

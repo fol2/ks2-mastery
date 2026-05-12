@@ -1,0 +1,28 @@
+TAP version 13
+# (node:282980) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# [capacity-overhead] {"attempt":1,"attempts":3,"iterations":50,"baseline":{"meanMs":"6.3528","p95Ms":"8.0262","p99Ms":"10.0238"},"proxied":{"meanMs":"6.3728","p95Ms":"8.2115","p99Ms":"9.1674"},"fullStack":{"meanMs":"13.3237","p95Ms":"16.4710","p99Ms":"17.7584"},"meanDeltaPct":"0.32","p95DeltaPct":"2.31"}
+# [capacity-overhead] {"attempt":2,"attempts":3,"iterations":50,"baseline":{"meanMs":"5.8061","p95Ms":"6.9282","p99Ms":"7.1782"},"proxied":{"meanMs":"5.8840","p95Ms":"6.8825","p99Ms":"7.6167"},"fullStack":{"meanMs":"21.4267","p95Ms":"25.6904","p99Ms":"30.6320"},"meanDeltaPct":"1.34","p95DeltaPct":"-0.66"}
+# [capacity-overhead-micro] {"iterations":500,"raw":{"meanMs":"0.0170","p95Ms":"0.0252","p99Ms":"0.0635"},"proxy":{"meanMs":"0.0232","p95Ms":"0.0363","p99Ms":"0.0682"},"meanDeltaPct":"36.74","p95DeltaPct":"44.05"}
+# [capacity-overhead-micro] SKIP strict: timer resolution too coarse for reliable %
+# Subtest: U3 overhead benchmark — capacity proxy mean ≤+30%, p95 ≤+80%
+ok 1 - U3 overhead benchmark — capacity proxy mean ≤+30%, p95 ≤+80%
+  ---
+  duration_ms: 3254.1594
+  type: 'test'
+  ...
+# Subtest: U3 per-query micro-benchmark — capacity proxy mean ≤+20%, p95 ≤+25%
+ok 2 - U3 per-query micro-benchmark — capacity proxy mean ≤+20%, p95 ≤+25%
+  ---
+  duration_ms: 35.9247
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4146.5021

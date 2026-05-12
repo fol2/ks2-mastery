@@ -1,6 +1,8 @@
+diff --git a/shared/arithmetic/content.js b/shared/arithmetic/content.js
+index f5faf193..f9c41a89 100644
 --- a/shared/arithmetic/content.js
 +++ b/shared/arithmetic/content.js
-@@ -124,12 +124,17 @@
+@@ -124,12 +124,22 @@ function expandVulgarFractions(value) {
    return text.replace(VULGAR_RE, (glyph) => VULGAR[glyph] || glyph);
  }
  
@@ -8,20 +10,25 @@
 -  let text = String(value ?? '')
 +export function parseNumberInput(value, options = {}) {
 +  const raw = String(value ?? '');
-+  if (!options.allowPercentSymbol && /%/.test(raw)) return null;
-+  if (!options.allowCurrencySymbol && /£/.test(raw)) return null;
++  const unitNormalisedRaw = raw.replace(/[\u00A0\u202F]/g, ' ').trim();
++  if (/%/.test(unitNormalisedRaw)) {
++    if (!options.allowPercentSymbol || !/^[^%]+%$/.test(unitNormalisedRaw)) return null;
++  }
++  if (/£/.test(unitNormalisedRaw)) {
++    if (!options.allowCurrencySymbol || !/^£\s*[^£]+$/.test(unitNormalisedRaw)) return null;
++  }
 +  let text = raw
      .replace(/[\u00A0\u202F]/g, ' ')
      .replace(/[−–—]/g, '-')
 -    .replace(/[,+£%]/g, '')
 +    .replace(/[,]/g, '')
      .trim();
-+  if (options.allowPercentSymbol) text = text.replace(/%/g, '');
-+  if (options.allowCurrencySymbol) text = text.replace(/£/g, '');
++  if (options.allowPercentSymbol) text = text.replace(/\s*%$/, '');
++  if (options.allowCurrencySymbol) text = text.replace(/^£\s*/, '');
    text = text.replace(/\s+/g, '');
    const zr = text.match(/^([+-]?\d+)\s*(?:r|rem|remainder)\s*0+$/i);
    if (zr) return Number(zr[1]);
-@@ -211,7 +216,10 @@
+@@ -211,7 +221,10 @@ function evaluateExpected(expected, response, marks = 1) {
      return result({ correct: true, score: marks, maxScore: marks, feedbackShort: 'Correct.', feedbackLong: `The answer is ${answerText}.`, answerText });
    }
  
@@ -33,7 +40,7 @@
    const answerText = expected?.answerText || formatNumber(expected?.value);
    if (numeric === null) return result({ correct: false, score: 0, maxScore: marks, misconception: 'misread_question', feedbackShort: 'Enter a number.', answerText });
    if (expected?.kind === 'digit' && (numeric < 0 || numeric > 9 || !Number.isInteger(numeric))) {
-@@ -288,7 +296,22 @@
+@@ -288,7 +301,22 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
      return makeQuestion(this, seed, difficulty, { stem: `${nums.map(formatNumber).join(' + ')} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'fact_recall' }, solutionLines: ['Use bridging or partitioning.', `${nums.map(formatNumber).join(' + ')} = ${formatNumber(answer)}.`] });
    } }),
    template({ id: 'mental_subtraction', label: 'Mental subtraction', domain: 'Addition and subtraction', strand: 'operations_methods', skillIds: ['mental_subtraction'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
@@ -57,7 +64,7 @@
      return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(a)} − ${formatNumber(b)} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'fact_recall' }, solutionLines: ['Use counting on, compensation or subtract in parts.', `${formatNumber(a)} − ${formatNumber(b)} = ${formatNumber(answer)}.`] });
    } }),
    template({ id: 'column_addition', label: 'Column addition', domain: 'Addition and subtraction', strand: 'operations_methods', skillIds: ['column_addition'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
-@@ -304,7 +327,26 @@
+@@ -304,7 +332,26 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
      return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(known)} + □ = ${formatNumber(total)}`, inputSpec: { type: 'number', label: 'Missing number' }, expected: { kind: 'number', value: answer, misconception: 'inverse_error' }, solutionLines: ['Subtract the known part from the total.', `${formatNumber(total)} − ${formatNumber(known)} = ${formatNumber(answer)}.`] });
    } }),
    template({ id: 'mental_multiplication', label: 'Mental multiplication', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['mental_multiplication'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
@@ -85,7 +92,7 @@
      return makeQuestion(this, seed, difficulty, { stem: `${a} × ${b} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'fact_recall' }, solutionLines: ['Use a helpful fact and place-value pattern.', `${a} × ${b} = ${formatNumber(answer)}.`] });
    } }),
    template({ id: 'short_multiplication', label: 'Short multiplication', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['short_multiplication'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
-@@ -342,13 +384,28 @@
+@@ -342,13 +389,28 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
    template({ id: 'fraction_add_sub', label: 'Fraction calculations', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_calc'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
      const rng = seededRng(seed);
      const op = pick(rng, ['+', '−']);
@@ -121,7 +128,7 @@
      const lcm = Math.abs(aD * bD) / gcd(aD, bD);
      const n = op === '+' ? aN * (lcm / aD) + bN * (lcm / bD) : aN * (lcm / aD) - bN * (lcm / bD);
      const f = normaliseFraction(n, lcm);
-@@ -363,7 +420,14 @@
+@@ -363,7 +425,14 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
      return makeQuestion(this, seed, difficulty, { stem: `${fractionText(num, den)} ÷ ${divisor} =`, inputSpec: { type: 'text', label: 'Answer as a fraction' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: false }, solutionLines: [`Dividing by ${divisor} makes each part ${divisor} times smaller.`, `The answer is ${fractionText(f.n, f.d)}.`] });
    } }),
    template({ id: 'fraction_multiply_fraction', label: 'Multiplying fractions', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_multiply'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
@@ -137,7 +144,7 @@
      return makeQuestion(this, seed, difficulty, { stem: `${fractionText(a, b)} × ${fractionText(c, d)} =`, inputSpec: { type: 'text', label: 'Answer in simplest form' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: false }, solutionLines: ['Multiply the numerators and multiply the denominators.', `${a} × ${c} = ${a * c}; ${b} × ${d} = ${b * d}; simplify to ${fractionText(f.n, f.d)}.`] });
    } }),
    template({ id: 'percentage_of_amount', label: 'Percentages of amounts', domain: 'Percentages', strand: 'percentages_mixed', skillIds: ['percentages_of_amount'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
-@@ -371,10 +435,16 @@
+@@ -371,10 +440,16 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
      return makeQuestion(this, seed, difficulty, { stem: `${pct}% of ${formatNumber(amount)} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'percentage_method_error' }, solutionLines: ['Break the percentage into easy parts such as 10%, 5%, 1%, 50% or 25%.', `${pct}% of ${formatNumber(amount)} = ${formatNumber(answer)}.`] });
    } }),
    template({ id: 'fdp_equivalent', label: 'Fraction, decimal and percentage links', domain: 'Fractions / decimals / percentages', strand: 'percentages_mixed', skillIds: ['fdp_links'], speedFriendly: true, testFriendly: false, generator(seed, difficulty = 1) {
@@ -157,7 +164,7 @@
    } }),
    template({ id: 'order_of_operations', label: 'Order of operations', domain: 'Mixed arithmetic', strand: 'percentages_mixed', skillIds: ['order_of_operations'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
      const rng = seededRng(seed);
-@@ -410,8 +480,27 @@
+@@ -410,8 +485,27 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
      return makeQuestion(this, seed, difficulty, { stem: 'One digit is missing. What is the missing digit?', visual: `    ${shownQuotient}\n${divisor} ) ${shownDividend}`, inputSpec: { type: 'number', label: 'Missing digit' }, expected: { kind: 'digit', value: ans, misconception: 'inverse_error' }, solutionLines: ['Use short division or check with inverse multiplication.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}, so the missing digit is ${ans}.`] });
    } }),
    template({ id: 'fraction_decimal_hybrid', label: 'Fraction and decimal hybrid calculations', domain: 'Fractions / decimals / percentages', strand: 'decimals_fractions', skillIds: ['fdp_links', 'fractions_calc', 'decimals_add_sub'], speedFriendly: false, testFriendly: false, generator(seed, difficulty = 1) {
@@ -187,25 +194,11 @@
      return makeQuestion(this, seed, difficulty, { stem: `${left.text} ${op} ${right.text} =`, inputSpec: { type: 'text', label: 'Answer as a fraction, mixed number or decimal' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: true, allowDecimalEquivalent: true }, solutionLines: ['Turn the fraction and decimal into equivalent values in the same form before calculating.', `The answer is ${mixedFractionText(f.n, f.d, true)} or ${formatNumber(f.n / f.d)}.`] });
    } }),
    template({ id: 'formal_missing_digit', label: 'Missing digit in a formal calculation', domain: 'Addition and subtraction', strand: 'operations_methods', skillIds: ['inverse_missing'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
---- a/worker/src/subjects/arithmetic/engine.js
-+++ b/worker/src/subjects/arithmetic/engine.js
-@@ -404,11 +404,13 @@
- 
- function sessionSummary(session) {
-   if (!session) return null;
-+  const questionCount = Array.isArray(session.paper) ? session.paper.length : (session.answered || 0);
-   return {
-     id: session.id,
-     mode: session.mode,
-     goal: session.goal,
-     answered: session.answered || 0,
-+    questionCount,
-     correct: session.correct || 0,
-     score: session.score || 0,
-     maxScore: session.maxScore || 0,
+diff --git a/src/subjects/arithmetic/components/ArithmeticPracticeSurface.jsx b/src/subjects/arithmetic/components/ArithmeticPracticeSurface.jsx
+index 28f0854d..154358ed 100644
 --- a/src/subjects/arithmetic/components/ArithmeticPracticeSurface.jsx
 +++ b/src/subjects/arithmetic/components/ArithmeticPracticeSurface.jsx
-@@ -65,10 +65,13 @@
+@@ -65,10 +65,13 @@ function QuestionCard({ ui, actions }) {
      const actionName = submitterAction === 'finish-test' ? 'arithmetic-finish-test' : (isTest ? 'arithmetic-save-response' : 'arithmetic-submit-form');
      dispatch(actions, actionName, { formData: new FormData(event.currentTarget), advance: isTest && submitterAction !== 'finish-test' });
    };
@@ -221,7 +214,7 @@
        <div className="chips arithmetic-question-tags">
          <span className="chip neutral">{question.templateLabel}</span>
          <span className="chip neutral">{question.domain}</span>
-@@ -82,14 +85,14 @@
+@@ -82,14 +85,14 @@ function QuestionCard({ ui, actions }) {
            Official arithmetic papers can award a method mark on long multiplication and long division. This app auto-scores the final answer and leaves handwritten method quality for adult/self review.
          </div>
        ) : null}
@@ -238,7 +231,7 @@
          </label>
          <div className="actions arithmetic-question-actions">
            {!isTest && !ui.feedback ? <button className="btn primary" type="submit" disabled={pending}>Submit answer</button> : null}
-@@ -137,11 +140,14 @@
+@@ -137,11 +140,14 @@ function Setup({ ui, actions }) {
  
  function Summary({ ui, actions }) {
    if (!ui.summary) return null;
@@ -255,9 +248,192 @@
        {ui.session?.paper?.length ? (
          <div className="review-list">
            {ui.session.paper.map((entry) => (
+diff --git a/tests/react-arithmetic-surface.test.js b/tests/react-arithmetic-surface.test.js
+new file mode 100644
+index 00000000..b2e00876
+--- /dev/null
++++ b/tests/react-arithmetic-surface.test.js
+@@ -0,0 +1,175 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { execFileSync } from 'node:child_process';
++import { existsSync } from 'node:fs';
++import { mkdtemp, rm, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import path from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { build } from 'esbuild';
++
++const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
++
++function nodePaths() {
++  return [
++    path.join(rootDir, 'node_modules'),
++    ...String(process.env.NODE_PATH || '').split(path.delimiter),
++  ].filter((entry) => entry && existsSync(entry));
++}
++
++function normaliseLineEndings(value) {
++  return String(value).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
++}
++
++async function runFixture(entrySource) {
++  const tmpDir = await mkdtemp(path.join(tmpdir(), 'ks2-arithmetic-surface-'));
++  const entryPath = path.join(tmpDir, 'entry.jsx');
++  const bundlePath = path.join(tmpDir, 'entry.cjs');
++  try {
++    await writeFile(entryPath, entrySource);
++    await build({
++      absWorkingDir: rootDir,
++      entryPoints: [entryPath],
++      outfile: bundlePath,
++      bundle: true,
++      platform: 'node',
++      format: 'cjs',
++      target: ['node24'],
++      jsx: 'automatic',
++      jsxImportSource: 'react',
++      loader: { '.js': 'jsx' },
++      external: ['jsdom'],
++      nodePaths: nodePaths(),
++      logLevel: 'silent',
++    });
++    const output = execFileSync(process.execPath, [bundlePath], {
++      cwd: rootDir,
++      env: {
++        ...process.env,
++        NODE_PATH: nodePaths().join(path.delimiter),
++      },
++      encoding: 'utf8',
++      stdio: ['ignore', 'pipe', 'pipe'],
++      timeout: 10_000,
++    });
++    return normaliseLineEndings(output).replace(/\n+$/, '');
++  } finally {
++    await rm(tmpDir, { recursive: true, force: true });
++  }
++}
++
++function arithmeticSurfaceSpecifier() {
++  return JSON.stringify(path.join(rootDir, 'src/subjects/arithmetic/components/ArithmeticPracticeSurface.jsx'));
++}
++
++test('ArithmeticPracticeSurface remounts True Test answer fields from the current paper entry', async () => {
++  const output = await runFixture(`
++    const { JSDOM } = require('jsdom');
++
++    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
++    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
++      url: 'https://ks2.eugnel.uk/arithmetic',
++    });
++    globalThis.window = dom.window;
++    globalThis.document = dom.window.document;
++    globalThis.HTMLElement = dom.window.HTMLElement;
++    globalThis.HTMLInputElement = dom.window.HTMLInputElement;
++    globalThis.HTMLTextAreaElement = dom.window.HTMLTextAreaElement;
++    globalThis.HTMLButtonElement = dom.window.HTMLButtonElement;
++    globalThis.Event = dom.window.Event;
++    globalThis.FormData = dom.window.FormData;
++
++    const React = require('react');
++    const { createRoot } = require('react-dom/client');
++    const { act } = React;
++    const { ArithmeticPracticeSurface } = require(${arithmeticSurfaceSpecifier()});
++
++    const questions = [
++      {
++        id: 'q-one',
++        templateLabel: 'Column addition',
++        domain: 'arithmetic',
++        marks: 1,
++        stem: 'What is 24 + 18?',
++        inputSpec: { label: 'Answer' },
++      },
++      {
++        id: 'q-two',
++        templateLabel: 'Column subtraction',
++        domain: 'arithmetic',
++        marks: 1,
++        stem: 'What is 63 - 27?',
++        inputSpec: { label: 'Answer' },
++      },
++    ];
++    const paper = [
++      { index: 0, question: questions[0], response: { answer: '42' }, working: '24 + 18 = 42' },
++      { index: 1, question: questions[1], response: { answer: '36' }, working: '63 - 27 = 36' },
++    ];
++
++    function appStateFor(index) {
++      return {
++        learners: { selectedId: 'learner-arithmetic' },
++        subjectUi: {
++          arithmetic: {
++            phase: 'test',
++            prefs: { mode: 'test', goal: '10q', testForm: 'short' },
++            session: {
++              id: 'true-test-session',
++              mode: 'test',
++              currentIndex: index,
++              questionCount: paper.length,
++              currentQuestion: paper[index].question,
++              paper,
++            },
++          },
++        },
++      };
++    }
++
++    async function main() {
++      const root = createRoot(document.getElementById('root'));
++      const actions = { dispatch() {}, navigateHome() {} };
++      await act(async () => {
++        root.render(React.createElement(ArithmeticPracticeSurface, { appState: appStateFor(0), actions }));
++      });
++
++      const firstAnswer = document.querySelector('input[name="answer"]');
++      const firstWorking = document.querySelector('textarea[name="working"]');
++      if (!firstAnswer || !firstWorking) throw new Error('Arithmetic answer fields did not render');
++      if (firstAnswer.value !== '42' || firstWorking.value !== '24 + 18 = 42') {
++        throw new Error('First question did not hydrate from its paper entry');
++      }
++
++      firstAnswer.value = 'stale unsaved answer';
++      firstWorking.value = 'stale unsaved working';
++
++      await act(async () => {
++        root.render(React.createElement(ArithmeticPracticeSurface, { appState: appStateFor(1), actions }));
++      });
++
++      const secondAnswer = document.querySelector('input[name="answer"]');
++      const secondWorking = document.querySelector('textarea[name="working"]');
++      process.stdout.write(JSON.stringify({
++        answer: secondAnswer?.value || '',
++        working: secondWorking?.value || '',
++        stem: document.querySelector('.question-stem')?.textContent || '',
++      }));
++      await act(async () => {
++        root.unmount();
++      });
++      dom.window.close();
++      process.exit(0);
++    }
++
++    main().catch((error) => {
++      process.stderr.write(error.stack || error.message);
++      process.exit(1);
++    });
++  `);
++
++  const result = JSON.parse(output);
++  assert.equal(result.answer, '36');
++  assert.equal(result.working, '63 - 27 = 36');
++  assert.match(result.stem, /63 - 27/);
++});
+diff --git a/tests/worker-arithmetic-runtime.test.js b/tests/worker-arithmetic-runtime.test.js
+index 3731b7d7..2da84465 100644
 --- a/tests/worker-arithmetic-runtime.test.js
 +++ b/tests/worker-arithmetic-runtime.test.js
-@@ -50,6 +50,32 @@
+@@ -50,6 +50,38 @@ test('arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer
    assert.equal(evaluateArithmeticQuestion(question, { answer: '2 and 1/2' }).correct, true);
  });
  
@@ -285,12 +461,18 @@
 +  const percentAnswer = String(percentageOutput.expected.value);
 +  assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: percentAnswer }).correct, true);
 +  assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: `${percentAnswer}%` }).correct, true, 'percentage-output questions accept an explicit percent sign');
++  assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: `%${percentAnswer}` }).correct, false, 'percentage-output questions only accept percent as a trailing unit');
++  assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: `${percentAnswer}%%` }).correct, false, 'percentage-output questions reject duplicate percent units');
++  if (percentAnswer.length > 1) {
++    const malformedPercentAnswer = `${percentAnswer.slice(0, 1)}%${percentAnswer.slice(1)}`;
++    assert.equal(evaluateArithmeticQuestion(percentageOutput, { answer: malformedPercentAnswer }).correct, false, 'percentage-output questions reject embedded percent units');
++  }
 +});
 +
  test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
    const placeValue = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty: 2, seed: 96433 });
    assert.ok(placeValue.stem.includes('□'), 'place-value item contains a missing-value box');
-@@ -226,6 +252,7 @@
+@@ -226,6 +258,7 @@ test('arithmetic blank True Test questions are scored as blank but do not poison
    });
  
    assert.equal(finished.state.summary.answered, 0);
@@ -298,3 +480,21 @@
    assert.equal(finished.state.summary.score, 0);
    assert.equal(finished.state.summary.maxScore, 14);
    assert.equal(finished.state.session.paper.every((entry) => entry.status === 'blank' && entry.result), true);
+diff --git a/worker/src/subjects/arithmetic/engine.js b/worker/src/subjects/arithmetic/engine.js
+index 7ba0aaee..3a47f805 100644
+--- a/worker/src/subjects/arithmetic/engine.js
++++ b/worker/src/subjects/arithmetic/engine.js
+@@ -404,11 +404,13 @@ function responseHasAnswerContent(response = {}) {
+ 
+ function sessionSummary(session) {
+   if (!session) return null;
++  const questionCount = Array.isArray(session.paper) ? session.paper.length : (session.answered || 0);
+   return {
+     id: session.id,
+     mode: session.mode,
+     goal: session.goal,
+     answered: session.answered || 0,
++    questionCount,
+     correct: session.correct || 0,
+     score: session.score || 0,
+     maxScore: session.maxScore || 0,
