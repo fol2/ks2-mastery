@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "session": {
+    "demo": true,
+    "accountId": "demo-Edt_GwVqk3KoOw",
+    "learnerId": "learner-demo-Gm1PaykA0L-X4Q"
+  },
+  "assertions": {
+    "grammarTextVisible": true,
+    "noConsoleErrors": true,
+    "noRequestFailures": true,
+    "noHttpFailures": true
+  },
+  "consoleErrors": [],
+  "requestFailures": [],
+  "httpFailures": [],
+  "screenshot": "docs/plans/james/hotfixes/1. grammar-qg-p23-post-hardening-review-table-ui-rhythm-package/validation/live-rollout-2026-05-12/grammar-production-browser-smoke-2026-05-12.png",
+  "timestamp": "2026-05-12T14:54:48.758Z",
+  "commitSha": "87864532eea08f3389ee55947e5c98e9e7959071"
+}
