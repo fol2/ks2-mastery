@@ -1,0 +1,104 @@
+{
+  "ok": true,
+  "smokeType": "reading-stretch-production",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "https://ks2.eugnel.uk",
+  "contentReleaseId": "reading-poc-promoted-2026-05-05",
+  "contentVersion": 5,
+  "commitSha": "24757e1eee48b9d0b3134674d5909cb4fa6e32ff",
+  "commitShaSource": "cli-or-ci-expected",
+  "learnerFixtureType": "demo-session",
+  "accountId": "demo-C2dujfkEOCvELg",
+  "learnerId": "learner-demo-HlJZ-EPZvAPm_g",
+  "staleSetupPayload": {
+    "mode": "stretch",
+    "viewMode": "one",
+    "difficulty": "1",
+    "focusSkillId": "P1"
+  },
+  "session": {
+    "id": "reading_session_mp2ponbv_nn93iv9d",
+    "passage": {
+      "id": "phase5_fiction_carousel_paint",
+      "title": "Carousel Paint Day",
+      "difficulty": 4,
+      "isLong": true,
+      "wordCount": 142
+    },
+    "strict": false,
+    "delayedFeedback": true,
+    "questionCount": 6,
+    "questionDetails": [
+      {
+        "id": "phase5_fiction_carousel_paint_q3",
+        "passageId": "phase5_fiction_carousel_paint",
+        "type": "evidenceShort",
+        "skill": "2d",
+        "marks": 2
+      },
+      {
+        "id": "phase5_fiction_carousel_paint_q5",
+        "passageId": "phase5_fiction_carousel_paint",
+        "type": "open",
+        "skill": "2g",
+        "marks": 2
+      },
+      {
+        "id": "phase5_fiction_carousel_paint_q6",
+        "passageId": "phase5_fiction_carousel_paint",
+        "type": "short",
+        "skill": "2e",
+        "marks": 1
+      },
+      {
+        "id": "phase5_fiction_carousel_paint_q7",
+        "passageId": "phase5_fiction_carousel_paint",
+        "type": "match",
+        "skill": "2h",
+        "marks": 2
+      },
+      {
+        "id": "phase5_fiction_carousel_paint_q8",
+        "passageId": "phase5_fiction_carousel_paint",
+        "type": "order",
+        "skill": "2f",
+        "marks": 2
+      },
+      {
+        "id": "phase5_fiction_carousel_paint_q9",
+        "passageId": "phase5_fiction_carousel_paint",
+        "type": "multiSelect",
+        "skill": "2d",
+        "marks": 2
+      }
+    ],
+    "selectedQuestionTypeCount": 6,
+    "hasHighDepthQuestionType": true,
+    "hasPunctuationOnlyQuestion": false
+  },
+  "submitted": {
+    "questionId": "phase5_fiction_carousel_paint_q3",
+    "phase": "question",
+    "answeredCount": 1,
+    "markedCount": 0,
+    "delayedFeedbackLeakPrevented": true
+  },
+  "marked": {
+    "phase": "summary",
+    "summary": {
+      "sessionId": "reading_session_mp2ponbv_nn93iv9d",
+      "mode": "stretch",
+      "paperId": "",
+      "paperTitle": "",
+      "questionCount": 6,
+      "score": 2,
+      "maxScore": 11,
+      "accuracy": 18,
+      "completedAt": 1778595242481
+    }
+  },
+  "finalRevision": 3,
+  "timestamp": "2026-05-12T14:14:02.707Z",
+  "finishedAt": "2026-05-12T14:14:02.707Z"
+}

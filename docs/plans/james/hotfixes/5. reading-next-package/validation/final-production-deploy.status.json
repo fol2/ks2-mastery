@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "command": "npm run deploy",
+  "exitCode": 0,
+  "commitSha": "24757e1eee48b9d0b3134674d5909cb4fa6e32ff",
+  "worker": "ks2-mastery",
+  "workersUrl": "https://ks2-mastery.fol2hk.workers.dev",
+  "productionUrl": "https://ks2.eugnel.uk/",
+  "versionId": "89927860-7a47-461a-a3f5-14fe4ed38e04",
+  "startupTimeMs": 300,
+  "productionBundleAudit": {
+    "ok": true,
+    "htmlReferencedBundles": 1,
+    "transitiveChunksScanned": 6,
+    "directPaths": 19,
+    "matrixDemoCheck": "ok",
+    "securityHeaderChecks": "5/5",
+    "cacheSplitChecks": "15/15"
+  },
+  "log": "final-production-deploy.log",
+  "generatedAt": "2026-05-12T14:07:39.804Z"
+}

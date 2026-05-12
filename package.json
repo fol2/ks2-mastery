@@ -56,6 +56,7 @@
     "smoke:production:effect": "node ./scripts/effect-config-production-smoke.mjs",
     "smoke:production:grammar": "node ./scripts/grammar-production-smoke.mjs",
     "smoke:production:reading": "node ./scripts/reading-production-smoke.mjs",
+    "smoke:production:reading-stretch": "node ./scripts/reading-stretch-production-smoke.mjs",
     "smoke:production:arithmetic": "node ./scripts/arithmetic-production-smoke.mjs",
     "smoke:production:reading-landing": "node ./scripts/reading-landing-production-smoke.mjs",
     "smoke:production:punctuation": "node ./scripts/punctuation-production-smoke.mjs",
