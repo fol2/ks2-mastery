@@ -105,6 +105,23 @@ test('worker subject runtime keeps heavy punctuation command handlers off the st
   assert.match(source, /import\(['"]\.\/punctuation\/commands\.js['"]\)/);
 });
 
+test('worker repository keeps heavy punctuation read-model service off the startup path', async () => {
+  const source = await readFile(new URL('../worker/src/repository.js', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(
+    source,
+    /import\s+\{[^}]*buildPunctuationReadModel[^}]*\}\s+from\s+['"]\.\/subjects\/punctuation\/read-models\.js['"]/,
+    'punctuation read-model assembly must stay lazy so the generated runtime manifest is not built during Worker startup',
+  );
+  assert.doesNotMatch(
+    source,
+    /import\s+\{[^}]*createPunctuationService[^}]*\}\s+from\s+['"]\.\.\/\.\.\/shared\/punctuation\/service\.js['"]/,
+    'punctuation service must stay lazy because its default runtime manifest is expensive to build',
+  );
+  assert.match(source, /import\(['"]\.\/subjects\/punctuation\/read-models\.js['"]\)/);
+  assert.match(source, /import\(['"]\.\.\/\.\.\/shared\/punctuation\/service\.js['"]\)/);
+});
+
 test('repository reuses cached spelling runtime content for hot subject paths', async () => {
   const DB = createMigratedSqliteD1Database();
   const repository = createWorkerRepository({ env: { DB }, now: () => 1_776_000_000_000 });

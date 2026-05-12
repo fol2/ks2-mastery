@@ -155,7 +155,6 @@ import {
   eventToken as eventTokenForDedupe,
 } from './projections/events.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
-import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
 import { buildGrammarReadModel } from './subjects/grammar/read-models.js';
 import { ARITHMETIC_CONTENT_RELEASE_ID } from '../../shared/arithmetic/content.js';
 import { READING_CONTENT_RELEASE_ID } from '../../shared/reading/metadata.js';
@@ -165,7 +164,6 @@ import { buildArithmeticReadModel } from './subjects/arithmetic/read-models.js';
 import { __arithmeticEngineInternals } from './subjects/arithmetic/engine.js';
 import { buildReasoningReadModel } from './subjects/reasoning/read-models.js';
 import { listPunctuationEvents } from './subjects/punctuation/events.js';
-import { createPunctuationService } from '../../shared/punctuation/service.js';
 import {
   createInitialPunctuationState,
   // normalisePunctuationSummary → row-transforms.js
@@ -315,7 +313,27 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
   };
 }
 
-function createPunctuationReadModelService(data, now) {
+let punctuationReadModelModulesPromise = null;
+
+async function loadPunctuationReadModelModules() {
+  if (!punctuationReadModelModulesPromise) {
+    punctuationReadModelModulesPromise = Promise.all([
+      import('../../shared/punctuation/service.js'),
+      import('./subjects/punctuation/read-models.js'),
+    ])
+      .then(([serviceModule, readModelModule]) => ({
+        createPunctuationService: serviceModule.createPunctuationService,
+        buildPunctuationReadModel: readModelModule.buildPunctuationReadModel,
+      }))
+      .catch((error) => {
+        punctuationReadModelModulesPromise = null;
+        throw error;
+      });
+  }
+  return punctuationReadModelModulesPromise;
+}
+
+function createPunctuationReadModelService(createPunctuationService, data, now) {
   return createPunctuationService({
     repository: {
       readData() {
@@ -327,8 +345,12 @@ function createPunctuationReadModelService(data, now) {
   });
 }
 
-function redactPunctuationUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
-  const service = createPunctuationReadModelService(data, now);
+async function redactPunctuationUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
+  const {
+    buildPunctuationReadModel,
+    createPunctuationService,
+  } = await loadPunctuationReadModelModules();
+  const service = createPunctuationReadModelService(createPunctuationService, data, now);
   const state = service.initState(ui || createInitialPunctuationState());
   const readModel = buildPunctuationReadModel({
     learnerId,
@@ -404,7 +426,7 @@ const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
       now,
     });
   },
-  punctuation({ record, row, now }) {
+  async punctuation({ record, row, now }) {
     return redactPunctuationUiForClient(record.ui, record.data, row.learner_id, { now });
   },
   grammar({ record, row, now }) {
