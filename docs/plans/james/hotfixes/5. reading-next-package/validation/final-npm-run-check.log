@@ -3,8 +3,8 @@
 > node ./scripts/wrangler-oauth.mjs deploy --dry-run
 
 
- ⛅️ wrangler 4.84.0 (update available 4.90.1)
-─────────────────────────────────────────────
+ ⛅️ wrangler 4.84.0
+───────────────────
 [custom build] Running: npm run build && npm run assert:build-public && npm run audit:client
 [custom build] 
 [custom build] > ks2-mastery@0.1.0 build
@@ -21,7 +21,7 @@
 [custom build]   src\bundles\chunk-EE2UYWMZ.js              15.7kb
 [custom build]   ...and 3 more output files...
 [custom build] 
-[custom build] Done in 78ms
+[custom build] Done in 71ms
 [custom build] 
 [custom build] 
 [custom build] > ks2-mastery@0.1.0 assert:build-public

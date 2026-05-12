@@ -2,8 +2,8 @@
   "ok": true,
   "smokeType": "reading-landing-production",
   "origin": "https://ks2.eugnel.uk",
-  "commitSha": "7ca9ff6f42065aab287563d59297b2553b89e284",
-  "generatedAt": "2026-05-12T15:11:41.187Z",
+  "commitSha": "9681d2cbf6d814f939fba43e580e12305ee145f5",
+  "generatedAt": "2026-05-12T15:46:17.954Z",
   "viewports": [
     {
       "viewport": {
@@ -74,7 +74,7 @@
         "hasSetupGrid": true,
         "hasSetupMain": true,
         "hasHeroBackdrop": true,
-        "heroBg": "url('/assets/regions/the-moonleaf-archive/the-moonleaf-archive-a2.1280.webp')",
+        "heroBg": "url('/assets/regions/the-moonleaf-archive/the-moonleaf-archive-a3.1280.webp')",
         "primaryModes": [
           {
             "mode": "smart",

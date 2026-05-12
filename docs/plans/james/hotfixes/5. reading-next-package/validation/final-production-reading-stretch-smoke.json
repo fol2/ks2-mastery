@@ -6,11 +6,11 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 5,
-  "commitSha": "7ca9ff6f42065aab287563d59297b2553b89e284",
+  "commitSha": "9681d2cbf6d814f939fba43e580e12305ee145f5",
   "commitShaSource": "cli-or-ci-expected",
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-Qzf248JhNVDpmA",
-  "learnerId": "learner-demo-bik4_lv1uXj-Pw",
+  "accountId": "demo-5KQJ8q7YRv9Wqg",
+  "learnerId": "learner-demo-51fXLKqHzK_33g",
   "staleSetupPayload": {
     "mode": "stretch",
     "viewMode": "one",
@@ -18,58 +18,58 @@
     "focusSkillId": "P1"
   },
   "session": {
-    "id": "reading_session_mp2rr0cu_wiffav1f",
+    "id": "reading_session_mp2szk0n_srp9y2yp",
     "passage": {
-      "id": "p4f19_lighthouse_radio",
-      "title": "The Lighthouse Radio",
-      "difficulty": 4,
+      "id": "phase5_fiction_stone_circle",
+      "title": "Stone Circle Dawn",
+      "difficulty": 3,
       "isLong": true,
-      "wordCount": 147
+      "wordCount": 132
     },
     "strict": false,
     "delayedFeedback": true,
     "questionCount": 6,
     "questionDetails": [
       {
-        "id": "p4f19_lighthouse_radio_q3",
-        "passageId": "p4f19_lighthouse_radio",
+        "id": "phase5_fiction_stone_circle_q3",
+        "passageId": "phase5_fiction_stone_circle",
         "type": "evidenceShort",
         "skill": "2d",
         "marks": 2
       },
       {
-        "id": "p4f19_lighthouse_radio_q5",
-        "passageId": "p4f19_lighthouse_radio",
+        "id": "phase5_fiction_stone_circle_q5",
+        "passageId": "phase5_fiction_stone_circle",
         "type": "open",
         "skill": "2g",
         "marks": 2
       },
       {
-        "id": "p4f19_lighthouse_radio_q6",
-        "passageId": "p4f19_lighthouse_radio",
+        "id": "phase5_fiction_stone_circle_q6",
+        "passageId": "phase5_fiction_stone_circle",
         "type": "short",
         "skill": "2e",
         "marks": 1
       },
       {
-        "id": "p4f19_lighthouse_radio_q7",
-        "passageId": "p4f19_lighthouse_radio",
+        "id": "phase5_fiction_stone_circle_q7",
+        "passageId": "phase5_fiction_stone_circle",
         "type": "match",
         "skill": "2h",
         "marks": 2
       },
       {
-        "id": "p4f19_lighthouse_radio_q8",
-        "passageId": "p4f19_lighthouse_radio",
+        "id": "phase5_fiction_stone_circle_q8",
+        "passageId": "phase5_fiction_stone_circle",
         "type": "order",
         "skill": "2f",
         "marks": 2
       },
       {
-        "id": "p4f19_lighthouse_radio_q9",
-        "passageId": "p4f19_lighthouse_radio",
+        "id": "phase5_fiction_stone_circle_q9",
+        "passageId": "phase5_fiction_stone_circle",
         "type": "multiSelect",
-        "skill": "2b",
+        "skill": "2d",
         "marks": 2
       }
     ],
@@ -78,7 +78,7 @@
     "hasPunctuationOnlyQuestion": false
   },
   "submitted": {
-    "questionId": "p4f19_lighthouse_radio_q3",
+    "questionId": "phase5_fiction_stone_circle_q3",
     "phase": "question",
     "answeredCount": 1,
     "markedCount": 0,
@@ -87,7 +87,7 @@
   "marked": {
     "phase": "summary",
     "summary": {
-      "sessionId": "reading_session_mp2rr0cu_wiffav1f",
+      "sessionId": "reading_session_mp2szk0n_srp9y2yp",
       "mode": "stretch",
       "paperId": "",
       "paperTitle": "",
@@ -95,10 +95,10 @@
       "score": 2,
       "maxScore": 11,
       "accuracy": 18,
-      "completedAt": 1778598711253
+      "completedAt": 1778600789736
     }
   },
   "finalRevision": 3,
-  "timestamp": "2026-05-12T15:11:51.356Z",
-  "finishedAt": "2026-05-12T15:11:51.356Z"
+  "timestamp": "2026-05-12T15:46:29.845Z",
+  "finishedAt": "2026-05-12T15:46:29.845Z"
 }

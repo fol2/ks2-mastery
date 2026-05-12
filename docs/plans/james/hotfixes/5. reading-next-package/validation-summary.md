@@ -59,8 +59,8 @@ Each final evidence command has a paired `.status.json` file where applicable.
 - `validation/production-deploy-startup-limit-failure-2026-05-12.log`: first real `npm run deploy` failed with Cloudflare Error 10021 because script startup exceeded the CPU limit.
 - `validation/production-deploy-startup-limit-failure-2026-05-12.status.json`: machine-readable failure and resolution record.
 - `validation/final-production-deploy.log`: real `npm run deploy` succeeded after the lazy Punctuation startup fix.
-- `validation/final-production-deploy.status.json`: deployed Worker version `e05a7ff6-129f-4e77-a66a-55d20948c979`, startup time 225 ms, and production bundle audit pass.
-- `validation/final-production-reading-smoke.json`: live Reading API smoke passed against Reading content version 5 and commit `7ca9ff6f42065aab287563d59297b2553b89e284`.
+- `validation/final-production-deploy.status.json`: deployed Worker version `a6051648-2084-48ad-8e0c-a3c06b7c3689`, startup time 218 ms, and production bundle audit pass.
+- `validation/final-production-reading-smoke.json`: live Reading API smoke passed against Reading content version 5 and commit `9681d2cbf6d814f939fba43e580e12305ee145f5`.
 - `validation/final-production-reading-landing-smoke.json`: live Reading landing smoke passed on desktop and mobile viewports with no page, console, request or HTTP failures.
 - `validation/final-production-reading-landing-screenshots/`: current production landing and session screenshots from the smoke run.
 - `validation/final-production-reading-stretch-smoke.json`: live stretch smoke passed with stale setup filters (`difficulty=1`, `focusSkillId=P1`), six delayed-feedback questions, a long/high-difficulty passage, no punctuation-only items, and no pre-mark feedback leak.
