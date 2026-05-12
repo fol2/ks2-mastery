@@ -1,8 +1,191 @@
+diff --git a/scripts/reasoning-production-smoke.mjs b/scripts/reasoning-production-smoke.mjs
+index 865439bb..7988cc92 100644
+--- a/scripts/reasoning-production-smoke.mjs
++++ b/scripts/reasoning-production-smoke.mjs
+@@ -23,6 +23,19 @@ import {
+ const __filename = fileURLToPath(import.meta.url);
+ const ROOT_DIR = path.resolve(path.dirname(__filename), '..');
+ const FORBIDDEN_REASONING_READ_MODEL_KEYS = new Set(['evaluate']);
++const FORBIDDEN_REASONING_EARLY_HINT_KEYS = new Set([
++  'templateId',
++  'templateLabel',
++  'domain',
++  'skillIds',
++  'skillNames',
++  'solutionLines',
++  'checkLine',
++  'reflectionPrompt',
++  'answerText',
++  'feedbackLong',
++  'misconception',
++]);
+
+ function argValue(name, fallback = '') {
+   const index = process.argv.indexOf(name);
+@@ -189,6 +202,27 @@ export function assertNoReasoningMarkerLeak(value, pathLabel = 'reasoning.readMo
+   }
+ }
+
++export function assertNoEarlyReasoningHints(value, pathLabel = 'reasoning.session') {
++  if (value == null) return;
++  if (Array.isArray(value)) {
++    value.forEach((entry, index) => assertNoEarlyReasoningHints(entry, `${pathLabel}[${index}]`));
++    return;
++  }
++  if (typeof value !== 'object') return;
++  for (const [key, child] of Object.entries(value)) {
++    assert.equal(FORBIDDEN_REASONING_EARLY_HINT_KEYS.has(key), false, `${pathLabel}.${key} exposed an early Reasoning hint.`);
++    assertNoEarlyReasoningHints(child, `${pathLabel}.${key}`);
++  }
++}
++
++function blankReasoningResponse(question = {}) {
++  const inputSpec = question.inputSpec || {};
++  if (inputSpec.type === 'multi') {
++    return Object.fromEntries((inputSpec.fields || []).map((field) => [field.key, '']));
++  }
++  return { answer: '' };
++}
++
+ function currentSourceCommit() {
+   try {
+     return execSync('git rev-parse HEAD', { cwd: ROOT_DIR, encoding: 'utf8' }).trim();
+@@ -233,22 +267,68 @@ async function runSmoke() {
+     learnerId,
+     revision,
+     command: 'start-session',
+-    payload: { mode: 'sats', viewMode: 'one' },
++    payload: { mode: 'smart', viewMode: 'one', roundLength: 3 },
+   });
+   revision = step.revision;
+   const startModel = step.payload.subjectReadModel;
+   assert.equal(startModel?.subjectId, 'reasoning', 'Reasoning start did not return the Reasoning read model.');
+   assert.equal(startModel?.phase, 'session', 'Reasoning SATs smoke did not start a session.');
+-  assert.equal(startModel?.session?.strict, true, 'Reasoning SATs smoke did not expose strict mode.');
+-  assert.equal(startModel?.session?.delayedFeedback, false, 'Reasoning SATs single should use immediate completion.');
++  assert.equal(startModel?.session?.strict, false, 'Reasoning support smoke should start outside strict mode.');
++  assert.equal(startModel?.session?.delayedFeedback, false, 'Reasoning single-question surface should use immediate feedback.');
+   assertReasoningContentSummary(startModel?.content, 'reasoning.startModel.content');
+   assertNoReasoningMarkerLeak(startModel, 'reasoning.startModel');
+
+   const currentQuestion = startModel.session.currentQuestion;
+   assert.ok(currentQuestion?.id, 'Reasoning start did not expose a current question id.');
+-  const { templateId, seed } = parseReasoningQuestionId(currentQuestion.id);
+-  const sourceQuestion = generateReasoningQuestion(templateId, seed);
+-  const response = reasoningCorrectResponseFor(sourceQuestion);
++  assert.doesNotMatch(currentQuestion.id, /^[a-z0-9_]+:\d+$/i, 'Reasoning exposed a template-shaped question id before marking/support.');
++  assert.equal(currentQuestion.id, currentQuestion.itemId, 'Reasoning public question id and item id should agree.');
++  assertNoEarlyReasoningHints(startModel.session.currentQuestion, 'reasoning.startModel.session.currentQuestion');
++  assertNoEarlyReasoningHints(startModel.session.questionNav, 'reasoning.startModel.session.questionNav');
++  const blankResponse = blankReasoningResponse(currentQuestion);
++
++  step = await subjectCommand({
++    origin,
++    cookie: demo.cookie,
++    subjectId: 'reasoning',
++    learnerId,
++    revision,
++    command: 'submit-answer',
++    payload: {
++      expectedSessionId: startModel.session.id,
++      expectedQuestionId: currentQuestion.id,
++      response: blankResponse,
++    },
++  });
++  revision = step.revision;
++  const firstWrongModel = step.payload.subjectReadModel;
++  assert.equal(firstWrongModel?.subjectId, 'reasoning', 'Reasoning first submit did not return the Reasoning read model.');
++  assert.equal(firstWrongModel?.phase, 'session', 'Reasoning first-wrong nudge should keep the session active.');
++  assert.equal(firstWrongModel?.feedback?.final, false, 'Reasoning first-wrong feedback should be non-final.');
++  assert.equal(firstWrongModel?.feedback?.result?.answerText, undefined, 'Reasoning first-wrong feedback exposed answer text.');
++  assert.equal(firstWrongModel?.feedback?.result?.feedbackLong, undefined, 'Reasoning first-wrong feedback exposed full feedback.');
++  assertNoReasoningMarkerLeak(firstWrongModel, 'reasoning.firstWrongModel');
++  assertNoEarlyReasoningHints(firstWrongModel.session.currentQuestion, 'reasoning.firstWrongModel.session.currentQuestion');
++  assertNoEarlyReasoningHints(firstWrongModel.feedback?.question, 'reasoning.firstWrongModel.feedback.question');
++
++  step = await subjectCommand({
++    origin,
++    cookie: demo.cookie,
++    subjectId: 'reasoning',
++    learnerId,
++    revision,
++    command: 'request-support',
++    payload: {
++      expectedSessionId: startModel.session.id,
++      expectedQuestionId: currentQuestion.id,
++      kind: 'worked',
++    },
++  });
++  revision = step.revision;
++  const supportModel = step.payload.subjectReadModel;
++  assert.equal(supportModel?.subjectId, 'reasoning', 'Reasoning support did not return the Reasoning read model.');
++  assert.equal(supportModel?.session?.supportLevel, 2, 'Reasoning worked support was not applied.');
++  assert.ok(Array.isArray(supportModel?.session?.currentQuestion?.solutionLines), 'Reasoning support did not expose worked solution lines.');
++  assertNoReasoningMarkerLeak(supportModel, 'reasoning.supportModel');
+
+   step = await subjectCommand({
+     origin,
+@@ -260,21 +340,21 @@ async function runSmoke() {
+     payload: {
+       expectedSessionId: startModel.session.id,
+       expectedQuestionId: currentQuestion.id,
+-      response,
++      response: blankResponse,
+     },
+   });
+   revision = step.revision;
+-  const summaryModel = step.payload.subjectReadModel;
+-  assert.equal(summaryModel?.subjectId, 'reasoning', 'Reasoning submit did not return the Reasoning read model.');
+-  assert.equal(summaryModel?.phase, 'summary', 'Reasoning SATs single did not complete to summary.');
+-  assert.equal(summaryModel?.summary?.questionCount, 1, 'Reasoning SATs single summary did not include one question.');
+-  assert.equal(summaryModel?.summary?.score, summaryModel?.summary?.maxScore, 'Reasoning correct smoke answer was not accepted.');
+-  assert.ok(Number(summaryModel?.stats?.overview?.evidenceStars) >= 1, 'Reasoning evidence star was not recorded.');
+-  assertNoReasoningMarkerLeak(summaryModel, 'reasoning.summaryModel');
++  const markedModel = step.payload.subjectReadModel;
++  assert.equal(markedModel?.subjectId, 'reasoning', 'Reasoning supported submit did not return the Reasoning read model.');
++  assert.equal(markedModel?.feedback?.final, true, 'Reasoning supported submit did not finalise the question.');
++  assert.equal(Number(markedModel?.stats?.overview?.totalQuestions), 1, 'Reasoning supported submit did not update practice history.');
++  assert.equal(Number(markedModel?.stats?.overview?.evidenceStars), 0, 'Reasoning supported submit should not award independent evidence.');
++  assertNoReasoningMarkerLeak(markedModel, 'reasoning.markedModel');
+
+   const domainEvents = step.payload.domainEvents || [];
+   const reactionEvents = step.payload.reactionEvents || [];
+-  assert.ok(domainEvents.some((event) => event.type === 'reasoning.evidence-earned'), 'Reasoning evidence event was not emitted.');
++  assert.ok(domainEvents.some((event) => event.type === 'reasoning.answer-submitted'), 'Reasoning answer-submitted event was not emitted.');
++  assert.equal(domainEvents.some((event) => event.type === 'reasoning.evidence-earned'), false, 'Supported Reasoning smoke emitted independent evidence.');
+   assert.ok(reactionEvents.every((event) => event.subjectId === 'reasoning'), 'Reasoning reward reactions included another subject.');
+
+   const heroReadModel = await optionalHeroReadModel({ origin, cookie: demo.cookie, learnerId });
+@@ -288,15 +368,17 @@ async function runSmoke() {
+     learnerId,
+     finalRevision: revision,
+     contentReleaseId: REASONING_CONTENT_RELEASE_ID,
+-    content: summaryModel.content,
++    content: markedModel.content,
+     session: {
+       id: startModel.session.id,
+       mode: startModel.session.mode,
+       questionId: currentQuestion.id,
+-      templateId,
+-      seed,
+-      score: summaryModel.summary.score,
+-      maxScore: summaryModel.summary.maxScore,
++      publicQuestionIdOpaque: !/^[a-z0-9_]+:\d+$/i.test(currentQuestion.id),
++      firstWrongFinal: firstWrongModel.feedback.final,
++      supportLevel: supportModel.session.supportLevel,
++      markedCorrect: Boolean(markedModel.session?.result?.correct),
++      score: markedModel.session?.result?.score ?? null,
++      maxScore: markedModel.session?.result?.maxScore ?? null,
+     },
+     rewardProjection: {
+       domainEvents: domainEvents.map((event) => event.type),
+diff --git a/shared/reasoning/content.js b/shared/reasoning/content.js
+index 2afdb6ed..c677671e 100644
 --- a/shared/reasoning/content.js
 +++ b/shared/reasoning/content.js
-@@ -163,7 +163,13 @@
- 
- 
+@@ -163,12 +163,26 @@ const SKILLS = {
+
+
      function parseNumberInput(value) {
 -      const s = cleanNumText(value);
 +      const raw = cleanNumText(value)
@@ -15,150 +198,118 @@
        if (s === "") return null;
        if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
        return null;
-@@ -7770,7 +7776,6 @@
-     itemId: question.itemId || `${question.templateId}:${question.seed}`,
-     templateId: question.templateId,
-     templateLabel: question.templateLabel,
+     }
+
++    function parseMoneyAmount(value) {
++      const s = String(value || "").trim().replace(/,/g, "").replace(/\s+/g, "");
++      const amountText = s.startsWith("£") ? s.slice(1) : s;
++      if (amountText === "") return null;
++      if (/^-?\d+(\.\d+)?$/.test(amountText)) return Number(amountText);
++      return null;
++    }
++
+
+     function parseFractionOrNumber(value) {
+       const s = String(value || "").trim().replace(/\s+/g, "");
+@@ -1518,7 +1532,7 @@ const TEMPLATES = [
+             checkLine: `The change should be a little less than ${formatMoney(paid)} because the total cost is about ${formatMoney(Math.round(total))}.`,
+             inputSpec: { type:"text", label:"Change", placeholder:"e.g. 3.40 or £3.40" },
+             evaluate: (resp) => {
+-              const ans = parseNumberInput(resp.answer);
++              const ans = parseMoneyAmount(resp.answer);
+               if (ans === null) return mkResult({ correct:false, score:0, maxScore:2, misconception:"misread_question", feedbackShort:"Enter the amount of change." });
+               if (equalNumeric(ans, change)) return mkResult({
+                 correct:true, score:2, maxScore:2,
+@@ -1695,11 +1709,23 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+   }
+
+   function parseMoneyToPence(value) {
+-    const amount = parseNumberInput(value);
++    const amount = parseMoneyAmount(value);
+     if (amount === null) return null;
+     return Math.round(amount * 100);
+   }
+
++  function parseMoneyNotePence(value) {
++    const text = String(value || "").trim().replace(/,/g, "").replace(/\s+/g, "");
++    if (!text) return null;
++    if (/^£\d+(\.\d{1,2})?$/.test(text)) return Math.round(Number(text.slice(1)) * 100);
++    if (/^\d+$/.test(text)) {
++      const amount = Number(text);
++      if ([500, 1000, 2000].includes(amount)) return amount;
++      if ([5, 10, 20].includes(amount)) return amount * 100;
++    }
++    return null;
++  }
++
+   const FDP_LINK_CASES = [
+     { n: 1, d: 2, decimal: 0.5, percent: 50 },
+     { n: 1, d: 4, decimal: 0.25, percent: 25 },
+@@ -5592,7 +5618,7 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+             ]
+           },
+           evaluate: (resp) => {
+-            const estimateAnswer = parseNumberInput(resp.estimate);
++            const estimateAnswer = parseMoneyAmount(resp.estimate);
+             let score = 0;
+             if (estimateAnswer === estimate) score += 1;
+             if ((resp.enough === "yes") === enough) score += 1;
+@@ -6336,8 +6362,8 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+             ]
+           },
+           evaluate: (resp) => {
+-            const savingAnswer = parseNumberInput(resp.saving);
+-            const saleAnswer = parseNumberInput(resp.salePrice);
++            const savingAnswer = parseMoneyAmount(resp.saving);
++            const saleAnswer = parseMoneyAmount(resp.salePrice);
+             let score = 0;
+             if (savingAnswer === saving) score += 1;
+             if (saleAnswer === salePrice) score += 1;
+@@ -7553,7 +7579,7 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
+             ]
+           },
+           evaluate: (resp) => {
+-            const noteAnswer = parseNumberInput(resp.note);
++            const noteAnswer = parseMoneyNotePence(resp.note);
+             const changeAnswer = parseMoneyToPence(resp.change);
+             let score = 0;
+             if (noteAnswer === choice.note) score += 1;
+@@ -7762,15 +7788,14 @@ export function generateReasoningQuestion(templateId, seed) {
+   return template.generator(Number(seed) || 0);
+ }
+
+-export function safeReasoningQuestion(question, { includeSkill = false, includeFeedback = false } = {}) {
++export function safeReasoningQuestion(question, { includeSkill = false, includeFeedback = false, publicId = '' } = {}) {
+   if (!question) return null;
+   const spec = question.inputSpec ? JSON.parse(JSON.stringify(question.inputSpec)) : { type: 'text', label: 'Answer' };
++  const internalId = question.itemId || `${question.templateId}:${question.seed}`;
++  const safeId = publicId || question.publicId || internalId;
+   const base = {
+-    id: question.itemId || `${question.templateId}:${question.seed}`,
+-    itemId: question.itemId || `${question.templateId}:${question.seed}`,
+-    templateId: question.templateId,
+-    templateLabel: question.templateLabel,
 -    domain: question.domain,
++    id: safeId,
++    itemId: safeId,
      stemHtml: question.stemHtml || '',
      visualHtml: question.visualHtml || '',
      marks: Number(question.marks) || 1,
-@@ -7779,6 +7784,7 @@
+@@ -7779,6 +7804,9 @@ export function safeReasoningQuestion(question, { includeSkill = false, includeF
      typeLabel: REASONING_QUESTION_TYPE_LABELS[spec.type] || spec.type || 'Question',
    };
    if (includeSkill) {
++    base.templateId = question.templateId;
++    base.templateLabel = question.templateLabel;
 +    base.domain = question.domain;
      base.skillIds = Array.isArray(question.skillIds) ? question.skillIds.slice() : [];
      base.skillNames = base.skillIds.map((id) => REASONING_SKILLS[id]?.name || id);
    }
---- a/worker/src/subjects/reasoning/engine.js
-+++ b/worker/src/subjects/reasoning/engine.js
-@@ -308,11 +308,14 @@
-   const due = data.retryQueue
-     .filter((entry) => entry.dueAt <= nowValue && (!focusSkillId || (entry.skillIds || []).includes(focusSkillId)))
-     .sort((a, b) => a.dueAt - b.dueAt);
--  if (!due.length) return null;
--  const entry = due[0];
--  const index = data.retryQueue.indexOf(entry);
--  if (index >= 0) data.retryQueue.splice(index, 1);
--  return entry;
-+  return due[0] || null;
-+}
-+
-+function removeRetryForRef(data, ref) {
-+  if (!ref?.templateId) return;
-+  data.retryQueue = (data.retryQueue || []).filter((entry) => (
-+    entry.templateId !== ref.templateId || Number(entry.seed) !== Number(ref.seed)
-+  ));
- }
- 
- function chooseTemplate(data, prefs, mode, random, nowValue, usedTemplateIds = []) {
-@@ -472,6 +475,8 @@
- 
- function buildFeedback(session, feedback) {
-   if (!feedback?.questionRef) return null;
-+  const currentRef = currentQuestionRef(session);
-+  if (currentRef?.itemId && feedback.questionRef.itemId !== currentRef.itemId) return null;
-   const question = questionFromRef(feedback.questionRef);
-   const result = feedback.result || null;
-   const supportLevel = feedback.supportLevel || session?.support?.[feedback.questionRef.itemId]?.level || 0;
-@@ -624,14 +629,20 @@
- }
- 
- function moveIndex(session, move = {}) {
--  if (!session) return;
-+  if (!session) return false;
-+  const before = session.currentQuestionIndex || 0;
-   const count = session.questionRefs.length;
-   if (Number.isFinite(Number(move.questionIndex))) {
-     session.currentQuestionIndex = clamp(Math.floor(Number(move.questionIndex)), 0, Math.max(0, count - 1));
--    return;
-+    return session.currentQuestionIndex !== before;
-   }
-   const delta = Number(move.delta) || 0;
-   session.currentQuestionIndex = clamp((session.currentQuestionIndex || 0) + delta, 0, Math.max(0, count - 1));
-+  return session.currentQuestionIndex !== before;
-+}
-+
-+function applyMoveQuestion({ state, payload }) {
-+  if (moveIndex(state.session, payload || {})) state.feedback = null;
- }
- 
- function storeResponse(session, ref, response) {
-@@ -653,7 +664,7 @@
- }
- 
- function maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount }) {
--  if (!result.correct || quality < 3) return null;
-+  if (!result.correct || quality < 4.8 || supportLevel > 0) return null;
-   const primarySkill = question.skillIds?.[0] || '';
-   if (!primarySkill) return null;
-   const bucket = quality >= 4.8 ? 'independent' : supportLevel ? `support-${supportLevel}` : `attempt-${attemptCount}`;
-@@ -678,6 +689,7 @@
-   const attemptCount = session.attempts[ref.itemId] || 1;
-   const supportLevel = session.support?.[ref.itemId]?.level || 0;
-   const quality = outcomeQuality(result, attemptCount, supportLevel, session.strict);
-+  removeRetryForRef(data, ref);
-   updateStreak(data, nowValue);
-   for (const skillId of question.skillIds || []) updateNodeFromQuality(ensureNode(data.skills, skillId), quality, nowValue);
-   updateNodeFromQuality(ensureNode(data.templates, ref.templateId), quality, nowValue);
-@@ -696,6 +708,7 @@
-     attempts: attemptCount,
-     supportLevel,
-     misconception: result.misconception || null,
-+    response: clone(session.responses?.[ref.itemId] || {}),
-     durationSec: Math.round((nowValue - (session.startedAt || nowValue)) / 1000),
-   };
-   data.events.push(event);
-@@ -714,6 +727,7 @@
-     correct: result.correct,
-     misconception: result.misconception || null,
-     supportLevel,
-+    response: clone(session.responses?.[ref.itemId] || {}),
-   }];
-   const evidenceEvent = maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount });
-   if (evidenceEvent && !data.evidenceKeys.includes(evidenceEvent.masteryKey)) {
-@@ -840,14 +854,16 @@
-   const responses = payload?.responses && typeof payload.responses === 'object' ? payload.responses : null;
-   if (responses) {
-     for (const itemRef of session.questionRefs || []) {
--      if (responseHasValue(responses[itemRef.itemId])) storeResponse(session, itemRef, responses[itemRef.itemId]);
-+      if (Object.prototype.hasOwnProperty.call(responses, itemRef.itemId)) storeResponse(session, itemRef, responses[itemRef.itemId]);
-     }
-   } else {
-     if (payload?.expectedQuestionId && payload.expectedQuestionId !== ref.itemId) return;
-     storeResponse(session, ref, payload?.response || {});
-   }
--  if (payload?.advance) moveIndex(session, { delta: 1 });
--  if (payload?.move) moveIndex(session, payload.move);
-+  let moved = false;
-+  if (payload?.advance) moved = moveIndex(session, { delta: 1 }) || moved;
-+  if (payload?.move) moved = moveIndex(session, payload.move) || moved;
-+  if (moved) state.feedback = null;
- }
- 
- function applyMarkSession({ learnerId, state, data, payload, requestId, nowValue }) {
-@@ -856,7 +872,7 @@
-   if (payload?.expectedSessionId && payload.expectedSessionId !== session.id) return [];
-   if (payload?.responses && typeof payload.responses === 'object') {
-     for (const ref of session.questionRefs || []) {
--      if (!session.results?.[ref.itemId] && responseHasValue(payload.responses[ref.itemId])) storeResponse(session, ref, payload.responses[ref.itemId]);
-+      if (!session.results?.[ref.itemId] && Object.prototype.hasOwnProperty.call(payload.responses, ref.itemId)) storeResponse(session, ref, payload.responses[ref.itemId]);
-     }
-   }
-   const events = [];
-@@ -932,7 +948,7 @@
-       state.error = '';
-     } else if (command === 'save-response') applySaveResponse({ state, payload });
-     else if (command === 'submit-answer') events = applySubmit({ learnerId, state, data, payload, requestId, nowValue });
--    else if (command === 'move-question') moveIndex(state.session, payload || {});
-+    else if (command === 'move-question') applyMoveQuestion({ state, payload });
-     else if (command === 'mark-section' || command === 'mark-session') events = applyMarkSession({ learnerId, state, data, payload, requestId, nowValue });
-     else if (command === 'request-support') applySupport({ state, payload, nowValue });
-     else if (command === 'continue-session') applyContinue({ state });
+diff --git a/src/subjects/reasoning/command-actions.js b/src/subjects/reasoning/command-actions.js
+index e995ea5c..96ea1000 100644
 --- a/src/subjects/reasoning/command-actions.js
 +++ b/src/subjects/reasoning/command-actions.js
-@@ -24,9 +24,11 @@
+@@ -24,9 +24,11 @@ function responseFromFormData(formData, question, prefix = '') {
          response[field.key] = String(formDataValue(formData, name));
        }
      }
@@ -169,10 +320,12 @@
 +  response.working = String(formDataValue(formData, fieldName('working', prefix)));
    return response;
  }
- 
+
+diff --git a/src/subjects/reasoning/components/ReasoningPracticeSurface.jsx b/src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
+index e3c4c3cf..14d7052e 100644
 --- a/src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
 +++ b/src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
-@@ -475,6 +475,7 @@
+@@ -475,6 +475,7 @@ function QuestionListPanel({ ui, actions }) {
                <div className="question-stem reasoning-question-stem" dangerouslySetInnerHTML={{ __html: question.stemHtml }} />
                {question.visualHtml ? <div className="question-visual reasoning-question-visual" dangerouslySetInnerHTML={{ __html: question.visualHtml }} /> : null}
                <QuestionInput question={question} response={question.response || {}} disabled={disabled} prefix={prefix} />
@@ -180,17 +333,19 @@
                <Feedback feedback={question.result ? { result: question.result, final: true, question } : null} question={question} supportLevel={question.supportLevel} />
              </section>
            );
+diff --git a/tests/reasoning-engine-rewards.test.js b/tests/reasoning-engine-rewards.test.js
+index ab6522c6..c60d63db 100644
 --- a/tests/reasoning-engine-rewards.test.js
 +++ b/tests/reasoning-engine-rewards.test.js
-@@ -29,6 +29,7 @@
+@@ -29,6 +29,7 @@ test('server reasoning engine returns exact due retry questions and emits eviden
    });
    const ref = started.state.session.questionRefs[0];
    assert.deepEqual(ref, { templateId, seed, itemId: `${templateId}:${seed}` });
 +  assert.equal(started.data.retryQueue.length, 1, 'due retry should remain queued until the item is actually finalised');
- 
+
    const marked = engine.apply({
      learnerId: 'learner-1',
-@@ -41,6 +42,7 @@
+@@ -41,6 +42,7 @@ test('server reasoning engine returns exact due retry questions and emits eviden
    assert.equal(marked.summary, undefined);
    assert.equal(marked.stats.overview.totalQuestions, 1);
    assert.equal(marked.stats.overview.evidenceStars, 1);
@@ -198,10 +353,10 @@
    assert.deepEqual(marked.events.map((event) => event.type), [
      'reasoning.answer-submitted',
      'reasoning.evidence-earned',
-@@ -260,6 +262,35 @@
+@@ -260,6 +262,35 @@ test('reasoning support command actions send stale-session and stale-question gu
    });
  });
- 
+
 +
 +test('reasoning command actions include optional working for single and list responses', () => {
 +  const formData = new FormData();
@@ -234,8 +389,8 @@
  test('reasoning read model redacts legacy persisted first-wrong result fields', () => {
    const engine = createServerReasoningEngine({ now: () => 35_000, random: () => 0 });
    const started = engine.apply({
-@@ -311,12 +342,181 @@
- 
+@@ -311,12 +342,268 @@ test('duplicate Reasoning evidence keys update practice but do not re-emit evide
+
    assert.equal(marked.stats.overview.totalQuestions, 1);
    assert.equal(marked.stats.overview.evidenceStars, 1);
 +  assert.equal(marked.data.retryQueue.some((entry) => entry.templateId === templateId && Number(entry.seed) === seed), false, 'finalised retry item should be removed before any new retry is scheduled');
@@ -244,7 +399,7 @@
      'reasoning.session-completed',
    ]);
  });
- 
+
 +
 +test('Reasoning read models keep domain and skill hints hidden until marking or support', () => {
 +  const engine = createServerReasoningEngine({ now: () => 45_000, random: () => 0 });
@@ -255,9 +410,21 @@
 +    requestId: 'domain-start',
 +  });
 +  const questionBefore = started.readModel.session.currentQuestion;
++  for (const navItem of started.readModel.session.questionNav) {
++    assert.equal(navItem.id, `q${navItem.index + 1}`);
++    assert.doesNotMatch(navItem.id, /^[a-z0-9_]+:\d+$/i);
++    assert.equal(navItem.templateId, undefined);
++  }
++  assert.equal(questionBefore.id, 'q1');
++  assert.equal(questionBefore.itemId, 'q1');
++  assert.doesNotMatch(questionBefore.id, /^[a-z0-9_]+:\d+$/i);
++  assert.equal(questionBefore.templateId, undefined);
++  assert.equal(questionBefore.templateLabel, undefined);
 +  assert.equal(questionBefore.domain, undefined);
 +  assert.equal(questionBefore.skillIds, undefined);
 +  assert.equal(questionBefore.skillNames, undefined);
++  assert.equal(started.readModel.session.questions[0].id, 'q1');
++  assert.equal(started.readModel.session.questions[0].itemId, 'q1');
 +
 +  const ref = started.state.session.questionRefs[0];
 +  const question = generateReasoningQuestion(ref.templateId, ref.seed);
@@ -266,12 +433,45 @@
 +    learnerId: 'learner-domain-redaction',
 +    subjectRecord: { state: started.state, data: started.data },
 +    command: 'submit-answer',
-+    payload: { expectedSessionId: started.state.session.id, expectedQuestionId: ref.itemId, response: { answer } },
++    payload: { expectedSessionId: started.state.session.id, expectedQuestionId: questionBefore.id, response: { answer } },
 +    requestId: 'domain-mark',
 +  });
 +
++  assert.equal(marked.state.phase, 'summary');
++  assert.equal(marked.readModel.session.currentQuestion.id, 'q1');
++  assert.equal(marked.readModel.session.currentQuestion.itemId, 'q1');
 +  assert.equal(typeof marked.readModel.session.currentQuestion.domain, 'string');
++  assert.equal(typeof marked.readModel.session.questionNav[0].templateId, 'string');
++  assert.equal(typeof marked.readModel.session.currentQuestion.templateId, 'string');
++  assert.equal(typeof marked.readModel.session.currentQuestion.templateLabel, 'string');
 +  assert.ok(Array.isArray(marked.readModel.session.currentQuestion.skillNames));
++});
++
++test('Reasoning first-wrong feedback question stays redacted before support', () => {
++  const engine = createServerReasoningEngine({ now: () => 47_500, random: () => 0 });
++  const started = engine.apply({
++    learnerId: 'learner-feedback-redaction',
++    command: 'start-session',
++    payload: { mode: 'smart', viewMode: 'one', roundLength: 3 },
++    requestId: 'feedback-redaction-start',
++  });
++  const publicId = started.readModel.session.currentQuestion.id;
++  const firstWrong = engine.apply({
++    learnerId: 'learner-feedback-redaction',
++    subjectRecord: { state: started.state, data: started.data },
++    command: 'submit-answer',
++    payload: { expectedSessionId: started.state.session.id, expectedQuestionId: publicId, response: { answer: '0' } },
++    requestId: 'feedback-redaction-wrong',
++  });
++
++  assert.equal(firstWrong.readModel.feedback.final, false);
++  assert.equal(firstWrong.readModel.feedback.question.id, 'q1');
++  assert.equal(firstWrong.readModel.feedback.question.itemId, 'q1');
++  assert.equal(firstWrong.readModel.feedback.question.templateId, undefined);
++  assert.equal(firstWrong.readModel.feedback.question.templateLabel, undefined);
++  assert.equal(firstWrong.readModel.feedback.question.domain, undefined);
++  assert.equal(firstWrong.readModel.feedback.question.skillIds, undefined);
++  assert.equal(firstWrong.readModel.feedback.question.skillNames, undefined);
 +});
 +
 +test('Reasoning clears stale feedback when moving away from an unresolved first-wrong question', () => {
@@ -319,11 +519,13 @@
 +    requestId: 'clear-start',
 +  });
 +  const ref = started.state.session.questionRefs[0];
++  const publicId = started.readModel.session.questions[0].id;
++  assert.equal(publicId, 'q1');
 +  const saved = engine.apply({
 +    learnerId: 'learner-response-clear',
 +    subjectRecord: { state: started.state, data: started.data },
 +    command: 'save-response',
-+    payload: { expectedSessionId: started.state.session.id, responses: { [ref.itemId]: { answer, working: 'rounded to the nearest ten' } } },
++    payload: { expectedSessionId: started.state.session.id, responses: { [publicId]: { answer, working: 'rounded to the nearest ten' } } },
 +    requestId: 'clear-save',
 +  });
 +  assert.equal(saved.state.session.responses[ref.itemId].answer, answer);
@@ -333,7 +535,7 @@
 +    learnerId: 'learner-response-clear',
 +    subjectRecord: { state: saved.state, data: saved.data },
 +    command: 'save-response',
-+    payload: { expectedSessionId: saved.state.session.id, responses: { [ref.itemId]: { answer: '', working: '' } } },
++    payload: { expectedSessionId: saved.state.session.id, responses: { [publicId]: { answer: '', working: '' } } },
 +    requestId: 'clear-blank',
 +  });
 +  assert.deepEqual(cleared.state.session.responses[ref.itemId], { answer: '', working: '' });
@@ -342,7 +544,7 @@
 +    learnerId: 'learner-response-clear',
 +    subjectRecord: { state: cleared.state, data: cleared.data },
 +    command: 'save-response',
-+    payload: { expectedSessionId: cleared.state.session.id, responses: { [ref.itemId]: { answer, working: 'place-value check' } } },
++    payload: { expectedSessionId: cleared.state.session.id, responses: { [publicId]: { answer, working: 'place-value check' } } },
 +    requestId: 'clear-resave',
 +  });
 +  const marked = engine.apply({
@@ -411,8 +613,322 @@
 +  const areaAnswer = findNumericCorrectAnswer(areaQuestion);
 +  assert.equal(areaQuestion.evaluate({ answer: `${areaAnswer} cm²` }).correct, true);
 +  assert.equal(areaQuestion.evaluate({ answer: `${areaAnswer} cm2` }).correct, true);
++
++  const moneyQuestion = generateReasoningQuestion('money_change_multistep', 1);
++  const moneyMatch = String(moneyQuestion.solutionLines.at(-1) || '').match(/= £([0-9.]+)\.$/);
++  assert.ok(moneyMatch, 'money fixture should expose the expected change in the worked solution');
++  const moneyAnswer = moneyMatch[1];
++  assert.equal(moneyQuestion.evaluate({ answer: `£${moneyAnswer}` }).correct, true);
++  assert.equal(moneyQuestion.evaluate({ answer: `${moneyAnswer}` }).correct, true);
++  assert.equal(moneyQuestion.evaluate({ answer: `${moneyAnswer}m` }).correct, false);
++  assert.equal(moneyQuestion.evaluate({ answer: `${moneyAnswer}cm` }).correct, false);
++  assert.equal(moneyQuestion.evaluate({ answer: `${moneyAnswer}kg` }).correct, false);
++
++  const noteQuestion = generateReasoningQuestion('money_smallest_note_needed', 1);
++  const noteChangeMatch = String(noteQuestion.solutionLines.at(-1) || '').match(/change would be £([0-9.]+)\.$/);
++  assert.ok(noteChangeMatch, 'note fixture should expose the expected change in the worked solution');
++  const noteChange = noteChangeMatch[1];
++  const note = ['500', '1000', '2000'].find((value) => noteQuestion.evaluate({ note: value, change: noteChange }).correct);
++  assert.ok(note, 'note fixture should have a correct note value');
++  assert.equal(noteQuestion.evaluate({ note, change: noteChange }).correct, true);
++  assert.equal(noteQuestion.evaluate({ note: `${note}m`, change: noteChange }).correct, false);
++  assert.equal(noteQuestion.evaluate({ note: `${note}cm`, change: noteChange }).correct, false);
++  assert.equal(noteQuestion.evaluate({ note: `${note}kg`, change: noteChange }).correct, false);
++
++  const discountQuestion = generateReasoningQuestion('fdp_discount_price', 1);
++  const discountSavingMatch = String(discountQuestion.solutionLines[0] || '').match(/is £([0-9.]+)\.$/);
++  const discountSaleMatch = String(discountQuestion.solutionLines[1] || '').match(/= £([0-9.]+)\.$/);
++  assert.ok(discountSavingMatch, 'discount fixture should expose the expected saving');
++  assert.ok(discountSaleMatch, 'discount fixture should expose the expected sale price');
++  const saving = discountSavingMatch[1];
++  const salePrice = discountSaleMatch[1];
++  assert.equal(discountQuestion.evaluate({ saving, salePrice }).correct, true);
++  assert.equal(discountQuestion.evaluate({ saving: `${saving}cm`, salePrice }).correct, false);
++  assert.equal(discountQuestion.evaluate({ saving, salePrice: `${salePrice}kg` }).correct, false);
++
++  const estimateQuestion = generateReasoningQuestion('reason_budget_estimate', 1);
++  const estimateMatch = String(estimateQuestion.solutionLines[1] || '').match(/= £([0-9.]+)\.$/);
++  assert.ok(estimateMatch, 'budget estimate fixture should expose the expected estimated total');
++  const estimate = estimateMatch[1];
++  const enough = ['yes', 'no'].find((value) => estimateQuestion.evaluate({ estimate, enough: value }).correct);
++  assert.ok(enough, 'budget estimate fixture should have a correct budget choice');
++  assert.equal(estimateQuestion.evaluate({ estimate: `${estimate}m`, enough }).correct, false);
 +});
 +
  test('worker subject runtime wires reasoning command handlers', async () => {
    const runtime = createWorkerSubjectRuntime({ reasoning: { now: () => 1000, random: () => 0 } });
    const started = await runtime.dispatch({
+diff --git a/tests/reasoning-production-smoke.test.js b/tests/reasoning-production-smoke.test.js
+index 3581787a..44b0c7b8 100644
+--- a/tests/reasoning-production-smoke.test.js
++++ b/tests/reasoning-production-smoke.test.js
+@@ -7,6 +7,7 @@ import {
+   reasoningContentSummary,
+ } from '../shared/reasoning/content.js';
+ import {
++  assertNoEarlyReasoningHints,
+   assertNoReasoningMarkerLeak,
+   assertReasoningContentSummary,
+   parseReasoningQuestionId,
+@@ -41,6 +42,16 @@ test('reasoning production smoke helper validates content summary and marker red
+     () => assertNoReasoningMarkerLeak({ currentQuestion: { evaluate() { return true; } } }),
+     /exposed a server-only marker|exposed a function/,
+   );
++  assertNoEarlyReasoningHints({ currentQuestion: { id: 'q1', itemId: 'q1' } });
++  assert.throws(
++    () => assertNoEarlyReasoningHints({ currentQuestion: { id: 'pv_rounding_context:1', templateId: 'pv_rounding_context' } }),
++    /exposed an early Reasoning hint/,
++  );
++  assertNoEarlyReasoningHints({ feedback: { question: { id: 'q1', itemId: 'q1' } } });
++  assert.throws(
++    () => assertNoEarlyReasoningHints({ feedback: { question: { id: 'q1', domain: 'Number' } } }),
++    /exposed an early Reasoning hint/,
++  );
+ });
+
+ test('reasoning production smoke helper parses deterministic template ids', () => {
+diff --git a/worker/src/subjects/reasoning/engine.js b/worker/src/subjects/reasoning/engine.js
+index 1fe13b2d..5926bed4 100644
+--- a/worker/src/subjects/reasoning/engine.js
++++ b/worker/src/subjects/reasoning/engine.js
+@@ -308,11 +308,14 @@ function takeDueRetry(data, focusSkillId, nowValue) {
+   const due = data.retryQueue
+     .filter((entry) => entry.dueAt <= nowValue && (!focusSkillId || (entry.skillIds || []).includes(focusSkillId)))
+     .sort((a, b) => a.dueAt - b.dueAt);
+-  if (!due.length) return null;
+-  const entry = due[0];
+-  const index = data.retryQueue.indexOf(entry);
+-  if (index >= 0) data.retryQueue.splice(index, 1);
+-  return entry;
++  return due[0] || null;
++}
++
++function removeRetryForRef(data, ref) {
++  if (!ref?.templateId) return;
++  data.retryQueue = (data.retryQueue || []).filter((entry) => (
++    entry.templateId !== ref.templateId || Number(entry.seed) !== Number(ref.seed)
++  ));
+ }
+
+ function chooseTemplate(data, prefs, mode, random, nowValue, usedTemplateIds = []) {
+@@ -353,6 +356,38 @@ function buildQuestionRef(template, seed) {
+   return { templateId: template.id, seed, itemId: `${template.id}:${seed}` };
+ }
+
++function publicQuestionId(index) {
++  return `q${index + 1}`;
++}
++
++function questionIndexForRef(session, ref) {
++  if (!session || !ref) return -1;
++  return (session.questionRefs || []).findIndex((itemRef) => itemRef === ref || itemRef.itemId === ref.itemId);
++}
++
++function publicQuestionIdForRef(session, ref) {
++  const index = questionIndexForRef(session, ref);
++  return index >= 0 ? publicQuestionId(index) : '';
++}
++
++function expectedQuestionMatches(session, ref, expectedQuestionId) {
++  const expected = String(expectedQuestionId || '');
++  if (!expected) return true;
++  return expected === ref?.itemId || expected === publicQuestionIdForRef(session, ref);
++}
++
++function responseForRef(responses, session, ref) {
++  if (!responses || typeof responses !== 'object' || !ref?.itemId) return { found: false, value: undefined };
++  const publicId = publicQuestionIdForRef(session, ref);
++  if (publicId && Object.prototype.hasOwnProperty.call(responses, publicId)) {
++    return { found: true, value: responses[publicId] };
++  }
++  if (Object.prototype.hasOwnProperty.call(responses, ref.itemId)) {
++    return { found: true, value: responses[ref.itemId] };
++  }
++  return { found: false, value: undefined };
++}
++
+ function buildQuestionRefs(data, prefs, { nowValue, random }) {
+   const mode = prefs.mode;
+   const due = ['smart', 'skill', 'trouble'].includes(mode) ? takeDueRetry(data, mode === 'skill' ? prefs.focusSkillId : '', nowValue) : null;
+@@ -418,15 +453,16 @@ function buildQuestionNav(session) {
+   return (session?.questionRefs || []).map((ref, index) => {
+     const result = session.results?.[ref.itemId] || null;
+     const q = questionFromRef(ref);
+-    return {
+-      id: ref.itemId,
++    const item = {
++      id: publicQuestionId(index),
+       index,
+       current: index === session.currentQuestionIndex,
+-      templateId: ref.templateId,
+       status: resultStatus(session, ref),
+       score: result?.score ?? null,
+       maxScore: q?.marks || 0,
+     };
++    if (result || (session.support?.[ref.itemId]?.level > 0)) item.templateId = ref.templateId;
++    return item;
+   });
+ }
+
+@@ -454,7 +490,11 @@ function buildSessionReadModel(session, includeFeedbackForAll = false) {
+       const itemQuestion = questionFromRef(itemRef);
+       const itemResult = session.results?.[itemRef.itemId] || null;
+       return {
+-        ...safeReasoningQuestion(itemQuestion, { includeSkill: Boolean(itemResult), includeFeedback: Boolean(itemResult) || includeFeedbackForAll || (session.support?.[itemRef.itemId]?.level > 0) }),
++        ...safeReasoningQuestion(itemQuestion, {
++          includeSkill: Boolean(itemResult),
++          includeFeedback: Boolean(itemResult) || includeFeedbackForAll || (session.support?.[itemRef.itemId]?.level > 0),
++          publicId: publicQuestionId(index),
++        }),
+         index,
+         status: resultStatus(session, itemRef),
+         response: clone(session.responses?.[itemRef.itemId] || {}),
+@@ -462,7 +502,11 @@ function buildSessionReadModel(session, includeFeedbackForAll = false) {
+         supportLevel: session.support?.[itemRef.itemId]?.level || 0,
+       };
+     }).filter(Boolean),
+-    currentQuestion: safeReasoningQuestion(question, { includeSkill: Boolean(result), includeFeedback: Boolean(result) || (session.support?.[ref?.itemId]?.level > 0) }),
++    currentQuestion: safeReasoningQuestion(question, {
++      includeSkill: Boolean(result),
++      includeFeedback: Boolean(result) || (session.support?.[ref?.itemId]?.level > 0),
++      publicId: publicQuestionIdForRef(session, ref),
++    }),
+     response: clone(session.responses?.[ref?.itemId] || {}),
+     result: result ? clone(result) : null,
+     supportLevel: session.support?.[ref?.itemId]?.level || 0,
+@@ -472,13 +516,19 @@ function buildSessionReadModel(session, includeFeedbackForAll = false) {
+
+ function buildFeedback(session, feedback) {
+   if (!feedback?.questionRef) return null;
++  const currentRef = currentQuestionRef(session);
++  if (currentRef?.itemId && feedback.questionRef.itemId !== currentRef.itemId) return null;
+   const question = questionFromRef(feedback.questionRef);
+   const result = feedback.result || null;
+   const supportLevel = feedback.supportLevel || session?.support?.[feedback.questionRef.itemId]?.level || 0;
+   const final = feedback.final === true;
+   const includeFullFeedback = final || supportLevel > 0;
+   return {
+-    question: safeReasoningQuestion(question, { includeSkill: true, includeFeedback: includeFullFeedback }),
++    question: safeReasoningQuestion(question, {
++      includeSkill: includeFullFeedback,
++      includeFeedback: includeFullFeedback,
++      publicId: publicQuestionIdForRef(session, feedback.questionRef),
++    }),
+     result: sanitiseFeedbackResult(result, { includeFullFeedback }),
+     final,
+     supportLevel,
+@@ -624,14 +674,20 @@ function buildReadModel({ learnerId, state, data, projections, nowValue }) {
+ }
+
+ function moveIndex(session, move = {}) {
+-  if (!session) return;
++  if (!session) return false;
++  const before = session.currentQuestionIndex || 0;
+   const count = session.questionRefs.length;
+   if (Number.isFinite(Number(move.questionIndex))) {
+     session.currentQuestionIndex = clamp(Math.floor(Number(move.questionIndex)), 0, Math.max(0, count - 1));
+-    return;
++    return session.currentQuestionIndex !== before;
+   }
+   const delta = Number(move.delta) || 0;
+   session.currentQuestionIndex = clamp((session.currentQuestionIndex || 0) + delta, 0, Math.max(0, count - 1));
++  return session.currentQuestionIndex !== before;
++}
++
++function applyMoveQuestion({ state, payload }) {
++  if (moveIndex(state.session, payload || {})) state.feedback = null;
+ }
+
+ function storeResponse(session, ref, response) {
+@@ -653,7 +709,7 @@ function enqueueRetry(data, ref, question, result, nowValue, reason = '') {
+ }
+
+ function maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount }) {
+-  if (!result.correct || quality < 3) return null;
++  if (!result.correct || quality < 4.8 || supportLevel > 0) return null;
+   const primarySkill = question.skillIds?.[0] || '';
+   if (!primarySkill) return null;
+   const bucket = quality >= 4.8 ? 'independent' : supportLevel ? `support-${supportLevel}` : `attempt-${attemptCount}`;
+@@ -678,6 +734,7 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
+   const attemptCount = session.attempts[ref.itemId] || 1;
+   const supportLevel = session.support?.[ref.itemId]?.level || 0;
+   const quality = outcomeQuality(result, attemptCount, supportLevel, session.strict);
++  removeRetryForRef(data, ref);
+   updateStreak(data, nowValue);
+   for (const skillId of question.skillIds || []) updateNodeFromQuality(ensureNode(data.skills, skillId), quality, nowValue);
+   updateNodeFromQuality(ensureNode(data.templates, ref.templateId), quality, nowValue);
+@@ -696,6 +753,7 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
+     attempts: attemptCount,
+     supportLevel,
+     misconception: result.misconception || null,
++    response: clone(session.responses?.[ref.itemId] || {}),
+     durationSec: Math.round((nowValue - (session.startedAt || nowValue)) / 1000),
+   };
+   data.events.push(event);
+@@ -714,6 +772,7 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
+     correct: result.correct,
+     misconception: result.misconception || null,
+     supportLevel,
++    response: clone(session.responses?.[ref.itemId] || {}),
+   }];
+   const evidenceEvent = maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount });
+   if (evidenceEvent && !data.evidenceKeys.includes(evidenceEvent.masteryKey)) {
+@@ -797,7 +856,7 @@ function applySubmit({ learnerId, state, data, payload, requestId, nowValue }) {
+   const question = currentQuestion(session);
+   if (!session || !ref || !question) return [];
+   if (payload?.expectedSessionId && payload.expectedSessionId !== session.id) return [];
+-  if (payload?.expectedQuestionId && payload.expectedQuestionId !== ref.itemId) return [];
++  if (!expectedQuestionMatches(session, ref, payload?.expectedQuestionId)) return [];
+   if (session.results?.[ref.itemId]) return [];
+   const response = clone(payload?.response || {});
+   storeResponse(session, ref, response);
+@@ -840,14 +899,17 @@ function applySaveResponse({ state, payload }) {
+   const responses = payload?.responses && typeof payload.responses === 'object' ? payload.responses : null;
+   if (responses) {
+     for (const itemRef of session.questionRefs || []) {
+-      if (responseHasValue(responses[itemRef.itemId])) storeResponse(session, itemRef, responses[itemRef.itemId]);
++      const entry = responseForRef(responses, session, itemRef);
++      if (entry.found) storeResponse(session, itemRef, entry.value);
+     }
+   } else {
+-    if (payload?.expectedQuestionId && payload.expectedQuestionId !== ref.itemId) return;
++    if (!expectedQuestionMatches(session, ref, payload?.expectedQuestionId)) return;
+     storeResponse(session, ref, payload?.response || {});
+   }
+-  if (payload?.advance) moveIndex(session, { delta: 1 });
+-  if (payload?.move) moveIndex(session, payload.move);
++  let moved = false;
++  if (payload?.advance) moved = moveIndex(session, { delta: 1 }) || moved;
++  if (payload?.move) moved = moveIndex(session, payload.move) || moved;
++  if (moved) state.feedback = null;
+ }
+
+ function applyMarkSession({ learnerId, state, data, payload, requestId, nowValue }) {
+@@ -856,7 +918,8 @@ function applyMarkSession({ learnerId, state, data, payload, requestId, nowValue
+   if (payload?.expectedSessionId && payload.expectedSessionId !== session.id) return [];
+   if (payload?.responses && typeof payload.responses === 'object') {
+     for (const ref of session.questionRefs || []) {
+-      if (!session.results?.[ref.itemId] && responseHasValue(payload.responses[ref.itemId])) storeResponse(session, ref, payload.responses[ref.itemId]);
++      const entry = responseForRef(payload.responses, session, ref);
++      if (!session.results?.[ref.itemId] && entry.found) storeResponse(session, ref, entry.value);
+     }
+   }
+   const events = [];
+@@ -893,7 +956,7 @@ function applySupport({ state, payload, nowValue }) {
+   const ref = currentQuestionRef(session);
+   if (!session || !ref) return;
+   if (payload?.expectedSessionId && payload.expectedSessionId !== session.id) return;
+-  if (payload?.expectedQuestionId && payload.expectedQuestionId !== ref.itemId) return;
++  if (!expectedQuestionMatches(session, ref, payload?.expectedQuestionId)) return;
+   if (session.strict || session.results?.[ref.itemId]) return;
+   const currentLevel = session.support?.[ref.itemId]?.level || 0;
+   const attempted = (session.attempts?.[ref.itemId] || 0) > 0;
+@@ -932,7 +995,7 @@ export function createServerReasoningEngine({ now = () => Date.now(), random = M
+       state.error = '';
+     } else if (command === 'save-response') applySaveResponse({ state, payload });
+     else if (command === 'submit-answer') events = applySubmit({ learnerId, state, data, payload, requestId, nowValue });
+-    else if (command === 'move-question') moveIndex(state.session, payload || {});
++    else if (command === 'move-question') applyMoveQuestion({ state, payload });
+     else if (command === 'mark-section' || command === 'mark-session') events = applyMarkSession({ learnerId, state, data, payload, requestId, nowValue });
+     else if (command === 'request-support') applySupport({ state, payload, nowValue });
+     else if (command === 'continue-session') applyContinue({ state });

@@ -163,9 +163,23 @@ const SKILLS = {
 
 
     function parseNumberInput(value) {
-      const s = cleanNumText(value);
+      const raw = cleanNumText(value)
+        .replace(/−/g, "-")
+        .replace(/°$/g, "")
+        .replace(/(?:degrees?|deg)$/i, "")
+        .replace(/(?:cm²|cm2|cm\^2|m²|m2|m\^2|mm²|mm2|mm\^2)$/i, "")
+        .replace(/(?:kilograms?|kg|grams?|g|millilitres?|milliliters?|ml|litres?|liters?|l|centimetres?|centimeters?|cm|millimetres?|millimeters?|mm|metres?|meters?|m|kilometres?|kilometers?|km|packs?|boxes?|minutes?|mins?|hours?|hrs?)$/i, "");
+      const s = raw.trim();
       if (s === "") return null;
       if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+      return null;
+    }
+
+    function parseMoneyAmount(value) {
+      const s = String(value || "").trim().replace(/,/g, "").replace(/\s+/g, "");
+      const amountText = s.startsWith("£") ? s.slice(1) : s;
+      if (amountText === "") return null;
+      if (/^-?\d+(\.\d+)?$/.test(amountText)) return Number(amountText);
       return null;
     }
 
@@ -1518,7 +1532,7 @@ const TEMPLATES = [
             checkLine: `The change should be a little less than ${formatMoney(paid)} because the total cost is about ${formatMoney(Math.round(total))}.`,
             inputSpec: { type:"text", label:"Change", placeholder:"e.g. 3.40 or £3.40" },
             evaluate: (resp) => {
-              const ans = parseNumberInput(resp.answer);
+              const ans = parseMoneyAmount(resp.answer);
               if (ans === null) return mkResult({ correct:false, score:0, maxScore:2, misconception:"misread_question", feedbackShort:"Enter the amount of change." });
               if (equalNumeric(ans, change)) return mkResult({
                 correct:true, score:2, maxScore:2,
@@ -1695,9 +1709,21 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
   }
 
   function parseMoneyToPence(value) {
-    const amount = parseNumberInput(value);
+    const amount = parseMoneyAmount(value);
     if (amount === null) return null;
     return Math.round(amount * 100);
+  }
+
+  function parseMoneyNotePence(value) {
+    const text = String(value || "").trim().replace(/,/g, "").replace(/\s+/g, "");
+    if (!text) return null;
+    if (/^£\d+(\.\d{1,2})?$/.test(text)) return Math.round(Number(text.slice(1)) * 100);
+    if (/^\d+$/.test(text)) {
+      const amount = Number(text);
+      if ([500, 1000, 2000].includes(amount)) return amount;
+      if ([5, 10, 20].includes(amount)) return amount * 100;
+    }
+    return null;
   }
 
   const FDP_LINK_CASES = [
@@ -5592,7 +5618,7 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
             ]
           },
           evaluate: (resp) => {
-            const estimateAnswer = parseNumberInput(resp.estimate);
+            const estimateAnswer = parseMoneyAmount(resp.estimate);
             let score = 0;
             if (estimateAnswer === estimate) score += 1;
             if ((resp.enough === "yes") === enough) score += 1;
@@ -6336,8 +6362,8 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
             ]
           },
           evaluate: (resp) => {
-            const savingAnswer = parseNumberInput(resp.saving);
-            const saleAnswer = parseNumberInput(resp.salePrice);
+            const savingAnswer = parseMoneyAmount(resp.saving);
+            const saleAnswer = parseMoneyAmount(resp.salePrice);
             let score = 0;
             if (savingAnswer === saving) score += 1;
             if (saleAnswer === salePrice) score += 1;
@@ -7553,7 +7579,7 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
             ]
           },
           evaluate: (resp) => {
-            const noteAnswer = parseNumberInput(resp.note);
+            const noteAnswer = parseMoneyNotePence(resp.note);
             const changeAnswer = parseMoneyToPence(resp.change);
             let score = 0;
             if (noteAnswer === choice.note) score += 1;
@@ -7762,15 +7788,14 @@ export function generateReasoningQuestion(templateId, seed) {
   return template.generator(Number(seed) || 0);
 }
 
-export function safeReasoningQuestion(question, { includeSkill = false, includeFeedback = false } = {}) {
+export function safeReasoningQuestion(question, { includeSkill = false, includeFeedback = false, publicId = '' } = {}) {
   if (!question) return null;
   const spec = question.inputSpec ? JSON.parse(JSON.stringify(question.inputSpec)) : { type: 'text', label: 'Answer' };
+  const internalId = question.itemId || `${question.templateId}:${question.seed}`;
+  const safeId = publicId || question.publicId || internalId;
   const base = {
-    id: question.itemId || `${question.templateId}:${question.seed}`,
-    itemId: question.itemId || `${question.templateId}:${question.seed}`,
-    templateId: question.templateId,
-    templateLabel: question.templateLabel,
-    domain: question.domain,
+    id: safeId,
+    itemId: safeId,
     stemHtml: question.stemHtml || '',
     visualHtml: question.visualHtml || '',
     marks: Number(question.marks) || 1,
@@ -7779,6 +7804,9 @@ export function safeReasoningQuestion(question, { includeSkill = false, includeF
     typeLabel: REASONING_QUESTION_TYPE_LABELS[spec.type] || spec.type || 'Question',
   };
   if (includeSkill) {
+    base.templateId = question.templateId;
+    base.templateLabel = question.templateLabel;
+    base.domain = question.domain;
     base.skillIds = Array.isArray(question.skillIds) ? question.skillIds.slice() : [];
     base.skillNames = base.skillIds.map((id) => REASONING_SKILLS[id]?.name || id);
   }

@@ -7,6 +7,7 @@ import {
   reasoningContentSummary,
 } from '../shared/reasoning/content.js';
 import {
+  assertNoEarlyReasoningHints,
   assertNoReasoningMarkerLeak,
   assertReasoningContentSummary,
   parseReasoningQuestionId,
@@ -40,6 +41,16 @@ test('reasoning production smoke helper validates content summary and marker red
   assert.throws(
     () => assertNoReasoningMarkerLeak({ currentQuestion: { evaluate() { return true; } } }),
     /exposed a server-only marker|exposed a function/,
+  );
+  assertNoEarlyReasoningHints({ currentQuestion: { id: 'q1', itemId: 'q1' } });
+  assert.throws(
+    () => assertNoEarlyReasoningHints({ currentQuestion: { id: 'pv_rounding_context:1', templateId: 'pv_rounding_context' } }),
+    /exposed an early Reasoning hint/,
+  );
+  assertNoEarlyReasoningHints({ feedback: { question: { id: 'q1', itemId: 'q1' } } });
+  assert.throws(
+    () => assertNoEarlyReasoningHints({ feedback: { question: { id: 'q1', domain: 'Number' } } }),
+    /exposed an early Reasoning hint/,
   );
 });
 

@@ -23,6 +23,19 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const ROOT_DIR = path.resolve(path.dirname(__filename), '..');
 const FORBIDDEN_REASONING_READ_MODEL_KEYS = new Set(['evaluate']);
+const FORBIDDEN_REASONING_EARLY_HINT_KEYS = new Set([
+  'templateId',
+  'templateLabel',
+  'domain',
+  'skillIds',
+  'skillNames',
+  'solutionLines',
+  'checkLine',
+  'reflectionPrompt',
+  'answerText',
+  'feedbackLong',
+  'misconception',
+]);
 
 function argValue(name, fallback = '') {
   const index = process.argv.indexOf(name);
@@ -189,6 +202,27 @@ export function assertNoReasoningMarkerLeak(value, pathLabel = 'reasoning.readMo
   }
 }
 
+export function assertNoEarlyReasoningHints(value, pathLabel = 'reasoning.session') {
+  if (value == null) return;
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => assertNoEarlyReasoningHints(entry, `${pathLabel}[${index}]`));
+    return;
+  }
+  if (typeof value !== 'object') return;
+  for (const [key, child] of Object.entries(value)) {
+    assert.equal(FORBIDDEN_REASONING_EARLY_HINT_KEYS.has(key), false, `${pathLabel}.${key} exposed an early Reasoning hint.`);
+    assertNoEarlyReasoningHints(child, `${pathLabel}.${key}`);
+  }
+}
+
+function blankReasoningResponse(question = {}) {
+  const inputSpec = question.inputSpec || {};
+  if (inputSpec.type === 'multi') {
+    return Object.fromEntries((inputSpec.fields || []).map((field) => [field.key, '']));
+  }
+  return { answer: '' };
+}
+
 function currentSourceCommit() {
   try {
     return execSync('git rev-parse HEAD', { cwd: ROOT_DIR, encoding: 'utf8' }).trim();
@@ -233,22 +267,24 @@ async function runSmoke() {
     learnerId,
     revision,
     command: 'start-session',
-    payload: { mode: 'sats', viewMode: 'one' },
+    payload: { mode: 'smart', viewMode: 'one', roundLength: 3 },
   });
   revision = step.revision;
   const startModel = step.payload.subjectReadModel;
   assert.equal(startModel?.subjectId, 'reasoning', 'Reasoning start did not return the Reasoning read model.');
   assert.equal(startModel?.phase, 'session', 'Reasoning SATs smoke did not start a session.');
-  assert.equal(startModel?.session?.strict, true, 'Reasoning SATs smoke did not expose strict mode.');
-  assert.equal(startModel?.session?.delayedFeedback, false, 'Reasoning SATs single should use immediate completion.');
+  assert.equal(startModel?.session?.strict, false, 'Reasoning support smoke should start outside strict mode.');
+  assert.equal(startModel?.session?.delayedFeedback, false, 'Reasoning single-question surface should use immediate feedback.');
   assertReasoningContentSummary(startModel?.content, 'reasoning.startModel.content');
   assertNoReasoningMarkerLeak(startModel, 'reasoning.startModel');
 
   const currentQuestion = startModel.session.currentQuestion;
   assert.ok(currentQuestion?.id, 'Reasoning start did not expose a current question id.');
-  const { templateId, seed } = parseReasoningQuestionId(currentQuestion.id);
-  const sourceQuestion = generateReasoningQuestion(templateId, seed);
-  const response = reasoningCorrectResponseFor(sourceQuestion);
+  assert.doesNotMatch(currentQuestion.id, /^[a-z0-9_]+:\d+$/i, 'Reasoning exposed a template-shaped question id before marking/support.');
+  assert.equal(currentQuestion.id, currentQuestion.itemId, 'Reasoning public question id and item id should agree.');
+  assertNoEarlyReasoningHints(startModel.session.currentQuestion, 'reasoning.startModel.session.currentQuestion');
+  assertNoEarlyReasoningHints(startModel.session.questionNav, 'reasoning.startModel.session.questionNav');
+  const blankResponse = blankReasoningResponse(currentQuestion);
 
   step = await subjectCommand({
     origin,
@@ -260,21 +296,65 @@ async function runSmoke() {
     payload: {
       expectedSessionId: startModel.session.id,
       expectedQuestionId: currentQuestion.id,
-      response,
+      response: blankResponse,
     },
   });
   revision = step.revision;
-  const summaryModel = step.payload.subjectReadModel;
-  assert.equal(summaryModel?.subjectId, 'reasoning', 'Reasoning submit did not return the Reasoning read model.');
-  assert.equal(summaryModel?.phase, 'summary', 'Reasoning SATs single did not complete to summary.');
-  assert.equal(summaryModel?.summary?.questionCount, 1, 'Reasoning SATs single summary did not include one question.');
-  assert.equal(summaryModel?.summary?.score, summaryModel?.summary?.maxScore, 'Reasoning correct smoke answer was not accepted.');
-  assert.ok(Number(summaryModel?.stats?.overview?.evidenceStars) >= 1, 'Reasoning evidence star was not recorded.');
-  assertNoReasoningMarkerLeak(summaryModel, 'reasoning.summaryModel');
+  const firstWrongModel = step.payload.subjectReadModel;
+  assert.equal(firstWrongModel?.subjectId, 'reasoning', 'Reasoning first submit did not return the Reasoning read model.');
+  assert.equal(firstWrongModel?.phase, 'session', 'Reasoning first-wrong nudge should keep the session active.');
+  assert.equal(firstWrongModel?.feedback?.final, false, 'Reasoning first-wrong feedback should be non-final.');
+  assert.equal(firstWrongModel?.feedback?.result?.answerText, undefined, 'Reasoning first-wrong feedback exposed answer text.');
+  assert.equal(firstWrongModel?.feedback?.result?.feedbackLong, undefined, 'Reasoning first-wrong feedback exposed full feedback.');
+  assertNoReasoningMarkerLeak(firstWrongModel, 'reasoning.firstWrongModel');
+  assertNoEarlyReasoningHints(firstWrongModel.session.currentQuestion, 'reasoning.firstWrongModel.session.currentQuestion');
+  assertNoEarlyReasoningHints(firstWrongModel.feedback?.question, 'reasoning.firstWrongModel.feedback.question');
+
+  step = await subjectCommand({
+    origin,
+    cookie: demo.cookie,
+    subjectId: 'reasoning',
+    learnerId,
+    revision,
+    command: 'request-support',
+    payload: {
+      expectedSessionId: startModel.session.id,
+      expectedQuestionId: currentQuestion.id,
+      kind: 'worked',
+    },
+  });
+  revision = step.revision;
+  const supportModel = step.payload.subjectReadModel;
+  assert.equal(supportModel?.subjectId, 'reasoning', 'Reasoning support did not return the Reasoning read model.');
+  assert.equal(supportModel?.session?.supportLevel, 2, 'Reasoning worked support was not applied.');
+  assert.ok(Array.isArray(supportModel?.session?.currentQuestion?.solutionLines), 'Reasoning support did not expose worked solution lines.');
+  assertNoReasoningMarkerLeak(supportModel, 'reasoning.supportModel');
+
+  step = await subjectCommand({
+    origin,
+    cookie: demo.cookie,
+    subjectId: 'reasoning',
+    learnerId,
+    revision,
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: startModel.session.id,
+      expectedQuestionId: currentQuestion.id,
+      response: blankResponse,
+    },
+  });
+  revision = step.revision;
+  const markedModel = step.payload.subjectReadModel;
+  assert.equal(markedModel?.subjectId, 'reasoning', 'Reasoning supported submit did not return the Reasoning read model.');
+  assert.equal(markedModel?.feedback?.final, true, 'Reasoning supported submit did not finalise the question.');
+  assert.equal(Number(markedModel?.stats?.overview?.totalQuestions), 1, 'Reasoning supported submit did not update practice history.');
+  assert.equal(Number(markedModel?.stats?.overview?.evidenceStars), 0, 'Reasoning supported submit should not award independent evidence.');
+  assertNoReasoningMarkerLeak(markedModel, 'reasoning.markedModel');
 
   const domainEvents = step.payload.domainEvents || [];
   const reactionEvents = step.payload.reactionEvents || [];
-  assert.ok(domainEvents.some((event) => event.type === 'reasoning.evidence-earned'), 'Reasoning evidence event was not emitted.');
+  assert.ok(domainEvents.some((event) => event.type === 'reasoning.answer-submitted'), 'Reasoning answer-submitted event was not emitted.');
+  assert.equal(domainEvents.some((event) => event.type === 'reasoning.evidence-earned'), false, 'Supported Reasoning smoke emitted independent evidence.');
   assert.ok(reactionEvents.every((event) => event.subjectId === 'reasoning'), 'Reasoning reward reactions included another subject.');
 
   const heroReadModel = await optionalHeroReadModel({ origin, cookie: demo.cookie, learnerId });
@@ -288,15 +368,17 @@ async function runSmoke() {
     learnerId,
     finalRevision: revision,
     contentReleaseId: REASONING_CONTENT_RELEASE_ID,
-    content: summaryModel.content,
+    content: markedModel.content,
     session: {
       id: startModel.session.id,
       mode: startModel.session.mode,
       questionId: currentQuestion.id,
-      templateId,
-      seed,
-      score: summaryModel.summary.score,
-      maxScore: summaryModel.summary.maxScore,
+      publicQuestionIdOpaque: !/^[a-z0-9_]+:\d+$/i.test(currentQuestion.id),
+      firstWrongFinal: firstWrongModel.feedback.final,
+      supportLevel: supportModel.session.supportLevel,
+      markedCorrect: Boolean(markedModel.session?.result?.correct),
+      score: markedModel.session?.result?.score ?? null,
+      maxScore: markedModel.session?.result?.maxScore ?? null,
     },
     rewardProjection: {
       domainEvents: domainEvents.map((event) => event.type),

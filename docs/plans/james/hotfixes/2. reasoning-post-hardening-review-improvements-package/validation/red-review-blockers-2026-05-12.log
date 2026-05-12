@@ -1,0 +1,147 @@
+TAP version 13
+# Subtest: server reasoning engine returns exact due retry questions and emits evidence on independent success
+ok 1 - server reasoning engine returns exact due retry questions and emits evidence on independent success
+  ---
+  duration_ms: 18.6129
+  type: 'test'
+  ...
+# Subtest: reasoning reward projection updates direct and grand monsters with independent state ids
+ok 2 - reasoning reward projection updates direct and grand monsters with independent state ids
+  ---
+  duration_ms: 0.8943
+  type: 'test'
+  ...
+# Subtest: server reasoning engine uses the injected command clock for support and session records
+ok 3 - server reasoning engine uses the injected command clock for support and session records
+  ---
+  duration_ms: 2.6877
+  type: 'test'
+  ...
+# Subtest: reasoning first-wrong feedback gives only a nudge until support is requested
+ok 4 - reasoning first-wrong feedback gives only a nudge until support is requested
+  ---
+  duration_ms: 1.5235
+  type: 'test'
+  ...
+# Subtest: reasoning support requests are blocked before effort, in strict mode, and after marking
+ok 5 - reasoning support requests are blocked before effort, in strict mode, and after marking
+  ---
+  duration_ms: 4.2861
+  type: 'test'
+  ...
+# Subtest: worked and faded Reasoning modes expose seeded support without marking as independent
+ok 6 - worked and faded Reasoning modes expose seeded support without marking as independent
+  ---
+  duration_ms: 1.4221
+  type: 'test'
+  ...
+# Subtest: reasoning support command actions send stale-session and stale-question guards
+ok 7 - reasoning support command actions send stale-session and stale-question guards
+  ---
+  duration_ms: 0.4535
+  type: 'test'
+  ...
+# Subtest: reasoning command actions include optional working for single and list responses
+ok 8 - reasoning command actions include optional working for single and list responses
+  ---
+  duration_ms: 11.404
+  type: 'test'
+  ...
+# Subtest: reasoning read model redacts legacy persisted first-wrong result fields
+ok 9 - reasoning read model redacts legacy persisted first-wrong result fields
+  ---
+  duration_ms: 0.9132
+  type: 'test'
+  ...
+# Subtest: duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+ok 10 - duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+  ---
+  duration_ms: 5.7297
+  type: 'test'
+  ...
+# Subtest: Reasoning read models keep domain and skill hints hidden until marking or support
+not ok 11 - Reasoning read models keep domain and skill hints hidden until marking or support
+  ---
+  duration_ms: 0.9987
+  type: 'test'
+  location: 'D:\\Coding\\ks2-mastery\\.worktrees\\reasoning-post-review-20260511\\tests\\reasoning-engine-rewards.test.js:353:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+
+    + 'pv_rounding_context'
+    - undefined
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual: 'pv_rounding_context'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Coding/ks2-mastery/.worktrees/reasoning-post-review-20260511/tests/reasoning-engine-rewards.test.js:362:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+ok 12 - Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+  ---
+  duration_ms: 1.0087
+  type: 'test'
+  ...
+# Subtest: Reasoning list responses can be cleared and working is preserved in state and events
+ok 13 - Reasoning list responses can be cleared and working is preserved in state and events
+  ---
+  duration_ms: 1.9054
+  type: 'test'
+  ...
+# Subtest: supported Reasoning success updates practice but does not award monster evidence
+ok 14 - supported Reasoning success updates practice but does not award monster evidence
+  ---
+  duration_ms: 1.9507
+  type: 'test'
+  ...
+# Subtest: Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+not ok 15 - Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+  ---
+  duration_ms: 1.35
+  type: 'test'
+  location: 'D:\\Coding\\ks2-mastery\\.worktrees\\reasoning-post-review-20260511\\tests\\reasoning-engine-rewards.test.js:512:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    true !== false
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Coding/ks2-mastery/.worktrees/reasoning-post-review-20260511/tests/reasoning-engine-rewards.test.js:529:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: worker subject runtime wires reasoning command handlers
+ok 16 - worker subject runtime wires reasoning command handlers
+  ---
+  duration_ms: 1.8292
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 14
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 408.8486

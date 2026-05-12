@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: server reasoning engine returns exact due retry questions and emits evidence on independent success
+ok 1 - server reasoning engine returns exact due retry questions and emits evidence on independent success
+  ---
+  duration_ms: 15.9709
+  type: 'test'
+  ...
+# Subtest: reasoning reward projection updates direct and grand monsters with independent state ids
+ok 2 - reasoning reward projection updates direct and grand monsters with independent state ids
+  ---
+  duration_ms: 0.8766
+  type: 'test'
+  ...
+# Subtest: server reasoning engine uses the injected command clock for support and session records
+ok 3 - server reasoning engine uses the injected command clock for support and session records
+  ---
+  duration_ms: 2.8688
+  type: 'test'
+  ...
+# Subtest: reasoning first-wrong feedback gives only a nudge until support is requested
+ok 4 - reasoning first-wrong feedback gives only a nudge until support is requested
+  ---
+  duration_ms: 1.3966
+  type: 'test'
+  ...
+# Subtest: reasoning support requests are blocked before effort, in strict mode, and after marking
+ok 5 - reasoning support requests are blocked before effort, in strict mode, and after marking
+  ---
+  duration_ms: 5.5327
+  type: 'test'
+  ...
+# Subtest: worked and faded Reasoning modes expose seeded support without marking as independent
+ok 6 - worked and faded Reasoning modes expose seeded support without marking as independent
+  ---
+  duration_ms: 1.1751
+  type: 'test'
+  ...
+# Subtest: reasoning support command actions send stale-session and stale-question guards
+ok 7 - reasoning support command actions send stale-session and stale-question guards
+  ---
+  duration_ms: 0.4438
+  type: 'test'
+  ...
+# Subtest: reasoning command actions include optional working for single and list responses
+ok 8 - reasoning command actions include optional working for single and list responses
+  ---
+  duration_ms: 11.2551
+  type: 'test'
+  ...
+# Subtest: reasoning read model redacts legacy persisted first-wrong result fields
+ok 9 - reasoning read model redacts legacy persisted first-wrong result fields
+  ---
+  duration_ms: 0.8977
+  type: 'test'
+  ...
+# Subtest: duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+ok 10 - duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+  ---
+  duration_ms: 2.2645
+  type: 'test'
+  ...
+# Subtest: Reasoning read models keep domain and skill hints hidden until marking or support
+ok 11 - Reasoning read models keep domain and skill hints hidden until marking or support
+  ---
+  duration_ms: 1.9275
+  type: 'test'
+  ...
+# Subtest: Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+ok 12 - Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+  ---
+  duration_ms: 0.8664
+  type: 'test'
+  ...
+# Subtest: Reasoning list responses can be cleared and working is preserved in state and events
+ok 13 - Reasoning list responses can be cleared and working is preserved in state and events
+  ---
+  duration_ms: 1.8768
+  type: 'test'
+  ...
+# Subtest: supported Reasoning success updates practice but does not award monster evidence
+ok 14 - supported Reasoning success updates practice but does not award monster evidence
+  ---
+  duration_ms: 2.2771
+  type: 'test'
+  ...
+# Subtest: Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+ok 15 - Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+  ---
+  duration_ms: 1.1907
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reasoning command handlers
+ok 16 - worker subject runtime wires reasoning command handlers
+  ---
+  duration_ms: 2.001
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 393.0991

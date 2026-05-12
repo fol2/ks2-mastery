@@ -475,6 +475,7 @@ function QuestionListPanel({ ui, actions }) {
               <div className="question-stem reasoning-question-stem" dangerouslySetInnerHTML={{ __html: question.stemHtml }} />
               {question.visualHtml ? <div className="question-visual reasoning-question-visual" dangerouslySetInnerHTML={{ __html: question.visualHtml }} /> : null}
               <QuestionInput question={question} response={question.response || {}} disabled={disabled} prefix={prefix} />
+              <label className="answer-box reasoning-working-box"><span className="tool-label">Working (optional)</span><textarea name={fieldName('working', prefix)} defaultValue={question.response?.working || ''} disabled={disabled} placeholder="Show the steps you used." /></label>
               <Feedback feedback={question.result ? { result: question.result, final: true, question } : null} question={question} supportLevel={question.supportLevel} />
             </section>
           );

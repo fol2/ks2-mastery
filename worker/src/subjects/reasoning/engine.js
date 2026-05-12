@@ -308,11 +308,14 @@ function takeDueRetry(data, focusSkillId, nowValue) {
   const due = data.retryQueue
     .filter((entry) => entry.dueAt <= nowValue && (!focusSkillId || (entry.skillIds || []).includes(focusSkillId)))
     .sort((a, b) => a.dueAt - b.dueAt);
-  if (!due.length) return null;
-  const entry = due[0];
-  const index = data.retryQueue.indexOf(entry);
-  if (index >= 0) data.retryQueue.splice(index, 1);
-  return entry;
+  return due[0] || null;
+}
+
+function removeRetryForRef(data, ref) {
+  if (!ref?.templateId) return;
+  data.retryQueue = (data.retryQueue || []).filter((entry) => (
+    entry.templateId !== ref.templateId || Number(entry.seed) !== Number(ref.seed)
+  ));
 }
 
 function chooseTemplate(data, prefs, mode, random, nowValue, usedTemplateIds = []) {
@@ -351,6 +354,38 @@ function chooseTemplateForSatsSlot(data, skillPool, random, nowValue, usedTempla
 
 function buildQuestionRef(template, seed) {
   return { templateId: template.id, seed, itemId: `${template.id}:${seed}` };
+}
+
+function publicQuestionId(index) {
+  return `q${index + 1}`;
+}
+
+function questionIndexForRef(session, ref) {
+  if (!session || !ref) return -1;
+  return (session.questionRefs || []).findIndex((itemRef) => itemRef === ref || itemRef.itemId === ref.itemId);
+}
+
+function publicQuestionIdForRef(session, ref) {
+  const index = questionIndexForRef(session, ref);
+  return index >= 0 ? publicQuestionId(index) : '';
+}
+
+function expectedQuestionMatches(session, ref, expectedQuestionId) {
+  const expected = String(expectedQuestionId || '');
+  if (!expected) return true;
+  return expected === ref?.itemId || expected === publicQuestionIdForRef(session, ref);
+}
+
+function responseForRef(responses, session, ref) {
+  if (!responses || typeof responses !== 'object' || !ref?.itemId) return { found: false, value: undefined };
+  const publicId = publicQuestionIdForRef(session, ref);
+  if (publicId && Object.prototype.hasOwnProperty.call(responses, publicId)) {
+    return { found: true, value: responses[publicId] };
+  }
+  if (Object.prototype.hasOwnProperty.call(responses, ref.itemId)) {
+    return { found: true, value: responses[ref.itemId] };
+  }
+  return { found: false, value: undefined };
 }
 
 function buildQuestionRefs(data, prefs, { nowValue, random }) {
@@ -418,15 +453,16 @@ function buildQuestionNav(session) {
   return (session?.questionRefs || []).map((ref, index) => {
     const result = session.results?.[ref.itemId] || null;
     const q = questionFromRef(ref);
-    return {
-      id: ref.itemId,
+    const item = {
+      id: publicQuestionId(index),
       index,
       current: index === session.currentQuestionIndex,
-      templateId: ref.templateId,
       status: resultStatus(session, ref),
       score: result?.score ?? null,
       maxScore: q?.marks || 0,
     };
+    if (result || (session.support?.[ref.itemId]?.level > 0)) item.templateId = ref.templateId;
+    return item;
   });
 }
 
@@ -454,7 +490,11 @@ function buildSessionReadModel(session, includeFeedbackForAll = false) {
       const itemQuestion = questionFromRef(itemRef);
       const itemResult = session.results?.[itemRef.itemId] || null;
       return {
-        ...safeReasoningQuestion(itemQuestion, { includeSkill: Boolean(itemResult), includeFeedback: Boolean(itemResult) || includeFeedbackForAll || (session.support?.[itemRef.itemId]?.level > 0) }),
+        ...safeReasoningQuestion(itemQuestion, {
+          includeSkill: Boolean(itemResult),
+          includeFeedback: Boolean(itemResult) || includeFeedbackForAll || (session.support?.[itemRef.itemId]?.level > 0),
+          publicId: publicQuestionId(index),
+        }),
         index,
         status: resultStatus(session, itemRef),
         response: clone(session.responses?.[itemRef.itemId] || {}),
@@ -462,7 +502,11 @@ function buildSessionReadModel(session, includeFeedbackForAll = false) {
         supportLevel: session.support?.[itemRef.itemId]?.level || 0,
       };
     }).filter(Boolean),
-    currentQuestion: safeReasoningQuestion(question, { includeSkill: Boolean(result), includeFeedback: Boolean(result) || (session.support?.[ref?.itemId]?.level > 0) }),
+    currentQuestion: safeReasoningQuestion(question, {
+      includeSkill: Boolean(result),
+      includeFeedback: Boolean(result) || (session.support?.[ref?.itemId]?.level > 0),
+      publicId: publicQuestionIdForRef(session, ref),
+    }),
     response: clone(session.responses?.[ref?.itemId] || {}),
     result: result ? clone(result) : null,
     supportLevel: session.support?.[ref?.itemId]?.level || 0,
@@ -472,13 +516,19 @@ function buildSessionReadModel(session, includeFeedbackForAll = false) {
 
 function buildFeedback(session, feedback) {
   if (!feedback?.questionRef) return null;
+  const currentRef = currentQuestionRef(session);
+  if (currentRef?.itemId && feedback.questionRef.itemId !== currentRef.itemId) return null;
   const question = questionFromRef(feedback.questionRef);
   const result = feedback.result || null;
   const supportLevel = feedback.supportLevel || session?.support?.[feedback.questionRef.itemId]?.level || 0;
   const final = feedback.final === true;
   const includeFullFeedback = final || supportLevel > 0;
   return {
-    question: safeReasoningQuestion(question, { includeSkill: true, includeFeedback: includeFullFeedback }),
+    question: safeReasoningQuestion(question, {
+      includeSkill: includeFullFeedback,
+      includeFeedback: includeFullFeedback,
+      publicId: publicQuestionIdForRef(session, feedback.questionRef),
+    }),
     result: sanitiseFeedbackResult(result, { includeFullFeedback }),
     final,
     supportLevel,
@@ -624,14 +674,20 @@ function buildReadModel({ learnerId, state, data, projections, nowValue }) {
 }
 
 function moveIndex(session, move = {}) {
-  if (!session) return;
+  if (!session) return false;
+  const before = session.currentQuestionIndex || 0;
   const count = session.questionRefs.length;
   if (Number.isFinite(Number(move.questionIndex))) {
     session.currentQuestionIndex = clamp(Math.floor(Number(move.questionIndex)), 0, Math.max(0, count - 1));
-    return;
+    return session.currentQuestionIndex !== before;
   }
   const delta = Number(move.delta) || 0;
   session.currentQuestionIndex = clamp((session.currentQuestionIndex || 0) + delta, 0, Math.max(0, count - 1));
+  return session.currentQuestionIndex !== before;
+}
+
+function applyMoveQuestion({ state, payload }) {
+  if (moveIndex(state.session, payload || {})) state.feedback = null;
 }
 
 function storeResponse(session, ref, response) {
@@ -653,7 +709,7 @@ function enqueueRetry(data, ref, question, result, nowValue, reason = '') {
 }
 
 function maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount }) {
-  if (!result.correct || quality < 3) return null;
+  if (!result.correct || quality < 4.8 || supportLevel > 0) return null;
   const primarySkill = question.skillIds?.[0] || '';
   if (!primarySkill) return null;
   const bucket = quality >= 4.8 ? 'independent' : supportLevel ? `support-${supportLevel}` : `attempt-${attemptCount}`;
@@ -678,6 +734,7 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
   const attemptCount = session.attempts[ref.itemId] || 1;
   const supportLevel = session.support?.[ref.itemId]?.level || 0;
   const quality = outcomeQuality(result, attemptCount, supportLevel, session.strict);
+  removeRetryForRef(data, ref);
   updateStreak(data, nowValue);
   for (const skillId of question.skillIds || []) updateNodeFromQuality(ensureNode(data.skills, skillId), quality, nowValue);
   updateNodeFromQuality(ensureNode(data.templates, ref.templateId), quality, nowValue);
@@ -696,6 +753,7 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
     attempts: attemptCount,
     supportLevel,
     misconception: result.misconception || null,
+    response: clone(session.responses?.[ref.itemId] || {}),
     durationSec: Math.round((nowValue - (session.startedAt || nowValue)) / 1000),
   };
   data.events.push(event);
@@ -714,6 +772,7 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
     correct: result.correct,
     misconception: result.misconception || null,
     supportLevel,
+    response: clone(session.responses?.[ref.itemId] || {}),
   }];
   const evidenceEvent = maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount });
   if (evidenceEvent && !data.evidenceKeys.includes(evidenceEvent.masteryKey)) {
@@ -797,7 +856,7 @@ function applySubmit({ learnerId, state, data, payload, requestId, nowValue }) {
   const question = currentQuestion(session);
   if (!session || !ref || !question) return [];
   if (payload?.expectedSessionId && payload.expectedSessionId !== session.id) return [];
-  if (payload?.expectedQuestionId && payload.expectedQuestionId !== ref.itemId) return [];
+  if (!expectedQuestionMatches(session, ref, payload?.expectedQuestionId)) return [];
   if (session.results?.[ref.itemId]) return [];
   const response = clone(payload?.response || {});
   storeResponse(session, ref, response);
@@ -840,14 +899,17 @@ function applySaveResponse({ state, payload }) {
   const responses = payload?.responses && typeof payload.responses === 'object' ? payload.responses : null;
   if (responses) {
     for (const itemRef of session.questionRefs || []) {
-      if (responseHasValue(responses[itemRef.itemId])) storeResponse(session, itemRef, responses[itemRef.itemId]);
+      const entry = responseForRef(responses, session, itemRef);
+      if (entry.found) storeResponse(session, itemRef, entry.value);
     }
   } else {
-    if (payload?.expectedQuestionId && payload.expectedQuestionId !== ref.itemId) return;
+    if (!expectedQuestionMatches(session, ref, payload?.expectedQuestionId)) return;
     storeResponse(session, ref, payload?.response || {});
   }
-  if (payload?.advance) moveIndex(session, { delta: 1 });
-  if (payload?.move) moveIndex(session, payload.move);
+  let moved = false;
+  if (payload?.advance) moved = moveIndex(session, { delta: 1 }) || moved;
+  if (payload?.move) moved = moveIndex(session, payload.move) || moved;
+  if (moved) state.feedback = null;
 }
 
 function applyMarkSession({ learnerId, state, data, payload, requestId, nowValue }) {
@@ -856,7 +918,8 @@ function applyMarkSession({ learnerId, state, data, payload, requestId, nowValue
   if (payload?.expectedSessionId && payload.expectedSessionId !== session.id) return [];
   if (payload?.responses && typeof payload.responses === 'object') {
     for (const ref of session.questionRefs || []) {
-      if (!session.results?.[ref.itemId] && responseHasValue(payload.responses[ref.itemId])) storeResponse(session, ref, payload.responses[ref.itemId]);
+      const entry = responseForRef(payload.responses, session, ref);
+      if (!session.results?.[ref.itemId] && entry.found) storeResponse(session, ref, entry.value);
     }
   }
   const events = [];
@@ -893,7 +956,7 @@ function applySupport({ state, payload, nowValue }) {
   const ref = currentQuestionRef(session);
   if (!session || !ref) return;
   if (payload?.expectedSessionId && payload.expectedSessionId !== session.id) return;
-  if (payload?.expectedQuestionId && payload.expectedQuestionId !== ref.itemId) return;
+  if (!expectedQuestionMatches(session, ref, payload?.expectedQuestionId)) return;
   if (session.strict || session.results?.[ref.itemId]) return;
   const currentLevel = session.support?.[ref.itemId]?.level || 0;
   const attempted = (session.attempts?.[ref.itemId] || 0) > 0;
@@ -932,7 +995,7 @@ export function createServerReasoningEngine({ now = () => Date.now(), random = M
       state.error = '';
     } else if (command === 'save-response') applySaveResponse({ state, payload });
     else if (command === 'submit-answer') events = applySubmit({ learnerId, state, data, payload, requestId, nowValue });
-    else if (command === 'move-question') moveIndex(state.session, payload || {});
+    else if (command === 'move-question') applyMoveQuestion({ state, payload });
     else if (command === 'mark-section' || command === 'mark-session') events = applyMarkSession({ learnerId, state, data, payload, requestId, nowValue });
     else if (command === 'request-support') applySupport({ state, payload, nowValue });
     else if (command === 'continue-session') applyContinue({ state });

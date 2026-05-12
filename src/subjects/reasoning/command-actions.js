@@ -24,9 +24,11 @@ function responseFromFormData(formData, question, prefix = '') {
         response[field.key] = String(formDataValue(formData, name));
       }
     }
+    response.working = String(formDataValue(formData, fieldName('working', prefix)));
     return response;
   }
   response.answer = String(formDataValue(formData, fieldName('answer', prefix)));
+  response.working = String(formDataValue(formData, fieldName('working', prefix)));
   return response;
 }
 
