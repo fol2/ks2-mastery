@@ -1,7 +1,7 @@
 {
   "ok": true,
-  "generatedAt": "2026-05-12T16:27:32.763Z",
-  "head": "99ca58a8b1f9001034cb376e451e977865a093bf",
+  "generatedAt": "2026-05-12T16:31:07.041Z",
+  "head": "bf16e06f483473f12b3e953ddef6b15955244c73",
   "workingTreeHasUncommittedChanges": false,
   "content": {
     "releaseId": "reading-poc-promoted-2026-05-05",

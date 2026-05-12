@@ -55,7 +55,7 @@ f3b63a7fb3de6e27bb921bd8cb2fe4500fa25ddf07f57e08df3988a9e3e33a93  ./validation/f
 87f6a44eb1db76b5055352df85b38747c6155aa330f8c47ad82a2dfd0c97fd20  ./validation/final-reading-content-quality-audit.status.json
 c3422d7f80b6a6a96a7f006ffa15f54c98f941664b4bbc70a4c5c4ab7decfb97  ./validation/final-reading-session-interface.log
 184622349beab93e7147e4d18113c5166ebc5b60800960f56337353b27e0f1a0  ./validation/final-reading-session-interface.status.json
-a245e74421115bc5cef63eaf85a99033ff1f91d87ea78cde757947d01cac8529  ./validation/final-stretch-mode-probe.json
+963347a0868bc43b22d03bca72f7f624c518e4943d7d20883d579db28d3f6c91  ./validation/final-stretch-mode-probe.json
 18ac661f2c5fd8d088a0fe2bd7481f201f52422accb96b485a51dba2fc7ccc3e  ./validation/final-worker-reading-runtime.log
 96a2767ba74860cbd9c4114b3bc4a460d19fefbe7f5c73a7735a38f4f5d8978c  ./validation/final-worker-reading-runtime.status.json
 d720e2fde790b1c9fe25b1b23912bdd41c981f25b9d1f7742d58bc3565f2cd82  ./validation/lean-session-interface-env-limit.log
