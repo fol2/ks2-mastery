@@ -5,8 +5,9 @@
 // Purpose. R6 optimised the grammar selection pipeline via per-invocation
 // memoisation of `candidateVariantMetadata` and elimination of redundant per-
 // lane `recentTemplateIndex` / `recentConceptIndex` rebuilds. P22 intentionally
-// refreshes the committed snapshot after approving the catalogue-scale prompt
-// freshness pre-check. This test now freezes the approved post-P22 queue
+// refreshed the committed snapshot after approving the catalogue-scale prompt
+// freshness pre-check. P23 refreshes it again after approving the
+// question-type rhythm guard. This test now freezes the approved post-P23 queue
 // outputs so later work cannot drift selection behaviour. Bit-identical outputs prove:
 //   - R6.I1 — output byte-identical for all inputs.
 //   - R6.I2 — selection policy unchanged (lane order, weights, caps).
@@ -229,8 +230,8 @@ function buildSnapshot(cases) {
   const entries = cases.map((c) => ({ key: c.key, ...runCase(c) }));
   return {
     meta: {
-      description: 'R6/P22 parity snapshot — buildGrammarPracticeQueue + buildGrammarMiniPack outputs frozen after approved P22 scheduler hardening.',
-      contract: 'docs/contracts/ci-shard-balance-plan.md — U1; docs/plans/james/hotfixes/11. grammar-qg-p22-post-implementation-review-hardening-package/contract/grammar-qg-p22-post-implementation-hardening-contract.md',
+      description: 'R6/P22/P23 parity snapshot — buildGrammarPracticeQueue + buildGrammarMiniPack outputs frozen after approved P22 scheduler hardening and P23 question-type rhythm guard.',
+      contract: 'docs/contracts/ci-shard-balance-plan.md — U1; docs/plans/james/hotfixes/11. grammar-qg-p22-post-implementation-review-hardening-package/contract/grammar-qg-p22-post-implementation-hardening-contract.md; docs/plans/james/hotfixes/1. grammar-qg-p23-post-hardening-review-table-ui-rhythm-package/contract/grammar-qg-p23-post-hardening-review-table-ui-rhythm-contract.md',
       caseCount: entries.length,
       templateCount: GRAMMAR_TEMPLATE_METADATA.length,
       conceptCount: GRAMMAR_CONCEPTS.length,

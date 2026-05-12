@@ -97,6 +97,24 @@ function queueFor(options) {
   });
 }
 
+
+function maxQuestionTypeRun(queue) {
+  let max = 0;
+  let current = 0;
+  let previous = '';
+  for (const item of queue) {
+    const questionType = item.questionType || '';
+    if (questionType && questionType === previous) {
+      current += 1;
+    } else {
+      previous = questionType;
+      current = questionType ? 1 : 0;
+    }
+    max = Math.max(max, current);
+  }
+  return max;
+}
+
 function assertNoDuplicateTemplates(queue, label) {
   const templateIds = queue.map((item) => item.templateId);
   const uniqueTemplateIds = new Set(templateIds);
@@ -143,6 +161,144 @@ test('buildGrammarPracticeQueue keeps 100 smart five-question sessions template-
     assert.equal(queue.length, 5);
     assertNoDuplicateTemplates(queue, `smart seed ${seed}`);
   }
+});
+
+
+test('buildGrammarPracticeQueue avoids long same-question-type runs when alternatives exist', () => {
+  const conceptIds = GRAMMAR_CONCEPTS.map((concept) => concept.id);
+  const scenarios = [];
+  for (const mode of ['smart', 'trouble', 'satsset']) {
+    scenarios.push({ mode, focusConceptId: '' });
+    for (const focusConceptId of conceptIds) scenarios.push({ mode, focusConceptId });
+  }
+
+  for (const scenario of scenarios) {
+    for (let seed = 1; seed <= 80; seed += 1) {
+      const queue = queueFor({ ...scenario, size: 10, seed });
+      const questionTypes = queue.map((item) => item.questionType);
+      assert.ok(
+        maxQuestionTypeRun(queue) <= 3,
+        `${scenario.mode}/${scenario.focusConceptId || 'mixed'} seed ${seed} repeated one question shape too long: ${questionTypes.join(' -> ')}`,
+      );
+    }
+  }
+});
+
+test('buildGrammarPracticeQueue carries the question-type run guard across recent attempts', () => {
+  const state = emptyState();
+  const now = 1_777_000_000_000;
+  for (let index = 0; index < 3; index += 1) {
+    pushRecentAttempt(state, {
+      templateId: 'fronted_adverbial_choose',
+      itemId: `fronted_adverbial_choose::recent-${index}`,
+      seed: index + 1,
+      questionType: 'choose',
+      conceptIds: ['adverbials'],
+      createdAt: now - (3 - index) * 1_000,
+    });
+  }
+
+  const queue = queueFor({
+    state,
+    mode: 'smart',
+    focusConceptId: 'adverbials',
+    size: 5,
+    seed: 1,
+    now,
+  });
+
+  assert.equal(queue.length, 5);
+  assert.notEqual(
+    queue[0].questionType,
+    'choose',
+    `first selected item should not create a fourth choose in a row: ${queue.map((item) => item.questionType).join(' -> ')}`,
+  );
+  assert.ok(
+    queue.some((item) => item.questionType === 'choose'),
+    'the guard should soften the immediate run, not permanently ban choose templates',
+  );
+});
+
+test('buildGrammarPracticeQueue defers retry when it would create a fourth question-type run', () => {
+  const state = emptyState();
+  const now = 1_777_000_000_000;
+  for (let index = 0; index < 2; index += 1) {
+    pushRecentAttempt(state, {
+      templateId: 'fronted_adverbial_choose',
+      itemId: `fronted_adverbial_choose::recent-${index}`,
+      seed: index + 1,
+      questionType: 'choose',
+      conceptIds: ['adverbials'],
+      createdAt: now - (3 - index) * 1_000,
+    });
+  }
+  pushRecentAttempt(state, {
+    templateId: 'fronted_adverbial_choose',
+    itemId: 'fronted_adverbial_choose::latest-miss',
+    seed: 3,
+    questionType: 'choose',
+    conceptIds: ['adverbials'],
+    result: { correct: false },
+    createdAt: now - 1_000,
+  });
+
+  const queue = queueFor({
+    state,
+    mode: 'smart',
+    focusConceptId: 'adverbials',
+    size: 5,
+    seed: 1,
+    now,
+  });
+
+  const retryIndex = queue.findIndex((item) => item.reason === 'retry' && item.templateId === 'fronted_adverbial_choose');
+  assert.equal(queue.length, 5);
+  assert.notEqual(
+    queue[0].questionType,
+    'choose',
+    `retry must not create a fourth choose before alternatives are tried: ${queue.map((item) => `${item.reason}:${item.questionType}`).join(' -> ')}`,
+  );
+  assert.ok(retryIndex > 0, `retry should be deferred, not dropped: ${queue.map((item) => `${item.reason}:${item.templateId}`).join(' -> ')}`);
+  assert.ok(
+    maxQuestionTypeRun([...(state.recentAttempts || []), ...queue]) <= 3,
+    `recent attempts plus queue should not exceed a three-item question-type run: ${[...(state.recentAttempts || []), ...queue].map((item) => item.questionType).join(' -> ')}`,
+  );
+});
+
+test('buildGrammarPracticeQueue applies the question-type run guard to focus saturation', () => {
+  const state = emptyState();
+  const now = 1_777_000_000_000;
+  for (let index = 0; index < 3; index += 1) {
+    pushRecentAttempt(state, {
+      templateId: 'fronted_adverbial_choose',
+      itemId: `fronted_adverbial_choose::focus-recent-${index}`,
+      seed: index + 1,
+      questionType: 'choose',
+      conceptIds: ['adverbials'],
+      createdAt: now - (3 - index) * 1_000,
+    });
+  }
+
+  const queue = queueFor({
+    state,
+    mode: 'satsset',
+    focusConceptId: 'active_passive',
+    size: 20,
+    seed: 1,
+    now,
+  });
+
+  assert.equal(queue.length, 20);
+  assert.equal(queue[0].reason, 'focus-saturation');
+  assert.notEqual(
+    queue[0].questionType,
+    'choose',
+    `focus saturation must not create a fourth choose before broad alternatives are tried: ${queue.slice(0, 5).map((item) => `${item.reason}:${item.questionType}`).join(' -> ')}`,
+  );
+  assert.ok(
+    queue.some((item) => item.reason === 'focus-saturation' && item.questionType === 'choose'),
+    'the focus-saturation guard should soften the immediate run, not ban choose templates from the focused lane',
+  );
 });
 
 test('buildGrammarPracticeQueue is deterministic for the same seed and state', () => {

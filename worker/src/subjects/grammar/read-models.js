@@ -28,20 +28,49 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function safeInputOptionValue(option) {
+  if (Array.isArray(option)) return String(option[0] ?? '');
+  if (isPlainObject(option)) return String(option.value ?? option.label ?? '');
+  return String(option ?? '');
+}
+
+function safeInputOption(option) {
+  const value = safeInputOptionValue(option);
+  const label = Array.isArray(option)
+    ? String(option[1] ?? option[0] ?? '')
+    : isPlainObject(option)
+      ? String(option.label ?? option.value ?? '')
+      : value;
+  return { value, label };
+}
+
+function safeTableRowOption(option) {
+  return safeInputOptionValue(option);
+}
+
 function safeInputSpec(inputSpec) {
   if (!isPlainObject(inputSpec)) return null;
   const clone = cloneSerialisable(inputSpec);
   if (clone?.options && Array.isArray(clone.options)) {
-    clone.options = clone.options.map((option) => ({
-      value: String(option.value ?? ''),
-      label: String(option.label ?? option.value ?? ''),
-    }));
+    clone.options = clone.options.map(safeInputOption);
   }
   if (clone?.rows && Array.isArray(clone.rows)) {
-    clone.rows = clone.rows.map((row) => ({
-      key: String(row.key || ''),
-      label: String(row.label || ''),
-    }));
+    clone.rows = clone.rows.map((row) => {
+      const safeRow = {
+        key: String(row.key || ''),
+        label: String(row.label || ''),
+      };
+      if (typeof row.ariaLabel === 'string' && row.ariaLabel) {
+        safeRow.ariaLabel = row.ariaLabel;
+      }
+      if (Array.isArray(row.options) && row.options.length > 0) {
+        const options = row.options
+          .map(safeTableRowOption)
+          .filter((option) => option.length > 0);
+        if (options.length > 0) safeRow.options = options;
+      }
+      return safeRow;
+    });
   }
   return clone;
 }

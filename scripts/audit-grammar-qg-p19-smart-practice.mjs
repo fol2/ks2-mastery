@@ -21,6 +21,7 @@ import crypto from 'node:crypto';
 import { parseArgs } from 'node:util';
 
 import {
+  GRAMMAR_CONCEPTS,
   GRAMMAR_TEMPLATE_METADATA,
   GRAMMAR_CONTENT_RELEASE_ID,
   createGrammarQuestion,
@@ -36,6 +37,31 @@ const REPORTS_DIR = path.join(ROOT_DIR, 'reports', 'grammar');
 const NOW_TS = Date.parse('2026-05-04T09:00:00.000Z');
 const SESSION_SIZE = 5;
 const SEED_RANGE = Array.from({ length: 30 }, (_, i) => i + 1);
+const AUDIT_MODES = ['smart', 'trouble', 'satsset'];
+
+function templateFitsMode(template, mode) {
+  if (!template) return false;
+  if (mode === 'satsset' && (!template.satsFriendly || template.answerSpecKind === 'manualReviewOnly')) return false;
+  if (mode === 'surgery' && !(template.tags || []).includes('surgery')) return false;
+  if (mode === 'builder' && !(template.tags || []).includes('builder')) return false;
+  return true;
+}
+
+function smallestModeEligibleFocusPool() {
+  let smallest = null;
+  for (const mode of AUDIT_MODES) {
+    for (const concept of GRAMMAR_CONCEPTS) {
+      const count = GRAMMAR_TEMPLATE_METADATA.filter((template) => (
+        templateFitsMode(template, mode) && (template.skillIds || []).includes(concept.id)
+      )).length;
+      if (count <= 0) continue;
+      if (!smallest || count < smallest.count) {
+        smallest = { mode, conceptId: concept.id, count };
+      }
+    }
+  }
+  return smallest;
+}
 
 function parseSeedList(value = '') {
   const text = String(value || '').trim();
@@ -543,6 +569,10 @@ function getSmartPracticeReportLabel(contentReleaseId) {
 
 function renderMarkdown(audit, seeds = SEED_RANGE) {
   const reportLabel = getSmartPracticeReportLabel(audit.metadata.contentReleaseId);
+  const focusReachability = smallestModeEligibleFocusPool();
+  const focusReachabilityText = focusReachability
+    ? `${focusReachability.count} (${focusReachability.mode}/${focusReachability.conceptId})`
+    : 'none';
   const lines = [];
   lines.push(`# Grammar QG ${reportLabel} — smart-practice surface audit`);
   lines.push('');
@@ -604,7 +634,7 @@ function renderMarkdown(audit, seeds = SEED_RANGE) {
   }
   lines.push(`## Notes`);
   lines.push('');
-  lines.push(`- Every queue entry carries an explicit reason emitted by \`queueEntry()\` in \`worker/src/subjects/grammar/selection.js\`. Six lanes are exercised by the simulator profiles: fallback, priority-urgent, retry, similar-problem, spaced-retrieval, trouble-cluster. The seventh lane — focus-saturation — fires only when a focus concept's mode-eligible pool is smaller than the queue size (1..${SESSION_SIZE - 1} templates). With the current 510-template inventory the smallest mode-eligible per-concept pool is 16 (satsset/active_passive), so focus-saturation is unreachable in production today; the lane stays wired so a future content release that retires a concept down to ≤${SESSION_SIZE - 1} active templates would activate it without a code change.`);
+  lines.push(`- Every queue entry carries an explicit reason emitted by \`queueEntry()\` in \`worker/src/subjects/grammar/selection.js\`. Six lanes are exercised by the simulator profiles: fallback, priority-urgent, retry, similar-problem, spaced-retrieval, trouble-cluster. The seventh lane — focus-saturation — fires only when a focus concept's mode-eligible pool is smaller than the queue size (1..${SESSION_SIZE - 1} templates). With the current ${GRAMMAR_TEMPLATE_METADATA.length}-template inventory the smallest mode-eligible per-concept pool is ${focusReachabilityText}, so focus-saturation is unreachable in production today; the lane stays wired so a future content release that retires a concept down to ≤${SESSION_SIZE - 1} active templates would activate it without a code change.`);
   lines.push(`- Duplicate templates within a ${SESSION_SIZE}-question round are only permitted when the reason is on the \`ALLOWED_DUPLICATE_REASONS\` allow-list — missing or unknown reasons hard-fail the audit (Contract D criterion 4).`);
   lines.push(`- "Eligible pool" is computed from \`GRAMMAR_TEMPLATE_METADATA\` filtered by the profile's mastered concepts and (when set) focus concept. Sessions with eligible pool < ${SESSION_SIZE} record a \`pool-too-small\` advisory rather than a hard failure.`);
   lines.push('');

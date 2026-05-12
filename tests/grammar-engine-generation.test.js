@@ -224,6 +224,56 @@ test('Grammar generated attempts store safe variant metadata without exposing it
   assert.equal(applied.events[0].variantSignature, attempt.variantSignature);
 });
 
+
+test('Grammar read model preserves table-choice row-specific options for heterogeneous tables', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const templateId = 'qg_p4_word_class_noun_phrase_transfer';
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'read-model-table-row-options',
+    payload: {
+      roundLength: 1,
+      templateId,
+      seed: 1,
+    },
+  });
+
+  const rawSpec = start.state.session.currentItem.inputSpec;
+  assert.equal(rawSpec.type, 'table_choice');
+  assert.ok(rawSpec.rows.some((row) => Array.isArray(row.options) && row.options.length > 0));
+
+  const readModel = buildGrammarReadModel({
+    learnerId: 'learner-a',
+    state: start.state,
+    now: 1_777_000_000_000,
+  });
+  const safeSpec = readModel.session.currentItem.inputSpec;
+  assert.equal(safeSpec.type, 'table_choice');
+
+  for (const rawRow of rawSpec.rows) {
+    const safeRow = safeSpec.rows.find((row) => row.key === rawRow.key);
+    assert.ok(safeRow, `read model kept row ${rawRow.key}`);
+    assert.equal(safeRow.label, rawRow.label);
+    assert.equal(safeRow.ariaLabel, rawRow.ariaLabel || rawRow.label);
+    assert.equal('correctAnswer' in safeRow, false);
+    assert.equal('answer' in safeRow, false);
+    assert.equal('rationale' in safeRow, false);
+    if (Array.isArray(rawRow.options) && rawRow.options.length > 0) {
+      assert.deepEqual(
+        safeRow.options,
+        rawRow.options.map(String),
+        `read model must keep per-row options for ${rawRow.key}`,
+      );
+      assert.ok(
+        safeRow.options.length < safeSpec.columns.length,
+        `row ${rawRow.key} should not fall back to every global column`,
+      );
+    }
+  }
+});
+
 test('Grammar manual-review-only attempts save responses without scoring or reward evidence', () => {
   const state = createInitialGrammarState();
   const question = createGrammarQuestion({ templateId: 'build_noun_phrase', seed: 1 });

@@ -96,14 +96,14 @@ function runBenchmark() {
   };
 }
 
-test('R6 tripwire: buildGrammarPracticeQueue p95 under ceiling', () => {
+test('R6 tripwire: buildGrammarPracticeQueue p95 under ceiling', (t) => {
   if (GRAMMAR_TEMPLATE_METADATA.length > 80) {
     // Scale-horizon tripwire. When catalogue growth pushes us past 80
     // templates we are outside the regime the 500ms ceiling was calibrated
     // against; reassess the optimisation approach per plan.
     // eslint-disable-next-line no-console
     console.warn('Template count exceeds 80 — reassess R6 per docs/contracts/ci-shard-balance.md Scale Horizon');
-    test.skip('wall-clock ceiling skipped because template catalogue exceeds the R6 calibration horizon');
+    t.skip('wall-clock ceiling skipped because template catalogue exceeds the R6 calibration horizon');
     return;
   }
   const { p50, p95, max } = runBenchmark();
@@ -113,9 +113,9 @@ test('R6 tripwire: buildGrammarPracticeQueue p95 under ceiling', () => {
   );
 });
 
-test('R6 kill-switch: post-opt p95 shows >=30% improvement vs baseline', () => {
+test('R6 kill-switch: post-opt p95 shows >=30% improvement vs baseline', (t) => {
   if (GRAMMAR_TEMPLATE_METADATA.length > 80) {
-    test.skip('wall-clock kill-switch skipped because template catalogue exceeds the R6 calibration horizon');
+    t.skip('wall-clock kill-switch skipped because template catalogue exceeds the R6 calibration horizon');
     return;
   }
   const baseline = JSON.parse(readFileSync(BASELINE_PATH, 'utf8'));
@@ -144,7 +144,12 @@ test('R6 kill-switch: post-opt p95 shows >=30% improvement vs baseline', () => {
 // and still fails any regression that disables or bypasses the memo.
 const CALL_COUNT_CEILING_RATIO = 2.0;
 
-test('R6.AC5 — createGrammarQuestion call count stays below baseline / ratio', () => {
+test('R6.AC5 — createGrammarQuestion call count stays below baseline / ratio', (t) => {
+  const majorVersion = Number(String(process.versions.node || '').split('.')[0]) || 0;
+  if (majorVersion < 22) {
+    t.skip('createGrammarQuestion call-count probe requires Node 22 module mocking; this ZIP environment is below .nvmrc.');
+    return;
+  }
   const baseline = JSON.parse(readFileSync(BASELINE_PATH, 'utf8'));
   const baselineCount = baseline.createQuestionCallsPerBuild;
   assert.ok(

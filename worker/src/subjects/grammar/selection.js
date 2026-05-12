@@ -25,6 +25,7 @@ const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id
 export const GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW = 40;
 export const GRAMMAR_RECENT_TEMPLATE_REPEAT_WINDOW = 12;
 export const GRAMMAR_RECENT_STATIC_TEMPLATE_REPEAT_WINDOW = GRAMMAR_RECENT_VARIANT_REPEAT_WINDOW;
+export const GRAMMAR_QUESTION_TYPE_RUN_CEILING = 3;
 
 function seededRandom(seed) {
   let t = (Number(seed) || 0) >>> 0;
@@ -341,6 +342,24 @@ function hasRecentTemplate(template, recentTemplates) {
   return recentTemplate.lastDistance <= window;
 }
 
+function recentQuestionTypeRun(recentAttempts) {
+  const attempts = Array.isArray(recentAttempts) ? recentAttempts : [];
+  let questionType = '';
+  let count = 0;
+  for (let index = attempts.length - 1; index >= 0; index -= 1) {
+    const current = typeof attempts[index]?.questionType === 'string' ? attempts[index].questionType : '';
+    if (!current) continue;
+    if (!questionType) {
+      questionType = current;
+      count = 1;
+      continue;
+    }
+    if (current !== questionType) break;
+    count += 1;
+  }
+  return { questionType, count };
+}
+
 function variantFreshTemplates(pool, recentVariants, candidateSeed, variantMemo, recentVariantFamilies = null) {
   const fresh = pool.filter((template) => !hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo, recentVariantFamilies));
   return fresh.length > 0 ? fresh : pool;
@@ -621,22 +640,56 @@ export function buildGrammarPracticeQueue({
     if (candidatePool.length === 0) return candidatePool;
     const recentTemplates = recentTemplateIndex(workingRecent);
     const templateFresh = templateFreshPool(candidatePool);
-    const variantFresh = templateFresh.filter(
+    const shapeFresh = questionTypeRunFreshTemplates(templateFresh, candidateSeed);
+    const variantFresh = shapeFresh.filter(
       (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies),
     );
     const promptFresh = variantFresh.filter(
       (template) => !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo, recentTemplates),
     );
     if (promptFresh.length > 0) return promptFresh;
-    const broadSurfaceFresh = unplannedTemplates(broadPool).filter(
+    const broadShapeFresh = questionTypeRunFreshTemplates(unplannedTemplates(broadPool), candidateSeed);
+    const broadSurfaceFresh = broadShapeFresh.filter(
       (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies)
         && !hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo, recentTemplates),
     );
     if (broadSurfaceFresh.length > 0) return broadSurfaceFresh;
-    const broadVariantFresh = unplannedTemplates(broadPool).filter(
+    const broadVariantFresh = broadShapeFresh.filter(
       (template) => !hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies),
     );
     return broadVariantFresh.length > 0 ? broadVariantFresh : templateFresh;
+  }
+
+  function questionTypeRunFreshTemplates(candidatePool, candidateSeed) {
+    if (!Array.isArray(candidatePool) || candidatePool.length === 0) return candidatePool;
+    const fresh = candidatePool.filter((template) => !wouldExtendQuestionTypeRun(template, candidatePool, candidateSeed));
+    if (fresh.length > 0) return fresh;
+    return hasQuestionTypeRunAlternative(candidatePool, candidateSeed) ? [] : candidatePool;
+  }
+
+  function hasQuestionTypeRunAlternative(candidatePool, candidateSeed) {
+    const recentRun = recentQuestionTypeRun(workingRecent);
+    if (!recentRun.questionType || recentRun.count < GRAMMAR_QUESTION_TYPE_RUN_CEILING) return false;
+    const recentTemplates = recentTemplateIndex(workingRecent);
+    const seen = new Set();
+    for (const sourcePool of [candidatePool, broadPool]) {
+      for (const template of Array.isArray(sourcePool) ? sourcePool : []) {
+        if (!template || seen.has(template.id) || plannedTemplateIds.has(template.id)) continue;
+        seen.add(template.id);
+        if (template.questionType === recentRun.questionType) continue;
+        if (hasRecentGeneratedVariant(template, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies)) continue;
+        if (hasRecentPromptRhythm(template, workingRecentPrompts, candidateSeed, variantMemo, recentTemplates)) continue;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function wouldExtendQuestionTypeRun(template, candidatePool, candidateSeed) {
+    const recentRun = recentQuestionTypeRun(workingRecent);
+    if (!recentRun.questionType || recentRun.count < GRAMMAR_QUESTION_TYPE_RUN_CEILING) return false;
+    if (template?.questionType !== recentRun.questionType) return false;
+    return hasQuestionTypeRunAlternative(candidatePool, candidateSeed);
   }
 
   function pushQueueEntry(template, candidateSeed, reason) {
@@ -649,8 +702,8 @@ export function buildGrammarPracticeQueue({
 
   // P19b polish: focus-saturation lane fires only when the focus concept's
   // mode-eligible pool is smaller than the queue size (1..safeSize-1
-  // templates). With the current 510-template inventory the smallest mode-
-  // eligible per-concept pool is 16 (satsset/active_passive), so the lane is
+  // templates). With the current template inventory the smallest mode-
+  // eligible per-concept pool is above a normal 5-question round, so the lane is
   // currently unreachable in production AND in audit simulation. Kept in
   // place for forward compatibility — a future content release that retires
   // a concept down to ≤4 active templates would activate it cleanly without
@@ -664,6 +717,7 @@ export function buildGrammarPracticeQueue({
         if (queue.length >= safeSize) break;
         const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
         const recentVariants = workingRecentVariants;
+        if (wouldExtendQuestionTypeRun(template, focusTemplates, candidateSeed)) continue;
         if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies)) continue;
         pushQueueEntry(template, candidateSeed, 'focus-saturation');
       }
@@ -673,18 +727,25 @@ export function buildGrammarPracticeQueue({
   // P19 Contract D.4 — retry lane. When the most recent attempt was a miss
   // within the last 5 minutes and the same template is still eligible, surface
   // it once as 'retry'. Audit-allow-listed for duplicate templates.
-  if (queue.length < safeSize) {
-    const lastAttempt = recentLastScoredMiss(recentAttempts, nowTs, 5 * 60 * 1000);
-    if (lastAttempt) {
-      const retryTemplate = pool.find((template) => template.id === lastAttempt.templateId);
-      if (retryTemplate && !plannedTemplateIds.has(retryTemplate.id)) {
-        const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
-        if (!hasRecentGeneratedVariant(retryTemplate, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies)) {
-          pushQueueEntry(retryTemplate, candidateSeed, 'retry');
-        }
-      }
+  const retryAttempt = recentLastScoredMiss(recentAttempts, nowTs, 5 * 60 * 1000);
+  const retryTemplate = retryAttempt
+    ? pool.find((template) => template.id === retryAttempt.templateId)
+    : null;
+
+  function tryPushRetryEntry() {
+    if (queue.length >= safeSize || !retryTemplate || plannedTemplateIds.has(retryTemplate.id)) return false;
+    const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
+    if (hasRecentGeneratedVariant(retryTemplate, workingRecentVariants, candidateSeed, variantMemo, workingRecentVariantFamilies)) {
+      return false;
     }
+    if (wouldExtendQuestionTypeRun(retryTemplate, pool, candidateSeed)) {
+      return false;
+    }
+    pushQueueEntry(retryTemplate, candidateSeed, 'retry');
+    return true;
   }
+
+  tryPushRetryEntry();
 
   // P19 Contract D.4 — similar-problem lane. After any recent miss, surface a
   // *different* template that shares a missed concept so the learner gets a
@@ -722,6 +783,7 @@ export function buildGrammarPracticeQueue({
           variantMemo,
         });
         if (template) pushQueueEntry(template, candidateSeed, 'similar-problem');
+        tryPushRetryEntry();
       }
     }
   }
@@ -755,6 +817,7 @@ export function buildGrammarPracticeQueue({
           variantMemo,
         });
         if (template) pushQueueEntry(template, candidateSeed, 'spaced-retrieval');
+        tryPushRetryEntry();
       }
     }
   }
@@ -788,6 +851,7 @@ export function buildGrammarPracticeQueue({
       // explainable.
       const reason = mode === 'trouble' ? 'trouble-cluster' : 'priority-urgent';
       pushQueueEntry(template, candidateSeed, reason);
+      tryPushRetryEntry();
     }
   }
 
@@ -810,6 +874,7 @@ export function buildGrammarPracticeQueue({
       variantMemo,
     });
     pushQueueEntry(template, candidateSeed, 'fallback');
+    tryPushRetryEntry();
   }
   return queue;
 }
