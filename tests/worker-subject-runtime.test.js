@@ -7,7 +7,11 @@ import { createWorkerRepository } from '../worker/src/repository.js';
 import { createSubjectRuntime, createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 import { normaliseSubjectCommandRequest } from '../worker/src/subjects/command-contract.js';
 import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.js';
-import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
+import {
+  SEEDED_SPELLING_CONTENT_BUNDLE,
+  SEEDED_SPELLING_CONTENT_SUMMARY,
+  SEEDED_SPELLING_PUBLISHED_SNAPSHOT,
+} from '../src/subjects/spelling/data/content-data.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
@@ -132,6 +136,8 @@ test('repository reuses cached spelling runtime content for hot subject paths', 
     assert.equal(second.snapshot, first.snapshot);
     assert.equal(second.summary, first.summary);
     assert.equal(second.content, first.content);
+    assert.equal(first.snapshot, SEEDED_SPELLING_PUBLISHED_SNAPSHOT);
+    assert.equal(first.summary, SEEDED_SPELLING_CONTENT_SUMMARY);
     assert.equal(second.snapshot.words.length, SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1).snapshot.words.length);
   } finally {
     DB.close();

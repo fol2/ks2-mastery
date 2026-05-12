@@ -19,7 +19,11 @@ import {
   resolveRuntimeSnapshot,
   validateSpellingContentBundle,
 } from '../../src/subjects/spelling/content/model.js';
-import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../src/subjects/spelling/data/content-data.js';
+import {
+  SEEDED_SPELLING_CONTENT_BUNDLE,
+  SEEDED_SPELLING_CONTENT_SUMMARY,
+  SEEDED_SPELLING_PUBLISHED_SNAPSHOT,
+} from '../../src/subjects/spelling/data/content-data.js';
 import {
   POST_MEGA_SEED_SHAPES,
   resolvePostMegaSeedShape,
@@ -641,9 +645,16 @@ function runtimeContentSummary(content, snapshot) {
 }
 
 function buildSpellingRuntimeContent(row, subjectId) {
-  const content = row
-    ? contentRowToBundle(row)
-    : backfillSpellingWordExplanations(SEEDED_SPELLING_CONTENT_BUNDLE, SEEDED_SPELLING_CONTENT_BUNDLE);
+  if (!row) {
+    return {
+      subjectId,
+      content: SEEDED_SPELLING_CONTENT_BUNDLE,
+      snapshot: SEEDED_SPELLING_PUBLISHED_SNAPSHOT,
+      summary: SEEDED_SPELLING_CONTENT_SUMMARY,
+    };
+  }
+
+  const content = contentRowToBundle(row);
   const snapshot = runtimeSnapshotForBundle(content);
   return {
     subjectId,
