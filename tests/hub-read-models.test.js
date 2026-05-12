@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { buildParentHubReadModel } from '../src/platform/hubs/parent-read-model.js';
 import {
@@ -17,6 +18,7 @@ import {
   applyAdminHubProductionEvidencePatch,
 } from '../src/platform/hubs/admin-panel-patches.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
+import { buildPunctuationLearnerReadModel } from '../src/subjects/punctuation/read-model.js';
 import { createPunctuationMasteryKey, PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 import { createMemoryState, updateMemoryState } from '../shared/punctuation/scheduler.js';
 
@@ -384,6 +386,38 @@ test('parent hub read model includes Punctuation analytics evidence without raw 
   assert.equal(Object.hasOwn(model.punctuationEvidence.recentMistakes[0], 'model'), false);
   assert.ok(model.misconceptionPatterns.some((entry) => entry.subjectId === 'punctuation' && /Speech Quote Missing/.test(entry.label)));
   assert.ok(model.recentSessions.some((entry) => entry.subjectId === 'punctuation' && entry.headline === '1/2'));
+});
+
+test('Punctuation adult hub projection can omit child-only Star projection', () => {
+  const learner = makeLearner();
+  const now = 1_777_000_000_000;
+  const punctuation = buildPunctuationLearnerReadModel({
+    subjectStateRecord: makePunctuationSubjectState(now),
+    practiceSessions: [],
+    now: () => now,
+    includeStarView: false,
+  });
+
+  assert.equal(punctuation.hasEvidence, true);
+  assert.equal(punctuation.progressSnapshot.trackedItems, 2);
+  assert.equal(Object.hasOwn(punctuation, 'starView'), false);
+
+  const parentHubSource = readFileSync(new URL('../src/platform/hubs/parent-read-model.js', import.meta.url), 'utf8');
+  assert.match(
+    parentHubSource,
+    /buildPunctuationLearnerReadModel\(\{[\s\S]*includeStarView:\s*false[\s\S]*\}\)/,
+    'Parent Hub must keep Punctuation adult evidence on the lightweight projection path.',
+  );
+  const parentModel = buildParentHubReadModel({
+    learner,
+    platformRole: 'parent',
+    membershipRole: 'owner',
+    subjectStates: { punctuation: makePunctuationSubjectState(now) },
+    practiceSessions: [],
+    eventLog: [],
+    now: () => now,
+  });
+  assert.equal(parentModel.punctuationEvidence.hasEvidence, true);
 });
 
 test('parent hub read model normalises malformed restored Grammar state safely', () => {

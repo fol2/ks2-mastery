@@ -132,6 +132,7 @@ export function buildParentHubReadModel({
     subjectStateRecord: isPlainObject(subjectStates.punctuation) ? subjectStates.punctuation : null,
     practiceSessions,
     now,
+    includeStarView: false,
   });
   const grammarEvidence = grammarEvidenceFromReadModel(grammar);
   const punctuationEvidence = punctuationEvidenceFromReadModel(punctuation);

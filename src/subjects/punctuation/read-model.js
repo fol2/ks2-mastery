@@ -380,6 +380,7 @@ export function buildPunctuationLearnerReadModel({
   subjectStateRecord = null,
   practiceSessions = [],
   now = Date.now,
+  includeStarView = true,
 } = {}) {
   const nowTs = typeof now === 'function' ? asTs(now(), Date.now()) : asTs(now, Date.now());
   const stateRecord = isPlainObject(subjectStateRecord) ? subjectStateRecord : {};
@@ -431,39 +432,42 @@ export function buildPunctuationLearnerReadModel({
     }
     if (hasDeepSecureFacet) deepSecuredRewardUnitCount += 1;
   }
-  // U4: project Star counts from learning evidence. The ledger provides
-  // per-monster breakdowns (tryStars, practiceStars, secureStars,
-  // masteryStars, total) and a grand Star total. `starDerivedStage` is
-  // computed here so the read-model consumer can display star-derived
-  // monster stages. `maxStageEver` is left as 0 — the read-model does
-  // not have access to the monster codex state (lives in
-  // `gameStateRepository`); the view-model merges codex state at render
-  // time to produce the final displayStage.
-  const starLedger = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
-  const starViewPerMonster = {};
-  for (const [monsterId, starEntry] of Object.entries(starLedger.perMonster)) {
-    const starDerivedStage = stageFor(starEntry.total, PUNCTUATION_STAR_THRESHOLDS);
-    starViewPerMonster[monsterId] = {
-      tryStars: starEntry.tryStars,
-      practiceStars: starEntry.practiceStars,
-      secureStars: starEntry.secureStars,
-      masteryStars: starEntry.masteryStars,
-      total: starEntry.total,
-      starDerivedStage,
+  let starView = null;
+  if (includeStarView !== false) {
+    // U4: project Star counts from learning evidence. The ledger provides
+    // per-monster breakdowns (tryStars, practiceStars, secureStars,
+    // masteryStars, total) and a grand Star total. `starDerivedStage` is
+    // computed here so the read-model consumer can display star-derived
+    // monster stages. `maxStageEver` is left as 0 — the read-model does
+    // not have access to the monster codex state (lives in
+    // `gameStateRepository`); the view-model merges codex state at render
+    // time to produce the final displayStage.
+    const starLedger = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+    const starViewPerMonster = {};
+    for (const [monsterId, starEntry] of Object.entries(starLedger.perMonster)) {
+      const starDerivedStage = stageFor(starEntry.total, PUNCTUATION_STAR_THRESHOLDS);
+      starViewPerMonster[monsterId] = {
+        tryStars: starEntry.tryStars,
+        practiceStars: starEntry.practiceStars,
+        secureStars: starEntry.secureStars,
+        masteryStars: starEntry.masteryStars,
+        total: starEntry.total,
+        starDerivedStage,
+      };
+    }
+    const grandStarDerivedStage = stageFor(
+      starLedger.grand.grandStars,
+      PUNCTUATION_GRAND_STAR_THRESHOLDS,
+    );
+    starView = {
+      perMonster: starViewPerMonster,
+      grand: {
+        grandStars: starLedger.grand.grandStars,
+        total: starLedger.grand.total,
+        starDerivedStage: grandStarDerivedStage,
+      },
     };
   }
-  const grandStarDerivedStage = stageFor(
-    starLedger.grand.grandStars,
-    PUNCTUATION_GRAND_STAR_THRESHOLDS,
-  );
-  const starView = {
-    perMonster: starViewPerMonster,
-    grand: {
-      grandStars: starLedger.grand.grandStars,
-      total: starLedger.grand.total,
-      starDerivedStage: grandStarDerivedStage,
-    },
-  };
 
   const weakestFacets = facetRows(progress, skills, nowTs);
   const skillRows = skillRowsFromAttempts(attempts, skills);
@@ -529,7 +533,7 @@ export function buildPunctuationLearnerReadModel({
     subjectId: 'punctuation',
     hasEvidence,
     currentFocus,
-    starView,
+    ...(includeStarView !== false ? { starView } : {}),
     progressSnapshot: {
       subjectId: 'punctuation',
       releaseId: CURRENT_RELEASE_ID,
