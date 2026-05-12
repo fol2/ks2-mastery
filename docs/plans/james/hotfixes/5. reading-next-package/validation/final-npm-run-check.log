@@ -3,8 +3,8 @@
 > node ./scripts/wrangler-oauth.mjs deploy --dry-run
 
 
- ⛅️ wrangler 4.84.0
-───────────────────
+ ⛅️ wrangler 4.84.0 (update available 4.90.1)
+─────────────────────────────────────────────
 [custom build] Running: npm run build && npm run assert:build-public && npm run audit:client
 [custom build] 
 [custom build] > ks2-mastery@0.1.0 build
@@ -14,14 +14,14 @@
 [custom build] Generated src\platform\game\monster-asset-manifest.js with 180 monster assets.
 [custom build] 
 [custom build] 
-[custom build]   src\bundles\app.bundle.js                 716.4kb
+[custom build]   src\bundles\app.bundle.js                 716.8kb
 [custom build]   src\bundles\chunk-AC5HZHXN.js             289.3kb
 [custom build]   src\bundles\AdminHubSurface-54DBIUBD.js   227.4kb
 [custom build]   src\bundles\ParentHubSurface-MRTSMHTL.js   22.9kb
 [custom build]   src\bundles\chunk-EE2UYWMZ.js              15.7kb
 [custom build]   ...and 3 more output files...
 [custom build] 
-[custom build] Done in 71ms
+[custom build] Done in 72ms
 [custom build] 
 [custom build] 
 [custom build] > ks2-mastery@0.1.0 assert:build-public
@@ -39,10 +39,10 @@
 [custom build] Allowlisted token present: /api/admin/monster-visual-config (admin-only monster visual draft/publish endpoint; production renderers receive only the published bootstrap payload)
 [custom build] Allowlisted token present: /api/subjects/spelling/word-bank (authorised server read model endpoint for Word Bank rows and detail)
 [custom build] Allowlisted token present: /api/subjects/ (server-authoritative subject command boundary)
-[custom build] Client bundle audit passed (805 public files, 6 chunks scanned, main bundle 204441 / 232000 bytes gzip).
+[custom build] Client bundle audit passed (805 public files, 6 chunks scanned, main bundle 204491 / 232000 bytes gzip).
 [custom build] 
 ✨ Read 881 files from the assets directory D:\Coding\ks2-mastery\.worktrees\reading-next-package-20260512\dist\public
-Total Upload: 23073.70 KiB / gzip: 2177.94 KiB
+Total Upload: 23077.55 KiB / gzip: 2178.88 KiB
 Your Worker has access to the following bindings:
 Binding                                                     Resource                  
 env.LEARNER_LOCK (LearnerLock)                              Durable Object            

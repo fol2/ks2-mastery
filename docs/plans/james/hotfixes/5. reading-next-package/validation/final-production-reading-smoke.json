@@ -6,15 +6,15 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 5,
-  "commitSha": "9681d2cbf6d814f939fba43e580e12305ee145f5",
+  "commitSha": "eb48166622876499a01f00969c946eaa2b78ac1f",
   "commitShaSource": "cli-or-ci-expected",
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-bL9zsHte4VX0lw",
-  "learnerId": "learner-demo-LD0Ct97CqG-MrA",
+  "accountId": "demo-eo9ADjSGRHrjTA",
+  "learnerId": "learner-demo-ebUIvTknkMRTqw",
   "immediate": {
     "revision": 2,
-    "questionId": "p4n18_cave_paintings_q2",
-    "passageId": "p4n18_cave_paintings",
+    "questionId": "p4p14_bicycle_shed_q1",
+    "passageId": "p4p14_bicycle_shed",
     "content": {
       "releaseId": "reading-poc-promoted-2026-05-05",
       "version": 5,
@@ -40,14 +40,14 @@
     "staleErrorCleared": true
   },
   "staleWriteGuard": {
-    "expectedSessionId": "reading_session_mp2syu5i_eaf4hdqi",
+    "expectedSessionId": "reading_session_mp2tmjt6_e3jcbqya",
     "expectedQuestionId": "stale-question-id",
-    "protectedQuestionId": "phase5_nonfiction_local_archives_q2",
+    "protectedQuestionId": "p4p26_meadow_bees_q1",
     "changed": false,
     "revisionUnchanged": true,
     "staleResponsePersisted": false,
     "protectedQuestionResponsePersisted": false
   },
-  "timestamp": "2026-05-12T15:45:55.804Z",
-  "finishedAt": "2026-05-12T15:45:55.804Z"
+  "timestamp": "2026-05-12T16:04:22.157Z",
+  "finishedAt": "2026-05-12T16:04:22.157Z"
 }

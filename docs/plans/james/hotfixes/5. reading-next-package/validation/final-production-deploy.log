@@ -14,14 +14,14 @@
 [custom build] Generated src\platform\game\monster-asset-manifest.js with 180 monster assets.
 [custom build]
 [custom build]
-[custom build]   src\bundles\app.bundle.js                 716.4kb
+[custom build]   src\bundles\app.bundle.js                 716.8kb
 [custom build]   src\bundles\chunk-AC5HZHXN.js             289.3kb
 [custom build]   src\bundles\AdminHubSurface-54DBIUBD.js   227.4kb
 [custom build]   src\bundles\ParentHubSurface-MRTSMHTL.js   22.9kb
 [custom build]   src\bundles\chunk-EE2UYWMZ.js              15.7kb
 [custom build]   ...and 3 more output files...
 [custom build]
-[custom build] Done in 65ms
+[custom build] Done in 553ms
 [custom build]
 [custom build]
 [custom build] > ks2-mastery@0.1.0 assert:build-public
@@ -39,14 +39,14 @@
 [custom build] Allowlisted token present: /api/admin/monster-visual-config (admin-only monster visual draft/publish endpoint; production renderers receive only the published bootstrap payload)
 [custom build] Allowlisted token present: /api/subjects/spelling/word-bank (authorised server read model endpoint for Word Bank rows and detail)
 [custom build] Allowlisted token present: /api/subjects/ (server-authoritative subject command boundary)
-[custom build] Client bundle audit passed (805 public files, 6 chunks scanned, main bundle 204441 / 232000 bytes gzip).
+[custom build] Client bundle audit passed (805 public files, 6 chunks scanned, main bundle 204491 / 232000 bytes gzip).
 [custom build]
 ?? Building list of assets...
 ? Read 881 files from the assets directory D:\Coding\ks2-mastery\.worktrees\reading-next-package-20260512\dist\public
 ?? Starting asset upload...
 No updated asset files to upload. Proceeding with deployment...
-Total Upload: 23073.70 KiB / gzip: 2177.94 KiB
-Worker Startup Time: 218 ms
+Total Upload: 23077.55 KiB / gzip: 2178.88 KiB
+Worker Startup Time: 179 ms
 Your Worker has access to the following bindings:
 Binding                                                     Resource
 env.LEARNER_LOCK (LearnerLock)                              Durable Object
@@ -66,12 +66,12 @@ env.HERO_MODE_PROGRESS_ENABLED ("false")                    Environment Variable
 env.HERO_MODE_ECONOMY_ENABLED ("false")                     Environment Variable
 env.HERO_MODE_CAMP_ENABLED ("false")                        Environment Variable
 
-Uploaded ks2-mastery (28.71 sec)
-Deployed ks2-mastery triggers (7.30 sec)
+Uploaded ks2-mastery (37.90 sec)
+Deployed ks2-mastery triggers (7.83 sec)
   https://ks2-mastery.fol2hk.workers.dev
   schedule: 0 4 * * *
   schedule: 0 5 * * *
-Current Version ID: a6051648-2084-48ad-8e0c-a3c06b7c3689
+Current Version ID: f761e084-dad9-4037-a476-6e148551cfa2
 
 > ks2-mastery@0.1.0 audit:production
 > node ./scripts/production-bundle-audit.mjs --skip-local --retries 30 --retry-delay-ms 5000

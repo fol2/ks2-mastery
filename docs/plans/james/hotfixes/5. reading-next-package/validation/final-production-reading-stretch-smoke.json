@@ -6,11 +6,11 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 5,
-  "commitSha": "9681d2cbf6d814f939fba43e580e12305ee145f5",
+  "commitSha": "eb48166622876499a01f00969c946eaa2b78ac1f",
   "commitShaSource": "cli-or-ci-expected",
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-5KQJ8q7YRv9Wqg",
-  "learnerId": "learner-demo-51fXLKqHzK_33g",
+  "accountId": "demo-1HgnBzQW14JPvw",
+  "learnerId": "learner-demo-3Wwo7BgTNRbO6w",
   "staleSetupPayload": {
     "mode": "stretch",
     "viewMode": "one",
@@ -18,58 +18,58 @@
     "focusSkillId": "P1"
   },
   "session": {
-    "id": "reading_session_mp2szk0n_srp9y2yp",
+    "id": "reading_session_mp2tn807_hyw13jtj",
     "passage": {
-      "id": "phase5_fiction_stone_circle",
-      "title": "Stone Circle Dawn",
+      "id": "p4n26_glacier_clues",
+      "title": "What Glaciers Leave Behind",
       "difficulty": 3,
       "isLong": true,
-      "wordCount": 132
+      "wordCount": 140
     },
     "strict": false,
     "delayedFeedback": true,
     "questionCount": 6,
     "questionDetails": [
       {
-        "id": "phase5_fiction_stone_circle_q3",
-        "passageId": "phase5_fiction_stone_circle",
+        "id": "p4n26_glacier_clues_q3",
+        "passageId": "p4n26_glacier_clues",
         "type": "evidenceShort",
         "skill": "2d",
         "marks": 2
       },
       {
-        "id": "phase5_fiction_stone_circle_q5",
-        "passageId": "phase5_fiction_stone_circle",
+        "id": "p4n26_glacier_clues_q5",
+        "passageId": "p4n26_glacier_clues",
         "type": "open",
-        "skill": "2g",
+        "skill": "2f",
         "marks": 2
       },
       {
-        "id": "phase5_fiction_stone_circle_q6",
-        "passageId": "phase5_fiction_stone_circle",
+        "id": "p4n26_glacier_clues_q6",
+        "passageId": "p4n26_glacier_clues",
         "type": "short",
         "skill": "2e",
         "marks": 1
       },
       {
-        "id": "phase5_fiction_stone_circle_q7",
-        "passageId": "phase5_fiction_stone_circle",
+        "id": "p4n26_glacier_clues_q7",
+        "passageId": "p4n26_glacier_clues",
         "type": "match",
         "skill": "2h",
         "marks": 2
       },
       {
-        "id": "phase5_fiction_stone_circle_q8",
-        "passageId": "phase5_fiction_stone_circle",
+        "id": "p4n26_glacier_clues_q8",
+        "passageId": "p4n26_glacier_clues",
         "type": "order",
         "skill": "2f",
         "marks": 2
       },
       {
-        "id": "phase5_fiction_stone_circle_q9",
-        "passageId": "phase5_fiction_stone_circle",
+        "id": "p4n26_glacier_clues_q9",
+        "passageId": "p4n26_glacier_clues",
         "type": "multiSelect",
-        "skill": "2d",
+        "skill": "2b",
         "marks": 2
       }
     ],
@@ -78,7 +78,7 @@
     "hasPunctuationOnlyQuestion": false
   },
   "submitted": {
-    "questionId": "phase5_fiction_stone_circle_q3",
+    "questionId": "p4n26_glacier_clues_q3",
     "phase": "question",
     "answeredCount": 1,
     "markedCount": 0,
@@ -87,7 +87,7 @@
   "marked": {
     "phase": "summary",
     "summary": {
-      "sessionId": "reading_session_mp2szk0n_srp9y2yp",
+      "sessionId": "reading_session_mp2tn807_hyw13jtj",
       "mode": "stretch",
       "paperId": "",
       "paperTitle": "",
@@ -95,10 +95,10 @@
       "score": 2,
       "maxScore": 11,
       "accuracy": 18,
-      "completedAt": 1778600789736
+      "completedAt": 1778601893840
     }
   },
   "finalRevision": 3,
-  "timestamp": "2026-05-12T15:46:29.845Z",
-  "finishedAt": "2026-05-12T15:46:29.845Z"
+  "timestamp": "2026-05-12T16:04:53.978Z",
+  "finishedAt": "2026-05-12T16:04:53.978Z"
 }
