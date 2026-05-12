@@ -6,11 +6,11 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 5,
-  "commitSha": "24757e1eee48b9d0b3134674d5909cb4fa6e32ff",
+  "commitSha": "168005ec4c17749920c4ca0ae8a4effc5e69aee2",
   "commitShaSource": "cli-or-ci-expected",
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-C2dujfkEOCvELg",
-  "learnerId": "learner-demo-HlJZ-EPZvAPm_g",
+  "accountId": "demo-pi5uzRDv80DudQ",
+  "learnerId": "learner-demo-vIEvunyyVvqVqA",
   "staleSetupPayload": {
     "mode": "stretch",
     "viewMode": "one",
@@ -18,58 +18,58 @@
     "focusSkillId": "P1"
   },
   "session": {
-    "id": "reading_session_mp2ponbv_nn93iv9d",
+    "id": "reading_session_mp2r1kbs_8aetk3ki",
     "passage": {
-      "id": "phase5_fiction_carousel_paint",
-      "title": "Carousel Paint Day",
+      "id": "phase5_nonfiction_quarry_safety",
+      "title": "How Quarry safety Works",
       "difficulty": 4,
       "isLong": true,
-      "wordCount": 142
+      "wordCount": 133
     },
     "strict": false,
     "delayedFeedback": true,
     "questionCount": 6,
     "questionDetails": [
       {
-        "id": "phase5_fiction_carousel_paint_q3",
-        "passageId": "phase5_fiction_carousel_paint",
+        "id": "phase5_nonfiction_quarry_safety_q3",
+        "passageId": "phase5_nonfiction_quarry_safety",
         "type": "evidenceShort",
         "skill": "2d",
         "marks": 2
       },
       {
-        "id": "phase5_fiction_carousel_paint_q5",
-        "passageId": "phase5_fiction_carousel_paint",
-        "type": "open",
-        "skill": "2g",
+        "id": "phase5_nonfiction_quarry_safety_q4",
+        "passageId": "phase5_nonfiction_quarry_safety",
+        "type": "mcq",
+        "skill": "2c",
         "marks": 2
       },
       {
-        "id": "phase5_fiction_carousel_paint_q6",
-        "passageId": "phase5_fiction_carousel_paint",
-        "type": "short",
-        "skill": "2e",
-        "marks": 1
+        "id": "phase5_nonfiction_quarry_safety_q5",
+        "passageId": "phase5_nonfiction_quarry_safety",
+        "type": "open",
+        "skill": "2f",
+        "marks": 2
       },
       {
-        "id": "phase5_fiction_carousel_paint_q7",
-        "passageId": "phase5_fiction_carousel_paint",
+        "id": "phase5_nonfiction_quarry_safety_q7",
+        "passageId": "phase5_nonfiction_quarry_safety",
         "type": "match",
         "skill": "2h",
         "marks": 2
       },
       {
-        "id": "phase5_fiction_carousel_paint_q8",
-        "passageId": "phase5_fiction_carousel_paint",
+        "id": "phase5_nonfiction_quarry_safety_q8",
+        "passageId": "phase5_nonfiction_quarry_safety",
         "type": "order",
         "skill": "2f",
         "marks": 2
       },
       {
-        "id": "phase5_fiction_carousel_paint_q9",
-        "passageId": "phase5_fiction_carousel_paint",
+        "id": "phase5_nonfiction_quarry_safety_q9",
+        "passageId": "phase5_nonfiction_quarry_safety",
         "type": "multiSelect",
-        "skill": "2d",
+        "skill": "2b",
         "marks": 2
       }
     ],
@@ -78,7 +78,7 @@
     "hasPunctuationOnlyQuestion": false
   },
   "submitted": {
-    "questionId": "phase5_fiction_carousel_paint_q3",
+    "questionId": "phase5_nonfiction_quarry_safety_q3",
     "phase": "question",
     "answeredCount": 1,
     "markedCount": 0,
@@ -87,18 +87,18 @@
   "marked": {
     "phase": "summary",
     "summary": {
-      "sessionId": "reading_session_mp2ponbv_nn93iv9d",
+      "sessionId": "reading_session_mp2r1kbs_8aetk3ki",
       "mode": "stretch",
       "paperId": "",
       "paperTitle": "",
       "questionCount": 6,
       "score": 2,
-      "maxScore": 11,
-      "accuracy": 18,
-      "completedAt": 1778595242481
+      "maxScore": 12,
+      "accuracy": 17,
+      "completedAt": 1778597524292
     }
   },
   "finalRevision": 3,
-  "timestamp": "2026-05-12T14:14:02.707Z",
-  "finishedAt": "2026-05-12T14:14:02.707Z"
+  "timestamp": "2026-05-12T14:52:04.420Z",
+  "finishedAt": "2026-05-12T14:52:04.420Z"
 }

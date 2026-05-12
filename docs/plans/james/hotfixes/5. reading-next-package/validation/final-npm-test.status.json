@@ -2,14 +2,14 @@
   "ok": true,
   "command": "npm test",
   "exitCode": 0,
-  "generatedAt": "2026-05-12T14:20:46.799Z",
+  "generatedAt": "2026-05-12T14:52:25.899Z",
   "log": "final-npm-test.log",
-  "tests": 111478,
+  "tests": 111480,
   "suites": 819,
-  "pass": 111466,
+  "pass": 111468,
   "fail": 0,
   "skipped": 12,
   "todo": 0,
-  "durationMs": 195641.666,
+  "durationMs": 153268.0164,
   "note": "Status derived from completed command exit code and final test summary."
 }

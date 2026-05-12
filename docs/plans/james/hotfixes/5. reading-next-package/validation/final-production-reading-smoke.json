@@ -6,15 +6,15 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 5,
-  "commitSha": "24757e1eee48b9d0b3134674d5909cb4fa6e32ff",
+  "commitSha": "168005ec4c17749920c4ca0ae8a4effc5e69aee2",
   "commitShaSource": "cli-or-ci-expected",
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-b_BiB1kh0byeog",
-  "learnerId": "learner-demo-WEn7T5ewKBNeEg",
+  "accountId": "demo-aQnx4Oy7Mdy4SQ",
+  "learnerId": "learner-demo-LFKbxJnYkDbgeQ",
   "immediate": {
     "revision": 2,
-    "questionId": "p4n09_origami_engineering_q2",
-    "passageId": "p4n09_origami_engineering",
+    "questionId": "p4f26_sea_glass_shop_q2",
+    "passageId": "p4f26_sea_glass_shop",
     "content": {
       "releaseId": "reading-poc-promoted-2026-05-05",
       "version": 5,
@@ -40,14 +40,14 @@
     "staleErrorCleared": true
   },
   "staleWriteGuard": {
-    "expectedSessionId": "reading_session_mp2poowc_hwjqg93i",
+    "expectedSessionId": "reading_session_mp2r1kzp_mxydzg34",
     "expectedQuestionId": "stale-question-id",
-    "protectedQuestionId": "wbs_q2",
+    "protectedQuestionId": "phase5_fiction_desert_gallery_q2",
     "changed": false,
     "revisionUnchanged": true,
     "staleResponsePersisted": false,
     "protectedQuestionResponsePersisted": false
   },
-  "timestamp": "2026-05-12T14:14:03.619Z",
-  "finishedAt": "2026-05-12T14:14:03.619Z"
+  "timestamp": "2026-05-12T14:52:04.690Z",
+  "finishedAt": "2026-05-12T14:52:04.690Z"
 }

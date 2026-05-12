@@ -21,7 +21,7 @@
 [custom build]   src\bundles\chunk-EE2UYWMZ.js              15.7kb
 [custom build]   ...and 3 more output files...
 [custom build] 
-[custom build] Done in 163ms
+[custom build] Done in 69ms
 [custom build] 
 [custom build] 
 [custom build] > ks2-mastery@0.1.0 assert:build-public
@@ -45,8 +45,8 @@
 ✨ Read 881 files from the assets directory D:\Coding\ks2-mastery\.worktrees\reading-next-package-20260512\dist\public
 🌀 Starting asset upload...
 No updated asset files to upload. Proceeding with deployment...
-Total Upload: 22333.15 KiB / gzip: 2074.69 KiB
-Worker Startup Time: 300 ms
+Total Upload: 22335.99 KiB / gzip: 2074.79 KiB
+Worker Startup Time: 192 ms
 Your Worker has access to the following bindings:
 Binding                                                     Resource                  
 env.LEARNER_LOCK (LearnerLock)                              Durable Object            
@@ -66,12 +66,12 @@ env.HERO_MODE_PROGRESS_ENABLED ("false")                    Environment Variable
 env.HERO_MODE_ECONOMY_ENABLED ("false")                     Environment Variable      
 env.HERO_MODE_CAMP_ENABLED ("false")                        Environment Variable      
 
-Uploaded ks2-mastery (30.91 sec)
-Deployed ks2-mastery triggers (7.32 sec)
+Uploaded ks2-mastery (46.43 sec)
+Deployed ks2-mastery triggers (7.70 sec)
   https://ks2-mastery.fol2hk.workers.dev
   schedule: 0 4 * * *
   schedule: 0 5 * * *
-Current Version ID: 89927860-7a47-461a-a3f5-14fe4ed38e04
+Current Version ID: da755d6a-c120-432a-97ee-74e2c5458dce
 
 > ks2-mastery@0.1.0 audit:production
 > node ./scripts/production-bundle-audit.mjs --skip-local --retries 30 --retry-delay-ms 5000

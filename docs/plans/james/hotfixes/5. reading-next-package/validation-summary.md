@@ -49,7 +49,7 @@ The production rollout also required a startup-limit fix outside Reading: Punctu
 - `validation/final-worker-reading-runtime.log`: 28 tests passed, 0 failed.
 - `validation/final-reading-content-quality-audit.json`: official Reading content audit passed with 0 failures and 0 advisories.
 - `validation/final-stretch-mode-probe.json`: stretch is present in server and browser metadata, with 182 eligible passages and 1474 eligible questions; filtered payload samples also keep six-question delayed-feedback sessions.
-- `validation/final-npm-test.log`: 111478 tests, 111466 passed, 0 failed, 12 skipped.
+- `validation/final-npm-test.log`: 111480 tests, 111468 passed, 0 failed, 12 skipped.
 - `validation/final-npm-run-check.log`: Wrangler deploy dry-run completed after build, public asset assertion and client bundle audit.
 
 Each final evidence command has a paired `.status.json` file where applicable.
@@ -59,8 +59,8 @@ Each final evidence command has a paired `.status.json` file where applicable.
 - `validation/production-deploy-startup-limit-failure-2026-05-12.log`: first real `npm run deploy` failed with Cloudflare Error 10021 because script startup exceeded the CPU limit.
 - `validation/production-deploy-startup-limit-failure-2026-05-12.status.json`: machine-readable failure and resolution record.
 - `validation/final-production-deploy.log`: real `npm run deploy` succeeded after the lazy Punctuation startup fix.
-- `validation/final-production-deploy.status.json`: deployed Worker version `89927860-7a47-461a-a3f5-14fe4ed38e04`, startup time 300 ms, and production bundle audit pass.
-- `validation/final-production-reading-smoke.json`: live Reading API smoke passed against Reading content version 5 and commit `24757e1eee48b9d0b3134674d5909cb4fa6e32ff`.
+- `validation/final-production-deploy.status.json`: deployed Worker version `da755d6a-c120-432a-97ee-74e2c5458dce`, startup time 192 ms, and production bundle audit pass.
+- `validation/final-production-reading-smoke.json`: live Reading API smoke passed against Reading content version 5 and commit `168005ec4c17749920c4ca0ae8a4effc5e69aee2`.
 - `validation/final-production-reading-landing-smoke.json`: live Reading landing smoke passed on desktop and mobile viewports with no page, console, request or HTTP failures.
 - `validation/final-production-reading-landing-screenshots/`: current production landing and session screenshots from the smoke run.
 - `validation/final-production-reading-stretch-smoke.json`: live stretch smoke passed with stale setup filters (`difficulty=1`, `focusSkillId=P1`), six delayed-feedback questions, a long/high-difficulty passage, no punctuation-only items, and no pre-mark feedback leak.
