@@ -1,0 +1,916 @@
+TAP version 13
+# Subtest: P20 Smart real-service scheduler surfaces the expanded pool over heavy play
+ok 1 - P20 Smart real-service scheduler surfaces the expanded pool over heavy play
+  ---
+  duration_ms: 3975.062429
+  ...
+# Subtest: P20 real scheduler inspects a 128-item production choose candidate window by default
+ok 2 - P20 real scheduler inspects a 128-item production choose candidate window by default
+  ---
+  duration_ms: 2.875304
+  ...
+# Subtest: P20 real scheduler avoids recent items and signatures across a 100-attempt window
+ok 3 - P20 real scheduler avoids recent items and signatures across a 100-attempt window
+  ---
+  duration_ms: 2.269049
+  ...
+# Subtest: P20 real scheduler blocks a same-item repeat after one exposure in the last 100 attempts
+ok 4 - P20 real scheduler blocks a same-item repeat after one exposure in the last 100 attempts
+  ---
+  duration_ms: 0.527055
+  ...
+# Subtest: P20 misconception retry can bypass the per-session signature block
+ok 5 - P20 misconception retry can bypass the per-session signature block
+  ---
+  duration_ms: 1.143098
+  ...
+# Subtest: P20 mixed-review reason can be derived from progress history at the start of a new session
+ok 6 - P20 mixed-review reason can be derived from progress history at the start of a new session
+  ---
+  duration_ms: 0.509476
+  ...
+# Subtest: P20 real scheduler still honours an explicit small candidate window for deterministic probes
+ok 7 - P20 real scheduler still honours an explicit small candidate window for deterministic probes
+  ---
+  duration_ms: 0.63159
+  ...
+# Subtest: P20 runtime generated items keep each primary skill in the correct cluster
+ok 8 - P20 runtime generated items keep each primary skill in the correct cluster
+  ---
+  duration_ms: 8.751267
+  ...
+# Subtest: P20 real scheduler keeps focus-cluster starts inside the requested primary skill cluster
+ok 9 - P20 real scheduler keeps focus-cluster starts inside the requested primary skill cluster
+  ---
+  duration_ms: 53.772188
+  ...
+# Subtest: secure status requires repeated clean spaced evidence
+ok 10 - secure status requires repeated clean spaced evidence
+  ---
+  duration_ms: 3.344712
+  ...
+# Subtest: secure status ignores epoch-zero firstCorrectAt sentinels
+ok 11 - secure status ignores epoch-zero firstCorrectAt sentinels
+  ---
+  duration_ms: 0.266702
+  ...
+# Subtest: scheduler is deterministic under fixed state and random input
+ok 12 - scheduler is deterministic under fixed state and random input
+  ---
+  duration_ms: 7.284376
+  ...
+# Subtest: weak mode prioritises weak skill-by-mode facets
+ok 13 - weak mode prioritises weak skill-by-mode facets
+  ---
+  duration_ms: 14.590289
+  ...
+# Subtest: weak mode avoids repeating a recent item when another weak alternative exists
+ok 14 - weak mode avoids repeating a recent item when another weak alternative exists
+  ---
+  duration_ms: 11.70748
+  ...
+# Subtest: weak mode avoids the last attempted item when a new session starts
+ok 15 - weak mode avoids the last attempted item when a new session starts
+  ---
+  duration_ms: 0.737468
+  ...
+# Subtest: misconception retry avoids repeating the last fixed sibling across weak sessions
+ok 16 - misconception retry avoids repeating the last fixed sibling across weak sessions
+  ---
+  duration_ms: 0.948873
+  ...
+# Subtest: scheduler avoids recently seen generated variant signatures when alternatives exist
+ok 17 - scheduler avoids recently seen generated variant signatures when alternatives exist
+  ---
+  duration_ms: 4.258757
+  ...
+# Subtest: weak mode falls back to mixed review when no weak evidence exists
+ok 18 - weak mode falls back to mixed review when no weak evidence exists
+  ---
+  duration_ms: 3.516622
+  ...
+# Subtest: weak mode selects due skill-by-mode facets before fallback review
+ok 19 - weak mode selects due skill-by-mode facets before fallback review
+  ---
+  duration_ms: 3.278096
+  ...
+# Subtest: weak mode keeps expanded-manifest candidate scoring bounded
+ok 20 - weak mode keeps expanded-manifest candidate scoring bounded
+  ---
+  duration_ms: 4.25471
+  ...
+# Subtest: comma flow focus mode selects published comma cluster items only
+ok 21 - comma flow focus mode selects published comma cluster items only
+  ---
+  duration_ms: 1.557094
+  ...
+# Subtest: boundary focus mode selects published boundary cluster items only
+ok 22 - boundary focus mode selects published boundary cluster items only
+  ---
+  duration_ms: 0.829424
+  ...
+# Subtest: structure focus mode selects published structure cluster items only
+ok 23 - structure focus mode selects published structure cluster items only
+  ---
+  duration_ms: 2.519984
+  ...
+# Subtest: scheduler keeps candidate windows bounded for expanded manifests
+ok 24 - scheduler keeps candidate windows bounded for expanded manifests
+  ---
+  duration_ms: 3.808077
+  ...
+# Subtest: misconception retry
+    # Subtest: wrong answer with known misconception schedules sibling with different signature
+    ok 1 - wrong answer with known misconception schedules sibling with different signature
+      ---
+      duration_ms: 1.550653
+      ...
+    # Subtest: retry does not reuse same variant signature if alternatives exist
+    ok 2 - retry does not reuse same variant signature if alternatives exist
+      ---
+      duration_ms: 1.115064
+      ...
+    # Subtest: retry prefers different templateId over same templateId
+    ok 3 - retry prefers different templateId over same templateId
+      ---
+      duration_ms: 0.918704
+      ...
+    # Subtest: retry falls back gracefully when family has only 1 template
+    ok 4 - retry falls back gracefully when family has only 1 template
+      ---
+      duration_ms: 0.473773
+      ...
+    # Subtest: misconception tag not in any candidate falls back to standard selection
+    ok 5 - misconception tag not in any candidate falls back to standard selection
+      ---
+      duration_ms: 1.046894
+      ...
+    # Subtest: misconception retry respects session anti-repeat (does not retry same misconception twice)
+    ok 6 - misconception retry respects session anti-repeat (does not retry same misconception twice)
+      ---
+      duration_ms: 0.38629
+      ...
+    # Subtest: wrong fixed-item answer schedules generated sibling where appropriate
+    ok 7 - wrong fixed-item answer schedules generated sibling where appropriate
+      ---
+      duration_ms: 0.358891
+      ...
+    1..7
+ok 25 - misconception retry
+  ---
+  duration_ms: 7.963678
+  type: 'suite'
+  ...
+# Subtest: per-signature exposure limits
+    # Subtest: same signature not selected twice in same session when alternatives exist
+    ok 1 - same signature not selected twice in same session when alternatives exist
+      ---
+      duration_ms: 1.397465
+      ...
+    # Subtest: signature seen in last 3 attempts gets penalised weight (selects alternative)
+    ok 2 - signature seen in last 3 attempts gets penalised weight (selects alternative)
+      ---
+      duration_ms: 0.58396
+      ...
+    # Subtest: signature seen within 7 days gets avoided when alternatives exist
+    ok 3 - signature seen within 7 days gets avoided when alternatives exist
+      ---
+      duration_ms: 0.696496
+      ...
+    # Subtest: when ALL candidates seen within 7 days, least-recently-seen preferred (no deadlock)
+    ok 4 - when ALL candidates seen within 7 days, least-recently-seen preferred (no deadlock)
+      ---
+      duration_ms: 0.39655
+      ...
+    # Subtest: misconception-retry overrides per-session block
+    ok 5 - misconception-retry overrides per-session block
+      ---
+      duration_ms: 0.410899
+      ...
+    # Subtest: fixed items (no variantSignature) are never penalised by exposure limits
+    ok 6 - fixed items (no variantSignature) are never penalised by exposure limits
+      ---
+      duration_ms: 0.470048
+      ...
+    # Subtest: exposure limits interact correctly with existing weak-mode priority weighting
+    ok 7 - exposure limits interact correctly with existing weak-mode priority weighting
+      ---
+      duration_ms: 0.981308
+      ...
+    1..7
+ok 26 - per-signature exposure limits
+  ---
+  duration_ms: 6.229073
+  type: 'suite'
+  ...
+# Subtest: reason tags
+    # Subtest: due item returns reason: due-review
+    ok 1 - due item returns reason: due-review
+      ---
+      duration_ms: 0.579893
+      ...
+    # Subtest: weak facet returns reason: weak-skill-repair
+    ok 2 - weak facet returns reason: weak-skill-repair
+      ---
+      duration_ms: 1.42267
+      ...
+    # Subtest: item with different mode from last 3 returns reason: mixed-review
+    ok 3 - item with different mode from last 3 returns reason: mixed-review
+      ---
+      duration_ms: 1.085551
+      ...
+    # Subtest: spaced-return classified when lastCorrectAt exceeds threshold
+    ok 4 - spaced-return classified when lastCorrectAt exceeds threshold
+      ---
+      duration_ms: 0.449448
+      ...
+    # Subtest: retention-after-secure classified for secure items past threshold
+    ok 5 - retention-after-secure classified for secure items past threshold
+      ---
+      duration_ms: 0.38535
+      ...
+    # Subtest: fallback reason when no specific policy matches
+    ok 6 - fallback reason when no specific policy matches
+      ---
+      duration_ms: 0.327779
+      ...
+    # Subtest: weak mode due_facet source classified as due-review when within spaced threshold
+    ok 7 - weak mode due_facet source classified as due-review when within spaced threshold
+      ---
+      duration_ms: 1.867553
+      ...
+    # Subtest: smart mode weak bucket item returns weak-skill-repair
+    ok 8 - smart mode weak bucket item returns weak-skill-repair
+      ---
+      duration_ms: 0.363356
+      ...
+    1..8
+ok 27 - reason tags
+  ---
+  duration_ms: 7.360516
+  type: 'suite'
+  ...
+# Subtest: Punctuation text session disables submit for blank or whitespace-only answers
+ok 28 - Punctuation text session disables submit for blank or whitespace-only answers
+  ---
+  duration_ms: 4.211945
+  ...
+# Subtest: Punctuation text session guards the submit handler against forged blank submits
+ok 29 - Punctuation text session guards the submit handler against forged blank submits
+  ---
+  duration_ms: 1.245582
+  ...
+# Subtest: U1 session-ui: punctuationSessionSubmitLabel returns Save answer in GPS mode
+ok 30 - U1 session-ui: punctuationSessionSubmitLabel returns Save answer in GPS mode
+  ---
+  duration_ms: 3.842923
+  ...
+# Subtest: U1 session-ui: punctuationSessionSubmitLabel returns Check in every other mode
+ok 31 - U1 session-ui: punctuationSessionSubmitLabel returns Check in every other mode
+  ---
+  duration_ms: 0.210738
+  ...
+# Subtest: U1 session-ui: punctuationSessionSubmitLabel defaults to Check on null/invalid session
+ok 32 - U1 session-ui: punctuationSessionSubmitLabel defaults to Check on null/invalid session
+  ---
+  duration_ms: 0.173824
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns stem-prefill for insert/fix/paragraph
+ok 33 - U1 session-ui: punctuationSessionInputShape returns stem-prefill for insert/fix/paragraph
+  ---
+  duration_ms: 1.934704
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns blank+source for combine/transfer
+ok 34 - U1 session-ui: punctuationSessionInputShape returns blank+source for combine/transfer
+  ---
+  duration_ms: 0.228519
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns none for choose (radio) mode
+ok 35 - U1 session-ui: punctuationSessionInputShape returns none for choose (radio) mode
+  ---
+  duration_ms: 0.179163
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns none on empty/unknown mode (safe default)
+ok 36 - U1 session-ui: punctuationSessionInputShape returns none on empty/unknown mode (safe default)
+  ---
+  duration_ms: 0.23535
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel renders Question X of N on a standard round
+ok 37 - U1 session-ui: punctuationSessionProgressLabel renders Question X of N on a standard round
+  ---
+  duration_ms: 0.372661
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel clamps answered past length to total
+ok 38 - U1 session-ui: punctuationSessionProgressLabel clamps answered past length to total
+  ---
+  duration_ms: 0.216248
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel handles length=0 fallback
+ok 39 - U1 session-ui: punctuationSessionProgressLabel handles length=0 fallback
+  ---
+  duration_ms: 1.01301
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel null/invalid returns Question 1
+ok 40 - U1 session-ui: punctuationSessionProgressLabel null/invalid returns Question 1
+  ---
+  duration_ms: 0.226486
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility GPS hides feedback until summary
+ok 41 - U1 session-ui: punctuationSessionHelpVisibility GPS hides feedback until summary
+  ---
+  duration_ms: 0.393453
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility guided shows teach box during active-item
+ok 42 - U1 session-ui: punctuationSessionHelpVisibility guided shows teach box during active-item
+  ---
+  duration_ms: 1.193314
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility smart/weak hide teach box, feedback follows phase
+ok 43 - U1 session-ui: punctuationSessionHelpVisibility smart/weak hide teach box, feedback follows phase
+  ---
+  duration_ms: 0.377677
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility null session is fully off
+ok 44 - U1 session-ui: punctuationSessionHelpVisibility null session is fully off
+  ---
+  duration_ms: 0.26802
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputPlaceholder maps every known mode to a child string
+ok 45 - U1 session-ui: punctuationSessionInputPlaceholder maps every known mode to a child string
+  ---
+  duration_ms: 0.236402
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputPlaceholder falls back to generic prompt on unknown mode
+ok 46 - U1 session-ui: punctuationSessionInputPlaceholder falls back to generic prompt on unknown mode
+  ---
+  duration_ms: 0.77415
+  ...
+# Subtest: U1 safety: session-ui.js does not import react
+ok 47 - U1 safety: session-ui.js does not import react
+  ---
+  duration_ms: 6.254331
+  ...
+# Subtest: U1 view-model: composeIsDisabled returns false when availability ready
+ok 48 - U1 view-model: composeIsDisabled returns false when availability ready
+  ---
+  duration_ms: 4.435284
+  ...
+# Subtest: U1 view-model: composeIsDisabled returns true when availability degraded
+ok 49 - U1 view-model: composeIsDisabled returns true when availability degraded
+  ---
+  duration_ms: 0.178886
+  ...
+# Subtest: U1 view-model: composeIsDisabled returns true when availability unavailable
+ok 50 - U1 view-model: composeIsDisabled returns true when availability unavailable
+  ---
+  duration_ms: 0.144745
+  ...
+# Subtest: U1 view-model: composeIsDisabled returns true when pendingCommand set
+ok 51 - U1 view-model: composeIsDisabled returns true when pendingCommand set
+  ---
+  duration_ms: 0.729078
+  ...
+# Subtest: U1 view-model: composeIsDisabled returns true when runtime.readOnly set
+ok 52 - U1 view-model: composeIsDisabled returns true when runtime.readOnly set
+  ---
+  duration_ms: 0.220935
+  ...
+# Subtest: U1 view-model: composeIsDisabled defaults availability status to ready when missing
+ok 53 - U1 view-model: composeIsDisabled defaults availability status to ready when missing
+  ---
+  duration_ms: 0.141782
+  ...
+# Subtest: U6 view-model: composeIsNavigationDisabled returns false when availability ready
+ok 54 - U6 view-model: composeIsNavigationDisabled returns false when availability ready
+  ---
+  duration_ms: 0.159813
+  ...
+# Subtest: U6 view-model: composeIsNavigationDisabled returns false when availability degraded
+ok 55 - U6 view-model: composeIsNavigationDisabled returns false when availability degraded
+  ---
+  duration_ms: 0.148065
+  ...
+# Subtest: U6 view-model: composeIsNavigationDisabled returns false when availability unavailable
+ok 56 - U6 view-model: composeIsNavigationDisabled returns false when availability unavailable
+  ---
+  duration_ms: 0.23154
+  ...
+# Subtest: U6 view-model: composeIsNavigationDisabled returns false when pendingCommand set
+ok 57 - U6 view-model: composeIsNavigationDisabled returns false when pendingCommand set
+  ---
+  duration_ms: 0.239638
+  ...
+# Subtest: U6 view-model: composeIsNavigationDisabled returns false when runtime.readOnly set
+ok 58 - U6 view-model: composeIsNavigationDisabled returns false when runtime.readOnly set
+  ---
+  duration_ms: 0.181908
+  ...
+# Subtest: U6 view-model: composeIsNavigationDisabled fails closed for missing ui
+ok 59 - U6 view-model: composeIsNavigationDisabled fails closed for missing ui
+  ---
+  duration_ms: 0.15025
+  ...
+# Subtest: U6 view-model: composeIsNavigationDisabled returns false for a minimal well-formed ui
+ok 60 - U6 view-model: composeIsNavigationDisabled returns false for a minimal well-formed ui
+  ---
+  duration_ms: 0.140298
+  ...
+# Subtest: U6 view-model: composeIsNavigationDisabled and composeIsDisabled diverge under pendingCommand + degraded
+ok 61 - U6 view-model: composeIsNavigationDisabled and composeIsDisabled diverge under pendingCommand + degraded
+  ---
+  duration_ms: 1.37967
+  ...
+# Subtest: U1 view-model: PUNCTUATION_PRIMARY_MODE_IDS frozen at [smart, weak, gps]
+ok 62 - U1 view-model: PUNCTUATION_PRIMARY_MODE_IDS frozen at [smart, weak, gps]
+  ---
+  duration_ms: 1.793124
+  ...
+# Subtest: U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS has exactly three cards
+ok 63 - U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS has exactly three cards
+  ---
+  duration_ms: 0.436668
+  ...
+# Subtest: U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS is deeply frozen
+ok 64 - U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS is deeply frozen
+  ---
+  duration_ms: 0.788083
+  ...
+# Subtest: U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS Smart Review carries Recommended badge
+ok 65 - U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS Smart Review carries Recommended badge
+  ---
+  duration_ms: 0.807954
+  ...
+# Subtest: U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS labels + descriptions use only child copy
+ok 66 - U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS labels + descriptions use only child copy
+  ---
+  duration_ms: 1.295129
+  ...
+# Subtest: U1 view-model: PUNCTUATION_MAP_STATUS_FILTER_IDS ordered list matches plan
+ok 67 - U1 view-model: PUNCTUATION_MAP_STATUS_FILTER_IDS ordered list matches plan
+  ---
+  duration_ms: 0.286962
+  ...
+# Subtest: U1 view-model: PUNCTUATION_MAP_MONSTER_FILTER_IDS contains only active roster
+ok 68 - U1 view-model: PUNCTUATION_MAP_MONSTER_FILTER_IDS contains only active roster
+  ---
+  duration_ms: 0.297913
+  ...
+# Subtest: U1 view-model: ACTIVE_PUNCTUATION_MONSTER_IDS matches MONSTERS_BY_SUBJECT.punctuation order
+ok 69 - U1 view-model: ACTIVE_PUNCTUATION_MONSTER_IDS matches MONSTERS_BY_SUBJECT.punctuation order
+  ---
+  duration_ms: 0.260287
+  ...
+# Subtest: U1 view-model: ACTIVE_PUNCTUATION_MONSTER_IDS never includes reserved trio
+ok 70 - U1 view-model: ACTIVE_PUNCTUATION_MONSTER_IDS never includes reserved trio
+  ---
+  duration_ms: 0.732523
+  ...
+# Subtest: U1 view-model: ACTIVE_PUNCTUATION_MONSTER_DISPLAY_NAMES covers every active id
+ok 71 - U1 view-model: ACTIVE_PUNCTUATION_MONSTER_DISPLAY_NAMES covers every active id
+  ---
+  duration_ms: 0.287309
+  ...
+# Subtest: U1 view-model: punctuationMonsterDisplayName falls back to titlecase for unknown ids
+ok 72 - U1 view-model: punctuationMonsterDisplayName falls back to titlecase for unknown ids
+  ---
+  duration_ms: 0.956914
+  ...
+# Subtest: U1 view-model: PUNCTUATION_DASHBOARD_HERO has child-friendly copy
+ok 73 - U1 view-model: PUNCTUATION_DASHBOARD_HERO has child-friendly copy
+  ---
+  duration_ms: 0.198784
+  ...
+# Subtest: U1 view-model: PUNCTUATION_CHILD_FORBIDDEN_TERMS contains the plan-specified adult terms
+ok 74 - U1 view-model: PUNCTUATION_CHILD_FORBIDDEN_TERMS contains the plan-specified adult terms
+  ---
+  duration_ms: 0.215225
+  ...
+# Subtest: U1 view-model: PUNCTUATION_CHILD_FORBIDDEN_TERMS includes all 6 dotted-tag prefixes
+ok 75 - U1 view-model: PUNCTUATION_CHILD_FORBIDDEN_TERMS includes all 6 dotted-tag prefixes
+  ---
+  duration_ms: 0.140747
+  ...
+# Subtest: U1 view-model: PUNCTUATION_CHILD_FORBIDDEN_TERMS contains the /\\bWorker\\b/i regex
+ok 76 - U1 view-model: PUNCTUATION_CHILD_FORBIDDEN_TERMS contains the /\\bWorker\\b/i regex
+  ---
+  duration_ms: 0.236246
+  ...
+# Subtest: U1 view-model: PUNCTUATION_CHILD_FORBIDDEN_TERMS is frozen
+ok 77 - U1 view-model: PUNCTUATION_CHILD_FORBIDDEN_TERMS is frozen
+  ---
+  duration_ms: 0.119899
+  ...
+# Subtest: U1 view-model: isPunctuationChildCopy rejects forbidden child terms case-insensitively
+ok 78 - U1 view-model: isPunctuationChildCopy rejects forbidden child terms case-insensitively
+  ---
+  duration_ms: 0.213841
+  ...
+# Subtest: U1 view-model: isPunctuationChildCopy accepts genuine child copy
+ok 79 - U1 view-model: isPunctuationChildCopy accepts genuine child copy
+  ---
+  duration_ms: 0.202188
+  ...
+# Subtest: U1 view-model: punctuationChildStatusLabel maps every known status
+ok 80 - U1 view-model: punctuationChildStatusLabel maps every known status
+  ---
+  duration_ms: 0.203509
+  ...
+# Subtest: U1 view-model: punctuationChildStatusLabel unknown status falls back to New
+ok 81 - U1 view-model: punctuationChildStatusLabel unknown status falls back to New
+  ---
+  duration_ms: 0.112346
+  ...
+# Subtest: U1 view-model: punctuationChildMisconceptionLabel maps plan-specified tags
+ok 82 - U1 view-model: punctuationChildMisconceptionLabel maps plan-specified tags
+  ---
+  duration_ms: 0.232303
+  ...
+# Subtest: U1 view-model: punctuationChildMisconceptionLabel returns null for unmapped tags
+ok 83 - U1 view-model: punctuationChildMisconceptionLabel returns null for unmapped tags
+  ---
+  duration_ms: 0.131576
+  ...
+# Subtest: U1 view-model: punctuationChildMisconceptionLabel output is child-safe
+ok 84 - U1 view-model: punctuationChildMisconceptionLabel output is child-safe
+  ---
+  duration_ms: 0.348934
+  ...
+# Subtest: U1 view-model: punctuationFeedbackChips empty input returns empty array
+ok 85 - U1 view-model: punctuationFeedbackChips empty input returns empty array
+  ---
+  duration_ms: 0.255175
+  ...
+# Subtest: U1 view-model: punctuationFeedbackChips caps at 2 child-friendly chips
+ok 86 - U1 view-model: punctuationFeedbackChips caps at 2 child-friendly chips
+  ---
+  duration_ms: 0.189668
+  ...
+# Subtest: U1 view-model: punctuationFeedbackChips skips facets missing a label
+ok 87 - U1 view-model: punctuationFeedbackChips skips facets missing a label
+  ---
+  duration_ms: 0.129517
+  ...
+# Subtest: U1 view-model: punctuationPrimaryModeFromPrefs collapses cluster modes to smart
+ok 88 - U1 view-model: punctuationPrimaryModeFromPrefs collapses cluster modes to smart
+  ---
+  duration_ms: 0.204363
+  ...
+# Subtest: U1 view-model: punctuationPrimaryModeFromPrefs preserves active mode ids
+ok 89 - U1 view-model: punctuationPrimaryModeFromPrefs preserves active mode ids
+  ---
+  duration_ms: 0.117992
+  ...
+# Subtest: U1 view-model: punctuationPrimaryModeFromPrefs defaults to smart on missing/invalid
+ok 90 - U1 view-model: punctuationPrimaryModeFromPrefs defaults to smart on missing/invalid
+  ---
+  duration_ms: 0.135454
+  ...
+# Subtest: U1 view-model: PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE is frozen
+ok 91 - U1 view-model: PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE is frozen
+  ---
+  duration_ms: 0.683211
+  ...
+# Subtest: U1 view-model: punctuationSkillModalPreferredExample defaults to workedGood
+ok 92 - U1 view-model: punctuationSkillModalPreferredExample defaults to workedGood
+  ---
+  duration_ms: 0.215113
+  ...
+# Subtest: U1 view-model: PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE explicitly overrides comma_clarity
+ok 93 - U1 view-model: PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE explicitly overrides comma_clarity
+  ---
+  duration_ms: 0.130376
+  ...
+# Subtest: U1 view-model: bellstormSceneForPhase(map) returns a daily A-C scene
+ok 94 - U1 view-model: bellstormSceneForPhase(map) returns a daily A-C scene
+  ---
+  duration_ms: 0.552382
+  ...
+# Subtest: U1 view-model: bellstormSceneForPhase preserves existing phase behaviour
+ok 95 - U1 view-model: bellstormSceneForPhase preserves existing phase behaviour
+  ---
+  duration_ms: 0.191181
+  ...
+# Subtest: U1 view-model: punctuationPhaseLabel handles every phase including map
+ok 96 - U1 view-model: punctuationPhaseLabel handles every phase including map
+  ---
+  duration_ms: 0.250888
+  ...
+# Subtest: U1 view-model: currentItemInstruction branches on inputKind/mode (regression guard)
+ok 97 - U1 view-model: currentItemInstruction branches on inputKind/mode (regression guard)
+  ---
+  duration_ms: 0.192817
+  ...
+# Subtest: U1 view-model: punctuationMonsterAsset returns a safe payload shape
+ok 98 - U1 view-model: punctuationMonsterAsset returns a safe payload shape
+  ---
+  duration_ms: 2.384969
+  ...
+# Subtest: U1 view-model: punctuationMonsterAsset clamps stage to [0, 4]
+ok 99 - U1 view-model: punctuationMonsterAsset clamps stage to [0, 4]
+  ---
+  duration_ms: 0.516499
+  ...
+# Subtest: U1 view-model: buildPunctuationDashboardModel returns safe empty shape on null inputs
+ok 100 - U1 view-model: buildPunctuationDashboardModel returns safe empty shape on null inputs
+  ---
+  duration_ms: 1.567817
+  ...
+# Subtest: U1 view-model: buildPunctuationDashboardModel surfaces non-zero stats
+ok 101 - U1 view-model: buildPunctuationDashboardModel surfaces non-zero stats
+  ---
+  duration_ms: 0.388577
+  ...
+# Subtest: U2 view-model (adv-234 HIGH 3): Today-card detail strings are child-register
+ok 102 - U2 view-model (adv-234 HIGH 3): Today-card detail strings are child-register
+  ---
+  duration_ms: 1.985161
+  ...
+# Subtest: U1 view-model: buildPunctuationDashboardModel activeMonsters iterate only the 4 active ids
+ok 103 - U1 view-model: buildPunctuationDashboardModel activeMonsters iterate only the 4 active ids
+  ---
+  duration_ms: 0.415802
+  ...
+# Subtest: U1 view-model: buildPunctuationDashboardModel normalises stale cluster-mode prefs
+ok 104 - U1 view-model: buildPunctuationDashboardModel normalises stale cluster-mode prefs
+  ---
+  duration_ms: 0.254237
+  ...
+# Subtest: U1 view-model: buildPunctuationMapModel distributes 14 skills across 4 monsters
+ok 105 - U1 view-model: buildPunctuationMapModel distributes 14 skills across 4 monsters
+  ---
+  duration_ms: 1.022069
+  ...
+# Subtest: U1 view-model: buildPunctuationMapModel filters reserved monsters out of output
+ok 106 - U1 view-model: buildPunctuationMapModel filters reserved monsters out of output
+  ---
+  duration_ms: 0.385736
+  ...
+# Subtest: U1 view-model: buildPunctuationMapModel maps status to child label on each skill
+ok 107 - U1 view-model: buildPunctuationMapModel maps status to child label on each skill
+  ---
+  duration_ms: 1.057311
+  ...
+# Subtest: U1 view-model: buildPunctuationMapModel handles skill with unknown cluster by routing to grand monster
+ok 108 - U1 view-model: buildPunctuationMapModel handles skill with unknown cluster by routing to grand monster
+  ---
+  duration_ms: 0.319902
+  ...
+# Subtest: U1 view-model: buildPunctuationMapModel output shape is frozen end-to-end
+ok 109 - U1 view-model: buildPunctuationMapModel output shape is frozen end-to-end
+  ---
+  duration_ms: 0.286911
+  ...
+# Subtest: U5 drift: PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER matches shared PUNCTUATION_CLUSTERS
+ok 110 - U5 drift: PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER matches shared PUNCTUATION_CLUSTERS
+  ---
+  duration_ms: 0.245768
+  ...
+# Subtest: U1 safety: punctuation-view-model.js does not import react
+ok 111 - U1 safety: punctuation-view-model.js does not import react
+  ---
+  duration_ms: 7.571439
+  ...
+# Subtest: U5 drift: PUNCTUATION_CLIENT_SKILL_IDS stays in lock-step with PUNCTUATION_CLIENT_SKILLS
+ok 112 - U5 drift: PUNCTUATION_CLIENT_SKILL_IDS stays in lock-step with PUNCTUATION_CLIENT_SKILLS
+  ---
+  duration_ms: 86.499552
+  ...
+# Subtest: U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT.contrastBad mirrors PUNCTUATION_SKILLS byte-for-byte
+ok 113 - U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT.contrastBad mirrors PUNCTUATION_SKILLS byte-for-byte
+  ---
+  duration_ms: 0.997467
+  ...
+# Subtest: U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT.rule is non-empty, child-safe, and within reasonable length for every skill
+ok 114 - U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT.rule is non-empty, child-safe, and within reasonable length for every skill
+  ---
+  duration_ms: 0.660085
+  ...
+# Subtest: U6 red-team: PUNCTUATION_SKILL_MODAL_CONTENT example fields are disjoint from PUNCTUATION_ITEMS.accepted[*] for the owning skill
+ok 115 - U6 red-team: PUNCTUATION_SKILL_MODAL_CONTENT example fields are disjoint from PUNCTUATION_ITEMS.accepted[*] for the owning skill
+  ---
+  duration_ms: 3.00259
+  ...
+# Subtest: U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT covers every published skill
+ok 116 - U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT covers every published skill
+  ---
+  duration_ms: 0.229741
+  ...
+# Subtest: U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT entries expose only 4 pedagogy keys
+ok 117 - U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT entries expose only 4 pedagogy keys
+  ---
+  duration_ms: 0.267893
+  ...
+# Subtest: U6: punctuationSkillModalContent returns null for unknown ids
+ok 118 - U6: punctuationSkillModalContent returns null for unknown ids
+  ---
+  duration_ms: 0.552056
+  ...
+# Subtest: U6: punctuationSkillModalContent returns the 4-field entry for a published skill
+ok 119 - U6: punctuationSkillModalContent returns the 4-field entry for a published skill
+  ---
+  duration_ms: 0.182017
+  ...
+# Subtest: U6 drift: punctuationSkillHasMultiSkillItems matches every multi-skill PUNCTUATION_ITEMS entry
+ok 120 - U6 drift: punctuationSkillHasMultiSkillItems matches every multi-skill PUNCTUATION_ITEMS entry
+  ---
+  duration_ms: 0.941855
+  ...
+# Subtest: U6: punctuationSkillHasMultiSkillItems returns false for non-string / empty / unknown input
+ok 121 - U6: punctuationSkillHasMultiSkillItems returns false for non-string / empty / unknown input
+  ---
+  duration_ms: 0.570389
+  ...
+# Subtest: U4 follower: punctuationSummaryHeadline returns celebratory copy for accuracy >= 80
+ok 122 - U4 follower: punctuationSummaryHeadline returns celebratory copy for accuracy >= 80
+  ---
+  duration_ms: 0.310585
+  ...
+# Subtest: U4 follower: punctuationSummaryHeadline returns encouraging copy for 50 <= accuracy < 80
+ok 123 - U4 follower: punctuationSummaryHeadline returns encouraging copy for 50 <= accuracy < 80
+  ---
+  duration_ms: 0.142412
+  ...
+# Subtest: U4 follower: punctuationSummaryHeadline returns supportive copy for accuracy < 50
+ok 124 - U4 follower: punctuationSummaryHeadline returns supportive copy for accuracy < 50
+  ---
+  duration_ms: 0.115553
+  ...
+# Subtest: U4 follower: punctuationSummaryHeadline returns null for missing / malformed summary
+ok 125 - U4 follower: punctuationSummaryHeadline returns null for missing / malformed summary
+  ---
+  duration_ms: 0.626481
+  ...
+# Subtest: U4 follower: punctuationSummaryHeadline clamps out-of-range accuracy to [0, 100]
+ok 126 - U4 follower: punctuationSummaryHeadline clamps out-of-range accuracy to [0, 100]
+  ---
+  duration_ms: 0.186726
+  ...
+# Subtest: U4 follower: punctuationSummaryHeadline never emits forbidden child terms
+ok 127 - U4 follower: punctuationSummaryHeadline never emits forbidden child terms
+  ---
+  duration_ms: 0.250956
+  ...
+# Subtest: U7 Summary copy: punctuationChildNextReviewCopy returns "more goes" when due > 0
+ok 128 - U7 Summary copy: punctuationChildNextReviewCopy returns "more goes" when due > 0
+  ---
+  duration_ms: 0.554893
+  ...
+# Subtest: U7 Summary copy: punctuationChildNextReviewCopy returns "tomorrow" when due === 0
+ok 129 - U7 Summary copy: punctuationChildNextReviewCopy returns "tomorrow" when due === 0
+  ---
+  duration_ms: 0.273707
+  ...
+# Subtest: U7 Summary copy: punctuationChildNextReviewCopy returns null for missing stats
+ok 130 - U7 Summary copy: punctuationChildNextReviewCopy returns null for missing stats
+  ---
+  duration_ms: 0.278754
+  ...
+# Subtest: U7 Summary copy: punctuationChildTeaserSubLine references the monster name
+ok 131 - U7 Summary copy: punctuationChildTeaserSubLine references the monster name
+  ---
+  duration_ms: 0.438491
+  ...
+# Subtest: U7 Summary copy: punctuationChildTeaserSubLine falls back when monster name is missing
+ok 132 - U7 Summary copy: punctuationChildTeaserSubLine falls back when monster name is missing
+  ---
+  duration_ms: 0.686335
+  ...
+# Subtest: U7 Summary copy: punctuationChildSkillBadgeLabel returns child-register text
+ok 133 - U7 Summary copy: punctuationChildSkillBadgeLabel returns child-register text
+  ---
+  duration_ms: 0.567584
+  ...
+# Subtest: U7 Summary copy: punctuationChildSkillBadgeLabel falls back safely on unknown status
+ok 134 - U7 Summary copy: punctuationChildSkillBadgeLabel falls back safely on unknown status
+  ---
+  duration_ms: 0.2374
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(0, 0) → Not caught
+ok 135 - U7 view-model: punctuationStageLabel(0, 0) → Not caught
+  ---
+  duration_ms: 0.168252
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(0, 5) → Egg Found
+ok 136 - U7 view-model: punctuationStageLabel(0, 5) → Egg Found
+  ---
+  duration_ms: 0.246272
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(1) → Egg Found
+ok 137 - U7 view-model: punctuationStageLabel(1) → Egg Found
+  ---
+  duration_ms: 0.100263
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(2) → Hatch
+ok 138 - U7 view-model: punctuationStageLabel(2) → Hatch
+  ---
+  duration_ms: 0.093615
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(3) → Evolve
+ok 139 - U7 view-model: punctuationStageLabel(3) → Evolve
+  ---
+  duration_ms: 0.09462
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(4) → Strong
+ok 140 - U7 view-model: punctuationStageLabel(4) → Strong
+  ---
+  duration_ms: 0.170438
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(4, 65) → Strong (totalStars ignored for non-zero stages)
+ok 141 - U7 view-model: punctuationStageLabel(4, 65) → Strong (totalStars ignored for non-zero stages)
+  ---
+  duration_ms: 0.086902
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(5) → Mega
+ok 142 - U7 view-model: punctuationStageLabel(5) → Mega
+  ---
+  duration_ms: 0.124609
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(-1) → Not caught (negative out-of-range)
+ok 143 - U7 view-model: punctuationStageLabel(-1) → Not caught (negative out-of-range)
+  ---
+  duration_ms: 0.094902
+  ...
+# Subtest: U7 view-model: punctuationStageLabel(NaN) → Not caught (non-finite fallback)
+ok 144 - U7 view-model: punctuationStageLabel(NaN) → Not caught (non-finite fallback)
+  ---
+  duration_ms: 0.156096
+  ...
+# Subtest: U3 view-model: displayStage = max(starDerivedStage, maxStageEver) — maxStageEver wins
+ok 145 - U3 view-model: displayStage = max(starDerivedStage, maxStageEver) — maxStageEver wins
+  ---
+  duration_ms: 0.322174
+  ...
+# Subtest: U3 view-model: displayStage = max(starDerivedStage, maxStageEver) — starDerivedStage wins
+ok 146 - U3 view-model: displayStage = max(starDerivedStage, maxStageEver) — starDerivedStage wins
+  ---
+  duration_ms: 0.270881
+  ...
+# Subtest: U3 view-model: fresh learner (no maxStageEver) → displayStage = starDerivedStage
+ok 147 - U3 view-model: fresh learner (no maxStageEver) → displayStage = starDerivedStage
+  ---
+  duration_ms: 0.254942
+  ...
+# Subtest: U3 view-model: evidence lapse reduces starDerivedStage but displayStage holds
+ok 148 - U3 view-model: evidence lapse reduces starDerivedStage but displayStage holds
+  ---
+  duration_ms: 1.015771
+  ...
+# Subtest: U3 view-model: displayStars = max(totalStars, starHighWater) — starHighWater wins
+ok 149 - U3 view-model: displayStars = max(totalStars, starHighWater) — starHighWater wins
+  ---
+  duration_ms: 0.449816
+  ...
+# Subtest: U3 view-model: displayStars = max(totalStars, starHighWater) — totalStars wins
+ok 150 - U3 view-model: displayStars = max(totalStars, starHighWater) — totalStars wins
+  ---
+  duration_ms: 0.348264
+  ...
+# Subtest: U3 view-model: NaN / missing maxStageEver and starHighWater treated as 0
+ok 151 - U3 view-model: NaN / missing maxStageEver and starHighWater treated as 0
+  ---
+  duration_ms: 0.368015
+  ...
+# Subtest: U3 view-model: grand monster (quoral) also gets monotonic display fields
+ok 152 - U3 view-model: grand monster (quoral) also gets monotonic display fields
+  ---
+  duration_ms: 0.371738
+  ...
+# Subtest: U3 view-model: punctuationStageLabel(displayStage, displayStars) produces correct label after lapse
+ok 153 - U3 view-model: punctuationStageLabel(displayStage, displayStars) produces correct label after lapse
+  ---
+  duration_ms: 0.192861
+  ...
+# Subtest: U3 view-model: all four monsters receive displayStage and displayStars fields
+ok 154 - U3 view-model: all four monsters receive displayStage and displayStars fields
+  ---
+  duration_ms: 0.196837
+  ...
+# Subtest: P7-U7: grandStars equals Quoral displayStars from starView
+ok 155 - P7-U7: grandStars equals Quoral displayStars from starView
+  ---
+  duration_ms: 0.269867
+  ...
+# Subtest: P7-U7: grandStars is 0 for a fresh learner with no starView
+ok 156 - P7-U7: grandStars is 0 for a fresh learner with no starView
+  ---
+  duration_ms: 0.127721
+  ...
+# Subtest: P7-U7: grandStars uses monotonic displayStars (starHighWater wins over live)
+ok 157 - P7-U7: grandStars uses monotonic displayStars (starHighWater wins over live)
+  ---
+  duration_ms: 0.137768
+  ...
+# Subtest: P7-U7: grandStars does not include direct monster Stars (Pealark only has Stars)
+ok 158 - P7-U7: grandStars does not include direct monster Stars (Pealark only has Stars)
+  ---
+  duration_ms: 0.127551
+  ...
+1..158
+# tests 177
+# suites 3
+# pass 177
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5989.540409

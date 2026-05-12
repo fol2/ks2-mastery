@@ -1,0 +1,504 @@
+runtime=v18.20.4 npm=9.2.0 expected=22
+TAP version 13
+# Subtest: ap_transfer_possession model answer is marked correct
+ok 1 - ap_transfer_possession model answer is marked correct
+  ---
+  duration_ms: 10.516714
+  ...
+# Subtest: canonicalPunctuationText preserves space after terminal possessive apostrophe
+ok 2 - canonicalPunctuationText preserves space after terminal possessive apostrophe
+  ---
+  duration_ms: 0.390475
+  ...
+# Subtest: curly apostrophe possessives normalise without collapsing space
+ok 3 - curly apostrophe possessives normalise without collapsing space
+  ---
+  duration_ms: 1.977086
+  ...
+# Subtest: contractions are unaffected by the normalisation fix
+ok 4 - contractions are unaffected by the normalisation fix
+  ---
+  duration_ms: 0.29268
+  ...
+# Subtest: curly contractions normalise to ASCII without disturbing word spacing
+ok 5 - curly contractions normalise to ASCII without disturbing word spacing
+  ---
+  duration_ms: 0.286801
+  ...
+# Subtest: speech quotes still collapse space after closing double quote
+ok 6 - speech quotes still collapse space after closing double quote
+  ---
+  duration_ms: 0.264906
+  ...
+# Subtest: space before opening speech quote still collapses
+ok 7 - space before opening speech quote still collapses
+  ---
+  duration_ms: 0.228186
+  ...
+# Subtest: P10 lexical preservation covers the expanded P12 production pool
+ok 8 - P10 lexical preservation covers the expanded P12 production pool
+  ---
+  duration_ms: 892.119508
+  ...
+# Subtest: P10: generated closed insert/fix items reject known lexical substitutions
+ok 9 - P10: generated closed insert/fix items reject known lexical substitutions
+  ---
+  duration_ms: 861.67115
+  ...
+# Subtest: P10: closed transfer model and accepted answers still pass
+ok 10 - P10: closed transfer model and accepted answers still pass
+  ---
+  duration_ms: 2558.857717
+  ...
+# P10 model/accepted answers checked: items=7083, answers=7599
+# Subtest: P10: closed transfer items reject same-count lexical substitutions
+ok 11 - P10: closed transfer items reject same-count lexical substitutions
+  ---
+  duration_ms: 2265.331105
+  ...
+# P10 lexical-replacement audit inspected: items=7083, attempts=28147
+#   GOLDEN MARKING: 452 templates tested, 612 accept cases passed, 1348 reject cases passed
+# Subtest: self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK
+ok 12 - self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK
+  ---
+  duration_ms: 3.872904
+  ...
+# Subtest: golden marking tests: generated choice families accept only their correct option
+ok 13 - golden marking tests: generated choice families accept only their correct option
+  ---
+  duration_ms: 4.209581
+  ...
+# Subtest: golden marking tests: all DSL families pass accept cases and fail reject cases
+ok 14 - golden marking tests: all DSL families pass accept cases and fail reject cases
+  ---
+  duration_ms: 636.685809
+  ...
+# Subtest: vacuous truth guard: every DSL family has templates with at least 4 test cases each
+ok 15 - vacuous truth guard: every DSL family has templates with at least 4 test cases each
+  ---
+  duration_ms: 15.559908
+  ...
+# Subtest: speech rubric accepts straight, curly, single, and double inverted commas
+ok 16 - speech rubric accepts straight, curly, single, and double inverted commas
+  ---
+  duration_ms: 15.759355
+  ...
+# Subtest: speech rubric rejects punctuation outside the closing inverted comma
+ok 17 - speech rubric rejects punctuation outside the closing inverted comma
+  ---
+  duration_ms: 33.559887
+  ...
+# Subtest: speech rubric rejects missing, unmatched, and mixed quote pairs
+ok 18 - speech rubric rejects missing, unmatched, and mixed quote pairs
+  ---
+  duration_ms: 1.053635
+  ...
+# Subtest: speech rubric rejects missing reporting comma and changed target words
+ok 19 - speech rubric rejects missing reporting comma and changed target words
+  ---
+  duration_ms: 4.364417
+  ...
+# Subtest: endmarks and apostrophe marking handles exact answers and constrained transfer
+ok 20 - endmarks and apostrophe marking handles exact answers and constrained transfer
+  ---
+  duration_ms: 5.633287
+  ...
+# Subtest: comma list transfer requires preserved items and KS2 list comma placement
+ok 21 - comma list transfer requires preserved items and KS2 list comma placement
+  ---
+  duration_ms: 26.652235
+  ...
+# Subtest: fronted adverbial and clarity transfers require the opening phrase comma
+ok 22 - fronted adverbial and clarity transfers require the opening phrase comma
+  ---
+  duration_ms: 2.362712
+  ...
+# Subtest: boundary transfer validators require target marks between preserved clauses
+ok 23 - boundary transfer validators require target marks between preserved clauses
+  ---
+  duration_ms: 5.483663
+  ...
+# Subtest: dash-clause model display teaches a spaced en dash
+ok 24 - dash-clause model display teaches a spaced en dash
+  ---
+  duration_ms: 1.620625
+  ...
+# Subtest: fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers
+ok 25 - fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers
+  ---
+  duration_ms: 1.343464
+  ...
+# Subtest: hyphen transfer validator requires the exact hyphenated phrase
+ok 26 - hyphen transfer validator requires the exact hyphenated phrase
+  ---
+  duration_ms: 6.360888
+  ...
+# Subtest: P2 U3 free-text fixed anchors accept golden answers and tag representative misconceptions
+ok 27 - P2 U3 free-text fixed anchors accept golden answers and tag representative misconceptions
+  ---
+  duration_ms: 44.777361
+  ...
+# Subtest: P2 U3 transfer anchors reject target-only sentence fragments
+ok 28 - P2 U3 transfer anchors reject target-only sentence fragments
+  ---
+  duration_ms: 1.042316
+  ...
+# Subtest: mixed transfer validators constrain fronted speech and colon-list stems
+ok 29 - mixed transfer validators constrain fronted speech and colon-list stems
+  ---
+  duration_ms: 9.803056
+  ...
+# Subtest: structure transfer validators require explicit punctuation roles
+ok 30 - structure transfer validators require explicit punctuation roles
+  ---
+  duration_ms: 18.010982
+  ...
+# Subtest: structure exact marking honours parenthesis variants and line-based bullet lists
+ok 31 - structure exact marking honours parenthesis variants and line-based bullet lists
+  ---
+  duration_ms: 15.405446
+  ...
+# Subtest: choice marking accepts integer indexes only without coercing malformed values
+ok 32 - choice marking accepts integer indexes only without coercing malformed values
+  ---
+  duration_ms: 1.604878
+  ...
+# Subtest: empty, whitespace-only, overlong, and unsupported answer payloads return marked results
+ok 33 - empty, whitespace-only, overlong, and unsupported answer payloads return marked results
+  ---
+  duration_ms: 0.994638
+  ...
+# Subtest: fixture has correct schema version and metadata
+ok 34 - fixture has correct schema version and metadata
+  ---
+  duration_ms: 3.204693
+  ...
+# Subtest: fixture covers all 72 non-choice fixed items with at least 2 vectors each
+ok 35 - fixture covers all 72 non-choice fixed items with at least 2 vectors each
+  ---
+  duration_ms: 0.949519
+  ...
+# Subtest: fixture has exactly 20 choice validation entries
+ok 36 - fixture has exactly 20 choice validation entries
+  ---
+  duration_ms: 0.19741
+  ...
+# Subtest: total negative vectors >= 189
+ok 37 - total negative vectors >= 189
+  ---
+  duration_ms: 0.199706
+  ...
+# Subtest: every non-generated negative vector marks INCORRECT through markPunctuationAnswer()
+ok 38 - every non-generated negative vector marks INCORRECT through markPunctuationAnswer()
+  ---
+  duration_ms: 126.737523
+  ...
+# Subtest: model answers for all 72 non-choice items still mark CORRECT
+ok 39 - model answers for all 72 non-choice items still mark CORRECT
+  ---
+  duration_ms: 23.189363
+  ...
+# Subtest: each choice item has exactly one correct option at the specified index
+ok 40 - each choice item has exactly one correct option at the specified index
+  ---
+  duration_ms: 1.514054
+  ...
+# Subtest: vectors cover multiple failure types
+ok 41 - vectors cover multiple failure types
+  ---
+  duration_ms: 0.34514
+  ...
+# Subtest: every closed item (insert/fix/combine) has at least one changed_required_words vector
+ok 42 - every closed item (insert/fix/combine) has at least one changed_required_words vector
+  ---
+  duration_ms: 1.282498
+  ...
+# Subtest: every speech item with reportingClause has at least one wrong_reporting_clause vector
+ok 43 - every speech item with reportingClause has at least one wrong_reporting_clause vector
+  ---
+  duration_ms: 1.051719
+  ...
+# Subtest: short-tail vectors (changed_content_short_tail) reject through markPunctuationAnswer()
+ok 44 - short-tail vectors (changed_content_short_tail) reject through markPunctuationAnswer()
+  ---
+  duration_ms: 0.474206
+  ...
+# Subtest: extra-phrase vectors (changed_content_extra_phrase) reject through markPunctuationAnswer()
+ok 45 - extra-phrase vectors (changed_content_extra_phrase) reject through markPunctuationAnswer()
+  ---
+  duration_ms: 0.404146
+  ...
+# Subtest: speech extra-tail vectors reject and include speech.extra_words_outside_reporting_clause misconception
+ok 46 - speech extra-tail vectors reject and include speech.extra_words_outside_reporting_clause misconception
+  ---
+  duration_ms: 0.791866
+  ...
+# Subtest: generated vectors exist and reject through markPunctuationAnswer()
+ok 47 - generated vectors exist and reject through markPunctuationAnswer()
+  ---
+  duration_ms: 1.612082
+  ...
+# Subtest: derivePreserveTokens strips punctuation and returns word array
+ok 48 - derivePreserveTokens strips punctuation and returns word array
+  ---
+  duration_ms: 10.448408
+  ...
+# Subtest: DSL derivePreserveTokens matches marking.js utility
+ok 49 - DSL derivePreserveTokens matches marking.js utility
+  ---
+  duration_ms: 0.801369
+  ...
+# Subtest: evaluatePreservation passes when only punctuation is added
+ok 50 - evaluatePreservation passes when only punctuation is added
+  ---
+  duration_ms: 1.382557
+  ...
+# Subtest: evaluatePreservation fails when extra tail is appended
+ok 51 - evaluatePreservation fails when extra tail is appended
+  ---
+  duration_ms: 1.111196
+  ...
+# Subtest: evaluatePreservation uses preserveTokens when provided
+ok 52 - evaluatePreservation uses preserveTokens when provided
+  ---
+  duration_ms: 1.152753
+  ...
+# Subtest: evaluatePreservation fails when words are missing from expected
+ok 53 - evaluatePreservation fails when words are missing from expected
+  ---
+  duration_ms: 1.195332
+  ...
+# Subtest: lc_insert_supplies with correct answer (only punctuation added) passes
+ok 54 - lc_insert_supplies with correct answer (only punctuation added) passes
+  ---
+  duration_ms: 6.973314
+  ...
+# Subtest: lc_insert_supplies with extra tail fails
+ok 55 - lc_insert_supplies with extra tail fails
+  ---
+  duration_ms: 0.461425
+  ...
+# Subtest: lc_fix_display with correct answer passes
+ok 56 - lc_fix_display with correct answer passes
+  ---
+  duration_ms: 5.539596
+  ...
+# Subtest: lc_fix_display with extra words fails
+ok 57 - lc_fix_display with extra words fails
+  ---
+  duration_ms: 0.817743
+  ...
+# Subtest: pa_insert_museum with correct answer passes
+ok 58 - pa_insert_museum with correct answer passes
+  ---
+  duration_ms: 1.48249
+  ...
+# Subtest: pa_insert_museum with arbitrary tail fails
+ok 59 - pa_insert_museum with arbitrary tail fails
+  ---
+  duration_ms: 0.288768
+  ...
+# Subtest: pa_fix_author with correct answer passes
+ok 60 - pa_fix_author with correct answer passes
+  ---
+  duration_ms: 1.335409
+  ...
+# Subtest: pa_fix_author with extra words fails
+ok 61 - pa_fix_author with extra words fails
+  ---
+  duration_ms: 0.87143
+  ...
+# Subtest: generated list-comma insert item with extra sentence fails
+ok 62 - generated list-comma insert item with extra sentence fails
+  ---
+  duration_ms: 20.807008
+  ...
+# Subtest: transfer items are not subject to preservation gate
+ok 63 - transfer items are not subject to preservation gate
+  ---
+  duration_ms: 3.943718
+  ...
+# Subtest: exact-match item without validator still works correctly
+ok 64 - exact-match item without validator still works correctly
+  ---
+  duration_ms: 1.199101
+  ...
+# Subtest: combine item with extra tail fails preservation
+ok 65 - combine item with extra tail fails preservation
+  ---
+  duration_ms: 2.366824
+  ...
+# Subtest: dc_fix_signal_team with model answer passes (preserveTokens excludes "and")
+ok 66 - dc_fix_signal_team with model answer passes (preserveTokens excludes "and")
+  ---
+  duration_ms: 0.296422
+  ...
+# Subtest: sp_insert_question with correct clause "Ella asked" passes
+ok 67 - sp_insert_question with correct clause "Ella asked" passes
+  ---
+  duration_ms: 13.31588
+  ...
+# Subtest: sp_insert_question with correct clause (single quotes) passes
+ok 68 - sp_insert_question with correct clause (single quotes) passes
+  ---
+  duration_ms: 5.181137
+  ...
+# Subtest: sp_insert_question with changed name "Tom shouted" fails
+ok 69 - sp_insert_question with changed name "Tom shouted" fails
+  ---
+  duration_ms: 0.662248
+  ...
+# Subtest: sp_insert_question: reporting_clause_words facet is false when clause changed
+ok 70 - sp_insert_question: reporting_clause_words facet is false when clause changed
+  ---
+  duration_ms: 1.201949
+  ...
+# Subtest: sp_fix_question with correct clause "asked Zara" passes
+ok 71 - sp_fix_question with correct clause "asked Zara" passes
+  ---
+  duration_ms: 0.997364
+  ...
+# Subtest: sp_fix_question with correct clause (single quotes) passes
+ok 72 - sp_fix_question with correct clause (single quotes) passes
+  ---
+  duration_ms: 38.079128
+  ...
+# Subtest: sp_fix_question with omitted clause (speech-only) fails
+ok 73 - sp_fix_question with omitted clause (speech-only) fails
+  ---
+  duration_ms: 0.706704
+  ...
+# Subtest: sp_fix_question: reporting_clause_words facet is false when clause omitted
+ok 74 - sp_fix_question: reporting_clause_words facet is false when clause omitted
+  ---
+  duration_ms: 0.460716
+  ...
+# Subtest: sp_fix_question with wrong name "asked Mia" fails
+ok 75 - sp_fix_question with wrong name "asked Mia" fails
+  ---
+  duration_ms: 1.038696
+  ...
+# Subtest: sp_fix_question with wrong verb + name "yelled Tom" fails
+ok 76 - sp_fix_question with wrong verb + name "yelled Tom" fails
+  ---
+  duration_ms: 1.233298
+  ...
+# Subtest: transfer item without reportingClause in rubric accepts child-created clause
+ok 77 - transfer item without reportingClause in rubric accepts child-created clause
+  ---
+  duration_ms: 4.02432
+  ...
+# Subtest: transfer item without reportingClause accepts reporting-after
+ok 78 - transfer item without reportingClause accepts reporting-after
+  ---
+  duration_ms: 4.426406
+  ...
+# Subtest: transfer item: no reporting_clause_words facet emitted when rubric lacks reportingClause
+ok 79 - transfer item: no reporting_clause_words facet emitted when rubric lacks reportingClause
+  ---
+  duration_ms: 1.137209
+  ...
+# Subtest: P7 comma facet: reporting-before missing comma still detected
+ok 80 - P7 comma facet: reporting-before missing comma still detected
+  ---
+  duration_ms: 1.043001
+  ...
+# Subtest: P7 comma facet: reporting-after shape does not require comma
+ok 81 - P7 comma facet: reporting-after shape does not require comma
+  ---
+  duration_ms: 0.311179
+  ...
+# Subtest: evaluateSpeechRubric: correct clause words produce ok facet
+ok 82 - evaluateSpeechRubric: correct clause words produce ok facet
+  ---
+  duration_ms: 0.305493
+  ...
+# Subtest: evaluateSpeechRubric: changed clause produces speech.reporting_clause_changed tag
+ok 83 - evaluateSpeechRubric: changed clause produces speech.reporting_clause_changed tag
+  ---
+  duration_ms: 1.015155
+  ...
+# Subtest: evaluateSpeechRubric: case-insensitive clause matching
+ok 84 - evaluateSpeechRubric: case-insensitive clause matching
+  ---
+  duration_ms: 1.528633
+  ...
+# Subtest: evaluateSpeechRubric: speech-only shape fails when reportingClause expected
+ok 85 - evaluateSpeechRubric: speech-only shape fails when reportingClause expected
+  ---
+  duration_ms: 0.352187
+  ...
+# Subtest: evaluateSpeechRubric: no reportingClause in rubric means no clause_words facet
+ok 86 - evaluateSpeechRubric: no reportingClause in rubric means no clause_words facet
+  ---
+  duration_ms: 0.964513
+  ...
+# Subtest: reporting-before with double quotes is correct
+ok 87 - reporting-before with double quotes is correct
+  ---
+  duration_ms: 47.512825
+  ...
+# Subtest: reporting-before with single quotes is correct
+ok 88 - reporting-before with single quotes is correct
+  ---
+  duration_ms: 4.000315
+  ...
+# Subtest: reporting-after with double quotes is correct
+ok 89 - reporting-after with double quotes is correct
+  ---
+  duration_ms: 1.143283
+  ...
+# Subtest: reporting-after with single quotes is correct
+ok 90 - reporting-after with single quotes is correct
+  ---
+  duration_ms: 0.974777
+  ...
+# Subtest: reporting-after with curly quotes is correct
+ok 91 - reporting-after with curly quotes is correct
+  ---
+  duration_ms: 10.317991
+  ...
+# Subtest: exclamation reporting-after with double quotes is correct
+ok 92 - exclamation reporting-after with double quotes is correct
+  ---
+  duration_ms: 0.661727
+  ...
+# Subtest: missing inverted commas is rejected
+ok 93 - missing inverted commas is rejected
+  ---
+  duration_ms: 0.617967
+  ...
+# Subtest: wrong terminal mark is rejected
+ok 94 - wrong terminal mark is rejected
+  ---
+  duration_ms: 1.106402
+  ...
+# Subtest: spoken words not preserved is rejected
+ok 95 - spoken words not preserved is rejected
+  ---
+  duration_ms: 0.430725
+  ...
+# Subtest: question mark outside quote is rejected (reporting-before)
+ok 96 - question mark outside quote is rejected (reporting-before)
+  ---
+  duration_ms: 1.411554
+  ...
+# Subtest: explicit reportingPosition before rejects reporting-after form
+ok 97 - explicit reportingPosition before rejects reporting-after form
+  ---
+  duration_ms: 0.483673
+  ...
+# Subtest: explicit reportingPosition before accepts reporting-before form
+ok 98 - explicit reportingPosition before accepts reporting-before form
+  ---
+  duration_ms: 0.398159
+  ...
+1..98
+# tests 98
+# suites 0
+# pass 98
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8119.627471

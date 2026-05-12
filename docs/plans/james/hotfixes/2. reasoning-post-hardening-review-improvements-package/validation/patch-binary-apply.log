@@ -1,0 +1,5 @@
+patching file shared/reasoning/content.js
+patching file worker/src/subjects/reasoning/engine.js
+patching file src/subjects/reasoning/command-actions.js
+patching file src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
+patching file tests/reasoning-engine-rewards.test.js

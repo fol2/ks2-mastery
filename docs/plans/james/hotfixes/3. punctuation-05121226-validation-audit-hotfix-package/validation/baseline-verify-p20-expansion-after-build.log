@@ -1,0 +1,25 @@
+runtime=v18.20.4 npm=9.2.0 expected=22
+
+> ks2-mastery@0.1.0 verify:punctuation-qg:p20-expansion
+> node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json
+
+P20 review register written: reports/punctuation/punctuation-qg-p20-review-register.json
+P20 negative-vector register written: reports/punctuation/punctuation-qg-p20-negative-vector-register.json
+P20 heavy-play simulation written: reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
+  one learner unique: 300
+  multi learner unique: 2525
+  open production ratio: 0.333
+
+> ks2-mastery@0.1.0 audit:punctuation-qg:p20-expansion
+> node scripts/audit-punctuation-qg-p20-expansion.mjs --out reports/punctuation/punctuation-qg-p20-expansion-audit.json
+
+Punctuation QG P20 expansion audit: PASS
+  release: punctuation-qg-p20-15072-2026-05-04
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15072/15072
+  generated families: 126
+  failing gates: none
+P20 expansion report validation: PASS
+  release: punctuation-qg-p20-15072-2026-05-04
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15072/15072

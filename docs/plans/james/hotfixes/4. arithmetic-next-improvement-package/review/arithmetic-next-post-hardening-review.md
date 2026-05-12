@@ -1,0 +1,73 @@
+# Arithmetic post-hardening review and next improvement pass
+
+Source boundary: I used `ks2-mastery-lean-05121221.zip` as the primary implementation snapshot. GitHub was used only as a supplementary exact-file/reference check for Arithmetic source, not as a replacement for the uploaded ZIP. I did not certify live production deployment.
+
+## Review verdict
+
+Arithmetic is now a real integrated subject and the previous post-hardening pass is broadly healthy. The subject has an isolated content/marking engine, Worker command runtime, client surface, read-model plumbing, reward-unit projection, Hero launch/provider wiring, and Arithmetic-specific tests. The next problems I found are not integration blockers; they are learner-facing quality and polish issues inside Arithmetic itself.
+
+The review found three Arithmetic-only issues worth fixing before the next implementation round.
+
+## 1. Marking accuracy: stray unit symbols were accepted too broadly
+
+The Worker answer parser stripped `%` and `£` from numeric answers globally. That meant a learner could answer `44%` or `£44` to a plain missing-number question where the correct answer was `44`, and it would be marked correct.
+
+This is not harmless tolerance. In Arithmetic, form matters. `50%` is acceptable only when the question asks for a percentage value, not when the item asks for a plain number, a missing digit, a quotient, a place-value part, or a final written-method answer.
+
+Baseline audit over 45,000 generated cases found:
+
+```text
+badPercentUnitAcceptances: 37005
+poundAccepted: 37005
+```
+
+The fix makes numeric parsing unit-aware. `%` is now accepted only when the expected answer explicitly allows a percentage symbol, and `£` is rejected unless a future money question explicitly allows currency. Current Arithmetic has no money-answer items.
+
+## 2. True Test interface: stale input and summary denominator risk
+
+The Arithmetic React surface used uncontrolled fields with `defaultValue` for True Test answer and working inputs. When moving between paper questions, React can preserve the same input DOM node unless the form is keyed by the current question. That creates a stale-answer risk in a no-feedback test mode.
+
+The test summary also calculated accuracy from `answered`, so a blank 12-question test could appear as a `0/0` style summary even though the paper had 12 questions. That is confusing for parents and weakens the diagnostic value of True Test Mode.
+
+The fix keys the answer form by question id/index, restores saved response and working per paper entry, and reports test summaries against the full paper denominator while still showing how many responses were answered.
+
+## 3. Content enrichment: some high-frequency pools were too small
+
+The earlier hardening made the engine safer, but several procedural pools were still narrow enough to feel repetitive in long-term daily use. The main hotspots were mental subtraction, mental multiplication, fraction add/subtract, multiplying fractions, fraction-decimal-percentage links, and fraction/decimal hybrids.
+
+The fix expands those generators without changing the subject contract or increasing hidden coupling. It keeps the same 30 templates and 90 reward units, but increases the variety of generated stems and adds stronger FDP/stretch material, including eighths, sixteenths, twentieths, decimal-percentage links such as `12.5%`, and more varied mental-number structures.
+
+## Improvements shipped in this patch
+
+Files changed:
+
+```text
+shared/arithmetic/content.js
+worker/src/subjects/arithmetic/engine.js
+src/subjects/arithmetic/components/ArithmeticPracticeSurface.jsx
+tests/worker-arithmetic-runtime.test.js
+```
+
+Changes made:
+
+- Made numeric answer parsing unit-aware.
+- Preserved acceptance of `50%` only for explicit percentage-output questions.
+- Rejected `%` and `£` on ordinary number, digit, quotient, decimal, and written-method answers.
+- Expanded mental subtraction generator variety.
+- Expanded mental multiplication generator variety.
+- Expanded fraction add/subtract generation.
+- Expanded multiplying-fractions pools.
+- Expanded FDP equivalents, including extra-credit stretch links.
+- Expanded fraction/decimal hybrid pools.
+- Added full-paper `questionCount` into Arithmetic test summaries.
+- Keyed the Arithmetic answer form by current question to avoid stale uncontrolled input during True Test navigation.
+- Added an Arithmetic runtime regression test for the unit-symbol marking bug.
+- Strengthened the blank True Test regression test so it checks the full paper denominator.
+
+## Scope deliberately not touched
+
+This patch does not change other subjects, monsters, Hero Mode, reward thresholds, global subject routing, platform commands, the database schema, or non-Arithmetic UI. Arithmetic reward units remain at 90 and the engine remains isolated from other subjects.
+
+## Remaining recommendations for the next pass
+
+The next highest-value Arithmetic-only pass would be a deeper written-method upgrade: richer two-mark long multiplication/long division variants, more missing-digit written-method puzzles, and a better parent-facing diagnostic split between fact-recall errors and written-method errors. I would also add a dedicated audit for “valid but unusual answer forms” across every fraction/decimal template, because that is where edge cases tend to hide.

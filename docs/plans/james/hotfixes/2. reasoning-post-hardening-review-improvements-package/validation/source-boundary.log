@@ -1,0 +1,51 @@
+Source ZIP: /mnt/data/ks2-mastery-lean-05121226.zip
+a0f99b47f8268e73f79aa7d95fe1b1fb63dba0a7aef87ff9ed6d744cf00e9dbe  /mnt/data/ks2-mastery-lean-05121226.zip
+
+ZIP integrity:
+    testing: ./.agents/skills/        OK
+    testing: ./.agents/skills/claude-design/   OK
+    testing: ./.agents/skills/claude-design/README.md   OK
+    testing: ./.agents/skills/claude-design/SKILL.md   OK
+No errors detected in compressed data of /mnt/data/ks2-mastery-lean-05121226.zip.
+
+Node environment:
+v22.16.0
+10.9.2
+.nvmrc:
+22
+
+Git metadata:
+No .git metadata in this ZIP extraction
+
+Reasoning-relevant files:
+shared/reasoning/content.js
+shared/reasoning/metadata.js
+src/platform/game/mastery/reasoning.js
+src/subjects/reasoning/client-read-models.js
+src/subjects/reasoning/command-actions.js
+src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
+src/subjects/reasoning/event-hooks.js
+src/subjects/reasoning/metadata.js
+src/subjects/reasoning/module.js
+tests/hero-reasoning-integration.test.js
+tests/reasoning-content-contract.test.js
+tests/reasoning-engine-rewards.test.js
+tests/reasoning-production-smoke.test.js
+tests/reasoning-subject-registry.test.js
+worker/src/hero/launch-adapters/arithmetic.js
+worker/src/hero/launch-adapters/grammar.js
+worker/src/hero/launch-adapters/index.js
+worker/src/hero/launch-adapters/punctuation.js
+worker/src/hero/launch-adapters/reading.js
+worker/src/hero/launch-adapters/reasoning.js
+worker/src/hero/launch-adapters/spelling.js
+worker/src/hero/providers/arithmetic.js
+worker/src/hero/providers/grammar.js
+worker/src/hero/providers/index.js
+worker/src/hero/providers/punctuation.js
+worker/src/hero/providers/reading.js
+worker/src/hero/providers/reasoning.js
+worker/src/hero/providers/spelling.js
+worker/src/subjects/reasoning/commands.js
+worker/src/subjects/reasoning/engine.js
+worker/src/subjects/reasoning/read-models.js

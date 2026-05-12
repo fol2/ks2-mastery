@@ -1,0 +1,466 @@
+{
+  "templates": 30,
+  "rewardUnits": 90,
+  "cases": 45000,
+  "uniqueStemVisuals": 31630,
+  "duplicateStemVisuals": 13370,
+  "badPercentUnitAcceptances": 37005,
+  "poundAccepted": 37005,
+  "expectedPercentOutputCases": 0,
+  "expectedPercentOutputAcceptances": 0,
+  "blueprints": {
+    "short": {
+      "questions": 12,
+      "marks": 14
+    },
+    "full": {
+      "questions": 36,
+      "marks": 40
+    }
+  },
+  "findingCount": 50,
+  "findings": [
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 1,
+      "stem": "6 + □ = 50",
+      "answer": "44%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 1,
+      "stem": "6 + □ = 50",
+      "answer": "£44"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 2,
+      "stem": "18 + □ = 50",
+      "answer": "32%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 2,
+      "stem": "18 + □ = 50",
+      "answer": "£32"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 3,
+      "stem": "7 + □ = 50",
+      "answer": "43%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 3,
+      "stem": "7 + □ = 50",
+      "answer": "£43"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 4,
+      "stem": "37 + □ = 100",
+      "answer": "63%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 4,
+      "stem": "37 + □ = 100",
+      "answer": "£63"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 5,
+      "stem": "36 + □ = 50",
+      "answer": "14%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 5,
+      "stem": "36 + □ = 50",
+      "answer": "£14"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 6,
+      "stem": "6 + □ = 50",
+      "answer": "44%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 6,
+      "stem": "6 + □ = 50",
+      "answer": "£44"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 7,
+      "stem": "1 + □ = 10",
+      "answer": "9%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 7,
+      "stem": "1 + □ = 10",
+      "answer": "£9"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 8,
+      "stem": "6 + □ = 10",
+      "answer": "4%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 8,
+      "stem": "6 + □ = 10",
+      "answer": "£4"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 9,
+      "stem": "7 + □ = 10",
+      "answer": "3%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 9,
+      "stem": "7 + □ = 10",
+      "answer": "£3"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 10,
+      "stem": "41 + □ = 50",
+      "answer": "9%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 10,
+      "stem": "41 + □ = 50",
+      "answer": "£9"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 11,
+      "stem": "26 + □ = 50",
+      "answer": "24%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 11,
+      "stem": "26 + □ = 50",
+      "answer": "£24"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 12,
+      "stem": "3 + □ = 20",
+      "answer": "17%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 12,
+      "stem": "3 + □ = 20",
+      "answer": "£17"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 13,
+      "stem": "20 + □ = 50",
+      "answer": "30%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 13,
+      "stem": "20 + □ = 50",
+      "answer": "£30"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 14,
+      "stem": "8 + □ = 20",
+      "answer": "12%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 14,
+      "stem": "8 + □ = 20",
+      "answer": "£12"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 15,
+      "stem": "4 + □ = 10",
+      "answer": "6%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 15,
+      "stem": "4 + □ = 10",
+      "answer": "£6"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 16,
+      "stem": "11 + □ = 50",
+      "answer": "39%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 16,
+      "stem": "11 + □ = 50",
+      "answer": "£39"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 17,
+      "stem": "13 + □ = 50",
+      "answer": "37%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 17,
+      "stem": "13 + □ = 50",
+      "answer": "£37"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 18,
+      "stem": "11 + □ = 20",
+      "answer": "9%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 18,
+      "stem": "11 + □ = 20",
+      "answer": "£9"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 19,
+      "stem": "3 + □ = 10",
+      "answer": "7%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 19,
+      "stem": "3 + □ = 10",
+      "answer": "£7"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 20,
+      "stem": "41 + □ = 100",
+      "answer": "59%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 20,
+      "stem": "41 + □ = 100",
+      "answer": "£59"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 21,
+      "stem": "9 + □ = 20",
+      "answer": "11%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 21,
+      "stem": "9 + □ = 20",
+      "answer": "£11"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 22,
+      "stem": "15 + □ = 50",
+      "answer": "35%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 22,
+      "stem": "15 + □ = 50",
+      "answer": "£35"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 23,
+      "stem": "1 + □ = 10",
+      "answer": "9%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 23,
+      "stem": "1 + □ = 10",
+      "answer": "£9"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 24,
+      "stem": "17 + □ = 20",
+      "answer": "3%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 24,
+      "stem": "17 + □ = 20",
+      "answer": "£3"
+    },
+    {
+      "kind": "bad-percent-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 25,
+      "stem": "38 + □ = 50",
+      "answer": "12%"
+    },
+    {
+      "kind": "bad-pound-unit-accepted",
+      "template": "bonds_missing",
+      "difficulty": 0,
+      "seed": 25,
+      "stem": "38 + □ = 50",
+      "answer": "£12"
+    }
+  ],
+  "duplicateHotspots": [
+    {
+      "count": 51,
+      "key": "mental_subtraction | 2 | 5,003 − 2,456 = | "
+    },
+    {
+      "count": 48,
+      "key": "mental_subtraction | 2 | 10,004 − 387 = | "
+    },
+    {
+      "count": 47,
+      "key": "mental_subtraction | 2 | 10,004 − 1,997 = | "
+    },
+    {
+      "count": 45,
+      "key": "mental_subtraction | 2 | 5,003 − 387 = | "
+    },
+    {
+      "count": 44,
+      "key": "mental_subtraction | 2 | 5,003 − 1,997 = | "
+    },
+    {
+      "count": 44,
+      "key": "mental_subtraction | 2 | 12,000 − 2,456 = | "
+    },
+    {
+      "count": 43,
+      "key": "mental_subtraction | 2 | 12,000 − 1,997 = | "
+    },
+    {
+      "count": 43,
+      "key": "mental_subtraction | 2 | 10,004 − 998 = | "
+    },
+    {
+      "count": 43,
+      "key": "fraction_add_sub | 0 | 5/10 − 3/10 = | "
+    },
+    {
+      "count": 40,
+      "key": "fraction_add_sub | 0 | 7/9 + 2/9 = | "
+    }
+  ]
+}

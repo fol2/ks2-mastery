@@ -1,0 +1,5 @@
+checking file shared/reasoning/content.js
+checking file worker/src/subjects/reasoning/engine.js
+checking file src/subjects/reasoning/command-actions.js
+checking file src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
+checking file tests/reasoning-engine-rewards.test.js

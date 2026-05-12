@@ -1,0 +1,443 @@
+{
+  "runtimeItems": 15072,
+  "runtime": {
+    "adverbialLyHyphen": {
+      "count": 182,
+      "phraseCounts": {
+        "newly-built": 2,
+        "carefully-planned": 80,
+        "brightly-lit": 80,
+        "brightly-litdesign": 10,
+        "carefully-planneddesign": 10
+      },
+      "samples": [
+        {
+          "itemId": "gen_hyphen_insert_ukqpgz_12",
+          "familyId": "gen_hyphen_insert",
+          "mode": "insert",
+          "surface": "newly-built"
+        },
+        {
+          "itemId": "gen_hyphen_insert_16bnjl_58",
+          "familyId": "gen_hyphen_insert",
+          "mode": "insert",
+          "surface": "newly-built"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1e5udtl_12",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "carefully-planned"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1dbvkqo_13",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "brightly-lit"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1gdr7dd_20",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "carefully-planned"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1l3hanx_21",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "brightly-lit"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1jpg4p3_32",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "carefully-planned"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1jzfqe2_33",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "brightly-lit"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_iiu88u_44",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "carefully-planned"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_jct1br_45",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "brightly-lit"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_fqv1t5_56",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "carefully-planned"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_eww8q8_57",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "brightly-lit"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_f6sox8_68",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "carefully-planned"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_h4pws1_69",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "brightly-lit"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_fqoqt7_80",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "carefully-planned"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_khxpav_81",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "brightly-lit"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_j3wjc1_92",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "carefully-planned"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_i9xq94_93",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "brightly-lit"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1oyapu7_104",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "carefully-planned"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1o4bwra_105",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "brightly-lit"
+        }
+      ]
+    },
+    "malformedNoSpaceDesign": {
+      "count": 120,
+      "phraseCounts": {
+        "brightly-litdesign": 10,
+        "ice-colddesign": 10,
+        "last-minutedesign": 10,
+        "open-endeddesign": 10,
+        "long-termdesign": 10,
+        "half-finisheddesign": 10,
+        "high-speeddesign": 10,
+        "carefully-planneddesign": 10,
+        "to-datedesign": 10,
+        "full-sizedesign": 10,
+        "well-knowndesign": 10,
+        "two-metredesign": 10
+      },
+      "samples": [
+        {
+          "itemId": "gen_p20_hyphen_choose_1a7c7gq_1",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "brightly-litdesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_1ahbt5p_2",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "ice-colddesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_19nd02s_3",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "last-minutedesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_19xclrr_4",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "open-endeddesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_193dsou_5",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "long-termdesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_19ddedt_6",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "half-finisheddesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_18jelaw_7",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "high-speeddesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_18te6zv_8",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "carefully-planneddesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_17zfdwy_9",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "brightly-litdesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_189ezlx_10",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "ice-colddesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_a28syf_11",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "last-minutedesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_9s979g_12",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "open-endeddesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_am80cd_13",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "to-datedesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_ac8ene_14",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "full-sizedesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_8yae6j_15",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "well-knowndesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_8oashk_16",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "two-metredesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_9i9lkh_17",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "long-termdesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_989zvi_18",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "half-finisheddesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_7ubzen_19",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "high-speeddesign"
+        },
+        {
+          "itemId": "gen_p20_hyphen_choose_7kcdpo_20",
+          "familyId": "gen_p20_hyphen_choose",
+          "mode": "choose",
+          "surface": "carefully-planneddesign"
+        }
+      ]
+    },
+    "articleAgreement": {
+      "count": 480,
+      "phraseCounts": {
+        "a up to date": 80,
+        "a up-to-date": 80,
+        "a ice cold": 80,
+        "a ice-cold": 80,
+        "a open ended": 80,
+        "a open-ended": 80
+      },
+      "samples": [
+        {
+          "itemId": "gen_hyphen_transfer_1tozohl_5",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a up to date"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1tozohl_5",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a up-to-date"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1dlv6fn_14",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a ice cold"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1dlv6fn_14",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a ice-cold"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1f9sslh_16",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a open ended"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1f9sslh_16",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a open-ended"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1eftzik_17",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a up to date"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1eftzik_17",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a up-to-date"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1kthoyy_22",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a ice cold"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1kthoyy_22",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a ice-cold"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1k9ihl0_24",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a open ended"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1k9ihl0_24",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a open-ended"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1jzivw1_25",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a up to date"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1jzivw1_25",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a up-to-date"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1k9fc31_34",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a ice cold"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1k9fc31_34",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a ice-cold"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1ilhpx7_36",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a open ended"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1ilhpx7_36",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a open-ended"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1ivhbm6_37",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a up to date"
+        },
+        {
+          "itemId": "gen_hyphen_transfer_1ivhbm6_37",
+          "familyId": "gen_hyphen_transfer",
+          "mode": "transfer",
+          "surface": "a up-to-date"
+        }
+      ]
+    }
+  },
+  "sources": {
+    "adverbialLyHyphen": [
+      {
+        "path": "shared/punctuation/manual-expansion-bank.js",
+        "surface": "brightly-lit"
+      },
+      {
+        "path": "shared/punctuation/manual-deep-expansion-bank.js",
+        "surface": "brightly-coloured"
+      },
+      {
+        "path": "shared/punctuation/manual-deep-expansion-bank.js",
+        "surface": "carefully-planned"
+      },
+      {
+        "path": "shared/punctuation/manual-deep-expansion-bank.js",
+        "surface": "newly-built"
+      },
+      {
+        "path": "shared/punctuation/manual-p12-quality-bank.js",
+        "surface": "newly-built"
+      },
+      {
+        "path": "shared/punctuation/p20-systematic-expansion-bank.js",
+        "surface": "brightly-lit"
+      },
+      {
+        "path": "shared/punctuation/p20-systematic-expansion-bank.js",
+        "surface": "carefully-planned"
+      }
+    ],
+    "malformedNoSpaceDesign": [],
+    "articleAgreement": []
+  }
+}

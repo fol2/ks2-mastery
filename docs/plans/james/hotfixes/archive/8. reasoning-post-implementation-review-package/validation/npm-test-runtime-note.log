@@ -1,0 +1,5 @@
+
+> ks2-mastery@0.1.0 pretest
+> node ./scripts/preflight-test.mjs
+
+Missing node_modules (react, esbuild) — run "npm install" from this worktree root before "npm test". Git worktrees do not share node_modules with the primary checkout.

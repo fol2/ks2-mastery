@@ -1,0 +1,35 @@
+{
+  "iterationsPerMode": 200,
+  "rows": {
+    "smart": {
+      "minMs": 2.229,
+      "medianMs": 2.918,
+      "p95Ms": 6.846,
+      "maxMs": 17.839
+    },
+    "guided": {
+      "minMs": 0.892,
+      "medianMs": 1.237,
+      "p95Ms": 2.274,
+      "maxMs": 5.334
+    },
+    "stamina": {
+      "minMs": 1.737,
+      "medianMs": 2.26,
+      "p95Ms": 3.687,
+      "maxMs": 5.56
+    },
+    "stretch": {
+      "minMs": 2.072,
+      "medianMs": 2.532,
+      "p95Ms": 4.344,
+      "maxMs": 6.687
+    },
+    "test": {
+      "minMs": 0.307,
+      "medianMs": 0.417,
+      "p95Ms": 0.772,
+      "maxMs": 3.494
+    }
+  }
+}

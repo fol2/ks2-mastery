@@ -1,0 +1,29 @@
+patching file shared/reasoning/content.js
+Hunk #1 FAILED at 163 (different line endings).
+Hunk #2 FAILED at 7770 (different line endings).
+Hunk #3 FAILED at 7779 (different line endings).
+3 out of 3 hunks FAILED -- saving rejects to file shared/reasoning/content.js.rej
+patching file worker/src/subjects/reasoning/engine.js
+Hunk #1 FAILED at 308 (different line endings).
+Hunk #2 FAILED at 472 (different line endings).
+Hunk #3 FAILED at 624 (different line endings).
+Hunk #4 FAILED at 653 (different line endings).
+Hunk #5 FAILED at 678 (different line endings).
+Hunk #6 FAILED at 696 (different line endings).
+Hunk #7 FAILED at 714 (different line endings).
+Hunk #8 FAILED at 840 (different line endings).
+Hunk #9 FAILED at 856 (different line endings).
+Hunk #10 FAILED at 932 (different line endings).
+10 out of 10 hunks FAILED -- saving rejects to file worker/src/subjects/reasoning/engine.js.rej
+patching file src/subjects/reasoning/command-actions.js
+Hunk #1 FAILED at 24 (different line endings).
+1 out of 1 hunk FAILED -- saving rejects to file src/subjects/reasoning/command-actions.js.rej
+patching file src/subjects/reasoning/components/ReasoningPracticeSurface.jsx
+Hunk #1 FAILED at 475 (different line endings).
+1 out of 1 hunk FAILED -- saving rejects to file src/subjects/reasoning/components/ReasoningPracticeSurface.jsx.rej
+patching file tests/reasoning-engine-rewards.test.js
+Hunk #1 FAILED at 29 (different line endings).
+Hunk #2 FAILED at 41 (different line endings).
+Hunk #3 FAILED at 260 (different line endings).
+Hunk #4 FAILED at 311 (different line endings).
+4 out of 4 hunks FAILED -- saving rejects to file tests/reasoning-engine-rewards.test.js.rej

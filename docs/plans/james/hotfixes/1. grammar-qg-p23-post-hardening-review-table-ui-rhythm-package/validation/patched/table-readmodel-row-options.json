@@ -1,0 +1,64 @@
+{
+  "templateId": "qg_p4_word_class_noun_phrase_transfer",
+  "rawColumns": [
+    "the",
+    "rusty",
+    "old",
+    "bicycle",
+    "noun",
+    "adjective",
+    "adverb",
+    "determiner"
+  ],
+  "safeColumns": [
+    "the",
+    "rusty",
+    "old",
+    "bicycle",
+    "noun",
+    "adjective",
+    "adverb",
+    "determiner"
+  ],
+  "rowCount": 2,
+  "rows": [
+    {
+      "key": "row0",
+      "label": "Head noun",
+      "rawOptions": [
+        "the",
+        "rusty",
+        "old",
+        "bicycle"
+      ],
+      "safeOptions": [
+        "the",
+        "rusty",
+        "old",
+        "bicycle"
+      ],
+      "rawAriaLabel": "Head noun",
+      "safeAriaLabel": "Head noun"
+    },
+    {
+      "key": "row1",
+      "label": "Word class of 'rusty'",
+      "rawOptions": [
+        "noun",
+        "adjective",
+        "adverb",
+        "determiner"
+      ],
+      "safeOptions": [
+        "noun",
+        "adjective",
+        "adverb",
+        "determiner"
+      ],
+      "rawAriaLabel": "Word class of 'rusty'",
+      "safeAriaLabel": "Word class of 'rusty'"
+    }
+  ],
+  "rowsWithRawOptions": 2,
+  "rowsWithSafeOptions": 2
+}

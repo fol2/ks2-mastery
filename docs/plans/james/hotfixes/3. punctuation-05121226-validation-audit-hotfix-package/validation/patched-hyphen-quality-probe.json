@@ -1,0 +1,25 @@
+{
+  "runtimeItems": 15072,
+  "runtime": {
+    "adverbialLyHyphen": {
+      "count": 0,
+      "phraseCounts": {},
+      "samples": []
+    },
+    "malformedNoSpaceDesign": {
+      "count": 0,
+      "phraseCounts": {},
+      "samples": []
+    },
+    "articleAgreement": {
+      "count": 0,
+      "phraseCounts": {},
+      "samples": []
+    }
+  },
+  "sources": {
+    "adverbialLyHyphen": [],
+    "malformedNoSpaceDesign": [],
+    "articleAgreement": []
+  }
+}

@@ -1,0 +1,645 @@
+--- a/package.json
++++ b/package.json
+@@ -122,7 +122,7 @@
+     "build:punctuation-qg:p20-evidence": "node scripts/build-punctuation-qg-p20-evidence.mjs",
+     "simulate:punctuation-qg:p20-heavy-play": "node scripts/simulate-punctuation-qg-p20-heavy-play.mjs",
+     "validate:punctuation-qg:p20-expansion-report": "node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json",
+-    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json",
++    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-hyphen-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js",
+     "verify:punctuation-qg:p20-live": "node scripts/validate-punctuation-qg-p20-live-evidence.mjs reports/punctuation/punctuation-qg-p20-production-smoke.json && node --test tests/punctuation-qg-p20-production-evidence.test.js",
+     "verify:punctuation-qg:p20": "npm run verify:punctuation-qg:p20-expansion && npm run verify:punctuation-qg:p20-live",
+     "prepare": "simple-git-hooks"
+--- a/src/subjects/punctuation/service-contract.js
++++ b/src/subjects/punctuation/service-contract.js
+@@ -18,7 +18,7 @@
+ // P20 Gate 1: release ID + count are coupled. Post-expansion runtime is
+ // 15,072 items (512 fixed + 28 baseline families × 100 templates + 14
+ // transfer families × 120 templates + 84 P20 families × 120 templates).
+-export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p20-15072-2026-05-04';
++export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p21-15072-2026-05-12';
+ export const PUNCTUATION_GENERATED_ITEM_SEED = 'punctuation-p20-systematic-depth120-15072';
+ 
+ export const PUNCTUATION_PHASES = Object.freeze([
+--- a/shared/punctuation/p20-systematic-expansion-bank.js
++++ b/shared/punctuation/p20-systematic-expansion-bank.js
+@@ -90,7 +90,7 @@
+   ['tickets', 'badges', 'programmes'], ['lanterns', 'blankets', 'snacks'], ['cameras', 'tripods', 'memory cards'], ['spades', 'gloves', 'labels'],
+   ['drums', 'flutes', 'tambourines'], ['batteries', 'cables', 'chargers'], ['clay tiles', 'rollers', 'cutters'], ['flags', 'ropes', 'pegs'],
+ ]);
+-const COMPOUNDS = Object.freeze(['well-known', 'two-metre', 'long-term', 'half-finished', 'high-speed', 'carefully-planned', 'brightly-lit', 'ice-cold', 'last-minute', 'open-ended', 'up-to-date', 'full-size']);
++const COMPOUNDS = Object.freeze(['well-known', 'two-metre', 'long-term', 'half-finished', 'high-speed', 'well-planned', 'well-lit', 'ice-cold', 'last-minute', 'open-ended', 'up-to-date', 'full-size']);
+ const POSSESSORS = Object.freeze([
+   ['girl', "girl's"], ['boy', "boy's"], ['teacher', "teacher's"], ['captain', "captain's"], ['artist', "artist's"], ['runner', "runner's"],
+   ['children', "children's"], ['class', "class's"], ['team', "team's"], ['school', "school's"], ['friends', "friends'"], ['players', "players'"],
+@@ -138,6 +138,11 @@
+   if (!text) return "";
+   if (/(?:s|x|z|ch|sh)$/i.test(text)) return `${text}es'`;
+   return `${text}s'`;
++}
++
++function articleForCompound(compound) {
++  const text = String(compound ?? '').toLowerCase();
++  return /^(?:ice|open|up)-/.test(text) ? 'an' : 'a';
+ }
+ 
+ function singularPossessiveDistractor(possessor) {
+@@ -375,12 +380,14 @@
+       };
+     }
+     case 'hyphen': {
+-      const model = `${c.actor} chose a ${c.compound} design for the ${c.setting}.`;
+-      return {
+-        model,
+-        bad: `${c.actor} chose a ${c.compound.replace(/-/g, ' ')} design for the ${c.setting}.`,
+-        wrongOne: `${c.actor} chose a ${c.compound.replace(/-/g, ' ')}-design for the ${c.setting}.`,
+-        wrongTwo: `${c.actor} chose a ${c.compound}design for the ${c.setting}.`,
++      const article = articleForCompound(c.compound);
++      const spacedCompound = c.compound.replace(/-/g, ' ');
++      const model = `${c.actor} chose ${article} ${c.compound} design for the ${c.setting}.`;
++      return {
++        model,
++        bad: `${c.actor} chose ${article} ${spacedCompound} design for the ${c.setting}.`,
++        wrongOne: `${c.actor} chose ${article} ${spacedCompound}-design for the ${c.setting}.`,
++        wrongTwo: `${c.actor} chose ${article} ${c.compound}-design for the ${c.setting}.`,
+         explanation: 'A hyphen can join words that work together before a noun.',
+         explanationRuleId: 'hyphen.compound-modifier',
+         misconceptionTags: ['hyphen.compound_missing', 'hyphen.wrong_boundary'],
+--- a/shared/punctuation/manual-deep-expansion-bank.js
++++ b/shared/punctuation/manual-deep-expansion-bank.js
+@@ -43718,8 +43718,8 @@
+   {
+     "templateId": "deep_gen_hyphen_insert_027",
+     "prompt": "Add the hyphen that avoids ambiguity.",
+-    "stem": "The newly built kit needed careful repairs.",
+-    "model": "The newly-built kit needed careful repairs.",
++    "stem": "The well built kit needed careful repairs.",
++    "model": "The well-built kit needed careful repairs.",
+     "skillIds": [
+       "hyphen"
+     ],
+@@ -43732,18 +43732,18 @@
+       "misconception",
+       "negative_test"
+     ],
+-    "explanation": "The phrase newly-built is hyphenated so it describes the noun clearly.",
++    "explanation": "The phrase well-built is hyphenated so it describes the noun clearly.",
+     "explanationRuleId": "hyphen.compound-modifier",
+     "validator": {
+       "type": "requiresHyphenatedPhrase",
+-      "phrase": "newly-built"
+-    },
+-    "tests": {
+-      "accept": [
+-        "The newly-built kit needed careful repairs."
+-      ],
+-      "reject": [
+-        "The newly built kit needed careful repairs."
++      "phrase": "well-built"
++    },
++    "tests": {
++      "accept": [
++        "The well-built kit needed careful repairs."
++      ],
++      "reject": [
++        "The well built kit needed careful repairs."
+       ]
+     }
+   },
+@@ -44518,8 +44518,8 @@
+   {
+     "templateId": "deep_gen_hyphen_insert_052",
+     "prompt": "Add the hyphen that avoids ambiguity.",
+-    "stem": "The brightly coloured story kept everyone safe.",
+-    "model": "The brightly-coloured story kept everyone safe.",
++    "stem": "The prize winning story kept everyone safe.",
++    "model": "The prize-winning story kept everyone safe.",
+     "skillIds": [
+       "hyphen"
+     ],
+@@ -44532,18 +44532,18 @@
+       "misconception",
+       "negative_test"
+     ],
+-    "explanation": "The phrase brightly-coloured is hyphenated so it describes the noun clearly.",
++    "explanation": "The phrase prize-winning is hyphenated so it describes the noun clearly.",
+     "explanationRuleId": "hyphen.compound-modifier",
+     "validator": {
+       "type": "requiresHyphenatedPhrase",
+-      "phrase": "brightly-coloured"
+-    },
+-    "tests": {
+-      "accept": [
+-        "The brightly-coloured story kept everyone safe."
+-      ],
+-      "reject": [
+-        "The brightly coloured story kept everyone safe."
++      "phrase": "prize-winning"
++    },
++    "tests": {
++      "accept": [
++        "The prize-winning story kept everyone safe."
++      ],
++      "reject": [
++        "The prize winning story kept everyone safe."
+       ]
+     }
+   },
+@@ -44614,8 +44614,8 @@
+   {
+     "templateId": "deep_gen_hyphen_insert_055",
+     "prompt": "Add the hyphen that avoids ambiguity.",
+-    "stem": "The carefully planned camera solved the problem.",
+-    "model": "The carefully-planned camera solved the problem.",
++    "stem": "The well planned camera solved the problem.",
++    "model": "The well-planned camera solved the problem.",
+     "skillIds": [
+       "hyphen"
+     ],
+@@ -44628,18 +44628,18 @@
+       "misconception",
+       "negative_test"
+     ],
+-    "explanation": "The phrase carefully-planned is hyphenated so it describes the noun clearly.",
++    "explanation": "The phrase well-planned is hyphenated so it describes the noun clearly.",
+     "explanationRuleId": "hyphen.compound-modifier",
+     "validator": {
+       "type": "requiresHyphenatedPhrase",
+-      "phrase": "carefully-planned"
+-    },
+-    "tests": {
+-      "accept": [
+-        "The carefully-planned camera solved the problem."
+-      ],
+-      "reject": [
+-        "The carefully planned camera solved the problem."
++      "phrase": "well-planned"
++    },
++    "tests": {
++      "accept": [
++        "The well-planned camera solved the problem."
++      ],
++      "reject": [
++        "The well planned camera solved the problem."
+       ]
+     }
+   },
+--- a/shared/punctuation/manual-expansion-bank.js
++++ b/shared/punctuation/manual-expansion-bank.js
+@@ -1327,10 +1327,10 @@
+       "The record-breaking jump amazed the crowd."
+     ],
+     [
+-      "brightly lit room",
+-      "brightly-lit room",
+-      "The brightly lit room looked cheerful.",
+-      "The brightly-lit room looked cheerful."
++      "well lit room",
++      "well-lit room",
++      "The well lit room looked cheerful.",
++      "The well-lit room looked cheerful."
+     ],
+     [
+       "life saving medicine",
+--- a/shared/punctuation/manual-p12-quality-bank.js
++++ b/shared/punctuation/manual-p12-quality-bank.js
+@@ -72284,8 +72284,8 @@
+     {
+       "templateId": "p12q_gen_hyphen_insert_027",
+       "prompt": "Add the hyphen that avoids ambiguity.",
+-      "stem": "The newly built kit helped younger pupils in the sailing club.",
+-      "model": "The newly-built kit helped younger pupils in the sailing club.",
++      "stem": "The well built kit helped younger pupils in the sailing club.",
++      "model": "The well-built kit helped younger pupils in the sailing club.",
+       "skillIds": [
+         "hyphen"
+       ],
+@@ -72302,14 +72302,14 @@
+       "explanationRuleId": "hyphen.compound-modifier",
+       "validator": {
+         "type": "requiresHyphenatedPhrase",
+-        "phrase": "newly-built"
+-      },
+-      "tests": {
+-        "accept": [
+-          "The newly-built kit helped younger pupils in the sailing club."
+-        ],
+-        "reject": [
+-          "The newly built kit helped younger pupils in the sailing club."
++        "phrase": "well-built"
++      },
++      "tests": {
++        "accept": [
++          "The well-built kit helped younger pupils in the sailing club."
++        ],
++        "reject": [
++          "The well built kit helped younger pupils in the sailing club."
+         ]
+       }
+     },
+@@ -73884,8 +73884,8 @@
+     {
+       "templateId": "p12q_gen_hyphen_insert_077",
+       "prompt": "Add the hyphen that avoids ambiguity.",
+-      "stem": "The newly built shelter helped younger pupils in the computer suite.",
+-      "model": "The newly-built shelter helped younger pupils in the computer suite.",
++      "stem": "The well built shelter helped younger pupils in the computer suite.",
++      "model": "The well-built shelter helped younger pupils in the computer suite.",
+       "skillIds": [
+         "hyphen"
+       ],
+@@ -73902,14 +73902,14 @@
+       "explanationRuleId": "hyphen.compound-modifier",
+       "validator": {
+         "type": "requiresHyphenatedPhrase",
+-        "phrase": "newly-built"
+-      },
+-      "tests": {
+-        "accept": [
+-          "The newly-built shelter helped younger pupils in the computer suite."
+-        ],
+-        "reject": [
+-          "The newly built shelter helped younger pupils in the computer suite."
++        "phrase": "well-built"
++      },
++      "tests": {
++        "accept": [
++          "The well-built shelter helped younger pupils in the computer suite."
++        ],
++        "reject": [
++          "The well built shelter helped younger pupils in the computer suite."
+         ]
+       }
+     },
+--- a/scripts/audit-punctuation-qg-p20-expansion.mjs
++++ b/scripts/audit-punctuation-qg-p20-expansion.mjs
+@@ -32,6 +32,9 @@
+ 
+ const OPEN_TYPED_MODES = new Set(['insert', 'fix', 'combine', 'paragraph', 'transfer']);
+ const OPEN_PRODUCTION_MODES = new Set(['combine', 'paragraph', 'transfer']);
++const ADVERBIAL_LY_HYPHEN_PATTERN = /\b(?:newly|carefully|brightly|slowly|quickly|quietly|neatly|clearly|safely|happily|sadly|fully|partly|mostly|closely|easily|gently|roughly|smoothly|badly|fairly|highly|lightly|loudly|recently|warmly|widely)-[a-z]+\b/gi;
++const MALFORMED_HYPHEN_DESIGN_PATTERN = /\b[a-z]+-[a-z]+design\b/gi;
++const HYF_ARTICLE_PATTERN = /\ba (?:ice[- ]cold|open[- ]ended|up[- ]to[- ]date)\b/gi;
+ const APPROVED_REVIEW_STATUSES = new Set([
+   'approved',
+   'approve',
+@@ -606,6 +609,58 @@
+     .slice(0, 50);
+ }
+ 
++function collectTextParts(value, parts = []) {
++  if (value === null || value === undefined) return parts;
++  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
++    parts.push(String(value));
++    return parts;
++  }
++  if (Array.isArray(value)) {
++    for (const entry of value) collectTextParts(entry, parts);
++    return parts;
++  }
++  if (typeof value === 'object') {
++    for (const entry of Object.values(value)) collectTextParts(entry, parts);
++  }
++  return parts;
++}
++
++function auditedLearnerAndModelText(item) {
++  return collectTextParts({
++    prompt: item.prompt,
++    stem: item.stem,
++    options: item.options,
++    model: item.model,
++    accepted: item.accepted,
++    validator: item.validator,
++    rubric: item.rubric,
++    tests: item.tests,
++  }).join('\n');
++}
++
++function findPatternFindings(items, pattern, phraseKey = 'phrase') {
++  const findings = [];
++  for (const item of items) {
++    const text = auditedLearnerAndModelText(item);
++    const matches = [...new Set([...String(text).matchAll(pattern)].map((match) => match[0].toLowerCase()))];
++    for (const match of matches) {
++      findings.push({
++        itemId: item.id,
++        familyId: item.generatorFamilyId || '',
++        mode: item.mode || '',
++        skillIds: item.skillIds || [],
++        [phraseKey]: match,
++        model: item.model || '',
++      });
++    }
++  }
++  return findings.slice(0, 100);
++}
++
++function findAdverbialLyHyphenFindings(items) {
++  return findPatternFindings(items, ADVERBIAL_LY_HYPHEN_PATTERN);
++}
++
+ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+   const runtime = createPunctuationRuntimeManifest({
+     manifest: PUNCTUATION_CONTENT_MANIFEST,
+@@ -629,6 +684,9 @@
+   const duplicateSurfaces = findSurfaceDuplicates(items);
+   const generatedDuplicateSurfaces = findSurfaceDuplicates(generatedItems);
+   const fixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
++  const adverbialLyHyphenFindings = findAdverbialLyHyphenFindings(items);
++  const malformedHyphenCompoundFindings = findPatternFindings(items, MALFORMED_HYPHEN_DESIGN_PATTERN, 'surface');
++  const hyphenArticleFindings = findPatternFindings(items, HYF_ARTICLE_PATTERN, 'surface');
+   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
+   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
+   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
+@@ -649,6 +707,9 @@
+     generatedDuplicateSurfaceGroups: generatedDuplicateSurfaces.length,
+     fixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
+     legacyFixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
++    hyphenAdverbialLyHyphenFindings: adverbialLyHyphenFindings.length,
++    hyphenMalformedCompoundFindings: malformedHyphenCompoundFindings.length,
++    hyphenArticleAgreementFindings: hyphenArticleFindings.length,
+     modelSelfMarkingFailures: modelFailures.length,
+     byMode: groupCounts(items, (item) => item.mode),
+     bySkill: groupCounts(items, (item) => item.skillIds || []),
+@@ -725,6 +786,18 @@
+       failureCount: modelFailures.length,
+       failures: modelFailures.slice(0, 25),
+     },
++    hyphenCompoundQuality: {
++      ok: adverbialLyHyphenFindings.length === 0
++        && malformedHyphenCompoundFindings.length === 0
++        && hyphenArticleFindings.length === 0,
++      rule: 'Hyphen examples must avoid -ly adverb compounds, malformed no-space compound distractors, and article errors such as "a ice-cold".',
++      adverbialLyFindingCount: adverbialLyHyphenFindings.length,
++      malformedCompoundFindingCount: malformedHyphenCompoundFindings.length,
++      articleAgreementFindingCount: hyphenArticleFindings.length,
++      adverbialLyFindings: adverbialLyHyphenFindings.slice(0, 25),
++      malformedCompoundFindings: malformedHyphenCompoundFindings.slice(0, 25),
++      articleAgreementFindings: hyphenArticleFindings.slice(0, 25),
++    },
+     reviewGovernance: reviewCoverage,
+     negativeVectorCoverage: negativeVectors,
+     heavyPlayVariety: heavyPlay,
+@@ -753,6 +826,7 @@
+     notes: [
+       'This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.',
+       'Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.',
++      'Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.',
+       'Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage.',
+     ],
+   };
+--- a/scripts/validate-punctuation-qg-p20-expansion-report.mjs
++++ b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
+@@ -31,6 +31,7 @@
+ if (gates.generatedFamilyDepth?.ok !== true) fail('generated family depth gate failed', gates.generatedFamilyDepth);
+ if (gates.perSkillBalance?.ok !== true) fail('per-skill balance gate failed', gates.perSkillBalance?.failingSkills || gates.perSkillBalance);
+ if (gates.modelSelfMarking?.ok !== true) fail('model self-marking gate failed', gates.modelSelfMarking);
++if (gates.hyphenCompoundQuality?.ok !== true) fail('hyphen compound quality gate failed', gates.hyphenCompoundQuality);
+ if (gates.reviewGovernance?.ok !== true) fail('review governance gate failed', gates.reviewGovernance);
+ if (gates.negativeVectorCoverage?.ok !== true) fail('negative-vector coverage gate failed', gates.negativeVectorCoverage);
+ if (gates.heavyPlayVariety?.ok !== true) fail('heavy-play variety gate failed', gates.heavyPlayVariety);
+@@ -44,6 +45,9 @@
+ if (counts.generatedDuplicateSurfaceGroups !== undefined && counts.generatedDuplicateSurfaceGroups !== 0) fail('generated duplicate surface groups must be zero', counts);
+ if (counts.fixedDuplicateSurfaceGroups !== undefined && counts.fixedDuplicateSurfaceGroups !== 0) fail('fixed-bank duplicate surface groups must be zero', counts);
+ if (counts.legacyFixedDuplicateSurfaceGroups !== undefined && counts.legacyFixedDuplicateSurfaceGroups !== 0) fail('legacy fixed-bank duplicate surface groups must be zero', counts);
++if (counts.hyphenAdverbialLyHyphenFindings !== 0) fail('adverbial -ly hyphen findings must be zero', counts);
++if (counts.hyphenMalformedCompoundFindings !== 0) fail('malformed hyphen compound findings must be zero', counts);
++if (counts.hyphenArticleAgreementFindings !== 0) fail('hyphen article agreement findings must be zero', counts);
+ if (counts.modelSelfMarkingFailures !== 0) fail('model self-marking failures must be zero', counts);
+ 
+ const skillRows = Array.isArray(report.skillRows) ? report.skillRows : [];
+--- a/tests/punctuation-qg-p20-expansion.test.js
++++ b/tests/punctuation-qg-p20-expansion.test.js
+@@ -2,16 +2,40 @@
+ import assert from 'node:assert/strict';
+ import { execFileSync } from 'node:child_process';
+ import { existsSync, readFileSync } from 'node:fs';
+-import { resolve } from 'node:path';
++import { dirname, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { PUNCTUATION_CURRENT_RELEASE_ID } from '../src/subjects/punctuation/service-contract.js';
+ 
+-const REPORT_PATH = resolve(import.meta.dirname, '..', 'reports/punctuation/punctuation-qg-p20-expansion-audit.json');
++const __dirname = dirname(fileURLToPath(import.meta.url));
++const ROOT = resolve(__dirname, '..');
++const REPORT_PATH = resolve(ROOT, 'reports/punctuation/punctuation-qg-p20-expansion-audit.json');
+ 
+-if (!existsSync(REPORT_PATH)) {
+-  execFileSync(process.execPath, ['scripts/build-punctuation-qg-p20-evidence.mjs'], { stdio: 'inherit' });
+-  execFileSync(process.execPath, ['scripts/audit-punctuation-qg-p20-expansion.mjs', '--out', REPORT_PATH], { stdio: 'inherit' });
++function readJsonReport(path) {
++  if (!existsSync(path)) return null;
++  try {
++    return JSON.parse(readFileSync(path, 'utf8'));
++  } catch {
++    return null;
++  }
+ }
+ 
+-const report = JSON.parse(readFileSync(REPORT_PATH, 'utf8'));
++function rebuildP20Evidence() {
++  execFileSync(process.execPath, ['scripts/build-punctuation-qg-p20-evidence.mjs'], { cwd: ROOT, stdio: 'inherit' });
++  execFileSync(process.execPath, ['scripts/simulate-punctuation-qg-p20-heavy-play.mjs'], { cwd: ROOT, stdio: 'inherit' });
++  execFileSync(process.execPath, ['scripts/audit-punctuation-qg-p20-expansion.mjs', '--out', REPORT_PATH], { cwd: ROOT, stdio: 'inherit' });
++}
++
++function loadP20Report() {
++  let report = readJsonReport(REPORT_PATH);
++  if (!report || report.status !== 'PASS' || report.releaseId !== PUNCTUATION_CURRENT_RELEASE_ID) {
++    rebuildP20Evidence();
++    report = readJsonReport(REPORT_PATH);
++  }
++  assert.ok(report, 'P20 expansion report could not be parsed after rebuild');
++  return report;
++}
++
++const report = loadP20Report();
+ const P20_THRESHOLDS = report.thresholds;
+ 
+ test('P20 release identity and runtime pool scale are certified', () => {
+@@ -39,8 +63,12 @@
+   }
+ });
+ 
+-test('P20 marking, review governance, and negative vectors are production-clean', () => {
++test('P20 marking, hyphen quality, review governance, and negative vectors are production-clean', () => {
+   assert.equal(report.gates.modelSelfMarking.ok, true, JSON.stringify(report.gates.modelSelfMarking, null, 2));
++  assert.equal(report.gates.hyphenCompoundQuality.ok, true, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
++  assert.equal(report.counts.hyphenAdverbialLyHyphenFindings, 0, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
++  assert.equal(report.counts.hyphenMalformedCompoundFindings, 0, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
++  assert.equal(report.counts.hyphenArticleAgreementFindings, 0, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
+   assert.equal(report.gates.reviewGovernance.ok, true, JSON.stringify(report.gates.reviewGovernance, null, 2));
+   assert.equal(report.gates.negativeVectorCoverage.ok, true, JSON.stringify(report.gates.negativeVectorCoverage, null, 2));
+ });
+--- a/tests/punctuation-qg-p20-expansion-report-validator.test.js
++++ b/tests/punctuation-qg-p20-expansion-report-validator.test.js
+@@ -1,24 +1,42 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+-import { spawnSync } from 'node:child_process';
+-import { resolve } from 'node:path';
++import { execFileSync, spawnSync } from 'node:child_process';
++import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
++import { dirname, join, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { PUNCTUATION_CURRENT_RELEASE_ID } from '../src/subjects/punctuation/service-contract.js';
+ 
+-const VALIDATOR = resolve(import.meta.dirname, '..', 'scripts/validate-punctuation-qg-p20-expansion-report.mjs');
+-const CURRENT_REPORT = resolve(import.meta.dirname, '..', 'reports/punctuation/punctuation-qg-p20-expansion-audit.json');
+-const BASELINE_DUPLICATE_REPORT = resolve(
+-  import.meta.dirname,
+-  '..',
+-  'docs/plans/james/hotfixes/archive/3. punctuation-p20-hotfix-redelivery-0508/validation/baseline-p20-expansion-audit.json',
+-);
++const __dirname = dirname(fileURLToPath(import.meta.url));
++const ROOT = resolve(__dirname, '..');
++const VALIDATOR = resolve(ROOT, 'scripts/validate-punctuation-qg-p20-expansion-report.mjs');
++const CURRENT_REPORT = resolve(ROOT, 'reports/punctuation/punctuation-qg-p20-expansion-audit.json');
++
++function readJsonReport(path) {
++  if (!existsSync(path)) return null;
++  try {
++    return JSON.parse(readFileSync(path, 'utf8'));
++  } catch {
++    return null;
++  }
++}
++
++function ensureCurrentP20Report() {
++  const existing = readJsonReport(CURRENT_REPORT);
++  if (existing?.status === 'PASS' && existing.releaseId === PUNCTUATION_CURRENT_RELEASE_ID) return;
++  execFileSync(process.execPath, ['scripts/build-punctuation-qg-p20-evidence.mjs'], { cwd: ROOT, stdio: 'inherit' });
++  execFileSync(process.execPath, ['scripts/simulate-punctuation-qg-p20-heavy-play.mjs'], { cwd: ROOT, stdio: 'inherit' });
++  execFileSync(process.execPath, ['scripts/audit-punctuation-qg-p20-expansion.mjs', '--out', CURRENT_REPORT], { cwd: ROOT, stdio: 'inherit' });
++}
+ 
+ function runValidator(reportPath) {
+   return spawnSync(process.execPath, [VALIDATOR, reportPath], {
+-    cwd: resolve(import.meta.dirname, '..'),
++    cwd: ROOT,
+     encoding: 'utf8',
+   });
+ }
+ 
+-test('P20 expansion report validator accepts the current duplicate-free report', () => {
++test('P20 expansion report validator accepts the current duplicate-free and hyphen-clean report', () => {
++  ensureCurrentP20Report();
+   const result = runValidator(CURRENT_REPORT);
+ 
+   assert.equal(result.status, 0, result.stderr || result.stdout);
+@@ -26,9 +44,25 @@
+ });
+ 
+ test('P20 expansion report validator rejects stale fixed-bank duplicate reports', () => {
+-  const result = runValidator(BASELINE_DUPLICATE_REPORT);
++  ensureCurrentP20Report();
++  const report = readJsonReport(CURRENT_REPORT);
++  assert.ok(report, 'current P20 report must exist before synthesising stale duplicate fixture');
++  const tempDir = mkdtempSync('/tmp/punctuation-p20-duplicate-report-');
++  const duplicateReport = {
++    ...report,
++    counts: {
++      ...report.counts,
++      duplicateSurfaceGroups: 6,
++      fixedDuplicateSurfaceGroups: 6,
++      legacyFixedDuplicateSurfaceGroups: 6,
++    },
++  };
++  const duplicatePath = join(tempDir, 'duplicate-report.json');
++  writeFileSync(duplicatePath, JSON.stringify(duplicateReport, null, 2));
++
++  const result = runValidator(duplicatePath);
+ 
+   assert.notEqual(result.status, 0, 'baseline duplicate report unexpectedly passed validation');
+-  assert.match(result.stderr, /legacy fixed-bank duplicate surface groups must be zero/);
++  assert.match(result.stderr, /runtime duplicate surface groups must be zero|fixed-bank duplicate surface groups must be zero|legacy fixed-bank duplicate surface groups must be zero/);
+   assert.match(result.stderr, /"legacyFixedDuplicateSurfaceGroups": 6/);
+ });
+--- /dev/null
++++ b/tests/punctuation-hyphen-quality.test.js
+@@ -0,0 +1,85 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { readFileSync } from 'node:fs';
++
++import { PUNCTUATION_CONTENT_MANIFEST } from '../shared/punctuation/content.js';
++import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
++
++const ADVERBIAL_LY_HYPHEN_PATTERN = /\b(?:newly|carefully|brightly|slowly|quickly|quietly|neatly|clearly|safely|happily|sadly|fully|partly|mostly|closely|easily|gently|roughly|smoothly|badly|fairly|highly|lightly|loudly|recently|warmly|widely)-[a-z]+\b/gi;
++const MALFORMED_HYPHEN_DESIGN_PATTERN = /\b[a-z]+-[a-z]+design\b/gi;
++const HYF_ARTICLE_PATTERN = /\ba (?:ice[- ]cold|open[- ]ended|up[- ]to[- ]date)\b/gi;
++const SOURCE_BANKS = [
++  'shared/punctuation/manual-expansion-bank.js',
++  'shared/punctuation/manual-deep-expansion-bank.js',
++  'shared/punctuation/manual-p12-quality-bank.js',
++  'shared/punctuation/p20-systematic-expansion-bank.js',
++];
++
++function adverbialLyHyphenFindings(text) {
++  return [...new Set(String(text).match(ADVERBIAL_LY_HYPHEN_PATTERN) || [])]
++    .map((phrase) => phrase.toLowerCase())
++    .sort();
++}
++
++function collectTextParts(value, parts = []) {
++  if (value === null || value === undefined) return parts;
++  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
++    parts.push(String(value));
++    return parts;
++  }
++  if (Array.isArray(value)) {
++    for (const entry of value) collectTextParts(entry, parts);
++    return parts;
++  }
++  if (typeof value === 'object') {
++    for (const entry of Object.values(value)) collectTextParts(entry, parts);
++  }
++  return parts;
++}
++
++test('Punctuation hyphen runtime avoids -ly compounds, no-space distractors, and article errors', () => {
++  const runtime = createPunctuationRuntimeManifest({
++    manifest: PUNCTUATION_CONTENT_MANIFEST,
++    generatedPerFamily: PRODUCTION_DEPTH,
++  });
++
++  const findings = {
++    adverbialLy: [],
++    malformedNoSpace: [],
++    articleErrors: [],
++  };
++  for (const item of runtime.items) {
++    if (!Array.isArray(item.skillIds) || !item.skillIds.includes('hyphen')) continue;
++    const text = collectTextParts({
++      prompt: item.prompt,
++      stem: item.stem,
++      options: item.options,
++      model: item.model,
++      accepted: item.accepted,
++      validator: item.validator,
++      rubric: item.rubric,
++      tests: item.tests,
++    }).join('\n');
++    for (const phrase of adverbialLyHyphenFindings(text)) {
++      findings.adverbialLy.push({ itemId: item.id, familyId: item.generatorFamilyId || '', mode: item.mode, phrase });
++    }
++    for (const surface of [...new Set(String(text).match(MALFORMED_HYPHEN_DESIGN_PATTERN) || [])]) {
++      findings.malformedNoSpace.push({ itemId: item.id, familyId: item.generatorFamilyId || '', mode: item.mode, surface: surface.toLowerCase() });
++    }
++    for (const surface of [...new Set(String(text).match(HYF_ARTICLE_PATTERN) || [])]) {
++      findings.articleErrors.push({ itemId: item.id, familyId: item.generatorFamilyId || '', mode: item.mode, surface: surface.toLowerCase() });
++    }
++  }
++
++  assert.deepEqual(findings, { adverbialLy: [], malformedNoSpace: [], articleErrors: [] });
++});
++
++test('Punctuation manual and systematic hyphen banks stay free of -ly adverb hyphen examples', () => {
++  const findings = [];
++  for (const path of SOURCE_BANKS) {
++    const phrases = adverbialLyHyphenFindings(readFileSync(path, 'utf8'));
++    for (const phrase of phrases) findings.push({ path, phrase });
++  }
++
++  assert.deepEqual(findings, []);
++});

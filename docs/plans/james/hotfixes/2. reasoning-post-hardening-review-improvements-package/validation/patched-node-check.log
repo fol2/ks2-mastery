@@ -1,0 +1,6 @@
+Node: v22.16.0
+node --check shared/reasoning/content.js
+node --check worker/src/subjects/reasoning/engine.js
+node --check src/subjects/reasoning/command-actions.js
+node --check tests/reasoning-engine-rewards.test.js
+JSX syntax not checked by node --check directly; requires build/esbuild.

@@ -1,0 +1,240 @@
+diff --git a/shared/reading/content.js b/shared/reading/content.js
+index 00fa695..57cf267 100644
+--- a/shared/reading/content.js
++++ b/shared/reading/content.js
+@@ -10803,7 +10803,7 @@ export const READING_TEST_PAPERS = Object.freeze([
+ ]);
+ 
+ export const READING_GENRES = Object.freeze(['fiction', 'non-fiction', 'poetry']);
+-export const READING_MODES = Object.freeze(['guided', 'core', 'smart', 'evidence', 'vocab', 'inference', 'punct', 'stamina', 'test']);
++export const READING_MODES = Object.freeze(['guided', 'core', 'smart', 'evidence', 'vocab', 'inference', 'punct', 'stamina', 'stretch', 'test']);
+ 
+ export function readingPassageMap(passages = READING_PASSAGES) {
+   return Object.freeze(Object.fromEntries(passages.map((passage) => [passage.id, passage])));
+diff --git a/shared/reading/metadata.js b/shared/reading/metadata.js
+index a35326d..950cbb0 100644
+--- a/shared/reading/metadata.js
++++ b/shared/reading/metadata.js
+@@ -65,7 +65,7 @@ export const READING_QUESTION_TYPE_LABELS = Object.freeze({
+ });
+ 
+ export const READING_GENRES = Object.freeze(['fiction', 'non-fiction', 'poetry']);
+-export const READING_MODES = Object.freeze(['guided', 'core', 'smart', 'evidence', 'vocab', 'inference', 'punct', 'stamina', 'test']);
++export const READING_MODES = Object.freeze(['guided', 'core', 'smart', 'evidence', 'vocab', 'inference', 'punct', 'stamina', 'stretch', 'test']);
+ 
+ export function readingContentSummary() {
+   return {
+diff --git a/src/subjects/reading/components/ReadingPracticeSurface.jsx b/src/subjects/reading/components/ReadingPracticeSurface.jsx
+index 1a866df..f735d8e 100644
+--- a/src/subjects/reading/components/ReadingPracticeSurface.jsx
++++ b/src/subjects/reading/components/ReadingPracticeSurface.jsx
+@@ -67,6 +67,7 @@ const READING_HERO_MODE_REGION = Object.freeze({
+   inference: 'c',
+   punct: 'd',
+   stamina: 'e',
++  stretch: 'e',
+   test: 'e',
+ });
+ 
+@@ -166,12 +167,14 @@ function hasMarkedQuestion(question) {
+ 
+ function markActionLabel(session) {
+   if (session?.strict) return 'Mark whole paper';
++  if (session?.mode === 'stretch') return 'Mark challenge';
+   if (session?.viewMode === 'list') return 'Mark this section';
+   return 'Mark now';
+ }
+ 
+ function markActionHint(session) {
+   if (session?.strict) return 'Checks every saved answer in this paper and then shows feedback.';
++  if (session?.mode === 'stretch') return 'Checks the full stretch set after you have saved your answers, then shows feedback.';
+   if (session?.viewMode === 'list') return 'Checks the visible question list and then shows feedback for this text.';
+   return 'Checks your saved answer now and then shows feedback.';
+ }
+diff --git a/src/subjects/reading/metadata.js b/src/subjects/reading/metadata.js
+index b0e148d..8699174 100644
+--- a/src/subjects/reading/metadata.js
++++ b/src/subjects/reading/metadata.js
+@@ -18,6 +18,7 @@ export const READING_MODE_OPTIONS = Object.freeze([
+   { id: 'inference', label: 'Inference lab', description: 'Inference, author choice, comparison and structure practice.' },
+   { id: 'punct', label: 'Punctuation lens', description: 'Punctuation only where it supports meaning, voice and phrasing.' },
+   { id: 'stamina', label: 'Stamina builder', description: 'Longer texts and delayed feedback for sustained reading.' },
++  { id: 'stretch', label: 'Stretch challenge', description: 'Harder long-text questions with delayed feedback and extra-credit depth.' },
+   { id: 'test', label: 'SATs-style paper', description: 'Three original texts with delayed feedback and paper-style timing.' },
+ ]);
+ 
+diff --git a/tests/reading-content-contract.test.js b/tests/reading-content-contract.test.js
+index 01629cc..509879c 100644
+--- a/tests/reading-content-contract.test.js
++++ b/tests/reading-content-contract.test.js
+@@ -5,9 +5,13 @@ import {
+   READING_PASSAGES,
+   READING_TEST_PAPERS,
+   READING_SKILLS,
++  READING_MODES,
+   readingContentSummary,
+ } from '../shared/reading/content.js';
+-import { readingContentSummary as readingPublicContentSummary } from '../shared/reading/metadata.js';
++import {
++  READING_MODES as READING_PUBLIC_MODES,
++  readingContentSummary as readingPublicContentSummary,
++} from '../shared/reading/metadata.js';
+ import { publicEventRowToRecord } from '../worker/src/row-transforms.js';
+ 
+ function norm(value) {
+@@ -48,6 +52,13 @@ test('reading content bank has varied original passages, papers and KS2 domains'
+   assert.equal(summary.longPassageCount, 166);
+ });
+ 
++
++test('Reading exposes a stretch challenge mode consistently in server and browser metadata', () => {
++  assert.ok(READING_MODES.includes('stretch'));
++  assert.ok(READING_PUBLIC_MODES.includes('stretch'));
++  assert.deepEqual(READING_PUBLIC_MODES, READING_MODES);
++});
++
+ test('reading ids are unique and evidence quotes exist in their source passage', () => {
+   const passageIds = new Set();
+   const questionIds = new Set();
+@@ -147,6 +158,17 @@ test('reading test papers only reference existing passages and questions and sum
+   }
+ });
+ 
++
++test('reading setup source advertises stretch mode without duplicate hero-card attributes', async () => {
++  const ui = await readFile('src/subjects/reading/components/ReadingPracticeSurface.jsx', 'utf8');
++  const metadata = await readFile('src/subjects/reading/metadata.js', 'utf8');
++  assert.match(metadata, /id: 'stretch'/);
++  assert.match(metadata, /Stretch challenge/);
++  assert.match(ui, /stretch: 'e'/);
++  assert.match(ui, /Mark challenge/);
++  assert.equal((ui.match(/data-text-tone=\{textTone\}/g) || []).length, 1);
++});
++
+ test('browser Reading metadata stays answer-safe and summary-compatible', async () => {
+   assert.deepEqual(readingPublicContentSummary(), readingContentSummary());
+ 
+diff --git a/tests/reading-session-interface.test.js b/tests/reading-session-interface.test.js
+index 1af778e..cf1a489 100644
+--- a/tests/reading-session-interface.test.js
++++ b/tests/reading-session-interface.test.js
+@@ -76,6 +76,17 @@ test('reading landing uses the shared subject setup shell used by mature subject
+   assert.doesNotMatch(ui, /<form onSubmit=\{start\} className="setup-form reading-setup-form"/);
+ });
+ 
++
++test('reading setup exposes stretch challenge without duplicate hero-card attributes', () => {
++  const ui = source('src/subjects/reading/components/ReadingPracticeSurface.jsx');
++  const metadata = source('src/subjects/reading/metadata.js');
++  assert.match(metadata, /id: 'stretch'/);
++  assert.match(metadata, /Stretch challenge/);
++  assert.match(ui, /stretch: 'e'/);
++  assert.match(ui, /Mark challenge/);
++  assert.equal((ui.match(/data-text-tone=\{textTone\}/g) || []).length, 1);
++});
++
+ test('reading marking controls use mode-specific labels instead of a generic finish action', () => {
+   const ui = source('src/subjects/reading/components/ReadingPracticeSurface.jsx');
+   assert.match(ui, /function markActionLabel/);
+diff --git a/tests/worker-reading-runtime.test.js b/tests/worker-reading-runtime.test.js
+index aa4f92a..e1891f2 100644
+--- a/tests/worker-reading-runtime.test.js
++++ b/tests/worker-reading-runtime.test.js
+@@ -35,6 +35,25 @@ test('reading engine starts a passage-first session and hides answer metadata be
+   assert.equal(readModel.session.currentQuestion.explanation, undefined);
+ });
+ 
++
++test('reading stretch challenge selects delayed high-depth long-text practice without punctuation-only items', () => {
++  const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
++  const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'stretch', viewMode: 'one' }, requestId: 'stretch-1' });
++  const session = started.state.session;
++  assert.equal(session.mode, 'stretch');
++  assert.equal(session.strict, false);
++  assert.equal(session.delayedFeedback, true);
++  assert.equal(session.sections.length, 1);
++  assert.equal(session.sections[0].questionIds.length, 6);
++  const passage = READING_PASSAGES.find((item) => item.id === session.sections[0].passageId);
++  assert.ok(passage?.isLong || passage?.difficulty >= 4, 'stretch should choose a long or high-difficulty passage');
++  const questions = session.sections[0].questionIds.map((qid) => passage.questions.find((question) => question.id === qid));
++  const types = new Set(questions.map((question) => question?.type));
++  assert.ok(types.size >= 3, 'stretch should not be only one repeated question type');
++  assert.equal(questions.some((question) => ['open', 'evidenceShort', 'match', 'order'].includes(question?.type)), true);
++  assert.equal(questions.some((question) => String(question?.skill || '').startsWith('P')), false);
++});
++
+ test('reading engine marks deterministically and then exposes feedback safely', () => {
+   const engine = createServerReadingEngine({ now: () => 1000, random: () => 0 });
+   const started = engine.apply({ learnerId: 'l1', command: 'start-session', payload: { mode: 'guided', viewMode: 'one' }, requestId: 'r1' });
+diff --git a/worker/src/subjects/reading/engine.js b/worker/src/subjects/reading/engine.js
+index 0afb034..41e0bd0 100644
+--- a/worker/src/subjects/reading/engine.js
++++ b/worker/src/subjects/reading/engine.js
+@@ -13,6 +13,16 @@ const PASSAGE_MAP = readingPassageMap();
+ const QUESTION_REF_MAP = readingQuestionRefMap();
+ const SKILL_IDS = Object.freeze(Object.keys(READING_SKILLS));
+ const PUNCTUATION_SKILL_IDS = new Set(['P1', 'P2', 'P3', 'P4']);
++const STRETCH_SKILL_IDS = new Set(['2a', '2c', '2d', '2e', '2f', '2g', '2h']);
++const STRETCH_TYPE_PRIORITY = Object.freeze({
++  open: 1.4,
++  evidenceShort: 1.2,
++  match: 0.8,
++  order: 0.7,
++  multiSelect: 0.55,
++  short: 0.25,
++  mcq: 0.15,
++});
+ 
+ const DEFAULT_PREFS = Object.freeze({
+   mode: 'smart',
+@@ -659,6 +669,10 @@ function relevantQuestionsForMode(passage, mode, skillFilter, allowSkillFallback
+   if (mode === 'inference') questions = questions.filter((question) => ['2d', '2g', '2h', '2f'].includes(question.skill));
+   if (mode === 'punct') questions = questions.filter((question) => PUNCTUATION_SKILL_IDS.has(question.skill));
+   if (mode === 'stamina') questions = passage.isLong ? questions.filter((question) => !PUNCTUATION_SKILL_IDS.has(question.skill)) : [];
++  if (mode === 'stretch') {
++    questions = questions.filter((question) => !PUNCTUATION_SKILL_IDS.has(question.skill)
++      && (STRETCH_SKILL_IDS.has(question.skill) || Number(question.marks || 0) >= 2));
++  }
+   if (!questions.length && skillFilter && allowSkillFallback) questions = (passage.questions || []).filter((question) => !PUNCTUATION_SKILL_IDS.has(question.skill));
+   return questions;
+ }
+@@ -689,6 +703,7 @@ function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
+     if (prefs.difficulty && Number(passage.difficulty) !== Number(prefs.difficulty)) return false;
+     if (prefs.mode === 'guided' && passage.difficulty > 3) return false;
+     if (prefs.mode === 'stamina' && !passage.isLong) return false;
++    if (prefs.mode === 'stretch' && !(passage.isLong || Number(passage.difficulty || 0) >= 4)) return false;
+     return relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch).length > 0;
+   });
+   if (!candidates.length) return null;
+@@ -733,15 +748,20 @@ function chooseQuestionIds(data, passage, prefs, nowValue = Date.now()) {
+   let questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
+   if (!questions.length) questions = (passage.questions || []).slice();
+   if (prefs.mode === 'stamina') return questions.map((question) => question.id);
+-  questions.sort((a, b) => questionWeakness(data, b, nowValue) - questionWeakness(data, a, nowValue));
+-  const limit = (prefs.mode === 'smart' || prefs.mode === 'guided') ? 4 : prefs.mode === 'punct' ? 3 : 5;
++  const scoreQuestion = (question) => questionWeakness(data, question, nowValue)
++    + (prefs.mode === 'stretch' ? ((STRETCH_TYPE_PRIORITY[question.type] || 0) + Math.min(0.4, Number(question.marks || 0) * 0.08)) : 0);
++  questions.sort((a, b) => scoreQuestion(b) - scoreQuestion(a));
++  const limit = prefs.mode === 'stretch' ? 6 : (prefs.mode === 'smart' || prefs.mode === 'guided') ? 4 : prefs.mode === 'punct' ? 3 : 5;
+   const picked = [];
+   const seenSkills = new Set();
++  const seenTypes = new Set();
+   for (const question of questions) {
+     if (picked.length >= limit) break;
+     if (seenSkills.has(question.skill) && picked.length < Math.min(3, questions.length)) continue;
++    if (prefs.mode === 'stretch' && seenTypes.has(question.type) && picked.length < Math.min(4, questions.length)) continue;
+     picked.push(question);
+     seenSkills.add(question.skill);
++    seenTypes.add(question.type);
+   }
+   for (const question of questions) {
+     if (picked.length >= Math.min(limit, questions.length)) break;
+@@ -802,7 +822,7 @@ function buildPracticeSession(data, prefs, { nowValue, random, heroContext } = {
+     id: uid('reading_session'),
+     mode: prefs.mode,
+     strict: false,
+-    delayedFeedback: prefs.mode === 'stamina' || prefs.viewMode === 'list',
++    delayedFeedback: prefs.mode === 'stamina' || prefs.mode === 'stretch' || prefs.viewMode === 'list',
+     viewMode: prefs.viewMode,
+     startedAt: nowValue,
+     currentSectionIndex: 0,

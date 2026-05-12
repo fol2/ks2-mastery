@@ -1,0 +1,50 @@
+TAP version 13
+# Subtest: buildGrammarPracticeQueue produces a variety of templates when pool is wide
+ok 1 - buildGrammarPracticeQueue produces a variety of templates when pool is wide
+  ---
+  duration_ms: 70.323349
+  ...
+# Subtest: buildGrammarPracticeQueue avoids known P14 same-template duplicate paths
+ok 2 - buildGrammarPracticeQueue avoids known P14 same-template duplicate paths
+  ---
+  duration_ms: 22.595364
+  ...
+# Subtest: buildGrammarPracticeQueue keeps 100 smart five-question sessions template-distinct when pool allows
+ok 3 - buildGrammarPracticeQueue keeps 100 smart five-question sessions template-distinct when pool allows
+  ---
+  duration_ms: 158.789631
+  ...
+# Subtest: buildGrammarPracticeQueue avoids long same-question-type runs when alternatives exist
+ok 4 - buildGrammarPracticeQueue avoids long same-question-type runs when alternatives exist
+  ---
+  duration_ms: 8684.561271
+  ...
+# Subtest: buildGrammarPracticeQueue is deterministic for the same seed and state
+ok 5 - buildGrammarPracticeQueue is deterministic for the same seed and state
+  ---
+  duration_ms: 19.511768
+  ...
+# Subtest: buildGrammarMiniPack returns the requested size and avoids template duplication when pool allows
+ok 6 - buildGrammarMiniPack returns the requested size and avoids template duplication when pool allows
+  ---
+  duration_ms: 5.808848
+  ...
+# Subtest: buildGrammarMiniPack spreads question types when possible
+ok 7 - buildGrammarMiniPack spreads question types when possible
+  ---
+  duration_ms: 8.076878
+  ...
+# Subtest: buildGrammarPracticeQueue tolerates empty / malformed mastery without throwing
+ok 8 - buildGrammarPracticeQueue tolerates empty / malformed mastery without throwing
+  ---
+  duration_ms: 10.713668
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9383.720243

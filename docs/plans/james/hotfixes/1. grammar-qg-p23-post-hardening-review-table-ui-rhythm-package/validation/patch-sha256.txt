@@ -1,0 +1,1 @@
+282a3ac58620efa5189976258a224f6fca4abcfacbd6e2cbae5a20e4c77ac1e9  /mnt/data/grammar-qg-p23-post-hardening-review-table-ui-rhythm-package/patches/001-grammar-qg-p23-table-row-options-and-practice-rhythm.patch

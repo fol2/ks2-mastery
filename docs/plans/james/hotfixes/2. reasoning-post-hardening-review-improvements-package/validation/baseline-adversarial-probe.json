@@ -1,0 +1,16 @@
+{
+  "domainLeakedBeforeMark": true,
+  "retryStillQueuedAfterStart": false,
+  "retryRemovedAfterFinalise": true,
+  "staleFeedbackAfterMove": true,
+  "blankListResponseCleared": false,
+  "supportedEvidenceEventTypes": [
+    "reasoning.answer-submitted",
+    "reasoning.evidence-earned",
+    "reasoning.session-completed"
+  ],
+  "supportedAwardedEvidence": true,
+  "angleDegreeSuffixAccepted": false,
+  "areaCm2SuffixAccepted": false,
+  "workingCapturedByAction": false
+}

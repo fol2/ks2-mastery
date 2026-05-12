@@ -1,0 +1,9 @@
+ shared/reading/content.js                          |  2 +-
+ shared/reading/metadata.js                         |  2 +-
+ .../reading/components/ReadingPracticeSurface.jsx  |  3 +++
+ src/subjects/reading/metadata.js                   |  1 +
+ tests/reading-content-contract.test.js             | 24 +++++++++++++++++++-
+ tests/reading-session-interface.test.js            | 11 +++++++++
+ tests/worker-reading-runtime.test.js               | 19 ++++++++++++++++
+ worker/src/subjects/reading/engine.js              | 26 +++++++++++++++++++---
+ 8 files changed, 82 insertions(+), 6 deletions(-)

@@ -1,0 +1,606 @@
+{
+  "templateCount": 546,
+  "worstCount": 1084,
+  "worst": [
+    {
+      "mode": "satsset",
+      "focus": "formality",
+      "seed": 198,
+      "run": 9,
+      "types": [
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "classify"
+      ],
+      "ids": [
+        "qg_p21_formality_closed_choice_variety",
+        "qg_p18_p16_formality_least_formal_choice",
+        "proc2_formality_choice",
+        "qg_p18_p15_formality_formal_choice",
+        "qg_p18_p16_formality_register_context_choice",
+        "qg_p18_p16_formality_choose_formal_word",
+        "qg_p4_cohesion_formality_transfer",
+        "qg_p18_p17_formality_precision_choice",
+        "formality_pairs",
+        "qg_p18_p18_formality_sat_table_classification"
+      ]
+    },
+    {
+      "mode": "smart",
+      "focus": "parenthesis_commas",
+      "seed": 163,
+      "run": 8,
+      "types": [
+        "explain",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "fix"
+      ],
+      "ids": [
+        "qg_p18_p16_parenthesis_commas_explain_parenthesis",
+        "qg_p18_p18_parenthesis_commas_diagnostic_identify",
+        "qg_p18_p15_parenthesis_commas_parenthesis_choice",
+        "qg_p18_p17_parenthesis_commas_precision_choice",
+        "qg_p14_parenthesis_commas_diagnostic_choice",
+        "qg_p18_p15_parenthesis_commas_parenthesis_transfer",
+        "qg_p14_parenthesis_commas_mixed_transfer",
+        "qg_p14_parenthesis_commas_constructed_rewrite",
+        "qg_p4_relative_parenthesis_transfer",
+        "qg_p18_p15_parenthesis_commas_parenthesis_fix"
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focus": "parenthesis_commas",
+      "seed": 163,
+      "run": 8,
+      "types": [
+        "explain",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "fix"
+      ],
+      "ids": [
+        "qg_p18_p16_parenthesis_commas_explain_parenthesis",
+        "qg_p18_p18_parenthesis_commas_diagnostic_identify",
+        "qg_p18_p15_parenthesis_commas_parenthesis_choice",
+        "qg_p18_p17_parenthesis_commas_precision_choice",
+        "qg_p14_parenthesis_commas_diagnostic_choice",
+        "qg_p18_p15_parenthesis_commas_parenthesis_transfer",
+        "qg_p14_parenthesis_commas_mixed_transfer",
+        "qg_p14_parenthesis_commas_constructed_rewrite",
+        "qg_p4_relative_parenthesis_transfer",
+        "qg_p18_p15_parenthesis_commas_parenthesis_fix"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "formality",
+      "seed": 46,
+      "run": 8,
+      "types": [
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "explain",
+        "classify"
+      ],
+      "ids": [
+        "proc2_formality_choice",
+        "qg_p21_formality_closed_choice_variety",
+        "qg_p18_p15_formality_formality_transfer",
+        "qg_p18_p18_formality_diagnostic_identify",
+        "qg_p4_cohesion_formality_transfer",
+        "qg_p18_p15_formality_formal_choice",
+        "qg_p18_p16_formality_register_context_choice",
+        "formality_pairs",
+        "qg_p18_p18_formality_explain_reasoning",
+        "qg_p18_p17_formality_table_classify"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "formality",
+      "seed": 154,
+      "run": 8,
+      "types": [
+        "classify",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "explain"
+      ],
+      "ids": [
+        "qg_p18_p16_formality_informal_to_formal_pair_table",
+        "qg_p21_formality_closed_choice_variety",
+        "qg_p4_cohesion_formality_transfer",
+        "proc2_formality_choice",
+        "qg_p18_p15_formality_formality_transfer",
+        "qg_p18_p16_formality_choose_formal_word",
+        "qg_p18_p15_formality_formal_choice",
+        "formality_pairs",
+        "qg_p18_p17_formality_precision_choice",
+        "qg_p3_formality_explain"
+      ]
+    },
+    {
+      "mode": "smart",
+      "focus": "apostrophes_possession",
+      "seed": 150,
+      "run": 7,
+      "types": [
+        "explain",
+        "rewrite",
+        "classify",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose"
+      ],
+      "ids": [
+        "qg_p18_p17_apostrophes_possession_written_reason",
+        "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+        "qg_p18_p18_apostrophes_possession_sat_table_classification",
+        "qg_p18_p18_apostrophes_possession_diagnostic_identify",
+        "qg_p18_p15_apostrophes_possession_possessive_choice",
+        "qg_p18_p16_apostrophes_possession_choose_possessive_phrase",
+        "proc_apostrophe_possession_choice",
+        "qg_p21_apostrophes_possession_closed_choice_variety",
+        "qg_p18_p16_apostrophes_possession_meaning_change_choice",
+        "qg_p4_possession_hyphen_clarity_transfer"
+      ]
+    },
+    {
+      "mode": "trouble",
+      "focus": "apostrophes_possession",
+      "seed": 150,
+      "run": 7,
+      "types": [
+        "explain",
+        "rewrite",
+        "classify",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose"
+      ],
+      "ids": [
+        "qg_p18_p17_apostrophes_possession_written_reason",
+        "qg_p18_p15_apostrophes_possession_possessive_rewrite",
+        "qg_p18_p18_apostrophes_possession_sat_table_classification",
+        "qg_p18_p18_apostrophes_possession_diagnostic_identify",
+        "qg_p18_p15_apostrophes_possession_possessive_choice",
+        "qg_p18_p16_apostrophes_possession_choose_possessive_phrase",
+        "proc_apostrophe_possession_choice",
+        "qg_p21_apostrophes_possession_closed_choice_variety",
+        "qg_p18_p16_apostrophes_possession_meaning_change_choice",
+        "qg_p4_possession_hyphen_clarity_transfer"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "noun_phrases",
+      "seed": 7,
+      "run": 7,
+      "types": [
+        "choose",
+        "classify",
+        "explain",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose"
+      ],
+      "ids": [
+        "expanded_noun_phrase_choice",
+        "qg_p4_word_class_noun_phrase_transfer",
+        "qg_p21_noun_phrases_explanation_choice_variety",
+        "qg_p18_p17_noun_phrases_precision_choice",
+        "qg_p18_p16_noun_phrases_expanded_or_not_choice",
+        "qg_p18_p15_noun_phrases_identify_expanded_np",
+        "qg_p18_p15_noun_phrases_np_not_clause",
+        "qg_p14_expanded_noun_phrases_mixed_transfer",
+        "qg_p18_p17_noun_phrases_examiner_trap_contrast",
+        "qg_p18_p18_noun_phrases_diagnostic_identify"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "adverbials",
+      "seed": 194,
+      "run": 7,
+      "types": [
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "explain",
+        "classify",
+        "choose"
+      ],
+      "ids": [
+        "qg_p18_p18_adverbials_diagnostic_identify",
+        "qg_p14_fronted_adverbials_mixed_transfer",
+        "qg_p18_p17_adverbials_precision_choice",
+        "qg_p21_adverbials_closed_choice_variety",
+        "fronted_adverbial_choose",
+        "qg_p18_p16_adverbials_choose_best_opening_adverbial",
+        "qg_p14_fronted_adverbials_diagnostic_choice",
+        "qg_p14_fronted_adverbials_explain_why",
+        "qg_p18_p17_adverbials_table_classify",
+        "qg_p18_p16_adverbials_adverbial_or_not"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "clauses",
+      "seed": 56,
+      "run": 7,
+      "types": [
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "identify",
+        "fix",
+        "classify"
+      ],
+      "ids": [
+        "qg_p14_subordinate_clauses_diagnostic_choice",
+        "qg_p18_p16_clauses_fragment_or_sentence",
+        "qg_p18_p18_clauses_diagnostic_identify",
+        "qg_p18_p15_clauses_clause_transfer",
+        "qg_p18_p16_clauses_clause_order_meaning_transfer",
+        "qg_p18_p17_clauses_precision_choice",
+        "qg_p21_clauses_closed_choice_variety",
+        "qg_p18_p15_clauses_identify_sub_clause",
+        "qg_p18_p18_clauses_precision_repair_or_rewrite",
+        "qg_p18_p16_clauses_main_vs_subordinate_table"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "clauses",
+      "seed": 71,
+      "run": 7,
+      "types": [
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "explain",
+        "explain",
+        "choose"
+      ],
+      "ids": [
+        "qg_p18_p18_clauses_diagnostic_identify",
+        "qg_p14_subordinate_clauses_diagnostic_choice",
+        "qg_p18_p17_clauses_examiner_trap_contrast",
+        "qg_p18_p17_clauses_precision_choice",
+        "qg_p18_p16_clauses_clause_order_meaning_transfer",
+        "qg_p4_adverbial_clause_boundary_transfer",
+        "qg_p14_subordinate_clauses_mixed_transfer",
+        "qg_p18_p18_clauses_explain_reasoning",
+        "qg_p18_p15_clauses_explain_sub_clause",
+        "qg_p18_p16_clauses_fragment_or_sentence"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "standard_english",
+      "seed": 40,
+      "run": 7,
+      "types": [
+        "classify",
+        "explain",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "classify"
+      ],
+      "ids": [
+        "qg_p18_p16_standard_english_standard_pairs_table",
+        "qg_p18_p18_standard_english_explain_reasoning",
+        "standard_english_pairs",
+        "qg_p18_p17_standard_english_precision_choice",
+        "qg_p14_standard_english_mixed_transfer",
+        "qg_p18_p18_standard_english_diagnostic_identify",
+        "qg_p18_p16_standard_english_choose_standard_sentence",
+        "qg_p4_verb_form_register_transfer",
+        "proc2_standard_english_choice",
+        "qg_p18_p18_standard_english_sat_table_classification"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "pronouns_cohesion",
+      "seed": 54,
+      "run": 7,
+      "types": [
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "explain",
+        "explain",
+        "explain"
+      ],
+      "ids": [
+        "qg_p18_p15_pronouns_cohesion_cohesion_choice",
+        "qg_p18_p17_pronouns_cohesion_precision_choice",
+        "qg_p18_p15_pronouns_cohesion_cohesion_transfer",
+        "qg_p18_p16_pronouns_cohesion_choose_cohesive_sentence",
+        "qg_p4_cohesion_formality_transfer",
+        "qg_p18_p18_pronouns_cohesion_diagnostic_identify",
+        "qg_p18_p16_pronouns_cohesion_too_many_pronouns",
+        "qg_p18_p18_pronouns_cohesion_explain_reasoning",
+        "qg_p21_pronouns_cohesion_explanation_choice_variety",
+        "qg_p18_p15_pronouns_cohesion_explain_cohesion"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "pronouns_cohesion",
+      "seed": 118,
+      "run": 7,
+      "types": [
+        "choose",
+        "explain",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "identify"
+      ],
+      "ids": [
+        "proc2_pronoun_cohesion_choice",
+        "qg_p18_p15_pronouns_cohesion_explain_cohesion",
+        "pronoun_cohesion_choice",
+        "qg_p21_pronouns_cohesion_closed_choice_variety",
+        "qg_p4_cohesion_formality_transfer",
+        "qg_p18_p15_pronouns_cohesion_cohesion_choice",
+        "qg_p18_p18_pronouns_cohesion_diagnostic_identify",
+        "qg_p18_p15_pronouns_cohesion_cohesion_transfer",
+        "qg_p18_p16_pronouns_cohesion_choose_cohesive_sentence",
+        "qg_pronoun_referent_identify"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "speech_punctuation",
+      "seed": 163,
+      "run": 7,
+      "types": [
+        "classify",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "explain",
+        "explain"
+      ],
+      "ids": [
+        "qg_p18_p15_speech_punctuation_speech_reporter_position",
+        "qg_p18_p18_speech_punctuation_diagnostic_identify",
+        "qg_p14_speech_punctuation_mixed_transfer",
+        "qg_p18_p16_speech_punctuation_speech_or_indirect",
+        "qg_p4_sentence_speech_transfer",
+        "qg_p18_p15_speech_punctuation_speech_choice",
+        "qg_p14_speech_punctuation_constructed_rewrite",
+        "qg_p14_speech_punctuation_diagnostic_choice",
+        "qg_p3_speech_punctuation_explain",
+        "qg_p18_p15_speech_punctuation_explain_speech"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "apostrophes_possession",
+      "seed": 14,
+      "run": 7,
+      "types": [
+        "fix",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "explain",
+        "classify"
+      ],
+      "ids": [
+        "qg_p18_p16_apostrophes_possession_fix_missing_apostrophe",
+        "qg_p18_p16_apostrophes_possession_choose_possessive_phrase",
+        "qg_p18_p16_apostrophes_possession_possession_not_contraction",
+        "qg_p18_p15_apostrophes_possession_possessive_choice",
+        "qg_p4_possession_hyphen_clarity_transfer",
+        "qg_p18_p16_apostrophes_possession_meaning_change_choice",
+        "qg_p18_p18_apostrophes_possession_diagnostic_identify",
+        "apostrophe_possession_choice",
+        "qg_p21_apostrophes_possession_explanation_choice_variety",
+        "qg_p18_p18_apostrophes_possession_sat_table_classification"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "apostrophes_possession",
+      "seed": 127,
+      "run": 7,
+      "types": [
+        "classify",
+        "explain",
+        "fix",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose"
+      ],
+      "ids": [
+        "qg_p18_p15_apostrophes_possession_possession_table",
+        "qg_p21_apostrophes_possession_explanation_choice_variety",
+        "qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite",
+        "qg_p18_p16_apostrophes_possession_meaning_change_choice",
+        "qg_p18_p18_apostrophes_possession_diagnostic_identify",
+        "qg_p18_p16_apostrophes_possession_choose_possessive_phrase",
+        "qg_p18_p17_apostrophes_possession_examiner_trap_contrast",
+        "qg_p18_p15_apostrophes_possession_possessive_choice",
+        "qg_p18_p16_apostrophes_possession_possession_not_contraction",
+        "qg_p21_apostrophes_possession_closed_choice_variety"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "boundary_punctuation",
+      "seed": 127,
+      "run": 7,
+      "types": [
+        "identify",
+        "explain",
+        "fix",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose"
+      ],
+      "ids": [
+        "qg_p18_p15_boundary_punctuation_boundary_label",
+        "qg_p21_boundary_punctuation_explanation_choice_variety",
+        "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite",
+        "qg_p18_p16_boundary_punctuation_choose_correct_boundary_sentence",
+        "qg_p18_p18_boundary_punctuation_diagnostic_identify",
+        "qg_p18_p16_boundary_punctuation_choose_boundary_mark",
+        "qg_p18_p17_boundary_punctuation_precision_choice",
+        "qg_p18_p15_boundary_punctuation_boundary_mark_choice",
+        "qg_p18_p16_boundary_punctuation_match_mark_to_purpose",
+        "qg_p21_boundary_punctuation_closed_choice_variety"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "boundary_punctuation",
+      "seed": 176,
+      "run": 7,
+      "types": [
+        "fix",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "explain",
+        "fix"
+      ],
+      "ids": [
+        "proc_dash_boundary_fix",
+        "qg_p18_p18_boundary_punctuation_diagnostic_identify",
+        "qg_p4_adverbial_clause_boundary_transfer",
+        "proc_semicolon_choice",
+        "qg_p18_p17_boundary_punctuation_precision_choice",
+        "qg_p18_p16_boundary_punctuation_semicolon_or_comma_splice",
+        "qg_p18_p16_boundary_punctuation_match_mark_to_purpose",
+        "qg_p18_p17_boundary_punctuation_examiner_trap_contrast",
+        "proc2_boundary_punctuation_explain",
+        "qg_p18_p18_boundary_punctuation_precision_repair_or_rewrite"
+      ]
+    },
+    {
+      "mode": "satsset",
+      "focus": "boundary_punctuation",
+      "seed": 179,
+      "run": 7,
+      "types": [
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "choose",
+        "fix",
+        "explain",
+        "identify"
+      ],
+      "ids": [
+        "qg_p18_p17_boundary_punctuation_examiner_trap_contrast",
+        "qg_p21_boundary_punctuation_closed_choice_variety",
+        "qg_p18_p17_boundary_punctuation_precision_choice",
+        "qg_p18_p16_boundary_punctuation_semicolon_or_comma_splice",
+        "qg_p18_p15_boundary_punctuation_boundary_mark_choice",
+        "qg_p4_adverbial_clause_boundary_transfer",
+        "qg_p18_p18_boundary_punctuation_diagnostic_identify",
+        "proc_dash_boundary_fix",
+        "qg_p18_p18_boundary_punctuation_explain_reasoning",
+        "qg_p18_p15_boundary_punctuation_boundary_label"
+      ]
+    }
+  ]
+}

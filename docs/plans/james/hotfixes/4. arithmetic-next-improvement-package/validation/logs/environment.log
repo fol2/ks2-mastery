@@ -1,0 +1,9 @@
+node: v22.16.0
+npm: 10.9.2
+.nvmrc: 22
+
+Arithmetic files touched:
+shared/arithmetic/content.js
+worker/src/subjects/arithmetic/engine.js
+src/subjects/arithmetic/components/ArithmeticPracticeSurface.jsx
+tests/worker-arithmetic-runtime.test.js

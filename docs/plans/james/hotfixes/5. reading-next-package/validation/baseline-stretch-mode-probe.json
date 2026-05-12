@@ -1,0 +1,22 @@
+{
+  "sharedContent": {
+    "hasStretchToken": false,
+    "dataTextToneCount": 0,
+    "hasMarkChallenge": false
+  },
+  "sharedMetadata": {
+    "hasStretchToken": false,
+    "dataTextToneCount": 0,
+    "hasMarkChallenge": false
+  },
+  "clientMetadata": {
+    "hasStretchToken": true,
+    "dataTextToneCount": 0,
+    "hasMarkChallenge": false
+  },
+  "component": {
+    "hasStretchToken": false,
+    "dataTextToneCount": 1,
+    "hasMarkChallenge": false
+  }
+}

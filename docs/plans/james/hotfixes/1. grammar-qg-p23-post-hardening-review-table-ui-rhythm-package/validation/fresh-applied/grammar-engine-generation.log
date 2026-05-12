@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: Grammar legacy oracle fixture remains frozen for the reviewed denominator
+ok 1 - Grammar legacy oracle fixture remains frozen for the reviewed denominator
+  ---
+  duration_ms: 3.954344
+  ...
+# Subtest: Grammar QG P1 baseline remains frozen for the previous content release
+ok 2 - Grammar QG P1 baseline remains frozen for the previous content release
+  ---
+  duration_ms: 1.208408
+  ...
+# Subtest: Grammar QG P2 baseline remains frozen for the shipped declarative marking denominator
+ok 3 - Grammar QG P2 baseline remains frozen for the shipped declarative marking denominator
+  ---
+  duration_ms: 0.786759
+  ...
+# Subtest: Grammar QG P3 baseline pins the historical explanation-depth release
+ok 4 - Grammar QG P3 baseline pins the historical explanation-depth release
+  ---
+  duration_ms: 0.709623
+  ...
+# Subtest: Grammar legacy content still generates serialisable questions matching frozen oracle samples
+ok 5 - Grammar legacy content still generates serialisable questions matching frozen oracle samples
+  ---
+  duration_ms: 27.047046
+  ...
+# Subtest: Grammar QG P1 templates emit answer specs and score their golden responses
+ok 6 - Grammar QG P1 templates emit answer specs and score their golden responses
+  ---
+  duration_ms: 2.369133
+  ...
+# Subtest: Grammar generated attempts store safe variant metadata without exposing it on currentItem
+ok 7 - Grammar generated attempts store safe variant metadata without exposing it on currentItem
+  ---
+  duration_ms: 11.818528
+  ...
+# Subtest: Grammar read model preserves table-choice row-specific options for heterogeneous tables
+ok 8 - Grammar read model preserves table-choice row-specific options for heterogeneous tables
+  ---
+  duration_ms: 7.296215
+  ...
+# Subtest: Grammar manual-review-only attempts save responses without scoring or reward evidence
+ok 9 - Grammar manual-review-only attempts save responses without scoring or reward evidence
+  ---
+  duration_ms: 2.591747
+  ...
+# Subtest: Grammar manual-review-only practice summary separates answered from scored answers
+ok 10 - Grammar manual-review-only practice summary separates answered from scored answers
+  ---
+  duration_ms: 3.040623
+  ...
+# Subtest: Grammar mini-test packs exclude manual-review-only templates
+ok 11 - Grammar mini-test packs exclude manual-review-only templates
+  ---
+  duration_ms: 1031.67881
+  ...
+# Subtest: Grammar strict mini-test rejects forced manual-review-only templates
+ok 12 - Grammar strict mini-test rejects forced manual-review-only templates
+  ---
+  duration_ms: 7.852299
+  ...
+# Subtest: Grammar mini-set generation covers mixed and focused pools without looping
+ok 13 - Grammar mini-set generation covers mixed and focused pools without looping
+  ---
+  duration_ms: 30.768697
+  ...
+# Subtest: Grammar mastery status blocks secured state when a strong concept is due
+ok 14 - Grammar mastery status blocks secured state when a strong concept is due
+  ---
+  duration_ms: 0.561259
+  ...
+# Subtest: Grammar answer quality gives supported correctness less gain than independent first attempts
+ok 15 - Grammar answer quality gives supported correctness less gain than independent first attempts
+  ---
+  duration_ms: 2.125665
+  ...
+# Subtest: Grammar multi-skill templates update every concept node
+ok 16 - Grammar multi-skill templates update every concept node
+  ---
+  duration_ms: 2.586535
+  ...
+# Subtest: Grammar engine rejects stale content release evidence
+ok 17 - Grammar engine rejects stale content release evidence
+  ---
+  duration_ms: 0.853292
+  ...
+# Subtest: Grammar command engine clears active sessions from an older content release
+ok 18 - Grammar command engine clears active sessions from an older content release
+  ---
+  duration_ms: 1.824741
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1563.504122
