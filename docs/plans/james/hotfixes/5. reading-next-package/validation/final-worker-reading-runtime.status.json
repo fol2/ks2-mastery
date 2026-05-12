@@ -2,7 +2,7 @@
   "ok": true,
   "command": "node --test tests/worker-reading-runtime.test.js",
   "exitCode": 0,
-  "generatedAt": "2026-05-12T13:20:02.469Z",
+  "generatedAt": "2026-05-12T16:24:02.345Z",
   "log": "final-worker-reading-runtime.log",
   "tests": 28,
   "suites": 0,

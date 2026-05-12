@@ -2,6 +2,6 @@
   "ok": true,
   "command": "node --check shared/reading/metadata.js",
   "exitCode": 0,
-  "generatedAt": "2026-05-12T13:05:12.8586852Z",
+  "generatedAt": "2026-05-12T16:22:08.948Z",
   "log": "final-node-check-shared-metadata.log"
 }

@@ -2,85 +2,85 @@ TAP version 13
 # Subtest: reading surface implements delegated full-list session UI inside the app frame
 ok 1 - reading surface implements delegated full-list session UI inside the app frame
   ---
-  duration_ms: 1.2926
+  duration_ms: 1.0904
   type: 'test'
   ...
 # Subtest: reading landing uses the shared subject setup shell used by mature subjects
 ok 2 - reading landing uses the shared subject setup shell used by mature subjects
   ---
-  duration_ms: 0.3709
+  duration_ms: 0.481
   type: 'test'
   ...
 # Subtest: reading setup exposes stretch challenge without duplicate hero-card attributes
 ok 3 - reading setup exposes stretch challenge without duplicate hero-card attributes
   ---
-  duration_ms: 0.4325
+  duration_ms: 0.4327
   type: 'test'
   ...
 # Subtest: reading setup prefs do not let stretch inherit focus or difficulty filters
 ok 4 - reading setup prefs do not let stretch inherit focus or difficulty filters
   ---
-  duration_ms: 0.5203
+  duration_ms: 0.4978
   type: 'test'
   ...
 # Subtest: reading marking controls use mode-specific labels instead of a generic finish action
 ok 5 - reading marking controls use mode-specific labels instead of a generic finish action
   ---
-  duration_ms: 0.6434
+  duration_ms: 0.5549
   type: 'test'
   ...
 # Subtest: reading one-question delayed-feedback surface has one save-and-next path
 ok 6 - reading one-question delayed-feedback surface has one save-and-next path
   ---
-  duration_ms: 0.2742
+  duration_ms: 0.2765
   type: 'test'
   ...
 # Subtest: reading command actions serialise section responses and preserve stale guards
 ok 7 - reading command actions serialise section responses and preserve stale guards
   ---
-  duration_ms: 0.2073
+  duration_ms: 0.2146
   type: 'test'
   ...
 # Subtest: reading read model exposes section question lists without pre-attempt feedback fields
 ok 8 - reading read model exposes section question lists without pre-attempt feedback fields
   ---
-  duration_ms: 0.292
+  duration_ms: 0.1925
   type: 'test'
   ...
 # Subtest: reading list-mode surface renders prefixed full-section form controls without feedback leakage
 ok 9 - reading list-mode surface renders prefixed full-section form controls without feedback leakage
   ---
-  duration_ms: 257.0089
+  duration_ms: 271.3336
   type: 'test'
   ...
 # Subtest: reading setup renders aligned landing landmarks and one primary start action
 ok 10 - reading setup renders aligned landing landmarks and one primary start action
   ---
-  duration_ms: 170.2272
+  duration_ms: 171.303
   type: 'test'
   ...
 # Subtest: reading setup keeps selected primary mode semantics while pending
 ok 11 - reading setup keeps selected primary mode semantics while pending
   ---
-  duration_ms: 180.4071
+  duration_ms: 187.5043
   type: 'test'
   ...
 # Subtest: reading setup degrades when monster-codex repository read fails
 ok 12 - reading setup degrades when monster-codex repository read fails
   ---
-  duration_ms: 163.3306
+  duration_ms: 164.725
   type: 'test'
   ...
 # Subtest: reading setup renders progressed monsters through existing visual asset aliases
 ok 13 - reading setup renders progressed monsters through existing visual asset aliases
   ---
-  duration_ms: 173.5792
+  duration_ms: 154.8461
   type: 'test'
   ...
 # Subtest: reading setup fallback monster list is not shadowed by empty meadow copy
 ok 14 - reading setup fallback monster list is not shadowed by empty meadow copy
   ---
-  duration_ms: 100.8509
+  duration_ms: 90.8565
   type: 'test'
   ...
 1..14
@@ -91,4 +91,4 @@ ok 14 - reading setup fallback monster list is not shadowed by empty meadow copy
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 1119.9819
+# duration_ms 1112.6538
