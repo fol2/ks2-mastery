@@ -31,6 +31,7 @@ if (gates.learnerSurfaceVariety?.ok !== true) fail('learner surface variety gate
 if (gates.generatedFamilyDepth?.ok !== true) fail('generated family depth gate failed', gates.generatedFamilyDepth);
 if (gates.perSkillBalance?.ok !== true) fail('per-skill balance gate failed', gates.perSkillBalance?.failingSkills || gates.perSkillBalance);
 if (gates.modelSelfMarking?.ok !== true) fail('model self-marking gate failed', gates.modelSelfMarking);
+if (gates.hyphenCompoundQuality?.ok !== true) fail('hyphen compound quality gate failed', gates.hyphenCompoundQuality);
 if (gates.reviewGovernance?.ok !== true) fail('review governance gate failed', gates.reviewGovernance);
 if (gates.negativeVectorCoverage?.ok !== true) fail('negative-vector coverage gate failed', gates.negativeVectorCoverage);
 if (gates.heavyPlayVariety?.ok !== true) fail('heavy-play variety gate failed', gates.heavyPlayVariety);
@@ -44,6 +45,9 @@ if (counts.duplicateSurfaceGroups !== 0) fail('runtime duplicate surface groups 
 if (counts.generatedDuplicateSurfaceGroups !== undefined && counts.generatedDuplicateSurfaceGroups !== 0) fail('generated duplicate surface groups must be zero', counts);
 if (counts.fixedDuplicateSurfaceGroups !== undefined && counts.fixedDuplicateSurfaceGroups !== 0) fail('fixed-bank duplicate surface groups must be zero', counts);
 if (counts.legacyFixedDuplicateSurfaceGroups !== undefined && counts.legacyFixedDuplicateSurfaceGroups !== 0) fail('legacy fixed-bank duplicate surface groups must be zero', counts);
+if (counts.hyphenAdverbialLyHyphenFindings !== 0) fail('adverbial -ly hyphen findings must be zero', counts);
+if (counts.hyphenMalformedCompoundFindings !== 0) fail('malformed hyphen compound findings must be zero', counts);
+if (counts.hyphenArticleAgreementFindings !== 0) fail('hyphen article agreement findings must be zero', counts);
 if (counts.modelSelfMarkingFailures !== 0) fail('model self-marking failures must be zero', counts);
 
 const skillRows = Array.isArray(report.skillRows) ? report.skillRows : [];

@@ -90,7 +90,7 @@ const LIST_SETS = Object.freeze([
   ['tickets', 'badges', 'programmes'], ['lanterns', 'blankets', 'snacks'], ['cameras', 'tripods', 'memory cards'], ['spades', 'gloves', 'labels'],
   ['drums', 'flutes', 'tambourines'], ['batteries', 'cables', 'chargers'], ['clay tiles', 'rollers', 'cutters'], ['flags', 'ropes', 'pegs'],
 ]);
-const COMPOUNDS = Object.freeze(['well-known', 'two-metre', 'long-term', 'half-finished', 'high-speed', 'carefully-planned', 'brightly-lit', 'ice-cold', 'last-minute', 'open-ended', 'up-to-date', 'full-size']);
+const COMPOUNDS = Object.freeze(['well-known', 'two-metre', 'long-term', 'half-finished', 'high-speed', 'well-planned', 'well-lit', 'ice-cold', 'last-minute', 'open-ended', 'up-to-date', 'full-size']);
 const POSSESSORS = Object.freeze([
   ['girl', "girl's"], ['boy', "boy's"], ['teacher', "teacher's"], ['captain', "captain's"], ['artist', "artist's"], ['runner', "runner's"],
   ['children', "children's"], ['class', "class's"], ['team', "team's"], ['school', "school's"], ['friends', "friends'"], ['players', "players'"],
@@ -138,6 +138,11 @@ function pluralPossessiveDistractor(possessor) {
   if (!text) return "";
   if (/(?:s|x|z|ch|sh)$/i.test(text)) return `${text}es'`;
   return `${text}s'`;
+}
+
+function articleForCompound(compound) {
+  const text = String(compound ?? '').toLowerCase();
+  return /^(?:ice|open|up)-/.test(text) ? 'an' : 'a';
 }
 
 function singularPossessiveDistractor(possessor) {
@@ -375,12 +380,14 @@ function coreForSkill(skillId, index, familyId) {
       };
     }
     case 'hyphen': {
-      const model = `${c.actor} chose a ${c.compound} design for the ${c.setting}.`;
+      const article = articleForCompound(c.compound);
+      const spacedCompound = c.compound.replace(/-/g, ' ');
+      const model = `${c.actor} chose ${article} ${c.compound} design for the ${c.setting}.`;
       return {
         model,
-        bad: `${c.actor} chose a ${c.compound.replace(/-/g, ' ')} design for the ${c.setting}.`,
-        wrongOne: `${c.actor} chose a ${c.compound.replace(/-/g, ' ')}-design for the ${c.setting}.`,
-        wrongTwo: `${c.actor} chose a ${c.compound}design for the ${c.setting}.`,
+        bad: `${c.actor} chose ${article} ${spacedCompound} design for the ${c.setting}.`,
+        wrongOne: `${c.actor} chose ${article} ${spacedCompound}-design for the ${c.setting}.`,
+        wrongTwo: `${c.actor} chose ${article} ${c.compound}-design for the ${c.setting}.`,
         explanation: 'A hyphen can join words that work together before a noun.',
         explanationRuleId: 'hyphen.compound-modifier',
         misconceptionTags: ['hyphen.compound_missing', 'hyphen.wrong_boundary'],

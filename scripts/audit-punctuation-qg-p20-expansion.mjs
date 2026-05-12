@@ -32,6 +32,9 @@ const PUBLISHED_SKILLS = PUNCTUATION_SKILLS
 
 const OPEN_TYPED_MODES = new Set(['insert', 'fix', 'combine', 'paragraph', 'transfer']);
 const OPEN_PRODUCTION_MODES = new Set(['combine', 'paragraph', 'transfer']);
+const ADVERBIAL_LY_HYPHEN_PATTERN = /\b(?:newly|carefully|brightly|slowly|quickly|quietly|neatly|clearly|safely|happily|sadly|fully|partly|mostly|closely|easily|gently|roughly|smoothly|badly|fairly|highly|lightly|loudly|recently|warmly|widely)-[a-z]+\b/gi;
+const MALFORMED_HYPHEN_DESIGN_PATTERN = /\b[a-z]+-[a-z]+design\b/gi;
+const HYF_ARTICLE_PATTERN = /\ba (?:ice[- ]cold|open[- ]ended|up[- ]to[- ]date)\b/gi;
 const APPROVED_REVIEW_STATUSES = new Set([
   'approved',
   'approve',
@@ -606,6 +609,77 @@ function findSurfaceDuplicates(items) {
     .slice(0, 50);
 }
 
+function collectTextParts(value, parts = []) {
+  if (value === null || value === undefined) return parts;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    parts.push(String(value));
+    return parts;
+  }
+  if (Array.isArray(value)) {
+    for (const entry of value) collectTextParts(entry, parts);
+    return parts;
+  }
+  if (typeof value === 'object') {
+    for (const entry of Object.values(value)) collectTextParts(entry, parts);
+  }
+  return parts;
+}
+
+export function auditedLearnerAndModelText(item) {
+  return collectTextParts({
+    prompt: item.prompt,
+    stem: item.stem,
+    options: item.options,
+    model: item.model,
+    accepted: item.accepted,
+    validator: item.validator,
+    rubric: item.rubric,
+    explanation: item.explanation,
+    tests: item.tests,
+  }).join('\n');
+}
+
+function findPatternFindings(items, pattern, phraseKey = 'phrase') {
+  const findings = [];
+  for (const item of items) {
+    const text = auditedLearnerAndModelText(item);
+    const matches = [...new Set([...String(text).matchAll(pattern)].map((match) => match[0].toLowerCase()))];
+    for (const match of matches) {
+      findings.push({
+        itemId: item.id,
+        familyId: item.generatorFamilyId || '',
+        mode: item.mode || '',
+        skillIds: item.skillIds || [],
+        [phraseKey]: match,
+        model: item.model || '',
+      });
+    }
+  }
+  return findings.slice(0, 100);
+}
+
+function findAdverbialLyHyphenFindings(items) {
+  return findPatternFindings(items, ADVERBIAL_LY_HYPHEN_PATTERN);
+}
+
+export function buildHyphenCompoundQualityEvidence(items) {
+  const adverbialLyHyphenFindings = findAdverbialLyHyphenFindings(items);
+  const malformedHyphenCompoundFindings = findPatternFindings(items, MALFORMED_HYPHEN_DESIGN_PATTERN, 'surface');
+  const hyphenArticleFindings = findPatternFindings(items, HYF_ARTICLE_PATTERN, 'surface');
+  return {
+    ok: adverbialLyHyphenFindings.length === 0
+      && malformedHyphenCompoundFindings.length === 0
+      && hyphenArticleFindings.length === 0,
+    rule: 'Hyphen examples must avoid -ly adverb compounds, malformed no-space compound distractors, and article errors such as "a ice-cold".',
+    adverbialLyFindingCount: adverbialLyHyphenFindings.length,
+    malformedCompoundFindingCount: malformedHyphenCompoundFindings.length,
+    articleAgreementFindingCount: hyphenArticleFindings.length,
+    adverbialLyFindings: adverbialLyHyphenFindings.slice(0, 25),
+    malformedCompoundFindings: malformedHyphenCompoundFindings.slice(0, 25),
+    articleAgreementFindings: hyphenArticleFindings.slice(0, 25),
+  };
+}
+
 export function buildPunctuationQGP20ExpansionReport(options = {}) {
   const runtime = createPunctuationRuntimeManifest({
     manifest: PUNCTUATION_CONTENT_MANIFEST,
@@ -629,6 +703,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
   const duplicateSurfaces = findSurfaceDuplicates(items);
   const generatedDuplicateSurfaces = findSurfaceDuplicates(generatedItems);
   const fixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
+  const hyphenCompoundQuality = buildHyphenCompoundQualityEvidence(items);
   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
@@ -649,6 +724,9 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
     generatedDuplicateSurfaceGroups: generatedDuplicateSurfaces.length,
     fixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
     legacyFixedDuplicateSurfaceGroups: fixedDuplicateSurfaces.length,
+    hyphenAdverbialLyHyphenFindings: hyphenCompoundQuality.adverbialLyFindingCount,
+    hyphenMalformedCompoundFindings: hyphenCompoundQuality.malformedCompoundFindingCount,
+    hyphenArticleAgreementFindings: hyphenCompoundQuality.articleAgreementFindingCount,
     modelSelfMarkingFailures: modelFailures.length,
     byMode: groupCounts(items, (item) => item.mode),
     bySkill: groupCounts(items, (item) => item.skillIds || []),
@@ -725,6 +803,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
       failureCount: modelFailures.length,
       failures: modelFailures.slice(0, 25),
     },
+    hyphenCompoundQuality,
     reviewGovernance: reviewCoverage,
     negativeVectorCoverage: negativeVectors,
     heavyPlayVariety: heavyPlay,
@@ -753,6 +832,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
     notes: [
       'This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.',
       'Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.',
+      'Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.',
       'Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage.',
     ],
   };

@@ -10,6 +10,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PUNCTUATION_CURRENT_RELEASE_ID } from '../src/subjects/punctuation/service-contract.js';
 
 const DEFAULT_SMOKE_PATH = 'reports/punctuation/punctuation-qg-p20-production-smoke.json';
 const DEFAULT_AUDIT_PATH = 'reports/punctuation/punctuation-qg-p20-expansion-audit.json';
@@ -18,18 +19,25 @@ const MIN_RUNTIME_ITEMS = 15_000;
 function parseArgs(argv) {
   const args = argv.slice(2);
   const options = {
-    smokePath: args.find((arg) => !arg.startsWith('--')) || DEFAULT_SMOKE_PATH,
+    smokePath: DEFAULT_SMOKE_PATH,
     auditPath: DEFAULT_AUDIT_PATH,
     expectedOrigin: 'https://ks2.eugnel.uk',
+    expectedReleaseId: PUNCTUATION_CURRENT_RELEASE_ID,
     json: args.includes('--json'),
   };
+  let positionalSmokePath = '';
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
+    if (arg === '--json') continue;
     if (arg === '--audit' && args[index + 1]) options.auditPath = args[++index];
     else if (arg.startsWith('--audit=')) options.auditPath = arg.slice('--audit='.length);
     else if (arg === '--expected-origin' && args[index + 1]) options.expectedOrigin = args[++index];
     else if (arg.startsWith('--expected-origin=')) options.expectedOrigin = arg.slice('--expected-origin='.length);
+    else if (arg === '--expected-release-id' && args[index + 1]) options.expectedReleaseId = args[++index];
+    else if (arg.startsWith('--expected-release-id=')) options.expectedReleaseId = arg.slice('--expected-release-id='.length);
+    else if (!arg.startsWith('--') && !positionalSmokePath) positionalSmokePath = arg;
   }
+  if (positionalSmokePath) options.smokePath = positionalSmokePath;
   return options;
 }
 
@@ -63,7 +71,12 @@ function parseReleaseId(releaseId) {
   };
 }
 
-export function validatePunctuationQGP20LiveEvidence({ smokePath = DEFAULT_SMOKE_PATH, auditPath = DEFAULT_AUDIT_PATH, expectedOrigin = 'https://ks2.eugnel.uk' } = {}) {
+export function validatePunctuationQGP20LiveEvidence({
+  smokePath = DEFAULT_SMOKE_PATH,
+  auditPath = DEFAULT_AUDIT_PATH,
+  expectedOrigin = 'https://ks2.eugnel.uk',
+  expectedReleaseId = PUNCTUATION_CURRENT_RELEASE_ID,
+} = {}) {
   const smoke = readJson(smokePath);
   const audit = readJson(auditPath);
   const failures = [];
@@ -94,6 +107,7 @@ export function validatePunctuationQGP20LiveEvidence({ smokePath = DEFAULT_SMOKE
   const release = parseReleaseId(releaseId);
   const environment = firstString(data.environment, attestation.environment);
   const origin = firstString(data.origin, attestation.origin);
+  const auditReleaseId = firstString(audit.data?.releaseId);
   const workerEvidence = firstString(
     data.workerCommitSha,
     data.workerVersionId,
@@ -110,7 +124,8 @@ export function validatePunctuationQGP20LiveEvidence({ smokePath = DEFAULT_SMOKE
   if (data.ok !== true) failures.push('production smoke ok must be true');
   if (origin !== expectedOrigin) failures.push(`origin=${origin || 'missing'}, expected ${expectedOrigin}`);
   if (environment !== 'production') failures.push(`environment=${environment || 'missing'}, expected production`);
-  if (!release.matchesPattern) failures.push(`releaseId=${releaseId || 'missing'} does not match punctuation-qg-p20-{count}-{yyyy-mm-dd}`);
+  if (!release.matchesPattern) failures.push(`releaseId=${releaseId || 'missing'} does not match punctuation-qg-p{phase}-{count}-{yyyy-mm-dd}`);
+  if (releaseId !== expectedReleaseId) failures.push(`production smoke releaseId=${releaseId || 'missing'}, expected ${expectedReleaseId}`);
   if (release.phase !== null && release.phase < 20) failures.push(`release phase p${release.phase} is lower than p20`);
   if (runtimeItemCount === null) failures.push('runtime item count missing');
   if (runtimeItemCount !== null && runtimeItemCount < MIN_RUNTIME_ITEMS) failures.push(`runtime item count ${runtimeItemCount} < ${MIN_RUNTIME_ITEMS}`);
@@ -146,6 +161,7 @@ export function validatePunctuationQGP20LiveEvidence({ smokePath = DEFAULT_SMOKE
   else {
     auditStatus = audit.data?.status || null;
     if (auditStatus !== 'PASS') failures.push(`P20 expansion audit status=${auditStatus || 'missing'}, expected PASS`);
+    if (auditReleaseId !== expectedReleaseId) failures.push(`P20 expansion audit releaseId=${auditReleaseId || 'missing'}, expected ${expectedReleaseId}`);
   }
 
   return {
@@ -155,10 +171,12 @@ export function validatePunctuationQGP20LiveEvidence({ smokePath = DEFAULT_SMOKE
     smokePath,
     auditPath,
     expectedOrigin,
+    expectedReleaseId,
     observed: {
       origin,
       environment,
       releaseId,
+      auditReleaseId,
       release,
       runtimeItemCount,
       workerEvidencePresent: Boolean(workerEvidence),

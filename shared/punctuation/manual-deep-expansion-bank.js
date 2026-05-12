@@ -43718,8 +43718,8 @@ const DEEP_GEN_HYPHEN_INSERT = Object.freeze([
   {
     "templateId": "deep_gen_hyphen_insert_027",
     "prompt": "Add the hyphen that avoids ambiguity.",
-    "stem": "The newly built kit needed careful repairs.",
-    "model": "The newly-built kit needed careful repairs.",
+    "stem": "The well built kit needed careful repairs.",
+    "model": "The well-built kit needed careful repairs.",
     "skillIds": [
       "hyphen"
     ],
@@ -43732,18 +43732,18 @@ const DEEP_GEN_HYPHEN_INSERT = Object.freeze([
       "misconception",
       "negative_test"
     ],
-    "explanation": "The phrase newly-built is hyphenated so it describes the noun clearly.",
+    "explanation": "The phrase well-built is hyphenated so it describes the noun clearly.",
     "explanationRuleId": "hyphen.compound-modifier",
     "validator": {
       "type": "requiresHyphenatedPhrase",
-      "phrase": "newly-built"
+      "phrase": "well-built"
     },
     "tests": {
       "accept": [
-        "The newly-built kit needed careful repairs."
+        "The well-built kit needed careful repairs."
       ],
       "reject": [
-        "The newly built kit needed careful repairs."
+        "The well built kit needed careful repairs."
       ]
     }
   },
@@ -44518,8 +44518,8 @@ const DEEP_GEN_HYPHEN_INSERT = Object.freeze([
   {
     "templateId": "deep_gen_hyphen_insert_052",
     "prompt": "Add the hyphen that avoids ambiguity.",
-    "stem": "The brightly coloured story kept everyone safe.",
-    "model": "The brightly-coloured story kept everyone safe.",
+    "stem": "The prize winning story kept everyone safe.",
+    "model": "The prize-winning story kept everyone safe.",
     "skillIds": [
       "hyphen"
     ],
@@ -44532,18 +44532,18 @@ const DEEP_GEN_HYPHEN_INSERT = Object.freeze([
       "misconception",
       "negative_test"
     ],
-    "explanation": "The phrase brightly-coloured is hyphenated so it describes the noun clearly.",
+    "explanation": "The phrase prize-winning is hyphenated so it describes the noun clearly.",
     "explanationRuleId": "hyphen.compound-modifier",
     "validator": {
       "type": "requiresHyphenatedPhrase",
-      "phrase": "brightly-coloured"
+      "phrase": "prize-winning"
     },
     "tests": {
       "accept": [
-        "The brightly-coloured story kept everyone safe."
+        "The prize-winning story kept everyone safe."
       ],
       "reject": [
-        "The brightly coloured story kept everyone safe."
+        "The prize winning story kept everyone safe."
       ]
     }
   },
@@ -44614,8 +44614,8 @@ const DEEP_GEN_HYPHEN_INSERT = Object.freeze([
   {
     "templateId": "deep_gen_hyphen_insert_055",
     "prompt": "Add the hyphen that avoids ambiguity.",
-    "stem": "The carefully planned camera solved the problem.",
-    "model": "The carefully-planned camera solved the problem.",
+    "stem": "The well planned camera solved the problem.",
+    "model": "The well-planned camera solved the problem.",
     "skillIds": [
       "hyphen"
     ],
@@ -44628,18 +44628,18 @@ const DEEP_GEN_HYPHEN_INSERT = Object.freeze([
       "misconception",
       "negative_test"
     ],
-    "explanation": "The phrase carefully-planned is hyphenated so it describes the noun clearly.",
+    "explanation": "The phrase well-planned is hyphenated so it describes the noun clearly.",
     "explanationRuleId": "hyphen.compound-modifier",
     "validator": {
       "type": "requiresHyphenatedPhrase",
-      "phrase": "carefully-planned"
+      "phrase": "well-planned"
     },
     "tests": {
       "accept": [
-        "The carefully-planned camera solved the problem."
+        "The well-planned camera solved the problem."
       ],
       "reject": [
-        "The carefully planned camera solved the problem."
+        "The well planned camera solved the problem."
       ]
     }
   },

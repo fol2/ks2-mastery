@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "phase": "punctuation-qg-p20-expansion-audit",
   "status": "PASS",
-  "releaseId": "punctuation-qg-p20-15072-2026-05-04",
-  "generatedAt": "2026-05-08T18:34:40.903Z",
+  "releaseId": "punctuation-qg-p21-15072-2026-05-12",
+  "generatedAt": "2026-05-12T13:11:45.907Z",
   "thresholds": {
     "phase": 20,
     "minRuntimeItems": 15000,
@@ -42,6 +42,9 @@
     "generatedDuplicateSurfaceGroups": 0,
     "fixedDuplicateSurfaceGroups": 0,
     "legacyFixedDuplicateSurfaceGroups": 0,
+    "hyphenAdverbialLyHyphenFindings": 0,
+    "hyphenMalformedCompoundFindings": 0,
+    "hyphenArticleAgreementFindings": 0,
     "modelSelfMarkingFailures": 0,
     "byMode": {
       "choose": 2420,
@@ -72,11 +75,11 @@
     "releaseIdentity": {
       "ok": true,
       "release": {
-        "releaseId": "punctuation-qg-p20-15072-2026-05-04",
+        "releaseId": "punctuation-qg-p21-15072-2026-05-12",
         "matchesPattern": true,
-        "phase": 20,
+        "phase": 21,
         "embeddedRuntimeCount": 15072,
-        "releaseDate": "2026-05-04",
+        "releaseDate": "2026-05-12",
         "runtimeCountMatches": true,
         "isP20OrLater": true
       }
@@ -380,6 +383,16 @@
       "ok": true,
       "failureCount": 0,
       "failures": []
+    },
+    "hyphenCompoundQuality": {
+      "ok": true,
+      "rule": "Hyphen examples must avoid -ly adverb compounds, malformed no-space compound distractors, and article errors such as \"a ice-cold\".",
+      "adverbialLyFindingCount": 0,
+      "malformedCompoundFindingCount": 0,
+      "articleAgreementFindingCount": 0,
+      "adverbialLyFindings": [],
+      "malformedCompoundFindings": [],
+      "articleAgreementFindings": []
     },
     "reviewGovernance": {
       "registerPath": "reports/punctuation/punctuation-qg-p20-review-register.json",
@@ -2144,6 +2157,7 @@
   "notes": [
     "This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.",
     "Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.",
+    "Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.",
     "Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage."
   ]
 }

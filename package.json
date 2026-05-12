@@ -122,7 +122,7 @@
     "build:punctuation-qg:p20-evidence": "node scripts/build-punctuation-qg-p20-evidence.mjs",
     "simulate:punctuation-qg:p20-heavy-play": "node scripts/simulate-punctuation-qg-p20-heavy-play.mjs",
     "validate:punctuation-qg:p20-expansion-report": "node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json",
-    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json",
+    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-hyphen-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js",
     "verify:punctuation-qg:p20-live": "node scripts/validate-punctuation-qg-p20-live-evidence.mjs reports/punctuation/punctuation-qg-p20-production-smoke.json && node --test tests/punctuation-qg-p20-production-evidence.test.js",
     "verify:punctuation-qg:p20": "npm run verify:punctuation-qg:p20-expansion && npm run verify:punctuation-qg:p20-live",
     "prepare": "simple-git-hooks"

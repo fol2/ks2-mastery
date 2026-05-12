@@ -72284,8 +72284,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_hyphen_insert_027",
       "prompt": "Add the hyphen that avoids ambiguity.",
-      "stem": "The newly built kit helped younger pupils in the sailing club.",
-      "model": "The newly-built kit helped younger pupils in the sailing club.",
+      "stem": "The well built kit helped younger pupils in the sailing club.",
+      "model": "The well-built kit helped younger pupils in the sailing club.",
       "skillIds": [
         "hyphen"
       ],
@@ -72302,14 +72302,14 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
       "explanationRuleId": "hyphen.compound-modifier",
       "validator": {
         "type": "requiresHyphenatedPhrase",
-        "phrase": "newly-built"
+        "phrase": "well-built"
       },
       "tests": {
         "accept": [
-          "The newly-built kit helped younger pupils in the sailing club."
+          "The well-built kit helped younger pupils in the sailing club."
         ],
         "reject": [
-          "The newly built kit helped younger pupils in the sailing club."
+          "The well built kit helped younger pupils in the sailing club."
         ]
       }
     },
@@ -73884,8 +73884,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_hyphen_insert_077",
       "prompt": "Add the hyphen that avoids ambiguity.",
-      "stem": "The newly built shelter helped younger pupils in the computer suite.",
-      "model": "The newly-built shelter helped younger pupils in the computer suite.",
+      "stem": "The well built shelter helped younger pupils in the computer suite.",
+      "model": "The well-built shelter helped younger pupils in the computer suite.",
       "skillIds": [
         "hyphen"
       ],
@@ -73902,14 +73902,14 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
       "explanationRuleId": "hyphen.compound-modifier",
       "validator": {
         "type": "requiresHyphenatedPhrase",
-        "phrase": "newly-built"
+        "phrase": "well-built"
       },
       "tests": {
         "accept": [
-          "The newly-built shelter helped younger pupils in the computer suite."
+          "The well-built shelter helped younger pupils in the computer suite."
         ],
         "reject": [
-          "The newly built shelter helped younger pupils in the computer suite."
+          "The well built shelter helped younger pupils in the computer suite."
         ]
       }
     },

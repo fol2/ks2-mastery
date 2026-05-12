@@ -1327,10 +1327,10 @@ const CASES = Object.freeze({
       "The record-breaking jump amazed the crowd."
     ],
     [
-      "brightly lit room",
-      "brightly-lit room",
-      "The brightly lit room looked cheerful.",
-      "The brightly-lit room looked cheerful."
+      "well lit room",
+      "well-lit room",
+      "The well lit room looked cheerful.",
+      "The well-lit room looked cheerful."
     ],
     [
       "life saving medicine",
