@@ -34,10 +34,10 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./validation/f
 d232e8d669c5b24f288096fe50041198e2978d4ccfeebd713a1a33e54bfb3067  ./validation/final-node-check-worker-reading-runtime.status.json
 c6c7f2b53a0dd4b0507a48a35febe03968200a26647717128dc31b9ac19055f1  ./validation/final-npm-install-ignore-scripts.log
 cc85a2f12ecfddb5eca4bb265e4c5262888b87cbae5a550507d78ae03236ff1b  ./validation/final-npm-install-ignore-scripts.status.json
-92c7cfc5d34de4c60dc871fb4767e48400da9a77b60b1aaece71885552bf6e5a  ./validation/final-npm-run-check.log
-4c95b4bccc3b83ec8e0fd0d57c4b4f0eb7a8d4b42c6c237c6fdb42e3c9c92763  ./validation/final-npm-run-check.status.json
-744fae9890a7c24b283abcff1489e58f68f05a58efc4bfd4baa35f4c58efdfd9  ./validation/final-npm-test.log
-2cd60bb9b2a0a3a796164e1af0b0d7d87ec2e229fa07b0a61bee1b8071781388  ./validation/final-npm-test.status.json
+6e58a26da0949009d942b04aa6c416cd15f38b6e7d4c8b9d9a45944481a96211  ./validation/final-npm-run-check.log
+3632fb5117dcffafdb5c7e43b3e775e1445aa669f7c905817d788bd244f7a933  ./validation/final-npm-run-check.status.json
+6e41ef3fcb877aee0592ba0fce10687c2bf850756ba7627669ee49fa5595059f  ./validation/final-npm-test.log
+f42a1d5f7827d0bb118c39b8c7565593235c20425c43e0891e41f907abee44c6  ./validation/final-npm-test.status.json
 67296abbb474cfb76a19d71cd680d75dc34ebf9243c9e9f1372f347a02f222d4  ./validation/final-reading-content-audit.log
 89740aaee0768d55976259a58e3285e2dd9aa9b754302d2d28f9333d80350b59  ./validation/final-reading-content-audit.status.json
 8ac35c23b795bab0162fd2684f3dbb825b3b17a4e51e8e3708a73acb36bfe946  ./validation/final-reading-content-quality-audit.json
@@ -62,6 +62,8 @@ c26a18e13a1358582a7499c767e553ebcb9a7969683b06c9f0c86d031e3f6f62  ./validation/p
 67296abbb474cfb76a19d71cd680d75dc34ebf9243c9e9f1372f347a02f222d4  ./validation/patched-reading-content-quality-audit.log
 015ac545a18cc7ba2213ea9f6dda5c7c23f35315de7cd2620cf6235de4d14553  ./validation/patched-start-session-performance.json
 b4ca7f7d48a6ffd5d567b1ff96f1cde0ee86648d38de695c6a71eb3b24ab207f  ./validation/patched-stretch-mode-probe.json
+1676fc3771ee3755c85ca52d5c9c080a68a0fe0a07216fd20b01db0e4430f0da  ./validation/production-deploy-startup-limit-failure-2026-05-12.log
+68967bbff69cf96dd31abae586b51744fc1350ec55c623af298270030e6d2288  ./validation/production-deploy-startup-limit-failure-2026-05-12.status.json
 6358382bcadfe9934a716545cae9879316ad2b6e73397037c80463415e17ff09  ./validation/source-boundary.md
 e8aa55736fd6a586b2f5f69429ff9d12ddd44d0fcce0736eec168115eec2ac07  ./validation/source-prior-hardening-package.sha256
 4d86ccfaf1a8d8c641825c4f149c10cfb0da1336290d9336746012eb9de65fbc  ./validation/source-reconstructed-base-zip.sha256

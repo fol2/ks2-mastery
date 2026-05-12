@@ -99,6 +99,19 @@ test('punctuation service keeps the default P20 runtime manifest and indexes cac
   assert.equal(DEFAULT_PUNCTUATION_CONTENT_INDEXES.publishedRewardUnits.length, 14);
 });
 
+test('punctuation service defers default P20 runtime bank generation until first use', () => {
+  const source = readFileSync(new URL('../shared/punctuation/service.js', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(
+    source,
+    /export const DEFAULT_PUNCTUATION_RUNTIME_MANIFEST\s*=\s*createPunctuationRuntimeManifest\s*\(/,
+  );
+  assert.doesNotMatch(
+    source,
+    /export const DEFAULT_PUNCTUATION_CONTENT_INDEXES\s*=\s*createPunctuationContentIndexes\s*\(/,
+  );
+});
+
 test('punctuation service default path reuses cached P12/P13 runtime indexes', () => {
   const source = readFileSync(new URL('../shared/punctuation/service.js', import.meta.url), 'utf8');
   const factoryStart = source.indexOf('export function createPunctuationService');

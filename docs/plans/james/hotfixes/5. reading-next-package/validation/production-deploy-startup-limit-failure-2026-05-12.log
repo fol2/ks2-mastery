@@ -1,6 +1,6 @@
 
-> ks2-mastery@0.1.0 check
-> node ./scripts/wrangler-oauth.mjs deploy --dry-run
+> ks2-mastery@0.1.0 deploy
+> node ./scripts/wrangler-oauth.mjs deploy && npm run audit:production -- --skip-local --retries 30 --retry-delay-ms 5000
 
 
  ⛅️ wrangler 4.84.0 (update available 4.90.1)
@@ -21,7 +21,7 @@
 [custom build]   src\bundles\chunk-EE2UYWMZ.js              15.7kb
 [custom build]   ...and 3 more output files...
 [custom build] 
-[custom build] Done in 86ms
+[custom build] Done in 66ms
 [custom build] 
 [custom build] 
 [custom build] > ks2-mastery@0.1.0 assert:build-public
@@ -41,8 +41,20 @@
 [custom build] Allowlisted token present: /api/subjects/ (server-authoritative subject command boundary)
 [custom build] Client bundle audit passed (805 public files, 6 chunks scanned, main bundle 204441 / 232000 bytes gzip).
 [custom build] 
+🌀 Building list of assets...
 ✨ Read 881 files from the assets directory D:\Coding\ks2-mastery\.worktrees\reading-next-package-20260512\dist\public
-Total Upload: 22333.15 KiB / gzip: 2074.69 KiB
+🌀 Starting asset upload...
+🌀 Found 4 new or modified static assets to upload. Proceeding with upload...
++ /index.html
++ /src/bundles/app.bundle.js
++ /src/bundles/AdminHubSurface-54DBIUBD.js
++ /src/bundles/chunk-AC5HZHXN.js
+Uploaded 1 of 4 assets
+Uploaded 2 of 4 assets
+Uploaded 4 of 4 assets
+✨ Success! Uploaded 4 files (800 already uploaded) (2.54 sec)
+
+Total Upload: 22332.08 KiB / gzip: 2074.41 KiB
 Your Worker has access to the following bindings:
 Binding                                                     Resource                  
 env.LEARNER_LOCK (LearnerLock)                              Durable Object            
@@ -62,4 +74,29 @@ env.HERO_MODE_PROGRESS_ENABLED ("false")                    Environment Variable
 env.HERO_MODE_ECONOMY_ENABLED ("false")                     Environment Variable      
 env.HERO_MODE_CAMP_ENABLED ("false")                        Environment Variable      
 
---dry-run: exiting now.
+X [ERROR] Your Worker failed validation because it exceeded startup limits.
+
+  
+  A request to the Cloudflare API (/accounts/6d00cb4a0396c17ad6ba617bcbcaa45d/workers/scripts/ks2-mastery/versions) failed.
+   - Error: Script startup exceeded CPU time limit.
+   [code: 10021]
+  To learn more about this error, visit: https://developers.cloudflare.com/workers/observability/errors/#validation-errors-10021
+  
+  To ensure fast responses, there are constraints on Worker startup, such as how much CPU it can use, or how long it can take. Your Worker has hit one of these startup limits. Try reducing the amount of work done during startup (outside the event handler), either by removing code or relocating it inside the event handler.
+  
+  Refer to https://developers.cloudflare.com/workers/platform/limits/#worker-startup-time for more details
+  A CPU Profile of your Worker's startup phase has been written to .wrangler\tmp\startup-profile-rv5fve\worker.cpuprofile - load it into the Chrome DevTools profiler (or directly in VSCode) to view a flamegraph.
+
+
+
+X [ERROR] A request to the Cloudflare API (/accounts/6d00cb4a0396c17ad6ba617bcbcaa45d/workers/scripts/ks2-mastery/versions) failed.
+
+  Error: Script startup exceeded CPU time limit.
+   [code: 10021]
+  To learn more about this error, visit: https://developers.cloudflare.com/workers/observability/errors/#validation-errors-10021
+
+  
+  If you think this is a bug, please open an issue at: https://github.com/cloudflare/workers-sdk/issues/new/choose
+
+
+🪵  Logs were written to "C:\Users\fol2h\AppData\Roaming\xdg.config\.wrangler\logs\wrangler-2026-05-12_13-43-17_646.log"

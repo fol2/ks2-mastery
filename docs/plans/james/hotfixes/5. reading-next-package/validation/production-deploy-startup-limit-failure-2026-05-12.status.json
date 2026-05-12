@@ -1,0 +1,10 @@
+{
+  "ok": false,
+  "command": "npm run deploy",
+  "exitCode": 1,
+  "generatedAt": "2026-05-12T13:43:52.484Z",
+  "log": "production-deploy-startup-limit-failure-2026-05-12.log",
+  "errorCode": 10021,
+  "error": "Cloudflare Worker validation rejected the deploy because script startup exceeded the CPU time limit.",
+  "resolution": "The default Punctuation P20 runtime bank generation was moved behind lazy frozen exports so Worker module import no longer expands the 15072-item bank during startup."
+}

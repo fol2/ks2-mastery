@@ -64,14 +64,42 @@ const SESSION_MODE_LABELS = Object.freeze({
   structure: 'Structure focus',
 });
 
-export const DEFAULT_PUNCTUATION_RUNTIME_MANIFEST = createPunctuationRuntimeManifest({
-  manifest: PUNCTUATION_CONTENT_MANIFEST,
-  generatedPerFamily: PRODUCTION_DEPTH,
-});
+let defaultRuntimeManifest = null;
+let defaultContentIndexes = null;
 
-export const DEFAULT_PUNCTUATION_CONTENT_INDEXES = createPunctuationContentIndexes(
-  DEFAULT_PUNCTUATION_RUNTIME_MANIFEST,
-);
+function getDefaultPunctuationRuntimeManifest() {
+  if (!defaultRuntimeManifest) {
+    defaultRuntimeManifest = createPunctuationRuntimeManifest({
+      manifest: PUNCTUATION_CONTENT_MANIFEST,
+      generatedPerFamily: PRODUCTION_DEPTH,
+    });
+  }
+  return defaultRuntimeManifest;
+}
+
+function getDefaultPunctuationContentIndexes() {
+  if (!defaultContentIndexes) {
+    defaultContentIndexes = createPunctuationContentIndexes(getDefaultPunctuationRuntimeManifest());
+  }
+  return defaultContentIndexes;
+}
+
+function lazyFrozenConstant(resolve) {
+  return new Proxy(Object.freeze({}), {
+    get(_target, property) {
+      if (property === 'toJSON') return () => resolve();
+      if (property === 'valueOf') return () => resolve();
+      return resolve()[property];
+    },
+    has(_target, property) {
+      return property in resolve();
+    },
+  });
+}
+
+export const DEFAULT_PUNCTUATION_RUNTIME_MANIFEST = lazyFrozenConstant(getDefaultPunctuationRuntimeManifest);
+
+export const DEFAULT_PUNCTUATION_CONTENT_INDEXES = lazyFrozenConstant(getDefaultPunctuationContentIndexes);
 
 function indexesForManifest(manifest) {
   return manifest === DEFAULT_PUNCTUATION_RUNTIME_MANIFEST
