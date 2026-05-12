@@ -3,8 +3,8 @@
   "origin": "https://ks2.eugnel.uk",
   "session": {
     "demo": true,
-    "accountId": "demo-Edt_GwVqk3KoOw",
-    "learnerId": "learner-demo-Gm1PaykA0L-X4Q"
+    "accountId": "demo-26JS0vlFwddLBQ",
+    "learnerId": "learner-demo-46MC-J8PuAoNBQ"
   },
   "assertions": {
     "grammarTextVisible": true,
@@ -16,6 +16,6 @@
   "requestFailures": [],
   "httpFailures": [],
   "screenshot": "docs/plans/james/hotfixes/1. grammar-qg-p23-post-hardening-review-table-ui-rhythm-package/validation/live-rollout-2026-05-12/grammar-production-browser-smoke-2026-05-12.png",
-  "timestamp": "2026-05-12T14:54:48.758Z",
-  "commitSha": "87864532eea08f3389ee55947e5c98e9e7959071"
+  "timestamp": "2026-05-12T15:15:46.756Z",
+  "commitSha": "fc378c8f42c4d8ddfc94736b18451bf952fe8353"
 }

@@ -10,7 +10,9 @@ Runtime-bearing commit: `87864532eea08f3389ee55947e5c98e9e7959071`
 
 Base at implementation close: `d1e7ffb92e7e7a146e7d45c3d1df88a603be50bd`
 
-Cloudflare Worker version from the runtime deploy: `15418daa-b133-4159-93ab-3099b89f106c`
+Evidence-bearing deployed commit: `fc378c8f42c4d8ddfc94736b18451bf952fe8353`
+
+Cloudflare Worker version from the final evidence-bearing deploy: `7ed9bf87-9261-4b88-9595-2596fa441afd`
 
 ## Product And Contract Closure
 
@@ -48,8 +50,8 @@ All local gates were rerun after rebasing onto `origin/main` at `d1e7ffb92e7e7a1
 |---|---|
 | `npm run deploy` | Pass: Worker deployed and production bundle audit passed |
 | `npm run smoke:production:grammar` | Pass against `https://ks2.eugnel.uk` |
-| `node ./scripts/grammar-production-smoke.mjs --json --evidence-origin post-deploy --out ...` | Pass: JSON evidence recorded |
-| Production browser smoke | Pass: demo browser session loaded `https://ks2.eugnel.uk`, Grammar text visible, no console errors, no request failures, no HTTP failures |
+| `node ./scripts/grammar-production-smoke.mjs --json --evidence-origin post-deploy --out ...` | Pass: JSON evidence recorded at `2026-05-12T15:15:05.782Z` for `fc378c8f42c4d8ddfc94736b18451bf952fe8353` |
+| Production browser smoke | Pass: demo browser session loaded `https://ks2.eugnel.uk` at `2026-05-12T15:15:46.756Z` for `fc378c8f42c4d8ddfc94736b18451bf952fe8353`; Grammar text visible, no console errors, no request failures, no HTTP failures |
 
 ## Evidence Files
 
@@ -66,4 +68,4 @@ All local gates were rerun after rebasing onto `origin/main` at `d1e7ffb92e7e7a1
 
 ## Release Notes
 
-The pushed runtime commit was deployed and production-smoked before this completion report was added. This report and the evidence artefacts are documentation-only additions; the release closure includes a final redeploy after committing them so the deployed bundle and `origin/main` remain aligned.
+The runtime-bearing commit was deployed and production-smoked, then the evidence-bearing commit `fc378c8f42c4d8ddfc94736b18451bf952fe8353` was redeployed so the report bundle and deployment evidence aligned at the final Cloudflare Worker version `7ed9bf87-9261-4b88-9595-2596fa441afd`.
