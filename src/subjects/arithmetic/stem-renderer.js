@@ -23,6 +23,41 @@ const OPERATOR_LABELS = Object.freeze({
   '×': 'times',
   '÷': 'divided by',
   '=': 'equals',
+  '<': 'is less than',
+  '>': 'is greater than',
+  '≤': 'is less than or equal to',
+  '≥': 'is greater than or equal to',
+  '≠': 'is not equal to',
+  '≈': 'approximately equals',
+  '±': 'plus or minus',
+  '^': 'to the power of',
+  '/': 'over',
+  ':': 'to',
+});
+
+const SYMBOL_LABELS = Object.freeze({
+  '%': 'percent',
+  '(': 'open bracket',
+  ')': 'close bracket',
+  '[': 'open square bracket',
+  ']': 'close square bracket',
+  '{': 'open brace',
+  '}': 'close brace',
+});
+
+const LATEX_COMMANDS = Object.freeze({
+  times: { type: 'operator', text: '×', label: 'times' },
+  cdot: { type: 'operator', text: '×', label: 'times' },
+  div: { type: 'operator', text: '÷', label: 'divided by' },
+  le: { type: 'operator', text: '≤', label: 'is less than or equal to' },
+  leq: { type: 'operator', text: '≤', label: 'is less than or equal to' },
+  ge: { type: 'operator', text: '≥', label: 'is greater than or equal to' },
+  geq: { type: 'operator', text: '≥', label: 'is greater than or equal to' },
+  ne: { type: 'operator', text: '≠', label: 'is not equal to' },
+  neq: { type: 'operator', text: '≠', label: 'is not equal to' },
+  approx: { type: 'operator', text: '≈', label: 'approximately equals' },
+  pm: { type: 'operator', text: '±', label: 'plus or minus' },
+  percent: { type: 'symbol', text: '%', label: 'percent' },
 });
 
 function pushTextToken(tokens, value) {
@@ -64,6 +99,168 @@ function normalisedNumberText(value) {
   return String(value || '').replace(/,/g, '');
 }
 
+function normalisedSource(value) {
+  return String(value || '').trim();
+}
+
+function isPlainInteger(value) {
+  return /^\d+$/.test(normalisedNumberText(normalisedSource(value)));
+}
+
+function skipSpaces(text, index) {
+  let cursor = index;
+  while (/\s/.test(text[cursor] || '')) cursor += 1;
+  return cursor;
+}
+
+function matchNumberAt(text, index) {
+  const match = /^(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?/.exec(text.slice(index));
+  if (!match) return null;
+  return { source: match[0], text: match[0], end: index + match[0].length };
+}
+
+function parseDelimited(text, index, open, close) {
+  if (text[index] !== open) return null;
+  let depth = 0;
+  for (let cursor = index; cursor < text.length; cursor += 1) {
+    const char = text[cursor];
+    if (char === open) depth += 1;
+    if (char === close) depth -= 1;
+    if (depth === 0) {
+      return {
+        source: text.slice(index, cursor + 1),
+        inner: text.slice(index + 1, cursor),
+        end: cursor + 1,
+      };
+    }
+  }
+  return null;
+}
+
+function parseFractionAtom(text, index) {
+  const start = skipSpaces(text, index);
+  const grouped = parseDelimited(text, start, '(', ')') || parseDelimited(text, start, '{', '}');
+  if (grouped) {
+    return {
+      source: normalisedSource(grouped.inner),
+      end: grouped.end,
+      grouped: true,
+    };
+  }
+  const number = matchNumberAt(text, start);
+  if (number) {
+    return {
+      source: number.source,
+      end: number.end,
+      grouped: false,
+    };
+  }
+  const variable = /^[A-Za-z]+/.exec(text.slice(start));
+  if (variable) {
+    return {
+      source: variable[0],
+      end: start + variable[0].length,
+      grouped: false,
+    };
+  }
+  return null;
+}
+
+function expressionFractionToken(source, numeratorSource, denominatorSource) {
+  const numerator = normalisedSource(numeratorSource);
+  const denominator = normalisedSource(denominatorSource);
+  return {
+    type: 'expression-fraction',
+    source,
+    numeratorSource: numerator,
+    denominatorSource: denominator,
+    numeratorTokens: tokeniseArithmeticStem(numerator),
+    denominatorTokens: tokeniseArithmeticStem(denominator),
+  };
+}
+
+function matchGroupedSlashFractionAt(text, index) {
+  const numeratorGroup = parseDelimited(text, index, '(', ')');
+  if (numeratorGroup) {
+    const slashIndex = skipSpaces(text, numeratorGroup.end);
+    if (text[slashIndex] !== '/') return null;
+    const denominator = parseFractionAtom(text, slashIndex + 1);
+    if (!denominator) return null;
+    return {
+      token: expressionFractionToken(
+        text.slice(index, denominator.end),
+        numeratorGroup.inner,
+        denominator.source,
+      ),
+      end: denominator.end,
+    };
+  }
+
+  const numerator = matchNumberAt(text, index);
+  if (!numerator || isInsideProseHyphen(text, index, numerator.end)) return null;
+  const slashIndex = skipSpaces(text, numerator.end);
+  if (text[slashIndex] !== '/') return null;
+  const denominator = parseFractionAtom(text, slashIndex + 1);
+  if (!denominator || (!denominator.grouped && isPlainInteger(denominator.source))) return null;
+  return {
+    token: expressionFractionToken(
+      text.slice(index, denominator.end),
+      numerator.source,
+      denominator.source,
+    ),
+    end: denominator.end,
+  };
+}
+
+function matchLatexAt(text, index) {
+  if (text[index] !== '\\') return null;
+  const commandMatch = /^\\([A-Za-z]+)/.exec(text.slice(index));
+  if (!commandMatch) return null;
+  const command = commandMatch[1];
+  let cursor = index + commandMatch[0].length;
+
+  if (command === 'frac') {
+    const numerator = parseDelimited(text, skipSpaces(text, cursor), '{', '}');
+    if (!numerator) return null;
+    const denominator = parseDelimited(text, skipSpaces(text, numerator.end), '{', '}');
+    if (!denominator) return null;
+    return {
+      token: expressionFractionToken(
+        text.slice(index, denominator.end),
+        numerator.inner,
+        denominator.inner,
+      ),
+      end: denominator.end,
+    };
+  }
+
+  if (command === 'sqrt') {
+    const radicand = parseDelimited(text, skipSpaces(text, cursor), '{', '}');
+    if (!radicand) return null;
+    const radicandSource = normalisedSource(radicand.inner);
+    return {
+      token: {
+        type: 'sqrt',
+        source: text.slice(index, radicand.end),
+        text: '√',
+        radicandSource,
+        radicandTokens: tokeniseArithmeticStem(radicandSource),
+      },
+      end: radicand.end,
+    };
+  }
+
+  const mapped = LATEX_COMMANDS[command];
+  if (!mapped) return null;
+  return {
+    token: {
+      ...mapped,
+      source: text.slice(index, cursor),
+    },
+    end: cursor,
+  };
+}
+
 function denominatorLabel(denominator, numerator = 2) {
   const d = Number(denominator);
   const n = Math.abs(Number(numerator));
@@ -80,83 +277,159 @@ export function mixedNumberAriaLabel({ whole, numerator, denominator }) {
   return `${Number(normalisedNumberText(whole))} and ${fractionAriaLabel({ numerator, denominator })}`;
 }
 
-export function tokeniseArithmeticStem(stem = '') {
-  const text = String(stem || '');
-  const tokens = [];
-  const numberPattern = '(?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d+)?';
-  const tokenPattern = new RegExp(`(${numberPattern})\\s+(\\d+)\\/(\\d+)|(\\d+)\\/(\\d+)|(${numberPattern})|([+\\-−×÷=])|(□)`, 'g');
-  let cursor = 0;
-  let match;
-
-  while ((match = tokenPattern.exec(text)) !== null) {
-    if (match[6] !== undefined && isInsideProseHyphen(text, match.index, match.index + match[0].length)) {
-      pushTextToken(tokens, text.slice(cursor, match.index + match[0].length));
-      cursor = match.index + match[0].length;
-      continue;
-    }
-
-    if (match[7] === '-' && isProseHyphen(text, match.index)) {
-      pushTextToken(tokens, text.slice(cursor, match.index + 1));
-      cursor = match.index + 1;
-      continue;
-    }
-
-    pushTextToken(tokens, text.slice(cursor, match.index));
-    if (match[1] !== undefined) {
-      tokens.push({
-        type: 'mixed-number',
-        source: match[0],
-        whole: match[1],
-        numerator: match[2],
-        denominator: match[3],
-      });
-    } else if (match[4] !== undefined) {
-      tokens.push({
-        type: 'fraction',
-        source: match[0],
-        numerator: match[4],
-        denominator: match[5],
-      });
-    } else if (match[6] !== undefined) {
-      tokens.push({
-        type: 'number',
-        source: match[0],
-        text: match[6],
-      });
-    } else if (match[7] !== undefined) {
-      tokens.push({
-        type: 'operator',
-        source: match[0],
-        text: match[7],
-        label: OPERATOR_LABELS[match[7]],
-      });
-    } else {
-      tokens.push({
-        type: 'placeholder',
-        source: match[0],
-        text: match[8],
-        label: 'blank',
-      });
-    }
-    cursor = match.index + match[0].length;
-  }
-
-  pushTextToken(tokens, text.slice(cursor));
-  return tokens;
+function normaliseLabelSpacing(value) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([.,!?;:])/g, '$1')
+    .trim();
 }
 
-export function arithmeticStemAriaLabel(stem = '') {
-  return tokeniseArithmeticStem(stem)
+function tokensAriaLabel(tokens = []) {
+  return normaliseLabelSpacing(tokens
     .map((token) => {
       if (token.type === 'mixed-number') return mixedNumberAriaLabel(token);
       if (token.type === 'fraction') return fractionAriaLabel(token);
+      if (token.type === 'expression-fraction') return expressionFractionAriaLabel(token);
+      if (token.type === 'sqrt') return sqrtAriaLabel(token);
       if (token.type === 'operator') return token.label;
+      if (token.type === 'symbol') return token.label;
       if (token.type === 'placeholder') return token.label;
       if (token.type === 'number') return token.text;
       return token.text.replace(/\s+/g, ' ');
     })
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .replace(/\s+([.,!?;:])/g, '$1')
-    .trim();
+    .join(' '));
+}
+
+export function expressionFractionAriaLabel({ numeratorSource, denominatorSource, numeratorTokens, denominatorTokens }) {
+  if (isPlainInteger(numeratorSource) && isPlainInteger(denominatorSource)) {
+    return fractionAriaLabel({ numerator: numeratorSource, denominator: denominatorSource });
+  }
+  return `${tokensAriaLabel(numeratorTokens)} over ${tokensAriaLabel(denominatorTokens)}`;
+}
+
+export function sqrtAriaLabel({ radicandTokens }) {
+  return `square root of ${tokensAriaLabel(radicandTokens)}`;
+}
+
+export function tokeniseArithmeticStem(stem = '') {
+  const text = String(stem || '');
+  const tokens = [];
+  let cursor = 0;
+
+  while (cursor < text.length) {
+    const latex = matchLatexAt(text, cursor);
+    if (latex) {
+      tokens.push(latex.token);
+      cursor = latex.end;
+      continue;
+    }
+
+    const groupedFraction = matchGroupedSlashFractionAt(text, cursor);
+    if (groupedFraction) {
+      tokens.push(groupedFraction.token);
+      cursor = groupedFraction.end;
+      continue;
+    }
+
+    const mixedNumber = /^((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\s+(\d+)\/(\d+)/.exec(text.slice(cursor));
+    if (mixedNumber && !isInsideProseHyphen(text, cursor, cursor + mixedNumber[0].length)) {
+      tokens.push({
+        type: 'mixed-number',
+        source: mixedNumber[0],
+        whole: mixedNumber[1],
+        numerator: mixedNumber[2],
+        denominator: mixedNumber[3],
+      });
+      cursor += mixedNumber[0].length;
+      continue;
+    }
+
+    const fraction = /^(\d+)\/(\d+)/.exec(text.slice(cursor));
+    if (fraction) {
+      tokens.push({
+        type: 'fraction',
+        source: fraction[0],
+        numerator: fraction[1],
+        denominator: fraction[2],
+      });
+      cursor += fraction[0].length;
+      continue;
+    }
+
+    const number = matchNumberAt(text, cursor);
+    if (number) {
+      if (isInsideProseHyphen(text, cursor, number.end)) {
+        pushTextToken(tokens, number.source);
+        cursor = number.end;
+        continue;
+      }
+      tokens.push({
+        type: 'number',
+        source: number.source,
+        text: number.text,
+      });
+      cursor = number.end;
+      continue;
+    }
+
+    const char = text[cursor];
+    if (char === '-' && isProseHyphen(text, cursor)) {
+      pushTextToken(tokens, char);
+      cursor += 1;
+      continue;
+    }
+
+    if (OPERATOR_LABELS[char]) {
+      tokens.push({
+        type: 'operator',
+        source: char,
+        text: char,
+        label: OPERATOR_LABELS[char],
+      });
+      cursor += 1;
+      continue;
+    }
+
+    if (SYMBOL_LABELS[char]) {
+      tokens.push({
+        type: 'symbol',
+        source: char,
+        text: char,
+        label: SYMBOL_LABELS[char],
+      });
+      cursor += 1;
+      continue;
+    }
+
+    if (char === '□') {
+      tokens.push({
+        type: 'placeholder',
+        source: char,
+        text: char,
+        label: 'blank',
+      });
+      cursor += 1;
+      continue;
+    }
+
+    if (char === '√') {
+      tokens.push({
+        type: 'operator',
+        source: char,
+        text: char,
+        label: 'square root',
+      });
+      cursor += 1;
+      continue;
+    }
+
+    pushTextToken(tokens, char);
+    cursor += 1;
+  }
+
+  return tokens;
+}
+
+export function arithmeticStemAriaLabel(stem = '') {
+  return tokensAriaLabel(tokeniseArithmeticStem(stem));
 }

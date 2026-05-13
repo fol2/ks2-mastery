@@ -287,6 +287,175 @@ test('ArithmeticPracticeSurface renders mixed-number stems as grouped fraction U
   assert.equal(result.stemText.includes('11/8'), false, 'rendered stem must not collapse the second mixed number into 11/8');
 });
 
+test('ArithmeticPracticeSurface renders grouped slash fractions as stacked expression fractions', async () => {
+  const output = await runFixture(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.test/arithmetic',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.HTMLInputElement = dom.window.HTMLInputElement;
+    globalThis.HTMLTextAreaElement = dom.window.HTMLTextAreaElement;
+    globalThis.HTMLButtonElement = dom.window.HTMLButtonElement;
+    globalThis.Event = dom.window.Event;
+    globalThis.FormData = dom.window.FormData;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { act } = React;
+    const { ArithmeticPracticeSurface } = require(${arithmeticSurfaceSpecifier()});
+
+    const question = {
+      id: 'expression-fraction-regression',
+      templateLabel: 'Order of operations',
+      domain: 'Mixed arithmetic',
+      marks: 1,
+      stem: '(5+3)/5 =',
+      inputSpec: { type: 'text', label: 'Answer' },
+    };
+    const appState = {
+      learners: { selectedId: 'learner-arithmetic' },
+      subjectUi: {
+        arithmetic: {
+          phase: 'session',
+          session: {
+            id: 'expression-fraction-session',
+            mode: 'smart',
+            currentIndex: 0,
+            currentQuestion: question,
+          },
+        },
+      },
+    };
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      const actions = { dispatch() {}, navigateHome() {} };
+      await act(async () => {
+        root.render(React.createElement(ArithmeticPracticeSurface, { appState, actions }));
+      });
+
+      const stem = document.querySelector('.question-stem');
+      const expressionFraction = stem?.querySelector('[data-arithmetic-token="expression-fraction"]');
+      process.stdout.write(JSON.stringify({
+        stemText: stem?.textContent.replace(/\\s+/g, ' ').trim() || '',
+        stemExpressionLabel: stem?.querySelector('.arithmetic-expression')?.getAttribute('aria-label') || '',
+        tokenLabel: expressionFraction?.getAttribute('data-arithmetic-label') || '',
+        numerator: expressionFraction?.querySelector('.arithmetic-fraction-numerator')?.textContent.replace(/\\s+/g, '') || '',
+        denominator: expressionFraction?.querySelector('.arithmetic-fraction-denominator')?.textContent.replace(/\\s+/g, '') || '',
+        tokenCount: stem?.querySelectorAll('[data-arithmetic-token]').length || 0,
+        ariaHidden: expressionFraction?.getAttribute('aria-hidden') || '',
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exit(1);
+    });
+  `);
+
+  const result = JSON.parse(output);
+  assert.equal(result.stemExpressionLabel, '5 plus 3 over 5 equals');
+  assert.equal(result.tokenLabel, '5 plus 3 over 5');
+  assert.equal(result.numerator, '5+3');
+  assert.equal(result.denominator, '5');
+  assert.equal(result.ariaHidden, 'true');
+  assert.equal(result.stemText.includes('(5+3)/5'), false, 'grouped slash fraction should not remain raw slash text');
+});
+
+test('ArithmeticPracticeSurface renders missing-number placeholders as full answer boxes', async () => {
+  const output = await runFixture(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.test/arithmetic',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.HTMLInputElement = dom.window.HTMLInputElement;
+    globalThis.HTMLTextAreaElement = dom.window.HTMLTextAreaElement;
+    globalThis.HTMLButtonElement = dom.window.HTMLButtonElement;
+    globalThis.Event = dom.window.Event;
+    globalThis.FormData = dom.window.FormData;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { act } = React;
+    const { ArithmeticPracticeSurface } = require(${arithmeticSurfaceSpecifier()});
+
+    const question = {
+      id: 'placeholder-box-regression',
+      templateLabel: 'Missing-number equation',
+      domain: 'Addition and subtraction',
+      marks: 1,
+      stem: '9 × □ = 99',
+      inputSpec: { type: 'text', label: 'Answer' },
+    };
+    const appState = {
+      learners: { selectedId: 'learner-arithmetic' },
+      subjectUi: {
+        arithmetic: {
+          phase: 'session',
+          session: {
+            id: 'placeholder-box-session',
+            mode: 'smart',
+            currentIndex: 0,
+            currentQuestion: question,
+          },
+        },
+      },
+    };
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      const actions = { dispatch() {}, navigateHome() {} };
+      await act(async () => {
+        root.render(React.createElement(ArithmeticPracticeSurface, { appState, actions }));
+      });
+
+      const stem = document.querySelector('.question-stem');
+      const placeholder = stem?.querySelector('[data-arithmetic-token="placeholder"]');
+      process.stdout.write(JSON.stringify({
+        stemExpressionLabel: stem?.querySelector('.arithmetic-expression')?.getAttribute('aria-label') || '',
+        placeholderLabel: placeholder?.getAttribute('data-arithmetic-label') || '',
+        placeholderText: placeholder?.textContent || '',
+        hasBox: Boolean(placeholder?.querySelector('.arithmetic-placeholder-box')),
+        ariaHidden: placeholder?.getAttribute('aria-hidden') || '',
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exit(1);
+    });
+  `);
+
+  const result = JSON.parse(output);
+  assert.equal(result.stemExpressionLabel, '9 times blank equals 99');
+  assert.equal(result.placeholderLabel, 'blank');
+  assert.equal(result.placeholderText, '');
+  assert.equal(result.hasBox, true);
+  assert.equal(result.ariaHidden, 'true');
+});
+
 test('ArithmeticPracticeSurface renders arithmetic feedback, answers and review text through the math renderer', async () => {
   const output = await runFixture(`
     const { JSDOM } = require('jsdom');

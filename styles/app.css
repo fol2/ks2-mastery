@@ -569,6 +569,7 @@ textarea:focus-visible {
 
 .arithmetic-number,
 .arithmetic-operator,
+.arithmetic-symbol,
 .arithmetic-placeholder {
   display: inline-flex;
   align-items: center;
@@ -586,8 +587,25 @@ textarea:focus-visible {
   font-weight: 800;
 }
 
+.arithmetic-symbol {
+  min-width: 0.7em;
+}
+
 .arithmetic-placeholder {
-  min-width: 1.1em;
+  min-width: 1.75em;
+  width: 1.75em;
+  height: 1.42em;
+  padding: 0;
+}
+
+.arithmetic-placeholder-box {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 2.5px solid currentColor;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .arithmetic-copy-space {
@@ -620,6 +638,39 @@ textarea:focus-visible {
 
 .arithmetic-fraction-denominator {
   padding-top: 0.08em;
+}
+
+.arithmetic-expression-fraction {
+  min-width: 2em;
+}
+
+.arithmetic-expression-fraction .arithmetic-fraction-numerator,
+.arithmetic-expression-fraction .arithmetic-fraction-denominator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08em;
+}
+
+.arithmetic-sqrt {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.08em;
+  white-space: nowrap;
+}
+
+.arithmetic-sqrt-symbol {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 800;
+}
+
+.arithmetic-sqrt-radicand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.08em;
+  padding: 0 0.12em;
+  border-top: 1.5px solid currentColor;
 }
 
 .arithmetic-visual {

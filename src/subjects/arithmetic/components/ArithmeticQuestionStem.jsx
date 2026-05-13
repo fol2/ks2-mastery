@@ -1,21 +1,32 @@
 import {
   arithmeticStemAriaLabel,
+  expressionFractionAriaLabel,
   fractionAriaLabel,
   mixedNumberAriaLabel,
+  sqrtAriaLabel,
   tokeniseArithmeticStem,
 } from '../stem-renderer.js';
 
+function ArithmeticTokenSequence({ tokens = [] }) {
+  return tokens.map((token, index) => renderArithmeticToken(token, index));
+}
+
 function ArithmeticFraction({ token }) {
+  const expressionFraction = token.type === 'expression-fraction';
   return (
     <span
-      className="arithmetic-fraction"
-      data-arithmetic-token="fraction"
-      data-arithmetic-label={fractionAriaLabel(token)}
+      className={expressionFraction ? 'arithmetic-fraction arithmetic-expression-fraction' : 'arithmetic-fraction'}
+      data-arithmetic-token={expressionFraction ? 'expression-fraction' : 'fraction'}
+      data-arithmetic-label={expressionFraction ? expressionFractionAriaLabel(token) : fractionAriaLabel(token)}
       aria-hidden="true"
     >
-      <span className="arithmetic-fraction-numerator">{token.numerator}</span>
+      <span className="arithmetic-fraction-numerator">
+        {expressionFraction ? <ArithmeticTokenSequence tokens={token.numeratorTokens} /> : token.numerator}
+      </span>
       <span className="arithmetic-copy-space" aria-hidden="true"> </span>
-      <span className="arithmetic-fraction-denominator">{token.denominator}</span>
+      <span className="arithmetic-fraction-denominator">
+        {expressionFraction ? <ArithmeticTokenSequence tokens={token.denominatorTokens} /> : token.denominator}
+      </span>
     </span>
   );
 }
@@ -43,9 +54,36 @@ function ArithmeticInlineToken({ token }) {
       data-arithmetic-label={token.label}
       aria-hidden="true"
     >
-      {token.text}
+      {token.type === 'placeholder' ? <span className="arithmetic-placeholder-box" /> : token.text}
     </span>
   );
+}
+
+function ArithmeticSqrt({ token }) {
+  return (
+    <span
+      className="arithmetic-sqrt"
+      data-arithmetic-token="sqrt"
+      data-arithmetic-label={sqrtAriaLabel(token)}
+      aria-hidden="true"
+    >
+      <span className="arithmetic-sqrt-symbol">√</span>
+      <span className="arithmetic-sqrt-radicand">
+        <ArithmeticTokenSequence tokens={token.radicandTokens} />
+      </span>
+    </span>
+  );
+}
+
+function renderArithmeticToken(token, index) {
+  const key = `${token.type}:${token.source || token.text}:${index}`;
+  if (token.type === 'mixed-number') return <ArithmeticMixedNumber key={key} token={token} />;
+  if (token.type === 'fraction' || token.type === 'expression-fraction') return <ArithmeticFraction key={key} token={token} />;
+  if (token.type === 'sqrt') return <ArithmeticSqrt key={key} token={token} />;
+  if (token.type === 'number' || token.type === 'operator' || token.type === 'symbol' || token.type === 'placeholder') {
+    return <ArithmeticInlineToken key={key} token={token} />;
+  }
+  return <span key={key} className="arithmetic-expression-text" aria-hidden="true">{token.text}</span>;
 }
 
 export function ArithmeticMathText({ text = '' }) {
@@ -55,15 +93,7 @@ export function ArithmeticMathText({ text = '' }) {
 
   return (
     <span className="arithmetic-expression" role="math" aria-label={arithmeticStemAriaLabel(text)}>
-      {tokens.map((token, index) => {
-        const key = `${token.type}:${token.source || token.text}:${index}`;
-        if (token.type === 'mixed-number') return <ArithmeticMixedNumber key={key} token={token} />;
-        if (token.type === 'fraction') return <ArithmeticFraction key={key} token={token} />;
-        if (token.type === 'number' || token.type === 'operator' || token.type === 'placeholder') {
-          return <ArithmeticInlineToken key={key} token={token} />;
-        }
-        return <span key={key} className="arithmetic-expression-text" aria-hidden="true">{token.text}</span>;
-      })}
+      <ArithmeticTokenSequence tokens={tokens} />
     </span>
   );
 }
