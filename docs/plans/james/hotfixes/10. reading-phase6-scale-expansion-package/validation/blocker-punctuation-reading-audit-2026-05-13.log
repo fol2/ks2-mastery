@@ -1,0 +1,10 @@
+
+> ks2-mastery@0.1.0 audit:reading-content
+> node scripts/audit-reading-content-quality.mjs --out=reports/reading/reading-content-quality-audit.json
+
+{
+  "failures": 0,
+  "advisories": 0,
+  "repeatedStemShapeAdvisories": 0,
+  "questions": 4112
+}

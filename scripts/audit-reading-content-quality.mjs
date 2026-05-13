@@ -62,6 +62,36 @@ function isRecentExpansionRow(row) {
   return row.includes('phase5_') || row.includes('phase6_');
 }
 
+const PHASE6_PUNCTUATION_FEATURES = Object.freeze({
+  P1: /\bcomma\b|\bopening (?:place|time) phrase\b/i,
+  P2: /\bspeech marks\b|\bexact words\b|\bspoken\b|\bwhispered\b/i,
+  P3: /\bdashes?\b|\bparentheses\b|\bbrackets\b/i,
+  P4: /\bsemicolon\b|\bcolon\b|\blist\b/i,
+});
+
+function questionSurface(question) {
+  return [
+    question.stem,
+    question.modelAnswer,
+    question.explanation,
+    question.hint,
+    ...(question.options || []),
+  ].join(' ');
+}
+
+function phase6PunctuationFeatureMismatch(rowId, question) {
+  if (!rowId.includes('phase6_') || !String(question.skill || '').startsWith('P')) return null;
+  const surface = questionSurface(question);
+  const expectedFeature = PHASE6_PUNCTUATION_FEATURES[question.skill];
+  if (!expectedFeature?.test(surface)) {
+    return { type: 'phase6-punctuation-skill-feature-mismatch', rowId, skill: question.skill };
+  }
+  if (question.skill !== 'P4' && /\b(?:colon|semicolon)\b/i.test(surface)) {
+    return { type: 'phase6-punctuation-skill-feature-mismatch', rowId, skill: question.skill, detail: 'colon-or-semicolon-content-labelled-as-non-p4' };
+  }
+  return null;
+}
+
 function sentenceContaining(source, snippet) {
   const snippetKey = norm(snippet);
   return String(source || '')
@@ -100,6 +130,8 @@ for (const passage of READING_PASSAGES) {
     if (!READING_SKILLS[question.skill]) failures.push({ type: 'unknown-skill', rowId, skill: question.skill });
     skillCounts[question.skill] = (skillCounts[question.skill] || 0) + 1;
     typeCounts[question.type] = (typeCounts[question.type] || 0) + 1;
+    const punctuationMismatch = phase6PunctuationFeatureMismatch(rowId, question);
+    if (punctuationMismatch) failures.push(punctuationMismatch);
     const stemKey = norm(question.stem).replace(/paragraph [0-9]+/g, 'paragraph #').replace(/section [0-9]+/g, 'section #');
     addGroup(duplicateStemGroups, stemKey, rowId);
     if (question.modelAnswer) addGroup(duplicateModelAnswerGroups, norm(question.modelAnswer), rowId);

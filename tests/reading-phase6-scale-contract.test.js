@@ -22,6 +22,16 @@ function hasUnresolvedCopy(value) {
   return /\b(undefined|null|NaN)\b/.test(String(value || ''));
 }
 
+function questionSurface(question) {
+  return [
+    question.stem,
+    question.modelAnswer,
+    question.explanation,
+    question.hint,
+    ...(question.options || []),
+  ].join(' ');
+}
+
 test('Reading Phase 6 takes Reading beyond four thousand questions without changing answer-safe metadata boundaries', () => {
   const summary = readingContentSummary();
   assert.equal(summary.version, 6);
@@ -83,6 +93,28 @@ test('Reading Phase 6 passages keep balanced skill and question-type coverage', 
     assert.ok(skills.has('2h'), `${passage.id} missing comparison`);
     assert.ok([...skills].some((skill) => skill.startsWith('P')), `${passage.id} missing punctuation support`);
   }
+});
+
+test('Reading Phase 6 punctuation support labels match the punctuation feature being tested', () => {
+  const featureBySkill = {
+    P1: /\bcomma\b|\bopening (?:place|time) phrase\b/i,
+    P2: /\bspeech marks\b|\bexact words\b|\bspoken\b|\bwhispered\b/i,
+    P3: /\bdashes?\b|\bparentheses\b|\bbrackets\b/i,
+    P4: /\bsemicolon\b|\bcolon\b|\blist\b/i,
+  };
+  const counts = { P1: 0, P2: 0, P3: 0, P4: 0 };
+  for (const passage of READING_PHASE6_PASSAGES) {
+    for (const question of passage.questions) {
+      if (!question.skill.startsWith('P')) continue;
+      counts[question.skill] += 1;
+      const surface = questionSurface(question);
+      assert.match(surface, featureBySkill[question.skill], `${question.id} does not test ${question.skill}'s punctuation feature`);
+      if (question.skill !== 'P4') {
+        assert.doesNotMatch(surface, /\b(?:colon|semicolon)\b/i, `${question.id} labels colon/semicolon content as ${question.skill}`);
+      }
+    }
+  }
+  assert.deepEqual(counts, { P1: 51, P2: 51, P3: 51, P4: 51 });
 });
 
 test('Reading Phase 6 generated learner-facing copy is resolved and passage-specific', () => {

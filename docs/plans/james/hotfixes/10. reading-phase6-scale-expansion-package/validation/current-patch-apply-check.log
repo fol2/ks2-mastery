@@ -1,4 +1,4 @@
-Command: git -C <fresh temporary worktree at current origin/main> apply --check --cached --unidiff-zero docs/plans/james/hotfixes/10. reading-phase6-scale-expansion-package/patches/001-reading-phase6-scale-expansion.patch
+Command: git -C <fresh temporary worktree at Reading implementation base> apply --check --cached --unidiff-zero docs/plans/james/hotfixes/10. reading-phase6-scale-expansion-package/patches/001-reading-phase6-scale-expansion.patch
 Result: passed
 Base commit: 85ac971f48516bdbf3b38400e73635b0cf630b77
 Note: The current generated patch is intentionally emitted with zero context so the package can satisfy git whitespace checks without blank context-line advisories. Git apply requires --unidiff-zero for this patch format.

@@ -318,6 +318,11 @@ function titleCase(value) {
   return String(value || '').split(/\s+/).map((word) => word ? word[0].toUpperCase() + word.slice(1) : word).join(' ');
 }
 
+function sentenceCase(value) {
+  const text = String(value || '').trim();
+  return text ? `${text.slice(0, 1).toUpperCase()}${text.slice(1)}` : text;
+}
+
 function objectForPoemSetting(setting, index) {
   const settingCore = String(setting || '').replace(SETTING_PREFIX_RE, '').trim();
   return `${settingCore} ${POEM_OBJECTS[index % POEM_OBJECTS.length]}`;
@@ -344,6 +349,121 @@ function topicCaseLabel(topic, index) {
 
 function topicCaseAnchor(index) {
   return CASE_ANCHORS[index % CASE_ANCHORS.length];
+}
+
+function makeFictionPunctuationQuestion(id, spec, skill) {
+  const adviceSentence = sentenceCase(spec.advice);
+  const bySkill = {
+    P1: {
+      stem: `In ${spec.title}, what does the comma after "For a while" help to show during ${spec.challenge}?`,
+      options: ['It separates an opening time phrase from the main idea.', 'It introduces exact spoken words.', 'It marks the end of a question.', 'It lists unrelated objects.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the comma marks an opening time phrase before the sentence explains the confusing problem.`,
+      explanation: 'The comma after the opening phrase creates a pause before the main idea of the sentence.',
+      hint: 'Look at the words before and after the comma.'
+    },
+    P2: {
+      stem: `When ${spec.helper} says "${adviceSentence}.", what do the speech marks show in ${spec.title}?`,
+      options: [`They show the exact words spoken by ${spec.helper}.`, 'They mark the title of the story.', 'They separate an opening time phrase.', 'They introduce a list of clues.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the speech marks show the exact words spoken by ${spec.helper}.`,
+      explanation: 'Speech marks signal direct speech and help the reader hear the character voice.',
+      hint: 'Think about who is speaking.'
+    },
+    P3: {
+      stem: `What do the dashes around "almost ordinary" add to the description of ${spec.clue} in ${spec.title}?`,
+      options: ['They add extra information about how the clue first seemed.', 'They show a new speaker starting to talk.', 'They mark the sentence as a question.', 'They remove the detail from the passage.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the dashes add extra information about how ${spec.clue} first seemed almost ordinary.`,
+      explanation: 'The dashes hold an inserted detail that comments on the clue without stopping the main sentence.',
+      hint: 'Look at the words between the dashes.'
+    },
+    P4: {
+      stem: `In ${spec.title}, what does the semicolon in "The first mark seemed tiny; the next choice depended on it" help to show during ${spec.challenge}?`,
+      options: ['It links two closely connected ideas.', 'It introduces direct speech.', 'It shows a question is being asked.', 'It separates items in a simple list only.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the semicolon links the tiny first mark to the choice that depends on it.`,
+      explanation: 'The first clause says the mark seemed tiny; the second explains why it still mattered.',
+      hint: 'Look at the ideas on both sides of the semicolon.'
+    },
+  };
+  return { id, type: 'mcq', skill, marks: 2, ...bySkill[skill] };
+}
+
+function makeNonFictionPunctuationQuestion(id, spec, skill) {
+  const bySkill = {
+    P1: {
+      stem: `When the ${spec.caseAnchor} explanation says "However", what does the comma help the reader notice in ${spec.title}?`,
+      options: ['The explanation is turning from benefit to caution.', 'A speaker is giving exact words.', 'A definition is being put in brackets.', 'A list of separate tools is beginning.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the comma after "However" helps signal that the ${spec.caseAnchor} explanation is turning from benefit to caution.`,
+      explanation: 'The comma marks a pause after the linking word before the balanced warning begins.',
+      hint: 'Think about the change after the word "However".'
+    },
+    P2: {
+      stem: `In the ${spec.caseAnchor} example, what do the speech marks around "What changed this week?" show?`,
+      options: ['They show the exact words the team asks.', 'They mark the name of the project.', 'They add extra information in brackets.', 'They introduce a sequence of steps.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the speech marks show the exact question the team asks.`,
+      explanation: 'Speech marks show direct speech, so the reader can hear the question being asked.',
+      hint: 'Look for the words a team member says.'
+    },
+    P3: {
+      stem: `What do the parentheses around "a short field record" add after ${spec.caseLabel} in the ${spec.caseAnchor} evidence?`,
+      options: ['They add a brief explanation of the label.', 'They show the start of direct speech.', 'They mark a question for the reader.', 'They separate two unrelated sections.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the parentheses add a brief explanation of what ${spec.caseLabel} means in the ${spec.caseAnchor} evidence.`,
+      explanation: 'Parentheses can hold extra information inside a sentence.',
+      hint: 'Look at the words inside the parentheses.'
+    },
+    P4: {
+      stem: `When the writer links checks to the ${spec.caseAnchor}, what does the semicolon in "They check, adjust and explain; the evidence is small" help to do?`,
+      options: ['It links two closely connected ideas about careful work.', 'It introduces a question.', 'It shows a speaker has begun talking.', 'It separates a title from a subtitle.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the semicolon links careful checking to the small evidence that supports decisions.`,
+      explanation: 'Both parts describe how the project uses evidence.',
+      hint: 'Look at the ideas on both sides of the semicolon.'
+    },
+  };
+  return { id, type: 'mcq', skill, marks: 2, ...bySkill[skill] };
+}
+
+function makePoetryPunctuationQuestion(id, spec, skill) {
+  const bySkill = {
+    P1: {
+      stem: `In ${spec.title}, what does the comma after "At ${spec.setting}" help to do before the image of the ${spec.object}?`,
+      options: ['It separates the opening place phrase from the image that follows.', 'It shows the exact words spoken by a passer-by.', 'It adds extra information between dashes.', 'It links two closely connected clauses.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the comma separates the opening place phrase from the image of the ${spec.object}.`,
+      explanation: 'The comma creates a pause after the setting before the poem focuses on the image.',
+      hint: 'Look at the opening line.'
+    },
+    P2: {
+      stem: `What do the speech marks around "Stay bright," show near the ${spec.object} in ${spec.title}?`,
+      options: ['They show the exact words whispered by the passer-by.', 'They mark an opening place phrase.', 'They add extra information about the place.', 'They introduce a list of objects.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the speech marks show the exact words whispered near the ${spec.object}.`,
+      explanation: 'Speech marks show direct speech and make the quiet voice part of the poem.',
+      hint: 'Think about who is whispering.'
+    },
+    P3: {
+      stem: `What do the dashes around "usually passed without thought" add about the ${spec.object} in ${spec.title}?`,
+      options: ['They add extra information about how people normally treat the place.', 'They show a new speaker beginning.', 'They mark the line as a question.', 'They separate two items in a list.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the dashes add extra information about how the place around the ${spec.object} is usually passed without thought.`,
+      explanation: 'The dashes hold an inserted comment before the poem returns to the main idea.',
+      hint: 'Look at the words between the dashes.'
+    },
+    P4: {
+      stem: `In ${spec.title}, what does the semicolon in "Small sounds move like careful footsteps; shadows lean and listen close" help to do near the ${spec.object}?`,
+      options: ['It links two closely connected images.', 'It introduces direct speech.', 'It marks a question.', 'It separates an author from a title.'],
+      correct: 0,
+      modelAnswer: `In ${spec.title}, the semicolon links two closely connected images.`,
+      explanation: 'Both clauses describe the quiet, watchful atmosphere.',
+      hint: 'Look at the images on both sides of the semicolon.'
+    },
+  };
+  return { id, type: 'mcq', skill, marks: 1, ...bySkill[skill] };
 }
 
 function fictionSpec(place, index) {
@@ -375,6 +495,7 @@ function makeFictionPassage(place, index) {
   const prefix = `phase6_fiction_${spec.id}`;
   const q = (n) => `${prefix}_q${n}`;
   const punctSkill = PUNCTUATION_SKILLS[index % PUNCTUATION_SKILLS.length];
+  const adviceSentence = sentenceCase(spec.advice);
   return {
     id: prefix,
     title: spec.title,
@@ -383,8 +504,8 @@ function makeFictionPassage(place, index) {
     isLong: true,
     blocks: [
       `${spec.name} reached ${spec.place} while the morning was still unsettled, carrying a ${spec.object} and trying to understand ${spec.challenge}. ${spec.image}.`,
-      `The first clue was ${spec.clue}. ${spec.helper} warned that ${spec.advice}, but ${spec.name} had to decide which sign mattered most.`,
-      `For a while, every obvious answer made ${spec.challenge} more confusing. The clue looked small; the decision it led to mattered. ${spec.name} slowed down, compared the marks, and checked the ${spec.object} again.`,
+      `The first clue was ${spec.clue}. ${spec.helper} warned, "${adviceSentence}." Even so, ${spec.name} had to decide which sign mattered most.`,
+      `For a while, every obvious answer made ${spec.challenge} more confusing. The clue looked small - almost ordinary - but the decision it led to mattered. The first mark seemed tiny; the next choice depended on it. ${spec.name} slowed down, compared the marks, and checked the ${spec.object} again.`,
       `${spec.evidence}. That evidence changed the problem from a guess into a plan, and ${spec.name} finally understood how to act without rushing.`,
       `By the end, ${spec.outcome}. The day left ${spec.name} with the thought that ${spec.theme}.`
     ],
@@ -398,7 +519,7 @@ function makeFictionPassage(place, index) {
       { id: q(7), type: 'match', skill: '2h', marks: 2, stem: `Match each detail from ${spec.title} to its role in solving ${spec.challenge}.`, prompts: [spec.object, spec.clue, spec.advice], options: ['the carried tool or object', 'the first important clue', 'the guidance about how to think'], correctMap: { 0: '0', 1: '1', 2: '2' }, modelAnswer: `${spec.object} is the carried object; ${spec.clue} is the first important clue; "${spec.advice}" is the guidance.`, explanation: 'Each detail has a different job in the solution.', hint: 'Decide whether each detail is object, clue or advice.' },
       { id: q(8), type: 'order', skill: '2f', marks: 2, stem: `Put the main events of ${spec.challenge} in order.`, items: [`${spec.name} arrives at ${spec.place} with a ${spec.object}.`, `${spec.name} notices ${spec.clue}.`, `${spec.evidence}.`, `${spec.outcome}.`], correctPositions: [1, 2, 3, 4], modelAnswer: `In ${spec.title}, the order is arrival with the ${spec.object}, clue, evidence, then outcome.`, explanation: 'The order follows the passage from beginning to end.', hint: 'Track what happens first, next and last.' },
       { id: q(9), type: 'multiSelect', skill: '2d', marks: 1, stem: `Which two details best show that ${spec.name} solves ${spec.challenge} carefully?`, options: [spec.clue, spec.evidence, 'guessing without checking', 'forgetting the object completely'], correctSet: [0, 1], modelAnswer: `${spec.clue} and "${spec.evidence}" show careful problem-solving.`, explanation: 'Both correct choices are pieces of evidence from the passage.', hint: 'Choose details that are in the passage and show care.' },
-      { id: q(10), type: 'mcq', skill: punctSkill, marks: 2, stem: `In ${spec.title}, what does the semicolon in "The clue looked small; the decision it led to mattered" help to show during ${spec.challenge}?`, options: ['It links two closely connected ideas.', 'It introduces a direct quotation.', 'It shows a question is being asked.', 'It separates items in a simple list only.'], correct: 0, modelAnswer: `In ${spec.title}, the semicolon links two closely connected ideas.`, explanation: 'The first clause says the clue seemed small; the second explains why it still mattered.', hint: 'Look at the ideas on both sides of the semicolon.' }
+      makeFictionPunctuationQuestion(q(10), spec, punctSkill)
     ]
   };
 }
@@ -436,7 +557,7 @@ function makeNonFictionPassage(topic, index) {
     isLong: true,
     blocks: [
       `A careful explanation of ${spec.topic} begins with ${spec.process}. The idea is not to collect facts for display, but to use evidence so that a real place or routine works better.`,
-      `One practical example is that ${spec.example}. The project labels this ${spec.caseLabel} and checks the ${spec.caseAnchor}, which makes the work visible because ${spec.detail}.`,
+      `One practical example is that ${spec.example}. The team asks, "What changed this week?" The project labels this ${spec.caseLabel} (a short field record) and checks the ${spec.caseAnchor}, which makes the work visible because ${spec.detail}.`,
       `${spec.image}. In that way, ${spec.topic} can help because it ${spec.benefit}.`,
       `However, the text must stay balanced: ${spec.topic} ${spec.risk}. ${spec.contrast}.`,
       `The best projects treat ${spec.topic} as a continuing habit. They check, adjust and explain; the evidence is small, but the decisions it supports can be important.`
@@ -451,7 +572,7 @@ function makeNonFictionPassage(topic, index) {
       { id: q(7), type: 'match', skill: '2h', marks: 2, stem: `Match each detail from the ${spec.caseAnchor} example to its role in explaining ${spec.topic}.`, prompts: [spec.process, spec.example, spec.risk], options: ['how the work starts', 'a practical example', 'a caution or limitation'], correctMap: { 0: '0', 1: '1', 2: '2' }, modelAnswer: `${spec.process} is how the work starts; ${spec.example} is a practical example; "${spec.risk}" is a caution.`, explanation: 'This compares the jobs of three details.', hint: 'Decide whether each detail is start, example or caution.' },
       { id: q(8), type: 'order', skill: '2f', marks: 2, stem: `Put the ${spec.caseAnchor} explanation of ${spec.topic} in order.`, items: [`The passage introduces ${spec.process}.`, `It gives the example: ${spec.example}.`, `It explains that ${spec.topic} ${spec.benefit}.`, `It warns that ${spec.topic} ${spec.risk}.`], correctPositions: [1, 2, 3, 4], modelAnswer: `In ${spec.title}, the explanation moves from process, to example, to benefit, to caution.`, explanation: 'This is the structure of the non-fiction passage.', hint: 'Follow the paragraph order.' },
       { id: q(9), type: 'multiSelect', skill: '2d', marks: 1, stem: `Which two statements does the ${spec.caseAnchor} evidence support in ${spec.title}?`, options: [`${spec.topic} ${spec.benefit}.`, `${spec.topic} ${spec.risk}.`, `${spec.topic} never needs checking.`, 'The passage says evidence is useless.'], correctSet: [0, 1], modelAnswer: `The text supports both the benefit and the caution about ${spec.topic}.`, explanation: 'The correct answers match the balanced explanation.', hint: 'Pick one benefit and one caution.' },
-      { id: q(10), type: 'mcq', skill: punctSkill, marks: 2, stem: `When the writer links checks to the ${spec.caseAnchor}, what does the semicolon in "They check, adjust and explain; the evidence is small" help to do?`, options: ['It links two closely connected ideas about careful work.', 'It introduces a question.', 'It shows a speaker has begun talking.', 'It separates a title from a subtitle.'], correct: 0, modelAnswer: `In ${spec.title}, the semicolon links two closely connected ideas about careful work.`, explanation: 'Both parts describe how the project uses evidence.', hint: 'Look at the ideas on both sides of the semicolon.' }
+      makeNonFictionPunctuationQuestion(q(10), spec, punctSkill)
     ]
   };
 }
@@ -484,20 +605,20 @@ function makePoetryPassage(setting, index) {
     isLong: true,
     blocks: [
       `At ${spec.setting},\n${spec.image}.\nThe air is ${spec.mood},\nand every small thing waits.`,
-      `${spec.personified}.\n${spec.contrast},\nbut here, the quiet detail\nkeeps its careful shape.`,
-      `Small sounds move like careful footsteps; shadows lean and listen close.\nThe ordinary place seems larger\nbecause ${spec.theme}.`
+      `${spec.personified}.\nA passer-by whispers, "Stay bright,"\nthen moves on.\n${spec.contrast},\nbut here, the quiet detail\nkeeps its careful shape.`,
+      `Small sounds move like careful footsteps; shadows lean and listen close.\nThe ordinary place - usually passed without thought - seems larger\nbecause ${spec.theme}.`
     ],
     questions: [
       { id: q(1), type: 'mcq', skill: '2a', marks: 1, stem: `In ${spec.title}, what does "careful shape" suggest about the ${spec.object} at ${spec.setting}?`, options: ['It seems precise and worth noticing.', 'It has disappeared completely.', 'It is noisy and careless.', 'It is unimportant to the poem.'], correct: 0, modelAnswer: `In ${spec.title}, the ${spec.object} seems precise and worth noticing.`, explanation: 'The phrase makes the quiet detail seem deliberate and important.', hint: 'Think about the word careful.' },
       { id: q(2), type: 'short', skill: '2b', marks: 1, stem: `Which object is personified in ${spec.title} by the line "${spec.personified}"?`, check: { keywordAny: [words(spec.object, 4)] }, modelAnswer: `The personified object in ${spec.title} is the ${spec.object}.`, explanation: `The line gives the ${spec.object} a human-like action.`, hint: 'Look at what is given a human action.' },
-      { id: q(3), type: 'evidenceShort', skill: '2d', marks: 2, stem: `How does the poem use the ${spec.object} to make ${spec.setting} feel more meaningful? Use a short quotation as evidence.`, answerCheck: { keywordAny: [['meaningful'], ['important'], ['larger'], ['detail'], ['alive'], words(spec.theme, 4)] }, evidenceCheck: { containsAny: ['The ordinary place seems larger', spec.personified, spec.image] }, answerMarks: 1, evidenceMarks: 1, modelAnswer: `The poem makes ${spec.setting} feel important because ordinary details seem alive and meaningful. Evidence could include "The ordinary place seems larger".`, explanation: 'The poem turns a small place into something worth noticing.', hint: 'Use one short line as proof.' },
+      { id: q(3), type: 'evidenceShort', skill: '2d', marks: 2, stem: `How does the poem use the ${spec.object} to make ${spec.setting} feel more meaningful? Use a short quotation as evidence.`, answerCheck: { keywordAny: [['meaningful'], ['important'], ['larger'], ['detail'], ['alive'], words(spec.theme, 4)] }, evidenceCheck: { containsAny: ['The ordinary place - usually passed without thought - seems larger', spec.personified, spec.image] }, answerMarks: 1, evidenceMarks: 1, modelAnswer: `The poem makes ${spec.setting} feel important because ordinary details seem alive and meaningful. Evidence could include "The ordinary place - usually passed without thought - seems larger".`, explanation: 'The poem turns a small place into something worth noticing.', hint: 'Use one short line as proof.' },
       { id: q(4), type: 'mcq', skill: '2c', marks: 2, stem: `Which option best summarises the mood around the ${spec.object} in ${spec.title}?`, options: ['quiet, watchful and thoughtful', 'angry and violent throughout', 'only silly and comic', 'empty with no details'], correct: 0, modelAnswer: `${spec.title} has a quiet, watchful and thoughtful mood.`, explanation: 'The poem is calm but gives ordinary details significance.', hint: 'Choose the option that matches quietness and meaning.' },
       { id: q(5), type: 'open', skill: '2g', marks: 2, stem: `Why is the image "${spec.image}" effective in ${spec.title}?`, rubric: [{ label: 'Uses image words', check: { keywordAny: [words(spec.image, 5)] } }, { label: 'Explains effect or atmosphere', check: { keywordAny: [['image'], ['picture'], ['mood'], ['atmosphere'], ['reader'], ['vivid']] } }], modelAnswer: `The image "${spec.image}" gives the reader a vivid picture and creates a ${spec.mood} atmosphere at ${spec.setting}.`, explanation: 'A strong answer links the image to the feeling it creates.', hint: 'Say what picture the words create.' },
       { id: q(6), type: 'open', skill: '2f', marks: 2, stem: `How does ${spec.title} move from the ${spec.object} at ${spec.setting} to the idea that ${spec.theme}?`, rubric: [{ label: 'Tracks place or object', check: { keywordAny: [words(spec.setting, 4), words(spec.object, 4), ['place'], ['object']] } }, { label: 'Tracks final idea', check: { keywordAny: [words(spec.theme, 6), ['idea'], ['ending'], ['theme']] } }], modelAnswer: `The poem starts at ${spec.setting}, then focuses on the ${spec.object} as if it is alive. By the final lines, it leaves the idea that ${spec.theme}.`, explanation: 'The structure moves from setting, to image, to meaning.', hint: 'Follow the stanzas in order.' },
       { id: q(7), type: 'match', skill: '2h', marks: 2, stem: `Match each quotation about the ${spec.object} from ${spec.title} to its main effect.`, prompts: [spec.image, spec.personified, spec.contrast], options: ['creates a visual image', 'personifies an object', 'shows a contrast with the busy world'], correctMap: { 0: '0', 1: '1', 2: '2' }, modelAnswer: `In ${spec.title}, "${spec.image}" creates a visual image; "${spec.personified}" personifies the ${spec.object}; "${spec.contrast}" shows contrast.`, explanation: 'Each quotation has a different effect.', hint: 'Decide whether each quotation mainly creates a picture, personifies, or contrasts.' },
       { id: q(8), type: 'order', skill: '2f', marks: 2, stem: `Put the movement around the ${spec.object} in ${spec.title} in order.`, items: [`The poem opens at ${spec.setting}.`, `The poem focuses on the ${spec.object}.`, 'The poem contrasts the quiet detail with a busy world.', `The poem ends with the idea that ${spec.theme}.`], correctPositions: [1, 2, 3, 4], modelAnswer: `In ${spec.title}, the poem moves from setting, to object, to contrast, to the final idea that ${spec.theme}.`, explanation: 'The order follows the poem from first stanza to final line.', hint: 'Follow the poem line by line.' },
       { id: q(9), type: 'multiSelect', skill: '2g', marks: 2, stem: `Which two choices explain the language effect around the ${spec.object} in ${spec.title}?`, options: [`It makes the ${spec.object} seem almost alive.`, `It uses the image "${spec.image}" to create atmosphere.`, 'It removes all imagery from the poem.', 'It says the setting is meaningless.'], correctSet: [0, 1], modelAnswer: `In ${spec.title}, the language personifies the ${spec.object} and uses "${spec.image}" to create atmosphere.`, explanation: 'Both correct choices describe real effects of the language.', hint: 'Choose effects that are actually created by the poem.' },
-      { id: q(10), type: 'mcq', skill: punctSkill, marks: 1, stem: `In ${spec.title}, what does the semicolon in "Small sounds move like careful footsteps; shadows lean and listen close" help to do near the ${spec.object}?`, options: ['It links two closely connected images.', 'It introduces direct speech.', 'It marks a question.', 'It separates an author from a title.'], correct: 0, modelAnswer: `In ${spec.title}, the semicolon links two closely connected images.`, explanation: 'Both clauses describe the quiet, watchful atmosphere.', hint: 'Look at the images on both sides of the semicolon.' }
+      makePoetryPunctuationQuestion(q(10), spec, punctSkill)
     ]
   };
 }

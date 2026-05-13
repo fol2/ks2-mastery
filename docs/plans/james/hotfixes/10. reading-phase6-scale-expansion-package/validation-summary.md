@@ -48,6 +48,11 @@ This package expands Reading from 2072 to 4112 questions and from 210 to 414 pas
 - `node --check shared/reading/phase6-expansion.js`: passed; see `validation/dependency-complete-node-check.log`.
 - `npm run audit:reading-content`: passed; see `validation/reading-content-quality-audit.log`.
 - Official Reading audit: 0 failures, 0 advisories.
+- Reviewer punctuation-skill blocker: fixed by making Phase 6 P1/P2/P3/P4 questions test comma/pausing, speech marks, dashes/parentheses, and colon/semicolon/list features respectively.
+- Phase 6 punctuation feature probe: P1 51, P2 51, P3 51, P4 51, 0 mismatches; see `validation/blocker-punctuation-feature-probe-2026-05-13.json`.
+- Post-blocker official Reading audit: 0 failures, 0 advisories, 0 repeated stem-shape advisories; see `validation/blocker-punctuation-reading-audit-2026-05-13.log`.
+- Post-blocker focused Reading tests: 65 passed, 0 failed; see `validation/blocker-punctuation-focused-reading-tests-2026-05-13.log`.
+- Post-blocker `npm run check`: passed Wrangler OAuth dry-run build/check; see `validation/blocker-punctuation-npm-run-check-2026-05-13.log`.
 - Case-label-normalised Phase 5/6 stem-shape probe: 0 duplicate groups.
 - Focused Reading tests: 50 passed, 0 failed; see `validation/dependency-complete-focused-reading-tests.log`.
 - Dependency-complete `node --test tests/reading-session-interface.test.js`: 14 passed, 0 failed; see `validation/dependency-complete-reading-session-interface.log`.
