@@ -52,6 +52,11 @@ Implemented in a dependency-complete worktree as the next Reading-only scale pat
 - Stretch eligible pool after Phase 7: 686 passages and 6,193 non-punctuation questions.
 - Local stretch start-session P95 over 100 starts: about 10.3 ms.
 
-## Next rollout requirement
+## Production validation
 
-After merge and deployment, run a fresh production Reading smoke with `--expected-content-version=7` and record production evidence separately.
+- Production Reading smoke on `https://ks2.eugnel.uk`: passed.
+- Production content version: 7.
+- Production content counts: 714 passages, 7,112 questions, 243 papers.
+- Phase 7 production delayed-feedback paper: `phase7_paper_001`, 28 questions, 50 marks.
+- Stale write guard: passed with no stale response persisted.
+- Evidence: `validation/production-reading-smoke-2026-05-13.json`.
