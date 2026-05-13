@@ -20,6 +20,15 @@ Worktree: `D:\Coding\ks2-mastery\.worktrees\monster-assets-b2-20260513`
   - Client bundle audit: pass, 1285 public files, 6 chunks scanned, main bundle 205514 / 232000 bytes gzip.
   - Wrangler dry-run: pass, read 1409 files from `dist\public`, total upload 23392.10 KiB / gzip 2231.29 KiB.
   - Evidence: `validation/npm-run-check-2026-05-13-final.log`
+- `npm run deploy`
+  - Result: pass.
+  - Cloudflare version id: `6c44bf78-52b9-43e1-bd22-d0baabc94ddb`.
+  - Production bundle audit: pass for `https://ks2.eugnel.uk/`.
+  - Evidence: `validation/npm-run-deploy-2026-05-13.log`
+- Production monster asset smoke
+  - Result: pass.
+  - Scope: 128 live `HEAD` checks across 16 subject-owned monster families, both branches, stages `0` and `4`, sizes `320` and `1280`.
+  - Evidence: `validation/production-monster-asset-smoke-2026-05-13.json`
 
 ## Asset Inventory
 
