@@ -584,7 +584,9 @@ textarea:focus-visible {
 
 .arithmetic-operator {
   min-width: 1.1em;
+  font-size: 2em;
   font-weight: 800;
+  line-height: 0.85;
 }
 
 .arithmetic-symbol {
@@ -695,7 +697,9 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   min-width: 1.05em;
+  font-size: 2em;
   font-weight: 800;
+  line-height: 0.85;
 }
 
 .arithmetic-visual {
