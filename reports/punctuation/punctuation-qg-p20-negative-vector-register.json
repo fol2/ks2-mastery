@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "phase": "punctuation-qg-p20-negative-vector-register",
-  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
-  "generatedAt": "2026-05-13T09:20:41.015Z",
+  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
+  "generatedAt": "2026-05-13T11:06:40.913Z",
   "status": "PASS",
   "byFamily": {
     "gen_apostrophe_contractions_fix": {

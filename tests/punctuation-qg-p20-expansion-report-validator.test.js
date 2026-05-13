@@ -135,3 +135,33 @@ test('P20 expansion report validator rejects apostrophe-contraction grammar gate
   assert.match(result.stderr, /apostrophe contraction grammar quality gate failed/);
   assert.match(result.stderr, /"findingCount": 1/);
 });
+
+
+test('P20 expansion report validator rejects proper-noun capitalisation gate failures and counters', () => {
+  ensureCurrentP20Report();
+  const report = readJsonReport(CURRENT_REPORT);
+  assert.ok(report, 'current P20 report must exist before synthesising proper-noun capitalisation fixture');
+  const properNounFailureReport = {
+    ...report,
+    gates: {
+      ...report.gates,
+      properNounCapitalisationQuality: {
+        ...report.gates.properNounCapitalisationQuality,
+        ok: false,
+        findingCount: 1,
+        findings: [{ itemId: 'fixture', field: 'model', phrase: 'maya' }],
+      },
+    },
+    counts: {
+      ...report.counts,
+      properNounCapitalisationFindings: 1,
+    },
+  };
+  const properNounFailurePath = writeTempReport('punctuation-p20-proper-noun-report-', properNounFailureReport);
+
+  const result = runValidator(properNounFailurePath);
+
+  assert.notEqual(result.status, 0, 'proper-noun capitalisation failure report unexpectedly passed validation');
+  assert.match(result.stderr, /proper noun capitalisation quality gate failed/);
+  assert.match(result.stderr, /"findingCount": 1/);
+});

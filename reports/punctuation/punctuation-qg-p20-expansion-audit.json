@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "phase": "punctuation-qg-p20-expansion-audit",
   "status": "PASS",
-  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
-  "generatedAt": "2026-05-13T09:20:43.284Z",
+  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
+  "generatedAt": "2026-05-13T11:06:43.171Z",
   "thresholds": {
     "phase": 20,
     "minRuntimeItems": 15000,
@@ -46,6 +46,7 @@
     "hyphenMalformedCompoundFindings": 0,
     "hyphenArticleAgreementFindings": 0,
     "apostropheContractionGrammarFindings": 0,
+    "properNounCapitalisationFindings": 0,
     "modelSelfMarkingFailures": 0,
     "byMode": {
       "choose": 2420,
@@ -76,9 +77,9 @@
     "releaseIdentity": {
       "ok": true,
       "release": {
-        "releaseId": "punctuation-qg-p22-15072-2026-05-13",
+        "releaseId": "punctuation-qg-p23-15072-2026-05-13",
         "matchesPattern": true,
-        "phase": 22,
+        "phase": 23,
         "embeddedRuntimeCount": 15072,
         "releaseDate": "2026-05-13",
         "runtimeCountMatches": true,
@@ -398,6 +399,12 @@
     "apostropheContractionGrammarQuality": {
       "ok": true,
       "rule": "Apostrophe-contraction items must use contractions in grammatical KS2 sentences; generated clauses such as \"Maya you're believe\" or \"Noah weren't moved the\" are blocked.",
+      "findingCount": 0,
+      "findings": []
+    },
+    "properNounCapitalisationQuality": {
+      "ok": true,
+      "rule": "Model answers and accepted answers must capitalise registered pupil, place, calendar, and other fixed proper names; stems may still use lowercase names when the task is explicitly asking the learner to repair capital letters.",
       "findingCount": 0,
       "findings": []
     },
@@ -2165,6 +2172,7 @@
     "This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.",
     "Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.",
     "Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.",
+    "Model answers and accepted answers must capitalise registered proper names even when the learner stem intentionally contains lowercase names for a capital-letter repair task.",
     "Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage."
   ]
 }

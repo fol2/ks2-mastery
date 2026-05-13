@@ -79,6 +79,7 @@ const SETTINGS = Object.freeze([
   'debate room', 'design studio', 'fitness track', 'geography room', 'rain shelter', 'assembly hall',
 ]);
 const ACTORS = Object.freeze(['Maya', 'Omar', 'Lina', 'Theo', 'Zara', 'Noah', 'Amira', 'Felix', 'Ivy', 'Ethan', 'Sofia', 'Leo', 'Nia', 'Jude', 'Asha', 'Kai', 'Ruby', 'Milo', 'Hana', 'Ben']);
+export const PUNCTUATION_P20_PROPER_NAME_TOKENS = ACTORS;
 const OBJECTS = Object.freeze(['map', 'folder', 'compass', 'tablet', 'torch', 'notebook', 'model', 'poster', 'ticket', 'badge', 'camera', 'sample tray', 'score sheet', 'script', 'toolbox', 'weather chart', 'seed packet', 'paint pot', 'guidebook', 'robot arm']);
 const RECORDS = Object.freeze(['log book', 'display board', 'class blog', 'planning sheet', 'safety checklist', 'team diary', 'result table', 'notice', 'project file', 'training card']);
 const ADJECTIVES = Object.freeze(['careful', 'brave', 'quiet', 'curious', 'patient', 'focused', 'creative', 'thoughtful', 'determined', 'cheerful', 'precise', 'steady']);
@@ -216,16 +217,21 @@ function coreForSkill(skillId, index, familyId) {
   switch (skillId) {
     case 'sentence_endings': {
       const type = index % 3;
-      const raw = type === 0
+      const bad = type === 0
         ? `where did ${c.actor.toLowerCase()} put the ${c.object}`
         : type === 1
           ? `${c.actor.toLowerCase()} checked the ${c.record} in the ${c.setting}`
           : `what a ${c.adjective} rescue in the ${c.setting}`;
-      const model = `${sentenceCase(raw)}${type === 0 ? '?' : type === 1 ? '.' : '!'}`;
+      const corrected = type === 0
+        ? `Where did ${c.actor} put the ${c.object}`
+        : type === 1
+          ? `${c.actor} checked the ${c.record} in the ${c.setting}`
+          : sentenceCase(bad);
+      const model = `${corrected}${type === 0 ? '?' : type === 1 ? '.' : '!'}`;
       return {
         model,
-        bad: raw,
-        wrongOne: `${sentenceCase(raw)}${type === 0 ? '.' : '?'}`,
+        bad,
+        wrongOne: `${corrected}${type === 0 ? '.' : '?'}`,
         wrongTwo: wrongLower(model),
         explanation: type === 0
           ? 'A direct question starts with a capital letter and ends with a question mark.'
@@ -302,7 +308,7 @@ function coreForSkill(skillId, index, familyId) {
       };
     }
     case 'fronted_adverbial': {
-      const clause = `${c.actor.toLowerCase()} checked the ${c.record}`;
+      const clause = `${c.actor} checked the ${c.record}`;
       const model = `${c.fronted}, ${clause}.`;
       return {
         model,

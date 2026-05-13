@@ -3,8 +3,8 @@
   "phase": "punctuation-qg-p20-heavy-play-simulation",
   "status": "PASS",
   "source": "p20-deterministic-cooldown-pool-simulation",
-  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
-  "generatedAt": "2026-05-13T09:20:41.530Z",
+  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
+  "generatedAt": "2026-05-13T11:06:41.410Z",
   "observed": {
     "learnerCount": 10,
     "sessionsPerLearner": 50,

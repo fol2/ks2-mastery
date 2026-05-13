@@ -23,6 +23,7 @@ import {
   createPunctuationRuntimeManifest,
 } from '../shared/punctuation/generators.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
+import { PUNCTUATION_PROPER_NOUN_CAPITALISATION_TOKENS } from '../shared/punctuation/proper-noun-tokens.js';
 import { createPunctuationService } from '../shared/punctuation/service.js';
 import { PUNCTUATION_CURRENT_RELEASE_ID } from '../src/subjects/punctuation/service-contract.js';
 
@@ -37,6 +38,10 @@ const MALFORMED_HYPHEN_DESIGN_PATTERN = /\b[a-z]+-[a-z]+design\b/gi;
 const HYF_ARTICLE_PATTERN = /\ba (?:ice[- ]cold|open[- ]ended|up[- ]to[- ]date)\b/gi;
 const APOSTROPHE_CONTRACTION_BAD_BELIEVE_PATTERN = /\b[A-Z][a-z]+\s+(?:haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+believe\b/gi;
 const APOSTROPHE_CONTRACTION_BAD_MOVED_PATTERN = /\b[A-Z][a-z]+\s+(?:didn't|couldn't|wouldn't|shouldn't|haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+moved\s+the\b/gi;
+const LOWERCASE_PROPER_NAME_PATTERN = new RegExp(`\\b(?:${PUNCTUATION_PROPER_NOUN_CAPITALISATION_TOKENS
+  .map((name) => escapeRegExp(String(name).toLowerCase()))
+  .sort((left, right) => right.length - left.length)
+  .join('|')})\\b`, 'g');
 const APPROVED_REVIEW_STATUSES = new Set([
   'approved',
   'approve',
@@ -123,6 +128,10 @@ function normaliseText(value) {
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function stableJson(value) {
@@ -722,6 +731,44 @@ export function buildApostropheContractionGrammarEvidence(items) {
   };
 }
 
+function modelAnswerTextParts(item) {
+  return [
+    ['model', item.model],
+    ...((Array.isArray(item.accepted) ? item.accepted : []).map((entry, index) => [`accepted[${index}]`, entry])),
+  ].filter(([, value]) => typeof value === 'string');
+}
+
+export function buildProperNounCapitalisationEvidence(items) {
+  const findings = [];
+  const seen = new Set();
+  for (const item of items) {
+    for (const [field, text] of modelAnswerTextParts(item)) {
+      LOWERCASE_PROPER_NAME_PATTERN.lastIndex = 0;
+      for (const match of String(text).matchAll(LOWERCASE_PROPER_NAME_PATTERN)) {
+        const phrase = match[0];
+        const key = `${item.id}:${field}:${phrase}:${match.index}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        findings.push({
+          itemId: item.id,
+          familyId: item.generatorFamilyId || '',
+          mode: item.mode || '',
+          skillIds: item.skillIds || [],
+          field,
+          phrase,
+          surface: text,
+        });
+      }
+    }
+  }
+  return {
+    ok: findings.length === 0,
+    rule: 'Model answers and accepted answers must capitalise registered pupil, place, calendar, and other fixed proper names; stems may still use lowercase names when the task is explicitly asking the learner to repair capital letters.',
+    findingCount: findings.length,
+    findings: findings.slice(0, 25),
+  };
+}
+
 export function buildPunctuationQGP20ExpansionReport(options = {}) {
   const runtime = createPunctuationRuntimeManifest({
     manifest: PUNCTUATION_CONTENT_MANIFEST,
@@ -747,6 +794,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
   const fixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
   const hyphenCompoundQuality = buildHyphenCompoundQualityEvidence(items);
   const apostropheContractionGrammarQuality = buildApostropheContractionGrammarEvidence(items);
+  const properNounCapitalisationQuality = buildProperNounCapitalisationEvidence(items);
   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
@@ -771,6 +819,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
     hyphenMalformedCompoundFindings: hyphenCompoundQuality.malformedCompoundFindingCount,
     hyphenArticleAgreementFindings: hyphenCompoundQuality.articleAgreementFindingCount,
     apostropheContractionGrammarFindings: apostropheContractionGrammarQuality.findingCount,
+    properNounCapitalisationFindings: properNounCapitalisationQuality.findingCount,
     modelSelfMarkingFailures: modelFailures.length,
     byMode: groupCounts(items, (item) => item.mode),
     bySkill: groupCounts(items, (item) => item.skillIds || []),
@@ -849,6 +898,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
     },
     hyphenCompoundQuality,
     apostropheContractionGrammarQuality,
+    properNounCapitalisationQuality,
     reviewGovernance: reviewCoverage,
     negativeVectorCoverage: negativeVectors,
     heavyPlayVariety: heavyPlay,
@@ -878,6 +928,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
       'This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.',
       'Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.',
       'Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.',
+      'Model answers and accepted answers must capitalise registered proper names even when the learner stem intentionally contains lowercase names for a capital-letter repair task.',
       'Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage.',
     ],
   };
