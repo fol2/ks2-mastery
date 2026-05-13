@@ -60,3 +60,7 @@ Implemented in a dependency-complete worktree as the next Reading-only scale pat
 - Phase 7 production delayed-feedback paper: `phase7_paper_001`, 28 questions, 50 marks.
 - Stale write guard: passed with no stale response persisted.
 - Evidence: `validation/production-reading-smoke-2026-05-13.json`.
+- Production Reading browser smoke on `/demo`: passed on desktop 1280x800 and mobile 390x844.
+- Browser smoke checked the Reading landing, Reading setup controls, desktop session start, horizontal overflow, screenshots, console errors, request failures, and HTTP failures.
+- Browser evidence: `validation/production-reading-landing-browser-smoke-2026-05-13.json`.
+- Browser screenshots: `validation/production-reading-landing-screenshots-2026-05-13/`.

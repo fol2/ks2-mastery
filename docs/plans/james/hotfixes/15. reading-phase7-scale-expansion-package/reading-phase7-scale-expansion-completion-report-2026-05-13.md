@@ -37,6 +37,9 @@ Reading Phase 7 has been implemented, reviewed, deployed, and smoke-tested on pr
 - Production content counts: 714 passages, 7,112 questions, 243 papers.
 - Phase 7 paper smoke: `phase7_paper_001`, 28 questions, 50 marks.
 - Stale write guard: passed with no stale response persisted.
+- Production browser smoke: passed on `/demo` for desktop 1280x800 and mobile 390x844.
+- Browser smoke evidence: `validation/production-reading-landing-browser-smoke-2026-05-13.json`.
+- Browser screenshots: `validation/production-reading-landing-screenshots-2026-05-13/`.
 
 ## Artefacts
 
