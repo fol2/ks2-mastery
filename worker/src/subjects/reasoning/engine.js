@@ -46,8 +46,10 @@ function randomInt(random, min, max) {
   return Math.floor(bounded * (max - min + 1)) + min;
 }
 
-function newSeed(random) {
-  return randomInt(random, 1, 1_000_000_000);
+function newSeed(random, salt = 0) {
+  const base = randomInt(random, 1, 1_000_000_000);
+  if (!salt) return base;
+  return (((base + (Number(salt) || 0) * 104_729 - 1) % 1_000_000_000) + 1);
 }
 
 function normalisePrefs(raw = {}) {
@@ -318,6 +320,17 @@ function removeRetryForRef(data, ref) {
   ));
 }
 
+function unspentCandidatePool(candidates, usedTemplateIds = []) {
+  const usedIds = (usedTemplateIds || []).filter(Boolean);
+  const used = new Set(usedIds);
+  if (!used.size) return candidates;
+  const fresh = candidates.filter((template) => !used.has(template.id));
+  if (fresh.length) return fresh;
+  if (!candidates.length) return candidates;
+  const offset = usedIds.length % candidates.length;
+  return candidates.slice(offset).concat(candidates.slice(0, offset));
+}
+
 function chooseTemplate(data, prefs, mode, random, nowValue, usedTemplateIds = []) {
   const weakSet = new Set(weakSkillIds(data, nowValue).slice(0, 6));
   let candidates = REASONING_TEMPLATES.filter((template) => {
@@ -327,6 +340,7 @@ function chooseTemplate(data, prefs, mode, random, nowValue, usedTemplateIds = [
     return true;
   });
   if (!candidates.length) candidates = REASONING_TEMPLATES.slice();
+  candidates = unspentCandidatePool(candidates, usedTemplateIds);
   const weighted = candidates.map((template) => {
     let weight = templateWeakness(data, template, nowValue);
     if (prefs.focusSkillId && template.skillIds.includes(prefs.focusSkillId)) weight *= 2.1;
@@ -344,6 +358,7 @@ function chooseTemplate(data, prefs, mode, random, nowValue, usedTemplateIds = [
 function chooseTemplateForSatsSlot(data, skillPool, random, nowValue, usedTemplateIds = []) {
   let candidates = REASONING_TEMPLATES.filter((template) => template.satsFriendly && template.skillIds.some((id) => skillPool.includes(id)));
   if (!candidates.length) candidates = REASONING_TEMPLATES.filter((template) => template.satsFriendly);
+  candidates = unspentCandidatePool(candidates, usedTemplateIds);
   const weighted = candidates.map((template) => {
     const priorUses = usedTemplateIds.filter((id) => id === template.id).length;
     const weight = templateWeakness(data, template, nowValue) * (priorUses ? Math.pow(0.28, priorUses) : 1);
@@ -401,15 +416,15 @@ function buildQuestionRefs(data, prefs, { nowValue, random }) {
     return Array.from({ length: size }, (_, index) => {
       const template = chooseTemplateForSatsSlot(data, blueprint[index] || [], random, nowValue, used);
       used.push(template.id);
-      return buildQuestionRef(template, newSeed(random));
+      return buildQuestionRef(template, newSeed(random, index + 1));
     });
   }
   const length = mode === 'sats' ? 1 : prefs.roundLength;
   const used = [];
-  return Array.from({ length }, () => {
+  return Array.from({ length }, (_, index) => {
     const template = chooseTemplate(data, prefs, mode, random, nowValue, used);
     used.push(template.id);
-    return buildQuestionRef(template, newSeed(random));
+    return buildQuestionRef(template, newSeed(random, index + 1));
   });
 }
 

@@ -1,0 +1,134 @@
+{
+  "smart": {
+    "templateCount": 12,
+    "uniqueTemplateCount": 1,
+    "uniqueItemCount": 1,
+    "templateIds": [
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context"
+    ],
+    "itemIds": [
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1"
+    ]
+  },
+  "skill": {
+    "templateCount": 12,
+    "uniqueTemplateCount": 1,
+    "uniqueItemCount": 1,
+    "templateIds": [
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context"
+    ],
+    "itemIds": [
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1"
+    ]
+  },
+  "trouble": {
+    "templateCount": 12,
+    "uniqueTemplateCount": 1,
+    "uniqueItemCount": 1,
+    "templateIds": [
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context",
+      "pv_rounding_context"
+    ],
+    "itemIds": [
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1",
+      "pv_rounding_context:1"
+    ]
+  },
+  "satsset": {
+    "templateCount": 12,
+    "uniqueTemplateCount": 9,
+    "uniqueItemCount": 9,
+    "templateIds": [
+      "pv_rounding_context",
+      "sharing_groups",
+      "sharing_groups",
+      "missing_number_ladder",
+      "fraction_of_amount_leftover",
+      "fraction_compare",
+      "percent_of_amount_leftover",
+      "unit_conversion_ribbon",
+      "pv_rounding_context",
+      "perimeter_to_area",
+      "geometry_angles",
+      "pv_rounding_context"
+    ],
+    "itemIds": [
+      "pv_rounding_context:1",
+      "sharing_groups:1",
+      "sharing_groups:1",
+      "missing_number_ladder:1",
+      "fraction_of_amount_leftover:1",
+      "fraction_compare:1",
+      "percent_of_amount_leftover:1",
+      "unit_conversion_ribbon:1",
+      "pv_rounding_context:1",
+      "perimeter_to_area:1",
+      "geometry_angles:1",
+      "pv_rounding_context:1"
+    ]
+  }
+}

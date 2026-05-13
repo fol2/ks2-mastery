@@ -1,7 +1,7 @@
 // Generated from the approved Reasoning PoC template bank. Do not import this module into the browser bundle; use shared/reasoning/metadata.js for public metadata.
 
 
-export const REASONING_CONTENT_RELEASE_ID = 'reasoning-poc-promoted-2026-05-11';
+export const REASONING_CONTENT_RELEASE_ID = 'reasoning-variety-hardening-2026-05-13';
 
 
 const MISCONCEPTIONS = {
@@ -7734,6 +7734,681 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
 
   registerExtraTemplates(extraTemplates);
 
+const REASONING_CONTEXT_THEMES = Object.freeze([
+  Object.freeze({ id: "school_fair", place: "school fair", people: ["pupils", "helpers", "visitors"], items: ["raffle tickets", "plant pots", "juice cartons", "programmes"], groups: ["stalls", "tables", "teams"], container: "box" }),
+  Object.freeze({ id: "eco_club", place: "eco club", people: ["club members", "volunteers", "gardeners"], items: ["seed packets", "saplings", "water bottles", "recycling bags"], groups: ["beds", "teams", "crates"], container: "crate" }),
+  Object.freeze({ id: "space_mission", place: "space mission", people: ["crew members", "engineers", "trainees"], items: ["sample tubes", "mission badges", "data cards", "meal packs"], groups: ["modules", "kits", "pods"], container: "kit" }),
+  Object.freeze({ id: "museum_trip", place: "museum trip", people: ["visitors", "guides", "groups"], items: ["maps", "audio guides", "postcards", "activity sheets"], groups: ["galleries", "tour groups", "batches"], container: "bundle" }),
+  Object.freeze({ id: "sports_day", place: "sports day", people: ["athletes", "teams", "runners"], items: ["water bottles", "relay cards", "medals", "score slips"], groups: ["lanes", "teams", "heats"], container: "tray" }),
+  Object.freeze({ id: "library_week", place: "library week", people: ["readers", "librarians", "classes"], items: ["bookmarks", "reading logs", "story cards", "library passes"], groups: ["shelves", "clubs", "boxes"], container: "pack" }),
+  Object.freeze({ id: "wildlife_rescue", place: "wildlife rescue centre", people: ["keepers", "volunteers", "visitors"], items: ["food portions", "nest boxes", "record cards", "blankets"], groups: ["enclosures", "teams", "cages"], container: "tub" }),
+  Object.freeze({ id: "robotics_club", place: "robotics club", people: ["coders", "builders", "teams"], items: ["sensors", "battery packs", "cables", "test cards"], groups: ["robots", "kits", "tables"], container: "kit" }),
+  Object.freeze({ id: "music_festival", place: "music festival", people: ["musicians", "audience members", "helpers"], items: ["wristbands", "programmes", "snack tokens", "seat labels"], groups: ["stages", "bands", "rows"], container: "bundle" }),
+  Object.freeze({ id: "science_lab", place: "science lab", people: ["scientists", "pupils", "technicians"], items: ["test tubes", "labels", "safety cards", "sample pots"], groups: ["benches", "trays", "groups"], container: "tray" }),
+  Object.freeze({ id: "train_station", place: "train station", people: ["passengers", "inspectors", "families"], items: ["tickets", "timetables", "platform cards", "snack vouchers"], groups: ["platforms", "carriages", "queues"], container: "wallet" }),
+  Object.freeze({ id: "community_cafe", place: "community café", people: ["customers", "helpers", "families"], items: ["muffins", "fruit pots", "drinks", "meal tokens"], groups: ["tables", "orders", "trays"], container: "box" })
+]);
+
+function contextTheme(seed, channel = "general") {
+  let hash = 0;
+  const source = `${channel}:${seed}`;
+  for (let index = 0; index < source.length; index += 1) hash = ((hash * 33) + source.charCodeAt(index)) >>> 0;
+  return REASONING_CONTEXT_THEMES[hash % REASONING_CONTEXT_THEMES.length];
+}
+
+function themeWord(rng, theme, key) {
+  const values = Array.isArray(theme?.[key]) ? theme[key] : [];
+  return values.length ? pick(rng, values) : "items";
+}
+
+function normaliseThemeItemLabel(label) {
+  return String(label || '').trim().toLowerCase();
+}
+
+function themeItemLabelsOverlap(first, second) {
+  const a = normaliseThemeItemLabel(first);
+  const b = normaliseThemeItemLabel(second);
+  if (!a || !b) return false;
+  return a === b || a.endsWith(` ${b}`) || b.endsWith(` ${a}`);
+}
+
+function pickDistinctThemeItem(rng, candidates, usedLabel) {
+  const distinct = candidates.filter((candidate) => !themeItemLabelsOverlap(candidate, usedLabel));
+  return pick(rng, distinct.length ? distinct : candidates.filter((candidate) => candidate !== usedLabel));
+}
+
+const THEMED_REASONING_TEMPLATES = [
+  {
+    id: "theme_digit_constraints_code",
+    label: "Theme-rich digit constraint code",
+    domain: "Number and place value",
+    skillIds: ["pv_compare", "pv_rounding", "reasonableness"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const digits = shuffle(rng, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).slice(0, 4);
+      if (!digits.some(digit => digit > 0)) digits[0] = 1;
+      const perms = permutations(digits).filter(parts => parts[0] !== 0).map(makeDigitNumber).sort((a, b) => a - b);
+      const grouped = {};
+      for (const value of perms) {
+        const roundedValue = roundToPlace(value, 100);
+        if (!grouped[roundedValue]) grouped[roundedValue] = [];
+        grouped[roundedValue].push(value);
+      }
+      const groups = Object.values(grouped).filter(values => values.length >= 1);
+      const values = pick(rng, groups).sort((a, b) => a - b);
+      const answerIndex = values.length > 1 ? randInt(rng, 1, values.length - 1) : 0;
+      const answer = values[answerIndex];
+      const rounded = roundToPlace(answer, 100);
+      const previous = answerIndex > 0 ? values[answerIndex - 1] : Math.max(999, answer - pick(rng, [40, 55, 75, 90]));
+      const threshold = previous;
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>At the ${theme.place}, a lock code uses the digits <strong>${digits.join(", ")}</strong> once each.</p><p>What is the <strong>smallest</strong> 4-digit code greater than <strong>${formatNumber(threshold)}</strong> that rounds to <strong>${formatNumber(rounded)}</strong> to the nearest 100?</p><p>What does the code round to?</p>`,
+        solutionLines: [
+          `List possible 4-digit codes using each digit once and keep the ones greater than ${formatNumber(threshold)}.`,
+          `Check which of those round to ${formatNumber(rounded)} to the nearest 100.`,
+          `The smallest valid code is ${formatNumber(answer)}, and it rounds to ${formatNumber(rounded)}.`
+        ],
+        checkLine: "The answer must use each digit once and must satisfy both clues.",
+        reflectionPrompt: "Did you check the size clue and the rounding clue separately?",
+        inputSpec: { type: "multi", fields: [
+          { key: "code", label: "Smallest code", kind: "number" },
+          { key: "rounded", label: "Rounded to nearest 100", kind: "number" }
+        ] },
+        evaluate: (resp) => {
+          let score = 0;
+          if (parseNumberInput(resp.code) === answer) score += 1;
+          if (parseNumberInput(resp.rounded) === rounded) score += 1;
+          const answerText = `${formatNumber(answer)}; ${formatNumber(rounded)}`;
+          return mkResult({
+            correct: score === 2, score, maxScore: 2,
+            misconception: score === 2 ? null : "constraint_ignored",
+            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
+            feedbackLong: `The smallest valid code is ${formatNumber(answer)}, and it rounds to ${formatNumber(rounded)}.`,
+            answerText
+          });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_equal_groups_shortfall",
+    label: "Theme-rich equal groups shortfall",
+    domain: "Calculation",
+    skillIds: ["mul_div_structure", "add_sub_multistep", "reasonableness"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const item = themeWord(rng, theme, "items");
+      const groups = randInt(rng, 4, 9);
+      const perGroup = randInt(rng, 12, 36);
+      const already = randInt(rng, 2, groups - 1) * perGroup + randInt(rng, 3, perGroup - 2);
+      const needed = groups * perGroup;
+      const shortfall = needed - already;
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>The ${theme.place} needs <strong>${groups}</strong> ${theme.groups[0]} with <strong>${perGroup}</strong> ${item} in each one.</p><p>There are already <strong>${already}</strong> ${item} ready.</p><p>How many more ${item} are needed?</p>`,
+        solutionLines: [
+          `Total needed: ${groups} × ${perGroup} = ${needed}.`,
+          `Compare with what is ready: ${needed} - ${already} = ${shortfall}.`,
+          `${shortfall} more ${item} are needed.`
+        ],
+        checkLine: "The answer should be smaller than the total needed because some items are already ready.",
+        reflectionPrompt: "Did you find the target total before subtracting the amount already ready?",
+        inputSpec: { type: "number", label: `More ${item} needed` },
+        evaluate: (resp) => {
+          const ans = parseNumberInput(resp.answer);
+          if (ans === shortfall) return mkResult({ correct: true, score: 2, maxScore: 2, feedbackShort: "Correct.", feedbackLong: `${shortfall} more ${item} are needed.`, answerText: String(shortfall) });
+          if (ans === needed) return mkResult({ correct: false, score: 1, maxScore: 2, misconception: "skipped_step", feedbackShort: "You found the total needed, but still need to subtract what is already ready.", feedbackLong: `${shortfall} more ${item} are needed.`, answerText: String(shortfall) });
+          return mkResult({ correct: false, score: 0, maxScore: 2, misconception: "operation_choice", feedbackShort: "Not quite.", feedbackLong: `${shortfall} more ${item} are needed.`, answerText: String(shortfall) });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_fraction_two_step_share",
+    label: "Theme-rich fraction then compare",
+    domain: "Fractions",
+    skillIds: ["fractions_quantity", "add_sub_multistep"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const item = themeWord(rng, theme, "items");
+      const den = pick(rng, [3, 4, 5, 8]);
+      const num = randInt(rng, 1, den - 1);
+      const total = den * randInt(rng, 8, 24);
+      const used = (total / den) * num;
+      const extra = randInt(rng, 4, Math.min(18, total - used));
+      const compare = used + extra;
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>At the ${theme.place}, <strong>${fractionToText(num, den)}</strong> of <strong>${total}</strong> ${item} are used in the morning.</p><p>In the afternoon, <strong>${extra}</strong> more ${item} are used.</p><p>How many ${item} are used altogether?</p>`,
+        solutionLines: [
+          `Find one part: ${total} ÷ ${den} = ${total / den}.`,
+          `Find ${num} parts: ${total / den} × ${num} = ${used}.`,
+          `Add the afternoon amount: ${used} + ${extra} = ${compare}.`
+        ],
+        checkLine: "Find the fraction amount first, then add the extra amount.",
+        reflectionPrompt: "Did you use the denominator to find one equal part first?",
+        inputSpec: { type: "number", label: `${item} used altogether` },
+        evaluate: (resp) => {
+          const ans = parseNumberInput(resp.answer);
+          if (ans === compare) return mkResult({ correct: true, score: 2, maxScore: 2, feedbackShort: "Correct.", feedbackLong: `${compare} ${item} are used altogether.`, answerText: String(compare) });
+          if (ans === used || ans === total / den) return mkResult({ correct: false, score: 1, maxScore: 2, misconception: ans === used ? "skipped_step" : "fraction_misconception", feedbackShort: "You found part of the method, but not the final total.", feedbackLong: `${compare} ${item} are used altogether.`, answerText: String(compare) });
+          return mkResult({ correct: false, score: 0, maxScore: 2, misconception: "fraction_misconception", feedbackShort: "Not quite.", feedbackLong: `${compare} ${item} are used altogether.`, answerText: String(compare) });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_percent_change_compare",
+    label: "Theme-rich percentage change comparison",
+    domain: "Fractions, decimals and percentages",
+    skillIds: ["percent_number", "fdp_equiv", "add_sub_multistep"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const people = themeWord(rng, theme, "people");
+      const percent = pick(rng, [10, 20, 25, 50]);
+      const total = percent === 25 ? randInt(rng, 12, 28) * 4 : randInt(rng, 10, 30) * (100 / gcd(100, percent));
+      const first = total * percent / 100;
+      const second = first + randInt(rng, 3, Math.min(18, total - first));
+      const difference = second - first;
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>At the ${theme.place}, <strong>${percent}%</strong> of <strong>${total}</strong> ${people} completed a challenge in the morning.</p><p>In the afternoon, <strong>${second}</strong> ${people} completed it.</p><p>How many more ${people} completed it in the afternoon than in the morning?</p>`,
+        solutionLines: [
+          `${percent}% of ${total} = ${first}.`,
+          `Compare the afternoon number with the morning number: ${second} - ${first} = ${difference}.`
+        ],
+        checkLine: "Work out the percentage amount before comparing the two times.",
+        reflectionPrompt: "Did you compare with the percentage amount, not the original total?",
+        inputSpec: { type: "number", label: "Difference" },
+        evaluate: (resp) => {
+          const ans = parseNumberInput(resp.answer);
+          if (ans === difference) return mkResult({ correct: true, score: 2, maxScore: 2, feedbackShort: "Correct.", feedbackLong: `The difference is ${difference}.`, answerText: String(difference) });
+          if (ans === first) return mkResult({ correct: false, score: 1, maxScore: 2, misconception: "skipped_step", feedbackShort: "You found the morning percentage amount, but still need to compare.", feedbackLong: `The difference is ${difference}.`, answerText: String(difference) });
+          return mkResult({ correct: false, score: 0, maxScore: 2, misconception: "fraction_misconception", feedbackShort: "Not quite.", feedbackLong: `The difference is ${difference}.`, answerText: String(difference) });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_ratio_recipe_total",
+    label: "Theme-rich ratio total after scaling",
+    domain: "Ratio and proportion",
+    skillIds: ["ratio_scale", "mul_div_structure"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const a = pick(rng, [2, 3, 4, 5]);
+      const b = pick(rng, [3, 4, 5, 6, 7].filter(x => x !== a));
+      const factor = randInt(rng, 3, 8);
+      const first = a * factor;
+      const second = b * factor;
+      const total = first + second;
+      const firstItem = themeWord(rng, theme, "items");
+      const secondItem = pickDistinctThemeItem(rng, ["tokens", "labels", "cards", "badges", "clips"], firstItem);
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>For an activity at the ${theme.place}, the ratio of <strong>${firstItem}</strong> to <strong>${secondItem}</strong> is <strong>${a}:${b}</strong>.</p><p>There are <strong>${first}</strong> ${firstItem}. How many ${firstItem} and ${secondItem} are there altogether?</p>`,
+        solutionLines: [
+          `The ${firstItem} amount has been scaled by ${factor} because ${a} × ${factor} = ${first}.`,
+          `Scale the ${secondItem}: ${b} × ${factor} = ${second}.`,
+          `Altogether: ${first} + ${second} = ${total}.`
+        ],
+        checkLine: "Use the same scale factor on both parts of the ratio.",
+        reflectionPrompt: "Did you scale multiplicatively rather than adding the same amount?",
+        inputSpec: { type: "number", label: "Total altogether" },
+        evaluate: (resp) => {
+          const ans = parseNumberInput(resp.answer);
+          if (ans === total) return mkResult({ correct: true, score: 2, maxScore: 2, feedbackShort: "Correct.", feedbackLong: `There are ${total} altogether.`, answerText: String(total) });
+          if (ans === second) return mkResult({ correct: false, score: 1, maxScore: 2, misconception: "skipped_step", feedbackShort: "You found the other part, but the question asks for the total altogether.", feedbackLong: `There are ${total} altogether.`, answerText: String(total) });
+          return mkResult({ correct: false, score: 0, maxScore: 2, misconception: "scaling_confusion", feedbackShort: "Not quite.", feedbackLong: `There are ${total} altogether.`, answerText: String(total) });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_mixed_units_total_gap",
+    label: "Theme-rich mixed units total gap",
+    domain: "Measure",
+    skillIds: ["unit_conversion", "add_sub_multistep"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const m1 = randInt(rng, 1, 4);
+      const cm1 = pick(rng, [15, 25, 35, 45, 60, 75, 90]);
+      const m2 = randInt(rng, 1, 3);
+      const cm2 = pick(rng, [10, 20, 30, 40, 50, 65, 80]);
+      const totalCm = m1 * 100 + cm1 + m2 * 100 + cm2;
+      const target = totalCm + pick(rng, [25, 40, 50, 75, 100, 125, 150]);
+      const gap = target - totalCm;
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>The ${theme.place} uses two lengths of ribbon: <strong>${m1} m ${cm1} cm</strong> and <strong>${m2} m ${cm2} cm</strong>.</p><p>They need a total length of <strong>${target} cm</strong>.</p><p>How many centimetres more ribbon are needed?</p>`,
+        solutionLines: [
+          `Convert both lengths: ${m1} m ${cm1} cm = ${m1 * 100 + cm1} cm and ${m2} m ${cm2} cm = ${m2 * 100 + cm2} cm.`,
+          `Total ribbon: ${m1 * 100 + cm1} + ${m2 * 100 + cm2} = ${totalCm} cm.`,
+          `More needed: ${target} - ${totalCm} = ${gap} cm.`
+        ],
+        checkLine: "All lengths must be in centimetres before adding or subtracting.",
+        reflectionPrompt: "Did you convert both mixed-unit lengths before finding the gap?",
+        inputSpec: { type: "number", label: "More cm needed" },
+        evaluate: (resp) => {
+          const ans = parseNumberInput(resp.answer);
+          if (ans === gap) return mkResult({ correct: true, score: 2, maxScore: 2, feedbackShort: "Correct.", feedbackLong: `${gap} cm more ribbon is needed.`, answerText: `${gap} cm` });
+          if (ans === totalCm) return mkResult({ correct: false, score: 1, maxScore: 2, misconception: "skipped_step", feedbackShort: "You found the total ribbon, but not the gap to the target.", feedbackLong: `${gap} cm more ribbon is needed.`, answerText: `${gap} cm` });
+          return mkResult({ correct: false, score: 0, maxScore: 2, misconception: "unit_confusion", feedbackShort: "Not quite.", feedbackLong: `${gap} cm more ribbon is needed.`, answerText: `${gap} cm` });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_timetable_wait_and_duration",
+    label: "Theme-rich timetable wait and duration",
+    domain: "Measure",
+    skillIds: ["time_elapsed", "add_sub_multistep"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const arrive = randInt(rng, 8, 14) * 60 + pick(rng, [0, 5, 10, 15, 20, 25, 30]);
+      const wait = pick(rng, [10, 15, 20, 25, 30, 35]);
+      const activity = randInt(rng, 1, 2) * 60 + pick(rng, [15, 30, 45]);
+      const start = arrive + wait;
+      const finish = start + activity;
+      const away = finish - arrive;
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>A group arrives at the ${theme.place} at <strong>${minutesToClock(arrive)}</strong>.</p><p>They wait <strong>${wait} minutes</strong> before an activity starts. The activity lasts <strong>${formatDurationText(activity)}</strong>.</p><p>What time does the activity finish, and how long is the group there from arrival to finish?</p>`,
+        solutionLines: [
+          `The activity starts at ${minutesToClock(start)} after a ${wait}-minute wait.`,
+          `Add the activity duration: ${minutesToClock(start)} + ${formatDurationText(activity)} = ${minutesToClock(finish)}.`,
+          `From arrival to finish is ${formatDurationText(away)}.`
+        ],
+        checkLine: "Include the waiting time as well as the activity time.",
+        reflectionPrompt: "Did you measure from arrival, not just from the activity start?",
+        inputSpec: { type: "multi", fields: [
+          { key: "finish", label: "Finish time", kind: "text", placeholder: "e.g. 14:25" },
+          { key: "duration", label: "Total minutes there", kind: "number" }
+        ] },
+        evaluate: (resp) => {
+          let score = 0;
+          if (parseClockTime(resp.finish) === finish % (24 * 60)) score += 1;
+          if (parseNumberInput(resp.duration) === away) score += 1;
+          const answerText = `${minutesToClock(finish)}; ${away} minutes`;
+          return mkResult({
+            correct: score === 2, score, maxScore: 2,
+            misconception: score === 2 ? null : "skipped_step",
+            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
+            feedbackLong: `The activity finishes at ${minutesToClock(finish)}, and the group is there for ${away} minutes.`,
+            answerText
+          });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_area_costing_tiles",
+    label: "Theme-rich area costing",
+    domain: "Geometry and measure",
+    skillIds: ["perimeter_area", "mul_div_structure", "reasonableness"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const width = randInt(rng, 6, 14);
+      const height = randInt(rng, 4, 10);
+      const area = width * height;
+      const packSize = pick(rng, [4, 5, 6, 8, 10]);
+      const packs = Math.ceil(area / packSize);
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>A rectangular display mat at the ${theme.place} is <strong>${width} cm</strong> by <strong>${height} cm</strong>.</p><p>One sticker covers <strong>1 cm²</strong>. Stickers are sold in packs of <strong>${packSize}</strong>.</p><p>What is the area of the mat, and how many packs of stickers are needed to cover it?</p>`,
+        visualHtml: rectangleSvg(`${width} cm`, `${height} cm`),
+        solutionLines: [
+          `Area = ${width} × ${height} = ${area} cm².`,
+          `${area} stickers are needed, one for each square centimetre.`,
+          `${area} ÷ ${packSize} means ${packs} pack${packs === 1 ? "" : "s"} are needed because packs must be whole.`
+        ],
+        checkLine: "Use area, not perimeter, then round the number of packs up if needed.",
+        reflectionPrompt: "Did you round up to a whole number of packs?",
+        inputSpec: { type: "multi", fields: [
+          { key: "area", label: "Area in cm²", kind: "number" },
+          { key: "packs", label: "Packs needed", kind: "number" }
+        ] },
+        evaluate: (resp) => {
+          let score = 0;
+          if (parseNumberInput(resp.area) === area) score += 1;
+          if (parseNumberInput(resp.packs) === packs) score += 1;
+          const answerText = `${area} cm²; ${packs} pack${packs === 1 ? "" : "s"}`;
+          return mkResult({
+            correct: score === 2, score, maxScore: 2,
+            misconception: score === 2 ? null : "area_perimeter_confusion",
+            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
+            feedbackLong: `The area is ${area} cm² and ${packs} pack${packs === 1 ? "" : "s"} are needed.`,
+            answerText
+          });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_angle_shape_chain",
+    label: "Theme-rich angle chain",
+    domain: "Geometry",
+    skillIds: ["geometry_angles", "add_sub_multistep"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const a = pick(rng, [35, 40, 45, 50, 55, 60, 65]);
+      const b = pick(rng, [25, 30, 35, 40, 45, 50]);
+      const missing = 180 - a - b;
+      const aroundPoint = 360 - missing - 90 - pick(rng, [40, 50, 60]);
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>A triangular sign at the ${theme.place} has two angles of <strong>${a}°</strong> and <strong>${b}°</strong>.</p><p>First find the missing angle of the triangle. Then find the angle left around a point after this angle and a right angle are used, with another angle of <strong>${360 - missing - 90 - aroundPoint}°</strong>.</p>`,
+        solutionLines: [
+          `Angles in a triangle add to 180°: 180° - ${a}° - ${b}° = ${missing}°.`,
+          `Around a point, subtract the known angles: 360° - ${missing}° - 90° - ${360 - missing - 90 - aroundPoint}° = ${aroundPoint}°.`
+        ],
+        checkLine: "Use 180° for the triangle and 360° for the point; do not swap them.",
+        reflectionPrompt: "Which total did you use at each stage?",
+        inputSpec: { type: "multi", fields: [
+          { key: "triangle", label: "Missing triangle angle", kind: "number" },
+          { key: "point", label: "Angle left around point", kind: "number" }
+        ] },
+        evaluate: (resp) => {
+          let score = 0;
+          if (parseNumberInput(resp.triangle) === missing) score += 1;
+          if (parseNumberInput(resp.point) === aroundPoint) score += 1;
+          const answerText = `${missing}°; ${aroundPoint}°`;
+          return mkResult({
+            correct: score === 2, score, maxScore: 2,
+            misconception: score === 2 ? null : "angle_total_confusion",
+            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
+            feedbackLong: `The triangle angle is ${missing}° and the angle left around the point is ${aroundPoint}°.`,
+            answerText
+          });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_data_missing_total",
+    label: "Theme-rich data missing total",
+    domain: "Statistics",
+    skillIds: ["statistics_reading", "add_sub_multistep", "inverse_missing"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const item = themeWord(rng, theme, "items");
+      const labels = shuffle(rng, ["Mon", "Tue", "Wed", "Thu"]);
+      const values = labels.map(() => pick(rng, [12, 15, 18, 20, 24, 25, 30, 32, 36]));
+      const missingIndex = randInt(rng, 0, labels.length - 1);
+      const targetTotal = values.reduce((sum, value) => sum + value, 0);
+      const rows = labels.map((label, index) => [label, index === missingIndex ? "?" : String(values[index])]);
+      const missing = values[missingIndex];
+      const range = Math.max(...values) - Math.min(...values);
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>The table shows ${item} used at the ${theme.place}. One entry is missing.</p><p>The total for all four days is <strong>${targetTotal}</strong>. What is the missing number, and what is the range of the four values?</p>`,
+        visualHtml: tableHtml(["Day", item], rows),
+        solutionLines: [
+          `Add the three shown values and subtract from ${targetTotal} to find the missing value ${missing}.`,
+          `The range is the largest value minus the smallest value: ${range}.`
+        ],
+        checkLine: "After finding the missing value, include it when finding the range.",
+        reflectionPrompt: "Did you use the missing value in the range calculation?",
+        inputSpec: { type: "multi", fields: [
+          { key: "missing", label: "Missing number", kind: "number" },
+          { key: "range", label: "Range", kind: "number" }
+        ] },
+        evaluate: (resp) => {
+          let score = 0;
+          if (parseNumberInput(resp.missing) === missing) score += 1;
+          if (parseNumberInput(resp.range) === range) score += 1;
+          const answerText = `${missing}; range ${range}`;
+          return mkResult({
+            correct: score === 2, score, maxScore: 2,
+            misconception: score === 2 ? null : "data_misread",
+            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
+            feedbackLong: `The missing number is ${missing}, and the range is ${range}.`,
+            answerText
+          });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_estimation_choice_defend",
+    label: "Theme-rich estimation choice",
+    domain: "Reasoning and checking",
+    skillIds: ["reasonableness", "error_analysis"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const item = themeWord(rng, theme, "items");
+      const qty = randInt(rng, 4, 9);
+      const price = pick(rng, [185, 220, 245, 275, 320, 350, 425]);
+      const exact = qty * price;
+      const estimate = Math.round(qty * Math.round(price / 100));
+      const options = shuffle(rng, [
+        ["a", `${formatPenceMoney(price)} × ${qty} is about £${estimate}`],
+        ["b", `${formatPenceMoney(price)} × ${qty} is about £${Math.max(1, estimate - qty * 2)}`],
+        ["c", `${formatPenceMoney(price)} × ${qty} is about £${estimate + qty * 4}`]
+      ]);
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>The ${theme.place} buys <strong>${qty}</strong> ${item}. Each one costs <strong>${formatPenceMoney(price)}</strong>.</p><p>Choose the best estimate and give the exact cost.</p>${renderChoiceList(options)}`,
+        solutionLines: [
+          `${formatPenceMoney(price)} is about £${Math.round(price / 100)}, so ${qty} lots is about £${estimate}.`,
+          `The exact cost is ${qty} × ${formatPenceMoney(price)} = ${formatPenceMoney(exact)}.`
+        ],
+        checkLine: "The estimate should be close to the exact cost, not wildly above or below it.",
+        reflectionPrompt: "Did your estimate help check whether the exact answer is sensible?",
+        inputSpec: { type: "multi", fields: [
+          { key: "choice", label: "Best estimate", kind: "radio", options },
+          { key: "exact", label: "Exact cost", kind: "text", placeholder: "e.g. 12.50 or £12.50" }
+        ] },
+        evaluate: (resp) => {
+          let score = 0;
+          if (resp.choice === "a") score += 1;
+          if (parseMoneyToPence(resp.exact) === exact) score += 1;
+          const answerText = `A; ${formatPenceMoney(exact)}`;
+          return mkResult({
+            correct: score === 2, score, maxScore: 2,
+            misconception: score === 2 ? null : "estimation_failure",
+            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
+            feedbackLong: `The best estimate is about £${estimate}, and the exact cost is ${formatPenceMoney(exact)}.`,
+            answerText
+          });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_money_multi_buy_budget",
+    label: "Theme-rich money budget with leftover",
+    domain: "Measure and money",
+    skillIds: ["add_sub_multistep", "mul_div_structure", "reasonableness"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const itemA = themeWord(rng, theme, "items");
+      const itemB = pickDistinctThemeItem(rng, ["pens", "snack tokens", "badges", "labels", "maps"], itemA);
+      const qtyA = randInt(rng, 2, 5);
+      const qtyB = randInt(rng, 2, 6);
+      const priceA = pick(rng, [95, 125, 150, 175, 220, 245, 275]);
+      const priceB = pick(rng, [45, 60, 75, 80, 95, 110, 135]);
+      const cost = qtyA * priceA + qtyB * priceB;
+      const budget = cost + pick(rng, [120, 150, 200, 250, 300, 375]);
+      const left = budget - cost;
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>The ${theme.place} has a budget of <strong>${formatPenceMoney(budget)}</strong>.</p><p>They buy <strong>${qtyA}</strong> ${itemA} at <strong>${formatPenceMoney(priceA)}</strong> each and <strong>${qtyB}</strong> ${itemB} at <strong>${formatPenceMoney(priceB)}</strong> each.</p><p>What is the total cost, and how much money is left?</p>`,
+        solutionLines: [
+          `Total cost = ${qtyA} × ${formatPenceMoney(priceA)} + ${qtyB} × ${formatPenceMoney(priceB)} = ${formatPenceMoney(cost)}.`,
+          `Money left = ${formatPenceMoney(budget)} - ${formatPenceMoney(cost)} = ${formatPenceMoney(left)}.`
+        ],
+        checkLine: "Multiply by the quantities before subtracting from the budget.",
+        reflectionPrompt: "Did you calculate both item totals before finding the money left?",
+        inputSpec: { type: "multi", fields: [
+          { key: "cost", label: "Total cost", kind: "text", placeholder: "e.g. 9.40 or £9.40" },
+          { key: "left", label: "Money left", kind: "text", placeholder: "e.g. 2.60 or £2.60" }
+        ] },
+        evaluate: (resp) => {
+          let score = 0;
+          if (parseMoneyToPence(resp.cost) === cost) score += 1;
+          if (parseMoneyToPence(resp.left) === left) score += 1;
+          const answerText = `${formatPenceMoney(cost)}; ${formatPenceMoney(left)}`;
+          return mkResult({
+            correct: score === 2, score, maxScore: 2,
+            misconception: score === 2 ? null : "skipped_step",
+            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
+            feedbackLong: `The total cost is ${formatPenceMoney(cost)} and ${formatPenceMoney(left)} is left.`,
+            answerText
+          });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_error_mixed_units",
+    label: "Theme-rich error analysis: mixed units",
+    domain: "Reasoning and checking",
+    skillIds: ["error_analysis", "unit_conversion"],
+    satsFriendly: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const metres = randInt(rng, 2, 6);
+      const cm = pick(rng, [20, 35, 40, 55, 65, 75, 90]);
+      const extra = randInt(rng, 80, 240);
+      const wrong = metres + cm + extra;
+      const correct = metres * 100 + cm + extra;
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p>A pupil at the ${theme.place} says:</p><div class="callout">“${metres} m ${cm} cm plus ${extra} cm is <strong>${wrong} cm</strong>, because ${metres} + ${cm} + ${extra} = ${wrong}.”</div><p>Which mistake has the pupil made, and what is the correct total in centimetres?</p>`,
+        solutionLines: [
+          `The pupil did not convert ${metres} m to ${metres * 100} cm.`,
+          `${metres} m ${cm} cm = ${metres * 100 + cm} cm.`,
+          `${metres * 100 + cm} + ${extra} = ${correct} cm.`
+        ],
+        checkLine: "Metres and centimetres must be in the same unit before adding.",
+        reflectionPrompt: "What does the metre part become in centimetres?",
+        inputSpec: { type: "multi", fields: [
+          { key: "reason", label: "Mistake", kind: "radio", options: [["unit", "They added metres and centimetres without converting."], ["subtract", "They should have subtracted the extra length."], ["none", "There is no mistake."]] },
+          { key: "total", label: "Correct total in cm", kind: "number" }
+        ] },
+        evaluate: (resp) => {
+          let score = 0;
+          if (resp.reason === "unit") score += 1;
+          if (parseNumberInput(resp.total) === correct) score += 1;
+          const answerText = `Convert metres first; ${correct} cm`;
+          return mkResult({
+            correct: score === 2, score, maxScore: 2,
+            misconception: score === 2 ? null : "unit_confusion",
+            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
+            feedbackLong: `The correct total is ${correct} cm.`,
+            answerText
+          });
+        }
+      });
+    }
+  },
+  {
+    id: "theme_extra_credit_rate_pattern",
+    label: "Extra credit: rate pattern transfer",
+    domain: "Reasoning and checking",
+    skillIds: ["ratio_scale", "statistics_reading", "reasonableness"],
+    satsFriendly: false,
+    extraCredit: true,
+    contextThemed: true,
+    generator(seed) {
+      const rng = mulberry32(seed);
+      const theme = contextTheme(seed, this.id);
+      const item = themeWord(rng, theme, "items");
+      const step = randInt(rng, 3, 9);
+      const start = randInt(rng, 8, 24);
+      const day = randInt(rng, 6, 12);
+      const value = start + (day - 1) * step;
+      const totalThreeDays = value + (value + step) + (value + 2 * step);
+      const rows = [["1", String(start)], ["2", String(start + step)], ["3", String(start + 2 * step)], [String(day), "?"]];
+      return makeBaseQuestion(this, seed, {
+        contextThemeId: theme.id,
+        marks: 2,
+        stemHtml: `<p><strong>Extra credit.</strong> A pattern at the ${theme.place} starts with <strong>${start}</strong> ${item} on day 1 and increases by the same amount each day.</p><p>Use the table to find the number on day <strong>${day}</strong>, then find the total for days ${day}, ${day + 1} and ${day + 2}.</p>`,
+        visualHtml: tableHtml(["Day", item], rows),
+        solutionLines: [
+          `The increase each day is ${step}.`,
+          `Day ${day}: ${start} + ${day - 1} × ${step} = ${value}.`,
+          `Days ${day}, ${day + 1} and ${day + 2}: ${value} + ${value + step} + ${value + 2 * step} = ${totalThreeDays}.`
+        ],
+        checkLine: "The same increase happens each day, so use multiplication to jump ahead.",
+        reflectionPrompt: "How did you avoid listing every single day?",
+        inputSpec: { type: "multi", fields: [
+          { key: "dayValue", label: `Day ${day} value`, kind: "number" },
+          { key: "total", label: `Total for days ${day}-${day + 2}`, kind: "number" }
+        ] },
+        evaluate: (resp) => {
+          let score = 0;
+          if (parseNumberInput(resp.dayValue) === value) score += 1;
+          if (parseNumberInput(resp.total) === totalThreeDays) score += 1;
+          const answerText = `${value}; ${totalThreeDays}`;
+          return mkResult({
+            correct: score === 2, score, maxScore: 2,
+            misconception: score === 2 ? null : "scaling_confusion",
+            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
+            feedbackLong: `Day ${day} has ${value}, and the three-day total is ${totalThreeDays}.`,
+            answerText
+          });
+        }
+      });
+    }
+  }
+];
+
+registerExtraTemplates(THEMED_REASONING_TEMPLATES);
+
 
 const SATS_SET_BLUEPRINTS = {
       8: [
@@ -7846,6 +8521,9 @@ export function reasoningContentSummary() {
     skillCount: Object.keys(REASONING_SKILLS).length,
     misconceptionCount: Object.keys(REASONING_MISCONCEPTIONS).length,
     satsFriendlyCount: TEMPLATES.filter((template) => template.satsFriendly).length,
+    contextThemeCount: typeof REASONING_CONTEXT_THEMES !== 'undefined' ? REASONING_CONTEXT_THEMES.length : 0,
+    themedTemplateCount: TEMPLATES.filter((template) => template.contextThemed).length,
+    extraCreditTemplateCount: TEMPLATES.filter((template) => template.extraCredit).length,
     domains,
     skills,
     modes: REASONING_MODES.slice(),

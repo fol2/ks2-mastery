@@ -1,0 +1,11 @@
+base=54bbfbfb69ca4d68b1f8bc35f9077b1f1eb68fc2
+patch=D:\Coding\ks2-mastery\.worktrees\reasoning-world-class-variety-hardening\docs\plans\james\hotfixes\8. reasoning-world-class-variety-hardening-package\patches\004-reasoning-world-class-variety-hardening.patch
+command=git apply D:\Coding\ks2-mastery\.worktrees\reasoning-world-class-variety-hardening\docs\plans\james\hotfixes\8. reasoning-world-class-variety-hardening-package\patches\004-reasoning-world-class-variety-hardening.patch
+ M scripts/reasoning-production-smoke.mjs
+ M shared/reasoning/content.js
+ M shared/reasoning/metadata.js
+ M tests/reasoning-content-contract.test.js
+ M tests/reasoning-engine-rewards.test.js
+ M tests/reasoning-production-smoke.test.js
+ M worker/src/subjects/reasoning/engine.js
+result=passed

@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: reasoning content bank exposes 124 safe template families without leaking markers to the browser metadata
+ok 1 - reasoning content bank exposes 124 safe template families without leaking markers to the browser metadata
+  ---
+  duration_ms: 1.2886
+  type: 'test'
+  ...
+# Subtest: reasoning templates generate, mark and serialise cleanly across smoke seeds
+ok 2 - reasoning templates generate, mark and serialise cleanly across smoke seeds
+  ---
+  duration_ms: 33.305
+  type: 'test'
+  ...
+# Subtest: reasoning generated templates keep stable item ids and do not emit malformed maths text
+ok 3 - reasoning generated templates keep stable item ids and do not emit malformed maths text
+  ---
+  duration_ms: 349.6779
+  type: 'test'
+  ...
+# Subtest: reasoning themed expansion exposes broad context variety and keeps extra credit out of SATs sets
+ok 4 - reasoning themed expansion exposes broad context variety and keeps extra credit out of SATs sets
+  ---
+  duration_ms: 0.3642
+  type: 'test'
+  ...
+# Subtest: reasoning mixed-unit gap template never asks for a negative more-needed amount
+ok 5 - reasoning mixed-unit gap template never asks for a negative more-needed amount
+  ---
+  duration_ms: 21.9275
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 470.7315

@@ -1,0 +1,184 @@
+TAP version 13
+# Subtest: reasoning content bank exposes 124 safe template families without leaking markers to the browser metadata
+ok 1 - reasoning content bank exposes 124 safe template families without leaking markers to the browser metadata
+  ---
+  duration_ms: 1.1673
+  type: 'test'
+  ...
+# Subtest: reasoning templates generate, mark and serialise cleanly across smoke seeds
+ok 2 - reasoning templates generate, mark and serialise cleanly across smoke seeds
+  ---
+  duration_ms: 31.4985
+  type: 'test'
+  ...
+# Subtest: reasoning generated templates keep stable item ids and do not emit malformed maths text
+ok 3 - reasoning generated templates keep stable item ids and do not emit malformed maths text
+  ---
+  duration_ms: 351.8575
+  type: 'test'
+  ...
+# Subtest: reasoning themed expansion exposes broad context variety and keeps extra credit out of SATs sets
+ok 4 - reasoning themed expansion exposes broad context variety and keeps extra credit out of SATs sets
+  ---
+  duration_ms: 0.5058
+  type: 'test'
+  ...
+# Subtest: reasoning mixed-unit gap template never asks for a negative more-needed amount
+ok 5 - reasoning mixed-unit gap template never asks for a negative more-needed amount
+  ---
+  duration_ms: 23.4299
+  type: 'test'
+  ...
+# Subtest: reasoning themed quantity stories stay possible and unambiguous
+ok 6 - reasoning themed quantity stories stay possible and unambiguous
+  ---
+  duration_ms: 25.0932
+  type: 'test'
+  ...
+# Subtest: server reasoning engine returns exact due retry questions and emits evidence on independent success
+ok 7 - server reasoning engine returns exact due retry questions and emits evidence on independent success
+  ---
+  duration_ms: 18.7435
+  type: 'test'
+  ...
+# Subtest: reasoning reward projection updates direct and grand monsters with independent state ids
+ok 8 - reasoning reward projection updates direct and grand monsters with independent state ids
+  ---
+  duration_ms: 0.9413
+  type: 'test'
+  ...
+# Subtest: server reasoning engine uses the injected command clock for support and session records
+ok 9 - server reasoning engine uses the injected command clock for support and session records
+  ---
+  duration_ms: 2.7376
+  type: 'test'
+  ...
+# Subtest: reasoning first-wrong feedback gives only a nudge until support is requested
+ok 10 - reasoning first-wrong feedback gives only a nudge until support is requested
+  ---
+  duration_ms: 2.1839
+  type: 'test'
+  ...
+# Subtest: reasoning support requests are blocked before effort, in strict mode, and after marking
+ok 11 - reasoning support requests are blocked before effort, in strict mode, and after marking
+  ---
+  duration_ms: 4.7816
+  type: 'test'
+  ...
+# Subtest: worked and faded Reasoning modes expose seeded support without marking as independent
+ok 12 - worked and faded Reasoning modes expose seeded support without marking as independent
+  ---
+  duration_ms: 1.6493
+  type: 'test'
+  ...
+# Subtest: reasoning support command actions send stale-session and stale-question guards
+ok 13 - reasoning support command actions send stale-session and stale-question guards
+  ---
+  duration_ms: 0.4657
+  type: 'test'
+  ...
+# Subtest: reasoning command actions include optional working for single and list responses
+ok 14 - reasoning command actions include optional working for single and list responses
+  ---
+  duration_ms: 12.8601
+  type: 'test'
+  ...
+# Subtest: reasoning read model redacts legacy persisted first-wrong result fields
+ok 15 - reasoning read model redacts legacy persisted first-wrong result fields
+  ---
+  duration_ms: 1.0979
+  type: 'test'
+  ...
+# Subtest: duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+ok 16 - duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+  ---
+  duration_ms: 2.5539
+  type: 'test'
+  ...
+# Subtest: Reasoning read models keep domain and skill hints hidden until marking or support
+ok 17 - Reasoning read models keep domain and skill hints hidden until marking or support
+  ---
+  duration_ms: 2.0978
+  type: 'test'
+  ...
+# Subtest: Reasoning first-wrong feedback question stays redacted before support
+ok 18 - Reasoning first-wrong feedback question stays redacted before support
+  ---
+  duration_ms: 0.972
+  type: 'test'
+  ...
+# Subtest: Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+ok 19 - Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+  ---
+  duration_ms: 1.23
+  type: 'test'
+  ...
+# Subtest: Reasoning list responses can be cleared and working is preserved in state and events
+ok 20 - Reasoning list responses can be cleared and working is preserved in state and events
+  ---
+  duration_ms: 2.0953
+  type: 'test'
+  ...
+# Subtest: supported Reasoning success updates practice but does not award monster evidence
+ok 21 - supported Reasoning success updates practice but does not award monster evidence
+  ---
+  duration_ms: 2.3481
+  type: 'test'
+  ...
+# Subtest: Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+ok 22 - Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+  ---
+  duration_ms: 1.5878
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reasoning command handlers
+ok 23 - worker subject runtime wires reasoning command handlers
+  ---
+  duration_ms: 3.1478
+  type: 'test'
+  ...
+# Subtest: Reasoning scheduler avoids obvious template repeats and salts item seeds inside one round
+ok 24 - Reasoning scheduler avoids obvious template repeats and salts item seeds inside one round
+  ---
+  duration_ms: 4.7367
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke helper derives correct responses for the promoted template bank
+ok 25 - reasoning production smoke helper derives correct responses for the promoted template bank
+  ---
+  duration_ms: 1732.2453
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke helper validates content summary and marker redaction
+ok 26 - reasoning production smoke helper validates content summary and marker redaction
+  ---
+  duration_ms: 1.7299
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke default report path is not tied to a stale dated release
+ok 27 - reasoning production smoke default report path is not tied to a stale dated release
+  ---
+  duration_ms: 0.1411
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke helper parses deterministic template ids
+ok 28 - reasoning production smoke helper parses deterministic template ids
+  ---
+  duration_ms: 0.1949
+  type: 'test'
+  ...
+# Subtest: reasoning reset-learner command resets state and data from an active session
+ok 29 - reasoning reset-learner command resets state and data from an active session
+  ---
+  duration_ms: 3.335
+  type: 'test'
+  ...
+1..29
+# tests 29
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1816.3167

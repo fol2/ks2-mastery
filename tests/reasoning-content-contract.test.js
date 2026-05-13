@@ -9,14 +9,32 @@ import {
 } from '../shared/reasoning/content.js';
 import { reasoningContentSummary as publicReasoningContentSummary } from '../shared/reasoning/metadata.js';
 
-test('reasoning content bank exposes 110 safe template families without leaking markers to the browser metadata', () => {
+function strongValues(html) {
+  return Array.from(String(html || '').matchAll(/<strong>([^<]+)<\/strong>/g)).map((match) => match[1]);
+}
+
+function findCorrectNumericAnswer(question, max = 10000) {
+  for (let answer = 0; answer <= max; answer += 1) {
+    if (question.evaluate({ answer: String(answer) }).correct) return answer;
+  }
+  return null;
+}
+
+function labelsOverlap(first, second) {
+  const a = String(first || '').trim().toLowerCase();
+  const b = String(second || '').trim().toLowerCase();
+  if (!a || !b) return false;
+  return a === b || a.endsWith(` ${b}`) || b.endsWith(` ${a}`);
+}
+
+test('reasoning content bank exposes 124 safe template families without leaking markers to the browser metadata', () => {
   const privateSummary = reasoningContentSummary();
   const publicSummary = publicReasoningContentSummary();
-  assert.equal(privateSummary.templateCount, 110);
+  assert.equal(privateSummary.templateCount, 124);
   assert.equal(privateSummary.skillCount, 17);
-  assert.equal(privateSummary.satsFriendlyCount, 110);
+  assert.equal(privateSummary.satsFriendlyCount, 123);
   assert.deepEqual(publicSummary, privateSummary);
-  assert.equal(REASONING_TEMPLATES.length, 110);
+  assert.equal(REASONING_TEMPLATES.length, 124);
   assert.equal(typeof publicSummary.templateCount, 'number');
 });
 
@@ -60,6 +78,81 @@ test('reasoning generated templates keep stable item ids and do not emit malform
       ].filter(Boolean).join('\\n');
       if (question?.itemId !== `${template.id}:${seed}`) failures.push(`${template.id}:${seed}: unstable itemId ${question?.itemId}`);
       if (malformed.test(text)) failures.push(`${template.id}:${seed}: malformed generated text`);
+    }
+  }
+  assert.deepEqual(failures, []);
+});
+
+test('reasoning themed expansion exposes broad context variety and keeps extra credit out of SATs sets', () => {
+  const summary = reasoningContentSummary();
+  assert.equal(summary.contextThemeCount, 12);
+  assert.equal(summary.themedTemplateCount, 14);
+  assert.equal(summary.extraCreditTemplateCount, 1);
+
+  const extraCredit = REASONING_TEMPLATES.filter((template) => template.extraCredit);
+  assert.equal(extraCredit.length, 1);
+  assert.equal(extraCredit[0].satsFriendly, false);
+
+  const themedTemplateIds = REASONING_TEMPLATES.filter((template) => template.contextThemed).map((template) => template.id);
+  assert.ok(themedTemplateIds.includes('theme_money_multi_buy_budget'));
+  assert.ok(themedTemplateIds.includes('theme_extra_credit_rate_pattern'));
+
+  const themeIds = new Set();
+  for (let seed = 1; seed <= 60; seed += 1) {
+    const question = generateReasoningQuestion('theme_equal_groups_shortfall', seed);
+    if (question?.contextThemeId) themeIds.add(question.contextThemeId);
+  }
+  assert.ok(themeIds.size >= 10, `expected broad theme variety, saw ${themeIds.size}`);
+});
+
+test('reasoning mixed-unit gap template never asks for a negative more-needed amount', () => {
+  const reviewedNegativeCase = generateReasoningQuestion('theme_mixed_units_total_gap', 5);
+  assert.equal(reviewedNegativeCase.evaluate({ answer: '-25' }).correct, false);
+
+  const failures = [];
+  for (let seed = 1; seed <= 1000; seed += 1) {
+    const question = generateReasoningQuestion('theme_mixed_units_total_gap', seed);
+    let hasNonNegativeAnswer = false;
+    for (let answer = 0; answer <= 1000; answer += 1) {
+      if (question.evaluate({ answer: String(answer) }).correct) {
+        hasNonNegativeAnswer = true;
+        break;
+      }
+    }
+    if (!hasNonNegativeAnswer) failures.push(`${question.itemId}: no non-negative correct answer`);
+  }
+  assert.deepEqual(failures, []);
+});
+
+test('reasoning themed quantity stories stay possible and unambiguous', () => {
+  const failures = [];
+  for (let seed = 1; seed <= 1000; seed += 1) {
+    const fractionQuestion = generateReasoningQuestion('theme_fraction_two_step_share', seed);
+    const fractionStrongValues = strongValues(fractionQuestion.stemHtml);
+    const fractionTotal = Number(fractionStrongValues[1]);
+    const fractionAnswer = findCorrectNumericAnswer(fractionQuestion);
+    if (!(fractionAnswer <= fractionTotal)) {
+      failures.push(`${fractionQuestion.itemId}: used altogether ${fractionAnswer} exceeds total ${fractionTotal}`);
+    }
+
+    const percentQuestion = generateReasoningQuestion('theme_percent_change_compare', seed);
+    const percentStrongValues = strongValues(percentQuestion.stemHtml);
+    const percentTotal = Number(percentStrongValues[1]);
+    const afternoonCompleters = Number(percentStrongValues[2]);
+    if (!(afternoonCompleters <= percentTotal)) {
+      failures.push(`${percentQuestion.itemId}: afternoon completers ${afternoonCompleters} exceeds total ${percentTotal}`);
+    }
+
+    const ratioQuestion = generateReasoningQuestion('theme_ratio_recipe_total', seed);
+    const ratioStrongValues = strongValues(ratioQuestion.stemHtml);
+    if (labelsOverlap(ratioStrongValues[0], ratioStrongValues[1])) {
+      failures.push(`${ratioQuestion.itemId}: overlapping ratio items ${ratioStrongValues[0]} / ${ratioStrongValues[1]}`);
+    }
+
+    const moneyQuestion = generateReasoningQuestion('theme_money_multi_buy_budget', seed);
+    const moneyMatch = String(moneyQuestion.stemHtml).match(/They buy <strong>\d+<\/strong> (.*?) at <strong>.*?<\/strong> each and <strong>\d+<\/strong> (.*?) at <strong>/);
+    if (!moneyMatch || labelsOverlap(moneyMatch[1], moneyMatch[2])) {
+      failures.push(`${moneyQuestion.itemId}: overlapping purchase items ${moneyMatch ? `${moneyMatch[1]} / ${moneyMatch[2]}` : 'unparsed'}`);
     }
   }
   assert.deepEqual(failures, []);

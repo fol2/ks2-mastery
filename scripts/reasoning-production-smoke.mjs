@@ -22,6 +22,7 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const ROOT_DIR = path.resolve(path.dirname(__filename), '..');
+export const DEFAULT_REASONING_PRODUCTION_SMOKE_REPORT = path.join('reports', 'reasoning', 'reasoning-production-smoke-current.json');
 const FORBIDDEN_REASONING_READ_MODEL_KEYS = new Set(['evaluate']);
 const FORBIDDEN_REASONING_EARLY_HINT_KEYS = new Set([
   'templateId',
@@ -181,10 +182,10 @@ export function parseReasoningQuestionId(itemId) {
 
 export function assertReasoningContentSummary(summary, label = 'reasoning.content') {
   assert.equal(summary?.releaseId, REASONING_CONTENT_RELEASE_ID, `${label}.releaseId mismatch.`);
-  assert.equal(Number(summary?.templateCount), 110, `${label}.templateCount mismatch.`);
+  assert.equal(Number(summary?.templateCount), 124, `${label}.templateCount mismatch.`);
   assert.equal(Number(summary?.skillCount), 17, `${label}.skillCount mismatch.`);
   assert.equal(Number(summary?.misconceptionCount), 20, `${label}.misconceptionCount mismatch.`);
-  assert.equal(Number(summary?.satsFriendlyCount), 110, `${label}.satsFriendlyCount mismatch.`);
+  assert.equal(Number(summary?.satsFriendlyCount), 123, `${label}.satsFriendlyCount mismatch.`);
   assert.deepEqual(summary, reasoningContentSummary(), `${label} no longer matches the local Reasoning content summary.`);
 }
 
@@ -255,7 +256,7 @@ async function optionalHeroReadModel({ origin, cookie, learnerId }) {
 
 async function runSmoke() {
   const origin = configuredOrigin();
-  const outPath = argValue('--out', path.join('reports', 'reasoning', 'reasoning-production-smoke-2026-05-11.json'));
+  const outPath = argValue('--out', DEFAULT_REASONING_PRODUCTION_SMOKE_REPORT);
   const startedAt = new Date().toISOString();
   const demo = await createDemoSession(origin);
   let { learnerId, revision } = await loadBootstrap(origin, demo.cookie, { expectedSession: demo.session });

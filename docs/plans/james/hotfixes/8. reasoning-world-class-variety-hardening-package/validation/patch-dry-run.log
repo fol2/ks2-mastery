@@ -1,0 +1,7 @@
+checking file scripts/reasoning-production-smoke.mjs
+checking file shared/reasoning/content.js
+checking file shared/reasoning/metadata.js
+checking file tests/reasoning-content-contract.test.js
+checking file tests/reasoning-engine-rewards.test.js
+checking file tests/reasoning-production-smoke.test.js
+checking file worker/src/subjects/reasoning/engine.js

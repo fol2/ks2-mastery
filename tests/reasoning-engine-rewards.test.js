@@ -48,7 +48,7 @@ test('server reasoning engine returns exact due retry questions and emits eviden
     'reasoning.evidence-earned',
     'reasoning.session-completed',
   ]);
-  assert.match(marked.events[1].masteryKey, /^reasoning-poc-promoted-2026-05-11:reasoning-evidence:pv_rounding:/);
+  assert.match(marked.events[1].masteryKey, /^reasoning-variety-hardening-2026-05-13:reasoning-evidence:pv_rounding:/);
 });
 
 test('reasoning reward projection updates direct and grand monsters with independent state ids', () => {
@@ -61,8 +61,8 @@ test('reasoning reward projection updates direct and grand monsters with indepen
       learnerId: 'learner-1',
       skillId: 'pv_rounding',
       itemId: 'pv_rounding_context:1',
-      contentReleaseId: 'reasoning-poc-promoted-2026-05-11',
-      masteryKey: 'reasoning-poc-promoted-2026-05-11:reasoning-evidence:pv_rounding:pv_rounding_context:1:independent',
+      contentReleaseId: 'reasoning-variety-hardening-2026-05-13',
+      masteryKey: 'reasoning-variety-hardening-2026-05-13:reasoning-evidence:pv_rounding:pv_rounding_context:1:independent',
     }],
   });
   const codex = projected.gameState['monster-codex'];
@@ -299,7 +299,7 @@ test('reasoning read model redacts legacy persisted first-wrong result fields', 
     payload: { mode: 'smart', roundLength: 3, viewMode: 'one' },
     requestId: 'legacy-redaction-start',
   });
-  const ref = { templateId: 'pv_rounding_context', seed: 1, itemId: 'pv_rounding_context:1' };
+  const ref = started.state.session.questionRefs[0];
   const question = generateReasoningQuestion(ref.templateId, ref.seed);
   const fullResult = question.evaluate({ answer: '0' });
   const readModel = buildReasoningReadModel({
@@ -323,7 +323,7 @@ test('duplicate Reasoning evidence keys update practice but do not re-emit evide
   const seed = 1;
   const question = generateReasoningQuestion(templateId, seed);
   const answer = findNumericCorrectAnswer(question);
-  const masteryKey = `reasoning-poc-promoted-2026-05-11:reasoning-evidence:pv_rounding:${templateId}:${seed}:independent`;
+  const masteryKey = `reasoning-variety-hardening-2026-05-13:reasoning-evidence:pv_rounding:${templateId}:${seed}:independent`;
   const engine = createServerReasoningEngine({ now: () => 40_000, random: () => 0 });
   const started = engine.apply({
     learnerId: 'learner-duplicate',
@@ -633,4 +633,27 @@ test('worker subject runtime wires reasoning command handlers', async () => {
   assert.ok(started.subjectReadModel.session.currentQuestion.id);
   assert.equal(started.subjectReadModel.session.currentQuestion.evaluate, undefined);
   assert.ok(started.runtimeWrite.state.session.id);
+});
+
+test('Reasoning scheduler avoids obvious template repeats and salts item seeds inside one round', () => {
+  const engine = createServerReasoningEngine({ now: () => 70_000, random: () => 0 });
+  const smart = engine.apply({
+    learnerId: 'learner-variety',
+    command: 'start-session',
+    payload: { mode: 'smart', roundLength: 12, viewMode: 'one' },
+    requestId: 'variety-smart',
+  });
+  const smartRefs = smart.state.session.questionRefs;
+  assert.equal(new Set(smartRefs.map((ref) => ref.templateId)).size, smartRefs.length);
+  assert.equal(new Set(smartRefs.map((ref) => ref.itemId)).size, smartRefs.length);
+
+  const skill = engine.apply({
+    learnerId: 'learner-variety',
+    command: 'start-session',
+    payload: { mode: 'skill', focusSkillId: 'pv_rounding', roundLength: 12, viewMode: 'one' },
+    requestId: 'variety-skill',
+  });
+  const skillRefs = skill.state.session.questionRefs;
+  assert.ok(new Set(skillRefs.map((ref) => ref.templateId)).size >= 7);
+  assert.equal(new Set(skillRefs.map((ref) => ref.itemId)).size, skillRefs.length);
 });

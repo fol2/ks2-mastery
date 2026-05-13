@@ -1,0 +1,7 @@
+[reasoning-production-smoke] Error: Request to https://ks2.eugnel.uk/api/demo/session failed or timed out after 15000ms: fetch failed
+    at fetchJson (file:///mnt/data/reasoning-05130813-patchcheck/scripts/lib/production-smoke.mjs:70:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async createDemoSession (file:///mnt/data/reasoning-05130813-patchcheck/scripts/lib/production-smoke.mjs:131:18)
+    at async runSmoke (file:///mnt/data/reasoning-05130813-patchcheck/scripts/reasoning-production-smoke.mjs:260:16)
+    at async main (file:///mnt/data/reasoning-05130813-patchcheck/scripts/reasoning-production-smoke.mjs:398:20)
+    at async file:///mnt/data/reasoning-05130813-patchcheck/scripts/reasoning-production-smoke.mjs:407:3

@@ -1,4 +1,4 @@
-export const REASONING_CONTENT_RELEASE_ID = 'reasoning-poc-promoted-2026-05-11';
+export const REASONING_CONTENT_RELEASE_ID = 'reasoning-variety-hardening-2026-05-13';
 
 export const REASONING_MODES = Object.freeze(['smart', 'skill', 'trouble', 'worked', 'faded', 'sats', 'satsset']);
 
@@ -80,42 +80,45 @@ export const REASONING_QUESTION_TYPE_LABELS = Object.freeze({
 });
 
 const PUBLIC_REASONING_CONTENT_SUMMARY = Object.freeze({
-  "releaseId": "reasoning-poc-promoted-2026-05-11",
-  "templateCount": 110,
+  "releaseId": "reasoning-variety-hardening-2026-05-13",
+  "templateCount": 124,
   "skillCount": 17,
   "misconceptionCount": 20,
-  "satsFriendlyCount": 110,
+  "satsFriendlyCount": 123,
+  "contextThemeCount": 12,
+  "themedTemplateCount": 14,
+  "extraCreditTemplateCount": 1,
   "domains": {
-    "Number and place value": 10,
-    "Calculation": 10,
-    "Fractions": 10,
-    "Fractions, decimals and percentages": 10,
-    "Ratio and proportion": 10,
-    "Measure": 10,
-    "Geometry and measure": 10,
-    "Geometry": 10,
-    "Statistics": 10,
-    "Reasoning and checking": 10,
-    "Measure and money": 10
+    "Number and place value": 11,
+    "Calculation": 11,
+    "Fractions": 11,
+    "Fractions, decimals and percentages": 11,
+    "Ratio and proportion": 11,
+    "Measure": 12,
+    "Geometry and measure": 11,
+    "Geometry": 11,
+    "Statistics": 11,
+    "Reasoning and checking": 13,
+    "Measure and money": 11
   },
   "skills": {
-    "pv_rounding": 6,
-    "reasonableness": 16,
-    "pv_compare": 8,
-    "inverse_missing": 11,
-    "mul_div_structure": 15,
-    "add_sub_multistep": 34,
-    "fractions_quantity": 6,
+    "pv_rounding": 7,
+    "reasonableness": 22,
+    "pv_compare": 9,
+    "inverse_missing": 12,
+    "mul_div_structure": 19,
+    "add_sub_multistep": 42,
+    "fractions_quantity": 7,
     "fractions_compare": 4,
-    "percent_number": 4,
-    "fdp_equiv": 9,
-    "ratio_scale": 10,
-    "unit_conversion": 5,
-    "time_elapsed": 5,
-    "perimeter_area": 10,
-    "error_analysis": 18,
-    "geometry_angles": 10,
-    "statistics_reading": 10
+    "percent_number": 5,
+    "fdp_equiv": 10,
+    "ratio_scale": 12,
+    "unit_conversion": 7,
+    "time_elapsed": 6,
+    "perimeter_area": 11,
+    "error_analysis": 20,
+    "geometry_angles": 11,
+    "statistics_reading": 12
   },
   "modes": [
     "smart",

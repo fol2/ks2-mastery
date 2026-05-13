@@ -1,0 +1,202 @@
+TAP version 13
+# Subtest: full simulated generate run lands every planned word entry uploaded
+ok 1 - full simulated generate run lands every planned word entry uploaded
+  ---
+  duration_ms: 613.5943
+  type: 'test'
+  ...
+# Subtest: rerun with same --run-id retries only failed entries
+ok 2 - rerun with same --run-id retries only failed entries
+  ---
+  duration_ms: 19.6206
+  type: 'test'
+  ...
+# Subtest: audit substring matcher catches GEMINI_API_KEY_2 / _20 / GEMINI_API_KEYS / CLOUDFLARE_API_TOKEN
+ok 3 - audit substring matcher catches GEMINI_API_KEY_2 / _20 / GEMINI_API_KEYS / CLOUDFLARE_API_TOKEN
+  ---
+  duration_ms: 0.2806
+  type: 'test'
+  ...
+# Subtest: parseArgs splits CSV --slug values and rejects unknown flags
+ok 4 - parseArgs splits CSV --slug values and rejects unknown flags
+  ---
+  duration_ms: 0.8066
+  type: 'test'
+  ...
+# Subtest: parseArgs rejects negative --limit / --offset / --concurrency
+ok 5 - parseArgs rejects negative --limit / --offset / --concurrency
+  ---
+  duration_ms: 0.1126
+  type: 'test'
+  ...
+# Subtest: getDirectApiKeyPool sorts numbered keys, dedups, and accepts comma-lists
+ok 6 - getDirectApiKeyPool sorts numbered keys, dedups, and accepts comma-lists
+  ---
+  duration_ms: 0.2053
+  type: 'test'
+  ...
+# Subtest: getDirectApiKeyPool returns empty when no env vars are set
+ok 7 - getDirectApiKeyPool returns empty when no env vars are set
+  ---
+  duration_ms: 0.1859
+  type: 'test'
+  ...
+# Subtest: selectVoices returns both buffered voices when no flag is passed
+ok 8 - selectVoices returns both buffered voices when no flag is passed
+  ---
+  duration_ms: 0.1489
+  type: 'test'
+  ...
+# Subtest: selectVoices rejects an unknown voice value
+ok 9 - selectVoices rejects an unknown voice value
+  ---
+  duration_ms: 0.1865
+  type: 'test'
+  ...
+# Subtest: pcmToWavBuffer wraps PCM with a RIFF/WAVE header
+ok 10 - pcmToWavBuffer wraps PCM with a RIFF/WAVE header
+  ---
+  duration_ms: 0.2907
+  type: 'test'
+  ...
+# Subtest: pcmToWavBuffer preserves audio/wav payload as-is
+ok 11 - pcmToWavBuffer preserves audio/wav payload as-is
+  ---
+  duration_ms: 0.0664
+  type: 'test'
+  ...
+# Subtest: extractAudioPayload accepts both inlineData and inline_data shapes
+ok 12 - extractAudioPayload accepts both inlineData and inline_data shapes
+  ---
+  duration_ms: 0.1391
+  type: 'test'
+  ...
+# Subtest: buildGeminiRequestBody mirrors the Worker direct-call body shape
+ok 13 - buildGeminiRequestBody mirrors the Worker direct-call body shape
+  ---
+  duration_ms: 0.1122
+  type: 'test'
+  ...
+# Subtest: listR2Objects paginates via cursor / truncated
+ok 14 - listR2Objects paginates via cursor / truncated
+  ---
+  duration_ms: 0.3128
+  type: 'test'
+  ...
+# Subtest: listR2Objects raises an explicit error when the REST call fails
+ok 15 - listR2Objects raises an explicit error when the REST call fails
+  ---
+  duration_ms: 0.137
+  type: 'test'
+  ...
+# Subtest: applyInventoryToEntries flips matching entries to uploaded
+ok 16 - applyInventoryToEntries flips matching entries to uploaded
+  ---
+  duration_ms: 0.0632
+  type: 'test'
+  ...
+# Subtest: mergeWithExistingState discards prior status when key drift detected
+ok 17 - mergeWithExistingState discards prior status when key drift detected
+  ---
+  duration_ms: 0.0427
+  type: 'test'
+  ...
+# Subtest: mergeWithExistingState inherits uploaded status when keys match
+ok 18 - mergeWithExistingState inherits uploaded status when keys match
+  ---
+  duration_ms: 0.0398
+  type: 'test'
+  ...
+# Subtest: summariseState counts pending / generated / uploaded / failed correctly
+ok 19 - summariseState counts pending / generated / uploaded / failed correctly
+  ---
+  duration_ms: 0.1096
+  type: 'test'
+  ...
+# Subtest: cleanText collapses NBSP / tabs / double-space and trims
+ok 20 - cleanText collapses NBSP / tabs / double-space and trims
+  ---
+  duration_ms: 0.0375
+  type: 'test'
+  ...
+# Subtest: processEntry returns immediately when entry is already uploaded
+ok 21 - processEntry returns immediately when entry is already uploaded
+  ---
+  duration_ms: 0.0792
+  type: 'test'
+  ...
+# Subtest: writeStateFile + readStateFile round-trip JSON state
+ok 22 - writeStateFile + readStateFile round-trip JSON state
+  ---
+  duration_ms: 17.0175
+  type: 'test'
+  ...
+# Subtest: readStateFile returns null for a missing path (no throw)
+ok 23 - readStateFile returns null for a missing path (no throw)
+  ---
+  duration_ms: 0.4084
+  type: 'test'
+  ...
+# Subtest: statePathFor uses the .spelling-audio/word-runs/<runId>/state.json layout
+ok 24 - statePathFor uses the .spelling-audio/word-runs/<runId>/state.json layout
+  ---
+  duration_ms: 0.179
+  type: 'test'
+  ...
+# Subtest: --max-retries 0 + non-quota Gemini error → exactly 1 attempt, status failed
+ok 25 - --max-retries 0 + non-quota Gemini error → exactly 1 attempt, status failed
+  ---
+  duration_ms: 8.7579
+  type: 'test'
+  ...
+# Subtest: --max-retries 0 + quota error rotates through 2 keys + succeeds on 2nd
+ok 26 - --max-retries 0 + quota error rotates through 2 keys + succeeds on 2nd
+  ---
+  duration_ms: 8.2124
+  type: 'test'
+  ...
+# Subtest: --max-retries 2 + non-quota Gemini error → exactly 1 attempt (break-immediately semantics)
+ok 27 - --max-retries 2 + non-quota Gemini error → exactly 1 attempt (break-immediately semantics)
+  ---
+  duration_ms: 10.091
+  type: 'test'
+  ...
+# Subtest: transient Gemini 5xx retries within the bounded retry budget
+ok 28 - transient Gemini 5xx retries within the bounded retry budget
+  ---
+  duration_ms: 518.7454
+  type: 'test'
+  ...
+# Subtest: readStateFile rejects corrupt JSON with a clear actionable error
+ok 29 - readStateFile rejects corrupt JSON with a clear actionable error
+  ---
+  duration_ms: 3.3016
+  type: 'test'
+  ...
+# Subtest: writeStateFile is atomic via tmp + rename (no .tmp.* lingers)
+ok 30 - writeStateFile is atomic via tmp + rename (no .tmp.* lingers)
+  ---
+  duration_ms: 11.4814
+  type: 'test'
+  ...
+# Subtest: commandGenerate registers + removes SIGINT/SIGTERM handlers
+ok 31 - commandGenerate registers + removes SIGINT/SIGTERM handlers
+  ---
+  duration_ms: 6.824
+  type: 'test'
+  ...
+# Subtest: commandGenerate flushes state after every entry (no end-of-run-only writes)
+ok 32 - commandGenerate flushes state after every entry (no end-of-run-only writes)
+  ---
+  duration_ms: 19.2646
+  type: 'test'
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 32
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1402.0903

@@ -7,6 +7,7 @@ import {
   reasoningContentSummary,
 } from '../shared/reasoning/content.js';
 import {
+  DEFAULT_REASONING_PRODUCTION_SMOKE_REPORT,
   assertNoEarlyReasoningHints,
   assertNoReasoningMarkerLeak,
   assertReasoningContentSummary,
@@ -34,7 +35,7 @@ test('reasoning production smoke helper derives correct responses for the promot
 test('reasoning production smoke helper validates content summary and marker redaction', () => {
   assertReasoningContentSummary(reasoningContentSummary());
   assert.throws(
-    () => assertReasoningContentSummary({ ...reasoningContentSummary(), templateCount: 109 }),
+    () => assertReasoningContentSummary({ ...reasoningContentSummary(), templateCount: 123 }),
     /templateCount mismatch/,
   );
   assertNoReasoningMarkerLeak({ currentQuestion: { id: 'safe' } });
@@ -52,6 +53,11 @@ test('reasoning production smoke helper validates content summary and marker red
     () => assertNoEarlyReasoningHints({ feedback: { question: { id: 'q1', domain: 'Number' } } }),
     /exposed an early Reasoning hint/,
   );
+});
+
+test('reasoning production smoke default report path is not tied to a stale dated release', () => {
+  assert.match(DEFAULT_REASONING_PRODUCTION_SMOKE_REPORT, /reasoning-production-smoke-current\.json$/);
+  assert.doesNotMatch(DEFAULT_REASONING_PRODUCTION_SMOKE_REPORT, /2026-05-11/);
 });
 
 test('reasoning production smoke helper parses deterministic template ids', () => {
