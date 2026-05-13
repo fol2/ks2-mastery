@@ -99,20 +99,21 @@ npm run check: PASS
 
 ## Production validation
 
-Current deployed production evidence was generated after rebasing to latest `origin/main` and deploying `5c311dbb57d3cd8b78616f6d30e98c88467ec8bc`.
+Current deployed production evidence was generated after rebasing to latest `origin/main` and verifying `125cacb6374103fec99010caf347a0d2feb61b54` on `https://ks2.eugnel.uk`.
 
 ```text
-npm run deploy: PASS
-Cloudflare Worker version: 7479ed75-caee-4fbb-b58f-9b4ca18ab8f5
-Production bundle audit: PASS
+npm run deploy: PASS before latest main verification
+Production bundle audit: PASS before latest main verification
+latest-main production smoke: PASS
 ```
 
 Production smoke:
 
 ```text
-node scripts/punctuation-production-smoke.mjs --env production --authenticated --admin-hub --commit-sha 5c311dbb57d3cd8b78616f6d30e98c88467ec8bc --worker-version-id 7479ed75-caee-4fbb-b58f-9b4ca18ab8f5 --out reports/punctuation/punctuation-qg-p20-production-smoke.json --timeout-ms 30000
+node scripts/punctuation-production-smoke.mjs --env production --authenticated --admin-hub --commit-sha 125cacb6374103fec99010caf347a0d2feb61b54 --out reports/punctuation/punctuation-qg-p20-production-smoke.json --timeout-ms 30000
 PASS
 origin: https://ks2.eugnel.uk
+worker SHA: 125cacb6374103fec99010caf347a0d2feb61b54
 release: punctuation-qg-p23-15072-2026-05-13
 runtime items: 15072
 authenticatedCoverage: true

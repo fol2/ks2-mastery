@@ -1,8 +1,8 @@
 {
   "ok": true,
   "origin": "https://ks2.eugnel.uk",
-  "accountId": "demo-Dpdr-9WZBy58iA",
-  "learnerId": "learner-demo-8hNMYd92luUNww",
+  "accountId": "demo-cK4EzaYsvjdP4Q",
+  "learnerId": "learner-demo-HtPGoh-rmEoyDQ",
   "attestation": {
     "environment": "production",
     "releaseId": "punctuation-qg-p23-15072-2026-05-13",
@@ -136,10 +136,10 @@
       "gen_speech_insert": 100,
       "gen_speech_transfer": 120
     },
-    "workerCommitSha": "5c311dbb57d3cd8b78616f6d30e98c88467ec8bc",
-    "workerVersionId": "7479ed75-caee-4fbb-b58f-9b4ca18ab8f5",
+    "workerCommitSha": "125cacb6374103fec99010caf347a0d2feb61b54",
+    "workerVersionId": null,
     "deploymentId": null,
-    "timestamp": "2026-05-13T11:27:53.427Z",
+    "timestamp": "2026-05-13T11:49:12.653Z",
     "authenticatedCoverage": true,
     "adminHubCoverage": true
   },
@@ -149,7 +149,7 @@
       "runtimeItems": 15072,
       "publishedRewardUnits": 14,
       "generatedItemCommandPathProbe": {
-        "itemId": "gen_p20_speech_fix_qiz9u0_102",
+        "itemId": "gen_p20_speech_fix_1xurp9x_15",
         "mode": "fix",
         "skillIds": [
           "speech"
@@ -168,7 +168,7 @@
       "runtimeItems": 15072,
       "publishedRewardUnits": 14
     },
-    "smartItemId": "gen_sentence_endings_insert_1u9oohd_87",
+    "smartItemId": "gen_sentence_endings_insert_1piivho_68",
     "smartSummaryTotal": 1,
     "smartSix": {
       "revision": 13,
@@ -181,7 +181,7 @@
       "uniqueItems": 6,
       "immediateRepeats": 0
     },
-    "generatedIncorrectItemId": "gen_p20_speech_fix_qiz9u0_102",
+    "generatedIncorrectItemId": "gen_p20_speech_fix_1xurp9x_15",
     "generatedIncorrectMisconceptionTags": [
       "speech.reporting_comma_missing",
       "speech.terminal_inside_quotes_missing"
@@ -189,52 +189,52 @@
     "dashAcceptance": [
       {
         "variant": "spaced-hyphen",
-        "itemId": "gen_p20_dash_clause_insert_1si98nm_76",
+        "itemId": "gen_p20_dash_clause_insert_y9vdnb_33",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
         ],
         "feedbackKind": "success",
-        "acceptedAnswer": "Ruby opened the seed packet - the room fell silent - and read the note."
+        "acceptedAnswer": "Jude opened the script - the room fell silent - and read the note."
       },
       {
         "variant": "en-dash",
-        "itemId": "gen_p20_dash_clause_insert_1qk8vau_63",
+        "itemId": "gen_p20_dash_clause_insert_1ssf5cj_59",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
         ],
         "feedbackKind": "success",
-        "acceptedAnswer": "Theo opened the tablet – the room fell silent – and read the note."
+        "acceptedAnswer": "Ben opened the robot arm – the room fell silent – and read the note."
       },
       {
         "variant": "em-dash",
-        "itemId": "gen_p20_dash_clause_insert_1rovk6b_15",
+        "itemId": "dc_insert_alarm_rang",
         "mode": "insert",
         "skillIds": [
           "dash_clause"
         ],
         "feedbackKind": "success",
-        "acceptedAnswer": "Kai opened the weather chart — the room fell silent — and read the note."
+        "acceptedAnswer": "The alarm rang — everyone lined up."
       }
     ],
-    "oxfordCommaItemId": "gen_list_commas_combine_1gf3bn5_95",
+    "oxfordCommaItemId": "gen_list_commas_insert_5lay0e_40",
     "oxfordCommaAcceptance": {
-      "itemId": "gen_list_commas_combine_1gf3bn5_95",
-      "mode": "combine",
+      "itemId": "gen_list_commas_insert_5lay0e_40",
+      "mode": "insert",
       "skillIds": [
         "list_commas"
       ],
       "feedbackKind": "success"
     },
     "advancedMode": "gps",
-    "advancedItemId": "fx_fa_choose_before_assembly",
+    "advancedItemId": "hy_choose_small_business",
     "advancedReviewItems": 1,
-    "parentHubAttempts": 18,
+    "parentHubAttempts": 21,
     "parentHubEvidence": {
       "hasEvidence": true,
-      "attempts": 18,
-      "accuracyPercent": 94,
+      "attempts": 21,
+      "accuracyPercent": 95,
       "progressSnapshotsHasPunctuation": true,
       "redactionChecks": {
         "punctuationEvidence": true,
@@ -243,8 +243,8 @@
       },
       "sessionModes": [
         "smart",
-        "guided",
         "comma_flow",
+        "guided",
         "gps",
         "speech"
       ]

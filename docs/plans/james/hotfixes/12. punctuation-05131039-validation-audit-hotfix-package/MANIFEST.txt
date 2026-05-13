@@ -4,7 +4,7 @@ Evidence boundary:
 - Primary: uploaded ZIP /mnt/data/ks2-mastery-lean-05131039.zip
 - User-stated filename: ks2-mastery-lean-05130839.zip
 - Patch base: 5c95335e^ (b16cb890508add84fff616bc737b5dbac9568aaf)
-- Production: deployed latest main 5c311dbb57d3cd8b78616f6d30e98c88467ec8bc to Cloudflare Worker version 7479ed75-caee-4fbb-b58f-9b4ca18ab8f5
+- Production: latest main 125cacb6374103fec99010caf347a0d2feb61b54 verified on https://ks2.eugnel.uk with authenticated Punctuation production smoke
 - Checksum note: FILE_SHA256S.txt intentionally excludes itself to avoid an invalid self-hash.
 
 Contents:

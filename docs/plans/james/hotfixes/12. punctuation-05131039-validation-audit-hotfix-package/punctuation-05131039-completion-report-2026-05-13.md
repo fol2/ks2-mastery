@@ -54,11 +54,8 @@ Production gates:
 npm run deploy
 PASS
 
-Cloudflare Worker version
-7479ed75-caee-4fbb-b58f-9b4ca18ab8f5
-
-deployed main commit
-5c311dbb57d3cd8b78616f6d30e98c88467ec8bc
+latest deployed main commit verified on production
+125cacb6374103fec99010caf347a0d2feb61b54
 
 production smoke
 PASS: https://ks2.eugnel.uk, production, punctuation-qg-p23-15072-2026-05-13, 15072 runtime items
