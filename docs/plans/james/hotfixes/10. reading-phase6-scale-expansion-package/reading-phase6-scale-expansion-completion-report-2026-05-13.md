@@ -29,7 +29,7 @@ The production Reading smoke passed with content version 6, 414 passages, 4112 q
 - `npm run check`: passed on the final implementation base and again before deployment.
 - Reviewer punctuation-skill blocker: fixed, audited, and covered by contract tests.
 - Final pre-push `npm test`: 111519 tests, 111507 passed, 0 failed, 12 skipped.
-- Package SHA256 manifest: updated and verified.
+- Package SHA256 manifest: updated from Git blob/archive bytes and clean-archive verified.
 
 ## Scope
 

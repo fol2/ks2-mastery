@@ -3,3 +3,4 @@
 "docs/plans/james/hotfixes/4. arithmetic-next-improvement-package/patches/*.patch" text eol=lf whitespace=-blank-at-eol
 "docs/plans/james/hotfixes/7. grammar-qg-p24-post-hardening-review-distractor-stretch-package/patches/*.patch" text eol=lf whitespace=-blank-at-eol
 "docs/plans/james/hotfixes/7. grammar-qg-p24-post-hardening-review-distractor-stretch-package/validation/patch-sha256.txt" text eol=lf
+"docs/plans/james/hotfixes/10. reading-phase6-scale-expansion-package/**" text eol=lf

@@ -1,0 +1,4 @@
+Command: git archive <staged-tree> docs/plans/james/hotfixes/10. reading-phase6-scale-expansion-package | tar -xf - <temp> && verify SHA256SUMS against extracted archive bytes
+Representation: Git blob/archive bytes after scoped eol=lf attributes; Windows working-tree CRLF bytes are not authoritative for this manifest.
+Result: passed
+Entries verified: 33

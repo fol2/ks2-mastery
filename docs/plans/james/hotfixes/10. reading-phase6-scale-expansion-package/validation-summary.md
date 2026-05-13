@@ -58,6 +58,7 @@ This package expands Reading from 2072 to 4112 questions and from 210 to 414 pas
 - Dependency-complete `node --test tests/reading-session-interface.test.js`: 14 passed, 0 failed; see `validation/dependency-complete-reading-session-interface.log`.
 - Dependency-complete `npm test`: 111501 tests, 111489 passed, 0 failed, 12 skipped; see `validation/dependency-complete-npm-test-summary.log`.
 - Final pre-push `npm test`: 111519 tests, 111507 passed, 0 failed, 12 skipped; see `validation/pre-push-npm-test-summary-2026-05-13.log`.
+- Package SHA256 manifest: generated from Git blob/archive bytes under scoped `eol=lf` attributes and verified from a clean Git archive; see `validation/sha256sum-git-archive-verification-2026-05-13.log`.
 - Dependency-complete `npm run check`: passed Wrangler OAuth dry-run build/check; see `validation/dependency-complete-npm-run-check.log`.
 - Fresh apply-check focused tests: 50 passed, 0 failed.
 - Stretch probe after Phase 6: 386 eligible passages, 3106 engine-eligible stretch questions, and 3493 non-punctuation questions available in those passages.
