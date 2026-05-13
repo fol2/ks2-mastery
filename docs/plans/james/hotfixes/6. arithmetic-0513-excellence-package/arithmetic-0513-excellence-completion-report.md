@@ -130,7 +130,7 @@ validation/logs/current-npm-run-deploy-2026-05-13.log
 
 ## Review Closure
 
-Independent code review and contract audit were requested after production evidence was available. Review stream records are stored in:
+Independent code review and contract audit were requested after production evidence was available. Both review streams found no code/product scope blocker; their remaining RED items were evidence-record wording and sync-record integrity. Those closure records are stored in:
 
 ```text
 review/current-code-review-2026-05-13.md
@@ -139,16 +139,19 @@ review/current-contract-audit-2026-05-13.md
 
 ## Remote Sync
 
-The implementation and evidence commits were pushed to `origin/main`:
+The rollout commits include:
 
 ```text
 6c623c373e98206c8ab9484709d852c7f4b9054f Harden Arithmetic answer discipline
 b3eb97c28b9b48dbf8529194432f86af4ea6a2b1 Record Arithmetic production evidence
 ```
 
-The main checkout at `D:\Coding\ks2-mastery` was refreshed with `git pull --ff-only` after the evidence commit:
+Later docs-only closure commits update this completion report and reviewer records. The final sync check is intentionally command-based rather than self-referential: the report's own commit hash cannot be embedded into the report without creating another commit.
+
+Final closure requires these checks to agree after the final push:
 
 ```text
-local main HEAD: b3eb97c28b9b48dbf8529194432f86af4ea6a2b1
-origin/main: b3eb97c28b9b48dbf8529194432f86af4ea6a2b1
+git -C D:\Coding\ks2-mastery status --short --branch --untracked-files=no
+git -C D:\Coding\ks2-mastery rev-parse HEAD
+git -C D:\Coding\ks2-mastery rev-parse origin/main
 ```
