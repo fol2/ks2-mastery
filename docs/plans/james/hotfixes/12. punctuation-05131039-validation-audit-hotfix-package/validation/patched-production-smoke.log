@@ -1,0 +1,29 @@
+# Punctuation Production Smoke
+
+| Field | Value |
+|-------|-------|
+| OK | true |
+| Origin | https://ks2.eugnel.uk |
+| Account | demo-Dpdr-9WZBy58iA |
+| Learner | learner-demo-8hNMYd92luUNww |
+| Environment | production |
+| Worker SHA | 5c311dbb57d3cd8b78616f6d30e98c88467ec8bc |
+
+## Punctuation
+
+| Metric | Value |
+|--------|-------|
+| Smart item | gen_sentence_endings_insert_1u9oohd_87 |
+| Smart summary total | 1 |
+| Fixed items | 512 |
+| Generated items | 14560 |
+| Runtime items | 15072 |
+| Published reward units | 14 |
+
+## Spelling
+
+| Metric | Value |
+|--------|-------|
+| Progress total | 1 |
+| Has prompt token | true |
+

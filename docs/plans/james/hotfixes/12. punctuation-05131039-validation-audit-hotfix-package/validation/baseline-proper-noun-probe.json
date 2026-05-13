@@ -1,0 +1,397 @@
+{
+  "runtimeItems": 15072,
+  "findingCount": 2560,
+  "uniqueAffectedItems": 1160,
+  "byFamily": {
+    "gen_sentence_endings_transfer": 80,
+    "gen_fronted_adverbial_transfer": 240,
+    "gen_p20_sentence_endings_choose": 80,
+    "gen_p20_sentence_endings_insert": 80,
+    "gen_p20_sentence_endings_fix": 80,
+    "gen_p20_sentence_endings_combine": 80,
+    "gen_p20_sentence_endings_paragraph": 160,
+    "gen_p20_sentence_endings_transfer": 80,
+    "gen_p20_fronted_adverbial_choose": 240,
+    "gen_p20_fronted_adverbial_insert": 240,
+    "gen_p20_fronted_adverbial_fix": 240,
+    "gen_p20_fronted_adverbial_combine": 240,
+    "gen_p20_fronted_adverbial_paragraph": 480,
+    "gen_p20_fronted_adverbial_transfer": 240
+  },
+  "bySkillMode": {
+    "sentence_endings::transfer": 160,
+    "fronted_adverbial::transfer": 480,
+    "sentence_endings::choose": 80,
+    "sentence_endings::insert": 80,
+    "sentence_endings::fix": 80,
+    "sentence_endings::combine": 80,
+    "sentence_endings::paragraph": 160,
+    "fronted_adverbial::choose": 240,
+    "fronted_adverbial::insert": 240,
+    "fronted_adverbial::fix": 240,
+    "fronted_adverbial::combine": 240,
+    "fronted_adverbial::paragraph": 480
+  },
+  "samples": [
+    {
+      "itemId": "gen_sentence_endings_transfer_1nak98s_2",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "maya",
+      "surface": "Where did maya put the map?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1nak98s_2",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "maya",
+      "surface": "Where did maya put the map?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1o4j2bp_3",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "theo",
+      "surface": "Where did theo put the tablet?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1o4j2bp_3",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "theo",
+      "surface": "Where did theo put the tablet?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1m6lugw_6",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "amira",
+      "surface": "Where did amira put the model?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1m6lugw_6",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "amira",
+      "surface": "Where did amira put the model?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1psgohj_9",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "ethan",
+      "surface": "Where did ethan put the badge?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1psgohj_9",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "ethan",
+      "surface": "Where did ethan put the badge?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_s0yonb_12",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "nia",
+      "surface": "Where did nia put the score sheet?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_s0yonb_12",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "nia",
+      "surface": "Where did nia put the score sheet?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_qn0o6g_15",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "kai",
+      "surface": "Where did kai put the weather chart?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_qn0o6g_15",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "kai",
+      "surface": "Where did kai put the weather chart?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_rgzh9d_18",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "hana",
+      "surface": "Where did hana put the guidebook?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_rgzh9d_18",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "hana",
+      "surface": "Where did hana put the guidebook?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1ndz8j3_21",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "omar",
+      "surface": "Where did omar put the folder?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1ndz8j3_21",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "omar",
+      "surface": "Where did omar put the folder?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1nnyu82_24",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "zara",
+      "surface": "Where did zara put the torch?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1nnyu82_24",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "zara",
+      "surface": "Where did zara put the torch?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1mu0155_27",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "felix",
+      "surface": "Where did felix put the poster?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1mu0155_27",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "felix",
+      "surface": "Where did felix put the poster?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1pbwgdw_30",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "sofia",
+      "surface": "Where did sofia put the camera?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1pbwgdw_30",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "sofia",
+      "surface": "Where did sofia put the camera?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_lne4ow_33",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "jude",
+      "surface": "Where did jude put the script?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_lne4ow_33",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "jude",
+      "surface": "Where did jude put the script?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_nlbcjp_36",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "ruby",
+      "surface": "Where did ruby put the seed packet?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_nlbcjp_36",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "ruby",
+      "surface": "Where did ruby put the seed packet?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_ofa5mm_39",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "ben",
+      "surface": "Where did ben put the robot arm?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_ofa5mm_39",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "ben",
+      "surface": "Where did ben put the robot arm?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1lzg3gm_42",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "model",
+      "phrase": "lina",
+      "surface": "Where did lina put the compass?"
+    },
+    {
+      "itemId": "gen_sentence_endings_transfer_1lzg3gm_42",
+      "source": "generated",
+      "familyId": "gen_sentence_endings_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "sentence_endings"
+      ],
+      "field": "accepted[0]",
+      "phrase": "lina",
+      "surface": "Where did lina put the compass?"
+    }
+  ]
+}

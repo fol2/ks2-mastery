@@ -1,0 +1,551 @@
+diff --git a/package.json b/package.json
+index 7bc506b0..fc97b2e7 100644
+--- a/package.json
++++ b/package.json
+@@ -124,7 +124,7 @@
+     "punctuation:qg:p20:build-evidence": "npm run build:punctuation-qg:p20-evidence",
+     "simulate:punctuation-qg:p20-heavy-play": "node scripts/simulate-punctuation-qg-p20-heavy-play.mjs",
+     "validate:punctuation-qg:p20-expansion-report": "node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json",
+-    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-hyphen-quality.test.js tests/punctuation-apostrophe-contraction-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js",
++    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-hyphen-quality.test.js tests/punctuation-apostrophe-contraction-quality.test.js tests/punctuation-proper-noun-capitalisation-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js",
+     "verify:punctuation-qg:p20-live": "node scripts/validate-punctuation-qg-p20-live-evidence.mjs reports/punctuation/punctuation-qg-p20-production-smoke.json && node --test tests/punctuation-qg-p20-production-evidence.test.js",
+     "verify:punctuation-qg:p20": "npm run verify:punctuation-qg:p20-expansion && npm run verify:punctuation-qg:p20-live",
+     "prepare": "simple-git-hooks"
+diff --git a/reports/punctuation/punctuation-qg-p20-expansion-audit.json b/reports/punctuation/punctuation-qg-p20-expansion-audit.json
+index 58b8045c..a981fe89 100644
+--- a/reports/punctuation/punctuation-qg-p20-expansion-audit.json
++++ b/reports/punctuation/punctuation-qg-p20-expansion-audit.json
+@@ -2,8 +2,8 @@
+   "schemaVersion": 1,
+   "phase": "punctuation-qg-p20-expansion-audit",
+   "status": "PASS",
+-  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
+-  "generatedAt": "2026-05-13T09:20:43.284Z",
++  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
++  "generatedAt": "2026-05-13T11:28:04.367Z",
+   "thresholds": {
+     "phase": 20,
+     "minRuntimeItems": 15000,
+@@ -46,6 +46,7 @@
+     "hyphenMalformedCompoundFindings": 0,
+     "hyphenArticleAgreementFindings": 0,
+     "apostropheContractionGrammarFindings": 0,
++    "properNounCapitalisationFindings": 0,
+     "modelSelfMarkingFailures": 0,
+     "byMode": {
+       "choose": 2420,
+@@ -76,9 +77,9 @@
+     "releaseIdentity": {
+       "ok": true,
+       "release": {
+-        "releaseId": "punctuation-qg-p22-15072-2026-05-13",
++        "releaseId": "punctuation-qg-p23-15072-2026-05-13",
+         "matchesPattern": true,
+-        "phase": 22,
++        "phase": 23,
+         "embeddedRuntimeCount": 15072,
+         "releaseDate": "2026-05-13",
+         "runtimeCountMatches": true,
+@@ -401,6 +402,12 @@
+       "findingCount": 0,
+       "findings": []
+     },
++    "properNounCapitalisationQuality": {
++      "ok": true,
++      "rule": "Model answers and accepted answers must capitalise registered pupil, place, calendar, and other fixed proper names; stems may still use lowercase names when the task is explicitly asking the learner to repair capital letters.",
++      "findingCount": 0,
++      "findings": []
++    },
+     "reviewGovernance": {
+       "registerPath": "reports/punctuation/punctuation-qg-p20-review-register.json",
+       "registerExists": true,
+@@ -2165,6 +2172,7 @@
+     "This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.",
+     "Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.",
+     "Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.",
++    "Model answers and accepted answers must capitalise registered proper names even when the learner stem intentionally contains lowercase names for a capital-letter repair task.",
+     "Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage."
+   ]
+ }
+diff --git a/reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json b/reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
+index 00ee4bff..77394bc7 100644
+--- a/reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
++++ b/reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
+@@ -3,8 +3,8 @@
+   "phase": "punctuation-qg-p20-heavy-play-simulation",
+   "status": "PASS",
+   "source": "p20-deterministic-cooldown-pool-simulation",
+-  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
+-  "generatedAt": "2026-05-13T09:20:41.530Z",
++  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
++  "generatedAt": "2026-05-13T11:28:02.539Z",
+   "observed": {
+     "learnerCount": 10,
+     "sessionsPerLearner": 50,
+diff --git a/reports/punctuation/punctuation-qg-p20-negative-vector-register.json b/reports/punctuation/punctuation-qg-p20-negative-vector-register.json
+index 5d7343dc..21a45156 100644
+--- a/reports/punctuation/punctuation-qg-p20-negative-vector-register.json
++++ b/reports/punctuation/punctuation-qg-p20-negative-vector-register.json
+@@ -1,8 +1,8 @@
+ {
+   "schemaVersion": 1,
+   "phase": "punctuation-qg-p20-negative-vector-register",
+-  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
+-  "generatedAt": "2026-05-13T09:20:41.015Z",
++  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
++  "generatedAt": "2026-05-13T11:28:02.014Z",
+   "status": "PASS",
+   "byFamily": {
+     "gen_apostrophe_contractions_fix": {
+diff --git a/reports/punctuation/punctuation-qg-p20-review-register.json b/reports/punctuation/punctuation-qg-p20-review-register.json
+index 67ced517..3972dd83 100644
+--- a/reports/punctuation/punctuation-qg-p20-review-register.json
++++ b/reports/punctuation/punctuation-qg-p20-review-register.json
+@@ -1,8 +1,8 @@
+ {
+   "schemaVersion": 1,
+   "phase": "punctuation-qg-p20-review-register",
+-  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
+-  "generatedAt": "2026-05-13T09:20:41.014Z",
++  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
++  "generatedAt": "2026-05-13T11:28:02.013Z",
+   "status": "PASS",
+   "fixedBank": {
+     "status": "inherited-approved",
+diff --git a/scripts/audit-punctuation-qg-p20-expansion.mjs b/scripts/audit-punctuation-qg-p20-expansion.mjs
+index 14adfc42..ed5f538e 100644
+--- a/scripts/audit-punctuation-qg-p20-expansion.mjs
++++ b/scripts/audit-punctuation-qg-p20-expansion.mjs
+@@ -23,6 +23,7 @@ import {
+   createPunctuationRuntimeManifest,
+ } from '../shared/punctuation/generators.js';
+ import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
++import { PUNCTUATION_PROPER_NOUN_CAPITALISATION_TOKENS } from '../shared/punctuation/proper-noun-tokens.js';
+ import { createPunctuationService } from '../shared/punctuation/service.js';
+ import { PUNCTUATION_CURRENT_RELEASE_ID } from '../src/subjects/punctuation/service-contract.js';
+ 
+@@ -37,6 +38,10 @@ const MALFORMED_HYPHEN_DESIGN_PATTERN = /\b[a-z]+-[a-z]+design\b/gi;
+ const HYF_ARTICLE_PATTERN = /\ba (?:ice[- ]cold|open[- ]ended|up[- ]to[- ]date)\b/gi;
+ const APOSTROPHE_CONTRACTION_BAD_BELIEVE_PATTERN = /\b[A-Z][a-z]+\s+(?:haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+believe\b/gi;
+ const APOSTROPHE_CONTRACTION_BAD_MOVED_PATTERN = /\b[A-Z][a-z]+\s+(?:didn't|couldn't|wouldn't|shouldn't|haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+moved\s+the\b/gi;
++const LOWERCASE_PROPER_NAME_PATTERN = new RegExp(`\\b(?:${PUNCTUATION_PROPER_NOUN_CAPITALISATION_TOKENS
++  .map((name) => escapeRegExp(String(name).toLowerCase()))
++  .sort((left, right) => right.length - left.length)
++  .join('|')})\\b`, 'g');
+ const APPROVED_REVIEW_STATUSES = new Set([
+   'approved',
+   'approve',
+@@ -125,6 +130,10 @@ function normaliseText(value) {
+     .toLowerCase();
+ }
+ 
++function escapeRegExp(value) {
++  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
++}
++
+ function stableJson(value) {
+   if (Array.isArray(value)) return value.map(stableJson);
+   if (!value || typeof value !== 'object') return value;
+@@ -722,6 +731,44 @@ export function buildApostropheContractionGrammarEvidence(items) {
+   };
+ }
+ 
++function modelAnswerTextParts(item) {
++  return [
++    ['model', item.model],
++    ...((Array.isArray(item.accepted) ? item.accepted : []).map((entry, index) => [`accepted[${index}]`, entry])),
++  ].filter(([, value]) => typeof value === 'string');
++}
++
++export function buildProperNounCapitalisationEvidence(items) {
++  const findings = [];
++  const seen = new Set();
++  for (const item of items) {
++    for (const [field, text] of modelAnswerTextParts(item)) {
++      LOWERCASE_PROPER_NAME_PATTERN.lastIndex = 0;
++      for (const match of String(text).matchAll(LOWERCASE_PROPER_NAME_PATTERN)) {
++        const phrase = match[0];
++        const key = `${item.id}:${field}:${phrase}:${match.index}`;
++        if (seen.has(key)) continue;
++        seen.add(key);
++        findings.push({
++          itemId: item.id,
++          familyId: item.generatorFamilyId || '',
++          mode: item.mode || '',
++          skillIds: item.skillIds || [],
++          field,
++          phrase,
++          surface: text,
++        });
++      }
++    }
++  }
++  return {
++    ok: findings.length === 0,
++    rule: 'Model answers and accepted answers must capitalise registered pupil, place, calendar, and other fixed proper names; stems may still use lowercase names when the task is explicitly asking the learner to repair capital letters.',
++    findingCount: findings.length,
++    findings: findings.slice(0, 25),
++  };
++}
++
+ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+   const runtime = createPunctuationRuntimeManifest({
+     manifest: PUNCTUATION_CONTENT_MANIFEST,
+@@ -747,6 +794,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+   const fixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
+   const hyphenCompoundQuality = buildHyphenCompoundQualityEvidence(items);
+   const apostropheContractionGrammarQuality = buildApostropheContractionGrammarEvidence(items);
++  const properNounCapitalisationQuality = buildProperNounCapitalisationEvidence(items);
+   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
+   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
+   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
+@@ -771,6 +819,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+     hyphenMalformedCompoundFindings: hyphenCompoundQuality.malformedCompoundFindingCount,
+     hyphenArticleAgreementFindings: hyphenCompoundQuality.articleAgreementFindingCount,
+     apostropheContractionGrammarFindings: apostropheContractionGrammarQuality.findingCount,
++    properNounCapitalisationFindings: properNounCapitalisationQuality.findingCount,
+     modelSelfMarkingFailures: modelFailures.length,
+     byMode: groupCounts(items, (item) => item.mode),
+     bySkill: groupCounts(items, (item) => item.skillIds || []),
+@@ -849,6 +898,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+     },
+     hyphenCompoundQuality,
+     apostropheContractionGrammarQuality,
++    properNounCapitalisationQuality,
+     reviewGovernance: reviewCoverage,
+     negativeVectorCoverage: negativeVectors,
+     heavyPlayVariety: heavyPlay,
+@@ -878,6 +928,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+       'This audit is a post-P20 acceptance gate and is expected to fail on the P14/P15 baseline.',
+       'Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.',
+       'Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.',
++      'Model answers and accepted answers must capitalise registered proper names even when the learner stem intentionally contains lowercase names for a capital-letter repair task.',
+       'Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage.',
+     ],
+   };
+diff --git a/scripts/validate-punctuation-qg-p20-expansion-report.mjs b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
+index 9978cdbb..1a5e7e38 100644
+--- a/scripts/validate-punctuation-qg-p20-expansion-report.mjs
++++ b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
+@@ -33,6 +33,7 @@ if (gates.perSkillBalance?.ok !== true) fail('per-skill balance gate failed', ga
+ if (gates.modelSelfMarking?.ok !== true) fail('model self-marking gate failed', gates.modelSelfMarking);
+ if (gates.hyphenCompoundQuality?.ok !== true) fail('hyphen compound quality gate failed', gates.hyphenCompoundQuality);
+ if (gates.apostropheContractionGrammarQuality?.ok !== true) fail('apostrophe contraction grammar quality gate failed', gates.apostropheContractionGrammarQuality);
++if (gates.properNounCapitalisationQuality?.ok !== true) fail('proper noun capitalisation quality gate failed', gates.properNounCapitalisationQuality);
+ if (gates.reviewGovernance?.ok !== true) fail('review governance gate failed', gates.reviewGovernance);
+ if (gates.negativeVectorCoverage?.ok !== true) fail('negative-vector coverage gate failed', gates.negativeVectorCoverage);
+ if (gates.heavyPlayVariety?.ok !== true) fail('heavy-play variety gate failed', gates.heavyPlayVariety);
+@@ -50,6 +51,7 @@ if (counts.hyphenAdverbialLyHyphenFindings !== 0) fail('adverbial -ly hyphen fin
+ if (counts.hyphenMalformedCompoundFindings !== 0) fail('malformed hyphen compound findings must be zero', counts);
+ if (counts.hyphenArticleAgreementFindings !== 0) fail('hyphen article agreement findings must be zero', counts);
+ if (counts.apostropheContractionGrammarFindings !== 0) fail('apostrophe contraction grammar findings must be zero', counts);
++if (counts.properNounCapitalisationFindings !== 0) fail('proper noun capitalisation findings must be zero', counts);
+ if (counts.modelSelfMarkingFailures !== 0) fail('model self-marking failures must be zero', counts);
+ 
+ const skillRows = Array.isArray(report.skillRows) ? report.skillRows : [];
+diff --git a/shared/punctuation/p20-systematic-expansion-bank.js b/shared/punctuation/p20-systematic-expansion-bank.js
+index f317084f..622aadea 100644
+--- a/shared/punctuation/p20-systematic-expansion-bank.js
++++ b/shared/punctuation/p20-systematic-expansion-bank.js
+@@ -79,6 +79,7 @@ const SETTINGS = Object.freeze([
+   'debate room', 'design studio', 'fitness track', 'geography room', 'rain shelter', 'assembly hall',
+ ]);
+ const ACTORS = Object.freeze(['Maya', 'Omar', 'Lina', 'Theo', 'Zara', 'Noah', 'Amira', 'Felix', 'Ivy', 'Ethan', 'Sofia', 'Leo', 'Nia', 'Jude', 'Asha', 'Kai', 'Ruby', 'Milo', 'Hana', 'Ben']);
++export const PUNCTUATION_P20_PROPER_NAME_TOKENS = ACTORS;
+ const OBJECTS = Object.freeze(['map', 'folder', 'compass', 'tablet', 'torch', 'notebook', 'model', 'poster', 'ticket', 'badge', 'camera', 'sample tray', 'score sheet', 'script', 'toolbox', 'weather chart', 'seed packet', 'paint pot', 'guidebook', 'robot arm']);
+ const RECORDS = Object.freeze(['log book', 'display board', 'class blog', 'planning sheet', 'safety checklist', 'team diary', 'result table', 'notice', 'project file', 'training card']);
+ const ADJECTIVES = Object.freeze(['careful', 'brave', 'quiet', 'curious', 'patient', 'focused', 'creative', 'thoughtful', 'determined', 'cheerful', 'precise', 'steady']);
+@@ -216,16 +217,21 @@ function coreForSkill(skillId, index, familyId) {
+   switch (skillId) {
+     case 'sentence_endings': {
+       const type = index % 3;
+-      const raw = type === 0
++      const bad = type === 0
+         ? `where did ${c.actor.toLowerCase()} put the ${c.object}`
+         : type === 1
+           ? `${c.actor.toLowerCase()} checked the ${c.record} in the ${c.setting}`
+           : `what a ${c.adjective} rescue in the ${c.setting}`;
+-      const model = `${sentenceCase(raw)}${type === 0 ? '?' : type === 1 ? '.' : '!'}`;
++      const corrected = type === 0
++        ? `Where did ${c.actor} put the ${c.object}`
++        : type === 1
++          ? `${c.actor} checked the ${c.record} in the ${c.setting}`
++          : sentenceCase(bad);
++      const model = `${corrected}${type === 0 ? '?' : type === 1 ? '.' : '!'}`;
+       return {
+         model,
+-        bad: raw,
+-        wrongOne: `${sentenceCase(raw)}${type === 0 ? '.' : '?'}`,
++        bad,
++        wrongOne: `${corrected}${type === 0 ? '.' : '?'}`,
+         wrongTwo: wrongLower(model),
+         explanation: type === 0
+           ? 'A direct question starts with a capital letter and ends with a question mark.'
+@@ -302,7 +308,7 @@ function coreForSkill(skillId, index, familyId) {
+       };
+     }
+     case 'fronted_adverbial': {
+-      const clause = `${c.actor.toLowerCase()} checked the ${c.record}`;
++      const clause = `${c.actor} checked the ${c.record}`;
+       const model = `${c.fronted}, ${clause}.`;
+       return {
+         model,
+diff --git a/shared/punctuation/proper-noun-tokens.js b/shared/punctuation/proper-noun-tokens.js
+new file mode 100644
+index 00000000..92f67519
+--- /dev/null
++++ b/shared/punctuation/proper-noun-tokens.js
+@@ -0,0 +1,87 @@
++import { PUNCTUATION_P20_PROPER_NAME_TOKENS } from './p20-systematic-expansion-bank.js';
++
++const FIXED_PUPIL_NAME_TOKENS = Object.freeze([
++  'Aisha',
++  'Hugo',
++  'Lin',
++  'Lily',
++  'Marcus',
++  'Mia',
++  'Noor',
++  'Ravi',
++  'Sam',
++]);
++
++const FIXED_PLACE_NAME_TOKENS = Object.freeze([
++  'Athens',
++  'Austria',
++  'Bangor',
++  'Bath',
++  'Beijing',
++  'Belfast',
++  'Bristol',
++  'Cardiff',
++  'China',
++  'Copenhagen',
++  'Cornwall',
++  'Denmark',
++  'Derry',
++  'Devon',
++  'Dover',
++  'Dundee',
++  'England',
++  'Finland',
++  'France',
++  'Galway',
++  'Greece',
++  'Helsinki',
++  'Ireland',
++  'Italy',
++  'Japan',
++  'Kent',
++  'Korea',
++  'Leeds',
++  'Limerick',
++  'Lisbon',
++  'London',
++  'Lyon',
++  'Madrid',
++  'Northern Ireland',
++  'Norway',
++  'Oslo',
++  'Oxford',
++  'Paris',
++  'Perth',
++  'Porto',
++  'Portugal',
++  'Rome',
++  'Scotland',
++  'Seoul',
++  'South Korea',
++  'Spain',
++  'Stirling',
++  'Tokyo',
++  'Truro',
++  'Vienna',
++  'Wales',
++  'York',
++]);
++
++const CALENDAR_PROPER_NAME_TOKENS = Object.freeze([
++  'Monday',
++  'Tuesday',
++  'Wednesday',
++  'Thursday',
++  'Friday',
++  'Saturday',
++  'Sunday',
++]);
++
++export const PUNCTUATION_PROPER_NOUN_CAPITALISATION_TOKENS = Object.freeze([
++  ...new Set([
++    ...PUNCTUATION_P20_PROPER_NAME_TOKENS,
++    ...FIXED_PUPIL_NAME_TOKENS,
++    ...FIXED_PLACE_NAME_TOKENS,
++    ...CALENDAR_PROPER_NAME_TOKENS,
++  ]),
++].sort((left, right) => left.localeCompare(right, 'en-GB')));
+diff --git a/src/subjects/punctuation/service-contract.js b/src/subjects/punctuation/service-contract.js
+index 984dfc3b..3c8f85c8 100644
+--- a/src/subjects/punctuation/service-contract.js
++++ b/src/subjects/punctuation/service-contract.js
+@@ -18,7 +18,7 @@ export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
+ // P20 Gate 1: release ID + count are coupled. Post-expansion runtime is
+ // 15,072 items (512 fixed + 28 baseline families × 100 templates + 14
+ // transfer families × 120 templates + 84 P20 families × 120 templates).
+-export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p22-15072-2026-05-13';
++export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p23-15072-2026-05-13';
+ export const PUNCTUATION_GENERATED_ITEM_SEED = 'punctuation-p20-systematic-depth120-15072';
+ 
+ export const PUNCTUATION_PHASES = Object.freeze([
+diff --git a/tests/punctuation-proper-noun-capitalisation-quality.test.js b/tests/punctuation-proper-noun-capitalisation-quality.test.js
+new file mode 100644
+index 00000000..6d415e41
+--- /dev/null
++++ b/tests/punctuation-proper-noun-capitalisation-quality.test.js
+@@ -0,0 +1,109 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import { buildProperNounCapitalisationEvidence } from '../scripts/audit-punctuation-qg-p20-expansion.mjs';
++import { PUNCTUATION_CONTENT_MANIFEST } from '../shared/punctuation/content.js';
++import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
++import { PUNCTUATION_P20_PROPER_NAME_TOKENS } from '../shared/punctuation/p20-systematic-expansion-bank.js';
++import { PUNCTUATION_PROPER_NOUN_CAPITALISATION_TOKENS } from '../shared/punctuation/proper-noun-tokens.js';
++
++test('Punctuation runtime model answers capitalise proper names', () => {
++  const runtime = createPunctuationRuntimeManifest({
++    manifest: PUNCTUATION_CONTENT_MANIFEST,
++    generatedPerFamily: PRODUCTION_DEPTH,
++  });
++
++  const evidence = buildProperNounCapitalisationEvidence(runtime.items);
++
++  assert.equal(evidence.ok, true, JSON.stringify(evidence, null, 2));
++  assert.equal(evidence.findingCount, 0);
++});
++
++test('P20 proper-noun audit rejects lowercase names in model answers and accepted answers', () => {
++  const evidence = buildProperNounCapitalisationEvidence([{
++    id: 'proper-noun-regression',
++    generatorFamilyId: 'gen_p20_sentence_endings_transfer',
++    mode: 'transfer',
++    skillIds: ['sentence_endings'],
++    stem: 'where did maya put the map',
++    model: 'Where did maya put the map?',
++    accepted: ['Where did maya put the map?'],
++  }]);
++
++  assert.equal(evidence.ok, false);
++  assert.equal(evidence.findingCount, 2);
++  assert.deepEqual(
++    evidence.findings.map((finding) => `${finding.field}:${finding.phrase}`),
++    ['model:maya', 'accepted[0]:maya'],
++  );
++});
++
++test('P20 proper-noun audit covers every systematic actor token', () => {
++  for (const name of PUNCTUATION_P20_PROPER_NAME_TOKENS) {
++    const lowerName = name.toLowerCase();
++    const evidence = buildProperNounCapitalisationEvidence([{
++      id: `proper-noun-${lowerName}`,
++      generatorFamilyId: 'gen_p20_sentence_endings_transfer',
++      mode: 'transfer',
++      skillIds: ['sentence_endings'],
++      stem: `where did ${lowerName} put the map`,
++      model: `Where did ${lowerName} put the map?`,
++      accepted: [`Where did ${lowerName} put the map?`],
++    }]);
++
++    assert.equal(evidence.ok, false, `${name} was not covered by the proper-noun audit`);
++    assert.equal(evidence.findingCount, 2);
++  }
++});
++
++test('P20 proper-noun audit covers fixed place-name tokens', () => {
++  const evidence = buildProperNounCapitalisationEvidence([{
++    id: 'proper-noun-fixed-place-regression',
++    generatorFamilyId: 'fixed-bank',
++    mode: 'insert',
++    skillIds: ['semicolon_list'],
++    stem: 'We visited York, England Cardiff, Wales and Belfast, Northern Ireland.',
++    model: 'We visited york, england; Cardiff, Wales; and Belfast, Northern Ireland.',
++    accepted: ['We visited york, england; Cardiff, Wales; and Belfast, Northern Ireland.'],
++  }]);
++
++  assert.equal(evidence.ok, false);
++  assert.equal(evidence.findingCount, 4);
++  assert.deepEqual(
++    evidence.findings.map((finding) => `${finding.field}:${finding.phrase}`),
++    ['model:york', 'model:england', 'accepted[0]:york', 'accepted[0]:england'],
++  );
++});
++
++test('P20 proper-noun audit covers every registered proper-name token', () => {
++  for (const name of PUNCTUATION_PROPER_NOUN_CAPITALISATION_TOKENS) {
++    const lowerName = name.toLowerCase();
++    const evidence = buildProperNounCapitalisationEvidence([{
++      id: `proper-noun-${lowerName.replace(/\s+/g, '-')}`,
++      generatorFamilyId: 'proper-noun-registry-fixture',
++      mode: 'transfer',
++      skillIds: ['semicolon_list'],
++      stem: `Write a sentence using ${name}.`,
++      model: `We visited ${lowerName}.`,
++      accepted: [`We visited ${lowerName}.`],
++    }]);
++
++    assert.equal(evidence.ok, false, `${name} was not covered by the proper-noun audit`);
++    assert.equal(evidence.findingCount, 2);
++  }
++});
++
++test('P20 proper-noun audit allows lowercase names in learner stems for capital-letter repair tasks', () => {
++  const evidence = buildProperNounCapitalisationEvidence([{
++    id: 'proper-noun-stem-repair',
++    generatorFamilyId: 'gen_p20_sentence_endings_transfer',
++    mode: 'transfer',
++    skillIds: ['sentence_endings'],
++    stem: 'where did maya put the map',
++    model: 'Where did Maya put the map?',
++    accepted: ['Where did Maya put the map?'],
++  }]);
++
++  assert.equal(evidence.ok, true, JSON.stringify(evidence, null, 2));
++  assert.equal(evidence.findingCount, 0);
++});
+diff --git a/tests/punctuation-qg-p20-expansion-report-validator.test.js b/tests/punctuation-qg-p20-expansion-report-validator.test.js
+index ef3275a7..8e70860d 100644
+--- a/tests/punctuation-qg-p20-expansion-report-validator.test.js
++++ b/tests/punctuation-qg-p20-expansion-report-validator.test.js
+@@ -135,3 +135,33 @@ test('P20 expansion report validator rejects apostrophe-contraction grammar gate
+   assert.match(result.stderr, /apostrophe contraction grammar quality gate failed/);
+   assert.match(result.stderr, /"findingCount": 1/);
+ });
++
++
++test('P20 expansion report validator rejects proper-noun capitalisation gate failures and counters', () => {
++  ensureCurrentP20Report();
++  const report = readJsonReport(CURRENT_REPORT);
++  assert.ok(report, 'current P20 report must exist before synthesising proper-noun capitalisation fixture');
++  const properNounFailureReport = {
++    ...report,
++    gates: {
++      ...report.gates,
++      properNounCapitalisationQuality: {
++        ...report.gates.properNounCapitalisationQuality,
++        ok: false,
++        findingCount: 1,
++        findings: [{ itemId: 'fixture', field: 'model', phrase: 'maya' }],
++      },
++    },
++    counts: {
++      ...report.counts,
++      properNounCapitalisationFindings: 1,
++    },
++  };
++  const properNounFailurePath = writeTempReport('punctuation-p20-proper-noun-report-', properNounFailureReport);
++
++  const result = runValidator(properNounFailurePath);
++
++  assert.notEqual(result.status, 0, 'proper-noun capitalisation failure report unexpectedly passed validation');
++  assert.match(result.stderr, /proper noun capitalisation quality gate failed/);
++  assert.match(result.stderr, /"findingCount": 1/);
++});

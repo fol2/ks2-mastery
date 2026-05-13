@@ -1,0 +1,34 @@
+punctuation-05131039-validation-audit-hotfix-package
+
+Evidence boundary:
+- Primary: uploaded ZIP /mnt/data/ks2-mastery-lean-05131039.zip
+- User-stated filename: ks2-mastery-lean-05130839.zip
+- Patch base: 5c95335e^ (b16cb890508add84fff616bc737b5dbac9568aaf)
+- Production: deployed latest main 5c311dbb57d3cd8b78616f6d30e98c88467ec8bc to Cloudflare Worker version 7479ed75-caee-4fbb-b58f-9b4ca18ab8f5
+- Checksum note: FILE_SHA256S.txt intentionally excludes itself to avoid an invalid self-hash.
+
+Contents:
+- contract/punctuation-05131039-proper-noun-capitalisation-quality-gate-contract.md
+- patches/001-punctuation-05131039-proper-noun-capitalisation-quality-gate.patch
+- validation-summary.md
+- punctuation-05131039-completion-report-2026-05-13.md
+- validation/baseline-p20-expansion.log
+- validation/baseline-proper-noun-probe.json
+- validation/fresh-patch-apply-check.log
+- validation/fresh-patch-apply.log
+- validation/fresh-patch-proper-noun-test.log
+- validation/fresh-patch-p20-expansion.log
+- validation/patched-proper-noun-probe.json
+- validation/patched-p20-expansion.log
+- validation/patched-p20-expansion-audit.json
+- validation/patched-heavy-play-simulation.json
+- validation/patched-review-register.json
+- validation/patched-negative-vector-register.json
+- validation/patched-targeted-runtime-ui-marking.log
+- validation/patched-production-smoke.log
+- validation/patched-production-smoke.json
+- validation/patched-p20-live.log
+- validation/patched-full-p20-live-boundary.log
+- recommendations/punctuation-next-subject-quality-contract.md
+- github-supplement/recent-punctuation-commits.md
+- FILE_SHA256S.txt

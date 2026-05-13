@@ -1,0 +1,13 @@
+{
+  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
+  "runtimeItems": 15072,
+  "properNounCapitalisationFindings": 0,
+  "gate": {
+    "ok": true,
+    "rule": "Model answers and accepted answers must capitalise registered pupil, place, calendar, and other fixed proper names; stems may still use lowercase names when the task is explicitly asking the learner to repair capital letters.",
+    "findingCount": 0,
+    "findings": []
+  },
+  "rule": "Model answers and accepted answers must capitalise registered pupil, place, calendar, and other fixed proper names; stems may still use lowercase names when the task is explicitly asking the learner to repair capital letters.",
+  "findings": []
+}
