@@ -1,0 +1,21 @@
+{
+  "releaseId": "punctuation-qg-p24-15072-2026-05-13",
+  "status": "PASS",
+  "counts": {
+    "runtimeItems": 15072,
+    "generatedItems": 14560,
+    "fixedItems": 512,
+    "uniqueLearnerSurfaces": 15072,
+    "uniqueVariantSignatures": 15072,
+    "duplicateSurfaceGroups": 0,
+    "hyphenAdverbialLyHyphenFindings": 0,
+    "hyphenMalformedCompoundFindings": 0,
+    "hyphenArticleAgreementFindings": 0,
+    "apostropheContractionGrammarFindings": 0,
+    "properNounCapitalisationFindings": 0,
+    "dashTypographyFindings": 0,
+    "redundantPhraseFindings": 0,
+    "modelSelfMarkingFailures": 0
+  },
+  "failingGates": []
+}

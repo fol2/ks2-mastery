@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "phase": "punctuation-qg-p20-review-register",
-  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
-  "generatedAt": "2026-05-13T11:28:02.013Z",
+  "releaseId": "punctuation-qg-p24-15072-2026-05-13",
+  "generatedAt": "2026-05-13T16:54:06.778Z",
   "status": "PASS",
   "fixedBank": {
     "status": "inherited-approved",

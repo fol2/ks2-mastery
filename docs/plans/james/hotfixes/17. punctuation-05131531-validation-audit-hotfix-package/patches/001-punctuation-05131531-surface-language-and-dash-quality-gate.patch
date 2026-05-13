@@ -1,0 +1,741 @@
+diff --git a/package.json b/package.json
+index f2893cc..118a7f6 100644
+--- a/package.json
++++ b/package.json
+@@ -124,7 +124,7 @@
+     "punctuation:qg:p20:build-evidence": "npm run build:punctuation-qg:p20-evidence",
+     "simulate:punctuation-qg:p20-heavy-play": "node scripts/simulate-punctuation-qg-p20-heavy-play.mjs",
+     "validate:punctuation-qg:p20-expansion-report": "node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json",
+-    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-hyphen-quality.test.js tests/punctuation-apostrophe-contraction-quality.test.js tests/punctuation-proper-noun-capitalisation-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js",
++    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-surface-language-quality.test.js tests/punctuation-hyphen-quality.test.js tests/punctuation-apostrophe-contraction-quality.test.js tests/punctuation-proper-noun-capitalisation-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js",
+     "verify:punctuation-qg:p20-live": "node scripts/validate-punctuation-qg-p20-live-evidence.mjs reports/punctuation/punctuation-qg-p20-production-smoke.json && node --test tests/punctuation-qg-p20-production-evidence.test.js",
+     "verify:punctuation-qg:p20": "npm run verify:punctuation-qg:p20-expansion && npm run verify:punctuation-qg:p20-live",
+     "prepare": "simple-git-hooks"
+diff --git a/scripts/audit-punctuation-qg-p20-expansion.mjs b/scripts/audit-punctuation-qg-p20-expansion.mjs
+index fbb3692..b51c155 100644
+--- a/scripts/audit-punctuation-qg-p20-expansion.mjs
++++ b/scripts/audit-punctuation-qg-p20-expansion.mjs
+@@ -38,6 +38,8 @@ const MALFORMED_HYPHEN_DESIGN_PATTERN = /\b[a-z]+-[a-z]+design\b/gi;
+ const HYF_ARTICLE_PATTERN = /\ba (?:ice[- ]cold|open[- ]ended|up[- ]to[- ]date)\b/gi;
+ const APOSTROPHE_CONTRACTION_BAD_BELIEVE_PATTERN = /\b[A-Z][a-z]+\s+(?:haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+believe\b/gi;
+ const APOSTROPHE_CONTRACTION_BAD_MOVED_PATTERN = /\b[A-Z][a-z]+\s+(?:didn't|couldn't|wouldn't|shouldn't|haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+moved\s+the\b/gi;
++const REDUNDANT_COORDINATE_PHRASE_PATTERN = /\b([A-Za-z][A-Za-z]*(?:\s+[A-Za-z][A-Za-z]*){0,3})\s+and\s+\1\b/gi;
++const SPACED_HYPHEN_AS_DASH_PATTERN = /\s-\s/g;
+ const LOWERCASE_PROPER_NAME_PATTERN = new RegExp(`\\b(?:${PUNCTUATION_PROPER_NOUN_CAPITALISATION_TOKENS
+   .map((name) => escapeRegExp(String(name).toLowerCase()))
+   .sort((left, right) => right.length - left.length)
+@@ -769,6 +771,74 @@ export function buildProperNounCapitalisationEvidence(items) {
+   };
+ }
+ 
++function learnerVisibleDashTextParts(item) {
++  return [
++    ['prompt', item.prompt],
++    ['stem', item.stem],
++    ['model', item.model],
++    ['explanation', item.explanation],
++    ...((Array.isArray(item.options) ? item.options : []).map((entry, index) => [`options[${index}]`, entry])),
++  ].filter(([, value]) => typeof value === 'string');
++}
++
++export function buildDashTypographyQualityEvidence(items) {
++  const findings = [];
++  const seen = new Set();
++  for (const item of items) {
++    if (!Array.isArray(item.skillIds) || !item.skillIds.includes('dash_clause')) continue;
++    for (const [field, text] of learnerVisibleDashTextParts(item)) {
++      SPACED_HYPHEN_AS_DASH_PATTERN.lastIndex = 0;
++      for (const match of String(text).matchAll(SPACED_HYPHEN_AS_DASH_PATTERN)) {
++        const key = `${item.id}:${field}:${match.index}`;
++        if (seen.has(key)) continue;
++        seen.add(key);
++        findings.push({
++          itemId: item.id,
++          familyId: item.generatorFamilyId || '',
++          mode: item.mode || '',
++          field,
++          surface: text,
++        });
++      }
++    }
++  }
++  return {
++    ok: findings.length === 0,
++    rule: 'Dash-clause learner-facing models, stems, options, and explanations must use a real dash (– or —), not a spaced hyphen-minus. Accepted-answer tolerance may still accept spaced hyphens for keyboard accessibility.',
++    findingCount: findings.length,
++    findings: findings.slice(0, 25),
++  };
++}
++
++export function buildRedundantPhraseQualityEvidence(items) {
++  const findings = [];
++  const seen = new Set();
++  for (const item of items) {
++    const text = auditedLearnerAndModelText(item);
++    REDUNDANT_COORDINATE_PHRASE_PATTERN.lastIndex = 0;
++    for (const match of String(text).matchAll(REDUNDANT_COORDINATE_PHRASE_PATTERN)) {
++      const phrase = match[0].replace(/\s+/g, ' ').trim();
++      const key = `${item.id}:${phrase.toLowerCase()}`;
++      if (seen.has(key)) continue;
++      seen.add(key);
++      findings.push({
++        itemId: item.id,
++        familyId: item.generatorFamilyId || '',
++        mode: item.mode || '',
++        skillIds: item.skillIds || [],
++        phrase,
++        model: item.model || '',
++      });
++    }
++  }
++  return {
++    ok: findings.length === 0,
++    rule: 'Learner-facing punctuation items and their answer contracts must avoid accidental repeated phrases such as "focused and focused", "scripts and scripts", or a three-item colon list where all entries are identical.',
++    findingCount: findings.length,
++    findings: findings.slice(0, 25),
++  };
++}
++
+ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+   const runtime = createPunctuationRuntimeManifest({
+     manifest: PUNCTUATION_CONTENT_MANIFEST,
+@@ -795,6 +865,8 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+   const hyphenCompoundQuality = buildHyphenCompoundQualityEvidence(items);
+   const apostropheContractionGrammarQuality = buildApostropheContractionGrammarEvidence(items);
+   const properNounCapitalisationQuality = buildProperNounCapitalisationEvidence(items);
++  const dashTypographyQuality = buildDashTypographyQualityEvidence(items);
++  const redundantPhraseQuality = buildRedundantPhraseQualityEvidence(items);
+   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
+   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
+   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
+@@ -820,6 +892,8 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+     hyphenArticleAgreementFindings: hyphenCompoundQuality.articleAgreementFindingCount,
+     apostropheContractionGrammarFindings: apostropheContractionGrammarQuality.findingCount,
+     properNounCapitalisationFindings: properNounCapitalisationQuality.findingCount,
++    dashTypographyFindings: dashTypographyQuality.findingCount,
++    redundantPhraseFindings: redundantPhraseQuality.findingCount,
+     modelSelfMarkingFailures: modelFailures.length,
+     byMode: groupCounts(items, (item) => item.mode),
+     bySkill: groupCounts(items, (item) => item.skillIds || []),
+@@ -899,6 +973,8 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+     hyphenCompoundQuality,
+     apostropheContractionGrammarQuality,
+     properNounCapitalisationQuality,
++    dashTypographyQuality,
++    redundantPhraseQuality,
+     reviewGovernance: reviewCoverage,
+     negativeVectorCoverage: negativeVectors,
+     heavyPlayVariety: heavyPlay,
+@@ -929,6 +1005,8 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+       'Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.',
+       'Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.',
+       'Model answers and accepted answers must capitalise registered proper names even when the learner stem intentionally contains lowercase names for a capital-letter repair task.',
++      'Dash-clause learner-facing examples must model real dash punctuation while marking still accepts spaced hyphen-minus as an accessibility fallback.',
++      'Learner-facing list and parenthesis surfaces must not contain accidental self-repetition such as repeated list entries or duplicated descriptive adjectives.',
+       'Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage.',
+     ],
+   };
+diff --git a/scripts/validate-punctuation-qg-p20-expansion-report.mjs b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
+index e350e39..603ffbb 100644
+--- a/scripts/validate-punctuation-qg-p20-expansion-report.mjs
++++ b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
+@@ -34,6 +34,8 @@ if (gates.modelSelfMarking?.ok !== true) fail('model self-marking gate failed',
+ if (gates.hyphenCompoundQuality?.ok !== true) fail('hyphen compound quality gate failed', gates.hyphenCompoundQuality);
+ if (gates.apostropheContractionGrammarQuality?.ok !== true) fail('apostrophe contraction grammar quality gate failed', gates.apostropheContractionGrammarQuality);
+ if (gates.properNounCapitalisationQuality?.ok !== true) fail('proper noun capitalisation quality gate failed', gates.properNounCapitalisationQuality);
++if (gates.dashTypographyQuality?.ok !== true) fail('dash typography quality gate failed', gates.dashTypographyQuality);
++if (gates.redundantPhraseQuality?.ok !== true) fail('redundant phrase quality gate failed', gates.redundantPhraseQuality);
+ if (gates.reviewGovernance?.ok !== true) fail('review governance gate failed', gates.reviewGovernance);
+ if (gates.negativeVectorCoverage?.ok !== true) fail('negative-vector coverage gate failed', gates.negativeVectorCoverage);
+ if (gates.heavyPlayVariety?.ok !== true) fail('heavy-play variety gate failed', gates.heavyPlayVariety);
+@@ -52,6 +54,8 @@ if (counts.hyphenMalformedCompoundFindings !== 0) fail('malformed hyphen compoun
+ if (counts.hyphenArticleAgreementFindings !== 0) fail('hyphen article agreement findings must be zero', counts);
+ if (counts.apostropheContractionGrammarFindings !== 0) fail('apostrophe contraction grammar findings must be zero', counts);
+ if (counts.properNounCapitalisationFindings !== 0) fail('proper noun capitalisation findings must be zero', counts);
++if (counts.dashTypographyFindings !== 0) fail('dash typography findings must be zero', counts);
++if (counts.redundantPhraseFindings !== 0) fail('redundant phrase findings must be zero', counts);
+ if (counts.modelSelfMarkingFailures !== 0) fail('model self-marking failures must be zero', counts);
+ 
+ const skillRows = Array.isArray(report.skillRows) ? report.skillRows : [];
+diff --git a/shared/punctuation/manual-p12-quality-bank.js b/shared/punctuation/manual-p12-quality-bank.js
+index 4877250..11a6704 100644
+--- a/shared/punctuation/manual-p12-quality-bank.js
++++ b/shared/punctuation/manual-p12-quality-bank.js
+@@ -26527,8 +26527,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_list_commas_choose_042",
+       "prompt": "Choose the sentence with commas used correctly in the list.",
+-      "stem": "Pick the best punctuation for the clay studio collection list: water bottles; safety cones; safety cones.",
+-      "model": "The clay studio display about bus timetables included water bottles, safety cones and safety cones.",
++      "stem": "Pick the best punctuation for the clay studio collection list: water bottles; safety cones; clipboards.",
++      "model": "The clay studio display about bus timetables included water bottles, safety cones and clipboards.",
+       "skillIds": [
+         "list_commas"
+       ],
+@@ -26545,21 +26545,21 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+       "explanation": "Commas separate the first list items, while and joins the final item.",
+       "explanationRuleId": "list.comma-separation",
+       "options": [
+-        "The clay studio display about bus timetables included water bottles, safety cones and safety cones.",
+-        "The clay studio display about bus timetables included, water bottles, safety cones and safety cones.",
+-        "The clay studio display about bus timetables included water bottles safety cones and safety cones.",
+-        "The clay studio display about bus timetables included water bottles, safety cones, and, safety cones."
++        "The clay studio display about bus timetables included water bottles, safety cones and clipboards.",
++        "The clay studio display about bus timetables included, water bottles, safety cones and clipboards.",
++        "The clay studio display about bus timetables included water bottles safety cones and clipboards.",
++        "The clay studio display about bus timetables included water bottles, safety cones, and, clipboards."
+       ],
+       "correctIndex": 0,
+       "tests": {
+         "accept": [
+-          "The clay studio display about bus timetables included water bottles, safety cones and safety cones."
++          "The clay studio display about bus timetables included water bottles, safety cones and clipboards."
+         ],
+         "reject": [
+-          "Pick the best punctuation for the clay studio collection list: water bottles; safety cones; safety cones.",
+-          "The clay studio display about bus timetables included, water bottles, safety cones and safety cones.",
+-          "The clay studio display about bus timetables included water bottles safety cones and safety cones.",
+-          "The clay studio display about bus timetables included water bottles, safety cones, and, safety cones."
++          "Pick the best punctuation for the clay studio collection list: water bottles; safety cones; clipboards.",
++          "The clay studio display about bus timetables included, water bottles, safety cones and clipboards.",
++          "The clay studio display about bus timetables included water bottles safety cones and clipboards.",
++          "The clay studio display about bus timetables included water bottles, safety cones, and, clipboards."
+         ]
+       }
+     },
+@@ -28399,8 +28399,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_list_commas_choose_090",
+       "prompt": "Choose the sentence with commas used correctly in the list.",
+-      "stem": "Pick the best punctuation for the sports track collection list: sound meters; garden forks; garden forks.",
+-      "model": "The sports track display about sewing needles included sound meters, garden forks and garden forks.",
++      "stem": "Pick the best punctuation for the sports track collection list: sound meters; garden forks; stopwatches.",
++      "model": "The sports track display about sewing needles included sound meters, garden forks and stopwatches.",
+       "skillIds": [
+         "list_commas"
+       ],
+@@ -28417,21 +28417,21 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+       "explanation": "Commas separate the first list items, while and joins the final item.",
+       "explanationRuleId": "list.comma-separation",
+       "options": [
+-        "The sports track display about sewing needles included sound meters, garden forks and garden forks.",
+-        "The sports track display about sewing needles included, sound meters, garden forks and garden forks.",
+-        "The sports track display about sewing needles included sound meters garden forks and garden forks.",
+-        "The sports track display about sewing needles included sound meters, garden forks, and, garden forks."
++        "The sports track display about sewing needles included sound meters, garden forks and stopwatches.",
++        "The sports track display about sewing needles included, sound meters, garden forks and stopwatches.",
++        "The sports track display about sewing needles included sound meters garden forks and stopwatches.",
++        "The sports track display about sewing needles included sound meters, garden forks, and, stopwatches."
+       ],
+       "correctIndex": 0,
+       "tests": {
+         "accept": [
+-          "The sports track display about sewing needles included sound meters, garden forks and garden forks."
++          "The sports track display about sewing needles included sound meters, garden forks and stopwatches."
+         ],
+         "reject": [
+-          "Pick the best punctuation for the sports track collection list: sound meters; garden forks; garden forks.",
+-          "The sports track display about sewing needles included, sound meters, garden forks and garden forks.",
+-          "The sports track display about sewing needles included sound meters garden forks and garden forks.",
+-          "The sports track display about sewing needles included sound meters, garden forks, and, garden forks."
++          "Pick the best punctuation for the sports track collection list: sound meters; garden forks; stopwatches.",
++          "The sports track display about sewing needles included, sound meters, garden forks and stopwatches.",
++          "The sports track display about sewing needles included sound meters garden forks and stopwatches.",
++          "The sports track display about sewing needles included sound meters, garden forks, and, stopwatches."
+         ]
+       }
+     },
+@@ -30388,8 +30388,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_list_commas_insert_042",
+       "prompt": "Add commas to separate the list items.",
+-      "stem": "The recording room tray held measuring jugs number lines and number lines.",
+-      "model": "The recording room tray held measuring jugs, number lines and number lines.",
++      "stem": "The recording room tray held measuring jugs number lines and stopwatches.",
++      "model": "The recording room tray held measuring jugs, number lines and stopwatches.",
+       "skillIds": [
+         "list_commas"
+       ],
+@@ -30411,15 +30411,15 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+         "items": [
+           "measuring jugs",
+           "number lines",
+-          "number lines"
++          "stopwatches"
+         ]
+       },
+       "tests": {
+         "accept": [
+-          "The recording room tray held measuring jugs, number lines and number lines."
++          "The recording room tray held measuring jugs, number lines and stopwatches."
+         ],
+         "reject": [
+-          "The recording room tray held measuring jugs number lines and number lines."
++          "The recording room tray held measuring jugs number lines and stopwatches."
+         ]
+       }
+     },
+@@ -32212,8 +32212,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_list_commas_insert_090",
+       "prompt": "Add commas to separate the list items.",
+-      "stem": "The covered walkway tray held keys scripts and scripts.",
+-      "model": "The covered walkway tray held keys, scripts and scripts.",
++      "stem": "The covered walkway tray held keys scripts and labels.",
++      "model": "The covered walkway tray held keys, scripts and labels.",
+       "skillIds": [
+         "list_commas"
+       ],
+@@ -32235,15 +32235,15 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+         "items": [
+           "keys",
+           "scripts",
+-          "scripts"
++          "labels"
+         ]
+       },
+       "tests": {
+         "accept": [
+-          "The covered walkway tray held keys, scripts and scripts."
++          "The covered walkway tray held keys, scripts and labels."
+         ],
+         "reject": [
+-          "The covered walkway tray held keys scripts and scripts."
++          "The covered walkway tray held keys scripts and labels."
+         ]
+       }
+     },
+@@ -34231,8 +34231,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_list_commas_combine_042",
+       "prompt": "Combine the notes into one correctly punctuated list sentence.",
+-      "stem": "The cookery room kit contained\n- recipe cards\n- toolboxes\n- toolboxes",
+-      "model": "The cookery room kit contained recipe cards, toolboxes and toolboxes.",
++      "stem": "The cookery room kit contained\n- recipe cards\n- toolboxes\n- measuring tapes",
++      "model": "The cookery room kit contained recipe cards, toolboxes and measuring tapes.",
+       "skillIds": [
+         "list_commas"
+       ],
+@@ -34254,16 +34254,16 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+         "items": [
+           "recipe cards",
+           "toolboxes",
+-          "toolboxes"
++          "measuring tapes"
+         ]
+       },
+       "tests": {
+         "accept": [
+-          "The cookery room kit contained recipe cards, toolboxes and toolboxes."
++          "The cookery room kit contained recipe cards, toolboxes and measuring tapes."
+         ],
+         "reject": [
+-          "The cookery room kit contained\n- recipe cards\n- toolboxes\n- toolboxes",
+-          "The cookery room kit contained recipe cards toolboxes and toolboxes."
++          "The cookery room kit contained\n- recipe cards\n- toolboxes\n- measuring tapes",
++          "The cookery room kit contained recipe cards toolboxes and measuring tapes."
+         ]
+       }
+     },
+@@ -36103,8 +36103,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_list_commas_combine_090",
+       "prompt": "Combine the notes into one correctly punctuated list sentence.",
+-      "stem": "The visitor centre kit contained\n- fossil brushes\n- memory cards\n- memory cards",
+-      "model": "The visitor centre kit contained fossil brushes, memory cards and memory cards.",
++      "stem": "The visitor centre kit contained\n- fossil brushes\n- memory cards\n- field notes",
++      "model": "The visitor centre kit contained fossil brushes, memory cards and field notes.",
+       "skillIds": [
+         "list_commas"
+       ],
+@@ -36126,16 +36126,16 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+         "items": [
+           "fossil brushes",
+           "memory cards",
+-          "memory cards"
++          "field notes"
+         ]
+       },
+       "tests": {
+         "accept": [
+-          "The visitor centre kit contained fossil brushes, memory cards and memory cards."
++          "The visitor centre kit contained fossil brushes, memory cards and field notes."
+         ],
+         "reject": [
+-          "The visitor centre kit contained\n- fossil brushes\n- memory cards\n- memory cards",
+-          "The visitor centre kit contained fossil brushes memory cards and memory cards."
++          "The visitor centre kit contained\n- fossil brushes\n- memory cards\n- field notes",
++          "The visitor centre kit contained fossil brushes memory cards and field notes."
+         ]
+       }
+     },
+@@ -88293,8 +88293,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_colon_list_insert_048",
+       "prompt": "Add the colon before the list.",
+-      "stem": "The market stall team packed three items a team flag, a team flag and a team flag.",
+-      "model": "The market stall team packed three items: a team flag, a team flag and a team flag.",
++      "stem": "The market stall team packed three items a team flag, a route card and a whistle.",
++      "model": "The market stall team packed three items: a team flag, a route card and a whistle.",
+       "skillIds": [
+         "colon_list"
+       ],
+@@ -88315,17 +88315,17 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+         "opening": "The market stall team packed three items",
+         "items": [
+           "a team flag",
+-          "a team flag",
+-          "a team flag"
++          "a route card",
++          "a whistle"
+         ]
+       },
+       "tests": {
+         "accept": [
+-          "The market stall team packed three items: a team flag, a team flag and a team flag."
++          "The market stall team packed three items: a team flag, a route card and a whistle."
+         ],
+         "reject": [
+-          "The market stall team packed three items a team flag, a team flag and a team flag.",
+-          "The market stall team packed three items; a team flag, a team flag and a team flag."
++          "The market stall team packed three items a team flag, a route card and a whistle.",
++          "The market stall team packed three items; a team flag, a route card and a whistle."
+         ]
+       }
+     },
+@@ -90165,8 +90165,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_colon_list_insert_096",
+       "prompt": "Add the colon before the list.",
+-      "stem": "The pond trail team packed three items a maze clue, a maze clue and a maze clue.",
+-      "model": "The pond trail team packed three items: a maze clue, a maze clue and a maze clue.",
++      "stem": "The pond trail team packed three items a maze clue, a compass and a torch.",
++      "model": "The pond trail team packed three items: a maze clue, a compass and a torch.",
+       "skillIds": [
+         "colon_list"
+       ],
+@@ -90187,17 +90187,17 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+         "opening": "The pond trail team packed three items",
+         "items": [
+           "a maze clue",
+-          "a maze clue",
+-          "a maze clue"
++          "a compass",
++          "a torch"
+         ]
+       },
+       "tests": {
+         "accept": [
+-          "The pond trail team packed three items: a maze clue, a maze clue and a maze clue."
++          "The pond trail team packed three items: a maze clue, a compass and a torch."
+         ],
+         "reject": [
+-          "The pond trail team packed three items a maze clue, a maze clue and a maze clue.",
+-          "The pond trail team packed three items; a maze clue, a maze clue and a maze clue."
++          "The pond trail team packed three items a maze clue, a compass and a torch.",
++          "The pond trail team packed three items; a maze clue, a compass and a torch."
+         ]
+       }
+     },
+@@ -92195,8 +92195,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_colon_list_combine_048",
+       "prompt": "Combine the opening clause and list using a colon.",
+-      "stem": "The weather station club needed three resources\na drama mask / a drama mask / a drama mask",
+-      "model": "The weather station club needed three resources: a drama mask, a drama mask and a drama mask.",
++      "stem": "The weather station club needed three resources\na drama mask / a script card / a costume tag",
++      "model": "The weather station club needed three resources: a drama mask, a script card and a costume tag.",
+       "skillIds": [
+         "colon_list"
+       ],
+@@ -92217,17 +92217,17 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+         "opening": "The weather station club needed three resources",
+         "items": [
+           "a drama mask",
+-          "a drama mask",
+-          "a drama mask"
++          "a script card",
++          "a costume tag"
+         ]
+       },
+       "tests": {
+         "accept": [
+-          "The weather station club needed three resources: a drama mask, a drama mask and a drama mask."
++          "The weather station club needed three resources: a drama mask, a script card and a costume tag."
+         ],
+         "reject": [
+-          "The weather station club needed three resources\na drama mask / a drama mask / a drama mask",
+-          "The weather station club needed three resources a drama mask, a drama mask and a drama mask."
++          "The weather station club needed three resources\na drama mask / a script card / a costume tag",
++          "The weather station club needed three resources a drama mask, a script card and a costume tag."
+         ]
+       }
+     },
+@@ -94067,8 +94067,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+     {
+       "templateId": "p12q_gen_colon_list_combine_096",
+       "prompt": "Combine the opening clause and list using a colon.",
+-      "stem": "The adventure yard club needed three resources\na telescope / a telescope / a telescope",
+-      "model": "The adventure yard club needed three resources: a telescope, a telescope and a telescope.",
++      "stem": "The adventure yard club needed three resources\na telescope / a star chart / a notebook",
++      "model": "The adventure yard club needed three resources: a telescope, a star chart and a notebook.",
+       "skillIds": [
+         "colon_list"
+       ],
+@@ -94089,17 +94089,17 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
+         "opening": "The adventure yard club needed three resources",
+         "items": [
+           "a telescope",
+-          "a telescope",
+-          "a telescope"
++          "a star chart",
++          "a notebook"
+         ]
+       },
+       "tests": {
+         "accept": [
+-          "The adventure yard club needed three resources: a telescope, a telescope and a telescope."
++          "The adventure yard club needed three resources: a telescope, a star chart and a notebook."
+         ],
+         "reject": [
+-          "The adventure yard club needed three resources\na telescope / a telescope / a telescope",
+-          "The adventure yard club needed three resources a telescope, a telescope and a telescope."
++          "The adventure yard club needed three resources\na telescope / a star chart / a notebook",
++          "The adventure yard club needed three resources a telescope, a star chart and a notebook."
+         ]
+       }
+     },
+diff --git a/shared/punctuation/p20-systematic-expansion-bank.js b/shared/punctuation/p20-systematic-expansion-bank.js
+index 161f1f1..e3b0ae9 100644
+--- a/shared/punctuation/p20-systematic-expansion-bank.js
++++ b/shared/punctuation/p20-systematic-expansion-bank.js
+@@ -321,12 +321,14 @@ function coreForSkill(skillId, index, familyId) {
+       };
+     }
+     case 'parenthesis': {
+-      const model = `${c.actor} (${c.adjective} and focused) updated the ${c.record}.`;
++      const parenthesisTrait = c.adjective === 'focused' ? 'careful' : c.adjective;
++      const parenthesisPhrase = `${parenthesisTrait} and focused`;
++      const model = `${c.actor} (${parenthesisPhrase}) updated the ${c.record}.`;
+       return {
+         model,
+-        bad: `${c.actor} ${c.adjective} and focused updated the ${c.record}.`,
+-        wrongOne: `${c.actor} (${c.adjective} and focused updated the ${c.record}.`,
+-        wrongTwo: `${c.actor}) ${c.adjective} and focused (updated the ${c.record}.`,
++        bad: `${c.actor} ${parenthesisPhrase} updated the ${c.record}.`,
++        wrongOne: `${c.actor} (${parenthesisPhrase} updated the ${c.record}.`,
++        wrongTwo: `${c.actor}) ${parenthesisPhrase} (updated the ${c.record}.`,
+         explanation: 'Parentheses add extra information that can be removed without breaking the main sentence.',
+         explanationRuleId: 'parenthesis.brackets',
+         misconceptionTags: ['parenthesis.boundary_missing', 'parenthesis.unbalanced'],
+@@ -369,12 +371,12 @@ function coreForSkill(skillId, index, familyId) {
+       };
+     }
+     case 'dash_clause': {
+-      const model = `${c.actor} opened the ${c.object} - the room fell silent - and read the note.`;
++      const model = `${c.actor} opened the ${c.object} – the room fell silent – and read the note.`;
+       return {
+         model,
+         bad: `${c.actor} opened the ${c.object} the room fell silent and read the note.`,
+-        wrongOne: `${c.actor} opened the ${c.object} - the room fell silent and read the note.`,
+-        wrongTwo: `${c.actor} opened - the ${c.object} the room fell silent - and read the note.`,
++        wrongOne: `${c.actor} opened the ${c.object} – the room fell silent and read the note.`,
++        wrongTwo: `${c.actor} opened – the ${c.object} the room fell silent – and read the note.`,
+         explanation: 'A pair of dashes can mark an extra clause inserted into the sentence.',
+         explanationRuleId: 'dash.extra-clause',
+         misconceptionTags: ['dash.boundary_missing', 'dash.boundary_unbalanced'],
+diff --git a/src/subjects/punctuation/service-contract.js b/src/subjects/punctuation/service-contract.js
+index 149bef0..b3e0f7f 100644
+--- a/src/subjects/punctuation/service-contract.js
++++ b/src/subjects/punctuation/service-contract.js
+@@ -18,7 +18,7 @@ export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
+ // P20 Gate 1: release ID + count are coupled. Post-expansion runtime is
+ // 15,072 items (512 fixed + 28 baseline families × 100 templates + 14
+ // transfer families × 120 templates + 84 P20 families × 120 templates).
+-export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p23-15072-2026-05-13';
++export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p24-15072-2026-05-13';
+ export const PUNCTUATION_GENERATED_ITEM_SEED = 'punctuation-p20-systematic-depth120-15072';
+ 
+ export const PUNCTUATION_PHASES = Object.freeze([
+diff --git a/tests/punctuation-qg-p20-expansion-report-validator.test.js b/tests/punctuation-qg-p20-expansion-report-validator.test.js
+index 998c2e4..1a65f64 100644
+--- a/tests/punctuation-qg-p20-expansion-report-validator.test.js
++++ b/tests/punctuation-qg-p20-expansion-report-validator.test.js
+@@ -165,3 +165,61 @@ test('P20 expansion report validator rejects proper-noun capitalisation gate fai
+   assert.match(result.stderr, /proper noun capitalisation quality gate failed/);
+   assert.match(result.stderr, /"findingCount": 1/);
+ });
++
++test('P20 expansion report validator rejects dash typography gate failures and counters', () => {
++  ensureCurrentP20Report();
++  const report = readJsonReport(CURRENT_REPORT);
++  assert.ok(report, 'current P20 report must exist before synthesising dash typography fixture');
++  const dashFailureReport = {
++    ...report,
++    gates: {
++      ...report.gates,
++      dashTypographyQuality: {
++        ...report.gates.dashTypographyQuality,
++        ok: false,
++        findingCount: 1,
++        findings: [{ itemId: 'fixture', field: 'model', surface: 'Maya opened the map - the room fell silent - and read the note.' }],
++      },
++    },
++    counts: {
++      ...report.counts,
++      dashTypographyFindings: 1,
++    },
++  };
++  const dashFailurePath = writeTempReport('punctuation-p20-dash-typography-report-', dashFailureReport);
++
++  const result = runValidator(dashFailurePath);
++
++  assert.notEqual(result.status, 0, 'dash typography failure report unexpectedly passed validation');
++  assert.match(result.stderr, /dash typography quality gate failed/);
++  assert.match(result.stderr, /"findingCount": 1/);
++});
++
++test('P20 expansion report validator rejects redundant phrase gate failures and counters', () => {
++  ensureCurrentP20Report();
++  const report = readJsonReport(CURRENT_REPORT);
++  assert.ok(report, 'current P20 report must exist before synthesising redundant phrase fixture');
++  const redundantFailureReport = {
++    ...report,
++    gates: {
++      ...report.gates,
++      redundantPhraseQuality: {
++        ...report.gates.redundantPhraseQuality,
++        ok: false,
++        findingCount: 1,
++        findings: [{ itemId: 'fixture', phrase: 'focused and focused' }],
++      },
++    },
++    counts: {
++      ...report.counts,
++      redundantPhraseFindings: 1,
++    },
++  };
++  const redundantFailurePath = writeTempReport('punctuation-p20-redundant-phrase-report-', redundantFailureReport);
++
++  const result = runValidator(redundantFailurePath);
++
++  assert.notEqual(result.status, 0, 'redundant phrase failure report unexpectedly passed validation');
++  assert.match(result.stderr, /redundant phrase quality gate failed/);
++  assert.match(result.stderr, /"findingCount": 1/);
++});
+diff --git a/tests/punctuation-qg-p20-expansion.test.js b/tests/punctuation-qg-p20-expansion.test.js
+index 99bd2bf..0bc15d4 100644
+--- a/tests/punctuation-qg-p20-expansion.test.js
++++ b/tests/punctuation-qg-p20-expansion.test.js
+@@ -63,12 +63,16 @@ test('P20 per-skill balance gives every published punctuation skill enough depth
+   }
+ });
+ 
+-test('P20 marking, hyphen quality, review governance, and negative vectors are production-clean', () => {
++test('P20 marking, subject language quality, review governance, and negative vectors are production-clean', () => {
+   assert.equal(report.gates.modelSelfMarking.ok, true, JSON.stringify(report.gates.modelSelfMarking, null, 2));
+   assert.equal(report.gates.hyphenCompoundQuality.ok, true, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
+   assert.equal(report.counts.hyphenAdverbialLyHyphenFindings, 0, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
+   assert.equal(report.counts.hyphenMalformedCompoundFindings, 0, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
+   assert.equal(report.counts.hyphenArticleAgreementFindings, 0, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
++  assert.equal(report.gates.dashTypographyQuality.ok, true, JSON.stringify(report.gates.dashTypographyQuality, null, 2));
++  assert.equal(report.counts.dashTypographyFindings, 0, JSON.stringify(report.gates.dashTypographyQuality, null, 2));
++  assert.equal(report.gates.redundantPhraseQuality.ok, true, JSON.stringify(report.gates.redundantPhraseQuality, null, 2));
++  assert.equal(report.counts.redundantPhraseFindings, 0, JSON.stringify(report.gates.redundantPhraseQuality, null, 2));
+   assert.equal(report.gates.reviewGovernance.ok, true, JSON.stringify(report.gates.reviewGovernance, null, 2));
+   assert.equal(report.gates.negativeVectorCoverage.ok, true, JSON.stringify(report.gates.negativeVectorCoverage, null, 2));
+ });
+diff --git a/tests/punctuation-surface-language-quality.test.js b/tests/punctuation-surface-language-quality.test.js
+new file mode 100644
+index 0000000..f8ff791
+--- /dev/null
++++ b/tests/punctuation-surface-language-quality.test.js
+@@ -0,0 +1,88 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import {
++  buildDashTypographyQualityEvidence,
++  buildRedundantPhraseQualityEvidence,
++} from '../scripts/audit-punctuation-qg-p20-expansion.mjs';
++import {
++  PRODUCTION_DEPTH,
++  createPunctuationRuntimeManifest,
++} from '../shared/punctuation/generators.js';
++
++function runtimeItems() {
++  return createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH }).items;
++}
++
++test('P20 runtime blocks accidental repeated list entries and repeated parenthesis descriptors', () => {
++  const evidence = buildRedundantPhraseQualityEvidence(runtimeItems());
++
++  assert.equal(evidence.findingCount, 0, JSON.stringify(evidence.findings, null, 2));
++  assert.equal(evidence.ok, true);
++});
++
++test('redundant phrase quality gate catches learner-facing self-repetition', () => {
++  const evidence = buildRedundantPhraseQualityEvidence([
++    {
++      id: 'fixture_list_repeat',
++      mode: 'insert',
++      skillIds: ['list_commas'],
++      stem: 'The tray held keys, scripts and scripts.',
++      model: 'The tray held keys, scripts and scripts.',
++      accepted: ['The tray held keys, scripts and scripts.'],
++    },
++    {
++      id: 'fixture_parenthesis_repeat',
++      mode: 'choose',
++      skillIds: ['parenthesis'],
++      options: ['Jude (focused and focused) updated the planning sheet.'],
++      model: 'Jude (focused and focused) updated the planning sheet.',
++    },
++  ]);
++
++  assert.equal(evidence.ok, false);
++  assert.equal(evidence.findingCount, 2, JSON.stringify(evidence.findings, null, 2));
++  assert.match(evidence.findings.map((finding) => finding.phrase).join('\n'), /scripts and scripts/);
++  assert.match(evidence.findings.map((finding) => finding.phrase).join('\n'), /focused and focused/);
++});
++
++test('P20 runtime models dash clauses with real dash typography', () => {
++  const evidence = buildDashTypographyQualityEvidence(runtimeItems());
++
++  assert.equal(evidence.findingCount, 0, JSON.stringify(evidence.findings, null, 2));
++  assert.equal(evidence.ok, true);
++});
++
++test('dash typography gate catches learner-facing spaced hyphen-minus but keeps accepted-answer keyboard tolerance', () => {
++  const bad = buildDashTypographyQualityEvidence([
++    {
++      id: 'fixture_dash_bad',
++      mode: 'choose',
++      skillIds: ['dash_clause'],
++      stem: 'Choose the sentence with the dash.',
++      options: ['Maya opened the map - the room fell silent - and read the note.'],
++      model: 'Maya opened the map - the room fell silent - and read the note.',
++      accepted: ['Maya opened the map – the room fell silent – and read the note.'],
++    },
++  ]);
++
++  assert.equal(bad.ok, false);
++  assert.ok(bad.findingCount >= 1, JSON.stringify(bad.findings, null, 2));
++
++  const accessible = buildDashTypographyQualityEvidence([
++    {
++      id: 'fixture_dash_accessible',
++      mode: 'fix',
++      skillIds: ['dash_clause'],
++      stem: 'Add a dash between the related clauses.',
++      model: 'Maya opened the map – the room fell silent – and read the note.',
++      accepted: ['Maya opened the map - the room fell silent - and read the note.'],
++      tests: {
++        accept: ['Maya opened the map - the room fell silent - and read the note.'],
++      },
++    },
++  ]);
++
++  assert.equal(accessible.findingCount, 0, JSON.stringify(accessible.findings, null, 2));
++  assert.equal(accessible.ok, true);
++});

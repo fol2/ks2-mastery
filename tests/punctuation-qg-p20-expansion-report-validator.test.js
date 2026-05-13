@@ -73,6 +73,34 @@ test('P20 expansion report validator rejects stale fixed-bank duplicate reports'
   assert.match(result.stderr, /"legacyFixedDuplicateSurfaceGroups": 6/);
 });
 
+test('P20 expansion report validator rejects stale release reports after the P24 bump', () => {
+  ensureCurrentP20Report();
+  const report = readJsonReport(CURRENT_REPORT);
+  assert.ok(report, 'current P20 report must exist before synthesising stale release fixture');
+  const staleReleaseReport = {
+    ...report,
+    releaseId: 'punctuation-qg-p23-15072-2026-05-13',
+    gates: {
+      ...report.gates,
+      releaseIdentity: {
+        ...report.gates.releaseIdentity,
+        ok: true,
+        release: {
+          ...report.gates.releaseIdentity.release,
+          releaseId: 'punctuation-qg-p23-15072-2026-05-13',
+          phase: 23,
+        },
+      },
+    },
+  };
+  const staleReleasePath = writeTempReport('punctuation-p20-stale-release-report-', staleReleaseReport);
+
+  const result = runValidator(staleReleasePath);
+
+  assert.notEqual(result.status, 0, 'stale P23 report unexpectedly passed validation');
+  assert.match(result.stderr, /report releaseId=punctuation-qg-p23-15072-2026-05-13, expected punctuation-qg-p24-15072-2026-05-13/);
+});
+
 test('P20 expansion report validator rejects hyphen quality gate failures and counters', () => {
   ensureCurrentP20Report();
   const report = readJsonReport(CURRENT_REPORT);
@@ -163,5 +191,63 @@ test('P20 expansion report validator rejects proper-noun capitalisation gate fai
 
   assert.notEqual(result.status, 0, 'proper-noun capitalisation failure report unexpectedly passed validation');
   assert.match(result.stderr, /proper noun capitalisation quality gate failed/);
+  assert.match(result.stderr, /"findingCount": 1/);
+});
+
+test('P20 expansion report validator rejects dash typography gate failures and counters', () => {
+  ensureCurrentP20Report();
+  const report = readJsonReport(CURRENT_REPORT);
+  assert.ok(report, 'current P20 report must exist before synthesising dash typography fixture');
+  const dashFailureReport = {
+    ...report,
+    gates: {
+      ...report.gates,
+      dashTypographyQuality: {
+        ...report.gates.dashTypographyQuality,
+        ok: false,
+        findingCount: 1,
+        findings: [{ itemId: 'fixture', field: 'model', surface: 'Maya opened the map - the room fell silent - and read the note.' }],
+      },
+    },
+    counts: {
+      ...report.counts,
+      dashTypographyFindings: 1,
+    },
+  };
+  const dashFailurePath = writeTempReport('punctuation-p20-dash-typography-report-', dashFailureReport);
+
+  const result = runValidator(dashFailurePath);
+
+  assert.notEqual(result.status, 0, 'dash typography failure report unexpectedly passed validation');
+  assert.match(result.stderr, /dash typography quality gate failed/);
+  assert.match(result.stderr, /"findingCount": 1/);
+});
+
+test('P20 expansion report validator rejects redundant phrase gate failures and counters', () => {
+  ensureCurrentP20Report();
+  const report = readJsonReport(CURRENT_REPORT);
+  assert.ok(report, 'current P20 report must exist before synthesising redundant phrase fixture');
+  const redundantFailureReport = {
+    ...report,
+    gates: {
+      ...report.gates,
+      redundantPhraseQuality: {
+        ...report.gates.redundantPhraseQuality,
+        ok: false,
+        findingCount: 1,
+        findings: [{ itemId: 'fixture', phrase: 'focused and focused' }],
+      },
+    },
+    counts: {
+      ...report.counts,
+      redundantPhraseFindings: 1,
+    },
+  };
+  const redundantFailurePath = writeTempReport('punctuation-p20-redundant-phrase-report-', redundantFailureReport);
+
+  const result = runValidator(redundantFailurePath);
+
+  assert.notEqual(result.status, 0, 'redundant phrase failure report unexpectedly passed validation');
+  assert.match(result.stderr, /redundant phrase quality gate failed/);
   assert.match(result.stderr, /"findingCount": 1/);
 });

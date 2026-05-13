@@ -63,12 +63,16 @@ test('P20 per-skill balance gives every published punctuation skill enough depth
   }
 });
 
-test('P20 marking, hyphen quality, review governance, and negative vectors are production-clean', () => {
+test('P20 marking, subject language quality, review governance, and negative vectors are production-clean', () => {
   assert.equal(report.gates.modelSelfMarking.ok, true, JSON.stringify(report.gates.modelSelfMarking, null, 2));
   assert.equal(report.gates.hyphenCompoundQuality.ok, true, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
   assert.equal(report.counts.hyphenAdverbialLyHyphenFindings, 0, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
   assert.equal(report.counts.hyphenMalformedCompoundFindings, 0, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
   assert.equal(report.counts.hyphenArticleAgreementFindings, 0, JSON.stringify(report.gates.hyphenCompoundQuality, null, 2));
+  assert.equal(report.gates.dashTypographyQuality.ok, true, JSON.stringify(report.gates.dashTypographyQuality, null, 2));
+  assert.equal(report.counts.dashTypographyFindings, 0, JSON.stringify(report.gates.dashTypographyQuality, null, 2));
+  assert.equal(report.gates.redundantPhraseQuality.ok, true, JSON.stringify(report.gates.redundantPhraseQuality, null, 2));
+  assert.equal(report.counts.redundantPhraseFindings, 0, JSON.stringify(report.gates.redundantPhraseQuality, null, 2));
   assert.equal(report.gates.reviewGovernance.ok, true, JSON.stringify(report.gates.reviewGovernance, null, 2));
   assert.equal(report.gates.negativeVectorCoverage.ok, true, JSON.stringify(report.gates.negativeVectorCoverage, null, 2));
 });

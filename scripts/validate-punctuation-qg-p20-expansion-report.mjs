@@ -2,6 +2,7 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { PUNCTUATION_CURRENT_RELEASE_ID } from '../src/subjects/punctuation/service-contract.js';
 
 const reportPath = resolve(process.argv[2] || 'reports/punctuation/punctuation-qg-p20-expansion-audit.json');
 
@@ -23,9 +24,20 @@ try {
 const thresholds = report.thresholds || {};
 const counts = report.counts || {};
 const gates = report.gates || {};
+const releaseIdentity = gates.releaseIdentity || {};
+const releaseGateReleaseId = releaseIdentity.release?.releaseId || null;
 
 if (report.status !== 'PASS') fail('global status is not PASS', { status: report.status, failingGates: report.failingGates });
-if (gates.releaseIdentity?.ok !== true) fail('release identity gate failed', gates.releaseIdentity);
+if (report.releaseId !== PUNCTUATION_CURRENT_RELEASE_ID) {
+  fail(`report releaseId=${report.releaseId || 'missing'}, expected ${PUNCTUATION_CURRENT_RELEASE_ID}`, {
+    releaseId: report.releaseId || null,
+    expectedReleaseId: PUNCTUATION_CURRENT_RELEASE_ID,
+  });
+}
+if (releaseIdentity?.ok !== true) fail('release identity gate failed', releaseIdentity);
+if (releaseGateReleaseId !== PUNCTUATION_CURRENT_RELEASE_ID) {
+  fail(`release identity gate releaseId=${releaseGateReleaseId || 'missing'}, expected ${PUNCTUATION_CURRENT_RELEASE_ID}`, releaseIdentity);
+}
 if (gates.poolDepth?.ok !== true) fail('pool depth gate failed', gates.poolDepth);
 if (gates.learnerSurfaceVariety?.ok !== true) fail('learner surface variety gate failed', gates.learnerSurfaceVariety);
 if (gates.generatedFamilyDepth?.ok !== true) fail('generated family depth gate failed', gates.generatedFamilyDepth);
@@ -34,6 +46,8 @@ if (gates.modelSelfMarking?.ok !== true) fail('model self-marking gate failed', 
 if (gates.hyphenCompoundQuality?.ok !== true) fail('hyphen compound quality gate failed', gates.hyphenCompoundQuality);
 if (gates.apostropheContractionGrammarQuality?.ok !== true) fail('apostrophe contraction grammar quality gate failed', gates.apostropheContractionGrammarQuality);
 if (gates.properNounCapitalisationQuality?.ok !== true) fail('proper noun capitalisation quality gate failed', gates.properNounCapitalisationQuality);
+if (gates.dashTypographyQuality?.ok !== true) fail('dash typography quality gate failed', gates.dashTypographyQuality);
+if (gates.redundantPhraseQuality?.ok !== true) fail('redundant phrase quality gate failed', gates.redundantPhraseQuality);
 if (gates.reviewGovernance?.ok !== true) fail('review governance gate failed', gates.reviewGovernance);
 if (gates.negativeVectorCoverage?.ok !== true) fail('negative-vector coverage gate failed', gates.negativeVectorCoverage);
 if (gates.heavyPlayVariety?.ok !== true) fail('heavy-play variety gate failed', gates.heavyPlayVariety);
@@ -52,6 +66,8 @@ if (counts.hyphenMalformedCompoundFindings !== 0) fail('malformed hyphen compoun
 if (counts.hyphenArticleAgreementFindings !== 0) fail('hyphen article agreement findings must be zero', counts);
 if (counts.apostropheContractionGrammarFindings !== 0) fail('apostrophe contraction grammar findings must be zero', counts);
 if (counts.properNounCapitalisationFindings !== 0) fail('proper noun capitalisation findings must be zero', counts);
+if (counts.dashTypographyFindings !== 0) fail('dash typography findings must be zero', counts);
+if (counts.redundantPhraseFindings !== 0) fail('redundant phrase findings must be zero', counts);
 if (counts.modelSelfMarkingFailures !== 0) fail('model self-marking failures must be zero', counts);
 
 const skillRows = Array.isArray(report.skillRows) ? report.skillRows : [];

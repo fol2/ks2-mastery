@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "phase": "punctuation-qg-p20-expansion-audit",
   "status": "PASS",
-  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
-  "generatedAt": "2026-05-13T11:28:04.367Z",
+  "releaseId": "punctuation-qg-p24-15072-2026-05-13",
+  "generatedAt": "2026-05-13T16:54:09.343Z",
   "thresholds": {
     "phase": 20,
     "minRuntimeItems": 15000,
@@ -47,6 +47,8 @@
     "hyphenArticleAgreementFindings": 0,
     "apostropheContractionGrammarFindings": 0,
     "properNounCapitalisationFindings": 0,
+    "dashTypographyFindings": 0,
+    "redundantPhraseFindings": 0,
     "modelSelfMarkingFailures": 0,
     "byMode": {
       "choose": 2420,
@@ -77,9 +79,9 @@
     "releaseIdentity": {
       "ok": true,
       "release": {
-        "releaseId": "punctuation-qg-p23-15072-2026-05-13",
+        "releaseId": "punctuation-qg-p24-15072-2026-05-13",
         "matchesPattern": true,
-        "phase": 23,
+        "phase": 24,
         "embeddedRuntimeCount": 15072,
         "releaseDate": "2026-05-13",
         "runtimeCountMatches": true,
@@ -405,6 +407,18 @@
     "properNounCapitalisationQuality": {
       "ok": true,
       "rule": "Model answers and accepted answers must capitalise registered pupil, place, calendar, and other fixed proper names; stems may still use lowercase names when the task is explicitly asking the learner to repair capital letters.",
+      "findingCount": 0,
+      "findings": []
+    },
+    "dashTypographyQuality": {
+      "ok": true,
+      "rule": "Dash-clause learner-facing models, stems, options, and explanations must use a real dash (– or —), not a spaced hyphen-minus. Accepted-answer tolerance may still accept spaced hyphens for keyboard accessibility.",
+      "findingCount": 0,
+      "findings": []
+    },
+    "redundantPhraseQuality": {
+      "ok": true,
+      "rule": "Learner-facing punctuation items and their answer contracts must avoid accidental repeated phrases such as \"focused and focused\", \"scripts and scripts\", or a three-item colon list where all entries are identical.",
       "findingCount": 0,
       "findings": []
     },
@@ -2173,6 +2187,8 @@
     "Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.",
     "Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.",
     "Model answers and accepted answers must capitalise registered proper names even when the learner stem intentionally contains lowercase names for a capital-letter repair task.",
+    "Dash-clause learner-facing examples must model real dash punctuation while marking still accepts spaced hyphen-minus as an accessibility fallback.",
+    "Learner-facing list and parenthesis surfaces must not contain accidental self-repetition such as repeated list entries or duplicated descriptive adjectives.",
     "Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage."
   ]
 }

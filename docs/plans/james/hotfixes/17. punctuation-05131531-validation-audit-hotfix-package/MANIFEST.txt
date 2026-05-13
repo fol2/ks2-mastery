@@ -1,0 +1,22 @@
+Punctuation 05131531 validation audit + hotfix package
+
+Primary source ZIP:
+  ks2-mastery-lean-05131531.zip
+  e1f6c8a068734e7a0faf1d2f450b9f3d9df57532872bac5ec8b849faa3005298
+
+Patch:
+  patches/001-punctuation-05131531-surface-language-and-dash-quality-gate.patch
+
+Contract:
+  contract/punctuation-05131531-surface-language-and-dash-quality-contract.md
+
+Validation highlights:
+  baseline-surface-language-probe.json
+  patched-surface-language-probe.json
+  patched-audit-compact.json
+  fresh-apply-p20-expansion.log
+  patched-runtime-session-marking-tests.log
+  patched-full-p20-verify-final.log
+
+Production note:
+  Local expansion verification passes. Full P20 verification fails at live evidence because the lean ZIP production smoke file is invalid/empty and must be regenerated after deployment for P24.

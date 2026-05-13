@@ -38,6 +38,8 @@ const MALFORMED_HYPHEN_DESIGN_PATTERN = /\b[a-z]+-[a-z]+design\b/gi;
 const HYF_ARTICLE_PATTERN = /\ba (?:ice[- ]cold|open[- ]ended|up[- ]to[- ]date)\b/gi;
 const APOSTROPHE_CONTRACTION_BAD_BELIEVE_PATTERN = /\b[A-Z][a-z]+\s+(?:haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+believe\b/gi;
 const APOSTROPHE_CONTRACTION_BAD_MOVED_PATTERN = /\b[A-Z][a-z]+\s+(?:didn't|couldn't|wouldn't|shouldn't|haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+moved\s+the\b/gi;
+const REDUNDANT_COORDINATE_PHRASE_PATTERN = /\b([A-Za-z][A-Za-z]*(?:\s+[A-Za-z][A-Za-z]*){0,3})\s+and\s+\1\b/gi;
+const SPACED_HYPHEN_AS_DASH_PATTERN = /\s-\s/g;
 const LOWERCASE_PROPER_NAME_PATTERN = new RegExp(`\\b(?:${PUNCTUATION_PROPER_NOUN_CAPITALISATION_TOKENS
   .map((name) => escapeRegExp(String(name).toLowerCase()))
   .sort((left, right) => right.length - left.length)
@@ -769,6 +771,74 @@ export function buildProperNounCapitalisationEvidence(items) {
   };
 }
 
+function learnerVisibleDashTextParts(item) {
+  return [
+    ['prompt', item.prompt],
+    ['stem', item.stem],
+    ['model', item.model],
+    ['explanation', item.explanation],
+    ...((Array.isArray(item.options) ? item.options : []).map((entry, index) => [`options[${index}]`, entry])),
+  ].filter(([, value]) => typeof value === 'string');
+}
+
+export function buildDashTypographyQualityEvidence(items) {
+  const findings = [];
+  const seen = new Set();
+  for (const item of items) {
+    if (!Array.isArray(item.skillIds) || !item.skillIds.includes('dash_clause')) continue;
+    for (const [field, text] of learnerVisibleDashTextParts(item)) {
+      SPACED_HYPHEN_AS_DASH_PATTERN.lastIndex = 0;
+      for (const match of String(text).matchAll(SPACED_HYPHEN_AS_DASH_PATTERN)) {
+        const key = `${item.id}:${field}:${match.index}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        findings.push({
+          itemId: item.id,
+          familyId: item.generatorFamilyId || '',
+          mode: item.mode || '',
+          field,
+          surface: text,
+        });
+      }
+    }
+  }
+  return {
+    ok: findings.length === 0,
+    rule: 'Dash-clause learner-facing models, stems, options, and explanations must use a real dash (– or —), not a spaced hyphen-minus. Accepted-answer tolerance may still accept spaced hyphens for keyboard accessibility.',
+    findingCount: findings.length,
+    findings: findings.slice(0, 25),
+  };
+}
+
+export function buildRedundantPhraseQualityEvidence(items) {
+  const findings = [];
+  const seen = new Set();
+  for (const item of items) {
+    const text = auditedLearnerAndModelText(item);
+    REDUNDANT_COORDINATE_PHRASE_PATTERN.lastIndex = 0;
+    for (const match of String(text).matchAll(REDUNDANT_COORDINATE_PHRASE_PATTERN)) {
+      const phrase = match[0].replace(/\s+/g, ' ').trim();
+      const key = `${item.id}:${phrase.toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      findings.push({
+        itemId: item.id,
+        familyId: item.generatorFamilyId || '',
+        mode: item.mode || '',
+        skillIds: item.skillIds || [],
+        phrase,
+        model: item.model || '',
+      });
+    }
+  }
+  return {
+    ok: findings.length === 0,
+    rule: 'Learner-facing punctuation items and their answer contracts must avoid accidental repeated phrases such as "focused and focused", "scripts and scripts", or a three-item colon list where all entries are identical.',
+    findingCount: findings.length,
+    findings: findings.slice(0, 25),
+  };
+}
+
 export function buildPunctuationQGP20ExpansionReport(options = {}) {
   const runtime = createPunctuationRuntimeManifest({
     manifest: PUNCTUATION_CONTENT_MANIFEST,
@@ -795,6 +865,8 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
   const hyphenCompoundQuality = buildHyphenCompoundQualityEvidence(items);
   const apostropheContractionGrammarQuality = buildApostropheContractionGrammarEvidence(items);
   const properNounCapitalisationQuality = buildProperNounCapitalisationEvidence(items);
+  const dashTypographyQuality = buildDashTypographyQualityEvidence(items);
+  const redundantPhraseQuality = buildRedundantPhraseQualityEvidence(items);
   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
@@ -820,6 +892,8 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
     hyphenArticleAgreementFindings: hyphenCompoundQuality.articleAgreementFindingCount,
     apostropheContractionGrammarFindings: apostropheContractionGrammarQuality.findingCount,
     properNounCapitalisationFindings: properNounCapitalisationQuality.findingCount,
+    dashTypographyFindings: dashTypographyQuality.findingCount,
+    redundantPhraseFindings: redundantPhraseQuality.findingCount,
     modelSelfMarkingFailures: modelFailures.length,
     byMode: groupCounts(items, (item) => item.mode),
     bySkill: groupCounts(items, (item) => item.skillIds || []),
@@ -899,6 +973,8 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
     hyphenCompoundQuality,
     apostropheContractionGrammarQuality,
     properNounCapitalisationQuality,
+    dashTypographyQuality,
+    redundantPhraseQuality,
     reviewGovernance: reviewCoverage,
     negativeVectorCoverage: negativeVectors,
     heavyPlayVariety: heavyPlay,
@@ -929,6 +1005,8 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
       'Duplicate-surface blocking is applied to the full runtime pool, including fixed-bank and generated items, so learner-facing repeats cannot hide in source-specific ledgers.',
       'Hyphen examples must avoid adverbial -ly compounds, malformed no-space distractors, and article errors because Punctuation should model clean KS2 English as well as the target mark.',
       'Model answers and accepted answers must capitalise registered proper names even when the learner stem intentionally contains lowercase names for a capital-letter repair task.',
+      'Dash-clause learner-facing examples must model real dash punctuation while marking still accepts spaced hyphen-minus as an accessibility fallback.',
+      'Learner-facing list and parenthesis surfaces must not contain accidental self-repetition such as repeated list entries or duplicated descriptive adjectives.',
       'Production certification still requires a separate production smoke with origin, environment, release ID, runtime count, authenticated coverage, and admin coverage.',
     ],
   };

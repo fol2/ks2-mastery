@@ -1,0 +1,398 @@
+{
+  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
+  "runtimeItems": 15072,
+  "redundantPhraseFindings": 90,
+  "redundantAffectedItems": 90,
+  "topRedundantPhrases": [
+    {
+      "phrase": "focused and focused",
+      "count": 80
+    },
+    {
+      "phrase": "a drama mask and a drama mask",
+      "count": 1
+    },
+    {
+      "phrase": "a maze clue and a maze clue",
+      "count": 1
+    },
+    {
+      "phrase": "a team flag and a team flag",
+      "count": 1
+    },
+    {
+      "phrase": "a telescope and a telescope",
+      "count": 1
+    },
+    {
+      "phrase": "garden forks and garden forks",
+      "count": 1
+    },
+    {
+      "phrase": "memory cards and memory cards",
+      "count": 1
+    },
+    {
+      "phrase": "number lines and number lines",
+      "count": 1
+    },
+    {
+      "phrase": "safety cones and safety cones",
+      "count": 1
+    },
+    {
+      "phrase": "scripts and scripts",
+      "count": 1
+    },
+    {
+      "phrase": "toolboxes and toolboxes",
+      "count": 1
+    }
+  ],
+  "redundantSamples": [
+    {
+      "itemId": "gen_list_commas_choose_130ar7h_6",
+      "familyId": "gen_list_commas_choose",
+      "mode": "choose",
+      "skillIds": [
+        "list_commas"
+      ],
+      "phrase": "safety cones and safety cones",
+      "model": "The clay studio display about bus timetables included water bottles, safety cones and safety cones."
+    },
+    {
+      "itemId": "gen_list_commas_choose_qeccui_54",
+      "familyId": "gen_list_commas_choose",
+      "mode": "choose",
+      "skillIds": [
+        "list_commas"
+      ],
+      "phrase": "garden forks and garden forks",
+      "model": "The sports track display about sewing needles included sound meters, garden forks and garden forks."
+    },
+    {
+      "itemId": "gen_list_commas_insert_16rzzym_14",
+      "familyId": "gen_list_commas_insert",
+      "mode": "insert",
+      "skillIds": [
+        "list_commas"
+      ],
+      "phrase": "scripts and scripts",
+      "model": "The covered walkway tray held keys, scripts and scripts."
+    },
+    {
+      "itemId": "gen_list_commas_insert_18g0rmf_62",
+      "familyId": "gen_list_commas_insert",
+      "mode": "insert",
+      "skillIds": [
+        "list_commas"
+      ],
+      "phrase": "number lines and number lines",
+      "model": "The recording room tray held measuring jugs, number lines and number lines."
+    },
+    {
+      "itemId": "gen_list_commas_combine_g3g6h3_28",
+      "familyId": "gen_list_commas_combine",
+      "mode": "combine",
+      "skillIds": [
+        "list_commas"
+      ],
+      "phrase": "toolboxes and toolboxes",
+      "model": "The cookery room kit contained recipe cards, toolboxes and toolboxes."
+    },
+    {
+      "itemId": "gen_list_commas_combine_1alwsoc_76",
+      "familyId": "gen_list_commas_combine",
+      "mode": "combine",
+      "skillIds": [
+        "list_commas"
+      ],
+      "phrase": "memory cards and memory cards",
+      "model": "The visitor centre kit contained fossil brushes, memory cards and memory cards."
+    },
+    {
+      "itemId": "gen_colon_list_insert_11tgl7m_39",
+      "familyId": "gen_colon_list_insert",
+      "mode": "insert",
+      "skillIds": [
+        "colon_list"
+      ],
+      "phrase": "a team flag and a team flag",
+      "model": "The market stall team packed three items: a team flag, a team flag and a team flag."
+    },
+    {
+      "itemId": "gen_colon_list_insert_ygqrsf_87",
+      "familyId": "gen_colon_list_insert",
+      "mode": "insert",
+      "skillIds": [
+        "colon_list"
+      ],
+      "phrase": "a maze clue and a maze clue",
+      "model": "The pond trail team packed three items: a maze clue, a maze clue and a maze clue."
+    },
+    {
+      "itemId": "gen_colon_list_combine_19z9we4_19",
+      "familyId": "gen_colon_list_combine",
+      "mode": "combine",
+      "skillIds": [
+        "colon_list"
+      ],
+      "phrase": "a telescope and a telescope",
+      "model": "The adventure yard club needed three resources: a telescope, a telescope and a telescope."
+    },
+    {
+      "itemId": "gen_colon_list_combine_1c73kfx_67",
+      "familyId": "gen_colon_list_combine",
+      "mode": "combine",
+      "skillIds": [
+        "colon_list"
+      ],
+      "phrase": "a drama mask and a drama mask",
+      "model": "The weather station club needed three resources: a drama mask, a drama mask and a drama mask."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_1syrzvm_13",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Jude (focused and focused) updated the planning sheet."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_wsdrij_25",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Noah (focused and focused) updated the team diary."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_wsam0k_37",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Milo (focused and focused) updated the notice."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_ujvtd5_49",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Ethan (focused and focused) updated the training card."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_1qqs0tv_61",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Omar (focused and focused) updated the display board."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_xvu76s_73",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Jude (focused and focused) updated the planning sheet."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_1xdxcvl_85",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Noah (focused and focused) updated the team diary."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_1w9vslq_97",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Milo (focused and focused) updated the notice."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_xm37o8_105",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Ethan (focused and focused) updated the training card."
+    },
+    {
+      "itemId": "gen_parenthesis_transfer_1y8pwqj_117",
+      "familyId": "gen_parenthesis_transfer",
+      "mode": "transfer",
+      "skillIds": [
+        "parenthesis"
+      ],
+      "phrase": "focused and focused",
+      "model": "Omar (focused and focused) updated the display board."
+    }
+  ],
+  "dashTypographyFindings": 2640,
+  "dashAffectedItems": 840,
+  "dashSamples": [
+    {
+      "itemId": "gen_dash_clause_transfer_12jqj3j_1",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Ethan opened the badge - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_12jqj3j_1",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Ethan opened the badge - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_129qxek_2",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Ivy opened the ticket - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_129qxek_2",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Ivy opened the ticket - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_133pqhh_3",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Leo opened the sample tray - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_133pqhh_3",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Leo opened the sample tray - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_12tq4si_4",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Sofia opened the camera - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_12tq4si_4",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Sofia opened the camera - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_11fs4bn_5",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Ethan opened the badge - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_11fs4bn_5",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Ethan opened the badge - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_115simo_6",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Sofia opened the camera - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_115simo_6",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Sofia opened the camera - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_11zrbpl_7",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Leo opened the sample tray - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_11zrbpl_7",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Leo opened the sample tray - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_11prq0m_8",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Nia opened the score sheet - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_11prq0m_8",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Nia opened the score sheet - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_14rncnb_9",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Jude opened the script - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_14rncnb_9",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Jude opened the script - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_14hnqyc_10",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Asha opened the toolbox - the room fell silent - and read the note."
+    },
+    {
+      "itemId": "gen_dash_clause_transfer_14hnqyc_10",
+      "familyId": "gen_dash_clause_transfer",
+      "mode": "transfer",
+      "field": "model",
+      "surface": "Asha opened the toolbox - the room fell silent - and read the note."
+    }
+  ]
+}

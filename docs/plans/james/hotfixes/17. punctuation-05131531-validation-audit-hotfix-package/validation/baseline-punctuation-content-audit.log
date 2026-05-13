@@ -1,0 +1,157 @@
+
+> ks2-mastery@0.1.0 audit:punctuation-content
+> node ./scripts/audit-punctuation-content.mjs
+
+Punctuation content audit
+fixed items: 512
+generator families: 126
+generated items: 126
+runtime items: 638
+published reward units: 14
+generated duplicate signatures: 0
+generated duplicate stems: 0
+generated duplicate models: 3
+
+Per-skill coverage:
+- sentence_endings: fixed=38, generated=9, signatures=9, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=34, answerContracts=36, validators=2
+- list_commas: fixed=37, generated=10, signatures=10, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=33, answerContracts=41, validators=8
+- apostrophe_contractions: fixed=38, generated=9, signatures=9, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=33, answerContracts=37, validators=4
+- apostrophe_possession: fixed=35, generated=10, signatures=10, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=33, answerContracts=37, validators=4
+- speech: fixed=37, generated=10, signatures=10, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=32, answerContracts=41, validators=9
+- fronted_adverbial: fixed=37, generated=10, signatures=10, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=32, answerContracts=39, validators=7
+- parenthesis: fixed=36, generated=10, signatures=10, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=32, answerContracts=40, validators=8
+- comma_clarity: fixed=38, generated=8, signatures=8, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=33, answerContracts=36, validators=3
+- colon_list: fixed=37, generated=10, signatures=10, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=32, answerContracts=39, validators=7
+- semicolon: fixed=36, generated=10, signatures=10, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=32, answerContracts=38, validators=6
+- dash_clause: fixed=38, generated=9, signatures=9, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=33, answerContracts=38, validators=5
+- semicolon_list: fixed=38, generated=8, signatures=8, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=33, answerContracts=36, validators=3
+- bullet_points: fixed=35, generated=9, signatures=9, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=32, answerContracts=38, validators=6
+- hyphen: fixed=38, generated=8, signatures=8, modes=choose|combine|fix|insert|paragraph|transfer, readiness=constrained_transfer|insertion|misconception|negative_test|proofreading|retrieve_discriminate, choices=33, answerContracts=37, validators=4
+
+Per-family generated coverage:
+- gen_sentence_endings_choose: generated=1, templates=1, signatures=1
+- gen_sentence_endings_insert: generated=1, templates=1, signatures=1
+- gen_apostrophe_possession_choose: generated=1, templates=1, signatures=1
+- gen_apostrophe_contractions_fix: generated=1, templates=1, signatures=1
+- gen_apostrophe_possession_insert: generated=1, templates=1, signatures=1
+- gen_apostrophe_mix_paragraph: generated=1, templates=1, signatures=1
+- gen_speech_insert: generated=1, templates=1, signatures=1
+- gen_list_commas_choose: generated=1, templates=1, signatures=1
+- gen_list_commas_insert: generated=1, templates=1, signatures=1
+- gen_list_commas_combine: generated=1, templates=1, signatures=1
+- gen_fronted_adverbial_fix: generated=1, templates=1, signatures=1
+- gen_fronted_adverbial_combine: generated=1, templates=1, signatures=1
+- gen_fronted_speech_paragraph: generated=1, templates=1, signatures=1
+- gen_comma_clarity_insert: generated=1, templates=1, signatures=1
+- gen_semicolon_fix: generated=1, templates=1, signatures=1
+- gen_semicolon_combine: generated=1, templates=1, signatures=1
+- gen_colon_semicolon_paragraph: generated=1, templates=1, signatures=1
+- gen_dash_clause_fix: generated=1, templates=1, signatures=1
+- gen_dash_clause_combine: generated=1, templates=1, signatures=1
+- gen_hyphen_insert: generated=1, templates=1, signatures=1
+- gen_parenthesis_fix: generated=1, templates=1, signatures=1
+- gen_parenthesis_combine: generated=1, templates=1, signatures=1
+- gen_parenthesis_speech_paragraph: generated=1, templates=1, signatures=1
+- gen_colon_list_insert: generated=1, templates=1, signatures=1
+- gen_colon_list_combine: generated=1, templates=1, signatures=1
+- gen_semicolon_list_fix: generated=1, templates=1, signatures=1
+- gen_bullet_points_fix: generated=1, templates=1, signatures=1
+- gen_bullet_points_paragraph: generated=1, templates=1, signatures=1
+- gen_sentence_endings_transfer: generated=1, templates=1, signatures=1
+- gen_list_commas_transfer: generated=1, templates=1, signatures=1
+- gen_apostrophe_contractions_transfer: generated=1, templates=1, signatures=1
+- gen_apostrophe_possession_transfer: generated=1, templates=1, signatures=1
+- gen_speech_transfer: generated=1, templates=1, signatures=1
+- gen_fronted_adverbial_transfer: generated=1, templates=1, signatures=1
+- gen_parenthesis_transfer: generated=1, templates=1, signatures=1
+- gen_comma_clarity_transfer: generated=1, templates=1, signatures=1
+- gen_colon_list_transfer: generated=1, templates=1, signatures=1
+- gen_semicolon_transfer: generated=1, templates=1, signatures=1
+- gen_dash_clause_transfer: generated=1, templates=1, signatures=1
+- gen_semicolon_list_transfer: generated=1, templates=1, signatures=1
+- gen_bullet_points_transfer: generated=1, templates=1, signatures=1
+- gen_hyphen_transfer: generated=1, templates=1, signatures=1
+- gen_p20_sentence_endings_choose: generated=1, templates=1, signatures=1
+- gen_p20_sentence_endings_insert: generated=1, templates=1, signatures=1
+- gen_p20_sentence_endings_fix: generated=1, templates=1, signatures=1
+- gen_p20_sentence_endings_combine: generated=1, templates=1, signatures=1
+- gen_p20_sentence_endings_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_sentence_endings_transfer: generated=1, templates=1, signatures=1
+- gen_p20_list_commas_choose: generated=1, templates=1, signatures=1
+- gen_p20_list_commas_insert: generated=1, templates=1, signatures=1
+- gen_p20_list_commas_fix: generated=1, templates=1, signatures=1
+- gen_p20_list_commas_combine: generated=1, templates=1, signatures=1
+- gen_p20_list_commas_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_list_commas_transfer: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_contractions_choose: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_contractions_insert: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_contractions_fix: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_contractions_combine: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_contractions_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_contractions_transfer: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_possession_choose: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_possession_insert: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_possession_fix: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_possession_combine: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_possession_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_apostrophe_possession_transfer: generated=1, templates=1, signatures=1
+- gen_p20_speech_choose: generated=1, templates=1, signatures=1
+- gen_p20_speech_insert: generated=1, templates=1, signatures=1
+- gen_p20_speech_fix: generated=1, templates=1, signatures=1
+- gen_p20_speech_combine: generated=1, templates=1, signatures=1
+- gen_p20_speech_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_speech_transfer: generated=1, templates=1, signatures=1
+- gen_p20_fronted_adverbial_choose: generated=1, templates=1, signatures=1
+- gen_p20_fronted_adverbial_insert: generated=1, templates=1, signatures=1
+- gen_p20_fronted_adverbial_fix: generated=1, templates=1, signatures=1
+- gen_p20_fronted_adverbial_combine: generated=1, templates=1, signatures=1
+- gen_p20_fronted_adverbial_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_fronted_adverbial_transfer: generated=1, templates=1, signatures=1
+- gen_p20_parenthesis_choose: generated=1, templates=1, signatures=1
+- gen_p20_parenthesis_insert: generated=1, templates=1, signatures=1
+- gen_p20_parenthesis_fix: generated=1, templates=1, signatures=1
+- gen_p20_parenthesis_combine: generated=1, templates=1, signatures=1
+- gen_p20_parenthesis_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_parenthesis_transfer: generated=1, templates=1, signatures=1
+- gen_p20_comma_clarity_choose: generated=1, templates=1, signatures=1
+- gen_p20_comma_clarity_insert: generated=1, templates=1, signatures=1
+- gen_p20_comma_clarity_fix: generated=1, templates=1, signatures=1
+- gen_p20_comma_clarity_combine: generated=1, templates=1, signatures=1
+- gen_p20_comma_clarity_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_comma_clarity_transfer: generated=1, templates=1, signatures=1
+- gen_p20_colon_list_choose: generated=1, templates=1, signatures=1
+- gen_p20_colon_list_insert: generated=1, templates=1, signatures=1
+- gen_p20_colon_list_fix: generated=1, templates=1, signatures=1
+- gen_p20_colon_list_combine: generated=1, templates=1, signatures=1
+- gen_p20_colon_list_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_colon_list_transfer: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_choose: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_insert: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_fix: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_combine: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_transfer: generated=1, templates=1, signatures=1
+- gen_p20_dash_clause_choose: generated=1, templates=1, signatures=1
+- gen_p20_dash_clause_insert: generated=1, templates=1, signatures=1
+- gen_p20_dash_clause_fix: generated=1, templates=1, signatures=1
+- gen_p20_dash_clause_combine: generated=1, templates=1, signatures=1
+- gen_p20_dash_clause_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_dash_clause_transfer: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_list_choose: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_list_insert: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_list_fix: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_list_combine: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_list_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_semicolon_list_transfer: generated=1, templates=1, signatures=1
+- gen_p20_bullet_points_choose: generated=1, templates=1, signatures=1
+- gen_p20_bullet_points_insert: generated=1, templates=1, signatures=1
+- gen_p20_bullet_points_fix: generated=1, templates=1, signatures=1
+- gen_p20_bullet_points_combine: generated=1, templates=1, signatures=1
+- gen_p20_bullet_points_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_bullet_points_transfer: generated=1, templates=1, signatures=1
+- gen_p20_hyphen_choose: generated=1, templates=1, signatures=1
+- gen_p20_hyphen_insert: generated=1, templates=1, signatures=1
+- gen_p20_hyphen_fix: generated=1, templates=1, signatures=1
+- gen_p20_hyphen_combine: generated=1, templates=1, signatures=1
+- gen_p20_hyphen_paragraph: generated=1, templates=1, signatures=1
+- gen_p20_hyphen_transfer: generated=1, templates=1, signatures=1

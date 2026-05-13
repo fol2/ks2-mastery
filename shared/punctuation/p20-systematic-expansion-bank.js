@@ -321,12 +321,14 @@ function coreForSkill(skillId, index, familyId) {
       };
     }
     case 'parenthesis': {
-      const model = `${c.actor} (${c.adjective} and focused) updated the ${c.record}.`;
+      const parenthesisTrait = c.adjective === 'focused' ? 'careful' : c.adjective;
+      const parenthesisPhrase = `${parenthesisTrait} and focused`;
+      const model = `${c.actor} (${parenthesisPhrase}) updated the ${c.record}.`;
       return {
         model,
-        bad: `${c.actor} ${c.adjective} and focused updated the ${c.record}.`,
-        wrongOne: `${c.actor} (${c.adjective} and focused updated the ${c.record}.`,
-        wrongTwo: `${c.actor}) ${c.adjective} and focused (updated the ${c.record}.`,
+        bad: `${c.actor} ${parenthesisPhrase} updated the ${c.record}.`,
+        wrongOne: `${c.actor} (${parenthesisPhrase} updated the ${c.record}.`,
+        wrongTwo: `${c.actor}) ${parenthesisPhrase} (updated the ${c.record}.`,
         explanation: 'Parentheses add extra information that can be removed without breaking the main sentence.',
         explanationRuleId: 'parenthesis.brackets',
         misconceptionTags: ['parenthesis.boundary_missing', 'parenthesis.unbalanced'],
@@ -369,12 +371,12 @@ function coreForSkill(skillId, index, familyId) {
       };
     }
     case 'dash_clause': {
-      const model = `${c.actor} opened the ${c.object} - the room fell silent - and read the note.`;
+      const model = `${c.actor} opened the ${c.object} – the room fell silent – and read the note.`;
       return {
         model,
         bad: `${c.actor} opened the ${c.object} the room fell silent and read the note.`,
-        wrongOne: `${c.actor} opened the ${c.object} - the room fell silent and read the note.`,
-        wrongTwo: `${c.actor} opened - the ${c.object} the room fell silent - and read the note.`,
+        wrongOne: `${c.actor} opened the ${c.object} – the room fell silent and read the note.`,
+        wrongTwo: `${c.actor} opened – the ${c.object} the room fell silent – and read the note.`,
         explanation: 'A pair of dashes can mark an extra clause inserted into the sentence.',
         explanationRuleId: 'dash.extra-clause',
         misconceptionTags: ['dash.boundary_missing', 'dash.boundary_unbalanced'],

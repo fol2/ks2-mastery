@@ -1,0 +1,12 @@
+/mnt/data/001-punctuation-05131531-surface-language-and-dash-quality-gate.patch:654: trailing whitespace.
+import test from 'node:test';
+/mnt/data/001-punctuation-05131531-surface-language-and-dash-quality-gate.patch:655: trailing whitespace.
+import assert from 'node:assert/strict';
+/mnt/data/001-punctuation-05131531-surface-language-and-dash-quality-gate.patch:656: trailing whitespace.
+
+/mnt/data/001-punctuation-05131531-surface-language-and-dash-quality-gate.patch:657: trailing whitespace.
+import {
+/mnt/data/001-punctuation-05131531-surface-language-and-dash-quality-gate.patch:658: trailing whitespace.
+  buildDashTypographyQualityEvidence,
+warning: squelched 83 whitespace errors
+warning: 88 lines add whitespace errors.

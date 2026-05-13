@@ -26527,8 +26527,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_list_commas_choose_042",
       "prompt": "Choose the sentence with commas used correctly in the list.",
-      "stem": "Pick the best punctuation for the clay studio collection list: water bottles; safety cones; safety cones.",
-      "model": "The clay studio display about bus timetables included water bottles, safety cones and safety cones.",
+      "stem": "Pick the best punctuation for the clay studio collection list: water bottles; safety cones; clipboards.",
+      "model": "The clay studio display about bus timetables included water bottles, safety cones and clipboards.",
       "skillIds": [
         "list_commas"
       ],
@@ -26545,21 +26545,21 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
       "explanation": "Commas separate the first list items, while and joins the final item.",
       "explanationRuleId": "list.comma-separation",
       "options": [
-        "The clay studio display about bus timetables included water bottles, safety cones and safety cones.",
-        "The clay studio display about bus timetables included, water bottles, safety cones and safety cones.",
-        "The clay studio display about bus timetables included water bottles safety cones and safety cones.",
-        "The clay studio display about bus timetables included water bottles, safety cones, and, safety cones."
+        "The clay studio display about bus timetables included water bottles, safety cones and clipboards.",
+        "The clay studio display about bus timetables included, water bottles, safety cones and clipboards.",
+        "The clay studio display about bus timetables included water bottles safety cones and clipboards.",
+        "The clay studio display about bus timetables included water bottles, safety cones, and, clipboards."
       ],
       "correctIndex": 0,
       "tests": {
         "accept": [
-          "The clay studio display about bus timetables included water bottles, safety cones and safety cones."
+          "The clay studio display about bus timetables included water bottles, safety cones and clipboards."
         ],
         "reject": [
-          "Pick the best punctuation for the clay studio collection list: water bottles; safety cones; safety cones.",
-          "The clay studio display about bus timetables included, water bottles, safety cones and safety cones.",
-          "The clay studio display about bus timetables included water bottles safety cones and safety cones.",
-          "The clay studio display about bus timetables included water bottles, safety cones, and, safety cones."
+          "Pick the best punctuation for the clay studio collection list: water bottles; safety cones; clipboards.",
+          "The clay studio display about bus timetables included, water bottles, safety cones and clipboards.",
+          "The clay studio display about bus timetables included water bottles safety cones and clipboards.",
+          "The clay studio display about bus timetables included water bottles, safety cones, and, clipboards."
         ]
       }
     },
@@ -28399,8 +28399,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_list_commas_choose_090",
       "prompt": "Choose the sentence with commas used correctly in the list.",
-      "stem": "Pick the best punctuation for the sports track collection list: sound meters; garden forks; garden forks.",
-      "model": "The sports track display about sewing needles included sound meters, garden forks and garden forks.",
+      "stem": "Pick the best punctuation for the sports track collection list: sound meters; garden forks; stopwatches.",
+      "model": "The sports track display about sewing needles included sound meters, garden forks and stopwatches.",
       "skillIds": [
         "list_commas"
       ],
@@ -28417,21 +28417,21 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
       "explanation": "Commas separate the first list items, while and joins the final item.",
       "explanationRuleId": "list.comma-separation",
       "options": [
-        "The sports track display about sewing needles included sound meters, garden forks and garden forks.",
-        "The sports track display about sewing needles included, sound meters, garden forks and garden forks.",
-        "The sports track display about sewing needles included sound meters garden forks and garden forks.",
-        "The sports track display about sewing needles included sound meters, garden forks, and, garden forks."
+        "The sports track display about sewing needles included sound meters, garden forks and stopwatches.",
+        "The sports track display about sewing needles included, sound meters, garden forks and stopwatches.",
+        "The sports track display about sewing needles included sound meters garden forks and stopwatches.",
+        "The sports track display about sewing needles included sound meters, garden forks, and, stopwatches."
       ],
       "correctIndex": 0,
       "tests": {
         "accept": [
-          "The sports track display about sewing needles included sound meters, garden forks and garden forks."
+          "The sports track display about sewing needles included sound meters, garden forks and stopwatches."
         ],
         "reject": [
-          "Pick the best punctuation for the sports track collection list: sound meters; garden forks; garden forks.",
-          "The sports track display about sewing needles included, sound meters, garden forks and garden forks.",
-          "The sports track display about sewing needles included sound meters garden forks and garden forks.",
-          "The sports track display about sewing needles included sound meters, garden forks, and, garden forks."
+          "Pick the best punctuation for the sports track collection list: sound meters; garden forks; stopwatches.",
+          "The sports track display about sewing needles included, sound meters, garden forks and stopwatches.",
+          "The sports track display about sewing needles included sound meters garden forks and stopwatches.",
+          "The sports track display about sewing needles included sound meters, garden forks, and, stopwatches."
         ]
       }
     },
@@ -30388,8 +30388,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_list_commas_insert_042",
       "prompt": "Add commas to separate the list items.",
-      "stem": "The recording room tray held measuring jugs number lines and number lines.",
-      "model": "The recording room tray held measuring jugs, number lines and number lines.",
+      "stem": "The recording room tray held measuring jugs number lines and stopwatches.",
+      "model": "The recording room tray held measuring jugs, number lines and stopwatches.",
       "skillIds": [
         "list_commas"
       ],
@@ -30411,15 +30411,15 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
         "items": [
           "measuring jugs",
           "number lines",
-          "number lines"
+          "stopwatches"
         ]
       },
       "tests": {
         "accept": [
-          "The recording room tray held measuring jugs, number lines and number lines."
+          "The recording room tray held measuring jugs, number lines and stopwatches."
         ],
         "reject": [
-          "The recording room tray held measuring jugs number lines and number lines."
+          "The recording room tray held measuring jugs number lines and stopwatches."
         ]
       }
     },
@@ -32212,8 +32212,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_list_commas_insert_090",
       "prompt": "Add commas to separate the list items.",
-      "stem": "The covered walkway tray held keys scripts and scripts.",
-      "model": "The covered walkway tray held keys, scripts and scripts.",
+      "stem": "The covered walkway tray held keys scripts and labels.",
+      "model": "The covered walkway tray held keys, scripts and labels.",
       "skillIds": [
         "list_commas"
       ],
@@ -32235,15 +32235,15 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
         "items": [
           "keys",
           "scripts",
-          "scripts"
+          "labels"
         ]
       },
       "tests": {
         "accept": [
-          "The covered walkway tray held keys, scripts and scripts."
+          "The covered walkway tray held keys, scripts and labels."
         ],
         "reject": [
-          "The covered walkway tray held keys scripts and scripts."
+          "The covered walkway tray held keys scripts and labels."
         ]
       }
     },
@@ -34231,8 +34231,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_list_commas_combine_042",
       "prompt": "Combine the notes into one correctly punctuated list sentence.",
-      "stem": "The cookery room kit contained\n- recipe cards\n- toolboxes\n- toolboxes",
-      "model": "The cookery room kit contained recipe cards, toolboxes and toolboxes.",
+      "stem": "The cookery room kit contained\n- recipe cards\n- toolboxes\n- measuring tapes",
+      "model": "The cookery room kit contained recipe cards, toolboxes and measuring tapes.",
       "skillIds": [
         "list_commas"
       ],
@@ -34254,16 +34254,16 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
         "items": [
           "recipe cards",
           "toolboxes",
-          "toolboxes"
+          "measuring tapes"
         ]
       },
       "tests": {
         "accept": [
-          "The cookery room kit contained recipe cards, toolboxes and toolboxes."
+          "The cookery room kit contained recipe cards, toolboxes and measuring tapes."
         ],
         "reject": [
-          "The cookery room kit contained\n- recipe cards\n- toolboxes\n- toolboxes",
-          "The cookery room kit contained recipe cards toolboxes and toolboxes."
+          "The cookery room kit contained\n- recipe cards\n- toolboxes\n- measuring tapes",
+          "The cookery room kit contained recipe cards toolboxes and measuring tapes."
         ]
       }
     },
@@ -36103,8 +36103,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_list_commas_combine_090",
       "prompt": "Combine the notes into one correctly punctuated list sentence.",
-      "stem": "The visitor centre kit contained\n- fossil brushes\n- memory cards\n- memory cards",
-      "model": "The visitor centre kit contained fossil brushes, memory cards and memory cards.",
+      "stem": "The visitor centre kit contained\n- fossil brushes\n- memory cards\n- field notes",
+      "model": "The visitor centre kit contained fossil brushes, memory cards and field notes.",
       "skillIds": [
         "list_commas"
       ],
@@ -36126,16 +36126,16 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
         "items": [
           "fossil brushes",
           "memory cards",
-          "memory cards"
+          "field notes"
         ]
       },
       "tests": {
         "accept": [
-          "The visitor centre kit contained fossil brushes, memory cards and memory cards."
+          "The visitor centre kit contained fossil brushes, memory cards and field notes."
         ],
         "reject": [
-          "The visitor centre kit contained\n- fossil brushes\n- memory cards\n- memory cards",
-          "The visitor centre kit contained fossil brushes memory cards and memory cards."
+          "The visitor centre kit contained\n- fossil brushes\n- memory cards\n- field notes",
+          "The visitor centre kit contained fossil brushes memory cards and field notes."
         ]
       }
     },
@@ -88293,8 +88293,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_colon_list_insert_048",
       "prompt": "Add the colon before the list.",
-      "stem": "The market stall team packed three items a team flag, a team flag and a team flag.",
-      "model": "The market stall team packed three items: a team flag, a team flag and a team flag.",
+      "stem": "The market stall team packed three items a team flag, a route card and a whistle.",
+      "model": "The market stall team packed three items: a team flag, a route card and a whistle.",
       "skillIds": [
         "colon_list"
       ],
@@ -88315,17 +88315,17 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
         "opening": "The market stall team packed three items",
         "items": [
           "a team flag",
-          "a team flag",
-          "a team flag"
+          "a route card",
+          "a whistle"
         ]
       },
       "tests": {
         "accept": [
-          "The market stall team packed three items: a team flag, a team flag and a team flag."
+          "The market stall team packed three items: a team flag, a route card and a whistle."
         ],
         "reject": [
-          "The market stall team packed three items a team flag, a team flag and a team flag.",
-          "The market stall team packed three items; a team flag, a team flag and a team flag."
+          "The market stall team packed three items a team flag, a route card and a whistle.",
+          "The market stall team packed three items; a team flag, a route card and a whistle."
         ]
       }
     },
@@ -90165,8 +90165,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_colon_list_insert_096",
       "prompt": "Add the colon before the list.",
-      "stem": "The pond trail team packed three items a maze clue, a maze clue and a maze clue.",
-      "model": "The pond trail team packed three items: a maze clue, a maze clue and a maze clue.",
+      "stem": "The pond trail team packed three items a maze clue, a compass and a torch.",
+      "model": "The pond trail team packed three items: a maze clue, a compass and a torch.",
       "skillIds": [
         "colon_list"
       ],
@@ -90187,17 +90187,17 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
         "opening": "The pond trail team packed three items",
         "items": [
           "a maze clue",
-          "a maze clue",
-          "a maze clue"
+          "a compass",
+          "a torch"
         ]
       },
       "tests": {
         "accept": [
-          "The pond trail team packed three items: a maze clue, a maze clue and a maze clue."
+          "The pond trail team packed three items: a maze clue, a compass and a torch."
         ],
         "reject": [
-          "The pond trail team packed three items a maze clue, a maze clue and a maze clue.",
-          "The pond trail team packed three items; a maze clue, a maze clue and a maze clue."
+          "The pond trail team packed three items a maze clue, a compass and a torch.",
+          "The pond trail team packed three items; a maze clue, a compass and a torch."
         ]
       }
     },
@@ -92195,8 +92195,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_colon_list_combine_048",
       "prompt": "Combine the opening clause and list using a colon.",
-      "stem": "The weather station club needed three resources\na drama mask / a drama mask / a drama mask",
-      "model": "The weather station club needed three resources: a drama mask, a drama mask and a drama mask.",
+      "stem": "The weather station club needed three resources\na drama mask / a script card / a costume tag",
+      "model": "The weather station club needed three resources: a drama mask, a script card and a costume tag.",
       "skillIds": [
         "colon_list"
       ],
@@ -92217,17 +92217,17 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
         "opening": "The weather station club needed three resources",
         "items": [
           "a drama mask",
-          "a drama mask",
-          "a drama mask"
+          "a script card",
+          "a costume tag"
         ]
       },
       "tests": {
         "accept": [
-          "The weather station club needed three resources: a drama mask, a drama mask and a drama mask."
+          "The weather station club needed three resources: a drama mask, a script card and a costume tag."
         ],
         "reject": [
-          "The weather station club needed three resources\na drama mask / a drama mask / a drama mask",
-          "The weather station club needed three resources a drama mask, a drama mask and a drama mask."
+          "The weather station club needed three resources\na drama mask / a script card / a costume tag",
+          "The weather station club needed three resources a drama mask, a script card and a costume tag."
         ]
       }
     },
@@ -94067,8 +94067,8 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
     {
       "templateId": "p12q_gen_colon_list_combine_096",
       "prompt": "Combine the opening clause and list using a colon.",
-      "stem": "The adventure yard club needed three resources\na telescope / a telescope / a telescope",
-      "model": "The adventure yard club needed three resources: a telescope, a telescope and a telescope.",
+      "stem": "The adventure yard club needed three resources\na telescope / a star chart / a notebook",
+      "model": "The adventure yard club needed three resources: a telescope, a star chart and a notebook.",
       "skillIds": [
         "colon_list"
       ],
@@ -94089,17 +94089,17 @@ export const PUNCTUATION_MANUAL_P12_QUALITY_BANK = Object.freeze({
         "opening": "The adventure yard club needed three resources",
         "items": [
           "a telescope",
-          "a telescope",
-          "a telescope"
+          "a star chart",
+          "a notebook"
         ]
       },
       "tests": {
         "accept": [
-          "The adventure yard club needed three resources: a telescope, a telescope and a telescope."
+          "The adventure yard club needed three resources: a telescope, a star chart and a notebook."
         ],
         "reject": [
-          "The adventure yard club needed three resources\na telescope / a telescope / a telescope",
-          "The adventure yard club needed three resources a telescope, a telescope and a telescope."
+          "The adventure yard club needed three resources\na telescope / a star chart / a notebook",
+          "The adventure yard club needed three resources a telescope, a star chart and a notebook."
         ]
       }
     },
