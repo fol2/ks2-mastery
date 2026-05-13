@@ -1,0 +1,1186 @@
+diff --git a/.gitattributes b/.gitattributes
+index bdedf84e..05dbb022 100644
+--- a/.gitattributes
++++ b/.gitattributes
+@@ -1,3 +1,4 @@
++".gitattributes" text eol=lf
+ "docs/plans/james/hotfixes/5. reasoning-subject-live-package/patches/*.patch" text eol=lf
+ "docs/plans/james/hotfixes/5. reasoning-subject-live-package/SHA256SUMS.txt" text eol=lf
+ "docs/plans/james/hotfixes/4. arithmetic-next-improvement-package/patches/*.patch" text eol=lf whitespace=-blank-at-eol
+@@ -6,3 +7,4 @@
+ "docs/plans/james/hotfixes/10. reading-phase6-scale-expansion-package/**" text eol=lf
+ "docs/plans/james/hotfixes/15. reading-phase7-scale-expansion-package/**" text eol=lf
+ "docs/plans/james/hotfixes/15. reading-phase7-scale-expansion-package/**/*.png" binary
++"docs/plans/james/hotfixes/16. reasoning-world-class-unlimited-variety-v2-package/**" text eol=lf
+diff --git a/scripts/reasoning-production-smoke.mjs b/scripts/reasoning-production-smoke.mjs
+index e1bcba35..bbc75dc7 100644
+--- a/scripts/reasoning-production-smoke.mjs
++++ b/scripts/reasoning-production-smoke.mjs
+@@ -182,10 +182,10 @@ export function parseReasoningQuestionId(itemId) {
+ 
+ export function assertReasoningContentSummary(summary, label = 'reasoning.content') {
+   assert.equal(summary?.releaseId, REASONING_CONTENT_RELEASE_ID, `${label}.releaseId mismatch.`);
+-  assert.equal(Number(summary?.templateCount), 124, `${label}.templateCount mismatch.`);
++  assert.equal(Number(summary?.templateCount), 138, `${label}.templateCount mismatch.`);
+   assert.equal(Number(summary?.skillCount), 17, `${label}.skillCount mismatch.`);
+   assert.equal(Number(summary?.misconceptionCount), 20, `${label}.misconceptionCount mismatch.`);
+-  assert.equal(Number(summary?.satsFriendlyCount), 123, `${label}.satsFriendlyCount mismatch.`);
++  assert.equal(Number(summary?.satsFriendlyCount), 136, `${label}.satsFriendlyCount mismatch.`);
+   assert.deepEqual(summary, reasoningContentSummary(), `${label} no longer matches the local Reasoning content summary.`);
+ }
+ 
+diff --git a/shared/reasoning/content.js b/shared/reasoning/content.js
+index 14fd30f9..b61e421b 100644
+--- a/shared/reasoning/content.js
++++ b/shared/reasoning/content.js
+@@ -1,7 +1,7 @@
+ // Generated from the approved Reasoning PoC template bank. Do not import this module into the browser bundle; use shared/reasoning/metadata.js for public metadata.
+ 
+ 
+-export const REASONING_CONTENT_RELEASE_ID = 'reasoning-variety-hardening-2026-05-13';
++export const REASONING_CONTENT_RELEASE_ID = 'reasoning-variety-expansion-v2-2026-05-13';
+ 
+ 
+ const MISCONCEPTIONS = {
+@@ -345,6 +345,8 @@ const SKILLS = {
+         skillIds: template.skillIds.slice(),
+         seed,
+         itemId: `${template.id}:${seed}`,
++        extraCredit: Boolean(template.extraCredit),
++        contextThemed: Boolean(template.contextThemed),
+         marks: 1,
+         visualHtml: "",
+         reflectionPrompt: "",
+@@ -7746,7 +7748,18 @@ const REASONING_CONTEXT_THEMES = Object.freeze([
+   Object.freeze({ id: "music_festival", place: "music festival", people: ["musicians", "audience members", "helpers"], items: ["wristbands", "programmes", "snack tokens", "seat labels"], groups: ["stages", "bands", "rows"], container: "bundle" }),
+   Object.freeze({ id: "science_lab", place: "science lab", people: ["scientists", "pupils", "technicians"], items: ["test tubes", "labels", "safety cards", "sample pots"], groups: ["benches", "trays", "groups"], container: "tray" }),
+   Object.freeze({ id: "train_station", place: "train station", people: ["passengers", "inspectors", "families"], items: ["tickets", "timetables", "platform cards", "snack vouchers"], groups: ["platforms", "carriages", "queues"], container: "wallet" }),
+-  Object.freeze({ id: "community_cafe", place: "community café", people: ["customers", "helpers", "families"], items: ["muffins", "fruit pots", "drinks", "meal tokens"], groups: ["tables", "orders", "trays"], container: "box" })
++  Object.freeze({ id: "community_cafe", place: "community café", people: ["customers", "helpers", "families"], items: ["muffins", "fruit pots", "drinks", "meal tokens"], groups: ["tables", "orders", "trays"], container: "box" }),
++  Object.freeze({ id: "coding_jam", place: "coding jam", people: ["coders", "mentors", "debuggers"], items: ["challenge cards", "tokens", "test cases", "USB badges"], groups: ["teams", "stations", "rounds"], container: "folder" }),
++  Object.freeze({ id: "beach_clean", place: "beach clean", people: ["volunteers", "coast guards", "families"], items: ["litter bags", "gloves", "shell counters", "survey cards"], groups: ["zones", "teams", "routes"], container: "sack" }),
++  Object.freeze({ id: "bakery_day", place: "bakery day", people: ["bakers", "helpers", "customers"], items: ["bread rolls", "cupcakes", "recipe cards", "loyalty stamps"], groups: ["ovens", "batches", "shelves"], container: "basket" }),
++  Object.freeze({ id: "drama_rehearsal", place: "drama rehearsal", people: ["actors", "stage crew", "directors"], items: ["props", "scripts", "costume tags", "seat cards"], groups: ["scenes", "rows", "teams"], container: "case" }),
++  Object.freeze({ id: "market_garden", place: "market garden", people: ["growers", "helpers", "visitors"], items: ["tomato plants", "herb pots", "seed labels", "compost bags"], groups: ["beds", "rows", "crates"], container: "crate" }),
++  Object.freeze({ id: "film_club", place: "film club", people: ["reviewers", "projectionists", "members"], items: ["tickets", "review cards", "popcorn tubs", "screening passes"], groups: ["rows", "screenings", "tables"], container: "wallet" }),
++  Object.freeze({ id: "mountain_camp", place: "mountain camp", people: ["walkers", "leaders", "campers"], items: ["route cards", "water flasks", "tent pegs", "map stickers"], groups: ["groups", "routes", "tents"], container: "rucksack" }),
++  Object.freeze({ id: "weather_station", place: "weather station", people: ["forecasters", "pupils", "observers"], items: ["rain gauges", "data slips", "wind flags", "temperature cards"], groups: ["stations", "days", "plots"], container: "clip" }),
++  Object.freeze({ id: "art_studio", place: "art studio", people: ["artists", "curators", "helpers"], items: ["paint tubes", "canvas cards", "brush sets", "display labels"], groups: ["easels", "tables", "collections"], container: "tray" }),
++  Object.freeze({ id: "city_farm", place: "city farm", people: ["keepers", "visitors", "volunteers"], items: ["feed scoops", "animal cards", "egg boxes", "visitor tokens"], groups: ["pens", "barns", "teams"], container: "bucket" }),
++  Object.freeze({ id: "aquarium_visit", place: "aquarium visit", people: ["guides", "visitors", "pupils"], items: ["tank labels", "feeding cards", "quiz sheets", "photo tokens"], groups: ["tanks", "tour groups", "benches"], container: "pouch" })
+ ]);
+ 
+ function contextTheme(seed, channel = "general") {
+@@ -7777,6 +7790,15 @@ function pickDistinctThemeItem(rng, candidates, usedLabel) {
+   return pick(rng, distinct.length ? distinct : candidates.filter((candidate) => candidate !== usedLabel));
+ }
+ 
++function singularThemeGroupLabel(label) {
++  const text = String(label || "group").trim();
++  if (!text) return "group";
++  if (/ies$/i.test(text)) return text.replace(/ies$/i, "y");
++  if (/(xes|ches|shes|sses)$/i.test(text)) return text.replace(/es$/i, "");
++  if (/s$/i.test(text) && !/ss$/i.test(text)) return text.slice(0, -1);
++  return text;
++}
++
+ const THEMED_REASONING_TEMPLATES = [
+   {
+     id: "theme_digit_constraints_code",
+@@ -8410,6 +8432,695 @@ const THEMED_REASONING_TEMPLATES = [
+ registerExtraTemplates(THEMED_REASONING_TEMPLATES);
+ 
+ 
++const WORLD_CLASS_REASONING_TEMPLATES = [
++  {
++    id: "theme_rounding_range_inventory",
++    label: "Theme-rich rounding range endpoints",
++    domain: "Number and place value",
++    skillIds: ["pv_rounding", "reasonableness"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const item = themeWord(rng, theme, "items");
++      const place = pick(rng, [100, 1000]);
++      const target = randInt(rng, 15, 86) * place;
++      const smallest = target - (place / 2);
++      const greatest = target + (place / 2) - 1;
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>At the ${theme.place}, the number of ${item} is rounded to <strong>${formatNumber(target)}</strong> to the nearest <strong>${formatNumber(place)}</strong>.</p><p>What are the <strong>smallest</strong> and <strong>greatest</strong> whole numbers of ${item} that could have been rounded to this value?</p>`,
++        solutionLines: [
++          `The lower halfway point is ${formatNumber(target)} - ${formatNumber(place / 2)} = ${formatNumber(smallest)}.`,
++          `The upper halfway point is ${formatNumber(target)} + ${formatNumber(place / 2)} = ${formatNumber(greatest + 1)}.`,
++          `So the range is ${formatNumber(smallest)} to ${formatNumber(greatest)}.`
++        ],
++        checkLine: "Include the lower halfway value, but stop one whole number before the upper halfway value.",
++        reflectionPrompt: "Why is the top endpoint one less than the next halfway point?",
++        inputSpec: { type: "multi", fields: [
++          { key: "smallest", label: "Smallest possible number", kind: "number" },
++          { key: "greatest", label: "Greatest possible number", kind: "number" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseNumberInput(resp.smallest) === smallest) score += 1;
++          if (parseNumberInput(resp.greatest) === greatest) score += 1;
++          const answerText = `${formatNumber(smallest)} to ${formatNumber(greatest)}`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "halfway_rounding",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One endpoint is right." : "Not quite."),
++            feedbackLong: `The possible whole numbers are from ${formatNumber(smallest)} to ${formatNumber(greatest)}.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_inverse_two_step_boxes",
++    label: "Theme-rich two-step inverse story",
++    domain: "Calculation",
++    skillIds: ["inverse_missing", "mul_div_structure", "add_sub_multistep"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const item = themeWord(rng, theme, "items");
++      const groups = randInt(rng, 4, 9);
++      const each = randInt(rng, 12, 36);
++      const extra = randInt(rng, 15, 80);
++      const before = groups * each;
++      const finalTotal = before + extra;
++      const groupName = themeWord(rng, theme, "groups");
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>At the ${theme.place}, <strong>${groups}</strong> ${groupName} each had the same number of ${item}.</p><p>After <strong>${extra}</strong> more ${item} arrived, there were <strong>${formatNumber(finalTotal)}</strong> ${item} altogether.</p><p>How many ${item} were there before the extra ones arrived, and how many were in each ${singularThemeGroupLabel(groupName)}?</p>`,
++        solutionLines: [
++          `Undo the extra first: ${formatNumber(finalTotal)} - ${extra} = ${formatNumber(before)}.`,
++          `Now divide by the ${groups} equal ${groupName}: ${formatNumber(before)} ÷ ${groups} = ${each}.`,
++          `There were ${formatNumber(before)} before the extra ones arrived, with ${each} in each group.`
++        ],
++        checkLine: "Undo addition before division because the equal groups existed before the extra amount arrived.",
++        reflectionPrompt: "Which operation did you need to undo first?",
++        inputSpec: { type: "multi", fields: [
++          { key: "before", label: "Number before the extra ones", kind: "number" },
++          { key: "each", label: "Number in each equal group", kind: "number" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseNumberInput(resp.before) === before) score += 1;
++          if (parseNumberInput(resp.each) === each) score += 1;
++          const answerText = `${formatNumber(before)}; ${each}`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "inverse_error",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `There were ${formatNumber(before)} before the extra ones arrived, and ${each} in each group.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_remainder_transport_decision",
++    label: "Theme-rich remainder decision",
++    domain: "Calculation",
++    skillIds: ["mul_div_structure", "reasonableness"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const people = themeWord(rng, theme, "people");
++      const capacity = pick(rng, [6, 8, 10, 12, 15]);
++      const full = randInt(rng, 4, 11);
++      const remainder = randInt(rng, 1, capacity - 1);
++      const total = full * capacity + remainder;
++      const needed = full + 1;
++      const spare = capacity - remainder;
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p><strong>${total}</strong> ${people} from the ${theme.place} need to travel in vehicles.</p><p>Each vehicle can take <strong>${capacity}</strong> people.</p><p>How many vehicles are needed, and how many empty seats will there be in the last vehicle?</p>`,
++        solutionLines: [
++          `${total} ÷ ${capacity} = ${full} remainder ${remainder}.`,
++          `The remainder still needs a vehicle, so round up to ${needed} vehicles.`,
++          `The last vehicle has ${capacity} - ${remainder} = ${spare} empty seats.`
++        ],
++        checkLine: "A remainder means another whole vehicle is needed.",
++        reflectionPrompt: "What does the remainder represent in this story?",
++        inputSpec: { type: "multi", fields: [
++          { key: "vehicles", label: "Vehicles needed", kind: "number" },
++          { key: "spare", label: "Empty seats in the last vehicle", kind: "number" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseNumberInput(resp.vehicles) === needed) score += 1;
++          if (parseNumberInput(resp.spare) === spare) score += 1;
++          const answerText = `${needed} vehicles; ${spare} empty seats`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "remainder_interpretation",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `${needed} vehicles are needed, with ${spare} empty seats in the last vehicle.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_fraction_measure_leftover",
++    label: "Theme-rich fraction measure leftover",
++    domain: "Fractions",
++    skillIds: ["fractions_quantity", "unit_conversion"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const den = pick(rng, [3, 4, 5, 6, 8]);
++      const num = randInt(rng, 1, den - 1);
++      const onePart = randInt(rng, 12, 35);
++      const total = den * onePart;
++      const used = num * onePart;
++      const left = total - used;
++      const frac = simplifyFraction(den - num, den);
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>At the ${theme.place}, a strip of display tape is <strong>${total} cm</strong> long.</p><p><strong>${fractionToText(num, den)}</strong> of the tape is used.</p><p>How many centimetres are left, and what fraction of the original tape is left?</p>`,
++        solutionLines: [
++          `One equal part is ${total} ÷ ${den} = ${onePart} cm.`,
++          `${num} parts are used: ${num} × ${onePart} = ${used} cm.`,
++          `${total} - ${used} = ${left} cm left, which is ${fractionToText(frac.n, frac.d)} of the original tape.`
++        ],
++        checkLine: "The used fraction and leftover fraction should add to 1 whole.",
++        reflectionPrompt: "Did the question ask for the used amount or the leftover amount?",
++        inputSpec: { type: "multi", fields: [
++          { key: "left", label: "Centimetres left", kind: "number" },
++          { key: "fraction", label: "Fraction left", kind: "text", placeholder: "e.g. 3/4" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseNumberInput(resp.left) === left) score += 1;
++          const fractionAnswer = parseFractionOrNumber(resp.fraction);
++          if (fractionAnswer !== null && equalNumeric(fractionAnswer, frac.n / frac.d)) score += 1;
++          const answerText = `${left} cm; ${fractionToText(frac.n, frac.d)}`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "fraction_misconception",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `${left} cm are left, which is ${fractionToText(frac.n, frac.d)} of the original tape.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_decimal_measure_compare",
++    label: "Theme-rich decimal measure comparison",
++    domain: "Measure",
++    skillIds: ["unit_conversion", "pv_compare"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const cmValues = shuffle(rng, [randInt(rng, 105, 160), randInt(rng, 161, 220), randInt(rng, 80, 104)]);
++      const labels = [
++        `${formatDecimalString(cmValues[0] / 100)} m`,
++        `${cmValues[1]} cm`,
++        `${Math.floor(cmValues[2] / 100)} m ${cmValues[2] % 100} cm`
++      ];
++      const rows = [["A", labels[0]], ["B", labels[1]], ["C", labels[2]]];
++      const longestIndex = cmValues.indexOf(Math.max(...cmValues));
++      const shortest = Math.min(...cmValues);
++      const longest = Math.max(...cmValues);
++      const diff = longest - shortest;
++      const letters = ["A", "B", "C"];
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>Three measurements at the ${theme.place} are shown in different units.</p><p>Which measurement is longest, and how many centimetres longer is it than the shortest measurement?</p>`,
++        visualHtml: tableHtml(["Measurement", "Length"], rows),
++        solutionLines: [
++          `Convert all lengths to centimetres: A = ${cmValues[0]} cm, B = ${cmValues[1]} cm, C = ${cmValues[2]} cm.`,
++          `The longest is ${letters[longestIndex]} at ${longest} cm.`,
++          `The difference from the shortest is ${longest} - ${shortest} = ${diff} cm.`
++        ],
++        checkLine: "Comparisons are safer after every measurement is in the same unit.",
++        reflectionPrompt: "Which value did you convert before comparing?",
++        inputSpec: { type: "multi", fields: [
++          { key: "longest", label: "Longest measurement", kind: "radio", options: [["A", "A"], ["B", "B"], ["C", "C"]] },
++          { key: "difference", label: "Difference in cm", kind: "number" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (resp.longest === letters[longestIndex]) score += 1;
++          if (parseNumberInput(resp.difference) === diff) score += 1;
++          const answerText = `${letters[longestIndex]}; ${diff} cm`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "unit_confusion",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `The longest is ${letters[longestIndex]}, and it is ${diff} cm longer than the shortest.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_percent_sale_budget",
++    label: "Theme-rich percentage sale budget",
++    domain: "Measure and money",
++    skillIds: ["percent_number", "fdp_equiv", "reasonableness"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const item = themeWord(rng, theme, "items");
++      const pct = pick(rng, [10, 20, 25, 50]);
++      const pricePence = pick(rng, [400, 500, 600, 800, 1000, 1200, 1600, 2000, 2400]);
++      const qty = randInt(rng, 2, 5);
++      const savingPer = Math.round(pricePence * pct / 100);
++      const salePer = pricePence - savingPer;
++      const totalSaving = savingPer * qty;
++      const totalSale = salePer * qty;
++      const budgetPence = totalSale + pick(rng, [-100, 0, 150, 300]);
++      const affordable = budgetPence >= totalSale;
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>At the ${theme.place}, ${item} cost <strong>${formatPenceMoney(pricePence)}</strong> each.</p><p>They are reduced by <strong>${pct}%</strong>. A pupil wants to buy <strong>${qty}</strong> of them and has <strong>${formatPenceMoney(budgetPence)}</strong>.</p><p>What is the total saving, and can the pupil afford them?</p>`,
++        solutionLines: [
++          `${pct}% of ${formatPenceMoney(pricePence)} is ${formatPenceMoney(savingPer)} saved on each item.`,
++          `Total saving: ${qty} × ${formatPenceMoney(savingPer)} = ${formatPenceMoney(totalSaving)}.`,
++          `Sale total: ${qty} × ${formatPenceMoney(salePer)} = ${formatPenceMoney(totalSale)}, so the pupil ${affordable ? "can" : "cannot"} afford them.`
++        ],
++        checkLine: "The sale price must be less than the original price.",
++        reflectionPrompt: "Did you find the saving or the sale price first?",
++        inputSpec: { type: "multi", fields: [
++          { key: "saving", label: "Total saving", kind: "text", placeholder: "e.g. £2.40" },
++          { key: "afford", label: "Can afford?", kind: "select", options: [["yes", "Yes"], ["no", "No"]] }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseMoneyAmount(resp.saving) !== null && parseMoneyAmount(resp.saving) === moneyValueFromPence(totalSaving)) score += 1;
++          if (resp.afford === (affordable ? "yes" : "no")) score += 1;
++          const answerText = `${formatPenceMoney(totalSaving)}; ${affordable ? "yes" : "no"}`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "fraction_misconception",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `The total saving is ${formatPenceMoney(totalSaving)}, and the pupil ${affordable ? "can" : "cannot"} afford the ${item}.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_ratio_total_split",
++    label: "Theme-rich ratio from total",
++    domain: "Ratio and proportion",
++    skillIds: ["ratio_scale", "mul_div_structure"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const first = themeWord(rng, theme, "items");
++      const second = pickDistinctThemeItem(rng, theme.items || [], first) || "tokens";
++      const a = pick(rng, [2, 3, 4, 5]);
++      const b = pick(rng, [3, 4, 5, 6, 7].filter(value => value !== a));
++      const factor = randInt(rng, 4, 12);
++      const total = (a + b) * factor;
++      const firstAmount = a * factor;
++      const secondAmount = b * factor;
++      const difference = Math.abs(firstAmount - secondAmount);
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>At the ${theme.place}, ${first} and ${second} are in the ratio <strong>${a}:${b}</strong>.</p><p>There are <strong>${total}</strong> items altogether.</p><p>How many ${first} are there, and what is the difference between the two amounts?</p>`,
++        solutionLines: [
++          `The total number of ratio parts is ${a} + ${b} = ${a + b}.`,
++          `One part is ${total} ÷ ${a + b} = ${factor}.`,
++          `${first}: ${a} × ${factor} = ${firstAmount}. The difference is ${difference}.`
++        ],
++        checkLine: "The two ratio amounts should add back to the total.",
++        reflectionPrompt: "Why did you divide by the total number of parts first?",
++        inputSpec: { type: "multi", fields: [
++          { key: "first", label: `Number of ${first}`, kind: "number" },
++          { key: "difference", label: "Difference between amounts", kind: "number" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseNumberInput(resp.first) === firstAmount) score += 1;
++          if (parseNumberInput(resp.difference) === difference) score += 1;
++          const answerText = `${firstAmount}; ${difference}`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "scaling_confusion",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `There are ${firstAmount} ${first}, and the difference is ${difference}.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_timetable_total_duration",
++    label: "Theme-rich timetable duration",
++    domain: "Measure",
++    skillIds: ["time_elapsed", "add_sub_multistep"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const start = randInt(rng, 8, 13) * 60 + pick(rng, [0, 5, 10, 15, 20, 30, 40, 45]);
++      const first = pick(rng, [35, 40, 45, 50, 55, 60, 75]);
++      const breakMin = pick(rng, [10, 15, 20, 25]);
++      const second = pick(rng, [30, 35, 40, 45, 50, 60]);
++      const total = first + breakMin + second;
++      const finish = start + total;
++      const rows = [["Start", minutesToClock(start)], ["Activity 1", `${first} min`], ["Break", `${breakMin} min`], ["Activity 2", `${second} min`]];
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>The timetable for the ${theme.place} is shown.</p><p>What time does Activity 2 finish, and how many minutes is the whole block from start to finish?</p>`,
++        visualHtml: tableHtml(["Part", "Time"], rows),
++        solutionLines: [
++          `Total duration: ${first} + ${breakMin} + ${second} = ${total} minutes.`,
++          `Add ${total} minutes to ${minutesToClock(start)}.`,
++          `The finish time is ${minutesToClock(finish)}.`
++        ],
++        checkLine: "Do not forget to include the break if the question asks for the whole block.",
++        reflectionPrompt: "Which times were durations and which was a clock time?",
++        inputSpec: { type: "multi", fields: [
++          { key: "finish", label: "Finish time", kind: "text", placeholder: "e.g. 11:35" },
++          { key: "duration", label: "Whole block in minutes", kind: "number" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseClockTime(resp.finish) === finish % (24 * 60)) score += 1;
++          if (parseNumberInput(resp.duration) === total) score += 1;
++          const answerText = `${minutesToClock(finish)}; ${total} minutes`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "skipped_step",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `The block lasts ${total} minutes and finishes at ${minutesToClock(finish)}.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_triangle_base_angles",
++    label: "Theme-rich isosceles angle reasoning",
++    domain: "Geometry",
++    skillIds: ["geometry_angles", "error_analysis"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const vertex = pick(rng, [40, 50, 60, 70, 80, 100]);
++      const base = (180 - vertex) / 2;
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>A triangular sign at the ${theme.place} is isosceles.</p><p>The top angle is <strong>${vertex}°</strong>. The two base angles are equal.</p><p>What is each base angle, and why?</p>`,
++        solutionLines: [
++          `Angles in a triangle add to 180°.`,
++          `The two base angles share ${180 - vertex}° equally.`,
++          `Each base angle is ${180 - vertex} ÷ 2 = ${base}°.`
++        ],
++        checkLine: "The three angles should add to 180°.",
++        reflectionPrompt: "What did the word isosceles tell you?",
++        inputSpec: { type: "multi", fields: [
++          { key: "angle", label: "Each base angle", kind: "number" },
++          { key: "reason", label: "Reason", kind: "radio", options: [["equal", "The two base angles are equal and share the remaining angle total."], ["right", "Every triangle has two right angles."], ["point", "Angles around a point add to 360°."]] }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseNumberInput(resp.angle) === base) score += 1;
++          if (resp.reason === "equal") score += 1;
++          const answerText = `${base}°; equal base angles share the remaining total`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "angle_total_confusion",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `Each base angle is ${base}° because the remaining ${180 - vertex}° is shared equally.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_composite_area_remaining",
++    label: "Theme-rich composite area remaining",
++    domain: "Geometry and measure",
++    skillIds: ["perimeter_area", "add_sub_multistep"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const width = randInt(rng, 12, 24);
++      const height = randInt(rng, 8, 16);
++      const coverW = randInt(rng, 3, Math.floor(width / 2));
++      const coverH = randInt(rng, 3, Math.floor(height / 2));
++      const boardArea = width * height;
++      const coverArea = coverW * coverH;
++      const remaining = boardArea - coverArea;
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>A rectangular display board at the ${theme.place} is <strong>${width} cm</strong> by <strong>${height} cm</strong>.</p><p>A smaller notice measuring <strong>${coverW} cm</strong> by <strong>${coverH} cm</strong> is placed on top.</p><p>What area of the board is still visible?</p>`,
++        solutionLines: [
++          `Board area: ${width} × ${height} = ${boardArea} cm².`,
++          `Notice area: ${coverW} × ${coverH} = ${coverArea} cm².`,
++          `Visible area: ${boardArea} - ${coverArea} = ${remaining} cm².`
++        ],
++        checkLine: "Visible area must be less than the whole board area.",
++        reflectionPrompt: "Why did this need subtraction after multiplication?",
++        inputSpec: { type: "number", label: "Visible area in cm²" },
++        evaluate: (resp) => {
++          const answer = parseNumberInput(resp.answer);
++          if (answer === remaining) return mkResult({ correct: true, score: 2, maxScore: 2, feedbackShort: "Correct.", feedbackLong: `The visible area is ${remaining} cm².`, answerText: `${remaining} cm²` });
++          if (answer === boardArea || answer === coverArea) return mkResult({ correct: false, score: 1, maxScore: 2, misconception: "skipped_step", feedbackShort: "You found one area but not the visible area.", feedbackLong: `The visible area is ${remaining} cm².`, answerText: `${remaining} cm²` });
++          return mkResult({ correct: false, score: 0, maxScore: 2, misconception: "area_perimeter_confusion", feedbackShort: "Not quite.", feedbackLong: `The visible area is ${remaining} cm².`, answerText: `${remaining} cm²` });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_statistics_missing_mean",
++    label: "Theme-rich missing value from mean",
++    domain: "Statistics",
++    skillIds: ["statistics_reading", "inverse_missing"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const item = themeWord(rng, theme, "items");
++      const values = [randInt(rng, 12, 38), randInt(rng, 18, 42), randInt(rng, 20, 48)];
++      const missing = randInt(rng, 15, 50);
++      const mean = Math.round((values[0] + values[1] + values[2] + missing) / 4);
++      const adjustedMissing = mean * 4 - values[0] - values[1] - values[2];
++      if (adjustedMissing < 5 || adjustedMissing > 80) return this.generator(seed + 101);
++      const all = values.concat(adjustedMissing);
++      const range = Math.max(...all) - Math.min(...all);
++      const rows = [["1", String(values[0])], ["2", String(values[1])], ["3", String(values[2])], ["4", "?"]];
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>At the ${theme.place}, four groups collected ${item}. The mean number collected was <strong>${mean}</strong>.</p><p>Find the missing value and then find the range.</p>`,
++        visualHtml: tableHtml(["Group", item], rows),
++        solutionLines: [
++          `If the mean is ${mean} for 4 groups, the total is ${mean} × 4 = ${mean * 4}.`,
++          `The known total is ${values[0]} + ${values[1]} + ${values[2]} = ${values[0] + values[1] + values[2]}.`,
++          `Missing value: ${mean * 4} - ${values[0] + values[1] + values[2]} = ${adjustedMissing}. The range is ${range}.`
++        ],
++        checkLine: "Mean × number of values gives the total.",
++        reflectionPrompt: "How did you turn the mean back into a total?",
++        inputSpec: { type: "multi", fields: [
++          { key: "missing", label: "Missing value", kind: "number" },
++          { key: "range", label: "Range", kind: "number" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseNumberInput(resp.missing) === adjustedMissing) score += 1;
++          if (parseNumberInput(resp.range) === range) score += 1;
++          const answerText = `${adjustedMissing}; ${range}`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "data_misread",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `The missing value is ${adjustedMissing}, and the range is ${range}.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_logic_total_constraints",
++    label: "Theme-rich constraint equation",
++    domain: "Reasoning and checking",
++    skillIds: ["inverse_missing", "error_analysis", "reasonableness"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const first = themeWord(rng, theme, "items");
++      const second = pickDistinctThemeItem(rng, theme.items || [], first) || "tokens";
++      const secondAmount = randInt(rng, 6, 18);
++      const multiplier = pick(rng, [2, 3, 4]);
++      const extra = randInt(rng, 2, 9);
++      const firstAmount = secondAmount * multiplier + extra;
++      const total = firstAmount + secondAmount;
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>At the ${theme.place}, there are <strong>${total}</strong> ${first} and ${second} altogether.</p><p>There are <strong>${extra}</strong> more ${first} than <strong>${multiplier}</strong> times the number of ${second}.</p><p>How many ${first} and how many ${second} are there?</p>`,
++        solutionLines: [
++          `Test the structure: ${first} = ${multiplier} × ${second} + ${extra}.`,
++          `For ${secondAmount} ${second}, ${multiplier} × ${secondAmount} + ${extra} = ${firstAmount} ${first}.`,
++          `${firstAmount} + ${secondAmount} = ${total}, so the counts fit both clues.`
++        ],
++        checkLine: "The answer must satisfy both the total and the relationship clue.",
++        reflectionPrompt: "How did you check that both clues were true?",
++        inputSpec: { type: "multi", fields: [
++          { key: "first", label: `Number of ${first}`, kind: "number" },
++          { key: "second", label: `Number of ${second}`, kind: "number" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseNumberInput(resp.first) === firstAmount) score += 1;
++          if (parseNumberInput(resp.second) === secondAmount) score += 1;
++          const answerText = `${firstAmount}; ${secondAmount}`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "constraint_ignored",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `There are ${firstAmount} ${first} and ${secondAmount} ${second}.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_fdp_ordering_transfer",
++    label: "Theme-rich FDP ordering transfer",
++    domain: "Fractions, decimals and percentages",
++    skillIds: ["fdp_equiv", "fractions_compare", "percent_number"],
++    satsFriendly: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const cases = shuffle(rng, FDP_LINK_CASES).slice(0, 3).sort((a, b) => a.decimal - b.decimal);
++      const labels = shuffle(rng, [
++        `${fractionToText(cases[0].n, cases[0].d)}`,
++        `${cases[1].percent}%`,
++        `${formatDecimalString(cases[2].decimal)}`
++      ]);
++      const values = labels.map((label) => {
++        if (label.endsWith("%")) return Number(label.slice(0, -1)) / 100;
++        if (label.includes("/")) return parseFractionOrNumber(label);
++        return Number(label);
++      });
++      const smallestIndex = values.indexOf(Math.min(...values));
++      const greatestIndex = values.indexOf(Math.max(...values));
++      const letters = ["A", "B", "C"];
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p>Three groups at the ${theme.place} completed different proportions of a task.</p><p>Put the smallest and greatest proportions into the boxes.</p>`,
++        visualHtml: tableHtml(["Group", "Proportion completed"], [["A", labels[0]], ["B", labels[1]], ["C", labels[2]]]),
++        solutionLines: [
++          `Convert to comparable values: A = ${values[0]}, B = ${values[1]}, C = ${values[2]}.`,
++          `The smallest is ${letters[smallestIndex]}.`,
++          `The greatest is ${letters[greatestIndex]}.`
++        ],
++        checkLine: "Percentages, decimals and fractions can be compared after converting to the same form.",
++        reflectionPrompt: "Which form made the comparison easiest?",
++        inputSpec: { type: "multi", fields: [
++          { key: "smallest", label: "Smallest group", kind: "radio", options: [["A", "A"], ["B", "B"], ["C", "C"]] },
++          { key: "greatest", label: "Greatest group", kind: "radio", options: [["A", "A"], ["B", "B"], ["C", "C"]] }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (resp.smallest === letters[smallestIndex]) score += 1;
++          if (resp.greatest === letters[greatestIndex]) score += 1;
++          const answerText = `${letters[smallestIndex]}; ${letters[greatestIndex]}`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "fraction_misconception",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `The smallest is ${letters[smallestIndex]}, and the greatest is ${letters[greatestIndex]}.`,
++            answerText
++          });
++        }
++      });
++    }
++  },
++  {
++    id: "theme_extra_credit_crossing_rules",
++    label: "Extra credit: crossing rules",
++    domain: "Reasoning and checking",
++    skillIds: ["ratio_scale", "statistics_reading", "reasonableness"],
++    satsFriendly: false,
++    extraCredit: true,
++    contextThemed: true,
++    generator(seed) {
++      const rng = mulberry32(seed);
++      const theme = contextTheme(seed, this.id);
++      const startA = randInt(rng, 8, 20);
++      const stepA = randInt(rng, 5, 9);
++      const startB = startA + randInt(rng, 15, 35);
++      const stepB = randInt(rng, 1, 4);
++      let day = 1;
++      while (startA + (day - 1) * stepA <= startB + (day - 1) * stepB) day += 1;
++      const valueA = startA + (day - 1) * stepA;
++      const valueB = startB + (day - 1) * stepB;
++      const rows = [["1", String(startA), String(startB)], ["2", String(startA + stepA), String(startB + stepB)], ["3", String(startA + 2 * stepA), String(startB + 2 * stepB)]];
++      return makeBaseQuestion(this, seed, {
++        contextThemeId: theme.id,
++        marks: 2,
++        stemHtml: `<p><strong>Extra credit.</strong> Two totals at the ${theme.place} grow by fixed amounts each day.</p><p>On which day does Total A first become greater than Total B, and what is Total A on that day?</p>`,
++        visualHtml: tableHtml(["Day", "Total A", "Total B"], rows),
++        solutionLines: [
++          `Total A increases by ${stepA} each day, while Total B increases by ${stepB}.`,
++          `Checking the difference each day, A first becomes greater than B on day ${day}.`,
++          `Total A on day ${day} is ${valueA}.`
++        ],
++        checkLine: "A starts lower but grows faster, so compare the rules, not just the first row.",
++        reflectionPrompt: "How could you jump ahead without writing every row?",
++        inputSpec: { type: "multi", fields: [
++          { key: "day", label: "First day A is greater", kind: "number" },
++          { key: "valueA", label: "Total A on that day", kind: "number" }
++        ] },
++        evaluate: (resp) => {
++          let score = 0;
++          if (parseNumberInput(resp.day) === day) score += 1;
++          if (parseNumberInput(resp.valueA) === valueA) score += 1;
++          const answerText = `Day ${day}; ${valueA}`;
++          return mkResult({
++            correct: score === 2, score, maxScore: 2,
++            misconception: score === 2 ? null : "scaling_confusion",
++            feedbackShort: score === 2 ? "Correct." : (score ? "One part is right." : "Not quite."),
++            feedbackLong: `A first becomes greater on day ${day}, when Total A is ${valueA} and Total B is ${valueB}.`,
++            answerText
++          });
++        }
++      });
++    }
++  }
++];
++
++registerExtraTemplates(WORLD_CLASS_REASONING_TEMPLATES);
++
++
+ const SATS_SET_BLUEPRINTS = {
+       8: [
+         ["pv_rounding", "pv_compare"],
+diff --git a/shared/reasoning/metadata.js b/shared/reasoning/metadata.js
+index 0572a9c0..f1e728b1 100644
+--- a/shared/reasoning/metadata.js
++++ b/shared/reasoning/metadata.js
+@@ -1,4 +1,4 @@
+-export const REASONING_CONTENT_RELEASE_ID = 'reasoning-variety-hardening-2026-05-13';
++export const REASONING_CONTENT_RELEASE_ID = 'reasoning-variety-expansion-v2-2026-05-13';
+ 
+ export const REASONING_MODES = Object.freeze(['smart', 'skill', 'trouble', 'worked', 'faded', 'sats', 'satsset']);
+ 
+@@ -80,45 +80,45 @@ export const REASONING_QUESTION_TYPE_LABELS = Object.freeze({
+ });
+ 
+ const PUBLIC_REASONING_CONTENT_SUMMARY = Object.freeze({
+-  "releaseId": "reasoning-variety-hardening-2026-05-13",
+-  "templateCount": 124,
++  "releaseId": "reasoning-variety-expansion-v2-2026-05-13",
++  "templateCount": 138,
+   "skillCount": 17,
+   "misconceptionCount": 20,
+-  "satsFriendlyCount": 123,
+-  "contextThemeCount": 12,
+-  "themedTemplateCount": 14,
+-  "extraCreditTemplateCount": 1,
++  "satsFriendlyCount": 136,
++  "contextThemeCount": 23,
++  "themedTemplateCount": 28,
++  "extraCreditTemplateCount": 2,
+   "domains": {
+-    "Number and place value": 11,
+-    "Calculation": 11,
+-    "Fractions": 11,
+-    "Fractions, decimals and percentages": 11,
+-    "Ratio and proportion": 11,
+-    "Measure": 12,
+-    "Geometry and measure": 11,
+-    "Geometry": 11,
+-    "Statistics": 11,
+-    "Reasoning and checking": 13,
+-    "Measure and money": 11
++    "Number and place value": 12,
++    "Calculation": 13,
++    "Fractions": 12,
++    "Fractions, decimals and percentages": 12,
++    "Ratio and proportion": 12,
++    "Measure": 14,
++    "Geometry and measure": 12,
++    "Geometry": 12,
++    "Statistics": 12,
++    "Reasoning and checking": 15,
++    "Measure and money": 12
+   },
+   "skills": {
+-    "pv_rounding": 7,
+-    "reasonableness": 22,
+-    "pv_compare": 9,
+-    "inverse_missing": 12,
+-    "mul_div_structure": 19,
+-    "add_sub_multistep": 42,
+-    "fractions_quantity": 7,
+-    "fractions_compare": 4,
+-    "percent_number": 5,
+-    "fdp_equiv": 10,
+-    "ratio_scale": 12,
+-    "unit_conversion": 7,
+-    "time_elapsed": 6,
+-    "perimeter_area": 11,
+-    "error_analysis": 20,
+-    "geometry_angles": 11,
+-    "statistics_reading": 12
++    "pv_rounding": 8,
++    "reasonableness": 27,
++    "pv_compare": 10,
++    "inverse_missing": 15,
++    "mul_div_structure": 22,
++    "add_sub_multistep": 45,
++    "fractions_quantity": 8,
++    "fractions_compare": 5,
++    "percent_number": 7,
++    "fdp_equiv": 12,
++    "ratio_scale": 14,
++    "unit_conversion": 9,
++    "time_elapsed": 7,
++    "perimeter_area": 12,
++    "error_analysis": 22,
++    "geometry_angles": 12,
++    "statistics_reading": 14
+   },
+   "modes": [
+     "smart",
+diff --git a/tests/reasoning-content-contract.test.js b/tests/reasoning-content-contract.test.js
+index faf4c476..4605ff73 100644
+--- a/tests/reasoning-content-contract.test.js
++++ b/tests/reasoning-content-contract.test.js
+@@ -27,17 +27,52 @@ function labelsOverlap(first, second) {
+   return a === b || a.endsWith(` ${b}`) || b.endsWith(` ${a}`);
+ }
+ 
+-test('reasoning content bank exposes 124 safe template families without leaking markers to the browser metadata', () => {
++function responseFromPlaceholders(inputSpec) {
++  if (!inputSpec || typeof inputSpec !== 'object') return null;
++  if (inputSpec.type === 'multi' && Array.isArray(inputSpec.fields)) {
++    const response = {};
++    let hasPlaceholder = false;
++    for (const field of inputSpec.fields) {
++      const placeholder = typeof field?.placeholder === 'string' ? field.placeholder.trim() : '';
++      response[field.key] = placeholder;
++      if (placeholder) hasPlaceholder = true;
++    }
++    return hasPlaceholder ? response : null;
++  }
++  if (typeof inputSpec.placeholder === 'string' && inputSpec.placeholder.trim()) {
++    return { answer: inputSpec.placeholder.trim() };
++  }
++  return null;
++}
++
++test('reasoning content bank exposes 138 safe template families without leaking markers to the browser metadata', () => {
+   const privateSummary = reasoningContentSummary();
+   const publicSummary = publicReasoningContentSummary();
+-  assert.equal(privateSummary.templateCount, 124);
++  assert.equal(privateSummary.templateCount, 138);
+   assert.equal(privateSummary.skillCount, 17);
+-  assert.equal(privateSummary.satsFriendlyCount, 123);
++  assert.equal(privateSummary.satsFriendlyCount, 136);
+   assert.deepEqual(publicSummary, privateSummary);
+-  assert.equal(REASONING_TEMPLATES.length, 124);
++  assert.equal(REASONING_TEMPLATES.length, 138);
+   assert.equal(typeof publicSummary.templateCount, 'number');
+ });
+ 
++test('reasoning safe input placeholders do not reveal generated answers before marking', () => {
++  const failures = [];
++  for (const template of REASONING_TEMPLATES) {
++    for (let seed = 1; seed <= 20; seed += 1) {
++      const question = generateReasoningQuestion(template.id, seed);
++      const safe = safeReasoningQuestion(question);
++      const placeholderResponse = responseFromPlaceholders(safe.inputSpec);
++      if (!placeholderResponse) continue;
++      const result = evaluateReasoningQuestion(question, placeholderResponse);
++      if (Number(result.score) > 0) {
++        failures.push(`${template.id}:${seed}: placeholder response scored ${result.score}/${result.maxScore}`);
++      }
++    }
++  }
++  assert.deepEqual(failures, []);
++});
++
+ test('reasoning templates generate, mark and serialise cleanly across smoke seeds', () => {
+   const failures = [];
+   for (const template of REASONING_TEMPLATES) {
+@@ -85,17 +120,19 @@ test('reasoning generated templates keep stable item ids and do not emit malform
+ 
+ test('reasoning themed expansion exposes broad context variety and keeps extra credit out of SATs sets', () => {
+   const summary = reasoningContentSummary();
+-  assert.equal(summary.contextThemeCount, 12);
+-  assert.equal(summary.themedTemplateCount, 14);
+-  assert.equal(summary.extraCreditTemplateCount, 1);
++  assert.equal(summary.contextThemeCount, 23);
++  assert.equal(summary.themedTemplateCount, 28);
++  assert.equal(summary.extraCreditTemplateCount, 2);
+ 
+   const extraCredit = REASONING_TEMPLATES.filter((template) => template.extraCredit);
+-  assert.equal(extraCredit.length, 1);
+-  assert.equal(extraCredit[0].satsFriendly, false);
++  assert.equal(extraCredit.length, 2);
++  assert.ok(extraCredit.every((template) => template.satsFriendly === false));
+ 
+   const themedTemplateIds = REASONING_TEMPLATES.filter((template) => template.contextThemed).map((template) => template.id);
+   assert.ok(themedTemplateIds.includes('theme_money_multi_buy_budget'));
+   assert.ok(themedTemplateIds.includes('theme_extra_credit_rate_pattern'));
++  assert.ok(themedTemplateIds.includes('theme_statistics_missing_mean'));
++  assert.ok(themedTemplateIds.includes('theme_extra_credit_crossing_rules'));
+ 
+   const themeIds = new Set();
+   for (let seed = 1; seed <= 60; seed += 1) {
+@@ -157,3 +194,38 @@ test('reasoning themed quantity stories stay possible and unambiguous', () => {
+   }
+   assert.deepEqual(failures, []);
+ });
++
++
++test('reasoning world-class themed expansion covers every domain with validated new structures', () => {
++  const ids = [
++    'theme_rounding_range_inventory',
++    'theme_inverse_two_step_boxes',
++    'theme_remainder_transport_decision',
++    'theme_fraction_measure_leftover',
++    'theme_decimal_measure_compare',
++    'theme_percent_sale_budget',
++    'theme_ratio_total_split',
++    'theme_timetable_total_duration',
++    'theme_triangle_base_angles',
++    'theme_composite_area_remaining',
++    'theme_statistics_missing_mean',
++    'theme_logic_total_constraints',
++    'theme_fdp_ordering_transfer',
++    'theme_extra_credit_crossing_rules',
++  ];
++  const templateById = new Map(REASONING_TEMPLATES.map((template) => [template.id, template]));
++  for (const id of ids) {
++    const template = templateById.get(id);
++    assert.ok(template, `${id} is registered`);
++    assert.equal(template.contextThemed, true, `${id} is context-themed`);
++    for (let seed = 1; seed <= 20; seed += 1) {
++      const question = generateReasoningQuestion(id, seed);
++      assert.equal(question.itemId, `${id}:${seed}`);
++      assert.ok(question.contextThemeId, `${id}:${seed} has a context theme`);
++      assert.ok(question.stemHtml.includes('<p>'), `${id}:${seed} has learner-facing stem html`);
++      assert.doesNotMatch(question.stemHtml, /\b(?:boxe|benche|batche|classe)\b/i, `${id}:${seed} avoids broken singular wording`);
++      assert.ok(Array.isArray(question.solutionLines) && question.solutionLines.length >= 2, `${id}:${seed} has worked reasoning`);
++      assert.equal(Number.isFinite(Number(evaluateReasoningQuestion(question, {}).score)), true, `${id}:${seed} marks safely`);
++    }
++  }
++});
+diff --git a/tests/reasoning-engine-rewards.test.js b/tests/reasoning-engine-rewards.test.js
+index 1d63689b..060704c0 100644
+--- a/tests/reasoning-engine-rewards.test.js
++++ b/tests/reasoning-engine-rewards.test.js
+@@ -48,7 +48,7 @@ test('server reasoning engine returns exact due retry questions and emits eviden
+     'reasoning.evidence-earned',
+     'reasoning.session-completed',
+   ]);
+-  assert.match(marked.events[1].masteryKey, /^reasoning-variety-hardening-2026-05-13:reasoning-evidence:pv_rounding:/);
++  assert.match(marked.events[1].masteryKey, /^reasoning-variety-expansion-v2-2026-05-13:reasoning-evidence:pv_rounding:/);
+ });
+ 
+ test('reasoning reward projection updates direct and grand monsters with independent state ids', () => {
+@@ -61,8 +61,8 @@ test('reasoning reward projection updates direct and grand monsters with indepen
+       learnerId: 'learner-1',
+       skillId: 'pv_rounding',
+       itemId: 'pv_rounding_context:1',
+-      contentReleaseId: 'reasoning-variety-hardening-2026-05-13',
+-      masteryKey: 'reasoning-variety-hardening-2026-05-13:reasoning-evidence:pv_rounding:pv_rounding_context:1:independent',
++      contentReleaseId: 'reasoning-variety-expansion-v2-2026-05-13',
++      masteryKey: 'reasoning-variety-expansion-v2-2026-05-13:reasoning-evidence:pv_rounding:pv_rounding_context:1:independent',
+     }],
+   });
+   const codex = projected.gameState['monster-codex'];
+@@ -323,7 +323,7 @@ test('duplicate Reasoning evidence keys update practice but do not re-emit evide
+   const seed = 1;
+   const question = generateReasoningQuestion(templateId, seed);
+   const answer = findNumericCorrectAnswer(question);
+-  const masteryKey = `reasoning-variety-hardening-2026-05-13:reasoning-evidence:pv_rounding:${templateId}:${seed}:independent`;
++  const masteryKey = `reasoning-variety-expansion-v2-2026-05-13:reasoning-evidence:pv_rounding:${templateId}:${seed}:independent`;
+   const engine = createServerReasoningEngine({ now: () => 40_000, random: () => 0 });
+   const started = engine.apply({
+     learnerId: 'learner-duplicate',
+@@ -657,3 +657,66 @@ test('Reasoning scheduler avoids obvious template repeats and salts item seeds i
+   assert.ok(new Set(skillRefs.map((ref) => ref.templateId)).size >= 7);
+   assert.equal(new Set(skillRefs.map((ref) => ref.itemId)).size, skillRefs.length);
+ });
++
++
++test('Reasoning scheduler gates extra-credit templates until the learner has enough independent evidence', () => {
++  const engine = createServerReasoningEngine({ now: () => 80_000, random: () => 0.999999 });
++  const cold = engine.apply({
++    learnerId: 'learner-extra-cold',
++    command: 'start-session',
++    payload: { mode: 'smart', roundLength: 12 },
++    requestId: 'extra-cold-start',
++  });
++  const coldExtra = cold.state.session.questionRefs.filter((ref) => generateReasoningQuestion(ref.templateId, ref.seed)?.extraCredit);
++  assert.equal(coldExtra.length, 0, 'new learners should not be surprised with beyond-KS2 extra credit');
++
++  const warmData = {
++    events: Array.from({ length: 24 }, (_, index) => ({
++      timestamp: new Date(70_000 + index).toISOString(),
++      templateId: 'pv_rounding_context',
++      itemId: `pv_rounding_context:${index + 1}`,
++      skillIds: ['pv_rounding'],
++      correct: true,
++      supportLevel: 0,
++      score: 1,
++      maxScore: 1,
++    })),
++  };
++  const warm = engine.apply({
++    learnerId: 'learner-extra-warm',
++    subjectRecord: { data: warmData },
++    command: 'start-session',
++    payload: { mode: 'smart', roundLength: 12 },
++    requestId: 'extra-warm-start',
++  });
++  const warmExtra = warm.state.session.questionRefs.filter((ref) => generateReasoningQuestion(ref.templateId, ref.seed)?.extraCredit);
++  assert.ok(warmExtra.length >= 1, 'ready learners can receive capped stretch practice');
++});
++
++test('Reasoning scheduler rotates context themes inside one round when themed templates are selected', () => {
++  const engine = createServerReasoningEngine({ now: () => 90_000, random: () => 0.999999 });
++  const readyData = {
++    events: Array.from({ length: 24 }, (_, index) => ({
++      timestamp: new Date(60_000 + index).toISOString(),
++      templateId: 'pv_rounding_context',
++      itemId: `pv_rounding_context:${index + 1}`,
++      skillIds: ['pv_rounding'],
++      correct: true,
++      supportLevel: 0,
++      score: 1,
++      maxScore: 1,
++    })),
++  };
++  const started = engine.apply({
++    learnerId: 'learner-theme-rotate',
++    subjectRecord: { data: readyData },
++    command: 'start-session',
++    payload: { mode: 'smart', roundLength: 12 },
++    requestId: 'theme-rotate-start',
++  });
++  const themeIds = started.state.session.questionRefs
++    .map((ref) => generateReasoningQuestion(ref.templateId, ref.seed)?.contextThemeId || '')
++    .filter(Boolean);
++  assert.ok(themeIds.length >= 8, `expected many themed questions in adversarial high-roll session, saw ${themeIds.length}`);
++  assert.equal(new Set(themeIds).size, themeIds.length, `theme ids should not repeat in one round: ${themeIds.join(', ')}`);
++});
+diff --git a/worker/src/subjects/reasoning/engine.js b/worker/src/subjects/reasoning/engine.js
+index e8a82c82..337a016c 100644
+--- a/worker/src/subjects/reasoning/engine.js
++++ b/worker/src/subjects/reasoning/engine.js
+@@ -306,6 +306,14 @@ function weakSkillIds(data, nowValue) {
+   });
+ }
+ 
++function extraCreditReady(data, nowValue) {
++  const events = Array.isArray(data?.events) ? data.events : [];
++  const independentCorrect = events.filter((event) => event?.correct && !(Number(event?.supportLevel) > 0)).length;
++  const securedSkills = SKILL_IDS.filter((skillId) => nodeStatus(data.skills?.[skillId] || defaultNode(), nowValue) === 'secured').length;
++  const totalAttempts = events.length;
++  return independentCorrect >= 20 || securedSkills >= 3 || (totalAttempts >= 30 && independentCorrect / Math.max(1, totalAttempts) >= 0.8);
++}
++
+ function takeDueRetry(data, focusSkillId, nowValue) {
+   const due = data.retryQueue
+     .filter((entry) => entry.dueAt <= nowValue && (!focusSkillId || (entry.skillIds || []).includes(focusSkillId)))
+@@ -333,7 +341,9 @@ function unspentCandidatePool(candidates, usedTemplateIds = []) {
+ 
+ function chooseTemplate(data, prefs, mode, random, nowValue, usedTemplateIds = []) {
+   const weakSet = new Set(weakSkillIds(data, nowValue).slice(0, 6));
++  const allowExtraCredit = extraCreditReady(data, nowValue);
+   let candidates = REASONING_TEMPLATES.filter((template) => {
++    if (template.extraCredit && !allowExtraCredit) return false;
+     if (prefs.focusSkillId && mode === 'skill') return template.skillIds.includes(prefs.focusSkillId);
+     if (mode === 'trouble') return template.skillIds.some((id) => weakSet.has(id));
+     if ((mode === 'sats' || mode === 'satsset') && !template.satsFriendly) return false;
+@@ -371,6 +381,33 @@ function buildQuestionRef(template, seed) {
+   return { templateId: template.id, seed, itemId: `${template.id}:${seed}` };
+ }
+ 
++function seedCandidate(baseSeed, attempt, salt = 0) {
++  const base = Number(baseSeed) || 1;
++  return (((base + attempt * 7919 + (Number(salt) || 0) * 104729 - 1) % 1_000_000_000) + 1);
++}
++
++function buildThemeAwareQuestionRef(template, seed, usedThemeIds = [], salt = 0) {
++  if (!template?.contextThemed || !Array.isArray(usedThemeIds)) return buildQuestionRef(template, seed);
++  let fallback = buildQuestionRef(template, seed);
++  let fallbackThemeId = '';
++  for (let attempt = 0; attempt < 48; attempt += 1) {
++    const candidateSeed = seedCandidate(seed, attempt, salt);
++    const ref = buildQuestionRef(template, candidateSeed);
++    const question = questionFromRef(ref);
++    const themeId = question?.contextThemeId || '';
++    if (attempt === 0) {
++      fallback = ref;
++      fallbackThemeId = themeId;
++    }
++    if (!themeId || !usedThemeIds.includes(themeId)) {
++      if (themeId) usedThemeIds.push(themeId);
++      return ref;
++    }
++  }
++  if (fallbackThemeId) usedThemeIds.push(fallbackThemeId);
++  return fallback;
++}
++
+ function publicQuestionId(index) {
+   return `q${index + 1}`;
+ }
+@@ -413,18 +450,20 @@ function buildQuestionRefs(data, prefs, { nowValue, random }) {
+       ? Array.from({ length: size }, () => [prefs.focusSkillId])
+       : (REASONING_SATS_SET_BLUEPRINTS[size] || Array.from({ length: size }, () => []));
+     const used = [];
++    const usedThemeIds = [];
+     return Array.from({ length: size }, (_, index) => {
+       const template = chooseTemplateForSatsSlot(data, blueprint[index] || [], random, nowValue, used);
+       used.push(template.id);
+-      return buildQuestionRef(template, newSeed(random, index + 1));
++      return buildThemeAwareQuestionRef(template, newSeed(random, index + 1), usedThemeIds, index + 1);
+     });
+   }
+   const length = mode === 'sats' ? 1 : prefs.roundLength;
+   const used = [];
++  const usedThemeIds = [];
+   return Array.from({ length }, (_, index) => {
+     const template = chooseTemplate(data, prefs, mode, random, nowValue, used);
+     used.push(template.id);
+-    return buildQuestionRef(template, newSeed(random, index + 1));
++    return buildThemeAwareQuestionRef(template, newSeed(random, index + 1), usedThemeIds, index + 1);
+   });
+ }
+ 

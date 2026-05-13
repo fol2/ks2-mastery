@@ -1,0 +1,14 @@
+{
+  "releaseId": "reasoning-variety-expansion-v2-2026-05-13",
+  "templateCount": 138,
+  "satsFriendlyCount": 136,
+  "contextThemeCount": 23,
+  "themedTemplateCount": 28,
+  "extraCreditTemplateCount": 2,
+  "seedsPerTemplate": 300,
+  "generated": 41400,
+  "failureCount": 0,
+  "failures": [],
+  "distinctThemeIdsSeen": 23,
+  "lowThemeCoverage": []
+}

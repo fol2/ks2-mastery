@@ -1,0 +1,310 @@
+TAP version 13
+# Subtest: hero mode treats reasoning as a ready subject with provider and launch adapter
+ok 1 - hero mode treats reasoning as a ready subject with provider and launch adapter
+  ---
+  duration_ms: 0.5632
+  type: 'test'
+  ...
+# Subtest: hero reasoning provider returns task envelopes from the reasoning read model
+ok 2 - hero reasoning provider returns task envelopes from the reasoning read model
+  ---
+  duration_ms: 0.2037
+  type: 'test'
+  ...
+# Subtest: reasoning content bank exposes 138 safe template families without leaking markers to the browser metadata
+ok 3 - reasoning content bank exposes 138 safe template families without leaking markers to the browser metadata
+  ---
+  duration_ms: 1.2176
+  type: 'test'
+  ...
+# Subtest: reasoning safe input placeholders do not reveal generated answers before marking
+ok 4 - reasoning safe input placeholders do not reveal generated answers before marking
+  ---
+  duration_ms: 52.6267
+  type: 'test'
+  ...
+# Subtest: reasoning templates generate, mark and serialise cleanly across smoke seeds
+ok 5 - reasoning templates generate, mark and serialise cleanly across smoke seeds
+  ---
+  duration_ms: 9.704
+  type: 'test'
+  ...
+# Subtest: reasoning generated templates keep stable item ids and do not emit malformed maths text
+ok 6 - reasoning generated templates keep stable item ids and do not emit malformed maths text
+  ---
+  duration_ms: 383.9872
+  type: 'test'
+  ...
+# Subtest: reasoning themed expansion exposes broad context variety and keeps extra credit out of SATs sets
+ok 7 - reasoning themed expansion exposes broad context variety and keeps extra credit out of SATs sets
+  ---
+  duration_ms: 0.3287
+  type: 'test'
+  ...
+# Subtest: reasoning mixed-unit gap template never asks for a negative more-needed amount
+ok 8 - reasoning mixed-unit gap template never asks for a negative more-needed amount
+  ---
+  duration_ms: 22.5324
+  type: 'test'
+  ...
+# Subtest: reasoning themed quantity stories stay possible and unambiguous
+ok 9 - reasoning themed quantity stories stay possible and unambiguous
+  ---
+  duration_ms: 25.5143
+  type: 'test'
+  ...
+# Subtest: reasoning world-class themed expansion covers every domain with validated new structures
+ok 10 - reasoning world-class themed expansion covers every domain with validated new structures
+  ---
+  duration_ms: 1.5671
+  type: 'test'
+  ...
+# Subtest: server reasoning engine returns exact due retry questions and emits evidence on independent success
+ok 11 - server reasoning engine returns exact due retry questions and emits evidence on independent success
+  ---
+  duration_ms: 16.0978
+  type: 'test'
+  ...
+# Subtest: reasoning reward projection updates direct and grand monsters with independent state ids
+ok 12 - reasoning reward projection updates direct and grand monsters with independent state ids
+  ---
+  duration_ms: 1.1106
+  type: 'test'
+  ...
+# Subtest: server reasoning engine uses the injected command clock for support and session records
+ok 13 - server reasoning engine uses the injected command clock for support and session records
+  ---
+  duration_ms: 2.8334
+  type: 'test'
+  ...
+# Subtest: reasoning first-wrong feedback gives only a nudge until support is requested
+ok 14 - reasoning first-wrong feedback gives only a nudge until support is requested
+  ---
+  duration_ms: 2.2887
+  type: 'test'
+  ...
+# Subtest: reasoning support requests are blocked before effort, in strict mode, and after marking
+ok 15 - reasoning support requests are blocked before effort, in strict mode, and after marking
+  ---
+  duration_ms: 4.9742
+  type: 'test'
+  ...
+# Subtest: worked and faded Reasoning modes expose seeded support without marking as independent
+ok 16 - worked and faded Reasoning modes expose seeded support without marking as independent
+  ---
+  duration_ms: 2.5739
+  type: 'test'
+  ...
+# Subtest: reasoning support command actions send stale-session and stale-question guards
+ok 17 - reasoning support command actions send stale-session and stale-question guards
+  ---
+  duration_ms: 0.6451
+  type: 'test'
+  ...
+# Subtest: reasoning command actions include optional working for single and list responses
+ok 18 - reasoning command actions include optional working for single and list responses
+  ---
+  duration_ms: 10.9132
+  type: 'test'
+  ...
+# Subtest: reasoning read model redacts legacy persisted first-wrong result fields
+ok 19 - reasoning read model redacts legacy persisted first-wrong result fields
+  ---
+  duration_ms: 1.1706
+  type: 'test'
+  ...
+# Subtest: duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+ok 20 - duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+  ---
+  duration_ms: 2.4994
+  type: 'test'
+  ...
+# Subtest: Reasoning read models keep domain and skill hints hidden until marking or support
+ok 21 - Reasoning read models keep domain and skill hints hidden until marking or support
+  ---
+  duration_ms: 2.6349
+  type: 'test'
+  ...
+# Subtest: Reasoning first-wrong feedback question stays redacted before support
+ok 22 - Reasoning first-wrong feedback question stays redacted before support
+  ---
+  duration_ms: 0.9726
+  type: 'test'
+  ...
+# Subtest: Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+ok 23 - Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+  ---
+  duration_ms: 1.1907
+  type: 'test'
+  ...
+# Subtest: Reasoning list responses can be cleared and working is preserved in state and events
+ok 24 - Reasoning list responses can be cleared and working is preserved in state and events
+  ---
+  duration_ms: 2.3081
+  type: 'test'
+  ...
+# Subtest: supported Reasoning success updates practice but does not award monster evidence
+ok 25 - supported Reasoning success updates practice but does not award monster evidence
+  ---
+  duration_ms: 2.9663
+  type: 'test'
+  ...
+# Subtest: Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+ok 26 - Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+  ---
+  duration_ms: 1.6643
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reasoning command handlers
+ok 27 - worker subject runtime wires reasoning command handlers
+  ---
+  duration_ms: 2.0113
+  type: 'test'
+  ...
+# Subtest: Reasoning scheduler avoids obvious template repeats and salts item seeds inside one round
+ok 28 - Reasoning scheduler avoids obvious template repeats and salts item seeds inside one round
+  ---
+  duration_ms: 6.0531
+  type: 'test'
+  ...
+# Subtest: Reasoning scheduler gates extra-credit templates until the learner has enough independent evidence
+ok 29 - Reasoning scheduler gates extra-credit templates until the learner has enough independent evidence
+  ---
+  duration_ms: 7.2457
+  type: 'test'
+  ...
+# Subtest: Reasoning scheduler rotates context themes inside one round when themed templates are selected
+ok 30 - Reasoning scheduler rotates context themes inside one round when themed templates are selected
+  ---
+  duration_ms: 4.5149
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke helper derives correct responses for the promoted template bank
+ok 31 - reasoning production smoke helper derives correct responses for the promoted template bank
+  ---
+  duration_ms: 1881.0103
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke helper validates content summary and marker redaction
+ok 32 - reasoning production smoke helper validates content summary and marker redaction
+  ---
+  duration_ms: 1.5695
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke default report path is not tied to a stale dated release
+ok 33 - reasoning production smoke default report path is not tied to a stale dated release
+  ---
+  duration_ms: 0.1638
+  type: 'test'
+  ...
+# Subtest: reasoning production smoke helper parses deterministic template ids
+ok 34 - reasoning production smoke helper parses deterministic template ids
+  ---
+  duration_ms: 0.2072
+  type: 'test'
+  ...
+# Subtest: reasoning reset-learner command resets state and data from an active session
+ok 35 - reasoning reset-learner command resets state and data from an active session
+  ---
+  duration_ms: 3.319
+  type: 'test'
+  ...
+# Subtest: reasoning module is live and not a placeholder
+ok 36 - reasoning module is live and not a placeholder
+  ---
+  duration_ms: 0.5464
+  type: 'test'
+  ...
+# Subtest: subject command action handler sends mapped subject commands
+ok 37 - subject command action handler sends mapped subject commands
+  ---
+  duration_ms: 1.2301
+  type: 'test'
+  ...
+# Subtest: subject command action handler blocks mutations while read-only
+ok 38 - subject command action handler blocks mutations while read-only
+  ---
+  duration_ms: 0.2252
+  type: 'test'
+  ...
+# Subtest: subject command action handler dedupes in-flight session commands
+ok 39 - subject command action handler dedupes in-flight session commands
+  ---
+  duration_ms: 0.1864
+  type: 'test'
+  ...
+# Subtest: subject command action handler reports command failures
+ok 40 - subject command action handler reports command failures
+  ---
+  duration_ms: 0.2093
+  type: 'test'
+  ...
+# Subtest: punctuation browser command action keeps choiceIndex parsing strict
+ok 41 - punctuation browser command action keeps choiceIndex parsing strict
+  ---
+  duration_ms: 0.5223
+  type: 'test'
+  ...
+# Subtest: punctuation browser command action binds submits to the visible item context
+ok 42 - punctuation browser command action binds submits to the visible item context
+  ---
+  duration_ms: 0.195
+  type: 'test'
+  ...
+# Subtest: punctuation start command action preserves explicit focus mode and round length
+ok 43 - punctuation start command action preserves explicit focus mode and round length
+  ---
+  duration_ms: 0.0968
+  type: 'test'
+  ...
+# Subtest: punctuation start command action passes guided skill only when present
+ok 44 - punctuation start command action passes guided skill only when present
+  ---
+  duration_ms: 0.0709
+  type: 'test'
+  ...
+# Subtest: punctuation round-length command action persists setup lengths through save-prefs
+ok 45 - punctuation round-length command action persists setup lengths through save-prefs
+  ---
+  duration_ms: 0.48
+  type: 'test'
+  ...
+# Subtest: punctuation round-length command action rejects non-setup and off-enum values
+ok 46 - punctuation round-length command action rejects non-setup and off-enum values
+  ---
+  duration_ms: 0.2846
+  type: 'test'
+  ...
+# Subtest: punctuation guidance display command actions persist setup booleans through save-prefs
+ok 47 - punctuation guidance display command actions persist setup booleans through save-prefs
+  ---
+  duration_ms: 0.3134
+  type: 'test'
+  ...
+# Subtest: punctuation guidance display command action rejects non-setup and unknown prefs
+ok 48 - punctuation guidance display command action rejects non-setup and unknown prefs
+  ---
+  duration_ms: 0.1326
+  type: 'test'
+  ...
+# Subtest: punctuation context-pack action sends only safe request metadata
+ok 49 - punctuation context-pack action sends only safe request metadata
+  ---
+  duration_ms: 0.0603
+  type: 'test'
+  ...
+# Subtest: punctuation context-pack action remains available while practice is read-only
+ok 50 - punctuation context-pack action remains available while practice is read-only
+  ---
+  duration_ms: 0.0993
+  type: 'test'
+  ...
+1..50
+# tests 50
+# suites 0
+# pass 50
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1973.2405

@@ -1,0 +1,6 @@
+patching file scripts/reasoning-production-smoke.mjs
+patching file shared/reasoning/content.js
+patching file shared/reasoning/metadata.js
+patching file tests/reasoning-content-contract.test.js
+patching file tests/reasoning-engine-rewards.test.js
+patching file worker/src/subjects/reasoning/engine.js

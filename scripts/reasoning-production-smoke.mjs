@@ -182,10 +182,10 @@ export function parseReasoningQuestionId(itemId) {
 
 export function assertReasoningContentSummary(summary, label = 'reasoning.content') {
   assert.equal(summary?.releaseId, REASONING_CONTENT_RELEASE_ID, `${label}.releaseId mismatch.`);
-  assert.equal(Number(summary?.templateCount), 124, `${label}.templateCount mismatch.`);
+  assert.equal(Number(summary?.templateCount), 138, `${label}.templateCount mismatch.`);
   assert.equal(Number(summary?.skillCount), 17, `${label}.skillCount mismatch.`);
   assert.equal(Number(summary?.misconceptionCount), 20, `${label}.misconceptionCount mismatch.`);
-  assert.equal(Number(summary?.satsFriendlyCount), 123, `${label}.satsFriendlyCount mismatch.`);
+  assert.equal(Number(summary?.satsFriendlyCount), 136, `${label}.satsFriendlyCount mismatch.`);
   assert.deepEqual(summary, reasoningContentSummary(), `${label} no longer matches the local Reasoning content summary.`);
 }
 

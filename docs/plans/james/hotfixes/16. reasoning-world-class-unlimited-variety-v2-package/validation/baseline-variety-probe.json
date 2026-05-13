@@ -1,0 +1,76 @@
+{
+  "cold": {
+    "questionCount": 12,
+    "uniqueTemplates": 12,
+    "themedQuestions": 12,
+    "uniqueThemes": 8,
+    "themeIds": [
+      "school_fair",
+      "train_station",
+      "museum_trip",
+      "science_lab",
+      "community_cafe",
+      "robotics_club",
+      "music_festival",
+      "eco_club",
+      "train_station",
+      "music_festival",
+      "train_station",
+      "eco_club"
+    ],
+    "extraCreditIds": [
+      "theme_extra_credit_rate_pattern"
+    ],
+    "templateIds": [
+      "theme_extra_credit_rate_pattern",
+      "theme_error_mixed_units",
+      "theme_money_multi_buy_budget",
+      "theme_estimation_choice_defend",
+      "theme_data_missing_total",
+      "theme_angle_shape_chain",
+      "theme_area_costing_tiles",
+      "theme_timetable_wait_and_duration",
+      "theme_mixed_units_total_gap",
+      "theme_ratio_recipe_total",
+      "theme_percent_change_compare",
+      "theme_fraction_two_step_share"
+    ]
+  },
+  "ready": {
+    "questionCount": 12,
+    "uniqueTemplates": 12,
+    "themedQuestions": 12,
+    "uniqueThemes": 8,
+    "themeIds": [
+      "school_fair",
+      "train_station",
+      "museum_trip",
+      "science_lab",
+      "community_cafe",
+      "robotics_club",
+      "music_festival",
+      "eco_club",
+      "train_station",
+      "music_festival",
+      "train_station",
+      "eco_club"
+    ],
+    "extraCreditIds": [
+      "theme_extra_credit_rate_pattern"
+    ],
+    "templateIds": [
+      "theme_extra_credit_rate_pattern",
+      "theme_error_mixed_units",
+      "theme_money_multi_buy_budget",
+      "theme_estimation_choice_defend",
+      "theme_data_missing_total",
+      "theme_angle_shape_chain",
+      "theme_area_costing_tiles",
+      "theme_timetable_wait_and_duration",
+      "theme_mixed_units_total_gap",
+      "theme_ratio_recipe_total",
+      "theme_percent_change_compare",
+      "theme_fraction_two_step_share"
+    ]
+  }
+}

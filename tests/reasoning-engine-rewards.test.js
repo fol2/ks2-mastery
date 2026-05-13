@@ -48,7 +48,7 @@ test('server reasoning engine returns exact due retry questions and emits eviden
     'reasoning.evidence-earned',
     'reasoning.session-completed',
   ]);
-  assert.match(marked.events[1].masteryKey, /^reasoning-variety-hardening-2026-05-13:reasoning-evidence:pv_rounding:/);
+  assert.match(marked.events[1].masteryKey, /^reasoning-variety-expansion-v2-2026-05-13:reasoning-evidence:pv_rounding:/);
 });
 
 test('reasoning reward projection updates direct and grand monsters with independent state ids', () => {
@@ -61,8 +61,8 @@ test('reasoning reward projection updates direct and grand monsters with indepen
       learnerId: 'learner-1',
       skillId: 'pv_rounding',
       itemId: 'pv_rounding_context:1',
-      contentReleaseId: 'reasoning-variety-hardening-2026-05-13',
-      masteryKey: 'reasoning-variety-hardening-2026-05-13:reasoning-evidence:pv_rounding:pv_rounding_context:1:independent',
+      contentReleaseId: 'reasoning-variety-expansion-v2-2026-05-13',
+      masteryKey: 'reasoning-variety-expansion-v2-2026-05-13:reasoning-evidence:pv_rounding:pv_rounding_context:1:independent',
     }],
   });
   const codex = projected.gameState['monster-codex'];
@@ -323,7 +323,7 @@ test('duplicate Reasoning evidence keys update practice but do not re-emit evide
   const seed = 1;
   const question = generateReasoningQuestion(templateId, seed);
   const answer = findNumericCorrectAnswer(question);
-  const masteryKey = `reasoning-variety-hardening-2026-05-13:reasoning-evidence:pv_rounding:${templateId}:${seed}:independent`;
+  const masteryKey = `reasoning-variety-expansion-v2-2026-05-13:reasoning-evidence:pv_rounding:${templateId}:${seed}:independent`;
   const engine = createServerReasoningEngine({ now: () => 40_000, random: () => 0 });
   const started = engine.apply({
     learnerId: 'learner-duplicate',
@@ -656,4 +656,67 @@ test('Reasoning scheduler avoids obvious template repeats and salts item seeds i
   const skillRefs = skill.state.session.questionRefs;
   assert.ok(new Set(skillRefs.map((ref) => ref.templateId)).size >= 7);
   assert.equal(new Set(skillRefs.map((ref) => ref.itemId)).size, skillRefs.length);
+});
+
+
+test('Reasoning scheduler gates extra-credit templates until the learner has enough independent evidence', () => {
+  const engine = createServerReasoningEngine({ now: () => 80_000, random: () => 0.999999 });
+  const cold = engine.apply({
+    learnerId: 'learner-extra-cold',
+    command: 'start-session',
+    payload: { mode: 'smart', roundLength: 12 },
+    requestId: 'extra-cold-start',
+  });
+  const coldExtra = cold.state.session.questionRefs.filter((ref) => generateReasoningQuestion(ref.templateId, ref.seed)?.extraCredit);
+  assert.equal(coldExtra.length, 0, 'new learners should not be surprised with beyond-KS2 extra credit');
+
+  const warmData = {
+    events: Array.from({ length: 24 }, (_, index) => ({
+      timestamp: new Date(70_000 + index).toISOString(),
+      templateId: 'pv_rounding_context',
+      itemId: `pv_rounding_context:${index + 1}`,
+      skillIds: ['pv_rounding'],
+      correct: true,
+      supportLevel: 0,
+      score: 1,
+      maxScore: 1,
+    })),
+  };
+  const warm = engine.apply({
+    learnerId: 'learner-extra-warm',
+    subjectRecord: { data: warmData },
+    command: 'start-session',
+    payload: { mode: 'smart', roundLength: 12 },
+    requestId: 'extra-warm-start',
+  });
+  const warmExtra = warm.state.session.questionRefs.filter((ref) => generateReasoningQuestion(ref.templateId, ref.seed)?.extraCredit);
+  assert.ok(warmExtra.length >= 1, 'ready learners can receive capped stretch practice');
+});
+
+test('Reasoning scheduler rotates context themes inside one round when themed templates are selected', () => {
+  const engine = createServerReasoningEngine({ now: () => 90_000, random: () => 0.999999 });
+  const readyData = {
+    events: Array.from({ length: 24 }, (_, index) => ({
+      timestamp: new Date(60_000 + index).toISOString(),
+      templateId: 'pv_rounding_context',
+      itemId: `pv_rounding_context:${index + 1}`,
+      skillIds: ['pv_rounding'],
+      correct: true,
+      supportLevel: 0,
+      score: 1,
+      maxScore: 1,
+    })),
+  };
+  const started = engine.apply({
+    learnerId: 'learner-theme-rotate',
+    subjectRecord: { data: readyData },
+    command: 'start-session',
+    payload: { mode: 'smart', roundLength: 12 },
+    requestId: 'theme-rotate-start',
+  });
+  const themeIds = started.state.session.questionRefs
+    .map((ref) => generateReasoningQuestion(ref.templateId, ref.seed)?.contextThemeId || '')
+    .filter(Boolean);
+  assert.ok(themeIds.length >= 8, `expected many themed questions in adversarial high-roll session, saw ${themeIds.length}`);
+  assert.equal(new Set(themeIds).size, themeIds.length, `theme ids should not repeat in one round: ${themeIds.join(', ')}`);
 });

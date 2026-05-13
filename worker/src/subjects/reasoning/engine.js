@@ -306,6 +306,14 @@ function weakSkillIds(data, nowValue) {
   });
 }
 
+function extraCreditReady(data, nowValue) {
+  const events = Array.isArray(data?.events) ? data.events : [];
+  const independentCorrect = events.filter((event) => event?.correct && !(Number(event?.supportLevel) > 0)).length;
+  const securedSkills = SKILL_IDS.filter((skillId) => nodeStatus(data.skills?.[skillId] || defaultNode(), nowValue) === 'secured').length;
+  const totalAttempts = events.length;
+  return independentCorrect >= 20 || securedSkills >= 3 || (totalAttempts >= 30 && independentCorrect / Math.max(1, totalAttempts) >= 0.8);
+}
+
 function takeDueRetry(data, focusSkillId, nowValue) {
   const due = data.retryQueue
     .filter((entry) => entry.dueAt <= nowValue && (!focusSkillId || (entry.skillIds || []).includes(focusSkillId)))
@@ -333,7 +341,9 @@ function unspentCandidatePool(candidates, usedTemplateIds = []) {
 
 function chooseTemplate(data, prefs, mode, random, nowValue, usedTemplateIds = []) {
   const weakSet = new Set(weakSkillIds(data, nowValue).slice(0, 6));
+  const allowExtraCredit = extraCreditReady(data, nowValue);
   let candidates = REASONING_TEMPLATES.filter((template) => {
+    if (template.extraCredit && !allowExtraCredit) return false;
     if (prefs.focusSkillId && mode === 'skill') return template.skillIds.includes(prefs.focusSkillId);
     if (mode === 'trouble') return template.skillIds.some((id) => weakSet.has(id));
     if ((mode === 'sats' || mode === 'satsset') && !template.satsFriendly) return false;
@@ -369,6 +379,33 @@ function chooseTemplateForSatsSlot(data, skillPool, random, nowValue, usedTempla
 
 function buildQuestionRef(template, seed) {
   return { templateId: template.id, seed, itemId: `${template.id}:${seed}` };
+}
+
+function seedCandidate(baseSeed, attempt, salt = 0) {
+  const base = Number(baseSeed) || 1;
+  return (((base + attempt * 7919 + (Number(salt) || 0) * 104729 - 1) % 1_000_000_000) + 1);
+}
+
+function buildThemeAwareQuestionRef(template, seed, usedThemeIds = [], salt = 0) {
+  if (!template?.contextThemed || !Array.isArray(usedThemeIds)) return buildQuestionRef(template, seed);
+  let fallback = buildQuestionRef(template, seed);
+  let fallbackThemeId = '';
+  for (let attempt = 0; attempt < 48; attempt += 1) {
+    const candidateSeed = seedCandidate(seed, attempt, salt);
+    const ref = buildQuestionRef(template, candidateSeed);
+    const question = questionFromRef(ref);
+    const themeId = question?.contextThemeId || '';
+    if (attempt === 0) {
+      fallback = ref;
+      fallbackThemeId = themeId;
+    }
+    if (!themeId || !usedThemeIds.includes(themeId)) {
+      if (themeId) usedThemeIds.push(themeId);
+      return ref;
+    }
+  }
+  if (fallbackThemeId) usedThemeIds.push(fallbackThemeId);
+  return fallback;
 }
 
 function publicQuestionId(index) {
@@ -413,18 +450,20 @@ function buildQuestionRefs(data, prefs, { nowValue, random }) {
       ? Array.from({ length: size }, () => [prefs.focusSkillId])
       : (REASONING_SATS_SET_BLUEPRINTS[size] || Array.from({ length: size }, () => []));
     const used = [];
+    const usedThemeIds = [];
     return Array.from({ length: size }, (_, index) => {
       const template = chooseTemplateForSatsSlot(data, blueprint[index] || [], random, nowValue, used);
       used.push(template.id);
-      return buildQuestionRef(template, newSeed(random, index + 1));
+      return buildThemeAwareQuestionRef(template, newSeed(random, index + 1), usedThemeIds, index + 1);
     });
   }
   const length = mode === 'sats' ? 1 : prefs.roundLength;
   const used = [];
+  const usedThemeIds = [];
   return Array.from({ length }, (_, index) => {
     const template = chooseTemplate(data, prefs, mode, random, nowValue, used);
     used.push(template.id);
-    return buildQuestionRef(template, newSeed(random, index + 1));
+    return buildThemeAwareQuestionRef(template, newSeed(random, index + 1), usedThemeIds, index + 1);
   });
 }
 

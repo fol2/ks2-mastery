@@ -1,4 +1,4 @@
-export const REASONING_CONTENT_RELEASE_ID = 'reasoning-variety-hardening-2026-05-13';
+export const REASONING_CONTENT_RELEASE_ID = 'reasoning-variety-expansion-v2-2026-05-13';
 
 export const REASONING_MODES = Object.freeze(['smart', 'skill', 'trouble', 'worked', 'faded', 'sats', 'satsset']);
 
@@ -80,45 +80,45 @@ export const REASONING_QUESTION_TYPE_LABELS = Object.freeze({
 });
 
 const PUBLIC_REASONING_CONTENT_SUMMARY = Object.freeze({
-  "releaseId": "reasoning-variety-hardening-2026-05-13",
-  "templateCount": 124,
+  "releaseId": "reasoning-variety-expansion-v2-2026-05-13",
+  "templateCount": 138,
   "skillCount": 17,
   "misconceptionCount": 20,
-  "satsFriendlyCount": 123,
-  "contextThemeCount": 12,
-  "themedTemplateCount": 14,
-  "extraCreditTemplateCount": 1,
+  "satsFriendlyCount": 136,
+  "contextThemeCount": 23,
+  "themedTemplateCount": 28,
+  "extraCreditTemplateCount": 2,
   "domains": {
-    "Number and place value": 11,
-    "Calculation": 11,
-    "Fractions": 11,
-    "Fractions, decimals and percentages": 11,
-    "Ratio and proportion": 11,
-    "Measure": 12,
-    "Geometry and measure": 11,
-    "Geometry": 11,
-    "Statistics": 11,
-    "Reasoning and checking": 13,
-    "Measure and money": 11
+    "Number and place value": 12,
+    "Calculation": 13,
+    "Fractions": 12,
+    "Fractions, decimals and percentages": 12,
+    "Ratio and proportion": 12,
+    "Measure": 14,
+    "Geometry and measure": 12,
+    "Geometry": 12,
+    "Statistics": 12,
+    "Reasoning and checking": 15,
+    "Measure and money": 12
   },
   "skills": {
-    "pv_rounding": 7,
-    "reasonableness": 22,
-    "pv_compare": 9,
-    "inverse_missing": 12,
-    "mul_div_structure": 19,
-    "add_sub_multistep": 42,
-    "fractions_quantity": 7,
-    "fractions_compare": 4,
-    "percent_number": 5,
-    "fdp_equiv": 10,
-    "ratio_scale": 12,
-    "unit_conversion": 7,
-    "time_elapsed": 6,
-    "perimeter_area": 11,
-    "error_analysis": 20,
-    "geometry_angles": 11,
-    "statistics_reading": 12
+    "pv_rounding": 8,
+    "reasonableness": 27,
+    "pv_compare": 10,
+    "inverse_missing": 15,
+    "mul_div_structure": 22,
+    "add_sub_multistep": 45,
+    "fractions_quantity": 8,
+    "fractions_compare": 5,
+    "percent_number": 7,
+    "fdp_equiv": 12,
+    "ratio_scale": 14,
+    "unit_conversion": 9,
+    "time_elapsed": 7,
+    "perimeter_area": 12,
+    "error_analysis": 22,
+    "geometry_angles": 12,
+    "statistics_reading": 14
   },
   "modes": [
     "smart",

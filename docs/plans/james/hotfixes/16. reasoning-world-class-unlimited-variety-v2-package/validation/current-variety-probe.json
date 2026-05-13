@@ -1,0 +1,74 @@
+{
+  "cold": {
+    "questionCount": 12,
+    "uniqueTemplates": 12,
+    "themedQuestions": 12,
+    "uniqueThemes": 12,
+    "themeIds": [
+      "train_station",
+      "drama_rehearsal",
+      "aquarium_visit",
+      "film_club",
+      "school_fair",
+      "robotics_club",
+      "weather_station",
+      "city_farm",
+      "space_mission",
+      "library_week",
+      "coding_jam",
+      "eco_club"
+    ],
+    "extraCreditIds": [],
+    "templateIds": [
+      "theme_fdp_ordering_transfer",
+      "theme_logic_total_constraints",
+      "theme_statistics_missing_mean",
+      "theme_composite_area_remaining",
+      "theme_triangle_base_angles",
+      "theme_timetable_total_duration",
+      "theme_ratio_total_split",
+      "theme_percent_sale_budget",
+      "theme_decimal_measure_compare",
+      "theme_fraction_measure_leftover",
+      "theme_remainder_transport_decision",
+      "theme_inverse_two_step_boxes"
+    ]
+  },
+  "ready": {
+    "questionCount": 12,
+    "uniqueTemplates": 12,
+    "themedQuestions": 12,
+    "uniqueThemes": 12,
+    "themeIds": [
+      "music_festival",
+      "robotics_club",
+      "coding_jam",
+      "weather_station",
+      "beach_clean",
+      "art_studio",
+      "sports_day",
+      "market_garden",
+      "mountain_camp",
+      "aquarium_visit",
+      "space_mission",
+      "science_lab"
+    ],
+    "extraCreditIds": [
+      "theme_extra_credit_crossing_rules"
+    ],
+    "templateIds": [
+      "theme_extra_credit_crossing_rules",
+      "theme_fdp_ordering_transfer",
+      "theme_logic_total_constraints",
+      "theme_statistics_missing_mean",
+      "theme_composite_area_remaining",
+      "theme_triangle_base_angles",
+      "theme_timetable_total_duration",
+      "theme_ratio_total_split",
+      "theme_percent_sale_budget",
+      "theme_decimal_measure_compare",
+      "theme_fraction_measure_leftover",
+      "theme_remainder_transport_decision"
+    ]
+  }
+}

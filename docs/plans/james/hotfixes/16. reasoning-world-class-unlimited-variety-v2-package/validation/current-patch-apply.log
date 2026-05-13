@@ -1,0 +1,8 @@
+git apply passed against origin/main cf165dae.
+ M .gitattributes
+ M scripts/reasoning-production-smoke.mjs
+ M shared/reasoning/content.js
+ M shared/reasoning/metadata.js
+ M tests/reasoning-content-contract.test.js
+ M tests/reasoning-engine-rewards.test.js
+ M worker/src/subjects/reasoning/engine.js
