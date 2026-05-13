@@ -100,6 +100,10 @@ Evidence:
 - npm: `11.6.2`
 - `.nvmrc`: `22`
 
-## Remaining release boundary
+## Production release evidence
 
-Local release gates are green. Production deployment and live smoke remain pending until this candidate is merged to `main`, pushed through the GitHub deployment path, and verified on `https://ks2.eugnel.uk`.
+Runtime commit `97aa70da2426e0a65b464d44b55cd8670df0c1dd` was pushed to `main`, deployed through the normal GitHub main path, and verified on `https://ks2.eugnel.uk`.
+
+- Production API smoke: `reports/grammar/grammar-production-smoke-grammar-qg-p24-2026-05-13.json`, `ok: true`, `p24Distractors.ok: true`, both P24 live cases `genericHitCount: 0`.
+- Production UI smoke: `validation/production-grammar-p24-ui-smoke-2026-05-13.json`, `ok: true`, correct P24 feedback renders `data-grammar-feedback-stretch` with the expected stretch copy, and console/page/request/HTTP failure arrays are empty.
+- Production UI screenshot: `validation/production-grammar-p24-ui-smoke-2026-05-13.png`.

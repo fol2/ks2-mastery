@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "environment": "production",
+  "demoAccountId": "demo-n3vJ4pVqzW37Gw",
+  "learnerId": "learner-demo-LPPwwmcoeB-a5Q",
+  "templateId": "qg_p18_p15_active_passive_explain_voice",
+  "seed": 1,
+  "feedbackPhaseRevision": 2,
+  "stretchCopy": "Extra challenge: turn your reason into one precise sentence using the grammar term.",
+  "expectedStretchCopy": "Extra challenge: turn your reason into one precise sentence using the grammar term.",
+  "feedbackTextIncludesStretchCopy": true,
+  "screenshotPath": "docs\\plans\\james\\hotfixes\\7. grammar-qg-p24-post-hardening-review-distractor-stretch-package\\validation\\production-grammar-p24-ui-smoke-2026-05-13.png",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requestFailures": [],
+  "httpFailures": [],
+  "timestamp": "2026-05-13T10:35:07.765Z",
+  "commitSha": "97aa70da2426e0a65b464d44b55cd8670df0c1dd"
+}
