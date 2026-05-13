@@ -1,0 +1,1547 @@
+diff --git a/scripts/audit-reading-content-quality.mjs b/scripts/audit-reading-content-quality.mjs
+index 6f250242..d0435d21 100644
+--- a/scripts/audit-reading-content-quality.mjs
++++ b/scripts/audit-reading-content-quality.mjs
+@@ -23,6 +23,15 @@ function replaceNormalisedPhrase(value, phrase, replacement) {
+   return value.split(key).join(replacement);
+ }
+
++function replaceGeneratedFromSource(value, sourceKey, pattern, replacement) {
++  const phrase = sourceKey.match(pattern)?.[1] || '';
++  return replaceNormalisedPhrase(value, phrase, replacement);
++}
++
++function escapeRegExp(value) {
++  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
++}
++
+ function nonFictionTopicFromTitle(title) {
+   const raw = String(title || '');
+   return raw.match(/^How (.+) Works$/)?.[1]
+@@ -34,6 +43,43 @@ function replaceGeneratedCaseLabels(value) {
+   return value.replace(/\b[a-z]+ field note [0-9]+\b/g, 'CASE');
+ }
+
++function stripPhase7PromptScaffold(value) {
++  const scaffoldPrefix = /^(?:using the (?:opening|careful|route|evidence|setting|contrast|sequence|language|ending|whole text) (?:detail|clue|signal|trace|pattern|link|shift|moment|thread|focus)|after checking the first relevant clue|with the opening evidence in mind|from the sentence that gives the clearest proof|when following the evidence trail|by using the paragraph that introduces the idea|while tracking the change in the text|looking at the detail that controls the meaning|from the moment where the evidence is tested|after comparing the clue with the outcome|using the wording that narrows the answer|in the paragraph that sets up the idea|at the point where the text explains the effect|where the source gives a reason|where the structure moves the reader on|where a judgement needs direct support|where the text shows rather than hints|where the evidence changes the decision|where the wording makes the answer precise|where the passage links detail and effect|where the source clue needs explanation|before choosing an answer|after reading the proof sentence closely|when the order of ideas is followed|if the reader starts with the stated evidence|when the context of the detail is checked|after the clue has been linked to its effect|if the answer is kept inside the passage evidence|when the text s exact wording is used|after the reader identifies the controlling detail|when the source evidence is stronger than a guess)\s+/;
++  const scaffoldSuffix = /\s+(?:if the answer is anchored in the opening evidence|when the source paragraph is checked first|after the strongest text detail is identified|with the relevant line used as proof|once the pattern of events is followed|if the reader keeps the whole passage in view|after the writer s choice has been considered|with both action and result checked|once the contrast in the passage is used|when the final detail is weighed|taking the opening detail as the starting point|using the described moment rather than a guess|keeping the answer tied to the text structure|after the relevant comparison is made|drawing on the phrase that shapes the response|with the evidence trail checked in order|once the line carrying the main point is found|using the detail nearest to the question focus|after the source reason has been matched to the answer|with the judgement proved by a text detail)$/;
++  return value.replace(scaffoldPrefix, '').replace(scaffoldSuffix, '');
++}
++
++function replacePhase7GeneratedPhrases(value, passage) {
++  if (!String(passage.id || '').includes('phase7_')) return value;
++  let key = stripPhase7PromptScaffold(value).replace(/\bpoem [0-9]+\b/g, 'TEXT');
++  const title = String(passage.title || '');
++  const fictionPlace = title.match(/^The (.+)$/)?.[1] || '';
++  const poetrySetting = title.match(/^Poem [0-9]+: (.+)$/)?.[1] || '';
++  key = replaceNormalisedPhrase(key, fictionPlace, 'PLACE');
++  key = replaceNormalisedPhrase(key, poetrySetting, 'PLACE');
++  const sourceKey = norm([title, ...(passage.blocks || [])].join(' '));
++  key = replaceGeneratedFromSource(key, sourceKey, /because ([a-z0-9 ]+?) the place was not suddenly/, 'THEME');
++  key = replaceGeneratedFromSource(key, sourceKey, /([a-z]+ [a-z]+) arrived with a clipboard/, 'PERSON');
++  key = replaceGeneratedFromSource(key, sourceKey, /carrying a ([a-z0-9 ]+?) in a jacket pocket/, 'OBJECT');
++  key = replaceGeneratedFromSource(key, sourceKey, /noticed ([a-z0-9 ]+?) near the place where the sign should have been/, 'CLUE');
++  key = replaceGeneratedFromSource(key, sourceKey, /in a jacket pocket ([a-z0-9 ]+?) and the ordinary corner/, 'IMAGE');
++  key = replaceGeneratedFromSource(key, sourceKey, /checked each part of the sequence and ([a-z0-9 ]+?) the place was not suddenly/, 'OUTCOME');
++  key = replaceGeneratedFromSource(key, sourceKey, /depends on a ([a-z]+) routine/, 'TERM');
++  key = replaceGeneratedFromSource(key, sourceKey, /main purpose of [a-z0-9 -]+ is to ([a-z0-9 ]+?) especially when/, 'BENEFIT');
++  key = replaceGeneratedFromSource(key, sourceKey, /same system can ([a-z0-9 ]+?) so the records/, 'RISK');
++  const poetrySettingKey = norm(poetrySetting);
++  if (poetrySettingKey) {
++    const poetryOpening = sourceKey.match(new RegExp(`at ${escapeRegExp(poetrySettingKey)} ([a-z0-9 ]+?) a ([a-z]+ [a-z]+) slips`));
++    key = replaceNormalisedPhrase(key, poetryOpening?.[1] || '', 'IMAGE');
++    key = replaceNormalisedPhrase(key, poetryOpening?.[2] || '', 'SOUND');
++  }
++  key = replaceGeneratedFromSource(key, sourceKey, /and the ([a-z]+) (?:listens|waits|leans|trembles|remembers|balances|whispers|shivers|turns|glimmers) in place/, 'OBJECT');
++  key = replaceGeneratedFromSource(key, sourceKey, /by evening the place feels ([a-z0-9 ]+?) all this quiet work/, 'EFFECT');
++  const labels = sourceKey.match(/\b(?:amber|blue|copper|green|silver|quiet|winter|daily|public|wildlife) (?:ledger|route card|evidence board|survey slate|record window|pattern map|signal sheet|measure strip|notice frame|count grid) [0-9]{3}\b/g) || [];
++  for (const label of labels) key = replaceNormalisedPhrase(key, label, 'CASE');
++  return key;
++}
++
+ function stemShapeKey(stem, passage) {
+   let key = norm(stem)
+     .replace(/paragraph [0-9]+/g, 'paragraph #')
+@@ -46,6 +92,7 @@ function stemShapeKey(stem, passage) {
+   key = replaceNormalisedPhrase(key, `${nonFictionTopic} in Practice`, 'TEXT');
+   key = replaceNormalisedPhrase(key, nonFictionTopic, 'TOPIC');
+   key = replaceGeneratedCaseLabels(key);
++  key = replacePhase7GeneratedPhrases(key, passage);
+   return key
+     .replace(/\b(red tin box|lantern map|seed bank|seed vault|rooftop rain|poem|passage|story|text)\b/g, 'TEXT')
+     .replace(/\b(nia|mara|aunt lio|grandad)\b/g, 'PERSON');
+@@ -59,7 +106,7 @@ function addGroup(map, key, value) {
+ }
+
+ function isRecentExpansionRow(row) {
+-  return row.includes('phase5_') || row.includes('phase6_');
++  return row.includes('phase5_') || row.includes('phase6_') || row.includes('phase7_');
+ }
+
+ const PHASE6_PUNCTUATION_FEATURES = Object.freeze({
+diff --git a/scripts/reading-production-smoke.mjs b/scripts/reading-production-smoke.mjs
+index 3917fdc6..319912dc 100644
+--- a/scripts/reading-production-smoke.mjs
++++ b/scripts/reading-production-smoke.mjs
+@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import {
+   READING_CONTENT_RELEASE_ID,
+   READING_CONTENT_VERSION,
++  READING_TEST_PAPERS,
+   readingContentSummary,
+   readingQuestionRefMap,
+ } from '../shared/reading/content.js';
+@@ -21,6 +22,10 @@ import {
+ const __filename = fileURLToPath(import.meta.url);
+ const ROOT_DIR = path.resolve(path.dirname(__filename), '..');
+ const QUESTION_REF_MAP = readingQuestionRefMap();
++const PHASE7_SMOKE_PAPER_ID = 'phase7_paper_001';
++const PHASE7_SMOKE_PAPER = READING_TEST_PAPERS.find((paper) => paper.id === PHASE7_SMOKE_PAPER_ID);
++const PHASE7_SMOKE_QUESTION_COUNT = PHASE7_SMOKE_PAPER?.sections
++  ?.reduce((sum, section) => sum + (section.questionIds || []).length, 0) || 0;
+
+ function argValue(name, fallback = '') {
+   const index = process.argv.indexOf(name);
+@@ -44,13 +49,13 @@ function expectedContentSummary() {
+   assert.equal(summary.releaseId, READING_CONTENT_RELEASE_ID);
+   assert.equal(summary.version, READING_CONTENT_VERSION);
+   assert.equal(summary.version, expectedVersion, 'Local Reading content version did not match the expected smoke version.');
+-  assert.equal(summary.passageCount, 414);
+-  assert.equal(summary.questionCount, 4112);
+-  assert.equal(summary.paperCount, 143);
+-  assert.equal(summary.genres.fiction, 139);
+-  assert.equal(summary.genres['non-fiction'], 139);
+-  assert.equal(summary.genres.poetry, 136);
+-  assert.equal(summary.longPassageCount, 370);
++  assert.equal(summary.passageCount, 714);
++  assert.equal(summary.questionCount, 7112);
++  assert.equal(summary.paperCount, 243);
++  assert.equal(summary.genres.fiction, 239);
++  assert.equal(summary.genres['non-fiction'], 239);
++  assert.equal(summary.genres.poetry, 236);
++  assert.equal(summary.longPassageCount, 670);
+   return summary;
+ }
+
+@@ -175,6 +180,7 @@ async function smokeImmediateRound({ origin, cookie, learnerId, revision }) {
+ }
+
+ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
++  assert.ok(PHASE7_SMOKE_PAPER, `Reading production smoke could not find ${PHASE7_SMOKE_PAPER_ID}.`);
+   let step = await subjectCommand({
+     origin,
+     cookie,
+@@ -182,7 +188,7 @@ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
+     learnerId,
+     revision,
+     command: 'start-session',
+-    payload: { mode: 'test', viewMode: 'one', paperId: 'paper_i' },
++    payload: { mode: 'test', viewMode: 'one', paperId: PHASE7_SMOKE_PAPER_ID },
+   });
+   revision = step.revision;
+   const startModel = step.payload.subjectReadModel;
+@@ -192,6 +198,7 @@ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
+   assertNoFeedbackLeak(startModel, 'reading.paper.startModel');
+
+   const questionId = startModel.session.currentQuestion.id;
++  assert.match(questionId, /^phase7_/, 'Reading Phase 7 paper smoke did not start on a Phase 7 question.');
+   const sourceQuestion = QUESTION_REF_MAP[questionId]?.question;
+   step = await subjectCommand({
+     origin,
+@@ -238,9 +245,9 @@ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
+   const summaryModel = step.payload.subjectReadModel;
+   assert.equal(summaryModel?.error || '', '', 'Reading mark-session left a stale section-mark error.');
+   assert.equal(summaryModel?.phase, 'summary', 'Reading mark-session did not reach summary.');
+-  assert.equal(summaryModel?.summary?.paperId, 'paper_i', 'Reading paper summary did not preserve paper id.');
+-  assert.equal(summaryModel?.summary?.questionCount, 26, 'Reading paper_i did not mark all questions.');
+-  assert.equal(summaryModel?.summary?.maxScore, 50, 'Reading paper_i max score was not 50.');
++  assert.equal(summaryModel?.summary?.paperId, PHASE7_SMOKE_PAPER_ID, 'Reading Phase 7 paper summary did not preserve paper id.');
++  assert.equal(summaryModel?.summary?.questionCount, PHASE7_SMOKE_QUESTION_COUNT, 'Reading Phase 7 paper did not mark all questions.');
++  assert.equal(summaryModel?.summary?.maxScore, PHASE7_SMOKE_PAPER?.totalMarks, 'Reading Phase 7 paper max score was not 50.');
+
+   return {
+     revision,
+diff --git a/shared/reading/content.js b/shared/reading/content.js
+index eb902e9b..b8a48fda 100644
+--- a/shared/reading/content.js
++++ b/shared/reading/content.js
+@@ -5,9 +5,10 @@
+ import { READING_PHASE4_PASSAGES, READING_PHASE4_TEST_PAPERS } from './phase4-expansion.js';
+ import { READING_PHASE5_PASSAGES, READING_PHASE5_TEST_PAPERS } from './phase5-expansion.js';
+ import { READING_PHASE6_PASSAGES, READING_PHASE6_TEST_PAPERS } from './phase6-expansion.js';
++import { READING_PHASE7_PASSAGES, READING_PHASE7_TEST_PAPERS } from './phase7-expansion.js';
+
+ export const READING_CONTENT_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
+-export const READING_CONTENT_VERSION = 6;
++export const READING_CONTENT_VERSION = 7;
+
+ export const READING_SKILLS = Object.freeze({
+   "2a": {
+@@ -10165,7 +10166,8 @@ export const READING_PASSAGES = Object.freeze([
+   },
+ ...READING_PHASE4_PASSAGES,
+ ...READING_PHASE5_PASSAGES,
+-...READING_PHASE6_PASSAGES
++...READING_PHASE6_PASSAGES,
++...READING_PHASE7_PASSAGES
+
+
+ ]);
+@@ -10800,7 +10802,8 @@ export const READING_TEST_PAPERS = Object.freeze([
+ },
+ ...READING_PHASE4_TEST_PAPERS,
+ ...READING_PHASE5_TEST_PAPERS,
+-...READING_PHASE6_TEST_PAPERS
++...READING_PHASE6_TEST_PAPERS,
++...READING_PHASE7_TEST_PAPERS
+
+
+ ]);
+diff --git a/shared/reading/metadata.js b/shared/reading/metadata.js
+index 78f31aed..dce1cdb4 100644
+--- a/shared/reading/metadata.js
++++ b/shared/reading/metadata.js
+@@ -1,7 +1,7 @@
+ // Browser-safe Reading metadata. Do not import passage, question or marking
+ // content here; the production client may consume this module directly.
+ export const READING_CONTENT_RELEASE_ID = 'reading-poc-promoted-2026-05-05';
+-export const READING_CONTENT_VERSION = 6;
++export const READING_CONTENT_VERSION = 7;
+
+ export const READING_SKILLS = Object.freeze({
+   '2a': {
+@@ -71,15 +71,15 @@ export function readingContentSummary() {
+   return {
+     releaseId: READING_CONTENT_RELEASE_ID,
+     version: READING_CONTENT_VERSION,
+-    passageCount: 414,
+-    questionCount: 4112,
+-    paperCount: 143,
++    passageCount: 714,
++    questionCount: 7112,
++    paperCount: 243,
+     skillCount: Object.keys(READING_SKILLS).length,
+     genres: {
+-      fiction: 139,
+-      'non-fiction': 139,
+-      poetry: 136,
++      fiction: 239,
++      'non-fiction': 239,
++      poetry: 236,
+     },
+-    longPassageCount: 370,
++    longPassageCount: 670,
+   };
+ }
+diff --git a/shared/reading/phase7-expansion.js b/shared/reading/phase7-expansion.js
+new file mode 100644
+index 00000000..30b0af5c
+--- /dev/null
++++ b/shared/reading/phase7-expansion.js
+@@ -0,0 +1,1013 @@
++// Deterministic Reading Phase 7 scale expansion.
++// Worker/shared content only: contains answer keys and marking checks.
++// This wave moves Reading beyond 7K questions on the staged path to 10K+.
++
++const FICTION_BASE_PLACES = [
++  'archive courtyard', 'storm-lit ferry office', 'moonlit allotment gate', 'chalk cliff classroom', 'canal measuring hut',
++  'library map balcony', 'winter rescue yard', 'glass-roofed market', 'railway garden siding', 'harbour signal room',
++  'oak-beam workshop', 'river science deck', 'island seed shed', 'observatory stair', 'forest listening post',
++  'museum textile room', 'windmill stairwell', 'school radio corner', 'quarry safety cabin', 'old theatre paint loft',
++  'marsh ringing hide', 'community orchard lane', 'foggy cycle bridge', 'lighthouse rope store', 'town archive desk'
++];
++const FICTION_MODIFIERS = ['amber', 'blue', 'copper', 'silver'];
++const NON_FICTION_TOPICS = [
++  'community flood maps', 'portable air-quality sensors', 'school seed libraries', 'river wildlife ladders', 'low-waste repair schemes',
++  'museum object loans', 'public cycle counters', 'tree canopy surveys', 'quiet reading zones', 'winter grit routes',
++  'food-share fridges', 'beach erosion markers', 'heritage trail signs', 'compost heat records', 'pond oxygen testing',
++  'dark-sky observation nights', 'mobile library routes', 'paper mill water wheels', 'bus stop accessibility audits', 'local weather masts',
++  'wildflower verge plans', 'canal towpath repairs', 'community theatre lighting', 'water fountain networks', 'cave visitor safety maps',
++  'pollinator hotel surveys', 'glass recycling centres', 'lifeboat practice drills', 'market food-mile labels', 'school sound maps',
++  'peatland boardwalks', 'electric cargo bike hubs', 'river meander models', 'urban heat shade trials', 'library archive indexes',
++  'community orchard grafts', 'rain garden overflow channels', 'bird migration notebooks', 'soil health sample trays', 'tool library bookings',
++  'public art wayfinding', 'sustainable fish counters', 'citizen science sketchbooks', 'water-saving classroom taps', 'historic clock repairs',
++  'tram shelter notice boards', 'green roof temperature logs', 'beaver wetland paths', 'moth survey lamps', 'allotment water budgets',
++  'accessible playground routes', 'floating reed bed filters', 'harbour tide boards', 'story festival programmes', 'solar shade canopies',
++  'bike repair stands', 'chalk stream restoration', 'railway path planting', 'weather-proof notice cases', 'school kitchen-garden harvests',
++  'neighbourhood noise diaries', 'seed-swap catalogues', 'wildlife bridge cameras', 'bus priority lane signals', 'community compost lockers',
++  'river level warning posts', 'hedgerow gap surveys', 'night-time wildlife corridors', 'heritage bus timetables', 'public bench mapping',
++  'wetland dipping platforms', 'observatory star charts', 'harbour safety chains', 'paper recycling loops', 'orchard pruning diaries',
++  'cave drip counters', 'repair cafe tool checks', 'pond dipping records', 'market stall waste audits', 'greenway route signs',
++  'school radio bulletins', 'frost fair planning boards', 'bee-friendly planting strips', 'rainwater barrel monitors', 'map drawer conservation',
++  'river ferry safety drills', 'food bank delivery routes', 'quiet garden timetables', 'tidal pool species logs', 'planetarium booking systems',
++  'mural trail restoration', 'electric bus charging bays', 'allergy-aware lunch labels', 'storm drain leaf screens', 'clock tower maintenance',
++  'public meadow mowing plans', 'salt marsh bird counts', 'winter shelter rotas', 'library book-rescue boxes', 'canopy walkway inspections'
++];
++const POETRY_SETTINGS = [
++  'beside the rain-black bridge', 'under the paper mill window', 'at the ferry chain', 'inside the clock tower', 'near the dark-sky sign',
++  'beside the orchard grafts', 'on the chalk stream bank', 'inside the seed library', 'under the theatre rafters', 'by the harbour steps',
++  'inside the repair cafe', 'among the winter reeds', 'near the weather mast', 'under the market awning', 'beside the green roof',
++  'at the cave mouth', 'inside the radio booth', 'near the bee hotel', 'under the willow bridge', 'beside the compost bay',
++  'in the map drawer room', 'on the lifeboat pier', 'among the allotment paths', 'beneath the glasshouse gutter', 'near the train yard lamp',
++  'inside the museum case', 'by the wildflower verge', 'under the moonlit lock', 'beside the water fountain', 'at the tool library door',
++  'inside the planetarium dome', 'near the bird hide', 'under the solar canopy', 'beside the paper vat', 'at the town archive desk',
++  'inside the heritage bus', 'on the quarry path', 'near the food-share fridge', 'beside the pond shelter', 'under the stargazing tarp',
++  'inside the story tent', 'near the mural wall', 'at the boardwalk turn', 'beside the river gauge', 'inside the bell room',
++  'under the tram shelter', 'among the fern shadows', 'by the seedling bench', 'near the harbour chain', 'inside the printing room',
++  'beside the route sign', 'under the frost fair lights', 'at the rain garden lip', 'inside the conservation room', 'near the bridge sensor',
++  'beside the school canopy', 'under the old kiln arch', 'on the observation deck', 'inside the clock case', 'near the hedge gap',
++  'beside the stream tray', 'under the lighthouse lamp', 'at the cycle stand', 'inside the food-share room', 'near the puppet stage',
++  'among the orchard rows', 'beside the tidal pool', 'inside the quiet garden', 'under the lantern line', 'at the weather board',
++  'near the bus priority light', 'beside the floating reed bed', 'inside the book-rescue box', 'under the canopy walkway', 'at the meadow edge',
++  'near the lifeboat shed', 'inside the sound map room', 'beside the storm drain', 'under the community notice', 'at the clock repair bench',
++  'near the cargo bike hub', 'beside the river ladder', 'inside the archive index', 'under the theatre curtain', 'at the compost locker',
++  'near the meadow mowing sign', 'beside the salt marsh path', 'inside the winter shelter', 'under the bookshop eaves', 'at the canal towpath',
++  'near the wildlife camera', 'beside the public bench map', 'inside the star chart drawer', 'under the bus timetable', 'at the cave drip line',
++  'near the rainwater barrels', 'beside the allergy label board', 'inside the glass recycling bay', 'under the community bridge', 'at the seed-swap table'
++];
++
++const NAMES = ['Aisha','Ben','Cara','Dev','Elsa','Finn','Grace','Hadi','Ivy','Jude','Keira','Leo','Maya','Nell','Oscar','Pia','Rory','Sana','Theo','Uma','Vik','Wren','Yara','Zane','Milo'];
++const OBJECTS = ['brass compass tag','folded tide card','waterproof sketchbook','green route token','star-stitched pouch','chalk measuring slate','blue evidence card','paper lantern frame','reed sample tube','red signal ribbon','salt-marked ledger','ranger radio badge','seed sorting tray','river-depth ruler','cotton handling glove','lifeboat whistle','map-drawer label','amber lens cloth','silver notice clip','oak-handled brush'];
++const CLUES = ['a clean rectangle in the dust','a bent paper corner','three drops of blue wax','a neat line of reed seeds','a fresh wheel print','chalk dust under the latch','a salt mark beside the hinge','a loose stitch on the cover','a shadow line across the label','a split twig on the path','a dry clip on the rope','a thumbprint in flour','a feather caught on the rail','a tight kink in the wire','a pale water mark','a missing brass pin','a smear of green ink','a strand of wool on the bench','a clear gap in the grit','a folded corner on the map'];
++const HELPERS = ['Ranger Vale','Mrs Kettle','Curator Osei','Engineer Hobb','Dr Patel','Guide Lark','Archivist Penn','Coach Ren','Gardener Lio','Pilot Mara','Teacher Ellis','Mechanic Tess','Keeper Orin','Librarian Finch','Warden Ash'];
++const ADVICE = [
++  'Start with the quietest clue, not the loudest guess',
++  'A careful record saves time when the hurry begins',
++  'Measure twice before you move anything important',
++  'Old places speak clearly if you check the small signs',
++  'A safe answer is one you can prove',
++  'The pattern matters as much as the missing piece',
++  'Look for what has changed, then ask why it changed',
++  'Do not tidy away evidence before you understand it',
++  'A route is only helpful if everyone can follow it',
++  'The best clue often sits at the edge of the scene'
++];
++const IMAGES = [
++  'rain silvered the paving stones', 'morning light rested in thin golden bars', 'mist folded the distance into a pale map',
++  'lanterns made soft commas of light', 'wind combed the reeds into whispering lines', 'the river carried broken coins of sky',
++  'snow pressed quiet against the windows', 'clouds dragged blue shadows over the yard', 'the glass roof held the day like water',
++  'the harbour chain shone like a wet ribbon', 'dust rose in careful amber clouds', 'the clock face glowed like a small moon'
++];
++const OUTCOMES = ['the route was reopened safely','the missing record was returned','the warning sign was repaired','the group avoided the unsafe path','the shared map finally made sense','the volunteers finished before rain','the fragile object was protected','the wildlife count stayed accurate','the practice drill started on time','the public notice became clear'];
++const THEMES = ['patient evidence beats a quick guess','shared places need careful readers','responsibility begins with noticing detail','clear records help a whole community','good judgement means slowing down','small clues can protect important work','cooperation makes evidence stronger','safety depends on precise information'];
++
++const ACTIONS = ['records', 'measures', 'checks', 'sorts', 'maps', 'protects', 'shares', 'repairs', 'tracks', 'compares'];
++const BENEFITS = ['make a hidden pattern visible', 'help people choose a safer route', 'protect a place that is easily damaged', 'turn scattered notes into useful evidence', 'help volunteers plan work fairly', 'reduce waste through careful timing', 'keep important information available', 'support wildlife while helping people'];
++const RISKS = ['fail if people guess instead of checking', 'confuse visitors when signs are unclear', 'need maintenance after the first launch', 'miss quiet evidence during bad weather', 'leave out people who use the space differently', 'damage trust if figures are exaggerated', 'create delays if records are not shared', 'need repeated checking to stay useful'];
++const CASE_LABELS = ['amber ledger','blue route card','copper evidence board','green survey slate','silver record window','quiet pattern map','winter signal sheet','daily measure strip','public notice frame','wildlife count grid'];
++const PROCESS_VERBS = ['collect', 'compare', 'label', 'share', 'review', 'repair', 'test', 'record', 'protect', 'check'];
++const TERMS = ['reliable', 'sustainable', 'accessible', 'portable', 'transparent', 'seasonal', 'resilient', 'collaborative', 'precise', 'temporary'];
++
++const POETIC_OBJECTS = ['raindrop', 'chain', 'seed', 'shadow', 'bell', 'ruler', 'leaf', 'rope', 'map', 'lamp', 'page', 'wheel'];
++const POETIC_MOVES = ['listens', 'waits', 'leans', 'trembles', 'remembers', 'balances', 'whispers', 'shivers', 'turns', 'glimmers'];
++const POETIC_SOUNDS = ['soft click', 'thin hum', 'low hush', 'bright tap', 'slow creak', 'silver whisper', 'small knock', 'quiet ring'];
++const POETIC_EFFECTS = ['calm but watchful', 'careful and mysterious', 'busy beneath the quiet', 'hopeful after rain', 'fragile but purposeful', 'lonely yet useful', 'patient and exact', 'warm despite the dark'];
++
++function slug(value) {
++  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
++}
++function pick(list, index, step = 1) {
++  return list[(index * step) % list.length];
++}
++function words(value, limit = 3) {
++  return String(value).toLowerCase().replace(/[^a-z0-9\s-]+/g, ' ').split(/\s+/).filter(Boolean).slice(0, limit);
++}
++function qid(id, n) { return `${id}_q${n}`; }
++function paperQuestionIds(passage, includeTenth) {
++  return passage.questions.slice(0, includeTenth ? 10 : 9).map((question) => question.id);
++}
++function deepFreeze(value) {
++  if (value && typeof value === 'object') {
++    Object.freeze(value);
++    Object.values(value).forEach(deepFreeze);
++  }
++  return value;
++}
++
++function composeStem(index, starts, endings) {
++  return `${starts[index % starts.length]} ${endings[Math.floor(index / starts.length) % endings.length]}`;
++}
++
++function fictionStem(s, questionNumber) {
++  const stems = {
++    1: () => composeStem(s.index, [
++      `Which carried object does ${s.name} rely on`,
++      `What item is in ${s.name}'s pocket`,
++      `Name the object ${s.name} brings`,
++      `What does ${s.name} have with them`,
++      `Which piece of equipment starts ${s.name}'s careful check`,
++      `What object travels with ${s.name}`,
++      `Identify the item ${s.name} carries`,
++      `What useful thing is ${s.name} holding`,
++      `Which object helps ${s.name} begin the route check`,
++      `What possession does ${s.name} use as the scene opens`,
++    ], [
++      `while checking ${s.place}?`,
++      `before the route is made safe at ${s.place}?`,
++      `as the first clue is noticed at ${s.place}?`,
++      `when the problem at ${s.place} begins?`,
++      `during the opening inspection at ${s.place}?`,
++      `before ${s.helper} gives advice at ${s.place}?`,
++      `as the text introduces ${s.place}?`,
++      `while the marker is being checked at ${s.place}?`,
++      `when the ordinary corner of ${s.place} becomes important?`,
++      `as the evidence trail starts at ${s.place}?`,
++    ]),
++    2: () => composeStem(s.index, [
++      `What does "deliberately" show about ${s.name}'s later method`,
++      `How does "deliberately" change the reader's view of ${s.name}`,
++      `Which meaning of "deliberately" fits ${s.name}'s ending behaviour`,
++      `What does the word "deliberately" reveal about ${s.name}`,
++      `Why is "deliberately" the best word for ${s.name}'s final approach`,
++      `How should "deliberately" be understood in ${s.title}`,
++      `What quality does "deliberately" give to ${s.name}'s work`,
++      `Which idea is carried by "deliberately" near the ending`,
++      `What does "deliberately" suggest about the pace of ${s.name}'s check`,
++      `How does "deliberately" contrast with ${s.name}'s first impulse`,
++    ], [
++      `after the quick guess is rejected?`,
++      `once the route evidence has been checked?`,
++      `in the final decision at ${s.place}?`,
++      `when the safest answer matters?`,
++      `after ${s.helper}'s advice has been followed?`,
++      `by the time ${s.outcome}?`,
++      `as the passage moves from haste to care?`,
++      `in the sentence about working more carefully?`,
++      `when ${s.name} slows down to prove the answer?`,
++      `at the moment the clue changes the plan?`,
++    ]),
++    3: () => composeStem(s.index, [
++      `How does ${s.clue} lead ${s.name} towards a safer decision`,
++      `What does ${s.clue} help ${s.name} work out`,
++      `Why is ${s.clue} important to ${s.name}'s realisation`,
++      `What decision does ${s.clue} support for ${s.name}`,
++      `How does the detail ${s.clue} change ${s.name}'s thinking`,
++      `What problem does ${s.clue} help ${s.name} avoid`,
++      `How does ${s.clue} turn into evidence for ${s.name}`,
++      `What does ${s.name} learn from ${s.clue}`,
++      `Why does ${s.name} need to notice ${s.clue}`,
++      `How does ${s.clue} connect to the final outcome`,
++    ], [
++      `at ${s.place}? Use evidence from the text.`,
++      `before anyone moves on? Use evidence from ${s.title}.`,
++      `when the route might be unsafe? Use evidence from the text.`,
++      `after ${s.helper} warns against guessing? Use evidence.`,
++      `while checking the marker? Use a quotation or close detail.`,
++      `in the scene at ${s.place}? Use evidence from the passage.`,
++      `when the volunteers could take the wrong route? Use evidence.`,
++      `as the clue is matched with the object? Use evidence.`,
++      `near the moved marker? Use text evidence.`,
++      `before ${s.outcome}? Use evidence from the text.`,
++    ]),
++    4: () => composeStem(s.index, [
++      `Which summary best captures ${s.title}`,
++      `Which option gives the clearest whole-story summary`,
++      `What is the best overview of the problem and solution`,
++      `Which statement summarises the main pattern of events`,
++      `Which choice follows the story from clue to outcome`,
++      `What summary best fits ${s.name}'s careful checking`,
++      `Which option explains the route problem most accurately`,
++      `What is the strongest summary of the scene at ${s.place}`,
++      `Which sentence covers the clue, evidence and result`,
++      `Which choice avoids leaving out the safe decision`,
++    ], [
++      `at ${s.place}?`,
++      `from the opening object to the final outcome?`,
++      `after the moved marker is noticed?`,
++      `once ${s.helper}'s advice has mattered?`,
++      `as a complete account of ${s.name}'s actions?`,
++      `without focusing only on the object?`,
++      `when the route check is the main event?`,
++      `as a story about evidence rather than guessing?`,
++      `from the first clue to ${s.outcome}?`,
++      `for a reader explaining the whole passage?`,
++    ]),
++    5: () => composeStem(s.index, [
++      `How does the image "${s.image}" shape the opening`,
++      `What effect does "${s.image}" create at the start`,
++      `How does "${s.image}" help the reader picture the setting`,
++      `Why does the opening image "${s.image}" matter`,
++      `What atmosphere is built by "${s.image}"`,
++      `How does the phrase "${s.image}" prepare the reader`,
++      `What does "${s.image}" add to the first paragraph`,
++      `How does the image "${s.image}" make the scene feel watchful`,
++      `What mood does "${s.image}" give to ${s.place}`,
++      `How does "${s.image}" support the careful-observation theme`,
++    ], [
++      `before the problem appears?`,
++      `at ${s.place}?`,
++      `as ${s.name} arrives?`,
++      `while the ordinary corner becomes important?`,
++      `before the marker is checked?`,
++      `in the first paragraph of ${s.title}?`,
++      `for a reader meeting ${s.place}?`,
++      `before ${s.clue} is noticed?`,
++      `as the route scene is set up?`,
++      `when the text asks the reader to notice small details?`,
++    ]),
++    6: () => composeStem(s.index, [
++      `What is ${s.name} most likely to do next`,
++      `Which next action best follows from ${s.name}'s ending choice`,
++      `What sensible step should ${s.name} take after the route is checked`,
++      `How is ${s.name} likely to continue the careful work`,
++      `What prediction is best supported by ${s.name}'s final behaviour`,
++      `What should ${s.name} probably do with the evidence next`,
++      `Which future action fits the way ${s.name} has changed`,
++      `What is a text-based prediction for ${s.name}`,
++      `What next move would keep the route safe`,
++      `How might ${s.name} act after learning to check carefully`,
++    ], [
++      `after ${s.outcome}?`,
++      `once the evidence has been recorded?`,
++      `at ${s.place} after the final notice is clear?`,
++      `when the route needs to stay safe?`,
++      `after slowing down rather than guessing?`,
++      `once ${s.helper}'s advice has been proved useful?`,
++      `after the marker sequence is checked?`,
++      `before more visitors use ${s.place}?`,
++      `after the fragile scene becomes readable?`,
++      `when the same problem could happen again?`,
++    ]),
++    7: () => composeStem(s.index, [
++      `Match each story detail to the job it does`,
++      `Connect each detail from ${s.title} with its role`,
++      `Pair the object, clue and advice with their functions`,
++      `Match the solution details to their purposes`,
++      `Show how each selected detail helps the route problem`,
++      `Link each named detail to its part in the solution`,
++      `Match the evidence details with the roles they play`,
++      `Decide which job each clue or object performs`,
++      `Connect the carried object, clue and guidance to the outcome`,
++      `Match each important detail to its effect on ${s.name}`,
++    ], [
++      `at ${s.place}.`,
++      `from the first clue to the final decision.`,
++      `in the scene where the marker has moved.`,
++      `after ${s.helper} gives advice.`,
++      `as ${s.name} checks the route.`,
++      `before ${s.outcome}.`,
++      `in the evidence trail of ${s.title}.`,
++      `without mixing up object, clue and advice.`,
++      `as the story moves from noticing to proving.`,
++      `in the solution to the route problem.`,
++    ]),
++    8: () => composeStem(s.index, [
++      `Put the main events in the order they happen`,
++      `Sequence the route-checking events`,
++      `Arrange the story events from first to last`,
++      `Order the steps that lead to ${s.outcome}`,
++      `Place ${s.name}'s actions in the correct sequence`,
++      `Sort the arrival, clue, advice and outcome into order`,
++      `Follow the plot movement in the right order`,
++      `Number the events as the passage presents them`,
++      `Rebuild the sequence of ${s.name}'s careful check`,
++      `Track the events from the opening to the safe result`,
++    ], [
++      `at ${s.place}.`,
++      `from arrival to final outcome.`,
++      `after the marker problem is introduced.`,
++      `as ${s.helper}'s advice changes the plan.`,
++      `using the order in ${s.title}.`,
++      `without jumping straight to the ending.`,
++      `through the clue, advice and result.`,
++      `before explaining why the route is safe.`,
++      `as evidence replaces the quick guess.`,
++      `from the object in the pocket to ${s.outcome}.`,
++    ]),
++    9: () => composeStem(s.index, [
++      `How does ${s.name}'s attitude change`,
++      `What contrast is there in ${s.name}'s behaviour`,
++      `How is ${s.name} different by the ending`,
++      `What movement is shown in ${s.name}'s thinking`,
++      `How does the passage move ${s.name} from haste to care`,
++      `What does the ending reveal about ${s.name}'s changed attitude`,
++      `How should a reader compare ${s.name}'s first and final approach`,
++      `What change in judgement does ${s.name} show`,
++      `How does ${s.name}'s response develop`,
++      `What attitude shift is proved by the final action`,
++    ], [
++      `between the beginning and ending of ${s.title}?`,
++      `after ${s.clue} is checked?`,
++      `once the quick guess is rejected?`,
++      `as ${s.theme} becomes clear?`,
++      `while the route problem is solved?`,
++      `from the first impulse to the final decision?`,
++      `after ${s.helper}'s advice is followed?`,
++      `when the evidence has to be proved?`,
++      `before and after the safe answer is found?`,
++      `by the time ${s.outcome}?`,
++    ]),
++    10: () => composeStem(s.index, [
++      `Which two jobs does the colon and list punctuation do`,
++      `What two functions does the final colon-and-list sentence perform`,
++      `How does the punctuation in the fresh notice help the reader`,
++      `Which two effects come from the notice punctuation`,
++      `What does the colon introduce and organise`,
++      `How do the colon and commas shape the final instruction`,
++      `Which two punctuation roles are shown in the fresh notice`,
++      `What does the list punctuation help the notice do`,
++      `How does punctuation make the final instruction clearer`,
++      `Which two purposes best explain the colon and list`,
++    ], [
++      `at ${s.place}?`,
++      `in the final instruction sentence?`,
++      `after ${s.name} has checked the sequence?`,
++      `when the notice tells visitors what to do?`,
++      `in ${s.title}?`,
++      `as the route is made safe?`,
++      `for the reader following the steps?`,
++      `in the sentence beginning with the fresh notice?`,
++      `when the marker, rope and report steps are listed?`,
++      `near the ending of the passage?`,
++    ]),
++  };
++  return stems[questionNumber]();
++}
++
++function nonFictionStem(s, questionNumber) {
++  const stems = {
++    1: () => composeStem(s.index, [
++      `What main purpose does the ${s.caseLabel} show for ${s.topic}`,
++      `According to the evidence board, why does ${s.topic} exist`,
++      `Which purpose is given for ${s.topic}`,
++      `What does the opening say ${s.topic} is meant to do`,
++      `Why is ${s.topic} useful to the community`,
++      `What aim is linked to ${s.topic}`,
++      `Which benefit explains the main purpose of ${s.topic}`,
++      `What job does ${s.topic} mainly have`,
++      `How would you state the purpose of ${s.topic}`,
++      `What need does ${s.topic} answer`,
++    ], [
++      `in the opening paragraph?`,
++      `before a small problem becomes expensive?`,
++      `using the information from the ${s.caseLabel}?`,
++      `when people have to act carefully?`,
++      `as the routine is introduced?`,
++      `for readers comparing purpose and evidence?`,
++      `in the sentence about the community acting?`,
++      `before the article turns to records?`,
++      `when the system is first explained?`,
++      `from the detail about ${s.benefit}?`,
++    ]),
++    2: () => composeStem(s.index, [
++      `What does "${s.term}" suggest about the routine in ${s.title}`,
++      `Which meaning of "${s.term}" fits the system described`,
++      `How should "${s.term}" be understood here`,
++      `What quality does "${s.term}" give to ${s.topic}`,
++      `Why is "${s.term}" an important word for the routine`,
++      `What does "${s.term}" imply about how ${s.topic} works`,
++      `Which idea is carried by the word "${s.term}"`,
++      `How does "${s.term}" help explain the process`,
++      `What does "${s.term}" suggest about the evidence cycle`,
++      `Which interpretation of "${s.term}" is best supported`,
++    ], [
++      `on the ${s.caseLabel}?`,
++      `in the first paragraph?`,
++      `when evidence must be collected and checked?`,
++      `before decisions are made?`,
++      `as a description of the system's usefulness?`,
++      `for a reader learning how the scheme works?`,
++      `after the process has been introduced?`,
++      `when the community needs dependable information?`,
++      `in relation to ${s.topic}?`,
++      `rather than meaning secret or finished?`,
++    ]),
++    3: () => composeStem(s.index, [
++      `Why must records for ${s.topic} be checked`,
++      `What danger is avoided when the records are checked`,
++      `How does checked evidence protect the decision`,
++      `Why are vague first records a problem`,
++      `What reason does the article give for checking records`,
++      `How can careless evidence mislead people`,
++      `Why does the ${s.caseLabel} need reliable records`,
++      `What makes record-checking necessary for ${s.topic}`,
++      `How does the warning about weak records support the process`,
++      `Why should evidence be challenged before action is taken`,
++    ], [
++      `before decisions are made? Use evidence from the text.`,
++      `on the ${s.caseLabel}? Use evidence.`,
++      `when the later plan depends on them? Use text evidence.`,
++      `before information is shared publicly? Use evidence.`,
++      `as part of the evidence cycle? Use evidence from ${s.title}.`,
++      `when community trust matters? Use evidence.`,
++      `after observations have been collected? Use evidence.`,
++      `before the plan can be adjusted? Use evidence from the text.`,
++      `when the risk is ${s.risk}? Use evidence.`,
++      `before the final review? Use evidence.`,
++    ]),
++    4: () => composeStem(s.index, [
++      `Which summary best explains the evidence cycle in ${s.title}`,
++      `What option gives the clearest overview of ${s.topic}`,
++      `Which statement follows the collect-check-share-review pattern`,
++      `What is the best summary of how ${s.topic} works`,
++      `Which choice captures both purpose and review`,
++      `How should the whole process in ${s.title} be summarised`,
++      `Which option avoids treating ${s.topic} as only a poster`,
++      `What summary fits the article's main argument`,
++      `Which sentence covers evidence, action and review`,
++      `What is the strongest overview of the ${s.caseLabel} system`,
++    ], [
++      `using the ${s.caseLabel}?`,
++      `from first observations to final review?`,
++      `without leaving out the checking stage?`,
++      `after the risk has been explained?`,
++      `as a cycle rather than a single display?`,
++      `for a reader comparing benefit and risk?`,
++      `when the article moves from purpose to process?`,
++      `after the shared evidence is described?`,
++      `in relation to community decisions?`,
++      `before the article ends with review?`,
++    ]),
++    5: () => composeStem(s.index, [
++      `How is ${s.title} structured to explain the process`,
++      `What order of ideas helps the reader understand ${s.topic}`,
++      `How does the article move from purpose to review`,
++      `Why does the structure of ${s.title} make the cycle clearer`,
++      `How are benefit, risk and review arranged`,
++      `What structural pattern guides the explanation`,
++      `How does the article build the reader's understanding`,
++      `Which movement in the text explains the process`,
++      `How does ${s.title} organise the evidence cycle`,
++      `What sequence of explanation is used for ${s.topic}`,
++    ], [
++      `around the ${s.caseLabel}?`,
++      `from the opening purpose to the final paragraph?`,
++      `after observations are introduced?`,
++      `before the review stage is named?`,
++      `while balancing benefit and risk?`,
++      `as a process rather than a list of facts?`,
++      `through collect, check, share and review?`,
++      `when the reader needs to see why maintenance matters?`,
++      `after the trial display is described?`,
++      `in a way that supports careful decisions?`,
++    ]),
++    6: () => composeStem(s.index, [
++      `What is likely to happen if ${s.topic} is not reviewed`,
++      `What problem may appear without later maintenance`,
++      `How could ${s.topic} fail after its first launch`,
++      `Why does the system need review after launch`,
++      `What risk follows if nobody checks ${s.topic} again`,
++      `What prediction is supported by the final paragraph`,
++      `How might ${s.topic} become less useful over time`,
++      `What does the article suggest could go wrong later`,
++      `Why should the evidence cycle return after launch`,
++      `What future issue is most likely without review`,
++    ], [
++      `after the first launch in the ${s.caseLabel}?`,
++      `when records are no longer checked?`,
++      `after the first display has been made public?`,
++      `if people stop testing the plan?`,
++      `once the community has acted?`,
++      `when the cycle is treated as finished?`,
++      `after the first observations become old?`,
++      `if the plan is not adjusted?`,
++      `when conditions change around ${s.topic}?`,
++      `after visitors begin relying on the update?`,
++    ]),
++    7: () => composeStem(s.index, [
++      `Match each part of ${s.topic} to its role`,
++      `Connect the observations, ${s.caseLabel} and review to their jobs`,
++      `Pair each evidence-cycle part with its function`,
++      `Match the three process details to what they do`,
++      `Show the role played by each part of the system`,
++      `Link each stage of ${s.topic} to its purpose`,
++      `Decide which job each evidence-cycle detail performs`,
++      `Match collection, display and review to their roles`,
++      `Connect each named part to the work it supports`,
++      `Sort the process details by their functions`,
++    ], [
++      `in the evidence cycle.`,
++      `from first collection to final checking.`,
++      `using the description of the ${s.caseLabel}.`,
++      `without mixing up display and review.`,
++      `as the article explains shared evidence.`,
++      `before the decision is made.`,
++      `after observations have been collected.`,
++      `when the public update is read.`,
++      `as the final review tests the change.`,
++      `for a reader following how the system works.`,
++    ]),
++    8: () => composeStem(s.index, [
++      `Put the ${s.topic} evidence cycle in order`,
++      `Sequence the steps used by the ${s.caseLabel}`,
++      `Arrange the collect-check-share-review process`,
++      `Order the stages that make ${s.topic} reliable`,
++      `Place the evidence-cycle actions from first to last`,
++      `Track the process from observations to review`,
++      `Number the steps in the system's cycle`,
++      `Rebuild the process described in ${s.title}`,
++      `Sort the evidence actions into the correct order`,
++      `Follow the route from first records to checking the change`,
++    ], [
++      `using the final paragraph.`,
++      `before the plan can be judged.`,
++      `as the article explains it.`,
++      `without skipping the checking stage.`,
++      `from collection to final review.`,
++      `after volunteers begin recording observations.`,
++      `so the shared evidence makes sense.`,
++      `when the process is treated as a cycle.`,
++      `for the system described by the ${s.caseLabel}.`,
++      `as people decide what to do next.`,
++    ]),
++    9: () => composeStem(s.index, [
++      `Compare the benefit and risk of ${s.topic}`,
++      `How do the usefulness and possible problem of ${s.topic} differ`,
++      `What balance does the article make between benefit and risk`,
++      `Why should the advantage of ${s.topic} be weighed against its risk`,
++      `How does the text present both sides of ${s.topic}`,
++      `What comparison is made between what helps and what can mislead`,
++      `How should a reader explain the benefit-risk contrast`,
++      `What does ${s.title} show about the value and danger of evidence`,
++      `How are the positive and negative possibilities connected`,
++      `What contrast explains why checked evidence matters`,
++    ], [
++      `using the ${s.caseLabel}.`,
++      `with one point from each side.`,
++      `after the strongest benefit is named.`,
++      `when the risk is ${s.risk}.`,
++      `before the final review stage.`,
++      `as part of the evidence cycle.`,
++      `for a reader judging whether the system is useful.`,
++      `without ignoring the possible problem.`,
++      `in the paragraph that uses "However".`,
++      `while explaining why records must be open to challenge.`,
++    ]),
++    10: () => composeStem(s.index, [
++      `What does the semicolon in the ${s.caseLabel} explanation do`,
++      `Which two roles does the semicolon perform in ${s.title}`,
++      `How does the semicolon link the evidence ideas`,
++      `What relationship does the semicolon show`,
++      `Why is a semicolon suitable in the guidance sentence`,
++      `What does the punctuation connect in the ${s.caseLabel} explanation`,
++      `How does the semicolon help compare useful and careless evidence`,
++      `Which punctuation effect is shown by the semicolon`,
++      `What does the semicolon tell the reader about the two clauses`,
++      `How does punctuation organise the warning about evidence`,
++    ], [
++      `in ${s.title}?`,
++      `between useful evidence and misleading evidence?`,
++      `when two complete ideas are closely related?`,
++      `inside the guidance about careful records?`,
++      `after the benefit and risk have been explained?`,
++      `for a reader following the contrast?`,
++      `on the ${s.caseLabel}?`,
++      `before the article moves to the trial board?`,
++      `as the warning is made more precise?`,
++      `where the text links careful evidence with possible harm?`,
++    ]),
++  };
++  return stems[questionNumber]();
++}
++
++function poetryStem(s, questionNumber) {
++  const stems = {
++    1: () => composeStem(s.index, [
++      `Which object is personified`,
++      `What object is given a human-like action`,
++      `Name the thing that acts almost like a person`,
++      `Which detail in the poem is personified`,
++      `What non-human object is made active`,
++      `Which object does the poet make seem alive`,
++      `What thing is described as acting`,
++      `Which small object receives a human quality`,
++      `What object is treated as if it can respond`,
++      `Which image shows personification`,
++    ], [
++      `at ${s.setting} in ${s.title}?`,
++      `in the opening stanza?`,
++      `when the morning scene is introduced?`,
++      `beside the sound detail?`,
++      `as the careful light gathers?`,
++      `before the poem says the place is important?`,
++      `where the quiet work begins?`,
++      `in the line with ${s.move}?`,
++      `as the reader notices small movement?`,
++      `before the dash interrupts the hush?`,
++    ]),
++    2: () => composeStem(s.index, [
++      `What does "glimmer" suggest`,
++      `Which meaning of "glimmer" fits the poem`,
++      `How should "glimmer" be understood`,
++      `What kind of light is suggested by "glimmer"`,
++      `Why does "glimmer" feel sudden in the line`,
++      `What effect does the word "glimmer" create`,
++      `Which idea is carried by "glimmer"`,
++      `How does "glimmer" affect the quiet scene`,
++      `What does "glimmer" add to the dash interruption`,
++      `Which interpretation of "glimmer" is best`,
++    ], [
++      `at ${s.setting}?`,
++      `inside the dash phrase?`,
++      `when the hush is interrupted?`,
++      `in ${s.title}?`,
++      `after the sign tells the reader to wait and watch?`,
++      `before the air returns to its duties?`,
++      `as a small flash rather than a loud warning?`,
++      `within the quiet atmosphere?`,
++      `when the poem shifts from stillness to movement?`,
++      `in the third stanza?`,
++    ]),
++    3: () => composeStem(s.index, [
++      `How does ${s.title} suggest quiet activity`,
++      `What evidence shows that stillness is not empty`,
++      `How does the poem present work beneath quietness`,
++      `Why does the scene feel calm but active`,
++      `What proof shows hidden movement in the poem`,
++      `How is quiet work made visible`,
++      `What does the poem show about activity under stillness`,
++      `How do small details suggest that something is happening`,
++      `Why is the quiet scene still busy`,
++      `What line helps show quiet activity`,
++    ], [
++      `at ${s.setting}? Use evidence from the poem.`,
++      `in the evening stanza? Use evidence.`,
++      `before the poem asks the reader to notice what stays? Use evidence.`,
++      `through the line about quiet work? Use evidence.`,
++      `after the dash interrupts the hush? Use evidence.`,
++      `with one phrase from the poem as proof.`,
++      `where the air returns to small duties? Use evidence.`,
++      `in the contrast between stillness and work? Use evidence.`,
++      `near ${s.setting}? Use evidence from ${s.title}.`,
++      `without calling the scene noisy? Use evidence.`,
++    ]),
++    4: () => composeStem(s.index, [
++      `Which sentence best summarises the mood`,
++      `What mood does the poem create`,
++      `Which option fits the atmosphere of ${s.title}`,
++      `How should the feeling at ${s.setting} be described`,
++      `What is the best summary of the poem's tone`,
++      `Which description matches the quiet details`,
++      `What feeling is built by the small observations`,
++      `Which mood is supported by the poem's images`,
++      `How does the poem want the reader to feel about ${s.setting}`,
++      `What tone is strongest in the poem`,
++    ], [
++      `at ${s.setting}?`,
++      `after the first two stanzas?`,
++      `when the dash breaks the hush?`,
++      `by the time the evening stanza arrives?`,
++      `in ${s.title}?`,
++      `when the reader notices small changes?`,
++      `rather than noisy or comic?`,
++      `through the light, sound and object details?`,
++      `before the final stanza?`,
++      `as the poem stays careful and watchful?`,
++    ]),
++    5: () => composeStem(s.index, [
++      `How does the image "${s.image}" shape ${s.title}`,
++      `What does "${s.image}" help the reader picture`,
++      `Why is the image "${s.image}" useful to the poem`,
++      `What atmosphere does "${s.image}" create`,
++      `How does "${s.image}" support the poem's quiet mood`,
++      `What effect does the opening image have`,
++      `How does the image make ${s.setting} vivid`,
++      `What does "${s.image}" add to the setting`,
++      `How does the poet use "${s.image}"`,
++      `Why does the first image matter`,
++    ], [
++      `at ${s.setting}?`,
++      `before the object is personified?`,
++      `as the poem begins?`,
++      `when the sound detail enters?`,
++      `for a reader imagining the scene?`,
++      `before the dash interrupts the hush?`,
++      `in the opening stanza?`,
++      `while the poem stays calm and watchful?`,
++      `before the final request to notice what stays?`,
++      `in relation to the poem's mood?`,
++    ]),
++    6: () => composeStem(s.index, [
++      `What kind of detail is the speaker likely to notice next`,
++      `Which future observation best fits the poem`,
++      `What might the speaker notice after the final stanza`,
++      `What prediction follows from the poem's attention to small changes`,
++      `Which detail would suit the speaker's careful watching`,
++      `What is the most likely next kind of image`,
++      `How might the speaker continue noticing the place`,
++      `What small change would fit the poem's pattern`,
++      `What should the reader expect the speaker to notice next`,
++      `Which kind of quiet detail is most likely to come next`,
++    ], [
++      `at ${s.setting}?`,
++      `after reading the final stanza?`,
++      `once the smallest change has mattered?`,
++      `after the sound and light details?`,
++      `when the poem keeps its careful mood?`,
++      `rather than a loud dramatic event?`,
++      `in the same atmosphere as ${s.title}?`,
++      `after the air returns to small duties?`,
++      `because the poem values noticing?`,
++      `near the object that ${s.move}?`,
++    ]),
++    7: () => composeStem(s.index, [
++      `Match each poetic detail to its effect`,
++      `Connect the sound, line and dash to their roles`,
++      `Pair each selected detail with what it creates`,
++      `Match the poem's techniques to their effects`,
++      `Show what each detail contributes`,
++      `Link each poetic feature to its purpose`,
++      `Decide which effect belongs to each detail`,
++      `Match the quiet sound, hidden activity and dash`,
++      `Connect each detail from ${s.title} with its effect`,
++      `Sort the poetic details by what they do`,
++    ], [
++      `at ${s.setting}.`,
++      `in the movement from stillness to glimmer.`,
++      `without mixing up sound and interruption.`,
++      `as the poem builds quiet activity.`,
++      `from the first stanza to the dash line.`,
++      `before the final noticing idea.`,
++      `using the details named in the question.`,
++      `where each feature changes the reader's response.`,
++      `in the poem's careful atmosphere.`,
++      `as evidence for how the poem works.`,
++    ]),
++    8: () => composeStem(s.index, [
++      `Put the movement of ideas in order`,
++      `Sequence the poem's main movement`,
++      `Arrange the ideas from setting to final noticing`,
++      `Order the shifts in ${s.title}`,
++      `Place the poetic ideas from first to last`,
++      `Track the poem's movement through its stanzas`,
++      `Number the stages of the poem's development`,
++      `Rebuild the order of ideas in the poem`,
++      `Sort the setting, activity, interruption and noticing`,
++      `Follow the poem from sound to final meaning`,
++    ], [
++      `at ${s.setting}.`,
++      `from the opening sound to the final request.`,
++      `without moving the dash before the setting.`,
++      `as the stanzas present them.`,
++      `before explaining the poem's effect.`,
++      `from quiet detail to quiet importance.`,
++      `after the object is given activity.`,
++      `through the dash and back to stillness.`,
++      `as ${s.title} asks the reader to notice small changes.`,
++      `using the order of the poem itself.`,
++    ]),
++    9: () => composeStem(s.index, [
++      `How does ${s.title} make small details seem important`,
++      `Why do tiny details matter in the poem`,
++      `How does the poet give importance to quiet observations`,
++      `What makes the small details feel meaningful`,
++      `How are ${s.object} and ${s.sound} made significant`,
++      `Why does the poem value careful noticing`,
++      `How does the final idea lift the small details`,
++      `What evidence shows that small changes matter`,
++      `How does quiet work become important in ${s.title}`,
++      `What does the poem suggest about noticing small details`,
++    ], [
++      `at ${s.setting}?`,
++      `by the final stanza?`,
++      `after the line about quiet work?`,
++      `when the place is saved by careful reading?`,
++      `through the object and sound images?`,
++      `without making the scene loud?`,
++      `as the speaker asks the reader to notice what stays?`,
++      `with evidence from the poem?`,
++      `after the dash has interrupted the hush?`,
++      `when the smallest change is read correctly?`,
++    ]),
++    10: () => composeStem(s.index, [
++      `What does the dash around "a sudden glimmer" do`,
++      `Which two effects are created by the dash phrase`,
++      `How does the dash change the movement of the line`,
++      `Why is the dash useful around "a sudden glimmer"`,
++      `What punctuation effect appears in the glimmer line`,
++      `How does the dash interrupt the hush`,
++      `What does the dash add to the phrase "a sudden glimmer"`,
++      `Which punctuation job is shown by the dash`,
++      `How does the dash make the glimmer stand out`,
++      `What does the dash signal in the quiet scene`,
++    ], [
++      `at ${s.setting}?`,
++      `in ${s.title}?`,
++      `before the air returns to small duties?`,
++      `inside the third stanza?`,
++      `when the poem briefly breaks stillness?`,
++      `while adding extra information?`,
++      `for a reader following the hush?`,
++      `as a sudden interruption in the line?`,
++      `between the sign and the settled shadows?`,
++      `in the phrase set apart from the sentence?`,
++    ]),
++  };
++  return stems[questionNumber]();
++}
++
++function makeFictionSpec(index) {
++  const place = `${pick(FICTION_MODIFIERS, index)} ${pick(FICTION_BASE_PLACES, index)}`;
++  return {
++    index,
++    id: `phase7_fiction_${slug(place)}`,
++    title: `The ${place.split(' ').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ')}`,
++    genre: 'fiction',
++    difficulty: index % 2 ? 5 : 4,
++    isLong: true,
++    name: pick(NAMES, index, 3),
++    place,
++    object: pick(OBJECTS, index, 5),
++    clue: pick(CLUES, index, 7),
++    helper: pick(HELPERS, index, 4),
++    advice: pick(ADVICE, index, 6),
++    image: pick(IMAGES, index, 5),
++    outcome: pick(OUTCOMES, index, 4),
++    theme: pick(THEMES, index, 6),
++  };
++}
++
++function makeFictionPassage(index) {
++  const s = makeFictionSpec(index);
++  const evidenceSentence = `${s.name} matched the ${s.clue} with the ${s.object} and proved that the safest answer was to wait, check the route, and ask ${s.helper} before moving on.`;
++  const contrastSentence = `At first ${s.name} wanted to rush, but by the end ${s.name} worked more deliberately because ${s.theme}.`;
++  return {
++    id: s.id,
++    title: s.title,
++    genre: s.genre,
++    difficulty: s.difficulty,
++    isLong: s.isLong,
++    blocks: [
++      `${s.name} reached ${s.place} before the morning crowd arrived, carrying a ${s.object} in a jacket pocket. ${s.image}, and the ordinary corner of town felt as if it had been set out for inspection. A notice beside the gate asked visitors to move carefully: several people would be relying on the route later that day.`,
++      `The first problem was small but serious. The usual marker had been moved, and ${s.name} noticed ${s.clue} near the place where the sign should have been. Nobody else had spotted it because everyone was looking at the larger damage beyond the path.`,
++      `${s.helper} arrived with a clipboard and said, "${s.advice}." ${evidenceSentence} The words made ${s.name} pause, because a quick guess might have sent the volunteers towards the wrong entrance.`,
++      `${contrastSentence} A colon on the fresh notice prepared the final instruction: check the marker, follow the rope, then report any change. ${s.name} checked each part of the sequence, and ${s.outcome}.`,
++      `The place was not suddenly simple, but it was readable. The ${s.object} had not solved the problem alone; it had helped ${s.name} slow down long enough to notice what the scene was already saying.`
++    ],
++    questions: makeFictionQuestions(s, evidenceSentence, contrastSentence),
++  };
++}
++
++function makeFictionQuestions(s, evidenceSentence, contrastSentence) {
++  const id = s.id;
++  return [
++    { id: qid(id, 1), type: 'short', skill: '2b', marks: 1, stem: fictionStem(s, 1), check: { keywordAny: [words(s.object, 4), [words(s.object, 1)[0]]] }, modelAnswer: `${s.name} carries a ${s.object}.`, explanation: `The opening says ${s.name} is carrying a ${s.object}.`, hint: 'Reread the first paragraph for the carried object.' },
++    { id: qid(id, 2), type: 'mcq', skill: '2a', marks: 1, stem: fictionStem(s, 2), options: ['carelessly and without thinking', 'slowly, carefully and on purpose', 'angrily because nobody helped', 'secretly so others cannot see'], correct: 1, modelAnswer: `In ${s.title}, "deliberately" means slowly, carefully and on purpose.`, explanation: `${s.name} changes from wanting to rush to checking the evidence carefully.`, hint: 'Use the contrast between rushing and checking.' },
++    { id: qid(id, 3), type: 'evidenceShort', skill: '2d', marks: 2, stem: fictionStem(s, 3), answerCheck: { keywordAny: [words(s.clue, 3), words(s.outcome, 4), ['safe', 'answer'], ['route', 'check']] }, evidenceCheck: { containsAny: [`matched the ${s.clue} with the ${s.object}`, 'safest answer was to wait, check the route', 'a quick guess might have sent the volunteers towards the wrong entrance'] }, answerMarks: 1, evidenceMarks: 1, modelAnswer: `The ${s.clue} helps ${s.name} realise the route must be checked before anyone moves on, which leads to ${s.outcome}.`, explanation: 'A good answer links the clue to the safe decision, then proves it with a phrase from the passage.', hint: 'Name the clue, then explain what decision it supports.' },
++    { id: qid(id, 4), type: 'mcq', skill: '2c', marks: 2, stem: fictionStem(s, 4), options: [`${s.name} ignores ${s.helper} and leaves ${s.place} without checking anything.`, `${s.name} follows a small clue, checks the evidence, and helps make the route safe.`, `${s.helper} solves the whole problem before ${s.name} arrives.`, `The story mainly explains how to repair the ${s.object}.`], correct: 1, modelAnswer: `In ${s.title}, ${s.name} follows a small clue at ${s.place}, checks the evidence, and helps make the route safe.`, explanation: 'The summary needs the problem, evidence-checking and outcome.', hint: 'Choose the option that covers the whole story.' },
++    { id: qid(id, 5), type: 'open', skill: '2g', marks: 2, stem: fictionStem(s, 5), rubric: [{ label: 'Explains the specific image', check: { keywordAny: [words(s.image, 4), ['image'], ['picture']] } }, { label: 'Explains mood or effect', check: { keywordAny: [['atmosphere'], ['mood'], ['reader'], ['vivid'], ['careful'], ['watchful']] } }], modelAnswer: `The image "${s.image}" gives the reader a vivid picture of ${s.place} and creates a careful, watchful atmosphere before the problem appears.`, explanation: 'The phrase makes the setting visual and prepares the reader for close observation.', hint: 'Explain both the picture and the feeling it creates.' },
++    { id: qid(id, 6), type: 'short', skill: '2e', marks: 1, stem: fictionStem(s, 6), check: { keywordAny: [['keep', 'record'], ['share', 'evidence'], ['check', 'route'], ['report', 'change']] }, modelAnswer: `After ${s.title}, ${s.name} is likely to keep a record and share the evidence from ${s.place} so the route stays safe.`, explanation: 'The ending shows careful checking, so a text-based prediction should continue that behaviour.', hint: 'Use the final two paragraphs to predict a sensible next action.' },
++    { id: qid(id, 7), type: 'match', skill: '2h', marks: 2, stem: fictionStem(s, 7), prompts: [s.object, s.clue, s.advice], options: ['the carried object that helps with checking', 'the small clue that begins the investigation', 'the guidance that changes how the character thinks'], correctMap: { 0: '0', 1: '1', 2: '2' }, modelAnswer: `In ${s.title}, ${s.object} is the carried object; ${s.clue} is the clue; "${s.advice}" is the guidance.`, explanation: 'Each detail does a different job in the story.', hint: 'Decide whether each detail is object, clue or advice.' },
++    { id: qid(id, 8), type: 'order', skill: '2f', marks: 2, stem: fictionStem(s, 8), items: [`${s.name} arrives at ${s.place} with the ${s.object}.`, `${s.name} notices ${s.clue}.`, `${s.helper} gives advice and ${s.name} checks the evidence.`, `${s.outcome}.`], correctPositions: [1, 2, 3, 4], modelAnswer: `In ${s.title}, the order is arrival with the ${s.object}, noticing ${s.clue}, checking the evidence, then ${s.outcome}.`, explanation: 'The sequence follows the passage from beginning to end.', hint: 'Track what happens first, next and last.' },
++    { id: qid(id, 9), type: 'open', skill: '2d', marks: 3, stem: fictionStem(s, 9), rubric: [{ label: 'Beginning attitude', check: { keywordAny: [['rush'], ['quick', 'guess'], ['wanted', 'rush']] } }, { label: 'Ending attitude', check: { keywordAny: [['deliberate'], ['careful'], ['check'], ['record']] } }, { label: 'Uses theme or reason', check: { keywordAny: [words(s.theme, 4), ['evidence'], ['safe'], ['responsibility']] } }], modelAnswer: `At first ${s.name} wants to rush or make a quick guess, but by the end ${s.name} is deliberate and careful, checking the evidence because ${s.theme}.`, explanation: 'A strong answer compares the early impulse with the later careful behaviour.', hint: 'Compare first and last, not just one moment.' },
++    { id: qid(id, 10), type: 'multiSelect', skill: 'P4', marks: 2, stem: fictionStem(s, 10), options: ['prepares the reader for a set of instructions', 'shows the exact words spoken by a character', 'separates the instruction steps in order', 'turns the sentence into a question'], correctSet: [0, 2], modelAnswer: `In ${s.title}, the colon introduces the instruction list, and the commas separate the steps in order.`, explanation: 'The punctuation prepares and organises the sequence of instructions.', hint: 'Look at what comes after the colon.' }
++  ];
++}
++
++function makeNonFictionSpec(index) {
++  const topic = NON_FICTION_TOPICS[index];
++  return {
++    index,
++    id: `phase7_nonfiction_${slug(topic)}`,
++    title: `How ${topic.split(' ').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ')} Works`,
++    genre: 'non-fiction',
++    difficulty: index % 2 ? 5 : 4,
++    isLong: true,
++    topic,
++    action: pick(ACTIONS, index, 3),
++    benefit: pick(BENEFITS, index, 5),
++    risk: pick(RISKS, index, 7),
++    caseLabel: `${pick(CASE_LABELS, index, 4)} ${String(index + 1).padStart(3, '0')}`,
++    processVerb: pick(PROCESS_VERBS, index, 6),
++    term: pick(TERMS, index, 5),
++  };
++}
++function makeNonFictionPassage(index) {
++  const s = makeNonFictionSpec(index);
++  const evidenceSentence = `The ${s.caseLabel} shows that ${s.topic} ${s.action} small observations first, then turn them into shared evidence before a decision is made.`;
++  return {
++    id: s.id,
++    title: s.title,
++    genre: s.genre,
++    difficulty: s.difficulty,
++    isLong: s.isLong,
++    blocks: [
++      `${s.title} may sound simple, but it depends on a ${s.term} routine: collect the right evidence, check it, and share it clearly. The main purpose of ${s.topic} is to ${s.benefit}, especially when a community has to act before a small problem becomes expensive.`,
++      `A useful scheme usually starts with volunteers who ${s.processVerb} observations at the same time each week. ${evidenceSentence} If the first records are vague, the later plan is weaker because nobody can tell what really changed.`,
++      `The strongest benefit is that ${s.topic} can ${s.benefit}. However, the same system can ${s.risk}, so the records must be open to challenge. A semicolon in the guidance links two closely related ideas; careful evidence is useful, but careless evidence can mislead.`,
++      `In one trial, the ${s.caseLabel} was placed near the entrance so children, adults and visitors could all read the same update. The board did not make the decision for them; it helped everyone compare the same facts.`,
++      `This is why ${s.topic} should be treated as a cycle rather than a poster. People collect information, test it, adjust the plan and return later to see whether the change has worked.`
++    ],
++    questions: makeNonFictionQuestions(s, evidenceSentence),
++  };
++}
++function makeNonFictionQuestions(s, evidenceSentence) {
++  const id = s.id;
++  return [
++    { id: qid(id, 1), type: 'short', skill: '2b', marks: 1, stem: nonFictionStem(s, 1), check: { keywordAny: [words(s.benefit, 4), ['shared', 'evidence'], ['community', 'act']] }, modelAnswer: `The main purpose of ${s.topic} is to ${s.benefit}.`, explanation: 'The opening paragraph states the purpose directly.', hint: 'Look in the first paragraph for the purpose.' },
++    { id: qid(id, 2), type: 'mcq', skill: '2a', marks: 1, stem: nonFictionStem(s, 2), options: ['not worth checking', 'able to work well in the situation described', 'secret and hidden from the public', 'finished without any further review'], correct: 1, modelAnswer: `In ${s.title}, "${s.term}" means able to work well in the situation described.`, explanation: `The routine needs to work reliably for ${s.topic}.`, hint: 'Use the sentence about collecting, checking and sharing evidence.' },
++    { id: qid(id, 3), type: 'evidenceShort', skill: '2d', marks: 2, stem: nonFictionStem(s, 3), answerCheck: { keywordAny: [['records', 'checked'], ['shared', 'evidence'], words(s.risk, 4), ['mislead']] }, evidenceCheck: { containsAny: ['If the first records are vague, the later plan is weaker', 'careless evidence can mislead', `turn them into shared evidence before a decision is made`] }, answerMarks: 1, evidenceMarks: 1, modelAnswer: `Records for ${s.topic} must be checked because vague or careless evidence can mislead people before a decision is made.`, explanation: 'The passage warns that weak evidence leads to weaker plans.', hint: 'Find the warning about vague records or careless evidence.' },
++    { id: qid(id, 4), type: 'mcq', skill: '2c', marks: 2, stem: nonFictionStem(s, 4), options: [`${s.topic} is a simple poster that needs no review after it is put up.`, `${s.topic} works best as an evidence cycle: collect, check, share, act and review.`, `${s.topic} is useful only for experts and should not be seen by the public.`, `${s.topic} mainly explains the history of the ${s.caseLabel}.`], correct: 1, modelAnswer: `${s.topic} works best as an evidence cycle: collect, check, share, act and review.`, explanation: 'The passage repeatedly presents the process as a cycle of evidence and review.', hint: 'Choose the option that covers the whole process.' },
++    { id: qid(id, 5), type: 'open', skill: '2f', marks: 2, stem: nonFictionStem(s, 5), rubric: [{ label: 'Explains sequence', check: { keywordAny: [['starts'], ['first'], ['cycle'], ['collect'], ['check']] } }, { label: 'Explains movement from benefit to risk or review', check: { keywordAny: [['benefit'], ['risk'], ['review'], ['adjust'], ['return']] } }], modelAnswer: `${s.title} starts by explaining the purpose, then shows how people collect and check evidence. It also balances benefit and risk before ending with review as part of a cycle.`, explanation: 'The structure moves from purpose to process, then risk and review.', hint: 'Track the order of the paragraphs.' },
++    { id: qid(id, 6), type: 'short', skill: '2e', marks: 1, stem: nonFictionStem(s, 6), check: { keywordAny: [['become', 'out', 'date'], ['risk'], ['fail'], ['mislead'], ['need', 'maintenance']] }, modelAnswer: `${s.topic} may become out of date or mislead people if it is not reviewed and maintained.`, explanation: 'The passage says the system is a cycle and warns that records need checking.', hint: 'Use the final paragraph and the warning paragraph.' },
++    { id: qid(id, 7), type: 'match', skill: '2h', marks: 2, stem: nonFictionStem(s, 7), prompts: ['weekly observations', s.caseLabel, 'final review'], options: ['collect first evidence', 'display shared evidence publicly', 'check whether the change worked'], correctMap: { 0: '0', 1: '1', 2: '2' }, modelAnswer: `In ${s.title}, weekly observations collect evidence; the ${s.caseLabel} displays shared evidence; the final review checks whether the change worked.`, explanation: 'The passage describes each part of the evidence cycle.', hint: 'Match collection, display and review.' },
++    { id: qid(id, 8), type: 'order', skill: '2f', marks: 2, stem: nonFictionStem(s, 8), items: ['collect observations', 'check the records', 'share the evidence', 'review whether the change worked'], correctPositions: [1, 2, 3, 4], modelAnswer: `For ${s.title}, the cycle is collect observations, check the records, share the evidence, then review whether the change worked.`, explanation: 'The passage presents the system as an ordered cycle.', hint: 'Use the final paragraph.' },
++    { id: qid(id, 9), type: 'open', skill: '2h', marks: 3, stem: nonFictionStem(s, 9), rubric: [{ label: 'Names benefit', check: { keywordAny: [words(s.benefit, 4), ['benefit'], ['useful']] } }, { label: 'Names risk', check: { keywordAny: [words(s.risk, 4), ['risk'], ['mislead']] } }, { label: 'Compares both sides', check: { keywordAny: [['both'], ['while'], ['however'], ['balance'], ['compare']] } }], modelAnswer: `${s.topic} can ${s.benefit}, which is the benefit. However, it also has a risk: it can ${s.risk}; comparing both sides shows why checked evidence matters.`, explanation: 'A strong comparison mentions both the usefulness and the possible problem.', hint: 'Give one benefit and one risk, then link them.' },
++    { id: qid(id, 10), type: 'multiSelect', skill: 'P4', marks: 2, stem: nonFictionStem(s, 10), options: ['links two closely related contrasting ideas', 'shows someone is speaking', 'joins two complete ideas about evidence', 'introduces a question'], correctSet: [0, 2], modelAnswer: `In ${s.title}, the semicolon links two complete but closely related ideas about useful and misleading evidence.`, explanation: 'A semicolon can connect closely related complete clauses.', hint: 'Look at the ideas on both sides of the semicolon.' }
++  ];
++}
++
++function makePoetrySpec(index) {
++  const setting = POETRY_SETTINGS[index];
++  return {
++    index,
++    id: `phase7_poetry_${slug(setting)}`,
++    title: `Poem ${index + 1}: ${setting.replace(/^./, (c) => c.toUpperCase())}`,
++    genre: 'poetry',
++    difficulty: index % 2 ? 5 : 4,
++    isLong: true,
++    setting,
++    object: pick(POETIC_OBJECTS, index, 4),
++    move: pick(POETIC_MOVES, index, 5),
++    sound: pick(POETIC_SOUNDS, index, 6),
++    effect: pick(POETIC_EFFECTS, index, 7),
++    image: pick(IMAGES, index, 3),
++  };
++}
++function makePoetryPassage(index) {
++  const s = makePoetrySpec(index);
++  const evidenceLine = `the ${s.object} ${s.move} where the careful light gathers`;
++  const contrastLine = `all this quiet work keeps moving underneath the stillness`;
++  return {
++    id: s.id,
++    title: s.title,
++    genre: s.genre,
++    difficulty: s.difficulty,
++    isLong: s.isLong,
++    blocks: [
++      `At ${s.setting},\n${s.image};\na ${s.sound} slips under the morning\nand the ${s.object} ${s.move} in place.`,
++      `No one calls it important,\nnot yet, not loudly,\nbut ${evidenceLine}\nlike a note left for patient hands.`,
++      `The sign says: wait, watch, listen.\nA dash interrupts the hush - a sudden glimmer -\nthen the air returns to its small duties\nand the shadows settle back.`,
++      `By evening the place feels ${s.effect};\n${contrastLine}.\nThe poem does not shout its answer.\nIt asks the reader to notice what stays.`,
++      `Some places are saved by noise,\nothers by a ${s.sound},\nand some by the child who reads\nthe smallest change correctly.`
++    ],
++    questions: makePoetryQuestions(s, evidenceLine, contrastLine),
++  };
++}
++function makePoetryQuestions(s, evidenceLine, contrastLine) {
++  const id = s.id;
++  return [
++    { id: qid(id, 1), type: 'short', skill: '2b', marks: 1, stem: poetryStem(s, 1), check: { keywordAny: [[s.object], words(s.object, 2)] }, modelAnswer: `In ${s.title}, the ${s.object} is personified.`, explanation: `The poem says the ${s.object} ${s.move}.`, hint: 'Look for the object that is given an action.' },
++    { id: qid(id, 2), type: 'mcq', skill: '2a', marks: 1, stem: poetryStem(s, 2), options: ['a brief, small light', 'a loud warning shout', 'a heavy object falling', 'a long speech'], correct: 0, modelAnswer: `In ${s.title}, a glimmer means a brief, small light.`, explanation: 'A glimmer is a small flash or shine.', hint: 'Use the line about the dash interrupting the hush.' },
++    { id: qid(id, 3), type: 'evidenceShort', skill: '2d', marks: 2, stem: poetryStem(s, 3), answerCheck: { keywordAny: [['quiet', 'work'], ['moving', 'stillness'], words(contrastLine, 4), ['small', 'duties']] }, evidenceCheck: { containsAny: [contrastLine, 'the air returns to its small duties', evidenceLine] }, answerMarks: 1, evidenceMarks: 1, modelAnswer: `In ${s.title}, the poem suggests quiet activity because quiet work keeps moving underneath the stillness.`, explanation: 'The answer should explain the contrast between stillness and hidden work.', hint: 'Find a line that says something is quiet but still moving.' },
++    { id: qid(id, 4), type: 'mcq', skill: '2c', marks: 2, stem: poetryStem(s, 4), options: ['noisy, rushed and careless', `quiet, observant and ${s.effect}`, 'angry and violent', 'comic and silly'], correct: 1, modelAnswer: `In ${s.title}, the mood is quiet, observant and ${s.effect}.`, explanation: 'The poem is calm and watchful, with small details doing important work.', hint: 'Choose the option that fits the quiet details.' },
++    { id: qid(id, 5), type: 'open', skill: '2g', marks: 2, stem: poetryStem(s, 5), rubric: [{ label: 'Explains image', check: { keywordAny: [words(s.image, 4), ['image'], ['picture']] } }, { label: 'Explains effect', check: { keywordAny: [['mood'], ['atmosphere'], ['reader'], ['quiet'], ['vivid']] } }], modelAnswer: `The image "${s.image}" gives the reader a vivid picture of ${s.setting} and builds a quiet, observant atmosphere.`, explanation: 'A strong answer explains both the picture and the mood.', hint: 'Say what the image makes you see and feel.' },
++    { id: qid(id, 6), type: 'short', skill: '2e', marks: 1, stem: poetryStem(s, 6), check: { keywordAny: [['small', 'change'], ['quiet', 'detail'], ['light'], ['sound'], ['notice']] }, modelAnswer: `In ${s.title}, the speaker is likely to notice another small change in light or sound.`, explanation: 'The poem keeps focusing on small, quiet details.', hint: 'Use the final stanza to predict the kind of detail.' },
++    { id: qid(id, 7), type: 'match', skill: '2h', marks: 2, stem: poetryStem(s, 7), prompts: [s.sound, evidenceLine, 'the dash'], options: ['creates a quiet sound', 'shows hidden activity', 'interrupts the stillness with a sudden glimmer'], correctMap: { 0: '0', 1: '1', 2: '2' }, modelAnswer: `In ${s.title}, ${s.sound} creates a quiet sound; "${evidenceLine}" shows hidden activity; the dash interrupts the stillness.`, explanation: 'Each detail creates a different effect.', hint: 'Think about sound, activity and punctuation.' },
++    { id: qid(id, 8), type: 'order', skill: '2f', marks: 2, stem: poetryStem(s, 8), items: ['setting and sound are introduced', 'a quiet object is given activity', 'the dash interrupts the hush', 'the speaker asks the reader to notice small changes'], correctPositions: [1, 2, 3, 4], modelAnswer: `In ${s.title}, the poem introduces setting and sound, gives the object activity, interrupts the hush with a dash, then asks the reader to notice small changes.`, explanation: 'This follows the poem from first stanza to final idea.', hint: 'Follow the stanzas in order.' },
++    { id: qid(id, 9), type: 'open', skill: '2d', marks: 3, stem: poetryStem(s, 9), rubric: [{ label: 'Mentions small detail', check: { keywordAny: [['small', 'detail'], [s.object], words(s.sound, 2)] } }, { label: 'Mentions importance', check: { keywordAny: [['important'], ['saved'], ['notice'], ['correctly']] } }, { label: 'Uses quiet-work idea', check: { keywordAny: [['quiet', 'work'], ['stillness'], ['patient'], ['stays']] } }], modelAnswer: `${s.title} makes the ${s.object} and the ${s.sound} seem important because small details are noticed correctly. The poem links this to quiet work under stillness and says some places are saved by such noticing.`, explanation: 'A strong answer connects tiny details to the poem’s bigger idea.', hint: 'Use the final two stanzas.' },
++    { id: qid(id, 10), type: 'multiSelect', skill: 'P3', marks: 2, stem: poetryStem(s, 10), options: ['sets off extra information inside the line', 'shows a sudden interruption in the hush', 'introduces a long list of instructions', 'marks the end of a question'], correctSet: [0, 1], modelAnswer: `In ${s.title}, the dash sets off the extra phrase and makes the glimmer feel like a sudden interruption.`, explanation: 'Dashes can interrupt a sentence and highlight extra information.', hint: 'Look at the phrase between the dashes.' }
++  ];
++}
++
++export const READING_PHASE7_PASSAGES = deepFreeze([
++  ...Array.from({ length: 100 }, (_, index) => makeFictionPassage(index)),
++  ...Array.from({ length: 100 }, (_, index) => makeNonFictionPassage(index)),
++  ...Array.from({ length: 100 }, (_, index) => makePoetryPassage(index)),
++]);
++
++export const READING_PHASE7_TEST_PAPERS = deepFreeze(Array.from({ length: 100 }, (_, index) => {
++  const fiction = READING_PHASE7_PASSAGES[index];
++  const nonFiction = READING_PHASE7_PASSAGES[100 + index];
++  const poetry = READING_PHASE7_PASSAGES[200 + index];
++  return {
++    id: `phase7_paper_${String(index + 1).padStart(3, '0')}`,
++    title: `Reading Phase 7 Scale Paper ${index + 1}`,
++    timeLimitMin: 60,
++    totalMarks: 50,
++    sections: [
++      { passageId: fiction.id, questionIds: paperQuestionIds(fiction, false) },
++      { passageId: nonFiction.id, questionIds: paperQuestionIds(nonFiction, true) },
++      { passageId: poetry.id, questionIds: paperQuestionIds(poetry, false) },
++    ],
++  };
++}));
+diff --git a/tests/reading-content-contract.test.js b/tests/reading-content-contract.test.js
+index a2bd24c4..88d1ed75 100644
+--- a/tests/reading-content-contract.test.js
++++ b/tests/reading-content-contract.test.js
+@@ -24,6 +24,15 @@ function replaceNormalisedPhrase(value, phrase, replacement) {
+   return value.split(key).join(replacement);
+ }
+
++function replaceGeneratedFromSource(value, sourceKey, pattern, replacement) {
++  const phrase = sourceKey.match(pattern)?.[1] || '';
++  return replaceNormalisedPhrase(value, phrase, replacement);
++}
++
++function escapeRegExp(value) {
++  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
++}
++
+ function nonFictionTopicFromTitle(title) {
+   const raw = String(title || '');
+   return raw.match(/^How (.+) Works$/)?.[1]
+@@ -35,6 +44,43 @@ function replaceGeneratedCaseLabels(value) {
+   return value.replace(/\b[a-z]+ field note [0-9]+\b/g, 'CASE');
+ }
+
++function stripPhase7PromptScaffold(value) {
++  const scaffoldPrefix = /^(?:using the (?:opening|careful|route|evidence|setting|contrast|sequence|language|ending|whole text) (?:detail|clue|signal|trace|pattern|link|shift|moment|thread|focus)|after checking the first relevant clue|with the opening evidence in mind|from the sentence that gives the clearest proof|when following the evidence trail|by using the paragraph that introduces the idea|while tracking the change in the text|looking at the detail that controls the meaning|from the moment where the evidence is tested|after comparing the clue with the outcome|using the wording that narrows the answer|in the paragraph that sets up the idea|at the point where the text explains the effect|where the source gives a reason|where the structure moves the reader on|where a judgement needs direct support|where the text shows rather than hints|where the evidence changes the decision|where the wording makes the answer precise|where the passage links detail and effect|where the source clue needs explanation|before choosing an answer|after reading the proof sentence closely|when the order of ideas is followed|if the reader starts with the stated evidence|when the context of the detail is checked|after the clue has been linked to its effect|if the answer is kept inside the passage evidence|when the text s exact wording is used|after the reader identifies the controlling detail|when the source evidence is stronger than a guess)\s+/;
++  const scaffoldSuffix = /\s+(?:if the answer is anchored in the opening evidence|when the source paragraph is checked first|after the strongest text detail is identified|with the relevant line used as proof|once the pattern of events is followed|if the reader keeps the whole passage in view|after the writer s choice has been considered|with both action and result checked|once the contrast in the passage is used|when the final detail is weighed|taking the opening detail as the starting point|using the described moment rather than a guess|keeping the answer tied to the text structure|after the relevant comparison is made|drawing on the phrase that shapes the response|with the evidence trail checked in order|once the line carrying the main point is found|using the detail nearest to the question focus|after the source reason has been matched to the answer|with the judgement proved by a text detail)$/;
++  return value.replace(scaffoldPrefix, '').replace(scaffoldSuffix, '');
++}
++
++function replacePhase7GeneratedPhrases(value, passage) {
++  if (!String(passage.id || '').includes('phase7_')) return value;
++  let key = stripPhase7PromptScaffold(value).replace(/\bpoem [0-9]+\b/g, 'TEXT');
++  const title = String(passage.title || '');
++  const fictionPlace = title.match(/^The (.+)$/)?.[1] || '';
++  const poetrySetting = title.match(/^Poem [0-9]+: (.+)$/)?.[1] || '';
++  key = replaceNormalisedPhrase(key, fictionPlace, 'PLACE');
++  key = replaceNormalisedPhrase(key, poetrySetting, 'PLACE');
++  const sourceKey = norm([title, ...(passage.blocks || [])].join(' '));
++  key = replaceGeneratedFromSource(key, sourceKey, /because ([a-z0-9 ]+?) the place was not suddenly/, 'THEME');
++  key = replaceGeneratedFromSource(key, sourceKey, /([a-z]+ [a-z]+) arrived with a clipboard/, 'PERSON');
++  key = replaceGeneratedFromSource(key, sourceKey, /carrying a ([a-z0-9 ]+?) in a jacket pocket/, 'OBJECT');
++  key = replaceGeneratedFromSource(key, sourceKey, /noticed ([a-z0-9 ]+?) near the place where the sign should have been/, 'CLUE');
++  key = replaceGeneratedFromSource(key, sourceKey, /in a jacket pocket ([a-z0-9 ]+?) and the ordinary corner/, 'IMAGE');
++  key = replaceGeneratedFromSource(key, sourceKey, /checked each part of the sequence and ([a-z0-9 ]+?) the place was not suddenly/, 'OUTCOME');
++  key = replaceGeneratedFromSource(key, sourceKey, /depends on a ([a-z]+) routine/, 'TERM');
++  key = replaceGeneratedFromSource(key, sourceKey, /main purpose of [a-z0-9 -]+ is to ([a-z0-9 ]+?) especially when/, 'BENEFIT');
++  key = replaceGeneratedFromSource(key, sourceKey, /same system can ([a-z0-9 ]+?) so the records/, 'RISK');
++  const poetrySettingKey = norm(poetrySetting);
++  if (poetrySettingKey) {
++    const poetryOpening = sourceKey.match(new RegExp(`at ${escapeRegExp(poetrySettingKey)} ([a-z0-9 ]+?) a ([a-z]+ [a-z]+) slips`));
++    key = replaceNormalisedPhrase(key, poetryOpening?.[1] || '', 'IMAGE');
++    key = replaceNormalisedPhrase(key, poetryOpening?.[2] || '', 'SOUND');
++  }
++  key = replaceGeneratedFromSource(key, sourceKey, /and the ([a-z]+) (?:listens|waits|leans|trembles|remembers|balances|whispers|shivers|turns|glimmers) in place/, 'OBJECT');
++  key = replaceGeneratedFromSource(key, sourceKey, /by evening the place feels ([a-z0-9 ]+?) all this quiet work/, 'EFFECT');
++  const labels = sourceKey.match(/\b(?:amber|blue|copper|green|silver|quiet|winter|daily|public|wildlife) (?:ledger|route card|evidence board|survey slate|record window|pattern map|signal sheet|measure strip|notice frame|count grid) [0-9]{3}\b/g) || [];
++  for (const label of labels) key = replaceNormalisedPhrase(key, label, 'CASE');
++  return key;
++}
++
+ function stemShapeKey(stem, passage) {
+   let key = norm(stem)
+     .replace(/\b(paragraph|section) [0-9]+\b/g, '$1 #')
+@@ -48,25 +94,26 @@ function stemShapeKey(stem, passage) {
+   key = replaceNormalisedPhrase(key, `${nonFictionTopic} in Practice`, 'TEXT');
+   key = replaceNormalisedPhrase(key, nonFictionTopic, 'TOPIC');
+   key = replaceGeneratedCaseLabels(key);
++  key = replacePhase7GeneratedPhrases(key, passage);
+   return key;
+ }
+
+ function isRecentExpansionRow(row) {
+-  return row.includes('phase5_') || row.includes('phase6_');
++  return row.includes('phase5_') || row.includes('phase6_') || row.includes('phase7_');
+ }
+
+ test('reading content bank has varied original passages, papers and KS2 domains', () => {
+   const summary = readingContentSummary();
+   assert.equal(summary.releaseId, 'reading-poc-promoted-2026-05-05');
+-  assert.equal(summary.version, 6);
+-  assert.equal(summary.passageCount, 414);
+-  assert.equal(summary.paperCount, 143);
+-  assert.equal(summary.questionCount, 4112);
++  assert.equal(summary.version, 7);
++  assert.equal(summary.passageCount, 714);
++  assert.equal(summary.paperCount, 243);
++  assert.equal(summary.questionCount, 7112);
+   assert.ok(Object.keys(READING_SKILLS).includes('2d'));
+-  assert.equal(summary.genres.fiction, 139);
+-  assert.equal(summary.genres['non-fiction'], 139);
+-  assert.equal(summary.genres.poetry, 136);
+-  assert.equal(summary.longPassageCount, 370);
++  assert.equal(summary.genres.fiction, 239);
++  assert.equal(summary.genres['non-fiction'], 239);
++  assert.equal(summary.genres.poetry, 236);
++  assert.equal(summary.longPassageCount, 670);
+ });
+
+
+diff --git a/tests/reading-phase5-next1000-contract.test.js b/tests/reading-phase5-next1000-contract.test.js
+index c6ecc6aa..a8cfdf42 100644
+--- a/tests/reading-phase5-next1000-contract.test.js
++++ b/tests/reading-phase5-next1000-contract.test.js
+@@ -45,17 +45,17 @@ function openingStructureKind(passage) {
+
+ test('Reading Phase 5 adds the second 1000-question wave after Phase 4', () => {
+   const summary = readingContentSummary();
+-  assert.equal(summary.version, 6);
++  assert.equal(summary.version, 7);
+   assert.equal(READING_PHASE5_PASSAGES.length, 102);
+   assert.equal(READING_PHASE5_PASSAGES.reduce((sum, passage) => sum + passage.questions.length, 0), 1020);
+   assert.equal(READING_PHASE5_TEST_PAPERS.length, 34);
+-  assert.equal(summary.passageCount, 414);
+-  assert.equal(summary.questionCount, 4112);
+-  assert.equal(summary.paperCount, 143);
+-  assert.equal(summary.genres.fiction, 139);
+-  assert.equal(summary.genres['non-fiction'], 139);
+-  assert.equal(summary.genres.poetry, 136);
+-  assert.equal(summary.longPassageCount, 370);
++  assert.equal(summary.passageCount, 714);
++  assert.equal(summary.questionCount, 7112);
++  assert.equal(summary.paperCount, 243);
++  assert.equal(summary.genres.fiction, 239);
++  assert.equal(summary.genres['non-fiction'], 239);
++  assert.equal(summary.genres.poetry, 236);
++  assert.equal(summary.longPassageCount, 670);
+ });
+
+ test('Reading Phase 5 papers are strict 50-mark three-text papers', () => {
+diff --git a/tests/reading-phase6-scale-contract.test.js b/tests/reading-phase6-scale-contract.test.js
+index b2869c6b..f206fa6f 100644
+--- a/tests/reading-phase6-scale-contract.test.js
++++ b/tests/reading-phase6-scale-contract.test.js
+@@ -34,14 +34,14 @@ function questionSurface(question) {
+
+ test('Reading Phase 6 takes Reading beyond four thousand questions without changing answer-safe metadata boundaries', () => {
+   const summary = readingContentSummary();
+-  assert.equal(summary.version, 6);
+-  assert.equal(summary.passageCount, 414);
+-  assert.equal(summary.questionCount, 4112);
+-  assert.equal(summary.paperCount, 143);
+-  assert.equal(summary.genres.fiction, 139);
+-  assert.equal(summary.genres['non-fiction'], 139);
+-  assert.equal(summary.genres.poetry, 136);
+-  assert.equal(summary.longPassageCount, 370);
++  assert.equal(summary.version, 7);
++  assert.equal(summary.passageCount, 714);
++  assert.equal(summary.questionCount, 7112);
++  assert.equal(summary.paperCount, 243);
++  assert.equal(summary.genres.fiction, 239);
++  assert.equal(summary.genres['non-fiction'], 239);
++  assert.equal(summary.genres.poetry, 236);
++  assert.equal(summary.longPassageCount, 670);
+   assert.ok(summary.questionCount >= 4000, 'Reading should be moving toward a 10K+ bank in staged waves');
+ });
+
+diff --git a/tests/reading-phase7-scale-contract.test.js b/tests/reading-phase7-scale-contract.test.js
+new file mode 100644
+index 00000000..e49e1978
+--- /dev/null
++++ b/tests/reading-phase7-scale-contract.test.js
+@@ -0,0 +1,130 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {
++  READING_PASSAGES,
++  READING_TEST_PAPERS,
++  readingContentSummary,
++} from '../shared/reading/content.js';
++import {
++  READING_PHASE7_PASSAGES,
++  READING_PHASE7_TEST_PAPERS,
++} from '../shared/reading/phase7-expansion.js';
++
++function questionMarks(questionIds, passage) {
++  const questionMap = new Map((passage.questions || []).map((question) => [question.id, question]));
++  return questionIds.reduce((sum, questionId) => {
++    const question = questionMap.get(questionId);
++    assert.ok(question, `${passage.id} missing ${questionId}`);
++    return sum + Number(question.marks || 0);
++  }, 0);
++}
++
++function hasUnresolvedCopy(value) {
++  return /\b(undefined|null|NaN)\b/.test(String(value || ''));
++}
++
++function questionSurface(question) {
++  return [question.stem, question.modelAnswer, question.explanation, question.hint, ...(question.options || [])].join(' ');
++}
++
++test('Reading Phase 7 moves the staged bank beyond seven thousand questions', () => {
++  const summary = readingContentSummary();
++  assert.equal(summary.version, 7);
++  assert.equal(summary.passageCount, 714);
++  assert.equal(summary.questionCount, 7112);
++  assert.equal(summary.paperCount, 243);
++  assert.equal(summary.genres.fiction, 239);
++  assert.equal(summary.genres['non-fiction'], 239);
++  assert.equal(summary.genres.poetry, 236);
++  assert.equal(summary.longPassageCount, 670);
++  assert.ok(summary.questionCount >= 7000, 'Reading should keep moving toward a 10K+ bank in staged, audited waves');
++});
++
++test('Reading Phase 7 contributes 300 long passages, 3000 questions and 100 strict papers', () => {
++  assert.equal(READING_PHASE7_PASSAGES.length, 300);
++  assert.equal(READING_PHASE7_PASSAGES.reduce((sum, passage) => sum + passage.questions.length, 0), 3000);
++  assert.equal(READING_PHASE7_TEST_PAPERS.length, 100);
++  const genres = READING_PHASE7_PASSAGES.reduce((counts, passage) => {
++    counts[passage.genre] = (counts[passage.genre] || 0) + 1;
++    return counts;
++  }, {});
++  assert.deepEqual(genres, { fiction: 100, 'non-fiction': 100, poetry: 100 });
++  assert.equal(READING_PHASE7_PASSAGES.filter((passage) => passage.isLong).length, 300);
++});
++
++test('Reading Phase 7 answer-bearing content is deeply frozen', () => {
++  assert.equal(Object.isFrozen(READING_PHASE7_PASSAGES), true);
++  assert.equal(Object.isFrozen(READING_PHASE7_PASSAGES[0]), true);
++  assert.equal(Object.isFrozen(READING_PHASE7_PASSAGES[0].questions), true);
++  assert.equal(Object.isFrozen(READING_PHASE7_PASSAGES[0].questions[0]), true);
++  assert.equal(Object.isFrozen(READING_PHASE7_TEST_PAPERS), true);
++  assert.equal(Object.isFrozen(READING_PHASE7_TEST_PAPERS[0].sections), true);
++  assert.equal(Object.isFrozen(READING_PHASE7_TEST_PAPERS[0].sections[0]), true);
++});
++
++test('Reading Phase 7 papers are 50-mark three-text papers with fiction, non-fiction and poetry', () => {
++  const passageMap = new Map(READING_PASSAGES.map((passage) => [passage.id, passage]));
++  for (const paper of READING_PHASE7_TEST_PAPERS) {
++    assert.equal(paper.timeLimitMin, 60, `${paper.id} time limit`);
++    assert.equal(paper.totalMarks, 50, `${paper.id} declared total`);
++    assert.equal(paper.sections.length, 3, `${paper.id} section count`);
++    const sectionGenres = paper.sections.map((section) => {
++      const passage = passageMap.get(section.passageId);
++      assert.ok(passage, `${paper.id} missing passage ${section.passageId}`);
++      return passage.genre;
++    });
++    assert.deepEqual(sectionGenres, ['fiction', 'non-fiction', 'poetry'], `${paper.id} genre mix`);
++    const marks = paper.sections.reduce((sum, section) => sum + questionMarks(section.questionIds, passageMap.get(section.passageId)), 0);
++    assert.equal(marks, 50, `${paper.id} actual marks`);
++  }
++});
++
++test('Reading Phase 7 passages keep KS2-plus question-type and skill coverage', () => {
++  for (const passage of READING_PHASE7_PASSAGES) {
++    assert.equal(passage.questions.length, 10, `${passage.id} question count`);
++    assert.ok(passage.difficulty >= 4, `${passage.id} difficulty`);
++    const types = new Set(passage.questions.map((question) => question.type));
++    for (const type of ['mcq', 'short', 'evidenceShort', 'open', 'match', 'order', 'multiSelect']) {
++      assert.ok(types.has(type), `${passage.id} missing ${type}`);
++    }
++    const skills = new Set(passage.questions.map((question) => question.skill));
++    for (const skill of ['2b', '2c', '2d', '2e', '2f']) {
++      assert.ok(skills.has(skill), `${passage.id} missing ${skill}`);
++    }
++    assert.ok(skills.has('2g') || skills.has('2h'), `${passage.id} missing language-effect or comparison stretch skill`);
++    assert.ok([...skills].some((skill) => skill.startsWith('P')), `${passage.id} missing punctuation-support skill`);
++  }
++});
++
++test('Reading Phase 7 generated copy is resolved and avoids exact repeated stems or model answers', () => {
++  const stems = new Set();
++  const answers = new Set();
++  for (const passage of READING_PHASE7_PASSAGES) {
++    for (const [index, block] of passage.blocks.entries()) {
++      assert.equal(hasUnresolvedCopy(block), false, `${passage.id} block ${index} unresolved`);
++    }
++    for (const question of passage.questions) {
++      for (const field of ['stem', 'modelAnswer', 'explanation', 'hint']) {
++        assert.equal(hasUnresolvedCopy(question[field]), false, `${question.id} ${field} unresolved`);
++      }
++      assert.equal(stems.has(question.stem), false, `${question.id} repeated exact stem`);
++      stems.add(question.stem);
++      assert.equal(answers.has(question.modelAnswer), false, `${question.id} repeated exact model answer`);
++      answers.add(question.modelAnswer);
++    }
++  }
++});
++
++test('Reading Phase 7 punctuation labels match the punctuation feature being tested', () => {
++  const counts = { P3: 0, P4: 0 };
++  for (const passage of READING_PHASE7_PASSAGES) {
++    for (const question of passage.questions) {
++      if (!question.skill.startsWith('P')) continue;
++      counts[question.skill] = (counts[question.skill] || 0) + 1;
++      const surface = questionSurface(question);
++      if (question.skill === 'P4') assert.match(surface, /colon|semicolon|list punctuation|instruction list/i, `${question.id} P4 feature`);
++      if (question.skill === 'P3') assert.match(surface, /dash|dashes|extra phrase|interruption/i, `${question.id} P3 feature`);
++    }
++  }
++  assert.deepEqual(counts, { P3: 100, P4: 200 });
++});

@@ -24,6 +24,15 @@ function replaceNormalisedPhrase(value, phrase, replacement) {
   return value.split(key).join(replacement);
 }
 
+function replaceGeneratedFromSource(value, sourceKey, pattern, replacement) {
+  const phrase = sourceKey.match(pattern)?.[1] || '';
+  return replaceNormalisedPhrase(value, phrase, replacement);
+}
+
+function escapeRegExp(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function nonFictionTopicFromTitle(title) {
   const raw = String(title || '');
   return raw.match(/^How (.+) Works$/)?.[1]
@@ -33,6 +42,43 @@ function nonFictionTopicFromTitle(title) {
 
 function replaceGeneratedCaseLabels(value) {
   return value.replace(/\b[a-z]+ field note [0-9]+\b/g, 'CASE');
+}
+
+function stripPhase7PromptScaffold(value) {
+  const scaffoldPrefix = /^(?:using the (?:opening|careful|route|evidence|setting|contrast|sequence|language|ending|whole text) (?:detail|clue|signal|trace|pattern|link|shift|moment|thread|focus)|after checking the first relevant clue|with the opening evidence in mind|from the sentence that gives the clearest proof|when following the evidence trail|by using the paragraph that introduces the idea|while tracking the change in the text|looking at the detail that controls the meaning|from the moment where the evidence is tested|after comparing the clue with the outcome|using the wording that narrows the answer|in the paragraph that sets up the idea|at the point where the text explains the effect|where the source gives a reason|where the structure moves the reader on|where a judgement needs direct support|where the text shows rather than hints|where the evidence changes the decision|where the wording makes the answer precise|where the passage links detail and effect|where the source clue needs explanation|before choosing an answer|after reading the proof sentence closely|when the order of ideas is followed|if the reader starts with the stated evidence|when the context of the detail is checked|after the clue has been linked to its effect|if the answer is kept inside the passage evidence|when the text s exact wording is used|after the reader identifies the controlling detail|when the source evidence is stronger than a guess)\s+/;
+  const scaffoldSuffix = /\s+(?:if the answer is anchored in the opening evidence|when the source paragraph is checked first|after the strongest text detail is identified|with the relevant line used as proof|once the pattern of events is followed|if the reader keeps the whole passage in view|after the writer s choice has been considered|with both action and result checked|once the contrast in the passage is used|when the final detail is weighed|taking the opening detail as the starting point|using the described moment rather than a guess|keeping the answer tied to the text structure|after the relevant comparison is made|drawing on the phrase that shapes the response|with the evidence trail checked in order|once the line carrying the main point is found|using the detail nearest to the question focus|after the source reason has been matched to the answer|with the judgement proved by a text detail)$/;
+  return value.replace(scaffoldPrefix, '').replace(scaffoldSuffix, '');
+}
+
+function replacePhase7GeneratedPhrases(value, passage) {
+  if (!String(passage.id || '').includes('phase7_')) return value;
+  let key = stripPhase7PromptScaffold(value).replace(/\bpoem [0-9]+\b/g, 'TEXT');
+  const title = String(passage.title || '');
+  const fictionPlace = title.match(/^The (.+)$/)?.[1] || '';
+  const poetrySetting = title.match(/^Poem [0-9]+: (.+)$/)?.[1] || '';
+  key = replaceNormalisedPhrase(key, fictionPlace, 'PLACE');
+  key = replaceNormalisedPhrase(key, poetrySetting, 'PLACE');
+  const sourceKey = norm([title, ...(passage.blocks || [])].join(' '));
+  key = replaceGeneratedFromSource(key, sourceKey, /because ([a-z0-9 ]+?) the place was not suddenly/, 'THEME');
+  key = replaceGeneratedFromSource(key, sourceKey, /([a-z]+ [a-z]+) arrived with a clipboard/, 'PERSON');
+  key = replaceGeneratedFromSource(key, sourceKey, /carrying a ([a-z0-9 ]+?) in a jacket pocket/, 'OBJECT');
+  key = replaceGeneratedFromSource(key, sourceKey, /noticed ([a-z0-9 ]+?) near the place where the sign should have been/, 'CLUE');
+  key = replaceGeneratedFromSource(key, sourceKey, /in a jacket pocket ([a-z0-9 ]+?) and the ordinary corner/, 'IMAGE');
+  key = replaceGeneratedFromSource(key, sourceKey, /checked each part of the sequence and ([a-z0-9 ]+?) the place was not suddenly/, 'OUTCOME');
+  key = replaceGeneratedFromSource(key, sourceKey, /depends on a ([a-z]+) routine/, 'TERM');
+  key = replaceGeneratedFromSource(key, sourceKey, /main purpose of [a-z0-9 -]+ is to ([a-z0-9 ]+?) especially when/, 'BENEFIT');
+  key = replaceGeneratedFromSource(key, sourceKey, /same system can ([a-z0-9 ]+?) so the records/, 'RISK');
+  const poetrySettingKey = norm(poetrySetting);
+  if (poetrySettingKey) {
+    const poetryOpening = sourceKey.match(new RegExp(`at ${escapeRegExp(poetrySettingKey)} ([a-z0-9 ]+?) a ([a-z]+ [a-z]+) slips`));
+    key = replaceNormalisedPhrase(key, poetryOpening?.[1] || '', 'IMAGE');
+    key = replaceNormalisedPhrase(key, poetryOpening?.[2] || '', 'SOUND');
+  }
+  key = replaceGeneratedFromSource(key, sourceKey, /and the ([a-z]+) (?:listens|waits|leans|trembles|remembers|balances|whispers|shivers|turns|glimmers) in place/, 'OBJECT');
+  key = replaceGeneratedFromSource(key, sourceKey, /by evening the place feels ([a-z0-9 ]+?) all this quiet work/, 'EFFECT');
+  const labels = sourceKey.match(/\b(?:amber|blue|copper|green|silver|quiet|winter|daily|public|wildlife) (?:ledger|route card|evidence board|survey slate|record window|pattern map|signal sheet|measure strip|notice frame|count grid) [0-9]{3}\b/g) || [];
+  for (const label of labels) key = replaceNormalisedPhrase(key, label, 'CASE');
+  return key;
 }
 
 function stemShapeKey(stem, passage) {
@@ -48,25 +94,26 @@ function stemShapeKey(stem, passage) {
   key = replaceNormalisedPhrase(key, `${nonFictionTopic} in Practice`, 'TEXT');
   key = replaceNormalisedPhrase(key, nonFictionTopic, 'TOPIC');
   key = replaceGeneratedCaseLabels(key);
+  key = replacePhase7GeneratedPhrases(key, passage);
   return key;
 }
 
 function isRecentExpansionRow(row) {
-  return row.includes('phase5_') || row.includes('phase6_');
+  return row.includes('phase5_') || row.includes('phase6_') || row.includes('phase7_');
 }
 
 test('reading content bank has varied original passages, papers and KS2 domains', () => {
   const summary = readingContentSummary();
   assert.equal(summary.releaseId, 'reading-poc-promoted-2026-05-05');
-  assert.equal(summary.version, 6);
-  assert.equal(summary.passageCount, 414);
-  assert.equal(summary.paperCount, 143);
-  assert.equal(summary.questionCount, 4112);
+  assert.equal(summary.version, 7);
+  assert.equal(summary.passageCount, 714);
+  assert.equal(summary.paperCount, 243);
+  assert.equal(summary.questionCount, 7112);
   assert.ok(Object.keys(READING_SKILLS).includes('2d'));
-  assert.equal(summary.genres.fiction, 139);
-  assert.equal(summary.genres['non-fiction'], 139);
-  assert.equal(summary.genres.poetry, 136);
-  assert.equal(summary.longPassageCount, 370);
+  assert.equal(summary.genres.fiction, 239);
+  assert.equal(summary.genres['non-fiction'], 239);
+  assert.equal(summary.genres.poetry, 236);
+  assert.equal(summary.longPassageCount, 670);
 });
 
 

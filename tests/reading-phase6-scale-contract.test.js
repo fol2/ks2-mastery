@@ -34,14 +34,14 @@ function questionSurface(question) {
 
 test('Reading Phase 6 takes Reading beyond four thousand questions without changing answer-safe metadata boundaries', () => {
   const summary = readingContentSummary();
-  assert.equal(summary.version, 6);
-  assert.equal(summary.passageCount, 414);
-  assert.equal(summary.questionCount, 4112);
-  assert.equal(summary.paperCount, 143);
-  assert.equal(summary.genres.fiction, 139);
-  assert.equal(summary.genres['non-fiction'], 139);
-  assert.equal(summary.genres.poetry, 136);
-  assert.equal(summary.longPassageCount, 370);
+  assert.equal(summary.version, 7);
+  assert.equal(summary.passageCount, 714);
+  assert.equal(summary.questionCount, 7112);
+  assert.equal(summary.paperCount, 243);
+  assert.equal(summary.genres.fiction, 239);
+  assert.equal(summary.genres['non-fiction'], 239);
+  assert.equal(summary.genres.poetry, 236);
+  assert.equal(summary.longPassageCount, 670);
   assert.ok(summary.questionCount >= 4000, 'Reading should be moving toward a 10K+ bank in staged waves');
 });
 

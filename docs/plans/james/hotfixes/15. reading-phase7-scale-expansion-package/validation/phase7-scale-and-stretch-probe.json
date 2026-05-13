@@ -1,0 +1,66 @@
+{
+  "ok": true,
+  "summary": {
+    "releaseId": "reading-poc-promoted-2026-05-05",
+    "version": 7,
+    "passageCount": 714,
+    "questionCount": 7112,
+    "paperCount": 243,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 239,
+      "non-fiction": 239,
+      "poetry": 236
+    },
+    "longPassageCount": 670
+  },
+  "phase7Counts": {
+    "passages": 300,
+    "questions": 3000,
+    "papers": 100,
+    "genres": {
+      "fiction": 100,
+      "non-fiction": 100,
+      "poetry": 100
+    },
+    "longPassages": 300
+  },
+  "stretchEligiblePassages": 686,
+  "stretchEligibleQuestions": 6193,
+  "sampleStretchSession": {
+    "delayedFeedback": true,
+    "strict": false,
+    "questionCount": 6,
+    "maxScore": 16,
+    "passage": {
+      "id": "tide_clock",
+      "title": "The Keeper of the Tide Clock",
+      "difficulty": 5,
+      "isLong": true,
+      "genre": "fiction"
+    },
+    "questionTypes": [
+      "mcq",
+      "evidenceShort",
+      "multiSelect",
+      "order",
+      "open"
+    ],
+    "questionSkills": [
+      "2a",
+      "2d",
+      "2b",
+      "2h"
+    ]
+  },
+  "performance": {
+    "starts": 100,
+    "p95Ms": 10.306,
+    "maxMs": 19.206
+  },
+  "phase7PaperMarkTotals": {
+    "min": 50,
+    "max": 50,
+    "all50": true
+  }
+}

@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   READING_CONTENT_RELEASE_ID,
   READING_CONTENT_VERSION,
+  READING_TEST_PAPERS,
   readingContentSummary,
   readingQuestionRefMap,
 } from '../shared/reading/content.js';
@@ -21,6 +22,10 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const ROOT_DIR = path.resolve(path.dirname(__filename), '..');
 const QUESTION_REF_MAP = readingQuestionRefMap();
+const PHASE7_SMOKE_PAPER_ID = 'phase7_paper_001';
+const PHASE7_SMOKE_PAPER = READING_TEST_PAPERS.find((paper) => paper.id === PHASE7_SMOKE_PAPER_ID);
+const PHASE7_SMOKE_QUESTION_COUNT = PHASE7_SMOKE_PAPER?.sections
+  ?.reduce((sum, section) => sum + (section.questionIds || []).length, 0) || 0;
 
 function argValue(name, fallback = '') {
   const index = process.argv.indexOf(name);
@@ -44,13 +49,13 @@ function expectedContentSummary() {
   assert.equal(summary.releaseId, READING_CONTENT_RELEASE_ID);
   assert.equal(summary.version, READING_CONTENT_VERSION);
   assert.equal(summary.version, expectedVersion, 'Local Reading content version did not match the expected smoke version.');
-  assert.equal(summary.passageCount, 414);
-  assert.equal(summary.questionCount, 4112);
-  assert.equal(summary.paperCount, 143);
-  assert.equal(summary.genres.fiction, 139);
-  assert.equal(summary.genres['non-fiction'], 139);
-  assert.equal(summary.genres.poetry, 136);
-  assert.equal(summary.longPassageCount, 370);
+  assert.equal(summary.passageCount, 714);
+  assert.equal(summary.questionCount, 7112);
+  assert.equal(summary.paperCount, 243);
+  assert.equal(summary.genres.fiction, 239);
+  assert.equal(summary.genres['non-fiction'], 239);
+  assert.equal(summary.genres.poetry, 236);
+  assert.equal(summary.longPassageCount, 670);
   return summary;
 }
 
@@ -175,6 +180,7 @@ async function smokeImmediateRound({ origin, cookie, learnerId, revision }) {
 }
 
 async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
+  assert.ok(PHASE7_SMOKE_PAPER, `Reading production smoke could not find ${PHASE7_SMOKE_PAPER_ID}.`);
   let step = await subjectCommand({
     origin,
     cookie,
@@ -182,7 +188,7 @@ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
     learnerId,
     revision,
     command: 'start-session',
-    payload: { mode: 'test', viewMode: 'one', paperId: 'paper_i' },
+    payload: { mode: 'test', viewMode: 'one', paperId: PHASE7_SMOKE_PAPER_ID },
   });
   revision = step.revision;
   const startModel = step.payload.subjectReadModel;
@@ -192,6 +198,7 @@ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
   assertNoFeedbackLeak(startModel, 'reading.paper.startModel');
 
   const questionId = startModel.session.currentQuestion.id;
+  assert.match(questionId, /^phase7_/, 'Reading Phase 7 paper smoke did not start on a Phase 7 question.');
   const sourceQuestion = QUESTION_REF_MAP[questionId]?.question;
   step = await subjectCommand({
     origin,
@@ -238,9 +245,9 @@ async function smokeDelayedPaper({ origin, cookie, learnerId, revision }) {
   const summaryModel = step.payload.subjectReadModel;
   assert.equal(summaryModel?.error || '', '', 'Reading mark-session left a stale section-mark error.');
   assert.equal(summaryModel?.phase, 'summary', 'Reading mark-session did not reach summary.');
-  assert.equal(summaryModel?.summary?.paperId, 'paper_i', 'Reading paper summary did not preserve paper id.');
-  assert.equal(summaryModel?.summary?.questionCount, 26, 'Reading paper_i did not mark all questions.');
-  assert.equal(summaryModel?.summary?.maxScore, 50, 'Reading paper_i max score was not 50.');
+  assert.equal(summaryModel?.summary?.paperId, PHASE7_SMOKE_PAPER_ID, 'Reading Phase 7 paper summary did not preserve paper id.');
+  assert.equal(summaryModel?.summary?.questionCount, PHASE7_SMOKE_QUESTION_COUNT, 'Reading Phase 7 paper did not mark all questions.');
+  assert.equal(summaryModel?.summary?.maxScore, PHASE7_SMOKE_PAPER?.totalMarks, 'Reading Phase 7 paper max score was not 50.');
 
   return {
     revision,

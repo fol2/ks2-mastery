@@ -45,17 +45,17 @@ function openingStructureKind(passage) {
 
 test('Reading Phase 5 adds the second 1000-question wave after Phase 4', () => {
   const summary = readingContentSummary();
-  assert.equal(summary.version, 6);
+  assert.equal(summary.version, 7);
   assert.equal(READING_PHASE5_PASSAGES.length, 102);
   assert.equal(READING_PHASE5_PASSAGES.reduce((sum, passage) => sum + passage.questions.length, 0), 1020);
   assert.equal(READING_PHASE5_TEST_PAPERS.length, 34);
-  assert.equal(summary.passageCount, 414);
-  assert.equal(summary.questionCount, 4112);
-  assert.equal(summary.paperCount, 143);
-  assert.equal(summary.genres.fiction, 139);
-  assert.equal(summary.genres['non-fiction'], 139);
-  assert.equal(summary.genres.poetry, 136);
-  assert.equal(summary.longPassageCount, 370);
+  assert.equal(summary.passageCount, 714);
+  assert.equal(summary.questionCount, 7112);
+  assert.equal(summary.paperCount, 243);
+  assert.equal(summary.genres.fiction, 239);
+  assert.equal(summary.genres['non-fiction'], 239);
+  assert.equal(summary.genres.poetry, 236);
+  assert.equal(summary.longPassageCount, 670);
 });
 
 test('Reading Phase 5 papers are strict 50-mark three-text papers', () => {

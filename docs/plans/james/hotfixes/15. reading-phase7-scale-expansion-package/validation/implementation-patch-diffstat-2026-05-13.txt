@@ -1,0 +1,10 @@
+ scripts/audit-reading-content-quality.mjs      |   49 +-
+ scripts/reading-production-smoke.mjs           |   29 +-
+ shared/reading/content.js                      |    9 +-
+ shared/reading/metadata.js                     |   16 +-
+ shared/reading/phase7-expansion.js             | 1013 ++++++++++++++++++++++++
+ tests/reading-content-contract.test.js         |   65 +-
+ tests/reading-phase5-next1000-contract.test.js |   16 +-
+ tests/reading-phase6-scale-contract.test.js    |   16 +-
+ tests/reading-phase7-scale-contract.test.js    |  130 +++
+ 9 files changed, 1295 insertions(+), 48 deletions(-)
