@@ -183,6 +183,65 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'esbuild' imported from tests/
 
 This was an environment/dependency limitation of the extracted lean bundle, not evidence of a React Arithmetic product failure. The full checkout validation above closes this gap with `node --test tests/react-arithmetic-surface.test.js`.
 
-## Production limit
+## Production deployment and smoke
 
-This validation summary covers source and pre-deployment evidence. Live production smoke evidence is recorded separately after the GitHub main deployment completes.
+The final patch was committed and pushed to `main`:
+
+```text
+commit: 6c623c373e98206c8ab9484709d852c7f4b9054f
+branch: codex/arithmetic-post-review-hardening
+remote target: origin/main
+push result: 741c3fba..6c623c37 HEAD -> main
+```
+
+The push hook ran `npm test` before accepting the push:
+
+```text
+tests: 111,492
+pass: 111,480
+fail: 0
+skipped: 12
+duration_ms: 159805.3128
+```
+
+Deployment used the repository package script:
+
+```bash
+npm run deploy
+```
+
+Result:
+
+```text
+Worker: ks2-mastery
+Cloudflare version ID: 2396c0ca-db8f-4bf9-bf6e-5e11e85ebe92
+Production bundle audit: passed for https://ks2.eugnel.uk/
+Security-header checks: 5/5
+Cache-split checks: 15/15
+```
+
+Live Arithmetic smoke command:
+
+```bash
+node scripts/arithmetic-production-smoke.mjs --out="docs/plans/james/hotfixes/6. arithmetic-0513-excellence-package/validation/arithmetic-0513-production-smoke-2026-05-13.json" --smoke-type=arithmetic-0513-excellence-production
+```
+
+Result:
+
+```text
+ok: true
+environment: production
+origin: https://ks2.eugnel.uk
+contentReleaseId: arithmetic-ks2-worker-v1-2026-05-11
+practice smoke: passed
+true test mode delayed-marking smoke: passed
+stale-write guard smoke: passed
+finishedAt: 2026-05-13T08:39:35.773Z
+```
+
+Production evidence:
+
+```text
+validation/arithmetic-0513-production-smoke-2026-05-13.json
+validation/logs/current-npm-run-deploy-2026-05-13.log
+```

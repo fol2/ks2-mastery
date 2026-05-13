@@ -1,0 +1,35 @@
+npm run deploy
+
+Result: passed
+
+Observed output summary:
+
+> ks2-mastery@0.1.0 deploy
+> node ./scripts/wrangler-oauth.mjs deploy && npm run audit:production -- --skip-local --retries 30 --retry-delay-ms 5000
+
+Wrangler version: 4.84.0
+
+Custom build:
+
+- npm run build: passed
+- npm run assert:build-public: passed
+- npm run audit:client: passed
+- Client bundle audit passed: 805 public files, 6 chunks scanned, main bundle 204581 / 232000 bytes gzip
+
+Cloudflare deploy:
+
+- Uploaded Worker: ks2-mastery
+- Worker startup time: 172 ms
+- Deployed trigger URL: https://ks2-mastery.fol2hk.workers.dev
+- Current Version ID: 2396c0ca-db8f-4bf9-bf6e-5e11e85ebe92
+
+Production audit:
+
+- Command: node ./scripts/production-bundle-audit.mjs --skip-local --retries 30 --retry-delay-ms 5000
+- Result: Production bundle audit passed for https://ks2.eugnel.uk/
+- HTML-referenced bundles: 1
+- Transitively scanned chunks: 6
+- Direct paths: 19
+- Matrix demo check: ok
+- Security-header checks: 5/5
+- Cache-split checks: 15/15
