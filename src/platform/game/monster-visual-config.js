@@ -104,6 +104,25 @@ const CODEX_FEATURE_FOOT_PAD_BY_ASSET = Object.freeze({
   }),
 });
 
+const VISUAL_SOURCE_MONSTER_BY_SUBJECT_MONSTER = Object.freeze({
+  readbloom: 'glossbloom',
+  readrill: 'loomrill',
+  inferane: 'mirrane',
+  structurillon: 'carillon',
+  lorequill: 'phaeton',
+  sumkrab: 'colisk',
+  carryfin: 'hyphang',
+  fractail: 'glossbloom',
+  perciva: 'carillon',
+  arithon: 'phaeton',
+  numdrake: 'colisk',
+  fractalon: 'hyphang',
+  measuron: 'curlune',
+  georune: 'carillon',
+  proofwyrm: 'mirrane',
+  strategon: 'phaeton',
+});
+
 const DEFAULT_CONTEXT_VALUES = Object.freeze({
   path: 'none',
   motionProfile: 'still',
@@ -170,22 +189,31 @@ export function buildMonsterAssetKey(monsterId, branch = 'b1', stage = 0) {
   return `${String(monsterId || '').trim()}-${String(branch || 'b1').trim()}-${normaliseStage(stage)}`;
 }
 
+function visualSourceMonsterId(monsterId) {
+  return VISUAL_SOURCE_MONSTER_BY_SUBJECT_MONSTER[monsterId] || monsterId;
+}
+
+function visualSourceAssetKey(asset) {
+  return buildMonsterAssetKey(visualSourceMonsterId(asset.monsterId), asset.branch, asset.stage);
+}
+
 export function defaultMonsterMeadowPath(monsterId, stage = 1) {
   if (normaliseStage(stage) === 0) return 'none';
-  if (monsterId === 'inklet') return 'walk';
-  if (monsterId === 'glimmerbug') return 'fly-a';
-  if (monsterId === 'phaeton') return 'fly-b';
-  if (monsterId === 'vellhorn') return 'walk-b';
+  const sourceMonsterId = visualSourceMonsterId(monsterId);
+  if (sourceMonsterId === 'inklet') return 'walk';
+  if (sourceMonsterId === 'glimmerbug') return 'fly-a';
+  if (sourceMonsterId === 'phaeton') return 'fly-b';
+  if (sourceMonsterId === 'vellhorn') return 'walk-b';
   return 'walk';
 }
 
 export function monsterVisualFaceSign(monsterId, branch, stage) {
-  const key = buildMonsterAssetKey(monsterId, branch, stage);
+  const key = buildMonsterAssetKey(visualSourceMonsterId(monsterId), branch, stage);
   return FACING_BY_ASSET[key] === 'right' ? 1 : -1;
 }
 
 function baselineForAsset(asset) {
-  const facing = normaliseFacing(FACING_BY_ASSET[asset.key], 'left');
+  const facing = normaliseFacing(FACING_BY_ASSET[visualSourceAssetKey(asset)], 'left');
   return {
     facing,
     scale: 1,
@@ -203,7 +231,7 @@ function baselineForAsset(asset) {
 }
 
 function codexFootPad(asset) {
-  return CODEX_FEATURE_FOOT_PAD_BY_ASSET[asset.monsterId]?.[asset.branch]?.[asset.stage] ?? 0;
+  return CODEX_FEATURE_FOOT_PAD_BY_ASSET[visualSourceMonsterId(asset.monsterId)]?.[asset.branch]?.[asset.stage] ?? 0;
 }
 
 function contextForAsset(asset, context) {
@@ -242,7 +270,7 @@ export function buildBundledMonsterVisualConfig(manifest = MONSTER_ASSET_MANIFES
     source: 'bundled',
     version: 0,
     assets: Object.fromEntries(manifest.assets.map((asset) => {
-      const provenance = (FACING_BY_ASSET[asset.key] || CODEX_FEATURE_FOOT_PAD_BY_ASSET[asset.monsterId])
+      const provenance = (FACING_BY_ASSET[visualSourceAssetKey(asset)] || CODEX_FEATURE_FOOT_PAD_BY_ASSET[visualSourceMonsterId(asset.monsterId)])
         ? 'current-tuned-default'
         : 'generated-neutral-default';
       return [

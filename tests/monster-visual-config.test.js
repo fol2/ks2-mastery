@@ -35,11 +35,12 @@ test('monster asset manifest covers every current monster asset folder determini
   const monsterIds = MONSTER_ASSET_MANIFEST.monsters.map((monster) => monster.id);
 
   assert.ok(MONSTER_ASSET_MANIFEST.manifestHash.length >= 16);
-  assert.deepEqual(monsterIds.slice(0, 3), ['bracehart', 'carillon', 'chronalyx']);
+  assert.deepEqual(monsterIds.slice(0, 3), ['arithon', 'bracehart', 'carillon']);
+  assert.ok(monsterIds.includes('chronalyx'));
   assert.ok(monsterIds.includes('inklet'));
   assert.ok(monsterIds.includes('vellhorn'));
   assert.ok(monsterIds.includes('couronnail'));
-  assert.equal(MONSTER_ASSET_MANIFEST.assets.length, 180);
+  assert.equal(MONSTER_ASSET_MANIFEST.assets.length, 340);
 
   const couronnail = MONSTER_ASSET_MANIFEST.assets.find((asset) => asset.key === 'couronnail-b2-4');
   assert.deepEqual(couronnail.sizes, [320, 640, 1280]);
@@ -70,6 +71,35 @@ test('bundled monster visual config preserves current tuned defaults', () => {
   assert.equal(feature.source, 'bundled');
 });
 
+test('subject-owned legendary monsters preserve their source-family visual tuning', () => {
+  for (const monsterId of ['lorequill', 'arithon', 'strategon']) {
+    const meadow = resolveMonsterVisual({
+      monsterId,
+      branch: 'b2',
+      stage: 4,
+      context: 'meadow',
+    });
+    assert.equal(meadow.path, 'fly-b', `${monsterId} should keep Phaeton meadow path`);
+    assert.equal(meadow.motionProfile, 'fly-b', `${monsterId} should keep Phaeton meadow motion`);
+    assert.equal(meadow.facing, 'left', `${monsterId} should keep Phaeton b2 stage 4 facing`);
+    assert.equal(meadow.faceSign, -1, `${monsterId} should keep Phaeton b2 stage 4 face sign`);
+
+    const feature = resolveMonsterVisual({
+      monsterId,
+      branch: 'b1',
+      stage: 4,
+      context: 'codexFeature',
+    });
+    assert.equal(feature.footPad, 4, `${monsterId} should keep Phaeton b1 stage 4 codex foot pad`);
+    assert.equal(BUNDLED_MONSTER_VISUAL_CONFIG.assets[`${monsterId}-b1-4`].provenance, 'current-tuned-default');
+    assert.equal(
+      BUNDLED_MONSTER_VISUAL_CONFIG.assets[`${monsterId}-b1-4`].review.contexts.codexFeature.reviewed,
+      true,
+      `${monsterId} tuned copied visual should be reviewed by default`,
+    );
+  }
+});
+
 test('bundled config has complete context values for every manifest asset', () => {
   const validation = validateMonsterVisualConfigForPublish(reviewedConfig());
 
@@ -93,8 +123,8 @@ test('generated neutral defaults start unreviewed so publish has a review backlo
     BUNDLED_MONSTER_VISUAL_CONFIG.assets[asset.key]?.provenance === 'current-tuned-default'
   ));
 
-  assert.equal(generatedAssets.length, 140);
-  assert.equal(tunedAssets.length, 40);
+  assert.equal(generatedAssets.length, 270);
+  assert.equal(tunedAssets.length, 70);
   assert.ok(generatedAssets.every((asset) => (
     MONSTER_VISUAL_CONTEXTS.every((context) => (
       BUNDLED_MONSTER_VISUAL_CONFIG.assets[asset.key].review.contexts[context].reviewed === false
@@ -235,9 +265,9 @@ test('asset source helper preserves existing image path convention', () => {
     preferredSize: 640,
   });
 
-  assert.equal(sources.src, './assets/monsters/inklet/b1/inklet-b1-0.640.webp?v=20260421-branches');
-  assert.match(sources.srcSet, /inklet-b1-0\.320\.webp\?v=20260421-branches 320w/);
-  assert.match(sources.srcSet, /inklet-b1-0\.1280\.webp\?v=20260421-branches 1280w/);
+  assert.equal(sources.src, './assets/monsters/inklet/b1/inklet-b1-0.640.webp?v=20260513-subject-assets');
+  assert.match(sources.srcSet, /inklet-b1-0\.320\.webp\?v=20260513-subject-assets 320w/);
+  assert.match(sources.srcSet, /inklet-b1-0\.1280\.webp\?v=20260513-subject-assets 1280w/);
 });
 
 test('runtime visual config normaliser accepts published config and rejects incompatible schemas', () => {

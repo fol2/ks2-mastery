@@ -28,6 +28,12 @@ function reviewedConfig(config = BUNDLED_MONSTER_VISUAL_CONFIG) {
   return reviewed;
 }
 
+function firstGeneratedNeutralAssetKey(config = BUNDLED_MONSTER_VISUAL_CONFIG) {
+  return Object.values(config.assets || {}).find((entry) => (
+    entry?.provenance === 'generated-neutral-default'
+  ))?.assetKey;
+}
+
 function raceBeforeStatementRun(db, predicate, onBeforeRun) {
   let triggered = false;
   return {
@@ -154,9 +160,11 @@ test('admin hub exposes seeded global monster visual config state', async () => 
     assert.equal(visual.status.publishedVersion, 1);
     assert.equal(visual.status.draftRevision, 0);
     assert.equal(visual.status.validation.ok, false);
+    const firstUnreviewedAssetKey = firstGeneratedNeutralAssetKey();
+    assert.ok(firstUnreviewedAssetKey, 'expected at least one generated-neutral default asset');
     assert.ok(visual.status.validation.errors.some((issue) => (
       issue.code === 'monster_visual_review_required'
-      && issue.assetKey === 'bracehart-b1-0'
+      && issue.assetKey === firstUnreviewedAssetKey
       && issue.context === 'meadow'
     )));
     assert.equal(visual.draft.assets['vellhorn-b1-3'].baseline.facing, 'left');

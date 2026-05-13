@@ -183,7 +183,6 @@ export const MONSTERS = {
   },
   readbloom: {
     id: 'readbloom',
-    assetId: 'glossbloom',
     name: 'Readbloom',
     blurb: 'Blooms as vocabulary and author-word evidence becomes secure.',
     accent: '#B45C83',
@@ -194,7 +193,6 @@ export const MONSTERS = {
   },
   readrill: {
     id: 'readrill',
-    assetId: 'loomrill',
     name: 'Readrill',
     blurb: 'Threads retrieval and summarising into a clear whole-text picture.',
     accent: '#4E79A8',
@@ -205,7 +203,6 @@ export const MONSTERS = {
   },
   inferane: {
     id: 'inferane',
-    assetId: 'mirrane',
     name: 'Inferane',
     blurb: 'Reflects inference, prediction and exact evidence.',
     accent: '#6F7D86',
@@ -216,7 +213,6 @@ export const MONSTERS = {
   },
   structurillon: {
     id: 'structurillon',
-    assetId: 'carillon',
     name: 'Structurillon',
     blurb: 'Rings clearly when structure and comparison are secure.',
     accent: '#D08A2C',
@@ -227,7 +223,6 @@ export const MONSTERS = {
   },
   lorequill: {
     id: 'lorequill',
-    assetId: 'phaeton',
     name: 'Lorequill',
     blurb: 'The Reading legendary that rises only when all core KS2 reading domains are secure.',
     accent: '#2F70B8',
@@ -238,7 +233,6 @@ export const MONSTERS = {
   },
   numdrake: {
     id: 'numdrake',
-    assetId: 'colisk',
     name: 'Numdrake',
     blurb: 'Hatches as number, place-value and calculation reasoning evidence becomes secure.',
     accent: '#C06B3E',
@@ -249,7 +243,6 @@ export const MONSTERS = {
   },
   fractalon: {
     id: 'fractalon',
-    assetId: 'hyphang',
     name: 'Fractalon',
     blurb: 'Sharpens fractions, decimals, percentages and ratio reasoning.',
     accent: '#8A5A9D',
@@ -260,7 +253,6 @@ export const MONSTERS = {
   },
   measuron: {
     id: 'measuron',
-    assetId: 'curlune',
     name: 'Measuron',
     blurb: 'Grows with measures, time, conversion and money reasoning.',
     accent: '#4B7A4A',
@@ -271,7 +263,6 @@ export const MONSTERS = {
   },
   georune: {
     id: 'georune',
-    assetId: 'carillon',
     name: 'Georune',
     blurb: 'Rings clearly as geometry, area, angles and statistics become secure.',
     accent: '#D08A2C',
@@ -282,7 +273,6 @@ export const MONSTERS = {
   },
   proofwyrm: {
     id: 'proofwyrm',
-    assetId: 'mirrane',
     name: 'Proofwyrm',
     blurb: 'Reflects checking, explaining mistakes and reasonableness habits.',
     accent: '#6F7D86',
@@ -293,7 +283,6 @@ export const MONSTERS = {
   },
   strategon: {
     id: 'strategon',
-    assetId: 'phaeton',
     name: 'Strategon',
     blurb: 'The Reasoning legendary that rises from broad, retained KS2 maths evidence.',
     accent: '#2F70B8',
@@ -304,7 +293,6 @@ export const MONSTERS = {
   },
   sumkrab: {
     id: 'sumkrab',
-    assetId: 'colisk',
     name: 'Sumkrab',
     blurb: 'Finds arithmetic eggs through number facts, place value and powers of ten.',
     accent: '#C06B3E',
@@ -315,7 +303,6 @@ export const MONSTERS = {
   },
   carryfin: {
     id: 'carryfin',
-    assetId: 'hyphang',
     name: 'Carryfin',
     blurb: 'Grows when written methods, exchanges and inverses become reliable.',
     accent: '#8A5A9D',
@@ -326,7 +313,6 @@ export const MONSTERS = {
   },
   fractail: {
     id: 'fractail',
-    assetId: 'glossbloom',
     name: 'Fractail',
     blurb: 'Blooms as decimals, fractions and written fraction methods settle.',
     accent: '#B45C83',
@@ -337,7 +323,6 @@ export const MONSTERS = {
   },
   perciva: {
     id: 'perciva',
-    assetId: 'carillon',
     name: 'Perciva',
     blurb: 'Rings clearly when percentages, FDP links and mixed arithmetic are secure.',
     accent: '#D08A2C',
@@ -348,7 +333,6 @@ export const MONSTERS = {
   },
   arithon: {
     id: 'arithon',
-    assetId: 'phaeton',
     name: 'Arithon',
     blurb: 'The Arithmetic legendary that grows only through broad, spaced KS2 arithmetic evidence.',
     accent: '#2F70B8',
@@ -376,14 +360,14 @@ export const MONSTERS_BY_SUBJECT = {
   // `src/platform/game/mastery/grammar.js`.
   grammar: ['bracehart', 'chronalyx', 'couronnail', 'concordium'],
   grammarReserve: ['glossbloom', 'loomrill', 'mirrane'],
-  // Reading owns separate state ids while reusing existing reserve art via
-  // each monster's assetId. This avoids Grammar/Punctuation state collision.
+  // Reading owns separate state ids and subject-owned asset folders. This
+  // avoids Grammar/Punctuation state and visual-key collision.
   reading: ['readbloom', 'readrill', 'inferane', 'structurillon', 'lorequill'],
-  // Reasoning also owns separate state ids while reusing existing reserve art.
+  // Reasoning also owns separate state ids and subject-owned asset folders.
   // That keeps the maths-reasoning monster layer independent from Grammar,
-  // Punctuation and Reading even when the visual asset family is shared.
+  // Punctuation and Reading at both state and visual-key boundaries.
   reasoning: ['numdrake', 'fractalon', 'measuron', 'georune', 'proofwyrm', 'strategon'],
-  // Arithmetic owns separate state ids while reusing reserve art via assetId.
+  // Arithmetic owns separate state ids and subject-owned asset folders.
   arithmetic: ['sumkrab', 'carryfin', 'fractail', 'perciva', 'arithon'],
 };
 
@@ -401,7 +385,7 @@ export const PUNCTUATION_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 25, 50, 1
 const PUNCTUATION_DISPLAY_STATES = Object.freeze(['egg-found', 'hatch', 'evolve', 'strong', 'mega']);
 const DEFAULT_MONSTER_BRANCH = 'b1';
 const MONSTER_ASSET_SIZES = Object.freeze([320, 640, 1280]);
-export const MONSTER_ASSET_VERSION = '20260421-branches';
+export const MONSTER_ASSET_VERSION = '20260513-subject-assets';
 
 export function normaliseMonsterBranch(value, fallback = DEFAULT_MONSTER_BRANCH) {
   return MONSTER_BRANCHES.includes(value) ? value : fallback;

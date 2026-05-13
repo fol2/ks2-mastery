@@ -249,7 +249,7 @@ test('reading setup degrades when monster-codex repository read fails', async ()
   assert.match(html, /Start practising to discover your Reading creatures/);
 });
 
-test('reading setup renders progressed monsters through existing visual asset aliases', async () => {
+test('reading setup renders progressed monsters through Reading-owned visual assets', async () => {
   const html = await renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -282,8 +282,8 @@ test('reading setup renders progressed monsters through existing visual asset al
   `);
 
   assert.match(html, /class="ss-meadow-art"/);
-  assert.match(html, /assets\/monsters\/glossbloom\/b1\/glossbloom-b1-/);
-  assert.doesNotMatch(html, /assets\/monsters\/readbloom\//);
+  assert.match(html, /assets\/monsters\/readbloom\/b1\/readbloom-b1-/);
+  assert.doesNotMatch(html, /assets\/monsters\/glossbloom\/b1\/glossbloom-b1-/);
 });
 
 test('reading setup fallback monster list is not shadowed by empty meadow copy', async () => {

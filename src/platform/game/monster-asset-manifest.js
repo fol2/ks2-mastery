@@ -3,9 +3,114 @@
 
 export const MONSTER_ASSET_MANIFEST = Object.freeze({
   "schemaVersion": 1,
-  "manifestHash": "3a5e0d699d815b618fb66964",
+  "manifestHash": "933ba1c0858d0f5b5b223a97",
   "assetRoot": "./assets/monsters",
   "monsters": [
+    {
+      "id": "arithon",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "arithon-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "arithon-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "arithon-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "arithon-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "arithon-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "arithon-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "arithon-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "arithon-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "arithon-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "arithon-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "bracehart",
       "branches": [
@@ -205,6 +310,111 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
             },
             {
               "key": "carillon-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "carryfin",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "carryfin-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "carryfin-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "carryfin-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "carryfin-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "carryfin-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "carryfin-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "carryfin-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "carryfin-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "carryfin-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "carryfin-b2-4",
               "stage": 4,
               "sizes": [
                 320,
@@ -847,6 +1057,321 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       ]
     },
     {
+      "id": "fractail",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "fractail-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractail-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractail-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractail-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractail-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "fractail-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractail-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractail-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractail-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractail-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fractalon",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "fractalon-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractalon-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractalon-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractalon-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractalon-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "fractalon-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractalon-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractalon-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractalon-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "fractalon-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "georune",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "georune-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "georune-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "georune-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "georune-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "georune-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "georune-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "georune-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "georune-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "georune-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "georune-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "glimmerbug",
       "branches": [
         {
@@ -1162,6 +1687,111 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       ]
     },
     {
+      "id": "inferane",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "inferane-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "inferane-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "inferane-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "inferane-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "inferane-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "inferane-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "inferane-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "inferane-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "inferane-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "inferane-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "inklet",
       "branches": [
         {
@@ -1372,6 +2002,216 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       ]
     },
     {
+      "id": "lorequill",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "lorequill-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "lorequill-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "lorequill-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "lorequill-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "lorequill-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "lorequill-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "lorequill-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "lorequill-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "lorequill-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "lorequill-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "measuron",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "measuron-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "measuron-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "measuron-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "measuron-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "measuron-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "measuron-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "measuron-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "measuron-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "measuron-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "measuron-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "mirrane",
       "branches": [
         {
@@ -1465,6 +2305,111 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
             },
             {
               "key": "mirrane-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "numdrake",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "numdrake-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "numdrake-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "numdrake-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "numdrake-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "numdrake-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "numdrake-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "numdrake-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "numdrake-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "numdrake-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "numdrake-b2-4",
               "stage": 4,
               "sizes": [
                 320,
@@ -1582,6 +2527,111 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       ]
     },
     {
+      "id": "perciva",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "perciva-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "perciva-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "perciva-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "perciva-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "perciva-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "perciva-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "perciva-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "perciva-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "perciva-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "perciva-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "phaeton",
       "branches": [
         {
@@ -1687,6 +2737,111 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       ]
     },
     {
+      "id": "proofwyrm",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "proofwyrm-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "proofwyrm-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "proofwyrm-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "proofwyrm-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "proofwyrm-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "proofwyrm-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "proofwyrm-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "proofwyrm-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "proofwyrm-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "proofwyrm-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "quoral",
       "branches": [
         {
@@ -1780,6 +2935,531 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
             },
             {
               "key": "quoral-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "readbloom",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "readbloom-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readbloom-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readbloom-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readbloom-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readbloom-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "readbloom-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readbloom-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readbloom-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readbloom-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readbloom-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "readrill",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "readrill-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readrill-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readrill-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readrill-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readrill-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "readrill-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readrill-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readrill-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readrill-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "readrill-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "strategon",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "strategon-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "strategon-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "strategon-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "strategon-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "strategon-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "strategon-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "strategon-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "strategon-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "strategon-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "strategon-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "structurillon",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "structurillon-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "structurillon-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "structurillon-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "structurillon-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "structurillon-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "structurillon-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "structurillon-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "structurillon-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "structurillon-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "structurillon-b2-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sumkrab",
+      "branches": [
+        {
+          "id": "b1",
+          "stages": [
+            {
+              "key": "sumkrab-b1-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "sumkrab-b1-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "sumkrab-b1-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "sumkrab-b1-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "sumkrab-b1-4",
+              "stage": 4,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "stages": [
+            {
+              "key": "sumkrab-b2-0",
+              "stage": 0,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "sumkrab-b2-1",
+              "stage": 1,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "sumkrab-b2-2",
+              "stage": 2,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "sumkrab-b2-3",
+              "stage": 3,
+              "sizes": [
+                320,
+                640,
+                1280
+              ]
+            },
+            {
+              "key": "sumkrab-b2-4",
               "stage": 4,
               "sizes": [
                 320,
@@ -1898,6 +3578,166 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
     }
   ],
   "assets": [
+    {
+      "key": "arithon-b1-0",
+      "monsterId": "arithon",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b1/arithon-b1-0.320.webp",
+        "640": "./assets/monsters/arithon/b1/arithon-b1-0.640.webp",
+        "1280": "./assets/monsters/arithon/b1/arithon-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "arithon-b1-1",
+      "monsterId": "arithon",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b1/arithon-b1-1.320.webp",
+        "640": "./assets/monsters/arithon/b1/arithon-b1-1.640.webp",
+        "1280": "./assets/monsters/arithon/b1/arithon-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "arithon-b1-2",
+      "monsterId": "arithon",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b1/arithon-b1-2.320.webp",
+        "640": "./assets/monsters/arithon/b1/arithon-b1-2.640.webp",
+        "1280": "./assets/monsters/arithon/b1/arithon-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "arithon-b1-3",
+      "monsterId": "arithon",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b1/arithon-b1-3.320.webp",
+        "640": "./assets/monsters/arithon/b1/arithon-b1-3.640.webp",
+        "1280": "./assets/monsters/arithon/b1/arithon-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "arithon-b1-4",
+      "monsterId": "arithon",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b1/arithon-b1-4.320.webp",
+        "640": "./assets/monsters/arithon/b1/arithon-b1-4.640.webp",
+        "1280": "./assets/monsters/arithon/b1/arithon-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "arithon-b2-0",
+      "monsterId": "arithon",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b2/arithon-b2-0.320.webp",
+        "640": "./assets/monsters/arithon/b2/arithon-b2-0.640.webp",
+        "1280": "./assets/monsters/arithon/b2/arithon-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "arithon-b2-1",
+      "monsterId": "arithon",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b2/arithon-b2-1.320.webp",
+        "640": "./assets/monsters/arithon/b2/arithon-b2-1.640.webp",
+        "1280": "./assets/monsters/arithon/b2/arithon-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "arithon-b2-2",
+      "monsterId": "arithon",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b2/arithon-b2-2.320.webp",
+        "640": "./assets/monsters/arithon/b2/arithon-b2-2.640.webp",
+        "1280": "./assets/monsters/arithon/b2/arithon-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "arithon-b2-3",
+      "monsterId": "arithon",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b2/arithon-b2-3.320.webp",
+        "640": "./assets/monsters/arithon/b2/arithon-b2-3.640.webp",
+        "1280": "./assets/monsters/arithon/b2/arithon-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "arithon-b2-4",
+      "monsterId": "arithon",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/arithon/b2/arithon-b2-4.320.webp",
+        "640": "./assets/monsters/arithon/b2/arithon-b2-4.640.webp",
+        "1280": "./assets/monsters/arithon/b2/arithon-b2-4.1280.webp"
+      }
+    },
     {
       "key": "bracehart-b1-0",
       "monsterId": "bracehart",
@@ -2216,6 +4056,166 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
         "320": "./assets/monsters/carillon/b2/carillon-b2-4.320.webp",
         "640": "./assets/monsters/carillon/b2/carillon-b2-4.640.webp",
         "1280": "./assets/monsters/carillon/b2/carillon-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b1-0",
+      "monsterId": "carryfin",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b1/carryfin-b1-0.320.webp",
+        "640": "./assets/monsters/carryfin/b1/carryfin-b1-0.640.webp",
+        "1280": "./assets/monsters/carryfin/b1/carryfin-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b1-1",
+      "monsterId": "carryfin",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b1/carryfin-b1-1.320.webp",
+        "640": "./assets/monsters/carryfin/b1/carryfin-b1-1.640.webp",
+        "1280": "./assets/monsters/carryfin/b1/carryfin-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b1-2",
+      "monsterId": "carryfin",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b1/carryfin-b1-2.320.webp",
+        "640": "./assets/monsters/carryfin/b1/carryfin-b1-2.640.webp",
+        "1280": "./assets/monsters/carryfin/b1/carryfin-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b1-3",
+      "monsterId": "carryfin",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b1/carryfin-b1-3.320.webp",
+        "640": "./assets/monsters/carryfin/b1/carryfin-b1-3.640.webp",
+        "1280": "./assets/monsters/carryfin/b1/carryfin-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b1-4",
+      "monsterId": "carryfin",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b1/carryfin-b1-4.320.webp",
+        "640": "./assets/monsters/carryfin/b1/carryfin-b1-4.640.webp",
+        "1280": "./assets/monsters/carryfin/b1/carryfin-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b2-0",
+      "monsterId": "carryfin",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b2/carryfin-b2-0.320.webp",
+        "640": "./assets/monsters/carryfin/b2/carryfin-b2-0.640.webp",
+        "1280": "./assets/monsters/carryfin/b2/carryfin-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b2-1",
+      "monsterId": "carryfin",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b2/carryfin-b2-1.320.webp",
+        "640": "./assets/monsters/carryfin/b2/carryfin-b2-1.640.webp",
+        "1280": "./assets/monsters/carryfin/b2/carryfin-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b2-2",
+      "monsterId": "carryfin",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b2/carryfin-b2-2.320.webp",
+        "640": "./assets/monsters/carryfin/b2/carryfin-b2-2.640.webp",
+        "1280": "./assets/monsters/carryfin/b2/carryfin-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b2-3",
+      "monsterId": "carryfin",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b2/carryfin-b2-3.320.webp",
+        "640": "./assets/monsters/carryfin/b2/carryfin-b2-3.640.webp",
+        "1280": "./assets/monsters/carryfin/b2/carryfin-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "carryfin-b2-4",
+      "monsterId": "carryfin",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/carryfin/b2/carryfin-b2-4.320.webp",
+        "640": "./assets/monsters/carryfin/b2/carryfin-b2-4.640.webp",
+        "1280": "./assets/monsters/carryfin/b2/carryfin-b2-4.1280.webp"
       }
     },
     {
@@ -3179,6 +5179,486 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       }
     },
     {
+      "key": "fractail-b1-0",
+      "monsterId": "fractail",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b1/fractail-b1-0.320.webp",
+        "640": "./assets/monsters/fractail/b1/fractail-b1-0.640.webp",
+        "1280": "./assets/monsters/fractail/b1/fractail-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "fractail-b1-1",
+      "monsterId": "fractail",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b1/fractail-b1-1.320.webp",
+        "640": "./assets/monsters/fractail/b1/fractail-b1-1.640.webp",
+        "1280": "./assets/monsters/fractail/b1/fractail-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "fractail-b1-2",
+      "monsterId": "fractail",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b1/fractail-b1-2.320.webp",
+        "640": "./assets/monsters/fractail/b1/fractail-b1-2.640.webp",
+        "1280": "./assets/monsters/fractail/b1/fractail-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "fractail-b1-3",
+      "monsterId": "fractail",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b1/fractail-b1-3.320.webp",
+        "640": "./assets/monsters/fractail/b1/fractail-b1-3.640.webp",
+        "1280": "./assets/monsters/fractail/b1/fractail-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "fractail-b1-4",
+      "monsterId": "fractail",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b1/fractail-b1-4.320.webp",
+        "640": "./assets/monsters/fractail/b1/fractail-b1-4.640.webp",
+        "1280": "./assets/monsters/fractail/b1/fractail-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "fractail-b2-0",
+      "monsterId": "fractail",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b2/fractail-b2-0.320.webp",
+        "640": "./assets/monsters/fractail/b2/fractail-b2-0.640.webp",
+        "1280": "./assets/monsters/fractail/b2/fractail-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "fractail-b2-1",
+      "monsterId": "fractail",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b2/fractail-b2-1.320.webp",
+        "640": "./assets/monsters/fractail/b2/fractail-b2-1.640.webp",
+        "1280": "./assets/monsters/fractail/b2/fractail-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "fractail-b2-2",
+      "monsterId": "fractail",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b2/fractail-b2-2.320.webp",
+        "640": "./assets/monsters/fractail/b2/fractail-b2-2.640.webp",
+        "1280": "./assets/monsters/fractail/b2/fractail-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "fractail-b2-3",
+      "monsterId": "fractail",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b2/fractail-b2-3.320.webp",
+        "640": "./assets/monsters/fractail/b2/fractail-b2-3.640.webp",
+        "1280": "./assets/monsters/fractail/b2/fractail-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "fractail-b2-4",
+      "monsterId": "fractail",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractail/b2/fractail-b2-4.320.webp",
+        "640": "./assets/monsters/fractail/b2/fractail-b2-4.640.webp",
+        "1280": "./assets/monsters/fractail/b2/fractail-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b1-0",
+      "monsterId": "fractalon",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b1/fractalon-b1-0.320.webp",
+        "640": "./assets/monsters/fractalon/b1/fractalon-b1-0.640.webp",
+        "1280": "./assets/monsters/fractalon/b1/fractalon-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b1-1",
+      "monsterId": "fractalon",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b1/fractalon-b1-1.320.webp",
+        "640": "./assets/monsters/fractalon/b1/fractalon-b1-1.640.webp",
+        "1280": "./assets/monsters/fractalon/b1/fractalon-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b1-2",
+      "monsterId": "fractalon",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b1/fractalon-b1-2.320.webp",
+        "640": "./assets/monsters/fractalon/b1/fractalon-b1-2.640.webp",
+        "1280": "./assets/monsters/fractalon/b1/fractalon-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b1-3",
+      "monsterId": "fractalon",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b1/fractalon-b1-3.320.webp",
+        "640": "./assets/monsters/fractalon/b1/fractalon-b1-3.640.webp",
+        "1280": "./assets/monsters/fractalon/b1/fractalon-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b1-4",
+      "monsterId": "fractalon",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b1/fractalon-b1-4.320.webp",
+        "640": "./assets/monsters/fractalon/b1/fractalon-b1-4.640.webp",
+        "1280": "./assets/monsters/fractalon/b1/fractalon-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b2-0",
+      "monsterId": "fractalon",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b2/fractalon-b2-0.320.webp",
+        "640": "./assets/monsters/fractalon/b2/fractalon-b2-0.640.webp",
+        "1280": "./assets/monsters/fractalon/b2/fractalon-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b2-1",
+      "monsterId": "fractalon",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b2/fractalon-b2-1.320.webp",
+        "640": "./assets/monsters/fractalon/b2/fractalon-b2-1.640.webp",
+        "1280": "./assets/monsters/fractalon/b2/fractalon-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b2-2",
+      "monsterId": "fractalon",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b2/fractalon-b2-2.320.webp",
+        "640": "./assets/monsters/fractalon/b2/fractalon-b2-2.640.webp",
+        "1280": "./assets/monsters/fractalon/b2/fractalon-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b2-3",
+      "monsterId": "fractalon",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b2/fractalon-b2-3.320.webp",
+        "640": "./assets/monsters/fractalon/b2/fractalon-b2-3.640.webp",
+        "1280": "./assets/monsters/fractalon/b2/fractalon-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "fractalon-b2-4",
+      "monsterId": "fractalon",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/fractalon/b2/fractalon-b2-4.320.webp",
+        "640": "./assets/monsters/fractalon/b2/fractalon-b2-4.640.webp",
+        "1280": "./assets/monsters/fractalon/b2/fractalon-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b1-0",
+      "monsterId": "georune",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b1/georune-b1-0.320.webp",
+        "640": "./assets/monsters/georune/b1/georune-b1-0.640.webp",
+        "1280": "./assets/monsters/georune/b1/georune-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b1-1",
+      "monsterId": "georune",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b1/georune-b1-1.320.webp",
+        "640": "./assets/monsters/georune/b1/georune-b1-1.640.webp",
+        "1280": "./assets/monsters/georune/b1/georune-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b1-2",
+      "monsterId": "georune",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b1/georune-b1-2.320.webp",
+        "640": "./assets/monsters/georune/b1/georune-b1-2.640.webp",
+        "1280": "./assets/monsters/georune/b1/georune-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b1-3",
+      "monsterId": "georune",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b1/georune-b1-3.320.webp",
+        "640": "./assets/monsters/georune/b1/georune-b1-3.640.webp",
+        "1280": "./assets/monsters/georune/b1/georune-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b1-4",
+      "monsterId": "georune",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b1/georune-b1-4.320.webp",
+        "640": "./assets/monsters/georune/b1/georune-b1-4.640.webp",
+        "1280": "./assets/monsters/georune/b1/georune-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b2-0",
+      "monsterId": "georune",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b2/georune-b2-0.320.webp",
+        "640": "./assets/monsters/georune/b2/georune-b2-0.640.webp",
+        "1280": "./assets/monsters/georune/b2/georune-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b2-1",
+      "monsterId": "georune",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b2/georune-b2-1.320.webp",
+        "640": "./assets/monsters/georune/b2/georune-b2-1.640.webp",
+        "1280": "./assets/monsters/georune/b2/georune-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b2-2",
+      "monsterId": "georune",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b2/georune-b2-2.320.webp",
+        "640": "./assets/monsters/georune/b2/georune-b2-2.640.webp",
+        "1280": "./assets/monsters/georune/b2/georune-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b2-3",
+      "monsterId": "georune",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b2/georune-b2-3.320.webp",
+        "640": "./assets/monsters/georune/b2/georune-b2-3.640.webp",
+        "1280": "./assets/monsters/georune/b2/georune-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "georune-b2-4",
+      "monsterId": "georune",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/georune/b2/georune-b2-4.320.webp",
+        "640": "./assets/monsters/georune/b2/georune-b2-4.640.webp",
+        "1280": "./assets/monsters/georune/b2/georune-b2-4.1280.webp"
+      }
+    },
+    {
       "key": "glimmerbug-b1-0",
       "monsterId": "glimmerbug",
       "branch": "b1",
@@ -3659,6 +6139,166 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       }
     },
     {
+      "key": "inferane-b1-0",
+      "monsterId": "inferane",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b1/inferane-b1-0.320.webp",
+        "640": "./assets/monsters/inferane/b1/inferane-b1-0.640.webp",
+        "1280": "./assets/monsters/inferane/b1/inferane-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "inferane-b1-1",
+      "monsterId": "inferane",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b1/inferane-b1-1.320.webp",
+        "640": "./assets/monsters/inferane/b1/inferane-b1-1.640.webp",
+        "1280": "./assets/monsters/inferane/b1/inferane-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "inferane-b1-2",
+      "monsterId": "inferane",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b1/inferane-b1-2.320.webp",
+        "640": "./assets/monsters/inferane/b1/inferane-b1-2.640.webp",
+        "1280": "./assets/monsters/inferane/b1/inferane-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "inferane-b1-3",
+      "monsterId": "inferane",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b1/inferane-b1-3.320.webp",
+        "640": "./assets/monsters/inferane/b1/inferane-b1-3.640.webp",
+        "1280": "./assets/monsters/inferane/b1/inferane-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "inferane-b1-4",
+      "monsterId": "inferane",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b1/inferane-b1-4.320.webp",
+        "640": "./assets/monsters/inferane/b1/inferane-b1-4.640.webp",
+        "1280": "./assets/monsters/inferane/b1/inferane-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "inferane-b2-0",
+      "monsterId": "inferane",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b2/inferane-b2-0.320.webp",
+        "640": "./assets/monsters/inferane/b2/inferane-b2-0.640.webp",
+        "1280": "./assets/monsters/inferane/b2/inferane-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "inferane-b2-1",
+      "monsterId": "inferane",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b2/inferane-b2-1.320.webp",
+        "640": "./assets/monsters/inferane/b2/inferane-b2-1.640.webp",
+        "1280": "./assets/monsters/inferane/b2/inferane-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "inferane-b2-2",
+      "monsterId": "inferane",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b2/inferane-b2-2.320.webp",
+        "640": "./assets/monsters/inferane/b2/inferane-b2-2.640.webp",
+        "1280": "./assets/monsters/inferane/b2/inferane-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "inferane-b2-3",
+      "monsterId": "inferane",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b2/inferane-b2-3.320.webp",
+        "640": "./assets/monsters/inferane/b2/inferane-b2-3.640.webp",
+        "1280": "./assets/monsters/inferane/b2/inferane-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "inferane-b2-4",
+      "monsterId": "inferane",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/inferane/b2/inferane-b2-4.320.webp",
+        "640": "./assets/monsters/inferane/b2/inferane-b2-4.640.webp",
+        "1280": "./assets/monsters/inferane/b2/inferane-b2-4.1280.webp"
+      }
+    },
+    {
       "key": "inklet-b1-0",
       "monsterId": "inklet",
       "branch": "b1",
@@ -3979,6 +6619,326 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       }
     },
     {
+      "key": "lorequill-b1-0",
+      "monsterId": "lorequill",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b1/lorequill-b1-0.320.webp",
+        "640": "./assets/monsters/lorequill/b1/lorequill-b1-0.640.webp",
+        "1280": "./assets/monsters/lorequill/b1/lorequill-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "lorequill-b1-1",
+      "monsterId": "lorequill",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b1/lorequill-b1-1.320.webp",
+        "640": "./assets/monsters/lorequill/b1/lorequill-b1-1.640.webp",
+        "1280": "./assets/monsters/lorequill/b1/lorequill-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "lorequill-b1-2",
+      "monsterId": "lorequill",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b1/lorequill-b1-2.320.webp",
+        "640": "./assets/monsters/lorequill/b1/lorequill-b1-2.640.webp",
+        "1280": "./assets/monsters/lorequill/b1/lorequill-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "lorequill-b1-3",
+      "monsterId": "lorequill",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b1/lorequill-b1-3.320.webp",
+        "640": "./assets/monsters/lorequill/b1/lorequill-b1-3.640.webp",
+        "1280": "./assets/monsters/lorequill/b1/lorequill-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "lorequill-b1-4",
+      "monsterId": "lorequill",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b1/lorequill-b1-4.320.webp",
+        "640": "./assets/monsters/lorequill/b1/lorequill-b1-4.640.webp",
+        "1280": "./assets/monsters/lorequill/b1/lorequill-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "lorequill-b2-0",
+      "monsterId": "lorequill",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b2/lorequill-b2-0.320.webp",
+        "640": "./assets/monsters/lorequill/b2/lorequill-b2-0.640.webp",
+        "1280": "./assets/monsters/lorequill/b2/lorequill-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "lorequill-b2-1",
+      "monsterId": "lorequill",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b2/lorequill-b2-1.320.webp",
+        "640": "./assets/monsters/lorequill/b2/lorequill-b2-1.640.webp",
+        "1280": "./assets/monsters/lorequill/b2/lorequill-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "lorequill-b2-2",
+      "monsterId": "lorequill",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b2/lorequill-b2-2.320.webp",
+        "640": "./assets/monsters/lorequill/b2/lorequill-b2-2.640.webp",
+        "1280": "./assets/monsters/lorequill/b2/lorequill-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "lorequill-b2-3",
+      "monsterId": "lorequill",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b2/lorequill-b2-3.320.webp",
+        "640": "./assets/monsters/lorequill/b2/lorequill-b2-3.640.webp",
+        "1280": "./assets/monsters/lorequill/b2/lorequill-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "lorequill-b2-4",
+      "monsterId": "lorequill",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/lorequill/b2/lorequill-b2-4.320.webp",
+        "640": "./assets/monsters/lorequill/b2/lorequill-b2-4.640.webp",
+        "1280": "./assets/monsters/lorequill/b2/lorequill-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b1-0",
+      "monsterId": "measuron",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b1/measuron-b1-0.320.webp",
+        "640": "./assets/monsters/measuron/b1/measuron-b1-0.640.webp",
+        "1280": "./assets/monsters/measuron/b1/measuron-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b1-1",
+      "monsterId": "measuron",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b1/measuron-b1-1.320.webp",
+        "640": "./assets/monsters/measuron/b1/measuron-b1-1.640.webp",
+        "1280": "./assets/monsters/measuron/b1/measuron-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b1-2",
+      "monsterId": "measuron",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b1/measuron-b1-2.320.webp",
+        "640": "./assets/monsters/measuron/b1/measuron-b1-2.640.webp",
+        "1280": "./assets/monsters/measuron/b1/measuron-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b1-3",
+      "monsterId": "measuron",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b1/measuron-b1-3.320.webp",
+        "640": "./assets/monsters/measuron/b1/measuron-b1-3.640.webp",
+        "1280": "./assets/monsters/measuron/b1/measuron-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b1-4",
+      "monsterId": "measuron",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b1/measuron-b1-4.320.webp",
+        "640": "./assets/monsters/measuron/b1/measuron-b1-4.640.webp",
+        "1280": "./assets/monsters/measuron/b1/measuron-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b2-0",
+      "monsterId": "measuron",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b2/measuron-b2-0.320.webp",
+        "640": "./assets/monsters/measuron/b2/measuron-b2-0.640.webp",
+        "1280": "./assets/monsters/measuron/b2/measuron-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b2-1",
+      "monsterId": "measuron",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b2/measuron-b2-1.320.webp",
+        "640": "./assets/monsters/measuron/b2/measuron-b2-1.640.webp",
+        "1280": "./assets/monsters/measuron/b2/measuron-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b2-2",
+      "monsterId": "measuron",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b2/measuron-b2-2.320.webp",
+        "640": "./assets/monsters/measuron/b2/measuron-b2-2.640.webp",
+        "1280": "./assets/monsters/measuron/b2/measuron-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b2-3",
+      "monsterId": "measuron",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b2/measuron-b2-3.320.webp",
+        "640": "./assets/monsters/measuron/b2/measuron-b2-3.640.webp",
+        "1280": "./assets/monsters/measuron/b2/measuron-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "measuron-b2-4",
+      "monsterId": "measuron",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/measuron/b2/measuron-b2-4.320.webp",
+        "640": "./assets/monsters/measuron/b2/measuron-b2-4.640.webp",
+        "1280": "./assets/monsters/measuron/b2/measuron-b2-4.1280.webp"
+      }
+    },
+    {
       "key": "mirrane-b1-0",
       "monsterId": "mirrane",
       "branch": "b1",
@@ -4136,6 +7096,166 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
         "320": "./assets/monsters/mirrane/b2/mirrane-b2-4.320.webp",
         "640": "./assets/monsters/mirrane/b2/mirrane-b2-4.640.webp",
         "1280": "./assets/monsters/mirrane/b2/mirrane-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b1-0",
+      "monsterId": "numdrake",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b1/numdrake-b1-0.320.webp",
+        "640": "./assets/monsters/numdrake/b1/numdrake-b1-0.640.webp",
+        "1280": "./assets/monsters/numdrake/b1/numdrake-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b1-1",
+      "monsterId": "numdrake",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b1/numdrake-b1-1.320.webp",
+        "640": "./assets/monsters/numdrake/b1/numdrake-b1-1.640.webp",
+        "1280": "./assets/monsters/numdrake/b1/numdrake-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b1-2",
+      "monsterId": "numdrake",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b1/numdrake-b1-2.320.webp",
+        "640": "./assets/monsters/numdrake/b1/numdrake-b1-2.640.webp",
+        "1280": "./assets/monsters/numdrake/b1/numdrake-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b1-3",
+      "monsterId": "numdrake",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b1/numdrake-b1-3.320.webp",
+        "640": "./assets/monsters/numdrake/b1/numdrake-b1-3.640.webp",
+        "1280": "./assets/monsters/numdrake/b1/numdrake-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b1-4",
+      "monsterId": "numdrake",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b1/numdrake-b1-4.320.webp",
+        "640": "./assets/monsters/numdrake/b1/numdrake-b1-4.640.webp",
+        "1280": "./assets/monsters/numdrake/b1/numdrake-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b2-0",
+      "monsterId": "numdrake",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b2/numdrake-b2-0.320.webp",
+        "640": "./assets/monsters/numdrake/b2/numdrake-b2-0.640.webp",
+        "1280": "./assets/monsters/numdrake/b2/numdrake-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b2-1",
+      "monsterId": "numdrake",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b2/numdrake-b2-1.320.webp",
+        "640": "./assets/monsters/numdrake/b2/numdrake-b2-1.640.webp",
+        "1280": "./assets/monsters/numdrake/b2/numdrake-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b2-2",
+      "monsterId": "numdrake",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b2/numdrake-b2-2.320.webp",
+        "640": "./assets/monsters/numdrake/b2/numdrake-b2-2.640.webp",
+        "1280": "./assets/monsters/numdrake/b2/numdrake-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b2-3",
+      "monsterId": "numdrake",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b2/numdrake-b2-3.320.webp",
+        "640": "./assets/monsters/numdrake/b2/numdrake-b2-3.640.webp",
+        "1280": "./assets/monsters/numdrake/b2/numdrake-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "numdrake-b2-4",
+      "monsterId": "numdrake",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/numdrake/b2/numdrake-b2-4.320.webp",
+        "640": "./assets/monsters/numdrake/b2/numdrake-b2-4.640.webp",
+        "1280": "./assets/monsters/numdrake/b2/numdrake-b2-4.1280.webp"
       }
     },
     {
@@ -4299,6 +7419,166 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       }
     },
     {
+      "key": "perciva-b1-0",
+      "monsterId": "perciva",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b1/perciva-b1-0.320.webp",
+        "640": "./assets/monsters/perciva/b1/perciva-b1-0.640.webp",
+        "1280": "./assets/monsters/perciva/b1/perciva-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "perciva-b1-1",
+      "monsterId": "perciva",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b1/perciva-b1-1.320.webp",
+        "640": "./assets/monsters/perciva/b1/perciva-b1-1.640.webp",
+        "1280": "./assets/monsters/perciva/b1/perciva-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "perciva-b1-2",
+      "monsterId": "perciva",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b1/perciva-b1-2.320.webp",
+        "640": "./assets/monsters/perciva/b1/perciva-b1-2.640.webp",
+        "1280": "./assets/monsters/perciva/b1/perciva-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "perciva-b1-3",
+      "monsterId": "perciva",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b1/perciva-b1-3.320.webp",
+        "640": "./assets/monsters/perciva/b1/perciva-b1-3.640.webp",
+        "1280": "./assets/monsters/perciva/b1/perciva-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "perciva-b1-4",
+      "monsterId": "perciva",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b1/perciva-b1-4.320.webp",
+        "640": "./assets/monsters/perciva/b1/perciva-b1-4.640.webp",
+        "1280": "./assets/monsters/perciva/b1/perciva-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "perciva-b2-0",
+      "monsterId": "perciva",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b2/perciva-b2-0.320.webp",
+        "640": "./assets/monsters/perciva/b2/perciva-b2-0.640.webp",
+        "1280": "./assets/monsters/perciva/b2/perciva-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "perciva-b2-1",
+      "monsterId": "perciva",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b2/perciva-b2-1.320.webp",
+        "640": "./assets/monsters/perciva/b2/perciva-b2-1.640.webp",
+        "1280": "./assets/monsters/perciva/b2/perciva-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "perciva-b2-2",
+      "monsterId": "perciva",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b2/perciva-b2-2.320.webp",
+        "640": "./assets/monsters/perciva/b2/perciva-b2-2.640.webp",
+        "1280": "./assets/monsters/perciva/b2/perciva-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "perciva-b2-3",
+      "monsterId": "perciva",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b2/perciva-b2-3.320.webp",
+        "640": "./assets/monsters/perciva/b2/perciva-b2-3.640.webp",
+        "1280": "./assets/monsters/perciva/b2/perciva-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "perciva-b2-4",
+      "monsterId": "perciva",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/perciva/b2/perciva-b2-4.320.webp",
+        "640": "./assets/monsters/perciva/b2/perciva-b2-4.640.webp",
+        "1280": "./assets/monsters/perciva/b2/perciva-b2-4.1280.webp"
+      }
+    },
+    {
       "key": "phaeton-b1-0",
       "monsterId": "phaeton",
       "branch": "b1",
@@ -4459,6 +7739,166 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
       }
     },
     {
+      "key": "proofwyrm-b1-0",
+      "monsterId": "proofwyrm",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-0.320.webp",
+        "640": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-0.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "proofwyrm-b1-1",
+      "monsterId": "proofwyrm",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-1.320.webp",
+        "640": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-1.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "proofwyrm-b1-2",
+      "monsterId": "proofwyrm",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-2.320.webp",
+        "640": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-2.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "proofwyrm-b1-3",
+      "monsterId": "proofwyrm",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-3.320.webp",
+        "640": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-3.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "proofwyrm-b1-4",
+      "monsterId": "proofwyrm",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-4.320.webp",
+        "640": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-4.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b1/proofwyrm-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "proofwyrm-b2-0",
+      "monsterId": "proofwyrm",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-0.320.webp",
+        "640": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-0.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "proofwyrm-b2-1",
+      "monsterId": "proofwyrm",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-1.320.webp",
+        "640": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-1.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "proofwyrm-b2-2",
+      "monsterId": "proofwyrm",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-2.320.webp",
+        "640": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-2.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "proofwyrm-b2-3",
+      "monsterId": "proofwyrm",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-3.320.webp",
+        "640": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-3.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "proofwyrm-b2-4",
+      "monsterId": "proofwyrm",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-4.320.webp",
+        "640": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-4.640.webp",
+        "1280": "./assets/monsters/proofwyrm/b2/proofwyrm-b2-4.1280.webp"
+      }
+    },
+    {
       "key": "quoral-b1-0",
       "monsterId": "quoral",
       "branch": "b1",
@@ -4616,6 +8056,806 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
         "320": "./assets/monsters/quoral/b2/quoral-b2-4.320.webp",
         "640": "./assets/monsters/quoral/b2/quoral-b2-4.640.webp",
         "1280": "./assets/monsters/quoral/b2/quoral-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b1-0",
+      "monsterId": "readbloom",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b1/readbloom-b1-0.320.webp",
+        "640": "./assets/monsters/readbloom/b1/readbloom-b1-0.640.webp",
+        "1280": "./assets/monsters/readbloom/b1/readbloom-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b1-1",
+      "monsterId": "readbloom",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b1/readbloom-b1-1.320.webp",
+        "640": "./assets/monsters/readbloom/b1/readbloom-b1-1.640.webp",
+        "1280": "./assets/monsters/readbloom/b1/readbloom-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b1-2",
+      "monsterId": "readbloom",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b1/readbloom-b1-2.320.webp",
+        "640": "./assets/monsters/readbloom/b1/readbloom-b1-2.640.webp",
+        "1280": "./assets/monsters/readbloom/b1/readbloom-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b1-3",
+      "monsterId": "readbloom",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b1/readbloom-b1-3.320.webp",
+        "640": "./assets/monsters/readbloom/b1/readbloom-b1-3.640.webp",
+        "1280": "./assets/monsters/readbloom/b1/readbloom-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b1-4",
+      "monsterId": "readbloom",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b1/readbloom-b1-4.320.webp",
+        "640": "./assets/monsters/readbloom/b1/readbloom-b1-4.640.webp",
+        "1280": "./assets/monsters/readbloom/b1/readbloom-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b2-0",
+      "monsterId": "readbloom",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b2/readbloom-b2-0.320.webp",
+        "640": "./assets/monsters/readbloom/b2/readbloom-b2-0.640.webp",
+        "1280": "./assets/monsters/readbloom/b2/readbloom-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b2-1",
+      "monsterId": "readbloom",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b2/readbloom-b2-1.320.webp",
+        "640": "./assets/monsters/readbloom/b2/readbloom-b2-1.640.webp",
+        "1280": "./assets/monsters/readbloom/b2/readbloom-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b2-2",
+      "monsterId": "readbloom",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b2/readbloom-b2-2.320.webp",
+        "640": "./assets/monsters/readbloom/b2/readbloom-b2-2.640.webp",
+        "1280": "./assets/monsters/readbloom/b2/readbloom-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b2-3",
+      "monsterId": "readbloom",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b2/readbloom-b2-3.320.webp",
+        "640": "./assets/monsters/readbloom/b2/readbloom-b2-3.640.webp",
+        "1280": "./assets/monsters/readbloom/b2/readbloom-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "readbloom-b2-4",
+      "monsterId": "readbloom",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readbloom/b2/readbloom-b2-4.320.webp",
+        "640": "./assets/monsters/readbloom/b2/readbloom-b2-4.640.webp",
+        "1280": "./assets/monsters/readbloom/b2/readbloom-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b1-0",
+      "monsterId": "readrill",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b1/readrill-b1-0.320.webp",
+        "640": "./assets/monsters/readrill/b1/readrill-b1-0.640.webp",
+        "1280": "./assets/monsters/readrill/b1/readrill-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b1-1",
+      "monsterId": "readrill",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b1/readrill-b1-1.320.webp",
+        "640": "./assets/monsters/readrill/b1/readrill-b1-1.640.webp",
+        "1280": "./assets/monsters/readrill/b1/readrill-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b1-2",
+      "monsterId": "readrill",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b1/readrill-b1-2.320.webp",
+        "640": "./assets/monsters/readrill/b1/readrill-b1-2.640.webp",
+        "1280": "./assets/monsters/readrill/b1/readrill-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b1-3",
+      "monsterId": "readrill",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b1/readrill-b1-3.320.webp",
+        "640": "./assets/monsters/readrill/b1/readrill-b1-3.640.webp",
+        "1280": "./assets/monsters/readrill/b1/readrill-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b1-4",
+      "monsterId": "readrill",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b1/readrill-b1-4.320.webp",
+        "640": "./assets/monsters/readrill/b1/readrill-b1-4.640.webp",
+        "1280": "./assets/monsters/readrill/b1/readrill-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b2-0",
+      "monsterId": "readrill",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b2/readrill-b2-0.320.webp",
+        "640": "./assets/monsters/readrill/b2/readrill-b2-0.640.webp",
+        "1280": "./assets/monsters/readrill/b2/readrill-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b2-1",
+      "monsterId": "readrill",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b2/readrill-b2-1.320.webp",
+        "640": "./assets/monsters/readrill/b2/readrill-b2-1.640.webp",
+        "1280": "./assets/monsters/readrill/b2/readrill-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b2-2",
+      "monsterId": "readrill",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b2/readrill-b2-2.320.webp",
+        "640": "./assets/monsters/readrill/b2/readrill-b2-2.640.webp",
+        "1280": "./assets/monsters/readrill/b2/readrill-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b2-3",
+      "monsterId": "readrill",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b2/readrill-b2-3.320.webp",
+        "640": "./assets/monsters/readrill/b2/readrill-b2-3.640.webp",
+        "1280": "./assets/monsters/readrill/b2/readrill-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "readrill-b2-4",
+      "monsterId": "readrill",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/readrill/b2/readrill-b2-4.320.webp",
+        "640": "./assets/monsters/readrill/b2/readrill-b2-4.640.webp",
+        "1280": "./assets/monsters/readrill/b2/readrill-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b1-0",
+      "monsterId": "strategon",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b1/strategon-b1-0.320.webp",
+        "640": "./assets/monsters/strategon/b1/strategon-b1-0.640.webp",
+        "1280": "./assets/monsters/strategon/b1/strategon-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b1-1",
+      "monsterId": "strategon",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b1/strategon-b1-1.320.webp",
+        "640": "./assets/monsters/strategon/b1/strategon-b1-1.640.webp",
+        "1280": "./assets/monsters/strategon/b1/strategon-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b1-2",
+      "monsterId": "strategon",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b1/strategon-b1-2.320.webp",
+        "640": "./assets/monsters/strategon/b1/strategon-b1-2.640.webp",
+        "1280": "./assets/monsters/strategon/b1/strategon-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b1-3",
+      "monsterId": "strategon",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b1/strategon-b1-3.320.webp",
+        "640": "./assets/monsters/strategon/b1/strategon-b1-3.640.webp",
+        "1280": "./assets/monsters/strategon/b1/strategon-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b1-4",
+      "monsterId": "strategon",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b1/strategon-b1-4.320.webp",
+        "640": "./assets/monsters/strategon/b1/strategon-b1-4.640.webp",
+        "1280": "./assets/monsters/strategon/b1/strategon-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b2-0",
+      "monsterId": "strategon",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b2/strategon-b2-0.320.webp",
+        "640": "./assets/monsters/strategon/b2/strategon-b2-0.640.webp",
+        "1280": "./assets/monsters/strategon/b2/strategon-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b2-1",
+      "monsterId": "strategon",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b2/strategon-b2-1.320.webp",
+        "640": "./assets/monsters/strategon/b2/strategon-b2-1.640.webp",
+        "1280": "./assets/monsters/strategon/b2/strategon-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b2-2",
+      "monsterId": "strategon",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b2/strategon-b2-2.320.webp",
+        "640": "./assets/monsters/strategon/b2/strategon-b2-2.640.webp",
+        "1280": "./assets/monsters/strategon/b2/strategon-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b2-3",
+      "monsterId": "strategon",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b2/strategon-b2-3.320.webp",
+        "640": "./assets/monsters/strategon/b2/strategon-b2-3.640.webp",
+        "1280": "./assets/monsters/strategon/b2/strategon-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "strategon-b2-4",
+      "monsterId": "strategon",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/strategon/b2/strategon-b2-4.320.webp",
+        "640": "./assets/monsters/strategon/b2/strategon-b2-4.640.webp",
+        "1280": "./assets/monsters/strategon/b2/strategon-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b1-0",
+      "monsterId": "structurillon",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b1/structurillon-b1-0.320.webp",
+        "640": "./assets/monsters/structurillon/b1/structurillon-b1-0.640.webp",
+        "1280": "./assets/monsters/structurillon/b1/structurillon-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b1-1",
+      "monsterId": "structurillon",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b1/structurillon-b1-1.320.webp",
+        "640": "./assets/monsters/structurillon/b1/structurillon-b1-1.640.webp",
+        "1280": "./assets/monsters/structurillon/b1/structurillon-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b1-2",
+      "monsterId": "structurillon",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b1/structurillon-b1-2.320.webp",
+        "640": "./assets/monsters/structurillon/b1/structurillon-b1-2.640.webp",
+        "1280": "./assets/monsters/structurillon/b1/structurillon-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b1-3",
+      "monsterId": "structurillon",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b1/structurillon-b1-3.320.webp",
+        "640": "./assets/monsters/structurillon/b1/structurillon-b1-3.640.webp",
+        "1280": "./assets/monsters/structurillon/b1/structurillon-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b1-4",
+      "monsterId": "structurillon",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b1/structurillon-b1-4.320.webp",
+        "640": "./assets/monsters/structurillon/b1/structurillon-b1-4.640.webp",
+        "1280": "./assets/monsters/structurillon/b1/structurillon-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b2-0",
+      "monsterId": "structurillon",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b2/structurillon-b2-0.320.webp",
+        "640": "./assets/monsters/structurillon/b2/structurillon-b2-0.640.webp",
+        "1280": "./assets/monsters/structurillon/b2/structurillon-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b2-1",
+      "monsterId": "structurillon",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b2/structurillon-b2-1.320.webp",
+        "640": "./assets/monsters/structurillon/b2/structurillon-b2-1.640.webp",
+        "1280": "./assets/monsters/structurillon/b2/structurillon-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b2-2",
+      "monsterId": "structurillon",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b2/structurillon-b2-2.320.webp",
+        "640": "./assets/monsters/structurillon/b2/structurillon-b2-2.640.webp",
+        "1280": "./assets/monsters/structurillon/b2/structurillon-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b2-3",
+      "monsterId": "structurillon",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b2/structurillon-b2-3.320.webp",
+        "640": "./assets/monsters/structurillon/b2/structurillon-b2-3.640.webp",
+        "1280": "./assets/monsters/structurillon/b2/structurillon-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "structurillon-b2-4",
+      "monsterId": "structurillon",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/structurillon/b2/structurillon-b2-4.320.webp",
+        "640": "./assets/monsters/structurillon/b2/structurillon-b2-4.640.webp",
+        "1280": "./assets/monsters/structurillon/b2/structurillon-b2-4.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b1-0",
+      "monsterId": "sumkrab",
+      "branch": "b1",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b1/sumkrab-b1-0.320.webp",
+        "640": "./assets/monsters/sumkrab/b1/sumkrab-b1-0.640.webp",
+        "1280": "./assets/monsters/sumkrab/b1/sumkrab-b1-0.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b1-1",
+      "monsterId": "sumkrab",
+      "branch": "b1",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b1/sumkrab-b1-1.320.webp",
+        "640": "./assets/monsters/sumkrab/b1/sumkrab-b1-1.640.webp",
+        "1280": "./assets/monsters/sumkrab/b1/sumkrab-b1-1.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b1-2",
+      "monsterId": "sumkrab",
+      "branch": "b1",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b1/sumkrab-b1-2.320.webp",
+        "640": "./assets/monsters/sumkrab/b1/sumkrab-b1-2.640.webp",
+        "1280": "./assets/monsters/sumkrab/b1/sumkrab-b1-2.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b1-3",
+      "monsterId": "sumkrab",
+      "branch": "b1",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b1/sumkrab-b1-3.320.webp",
+        "640": "./assets/monsters/sumkrab/b1/sumkrab-b1-3.640.webp",
+        "1280": "./assets/monsters/sumkrab/b1/sumkrab-b1-3.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b1-4",
+      "monsterId": "sumkrab",
+      "branch": "b1",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b1/sumkrab-b1-4.320.webp",
+        "640": "./assets/monsters/sumkrab/b1/sumkrab-b1-4.640.webp",
+        "1280": "./assets/monsters/sumkrab/b1/sumkrab-b1-4.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b2-0",
+      "monsterId": "sumkrab",
+      "branch": "b2",
+      "stage": 0,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b2/sumkrab-b2-0.320.webp",
+        "640": "./assets/monsters/sumkrab/b2/sumkrab-b2-0.640.webp",
+        "1280": "./assets/monsters/sumkrab/b2/sumkrab-b2-0.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b2-1",
+      "monsterId": "sumkrab",
+      "branch": "b2",
+      "stage": 1,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b2/sumkrab-b2-1.320.webp",
+        "640": "./assets/monsters/sumkrab/b2/sumkrab-b2-1.640.webp",
+        "1280": "./assets/monsters/sumkrab/b2/sumkrab-b2-1.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b2-2",
+      "monsterId": "sumkrab",
+      "branch": "b2",
+      "stage": 2,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b2/sumkrab-b2-2.320.webp",
+        "640": "./assets/monsters/sumkrab/b2/sumkrab-b2-2.640.webp",
+        "1280": "./assets/monsters/sumkrab/b2/sumkrab-b2-2.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b2-3",
+      "monsterId": "sumkrab",
+      "branch": "b2",
+      "stage": 3,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b2/sumkrab-b2-3.320.webp",
+        "640": "./assets/monsters/sumkrab/b2/sumkrab-b2-3.640.webp",
+        "1280": "./assets/monsters/sumkrab/b2/sumkrab-b2-3.1280.webp"
+      }
+    },
+    {
+      "key": "sumkrab-b2-4",
+      "monsterId": "sumkrab",
+      "branch": "b2",
+      "stage": 4,
+      "sizes": [
+        320,
+        640,
+        1280
+      ],
+      "srcBySize": {
+        "320": "./assets/monsters/sumkrab/b2/sumkrab-b2-4.320.webp",
+        "640": "./assets/monsters/sumkrab/b2/sumkrab-b2-4.640.webp",
+        "1280": "./assets/monsters/sumkrab/b2/sumkrab-b2-4.1280.webp"
       }
     },
     {
@@ -4781,4 +9021,4 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
   ]
 });
 
-export const MONSTER_ASSET_MANIFEST_HASH = "3a5e0d699d815b618fb66964";
+export const MONSTER_ASSET_MANIFEST_HASH = "933ba1c0858d0f5b5b223a97";
