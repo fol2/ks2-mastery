@@ -1,0 +1,20 @@
+{
+  "templates": 30,
+  "rewardUnits": 90,
+  "cases": 135000,
+  "unique": 81984,
+  "correctFail": 0,
+  "percentAccepted": 1596,
+  "badPercentAccepted": 0,
+  "explicitPercentAcceptances": 1596,
+  "explicitPercentCases": 1596,
+  "poundAccepted": 0,
+  "r0AcceptedNonDivision": 0,
+  "rem0AcceptedNonDivision": 0,
+  "remainder0AcceptedNonDivision": 0,
+  "zeroRemainderDivisionAcceptances": 9000,
+  "zeroRemainderDivisionRemAcceptances": 9000,
+  "zeroRemainderDivisionRemainderAcceptances": 9000,
+  "decimalRepeats": 0,
+  "findings": []
+}

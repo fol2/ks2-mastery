@@ -1,0 +1,177 @@
+{
+  "templates": 30,
+  "rewardUnits": 90,
+  "cases": 135000,
+  "unique": 76996,
+  "correctFail": 0,
+  "percentAccepted": 1596,
+  "badPercentAccepted": 0,
+  "explicitPercentAcceptances": 1596,
+  "explicitPercentCases": 1596,
+  "poundAccepted": 0,
+  "r0AcceptedNonDivision": 84931,
+  "zeroRemainderDivisionAcceptances": 9000,
+  "decimalRepeats": 514,
+  "findings": [
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 2,
+      "answer": 29.380000000000003,
+      "stem": "293.8 ÷ 10 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 3,
+      "answer": 46.269999999999996,
+      "stem": "462.7 ÷ 10 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 11,
+      "answer": 6.127999999999999,
+      "stem": "612.8 ÷ 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 13,
+      "answer": 0.8170000000000001,
+      "stem": "81.7 ÷ 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 37,
+      "answer": 0.037899999999999996,
+      "stem": "37.9 ÷ 1,000 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 41,
+      "answer": 6.3870000000000005,
+      "stem": "638.7 ÷ 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 50,
+      "answer": 34.410000000000004,
+      "stem": "344.1 ÷ 10 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 57,
+      "answer": 14.930000000000001,
+      "stem": "149.3 ÷ 10 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 59,
+      "answer": 27610.000000000004,
+      "stem": "276.1 × 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 67,
+      "answer": 5.752000000000001,
+      "stem": "575.2 ÷ 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 102,
+      "answer": 7.5889999999999995,
+      "stem": "758.9 ÷ 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 106,
+      "answer": 12869.999999999998,
+      "stem": "128.7 × 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 107,
+      "answer": 7.007999999999999,
+      "stem": "700.8 ÷ 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 111,
+      "answer": 0.11090000000000001,
+      "stem": "110.9 ÷ 1,000 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 119,
+      "answer": 0.31310000000000004,
+      "stem": "313.1 ÷ 1,000 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 125,
+      "answer": 0.5317000000000001,
+      "stem": "531.7 ÷ 1,000 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 148,
+      "answer": 0.6137999999999999,
+      "stem": "613.8 ÷ 1,000 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 150,
+      "answer": 9.011000000000001,
+      "stem": "901.1 ÷ 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 170,
+      "answer": 1.7069999999999999,
+      "stem": "170.7 ÷ 100 ="
+    },
+    {
+      "kind": "binary_decimal_artefact",
+      "templateId": "powers_of_ten_shift",
+      "difficulty": 1,
+      "seed": 177,
+      "answer": 56.42999999999999,
+      "stem": "564.3 ÷ 10 ="
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+TAP version 13
+# Subtest: ArithmeticPracticeSurface remounts True Test answer fields from the current paper entry
+ok 1 - ArithmeticPracticeSurface remounts True Test answer fields from the current paper entry
+  ---
+  duration_ms: 1449.3245
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1518.0924

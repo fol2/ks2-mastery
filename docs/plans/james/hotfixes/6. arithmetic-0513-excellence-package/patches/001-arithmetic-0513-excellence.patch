@@ -1,0 +1,210 @@
+diff --git a/shared/arithmetic/content.js b/shared/arithmetic/content.js
+index f9c41a89..132f955a 100644
+--- a/shared/arithmetic/content.js
++++ b/shared/arithmetic/content.js
+@@ -142,7 +142,7 @@ export function parseNumberInput(value, options = {}) {
+   if (options.allowCurrencySymbol) text = text.replace(/^£\s*/, '');
+   text = text.replace(/\s+/g, '');
+   const zr = text.match(/^([+-]?\d+)\s*(?:r|rem|remainder)\s*0+$/i);
+-  if (zr) return Number(zr[1]);
++  if (zr) return options.allowZeroRemainderText ? Number(zr[1]) : null;
+   if (text.startsWith('+')) text = text.slice(1);
+   if (text.startsWith('.')) text = `0${text}`;
+   if (text.startsWith('-.')) text = `-0${text.slice(1)}`;
+@@ -224,6 +224,7 @@ function evaluateExpected(expected, response, marks = 1) {
+   const numeric = parseNumberInput(answer, {
+     allowPercentSymbol: Boolean(expected?.allowPercentSymbol),
+     allowCurrencySymbol: Boolean(expected?.allowCurrencySymbol),
++    allowZeroRemainderText: Boolean(expected?.allowZeroRemainderText),
+   });
+   const answerText = expected?.answerText || formatNumber(expected?.value);
+   if (numeric === null) return result({ correct: false, score: 0, maxScore: marks, misconception: 'misread_question', feedbackShort: 'Enter a number.', answerText });
+@@ -264,6 +265,34 @@ function decimal(value, places) {
+   return Number(Number(value).toFixed(places));
+ }
+
++function tidyDecimal(value, places = 10) {
++  const numeric = Number(value);
++  if (!Number.isFinite(numeric)) return 0;
++  return Number(Number(numeric.toPrecision(Math.min(12, Math.max(1, places + 2)))).toFixed(places));
++}
++
++function countColumnEvents(a, b, mode) {
++  let events = 0;
++  let x = Math.abs(Math.trunc(a));
++  let y = Math.abs(Math.trunc(b));
++  while (x > 0 || y > 0) {
++    const xd = x % 10;
++    const yd = y % 10;
++    if (mode === 'add' && xd + yd >= 10) events += 1;
++    if (mode === 'subtract' && xd < yd) events += 1;
++    x = Math.floor(x / 10);
++    y = Math.floor(y / 10);
++  }
++  return events;
++}
++
++function pctFraction(percent) {
++  const text = String(percent);
++  const decimals = text.includes('.') ? text.split('.')[1].length : 0;
++  const scale = 10 ** decimals;
++  return normaliseFraction(Math.round(Number(percent) * scale), 100 * scale);
++}
++
+ function template(def) {
+   return Object.freeze({ ...def, skillIds: Object.freeze(def.skillIds.slice()) });
+ }
+@@ -289,11 +318,15 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
+     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(Number(parts.join('')))} = ${expanded.join(' + ')}`, inputSpec: { type: 'number', label: 'Missing place-value part' }, expected: { kind: 'number', value: values[missing], misconception: 'place_value_confusion' }, solutionLines: ['Read the number one place at a time.', `The missing part is ${formatNumber(values[missing])}.`] });
+   } }),
+   template({ id: 'powers_of_ten_shift', label: 'Multiply and divide by powers of 10', domain: 'Place value', strand: 'facts_place_value', skillIds: ['powers_of_10_shift'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
+-    const rng = seededRng(seed); const op = pick(rng, ['×', '÷']); const power = pick(rng, difficulty === 0 ? [10, 100] : [10, 100, 1000]); const base = difficulty === 0 ? randInt(rng, 12, 980) : decimal(randInt(rng, 120, 9999) / (difficulty === 1 ? 10 : 100), difficulty === 1 ? 1 : 2); const answer = op === '×' ? base * power : base / power; const reverse = op === '×' ? base / power : base * power;
++    const rng = seededRng(seed); const op = pick(rng, ['×', '÷']); const power = pick(rng, difficulty === 0 ? [10, 100] : [10, 100, 1000]); const base = difficulty === 0 ? randInt(rng, 12, 980) : decimal(randInt(rng, 120, 9999) / (difficulty === 1 ? 10 : 100), difficulty === 1 ? 1 : 2); const answer = tidyDecimal(op === '×' ? base * power : base / power); const reverse = tidyDecimal(op === '×' ? base / power : base * power);
+     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(base)} ${op} ${formatNumber(power)} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: answer, answerText: formatNumber(answer), misconception: 'powers_of_ten_shift', operationConfusionValues: [reverse] }, solutionLines: ['Changing by powers of 10 changes place value.', `${formatNumber(base)} ${op} ${formatNumber(power)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'times_table_fact', label: 'Times-table and division facts', domain: 'Multiplication and division', strand: 'facts_place_value', skillIds: ['times_tables', 'division_facts'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
+-    const rng = seededRng(seed); const a = randInt(rng, 2, 12); const b = randInt(rng, 2, 12); const product = a * b; const style = pick(rng, ['mul', 'div']); const stem = style === 'mul' ? `${a} × □ = ${product}` : `${product} ÷ ${a} = □`; const answer = style === 'mul' ? b : b;
++    const rng = seededRng(seed); const a = randInt(rng, 2, 12); const b = randInt(rng, 2, 12); const product = a * b; const style = pick(rng, ['mul-right', 'mul-left', 'div-divisor', 'div-quotient']); let stem; let answer;
++    if (style === 'mul-right') { stem = `${a} × □ = ${product}`; answer = b; }
++    else if (style === 'mul-left') { stem = `□ × ${b} = ${product}`; answer = a; }
++    else if (style === 'div-divisor') { stem = `${product} ÷ □ = ${b}`; answer = a; }
++    else { stem = `${product} ÷ ${a} = □`; answer = b; }
+     return makeQuestion(this, seed, difficulty, { stem, inputSpec: { type: 'number', label: 'Missing number' }, expected: { kind: 'number', value: answer, misconception: 'fact_recall' }, solutionLines: [`Recall ${a} × ${b} = ${product}.`, `The missing number is ${answer}.`] });
+   } }),
+   template({ id: 'mental_addition', label: 'Mental addition', domain: 'Addition and subtraction', strand: 'operations_methods', skillIds: ['mental_addition'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
+@@ -320,16 +353,46 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
+     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(a)} − ${formatNumber(b)} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'fact_recall' }, solutionLines: ['Use counting on, compensation or subtract in parts.', `${formatNumber(a)} − ${formatNumber(b)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'column_addition', label: 'Column addition', domain: 'Addition and subtraction', strand: 'operations_methods', skillIds: ['column_addition'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+-    const rng = seededRng(seed); const digits = difficulty === 0 ? 3 : difficulty === 1 ? 4 : 5; const a = randInt(rng, 10 ** (digits - 1), 10 ** digits - 1); const b = randInt(rng, 10 ** (digits - 1), 10 ** digits - 1); const answer = a + b;
++    const rng = seededRng(seed); const digits = difficulty === 0 ? 3 : difficulty === 1 ? 4 : 5; let a; let b; const minCarries = difficulty === 0 ? 1 : 2;
++    do {
++      a = randInt(rng, 10 ** (digits - 1), 10 ** digits - 1);
++      b = randInt(rng, 10 ** (digits - 1), 10 ** digits - 1);
++    } while (countColumnEvents(a, b, 'add') < minCarries);
++    const answer = a + b;
+     return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: visualVertical(formatNumber(a), formatNumber(b), '+'), inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, solutionLines: ['Add from right to left, exchanging where needed.', `${formatNumber(a)} + ${formatNumber(b)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'column_subtraction', label: 'Column subtraction', domain: 'Addition and subtraction', strand: 'operations_methods', skillIds: ['column_subtraction'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+-    const rng = seededRng(seed); const digits = difficulty === 0 ? 3 : difficulty === 1 ? 4 : 5; let a = randInt(rng, 10 ** (digits - 1), 10 ** digits - 1); let b = randInt(rng, 10 ** (digits - 2), 10 ** (digits - 1) - 1); if (b >= a) [a, b] = [a + b, a]; const answer = a - b;
++    const rng = seededRng(seed); const digits = difficulty === 0 ? 3 : difficulty === 1 ? 4 : 5; let a; let b; const minExchanges = difficulty === 0 ? 1 : 2;
++    do {
++      a = randInt(rng, 10 ** (digits - 1), 10 ** digits - 1);
++      b = randInt(rng, 10 ** (digits - 2), 10 ** digits - 1);
++      if (b >= a) [a, b] = [b, a];
++    } while (a <= b || countColumnEvents(a, b, 'subtract') < minExchanges);
++    const answer = a - b;
+     return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: visualVertical(formatNumber(a), formatNumber(b), '−'), inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, solutionLines: ['Subtract from right to left, exchanging where needed.', `${formatNumber(a)} − ${formatNumber(b)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'missing_number_inverse', label: 'Missing-number equation', domain: 'Addition and subtraction', strand: 'operations_methods', skillIds: ['inverse_missing'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
+-    const rng = seededRng(seed); const total = difficulty === 0 ? randInt(rng, 60, 300) : difficulty === 1 ? randInt(rng, 200, 2000) : randInt(rng, 2000, 10000); const known = randInt(rng, Math.floor(total * 0.2), Math.floor(total * 0.85)); const answer = total - known;
+-    return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(known)} + □ = ${formatNumber(total)}`, inputSpec: { type: 'number', label: 'Missing number' }, expected: { kind: 'number', value: answer, misconception: 'inverse_error' }, solutionLines: ['Subtract the known part from the total.', `${formatNumber(total)} − ${formatNumber(known)} = ${formatNumber(answer)}.`] });
++    const rng = seededRng(seed); const range = difficulty === 0 ? [60, 300] : difficulty === 1 ? [200, 2000] : [2000, 10000]; const style = pick(rng, ['add-right', 'add-left', 'subtract-start', 'subtract-part']); let stem; let answer; let line;
++    if (style === 'subtract-start') {
++      const known = randInt(rng, Math.floor(range[0] * 0.25), Math.floor(range[1] * 0.45));
++      const resultValue = randInt(rng, Math.floor(range[0] * 0.35), Math.floor(range[1] * 0.75));
++      answer = known + resultValue;
++      stem = `□ − ${formatNumber(known)} = ${formatNumber(resultValue)}`;
++      line = `${formatNumber(resultValue)} + ${formatNumber(known)} = ${formatNumber(answer)}.`;
++    } else if (style === 'subtract-part') {
++      const total = randInt(rng, range[0], range[1]);
++      const resultValue = randInt(rng, Math.floor(total * 0.15), Math.floor(total * 0.75));
++      answer = total - resultValue;
++      stem = `${formatNumber(total)} − □ = ${formatNumber(resultValue)}`;
++      line = `${formatNumber(total)} − ${formatNumber(resultValue)} = ${formatNumber(answer)}.`;
++    } else {
++      const total = randInt(rng, range[0], range[1]);
++      const known = randInt(rng, Math.floor(total * 0.2), Math.floor(total * 0.85));
++      answer = total - known;
++      stem = style === 'add-left' ? `□ + ${formatNumber(known)} = ${formatNumber(total)}` : `${formatNumber(known)} + □ = ${formatNumber(total)}`;
++      line = `${formatNumber(total)} − ${formatNumber(known)} = ${formatNumber(answer)}.`;
++    }
++    return makeQuestion(this, seed, difficulty, { stem, inputSpec: { type: 'number', label: 'Missing number' }, expected: { kind: 'number', value: answer, misconception: 'inverse_error' }, solutionLines: ['Use the inverse operation to isolate the missing number.', line] });
+   } }),
+   template({ id: 'mental_multiplication', label: 'Mental multiplication', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['mental_multiplication'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed);
+@@ -360,7 +423,7 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
+   } }),
+   template({ id: 'short_division', label: 'Short division', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['short_division'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const divisor = randInt(rng, 2, 9); const quotient = difficulty === 0 ? randInt(rng, 10, 99) : difficulty === 1 ? randInt(rng, 50, 450) : randInt(rng, 200, 900); const dividend = divisor * quotient;
+-    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: `${divisor} ) ${formatNumber(dividend)}`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: quotient, misconception: 'remainder_interpretation' }, solutionLines: ['Use exact division.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
++    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: `${divisor} ) ${formatNumber(dividend)}`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: quotient, misconception: 'remainder_interpretation', allowZeroRemainderText: true }, solutionLines: ['Use exact division.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
+   } }),
+   template({ id: 'long_multiplication', label: 'Long multiplication', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['long_multiplication'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const a = difficulty === 0 ? randInt(rng, 120, 999) : difficulty === 1 ? randInt(rng, 200, 4999) : randInt(rng, 3000, 9999); const b = difficulty === 0 ? randInt(rng, 12, 39) : difficulty === 1 ? randInt(rng, 24, 79) : randInt(rng, 35, 96); const answer = a * b;
+@@ -368,22 +431,22 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
+   } }),
+   template({ id: 'long_division', label: 'Long division', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['long_division'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const divisor = difficulty === 0 ? randInt(rng, 12, 24) : difficulty === 1 ? randInt(rng, 14, 36) : randInt(rng, 18, 49); const quotient = difficulty === 0 ? randInt(rng, 30, 99) : difficulty === 1 ? randInt(rng, 80, 299) : randInt(rng, 200, 999); const dividend = divisor * quotient;
+-    return makeQuestion(this, seed, difficulty, { marks: 2, stem: 'Work out:', visual: `${divisor} ) ${formatNumber(dividend)}`, inputSpec: { type: 'number', label: 'Final answer' }, expected: { kind: 'number', value: quotient, misconception: 'remainder_interpretation' }, manualMethodMark: true, solutionLines: ['Use formal long division and keep checking partial products.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
++    return makeQuestion(this, seed, difficulty, { marks: 2, stem: 'Work out:', visual: `${divisor} ) ${formatNumber(dividend)}`, inputSpec: { type: 'number', label: 'Final answer' }, expected: { kind: 'number', value: quotient, misconception: 'remainder_interpretation', allowZeroRemainderText: true }, manualMethodMark: true, solutionLines: ['Use formal long division and keep checking partial products.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
+   } }),
+   template({ id: 'decimal_add_sub', label: 'Decimal addition and subtraction', domain: 'Decimals', strand: 'decimals_fractions', skillIds: ['decimals_add_sub'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const op = pick(rng, ['+', '−']); const places = difficulty === 0 ? 1 : difficulty === 1 ? 2 : 3; let a = decimal(randInt(rng, 120, 9999) / (10 ** places), places); let b = decimal(randInt(rng, 10, 4999) / (10 ** places), places); if (op === '−' && b > a) [a, b] = [b, a]; const answer = decimal(op === '+' ? a + b : a - b, 6);
+     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(a)} ${op} ${formatNumber(b)} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'digit_alignment' }, solutionLines: ['Line up decimal points before calculating.', `${formatNumber(a)} ${op} ${formatNumber(b)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'decimal_times_integer', label: 'Decimal multiplication', domain: 'Decimals', strand: 'decimals_fractions', skillIds: ['decimals_multiply'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+-    const rng = seededRng(seed); const m = difficulty === 0 ? randInt(rng, 2, 9) : randInt(rng, 3, 12); const base = difficulty === 0 ? decimal(randInt(rng, 10, 99) / 10, 1) : decimal(randInt(rng, 100, 999) / 100, 2); const answer = decimal(base * m, 6);
+-    return makeQuestion(this, seed, difficulty, { stem: `${m} × ${formatNumber(base)} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'decimal_point_error', decimalShiftValues: [answer * 10, answer / 10] }, solutionLines: ['Use the whole-number fact and place the decimal point carefully.', `${m} × ${formatNumber(base)} = ${formatNumber(answer)}.`] });
++    const rng = seededRng(seed); const m = difficulty === 0 ? randInt(rng, 2, 9) : difficulty === 1 ? randInt(rng, 3, 12) : randInt(rng, 6, 24); const base = difficulty === 0 ? decimal(randInt(rng, 10, 99) / 10, 1) : difficulty === 1 ? decimal(randInt(rng, 100, 999) / 100, 2) : decimal(randInt(rng, 1000, 9999) / 1000, 3); const answer = decimal(base * m, 6);
++    return makeQuestion(this, seed, difficulty, { stem: `${m} × ${formatNumber(base)} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'decimal_point_error', decimalShiftValues: [tidyDecimal(answer * 10), tidyDecimal(answer / 10)] }, solutionLines: ['Use the whole-number fact and place the decimal point carefully.', `${m} × ${formatNumber(base)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'decimal_divide_integer', label: 'Decimal division by a whole number', domain: 'Decimals', strand: 'decimals_fractions', skillIds: ['decimals_divide'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+-    const rng = seededRng(seed); const divisor = pick(rng, difficulty === 0 ? [2, 4, 5, 10] : [2, 3, 4, 5, 6, 8]); const quotient = difficulty === 0 ? decimal(randInt(rng, 12, 95) / 10, 1) : decimal(randInt(rng, 120, 950) / 100, 2); const dividend = decimal(quotient * divisor, 3);
+-    return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(dividend)} ÷ ${divisor} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: quotient, misconception: 'decimal_point_error', decimalShiftValues: [quotient * 10, quotient / 10] }, solutionLines: ['Use inverse multiplication or short division with the decimal point lined up.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
++    const rng = seededRng(seed); const divisor = pick(rng, difficulty === 0 ? [2, 4, 5, 10] : difficulty === 1 ? [2, 3, 4, 5, 6, 8] : [3, 4, 5, 6, 8, 9, 12]); const quotient = difficulty === 0 ? decimal(randInt(rng, 12, 95) / 10, 1) : difficulty === 1 ? decimal(randInt(rng, 120, 950) / 100, 2) : decimal(randInt(rng, 1200, 9500) / 1000, 3); const dividend = decimal(quotient * divisor, 3);
++    return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(dividend)} ÷ ${divisor} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: quotient, misconception: 'decimal_point_error', decimalShiftValues: [tidyDecimal(quotient * 10), tidyDecimal(quotient / 10)] }, solutionLines: ['Use inverse multiplication or short division with the decimal point lined up.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
+   } }),
+   template({ id: 'fraction_of_amount', label: 'Fractions of amounts', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_of_amount'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
+-    const rng = seededRng(seed); const den = pick(rng, difficulty === 0 ? [2, 3, 4, 5] : [3, 4, 5, 8, 10, 12]); const num = randInt(rng, 1, den - 1); const onePart = difficulty === 0 ? randInt(rng, 4, 20) : randInt(rng, 8, 60); const total = den * onePart; const answer = num * onePart;
++    const rng = seededRng(seed); const den = pick(rng, difficulty === 0 ? [2, 3, 4, 5] : difficulty === 1 ? [3, 4, 5, 8, 10, 12] : [6, 8, 9, 10, 12, 15, 20]); const num = randInt(rng, 1, den - 1); const onePart = difficulty === 0 ? randInt(rng, 4, 20) : difficulty === 1 ? randInt(rng, 8, 60) : randInt(rng, 16, 150); const total = den * onePart; const answer = num * onePart;
+     return makeQuestion(this, seed, difficulty, { stem: `${fractionText(num, den)} of ${formatNumber(total)} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'fraction_method_error' }, solutionLines: [`Find one part: ${formatNumber(total)} ÷ ${den} = ${formatNumber(onePart)}.`, `Then ${num} part(s): ${formatNumber(onePart)} × ${num} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'fraction_add_sub', label: 'Fraction calculations', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_calc'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+@@ -436,8 +499,8 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
+     return makeQuestion(this, seed, difficulty, { stem: `${fractionText(a, b)} × ${fractionText(c, d)} =`, inputSpec: { type: 'text', label: 'Answer in simplest form' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: false }, solutionLines: ['Multiply the numerators and multiply the denominators.', `${a} × ${c} = ${a * c}; ${b} × ${d} = ${b * d}; simplify to ${fractionText(f.n, f.d)}.`] });
+   } }),
+   template({ id: 'percentage_of_amount', label: 'Percentages of amounts', domain: 'Percentages', strand: 'percentages_mixed', skillIds: ['percentages_of_amount'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
+-    const rng = seededRng(seed); const pct = pick(rng, difficulty === 0 ? [5, 10, 20, 25, 50] : difficulty === 1 ? [15, 30, 40, 75] : [19, 35, 65]); const baseUnit = difficulty === 0 ? randInt(rng, 4, 90) : randInt(rng, 10, 200); const amount = [19,35,65].includes(pct) ? baseUnit * 100 : baseUnit * (100 / gcd(100, pct)); const answer = amount * pct / 100;
+-    return makeQuestion(this, seed, difficulty, { stem: `${pct}% of ${formatNumber(amount)} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'percentage_method_error' }, solutionLines: ['Break the percentage into easy parts such as 10%, 5%, 1%, 50% or 25%.', `${pct}% of ${formatNumber(amount)} = ${formatNumber(answer)}.`] });
++    const rng = seededRng(seed); const pct = pick(rng, difficulty === 0 ? [5, 10, 20, 25, 50] : difficulty === 1 ? [12.5, 15, 30, 40, 75] : [6.25, 12.5, 17.5, 19, 35, 62.5, 65]); const factor = pctFraction(pct).d; const baseUnit = difficulty === 0 ? randInt(rng, 4, 90) : difficulty === 1 ? randInt(rng, 10, 200) : randInt(rng, 16, 260); const amount = baseUnit * factor; const answer = tidyDecimal(amount * pct / 100);
++    return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(pct)}% of ${formatNumber(amount)} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'percentage_method_error' }, solutionLines: ['Break the percentage into easy parts such as 10%, 5%, 1%, 50%, 25% or 12.5%.', `${formatNumber(pct)}% of ${formatNumber(amount)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'fdp_equivalent', label: 'Fraction, decimal and percentage links', domain: 'Fractions / decimals / percentages', strand: 'percentages_mixed', skillIds: ['fdp_links'], speedFriendly: true, testFriendly: false, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed);
+diff --git a/tests/worker-arithmetic-runtime.test.js b/tests/worker-arithmetic-runtime.test.js
+index 2da84465..19d96694 100644
+--- a/tests/worker-arithmetic-runtime.test.js
++++ b/tests/worker-arithmetic-runtime.test.js
+@@ -56,12 +56,23 @@ test('arithmetic marking rejects stray units except where the question asks for
+   assert.equal(evaluateArithmeticQuestion(numberBond, { answer: numberAnswer }).correct, true);
+   assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `${numberAnswer}%` }).correct, false, 'plain number answers must not accept percent units');
+   assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `£${numberAnswer}` }).correct, false, 'plain number answers must not accept currency units');
++  assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `${numberAnswer} r 0` }).correct, false, 'plain number answers must not accept remainder notation');
++  assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `${numberAnswer} rem 0` }).correct, false, 'plain number answers must not accept rem-zero text');
++  assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `${numberAnswer} remainder 0` }).correct, false, 'plain number answers must not accept remainder text');
+
+   const amountQuestion = generateArithmeticQuestion({ templateId: 'percentage_of_amount', difficulty: 1, seed: 3 });
+   const amountAnswer = String(amountQuestion.expected.value);
+   assert.equal(evaluateArithmeticQuestion(amountQuestion, { answer: amountAnswer }).correct, true);
+   assert.equal(evaluateArithmeticQuestion(amountQuestion, { answer: `${amountAnswer}%` }).correct, false, 'percentage-of-amount answers are amounts, not percentages');
+
++  for (const templateId of ['short_division', 'long_division']) {
++    const exactDivision = generateArithmeticQuestion({ templateId, difficulty: 1, seed: 42 });
++    const quotient = String(exactDivision.expected.value);
++    for (const suffix of ['r 0', 'rem 0', 'remainder 0']) {
++      assert.equal(evaluateArithmeticQuestion(exactDivision, { answer: `${quotient} ${suffix}` }).correct, true, `${templateId} accepts harmless ${suffix} notation`);
++    }
++  }
++
+   let percentageOutput = null;
+   for (let seed = 1; seed <= 100; seed += 1) {
+     const candidate = generateArithmeticQuestion({ templateId: 'fdp_equivalent', difficulty: 1, seed });
+@@ -90,6 +101,8 @@ test('arithmetic generators avoid malformed place-value items and repeating-deci
+   for (let seed = 1; seed <= 500; seed += 1) {
+     const order = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 2, seed });
+     assert.equal(Number.isInteger(order.expected.value), true, `seed ${seed} should produce a whole-number result`);
++    const power = generateArithmeticQuestion({ templateId: 'powers_of_ten_shift', difficulty: 1, seed });
++    assert.equal(String(power.expected.value).includes('000000000'), false, `seed ${seed} should not leak binary floating-point artefacts`);
+   }
+ });

@@ -56,11 +56,22 @@ test('arithmetic marking rejects stray units except where the question asks for 
   assert.equal(evaluateArithmeticQuestion(numberBond, { answer: numberAnswer }).correct, true);
   assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `${numberAnswer}%` }).correct, false, 'plain number answers must not accept percent units');
   assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `£${numberAnswer}` }).correct, false, 'plain number answers must not accept currency units');
+  assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `${numberAnswer} r 0` }).correct, false, 'plain number answers must not accept remainder notation');
+  assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `${numberAnswer} rem 0` }).correct, false, 'plain number answers must not accept rem-zero text');
+  assert.equal(evaluateArithmeticQuestion(numberBond, { answer: `${numberAnswer} remainder 0` }).correct, false, 'plain number answers must not accept remainder text');
 
   const amountQuestion = generateArithmeticQuestion({ templateId: 'percentage_of_amount', difficulty: 1, seed: 3 });
   const amountAnswer = String(amountQuestion.expected.value);
   assert.equal(evaluateArithmeticQuestion(amountQuestion, { answer: amountAnswer }).correct, true);
   assert.equal(evaluateArithmeticQuestion(amountQuestion, { answer: `${amountAnswer}%` }).correct, false, 'percentage-of-amount answers are amounts, not percentages');
+
+  for (const templateId of ['short_division', 'long_division']) {
+    const exactDivision = generateArithmeticQuestion({ templateId, difficulty: 1, seed: 42 });
+    const quotient = String(exactDivision.expected.value);
+    for (const suffix of ['r 0', 'rem 0', 'remainder 0']) {
+      assert.equal(evaluateArithmeticQuestion(exactDivision, { answer: `${quotient} ${suffix}` }).correct, true, `${templateId} accepts harmless ${suffix} notation`);
+    }
+  }
 
   let percentageOutput = null;
   for (let seed = 1; seed <= 100; seed += 1) {
@@ -90,6 +101,8 @@ test('arithmetic generators avoid malformed place-value items and repeating-deci
   for (let seed = 1; seed <= 500; seed += 1) {
     const order = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 2, seed });
     assert.equal(Number.isInteger(order.expected.value), true, `seed ${seed} should produce a whole-number result`);
+    const power = generateArithmeticQuestion({ templateId: 'powers_of_ten_shift', difficulty: 1, seed });
+    assert.equal(String(power.expected.value).includes('000000000'), false, `seed ${seed} should not leak binary floating-point artefacts`);
   }
 });
 

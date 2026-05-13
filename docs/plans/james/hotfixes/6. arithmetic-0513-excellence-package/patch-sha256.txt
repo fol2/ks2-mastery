@@ -1,0 +1,1 @@
+2a3b31a254b1314f80149683304445cc1493bc2eb5440331ddf73c6f03795ac4  patches/001-arithmetic-0513-excellence.patch

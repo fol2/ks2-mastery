@@ -1,0 +1,11 @@
+Command: npm test
+Exit code: 0
+Observed summary:
+tests 111492
+suites 819
+pass 111480
+fail 0
+cancelled 0
+skipped 12
+todo 0
+duration_ms 207676.5589
