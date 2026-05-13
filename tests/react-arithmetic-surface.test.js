@@ -456,7 +456,7 @@ test('ArithmeticPracticeSurface renders missing-number placeholders as full answ
   assert.equal(result.ariaHidden, 'true');
 });
 
-test('ArithmeticPracticeSurface renders short-division visuals as formal long division', async () => {
+test('ArithmeticPracticeSurface renders short-division visuals as readable division equations', async () => {
   const output = await runFixture(`
     const { JSDOM } = require('jsdom');
 
@@ -514,9 +514,9 @@ test('ArithmeticPracticeSurface renders short-division visuals as formal long di
       process.stdout.write(JSON.stringify({
         visualText: visual?.textContent.replace(/\\s+/g, ' ').trim() || '',
         tokenLabel: longDivision?.getAttribute('data-arithmetic-label') || '',
-        divisor: longDivision?.querySelector('.arithmetic-long-division-divisor')?.textContent.replace(/\\s+/g, '') || '',
         dividend: longDivision?.querySelector('.arithmetic-long-division-dividend')?.textContent.replace(/\\s+/g, '') || '',
-        hasBracket: Boolean(longDivision?.querySelector('.arithmetic-long-division-bracket')),
+        operator: longDivision?.querySelector('.arithmetic-long-division-operator')?.textContent.replace(/\\s+/g, '') || '',
+        divisor: longDivision?.querySelector('.arithmetic-long-division-divisor')?.textContent.replace(/\\s+/g, '') || '',
         ariaHidden: longDivision?.getAttribute('aria-hidden') || '',
       }));
 
@@ -535,11 +535,12 @@ test('ArithmeticPracticeSurface renders short-division visuals as formal long di
 
   const result = JSON.parse(output);
   assert.equal(result.tokenLabel, '354 divided by 6');
-  assert.equal(result.divisor, '6');
   assert.equal(result.dividend, '354');
-  assert.equal(result.hasBracket, true);
+  assert.equal(result.operator, '÷');
+  assert.equal(result.divisor, '6');
   assert.equal(result.ariaHidden, 'true');
   assert.equal(result.visualText.includes(')'), false, 'raw long-division text should not leave the close-bracket glyph visible');
+  assert.match(result.visualText, /354\s*÷\s*6/);
 });
 
 test('ArithmeticPracticeSurface renders arithmetic feedback, answers and review text through the math renderer', async () => {

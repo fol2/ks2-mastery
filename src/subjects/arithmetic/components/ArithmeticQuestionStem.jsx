@@ -84,13 +84,14 @@ function ArithmeticLongDivision({ token }) {
       data-arithmetic-label={longDivisionAriaLabel(token)}
       aria-hidden="true"
     >
+      <span className="arithmetic-long-division-dividend">
+        <ArithmeticTokenSequence tokens={token.dividendTokens} />
+      </span>
+      <span className="arithmetic-long-division-operator" data-arithmetic-token="operator" data-arithmetic-label="divided by">
+        ÷
+      </span>
       <span className="arithmetic-long-division-divisor">
         <ArithmeticTokenSequence tokens={token.divisorTokens} />
-      </span>
-      <span className="arithmetic-long-division-bracket">
-        <span className="arithmetic-long-division-dividend">
-          <ArithmeticTokenSequence tokens={token.dividendTokens} />
-        </span>
       </span>
     </span>
   );
