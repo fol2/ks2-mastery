@@ -1,0 +1,85 @@
+
+> ks2-mastery@0.1.0 deploy
+> node ./scripts/wrangler-oauth.mjs deploy && npm run audit:production -- --skip-local --retries 30 --retry-delay-ms 5000
+
+
+ ⛅️ wrangler 4.84.0 (update available 4.90.1)
+─────────────────────────────────────────────
+[custom build] Running: npm run build && npm run assert:build-public && npm run audit:client
+[custom build] 
+[custom build] > ks2-mastery@0.1.0 build
+[custom build] > node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs
+[custom build] 
+[custom build] 
+[custom build] Generated src\platform\game\monster-asset-manifest.js with 180 monster assets.
+[custom build] 
+[custom build] 
+[custom build]   src\bundles\app.bundle.js                 717.6kb
+[custom build]   src\bundles\chunk-F37LU2NR.js             289.4kb
+[custom build]   src\bundles\AdminHubSurface-GLR7HK5U.js   227.4kb
+[custom build]   src\bundles\ParentHubSurface-MRTSMHTL.js   22.9kb
+[custom build]   src\bundles\chunk-EE2UYWMZ.js              15.7kb
+[custom build]   ...and 3 more output files...
+[custom build] 
+[custom build] Done in 73ms
+[custom build] 
+[custom build] 
+[custom build] > ks2-mastery@0.1.0 assert:build-public
+[custom build] > node ./scripts/assert-build-public.mjs
+[custom build] 
+[custom build] 
+[custom build] 
+[custom build] > ks2-mastery@0.1.0 audit:client
+[custom build] > node ./scripts/audit-client-bundle.mjs
+[custom build] 
+[custom build] 
+[custom build] Allowlisted token present: /api/learners (platform learner-profile mutation route; not a subject engine/runtime route)
+[custom build] 
+[custom build] Allowlisted token present: /api/content/spelling (operator content import/export endpoint; content datasets are fetched only on explicit admin action)
+[custom build] Allowlisted token present: /api/admin/monster-visual-config (admin-only monster visual draft/publish endpoint; production renderers receive only the published bootstrap payload)
+[custom build] Allowlisted token present: /api/subjects/spelling/word-bank (authorised server read model endpoint for Word Bank rows and detail)
+[custom build] Allowlisted token present: /api/subjects/ (server-authoritative subject command boundary)
+[custom build] Client bundle audit passed (805 public files, 6 chunks scanned, main bundle 204818 / 232000 bytes gzip).
+[custom build] 
+🌀 Building list of assets...
+✨ Read 881 files from the assets directory D:\Coding\ks2-mastery\.worktrees\reasoning-world-class-variety-hardening\dist\public
+🌀 Starting asset upload...
+🌀 Found 2 new or modified static assets to upload. Proceeding with upload...
++ /index.html
++ /src/bundles/app.bundle.js
+Uploaded 1 of 2 assets
+Uploaded 2 of 2 assets
+✨ Success! Uploaded 2 files (802 already uploaded) (6.44 sec)
+
+Total Upload: 23177.90 KiB / gzip: 2201.25 KiB
+Worker Startup Time: 191 ms
+Your Worker has access to the following bindings:
+Binding                                                     Resource                  
+env.LEARNER_LOCK (LearnerLock)                              Durable Object            
+env.DB (ks2-mastery-db)                                     D1 Database               
+env.SPELLING_AUDIO_BUCKET (ks2-spelling-buffers)            R2 Bucket                 
+env.ASSETS                                                  Assets                    
+env.APP_NAME ("KS2 Mastery")                                Environment Variable      
+env.APP_HOSTNAME ("ks2.eugnel.uk")                          Environment Variable      
+env.AUTH_MODE ("production")                                Environment Variable      
+env.ENVIRONMENT ("production")                              Environment Variable      
+env.PUNCTUATION_SUBJECT_ENABLED ("true")                    Environment Variable      
+env.SOCIAL_LOGIN_WIRE_ENABLED ("true")                      Environment Variable      
+env.HERO_MODE_SHADOW_ENABLED ("false")                      Environment Variable      
+env.HERO_MODE_LAUNCH_ENABLED ("false")                      Environment Variable      
+env.HERO_MODE_CHILD_UI_ENABLED ("false")                    Environment Variable      
+env.HERO_MODE_PROGRESS_ENABLED ("false")                    Environment Variable      
+env.HERO_MODE_ECONOMY_ENABLED ("false")                     Environment Variable      
+env.HERO_MODE_CAMP_ENABLED ("false")                        Environment Variable      
+
+Uploaded ks2-mastery (44.78 sec)
+Deployed ks2-mastery triggers (7.62 sec)
+  https://ks2-mastery.fol2hk.workers.dev
+  schedule: 0 4 * * *
+  schedule: 0 5 * * *
+Current Version ID: 20f2baaf-d483-4889-86f5-fd8caf171aff
+
+> ks2-mastery@0.1.0 audit:production
+> node ./scripts/production-bundle-audit.mjs --skip-local --retries 30 --retry-delay-ms 5000
+
+Production bundle audit passed for https://ks2.eugnel.uk/ (1 HTML-referenced bundle(s), 6 chunk(s) scanned transitively, 19 direct paths, matrix demo check: ok, security-header checks: 5/5, cache-split checks: 15/15).

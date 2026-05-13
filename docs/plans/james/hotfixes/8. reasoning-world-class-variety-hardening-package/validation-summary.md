@@ -96,4 +96,8 @@ Follow-up fixes:
 
 ## Production certification status
 
-This summary records local and Cloudflare dry-run validation. Production certification still requires a deployed commit on `main` and a successful live Reasoning smoke against `https://ks2.eugnel.uk`; those artefacts are recorded separately in the completion report after deployment.
+Production certification is complete for runtime commit `686ff57fb3a39466c2d1a6753e83e2ffd11c661e`.
+
+- `npm run deploy`: passed through `scripts/wrangler-oauth.mjs`; Cloudflare version `20f2baaf-d483-4889-86f5-fd8caf171aff` was deployed and the production bundle audit passed. See `validation/production-npm-deploy-main-686ff57f.log`.
+- Live Reasoning command smoke against `https://ks2.eugnel.uk`: passed with content release `reasoning-variety-hardening-2026-05-13`, 124 templates, and no unexpected Hero read-model failure beyond the expected disabled-shadow `hero_shadow_disabled` result. See `validation/production-reasoning-smoke-main-686ff57f.json` and `validation/production-reasoning-smoke-main-686ff57f-direct.log`.
+- Live production browser UI smoke against `https://ks2.eugnel.uk/demo`: passed on desktop and mobile viewports with no page errors, console errors, request failures, or HTTP failures. Screenshots are stored under `validation/screenshots/production-reasoning-ui-main-686ff57f/`.
