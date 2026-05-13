@@ -95,9 +95,23 @@ const POSSESSORS = Object.freeze([
   ['girl', "girl's"], ['boy', "boy's"], ['teacher', "teacher's"], ['captain', "captain's"], ['artist', "artist's"], ['runner', "runner's"],
   ['children', "children's"], ['class', "class's"], ['team', "team's"], ['school', "school's"], ['friends', "friends'"], ['players', "players'"],
 ]);
-const CONTRACTIONS = Object.freeze([
-  ['didnt', "didn't"], ['couldnt', "couldn't"], ['wouldnt', "wouldn't"], ['shouldnt', "shouldn't"], ['havent', "haven't"], ['werent', "weren't"],
-  ['isnt', "isn't"], ['arent', "aren't"], ['youre', "you're"], ['theyre', "they're"], ['were', "we're"], ['Ill', "I'll"], ['youll', "you'll"], ['well', "we'll"], ['theyll', "they'll"], ['Ive', "I've"],
+const CONTRACTION_CASES = Object.freeze([
+  Object.freeze({ bad: 'didnt', good: "didn't", clause: (c) => `${c.actor} didn't move the ${c.object}` }),
+  Object.freeze({ bad: 'couldnt', good: "couldn't", clause: (c) => `${c.actor} couldn't open the ${c.object}` }),
+  Object.freeze({ bad: 'wouldnt', good: "wouldn't", clause: (c) => `${c.actor} wouldn't leave the ${c.object}` }),
+  Object.freeze({ bad: 'shouldnt', good: "shouldn't", clause: (c) => `${c.actor} shouldn't drop the ${c.object}` }),
+  Object.freeze({ bad: 'havent', good: "haven't", clause: (c) => `The pupils haven't checked the ${c.record}` }),
+  Object.freeze({ bad: 'werent', good: "weren't", clause: (c) => `The pupils weren't beside the ${c.record}` }),
+  Object.freeze({ bad: 'isnt', good: "isn't", clause: (c) => `${c.actor} isn't beside the ${c.record}` }),
+  Object.freeze({ bad: 'arent', good: "aren't", clause: (c) => `The maps aren't beside the ${c.record}` }),
+  Object.freeze({ bad: 'Youre', good: "You're", clause: (c) => `You're holding the ${c.object}` }),
+  Object.freeze({ bad: 'Theyre', good: "They're", clause: (c) => `They're checking the ${c.record}` }),
+  Object.freeze({ bad: 'Were', good: "We're", clause: (c) => `We're checking the ${c.record}` }),
+  Object.freeze({ bad: 'Ill', good: "I'll", clause: (c) => `I'll move the ${c.object}` }),
+  Object.freeze({ bad: 'Youll', good: "You'll", clause: (c) => `You'll find the ${c.object}` }),
+  Object.freeze({ bad: 'Well', good: "We'll", clause: (c) => `We'll update the ${c.record}` }),
+  Object.freeze({ bad: 'Theyll', good: "They'll", clause: (c) => `They'll move the ${c.object}` }),
+  Object.freeze({ bad: 'Ive', good: "I've", clause: (c) => `I've checked the ${c.object}` }),
 ]);
 const CONTEXT_COLOURS = Object.freeze(['amber', 'birch', 'cedar', 'dawn', 'elm', 'fern', 'gold', 'harbour', 'ivy', 'juniper', 'kestrel', 'lime']);
 const CONTEXT_MISSIONS = Object.freeze(['survey', 'trail', 'briefing', 'display', 'workshop', 'field note', 'rescue plan', 'garden task', 'museum card', 'team log']);
@@ -188,12 +202,11 @@ function baseContext(index, familyId) {
   const quote = pick(QUOTES, index, salt);
   const compound = pick(COMPOUNDS, index, salt);
   const [possessorBad, possessorGood] = pick(POSSESSORS, index, salt);
-  const [contractionBad, contractionGood] = pick(CONTRACTIONS, index, salt);
   const roleA = pick(ROLE_ROWS, index, salt);
   const roleB = pick(ROLE_ROWS, index + 3, salt);
   const roleC = pick(ROLE_ROWS, index + 6, salt);
   const context = contextLabel(index, familyId);
-  return { actor, secondActor, setting, object, record, adjective, list, fronted, quote, compound, possessorBad, possessorGood, contractionBad, contractionGood, roleA, roleB, roleC, context };
+  return { actor, secondActor, setting, object, record, adjective, list, fronted, quote, compound, possessorBad, possessorGood, roleA, roleB, roleC, context };
 }
 
 function coreForSkill(skillId, index, familyId) {
@@ -237,13 +250,22 @@ function coreForSkill(skillId, index, familyId) {
       };
     }
     case 'apostrophe_contractions': {
-      const model = `${c.actor} ${c.contractionGood} believe ${c.secondActor} ${pick(CONTRACTIONS, index + 7, hashString(familyId))[1]} moved the ${c.object}.`;
+      const contractionSalt = hashString(`${familyId}:contractions`);
+      const first = pick(CONTRACTION_CASES, index, contractionSalt);
+      const second = pick(CONTRACTION_CASES, index + 7, contractionSalt);
+      const secondContext = {
+        ...c,
+        actor: c.secondActor,
+        object: pick(OBJECTS, index + 9, hashString(`${familyId}:second-object`)),
+        record: pick(RECORDS, index + 11, hashString(`${familyId}:second-record`)),
+      };
+      const model = `${first.clause(c)}. ${second.clause(secondContext)}.`;
       const bad = model.replace(/'/g, '');
       return {
         model,
         bad,
-        wrongOne: model.replace(c.contractionGood, c.contractionBad),
-        wrongTwo: bad.replace(/\.$/, ''),
+        wrongOne: model.replace(first.good, first.bad),
+        wrongTwo: model.replace(second.good, second.bad),
         explanation: 'A contraction uses an apostrophe to show where letters have been left out.',
         explanationRuleId: 'apostrophe.contraction',
         misconceptionTags: ['apostrophe.contraction_missing'],

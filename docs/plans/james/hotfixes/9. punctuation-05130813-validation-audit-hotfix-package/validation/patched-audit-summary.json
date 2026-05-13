@@ -1,0 +1,18 @@
+{
+  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
+  "status": "PASS",
+  "counts": {
+    "runtimeItems": 15072,
+    "uniqueLearnerSurfaces": 15072,
+    "duplicateSurfaceGroups": 0,
+    "hyphenAdverbialLyHyphenFindings": 0,
+    "apostropheContractionGrammarFindings": 0,
+    "modelSelfMarkingFailures": 0
+  },
+  "apostropheGate": {
+    "ok": true,
+    "rule": "Apostrophe-contraction items must use contractions in grammatical KS2 sentences; generated clauses such as \"Maya you're believe\" or \"Noah weren't moved the\" are blocked.",
+    "findingCount": 0,
+    "findings": []
+  }
+}

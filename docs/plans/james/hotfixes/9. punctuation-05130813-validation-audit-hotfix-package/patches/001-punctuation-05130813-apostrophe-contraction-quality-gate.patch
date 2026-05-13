@@ -1,0 +1,262 @@
+diff --git a/package.json b/package.json
+index 902a4762..7bc506b0 100644
+--- a/package.json
++++ b/package.json
+@@ -121,9 +121,10 @@
+     "verify:punctuation-qg:p14-live": "node scripts/validate-punctuation-qg-p14-live-evidence.mjs reports/punctuation/punctuation-qg-p14-production-smoke.json",
+     "audit:punctuation-qg:p20-expansion": "node scripts/audit-punctuation-qg-p20-expansion.mjs --out reports/punctuation/punctuation-qg-p20-expansion-audit.json",
+     "build:punctuation-qg:p20-evidence": "node scripts/build-punctuation-qg-p20-evidence.mjs",
++    "punctuation:qg:p20:build-evidence": "npm run build:punctuation-qg:p20-evidence",
+     "simulate:punctuation-qg:p20-heavy-play": "node scripts/simulate-punctuation-qg-p20-heavy-play.mjs",
+     "validate:punctuation-qg:p20-expansion-report": "node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json",
+-    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-hyphen-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js",
++    "verify:punctuation-qg:p20-expansion": "node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-hyphen-quality.test.js tests/punctuation-apostrophe-contraction-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js",
+     "verify:punctuation-qg:p20-live": "node scripts/validate-punctuation-qg-p20-live-evidence.mjs reports/punctuation/punctuation-qg-p20-production-smoke.json && node --test tests/punctuation-qg-p20-production-evidence.test.js",
+     "verify:punctuation-qg:p20": "npm run verify:punctuation-qg:p20-expansion && npm run verify:punctuation-qg:p20-live",
+     "prepare": "simple-git-hooks"
+diff --git a/scripts/audit-punctuation-qg-p20-expansion.mjs b/scripts/audit-punctuation-qg-p20-expansion.mjs
+index 2a924e82..14adfc42 100644
+--- a/scripts/audit-punctuation-qg-p20-expansion.mjs
++++ b/scripts/audit-punctuation-qg-p20-expansion.mjs
+@@ -35,6 +35,8 @@ const OPEN_PRODUCTION_MODES = new Set(['combine', 'paragraph', 'transfer']);
+ const ADVERBIAL_LY_HYPHEN_PATTERN = /\b(?:newly|carefully|brightly|slowly|quickly|quietly|neatly|clearly|safely|happily|sadly|fully|partly|mostly|closely|easily|gently|roughly|smoothly|badly|fairly|highly|lightly|loudly|recently|warmly|widely)-[a-z]+\b/gi;
+ const MALFORMED_HYPHEN_DESIGN_PATTERN = /\b[a-z]+-[a-z]+design\b/gi;
+ const HYF_ARTICLE_PATTERN = /\ba (?:ice[- ]cold|open[- ]ended|up[- ]to[- ]date)\b/gi;
++const APOSTROPHE_CONTRACTION_BAD_BELIEVE_PATTERN = /\b[A-Z][a-z]+\s+(?:haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+believe\b/gi;
++const APOSTROPHE_CONTRACTION_BAD_MOVED_PATTERN = /\b[A-Z][a-z]+\s+(?:didn't|couldn't|wouldn't|shouldn't|haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+moved\s+the\b/gi;
+ const APPROVED_REVIEW_STATUSES = new Set([
+   'approved',
+   'approve',
+@@ -680,6 +682,46 @@ export function buildHyphenCompoundQualityEvidence(items) {
+   };
+ }
+ 
++function normaliseApostropheQualityText(value) {
++  return String(value ?? '').replace(/[‘’]/g, "'");
++}
++
++export function buildApostropheContractionGrammarEvidence(items) {
++  const patterns = [
++    APOSTROPHE_CONTRACTION_BAD_BELIEVE_PATTERN,
++    APOSTROPHE_CONTRACTION_BAD_MOVED_PATTERN,
++  ];
++  const findings = [];
++  const seen = new Set();
++  for (const item of items) {
++    if (!Array.isArray(item.skillIds) || !item.skillIds.includes('apostrophe_contractions')) continue;
++    const text = normaliseApostropheQualityText(auditedLearnerAndModelText(item));
++    for (const pattern of patterns) {
++      pattern.lastIndex = 0;
++      for (const match of text.matchAll(pattern)) {
++        const phrase = match[0].replace(/\s+/g, ' ').trim();
++        const key = `${item.id}:${phrase.toLowerCase()}`;
++        if (seen.has(key)) continue;
++        seen.add(key);
++        findings.push({
++          itemId: item.id,
++          familyId: item.generatorFamilyId || '',
++          mode: item.mode || '',
++          skillIds: item.skillIds || [],
++          phrase,
++          model: item.model || '',
++        });
++      }
++    }
++  }
++  return {
++    ok: findings.length === 0,
++    rule: "Apostrophe-contraction items must use contractions in grammatical KS2 sentences; generated clauses such as \"Maya you're believe\" or \"Noah weren't moved the\" are blocked.",
++    findingCount: findings.length,
++    findings: findings.slice(0, 25),
++  };
++}
++
+ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+   const runtime = createPunctuationRuntimeManifest({
+     manifest: PUNCTUATION_CONTENT_MANIFEST,
+@@ -704,6 +746,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+   const generatedDuplicateSurfaces = findSurfaceDuplicates(generatedItems);
+   const fixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
+   const hyphenCompoundQuality = buildHyphenCompoundQualityEvidence(items);
++  const apostropheContractionGrammarQuality = buildApostropheContractionGrammarEvidence(items);
+   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
+   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
+   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
+@@ -727,6 +770,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+     hyphenAdverbialLyHyphenFindings: hyphenCompoundQuality.adverbialLyFindingCount,
+     hyphenMalformedCompoundFindings: hyphenCompoundQuality.malformedCompoundFindingCount,
+     hyphenArticleAgreementFindings: hyphenCompoundQuality.articleAgreementFindingCount,
++    apostropheContractionGrammarFindings: apostropheContractionGrammarQuality.findingCount,
+     modelSelfMarkingFailures: modelFailures.length,
+     byMode: groupCounts(items, (item) => item.mode),
+     bySkill: groupCounts(items, (item) => item.skillIds || []),
+@@ -804,6 +848,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
+       failures: modelFailures.slice(0, 25),
+     },
+     hyphenCompoundQuality,
++    apostropheContractionGrammarQuality,
+     reviewGovernance: reviewCoverage,
+     negativeVectorCoverage: negativeVectors,
+     heavyPlayVariety: heavyPlay,
+diff --git a/scripts/validate-punctuation-qg-p20-expansion-report.mjs b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
+index d62cea01..9978cdbb 100644
+--- a/scripts/validate-punctuation-qg-p20-expansion-report.mjs
++++ b/scripts/validate-punctuation-qg-p20-expansion-report.mjs
+@@ -32,6 +32,7 @@ if (gates.generatedFamilyDepth?.ok !== true) fail('generated family depth gate f
+ if (gates.perSkillBalance?.ok !== true) fail('per-skill balance gate failed', gates.perSkillBalance?.failingSkills || gates.perSkillBalance);
+ if (gates.modelSelfMarking?.ok !== true) fail('model self-marking gate failed', gates.modelSelfMarking);
+ if (gates.hyphenCompoundQuality?.ok !== true) fail('hyphen compound quality gate failed', gates.hyphenCompoundQuality);
++if (gates.apostropheContractionGrammarQuality?.ok !== true) fail('apostrophe contraction grammar quality gate failed', gates.apostropheContractionGrammarQuality);
+ if (gates.reviewGovernance?.ok !== true) fail('review governance gate failed', gates.reviewGovernance);
+ if (gates.negativeVectorCoverage?.ok !== true) fail('negative-vector coverage gate failed', gates.negativeVectorCoverage);
+ if (gates.heavyPlayVariety?.ok !== true) fail('heavy-play variety gate failed', gates.heavyPlayVariety);
+@@ -48,6 +49,7 @@ if (counts.legacyFixedDuplicateSurfaceGroups !== undefined && counts.legacyFixed
+ if (counts.hyphenAdverbialLyHyphenFindings !== 0) fail('adverbial -ly hyphen findings must be zero', counts);
+ if (counts.hyphenMalformedCompoundFindings !== 0) fail('malformed hyphen compound findings must be zero', counts);
+ if (counts.hyphenArticleAgreementFindings !== 0) fail('hyphen article agreement findings must be zero', counts);
++if (counts.apostropheContractionGrammarFindings !== 0) fail('apostrophe contraction grammar findings must be zero', counts);
+ if (counts.modelSelfMarkingFailures !== 0) fail('model self-marking failures must be zero', counts);
+ 
+ const skillRows = Array.isArray(report.skillRows) ? report.skillRows : [];
+diff --git a/shared/punctuation/p20-systematic-expansion-bank.js b/shared/punctuation/p20-systematic-expansion-bank.js
+index 3e8c0b41..f317084f 100644
+--- a/shared/punctuation/p20-systematic-expansion-bank.js
++++ b/shared/punctuation/p20-systematic-expansion-bank.js
+@@ -95,9 +95,23 @@ const POSSESSORS = Object.freeze([
+   ['girl', "girl's"], ['boy', "boy's"], ['teacher', "teacher's"], ['captain', "captain's"], ['artist', "artist's"], ['runner', "runner's"],
+   ['children', "children's"], ['class', "class's"], ['team', "team's"], ['school', "school's"], ['friends', "friends'"], ['players', "players'"],
+ ]);
+-const CONTRACTIONS = Object.freeze([
+-  ['didnt', "didn't"], ['couldnt', "couldn't"], ['wouldnt', "wouldn't"], ['shouldnt', "shouldn't"], ['havent', "haven't"], ['werent', "weren't"],
+-  ['isnt', "isn't"], ['arent', "aren't"], ['youre', "you're"], ['theyre', "they're"], ['were', "we're"], ['Ill', "I'll"], ['youll', "you'll"], ['well', "we'll"], ['theyll', "they'll"], ['Ive', "I've"],
++const CONTRACTION_CASES = Object.freeze([
++  Object.freeze({ bad: 'didnt', good: "didn't", clause: (c) => `${c.actor} didn't move the ${c.object}` }),
++  Object.freeze({ bad: 'couldnt', good: "couldn't", clause: (c) => `${c.actor} couldn't open the ${c.object}` }),
++  Object.freeze({ bad: 'wouldnt', good: "wouldn't", clause: (c) => `${c.actor} wouldn't leave the ${c.object}` }),
++  Object.freeze({ bad: 'shouldnt', good: "shouldn't", clause: (c) => `${c.actor} shouldn't drop the ${c.object}` }),
++  Object.freeze({ bad: 'havent', good: "haven't", clause: (c) => `The pupils haven't checked the ${c.record}` }),
++  Object.freeze({ bad: 'werent', good: "weren't", clause: (c) => `The pupils weren't beside the ${c.record}` }),
++  Object.freeze({ bad: 'isnt', good: "isn't", clause: (c) => `${c.actor} isn't beside the ${c.record}` }),
++  Object.freeze({ bad: 'arent', good: "aren't", clause: (c) => `The maps aren't beside the ${c.record}` }),
++  Object.freeze({ bad: 'Youre', good: "You're", clause: (c) => `You're holding the ${c.object}` }),
++  Object.freeze({ bad: 'Theyre', good: "They're", clause: (c) => `They're checking the ${c.record}` }),
++  Object.freeze({ bad: 'Were', good: "We're", clause: (c) => `We're checking the ${c.record}` }),
++  Object.freeze({ bad: 'Ill', good: "I'll", clause: (c) => `I'll move the ${c.object}` }),
++  Object.freeze({ bad: 'Youll', good: "You'll", clause: (c) => `You'll find the ${c.object}` }),
++  Object.freeze({ bad: 'Well', good: "We'll", clause: (c) => `We'll update the ${c.record}` }),
++  Object.freeze({ bad: 'Theyll', good: "They'll", clause: (c) => `They'll move the ${c.object}` }),
++  Object.freeze({ bad: 'Ive', good: "I've", clause: (c) => `I've checked the ${c.object}` }),
+ ]);
+ const CONTEXT_COLOURS = Object.freeze(['amber', 'birch', 'cedar', 'dawn', 'elm', 'fern', 'gold', 'harbour', 'ivy', 'juniper', 'kestrel', 'lime']);
+ const CONTEXT_MISSIONS = Object.freeze(['survey', 'trail', 'briefing', 'display', 'workshop', 'field note', 'rescue plan', 'garden task', 'museum card', 'team log']);
+@@ -188,12 +202,11 @@ function baseContext(index, familyId) {
+   const quote = pick(QUOTES, index, salt);
+   const compound = pick(COMPOUNDS, index, salt);
+   const [possessorBad, possessorGood] = pick(POSSESSORS, index, salt);
+-  const [contractionBad, contractionGood] = pick(CONTRACTIONS, index, salt);
+   const roleA = pick(ROLE_ROWS, index, salt);
+   const roleB = pick(ROLE_ROWS, index + 3, salt);
+   const roleC = pick(ROLE_ROWS, index + 6, salt);
+   const context = contextLabel(index, familyId);
+-  return { actor, secondActor, setting, object, record, adjective, list, fronted, quote, compound, possessorBad, possessorGood, contractionBad, contractionGood, roleA, roleB, roleC, context };
++  return { actor, secondActor, setting, object, record, adjective, list, fronted, quote, compound, possessorBad, possessorGood, roleA, roleB, roleC, context };
+ }
+ 
+ function coreForSkill(skillId, index, familyId) {
+@@ -237,13 +250,22 @@ function coreForSkill(skillId, index, familyId) {
+       };
+     }
+     case 'apostrophe_contractions': {
+-      const model = `${c.actor} ${c.contractionGood} believe ${c.secondActor} ${pick(CONTRACTIONS, index + 7, hashString(familyId))[1]} moved the ${c.object}.`;
++      const contractionSalt = hashString(`${familyId}:contractions`);
++      const first = pick(CONTRACTION_CASES, index, contractionSalt);
++      const second = pick(CONTRACTION_CASES, index + 7, contractionSalt);
++      const secondContext = {
++        ...c,
++        actor: c.secondActor,
++        object: pick(OBJECTS, index + 9, hashString(`${familyId}:second-object`)),
++        record: pick(RECORDS, index + 11, hashString(`${familyId}:second-record`)),
++      };
++      const model = `${first.clause(c)}. ${second.clause(secondContext)}.`;
+       const bad = model.replace(/'/g, '');
+       return {
+         model,
+         bad,
+-        wrongOne: model.replace(c.contractionGood, c.contractionBad),
+-        wrongTwo: bad.replace(/\.$/, ''),
++        wrongOne: model.replace(first.good, first.bad),
++        wrongTwo: model.replace(second.good, second.bad),
+         explanation: 'A contraction uses an apostrophe to show where letters have been left out.',
+         explanationRuleId: 'apostrophe.contraction',
+         misconceptionTags: ['apostrophe.contraction_missing'],
+diff --git a/src/subjects/punctuation/service-contract.js b/src/subjects/punctuation/service-contract.js
+index 918b8cd5..984dfc3b 100644
+--- a/src/subjects/punctuation/service-contract.js
++++ b/src/subjects/punctuation/service-contract.js
+@@ -18,7 +18,7 @@ export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
+ // P20 Gate 1: release ID + count are coupled. Post-expansion runtime is
+ // 15,072 items (512 fixed + 28 baseline families × 100 templates + 14
+ // transfer families × 120 templates + 84 P20 families × 120 templates).
+-export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p21-15072-2026-05-12';
++export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p22-15072-2026-05-13';
+ export const PUNCTUATION_GENERATED_ITEM_SEED = 'punctuation-p20-systematic-depth120-15072';
+ 
+ export const PUNCTUATION_PHASES = Object.freeze([
+diff --git a/tests/punctuation-qg-p20-expansion-report-validator.test.js b/tests/punctuation-qg-p20-expansion-report-validator.test.js
+index efc5888c..ef3275a7 100644
+--- a/tests/punctuation-qg-p20-expansion-report-validator.test.js
++++ b/tests/punctuation-qg-p20-expansion-report-validator.test.js
+@@ -106,3 +106,32 @@ test('P20 expansion report validator rejects hyphen quality gate failures and co
+   assert.match(result.stderr, /"malformedCompoundFindingCount": 1/);
+   assert.match(result.stderr, /"articleAgreementFindingCount": 1/);
+ });
++
++test('P20 expansion report validator rejects apostrophe-contraction grammar gate failures and counters', () => {
++  ensureCurrentP20Report();
++  const report = readJsonReport(CURRENT_REPORT);
++  assert.ok(report, 'current P20 report must exist before synthesising apostrophe-contraction grammar fixture');
++  const contractionFailureReport = {
++    ...report,
++    gates: {
++      ...report.gates,
++      apostropheContractionGrammarQuality: {
++        ...report.gates.apostropheContractionGrammarQuality,
++        ok: false,
++        findingCount: 1,
++        findings: [{ itemId: 'fixture', phrase: "Maya you're believe" }],
++      },
++    },
++    counts: {
++      ...report.counts,
++      apostropheContractionGrammarFindings: 1,
++    },
++  };
++  const contractionFailurePath = writeTempReport('punctuation-p20-apostrophe-contraction-report-', contractionFailureReport);
++
++  const result = runValidator(contractionFailurePath);
++
++  assert.notEqual(result.status, 0, 'apostrophe-contraction grammar failure report unexpectedly passed validation');
++  assert.match(result.stderr, /apostrophe contraction grammar quality gate failed/);
++  assert.match(result.stderr, /"findingCount": 1/);
++});
+diff --git a/tests/punctuation-qg-p20-production-evidence.test.js b/tests/punctuation-qg-p20-production-evidence.test.js
+index 925a234b..10cd1690 100644
+--- a/tests/punctuation-qg-p20-production-evidence.test.js
++++ b/tests/punctuation-qg-p20-production-evidence.test.js
+@@ -73,14 +73,14 @@ test('P20 live evidence validator CLI keeps flag values out of the smoke path',
+   assert.equal(parsed.expectedReleaseId, impossibleReleaseId);
+ });
+ 
+-test('P20 live evidence validator rejects stale P20 smoke for the current P21 release', () => {
++test('P20 live evidence validator rejects stale P20 smoke for the current release', () => {
+   const { smokePath, auditPath } = writeEvidenceFixture({
+     releaseId: 'punctuation-qg-p20-15072-2026-05-04',
+   });
+ 
+   const result = validatePunctuationQGP20LiveEvidence({ smokePath, auditPath });
+   assert.equal(result.ok, false);
+-  assert.match(result.failures.join('\n'), /production smoke releaseId=punctuation-qg-p20-15072-2026-05-04, expected punctuation-qg-p21-15072-2026-05-12/);
++  assert.match(result.failures.join('\n'), new RegExp(`production smoke releaseId=punctuation-qg-p20-15072-2026-05-04, expected ${PUNCTUATION_CURRENT_RELEASE_ID}`));
+ });
+ 
+ test('P20 live evidence validator requires persisted dash acceptance outcomes', () => {

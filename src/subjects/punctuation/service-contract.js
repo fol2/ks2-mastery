@@ -18,7 +18,7 @@ export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
 // P20 Gate 1: release ID + count are coupled. Post-expansion runtime is
 // 15,072 items (512 fixed + 28 baseline families × 100 templates + 14
 // transfer families × 120 templates + 84 P20 families × 120 templates).
-export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p21-15072-2026-05-12';
+export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-qg-p22-15072-2026-05-13';
 export const PUNCTUATION_GENERATED_ITEM_SEED = 'punctuation-p20-systematic-depth120-15072';
 
 export const PUNCTUATION_PHASES = Object.freeze([

@@ -1,0 +1,427 @@
+TAP version 13
+# Subtest: P20 Smart real-service scheduler surfaces the expanded pool over heavy play
+ok 1 - P20 Smart real-service scheduler surfaces the expanded pool over heavy play
+  ---
+  duration_ms: 1755.8706
+  type: 'test'
+  ...
+# Subtest: P20 real scheduler inspects a 128-item production choose candidate window by default
+ok 2 - P20 real scheduler inspects a 128-item production choose candidate window by default
+  ---
+  duration_ms: 0.4091
+  type: 'test'
+  ...
+# Subtest: P20 real scheduler avoids recent items and signatures across a 100-attempt window
+ok 3 - P20 real scheduler avoids recent items and signatures across a 100-attempt window
+  ---
+  duration_ms: 0.3291
+  type: 'test'
+  ...
+# Subtest: P20 real scheduler blocks a same-item repeat after one exposure in the last 100 attempts
+ok 4 - P20 real scheduler blocks a same-item repeat after one exposure in the last 100 attempts
+  ---
+  duration_ms: 0.1659
+  type: 'test'
+  ...
+# Subtest: P20 misconception retry can bypass the per-session signature block
+ok 5 - P20 misconception retry can bypass the per-session signature block
+  ---
+  duration_ms: 0.4003
+  type: 'test'
+  ...
+# Subtest: P20 mixed-review reason can be derived from progress history at the start of a new session
+ok 6 - P20 mixed-review reason can be derived from progress history at the start of a new session
+  ---
+  duration_ms: 0.1541
+  type: 'test'
+  ...
+# Subtest: P20 real scheduler still honours an explicit small candidate window for deterministic probes
+ok 7 - P20 real scheduler still honours an explicit small candidate window for deterministic probes
+  ---
+  duration_ms: 0.2301
+  type: 'test'
+  ...
+# Subtest: P20 runtime generated items keep each primary skill in the correct cluster
+ok 8 - P20 runtime generated items keep each primary skill in the correct cluster
+  ---
+  duration_ms: 2.0383
+  type: 'test'
+  ...
+# Subtest: P20 real scheduler keeps focus-cluster starts inside the requested primary skill cluster
+ok 9 - P20 real scheduler keeps focus-cluster starts inside the requested primary skill cluster
+  ---
+  duration_ms: 24.985
+  type: 'test'
+  ...
+# Subtest: secure status requires repeated clean spaced evidence
+ok 10 - secure status requires repeated clean spaced evidence
+  ---
+  duration_ms: 1.0271
+  type: 'test'
+  ...
+# Subtest: secure status ignores epoch-zero firstCorrectAt sentinels
+ok 11 - secure status ignores epoch-zero firstCorrectAt sentinels
+  ---
+  duration_ms: 0.1079
+  type: 'test'
+  ...
+# Subtest: scheduler is deterministic under fixed state and random input
+ok 12 - scheduler is deterministic under fixed state and random input
+  ---
+  duration_ms: 1.8532
+  type: 'test'
+  ...
+# Subtest: weak mode prioritises weak skill-by-mode facets
+ok 13 - weak mode prioritises weak skill-by-mode facets
+  ---
+  duration_ms: 7.664
+  type: 'test'
+  ...
+# Subtest: weak mode avoids repeating a recent item when another weak alternative exists
+ok 14 - weak mode avoids repeating a recent item when another weak alternative exists
+  ---
+  duration_ms: 0.7879
+  type: 'test'
+  ...
+# Subtest: weak mode avoids the last attempted item when a new session starts
+ok 15 - weak mode avoids the last attempted item when a new session starts
+  ---
+  duration_ms: 0.2681
+  type: 'test'
+  ...
+# Subtest: misconception retry avoids repeating the last fixed sibling across weak sessions
+ok 16 - misconception retry avoids repeating the last fixed sibling across weak sessions
+  ---
+  duration_ms: 0.3313
+  type: 'test'
+  ...
+# Subtest: scheduler avoids recently seen generated variant signatures when alternatives exist
+ok 17 - scheduler avoids recently seen generated variant signatures when alternatives exist
+  ---
+  duration_ms: 0.3116
+  type: 'test'
+  ...
+# Subtest: weak mode falls back to mixed review when no weak evidence exists
+ok 18 - weak mode falls back to mixed review when no weak evidence exists
+  ---
+  duration_ms: 0.6516
+  type: 'test'
+  ...
+# Subtest: weak mode selects due skill-by-mode facets before fallback review
+ok 19 - weak mode selects due skill-by-mode facets before fallback review
+  ---
+  duration_ms: 0.6653
+  type: 'test'
+  ...
+# Subtest: weak mode keeps expanded-manifest candidate scoring bounded
+ok 20 - weak mode keeps expanded-manifest candidate scoring bounded
+  ---
+  duration_ms: 1.0809
+  type: 'test'
+  ...
+# Subtest: comma flow focus mode selects published comma cluster items only
+ok 21 - comma flow focus mode selects published comma cluster items only
+  ---
+  duration_ms: 0.2763
+  type: 'test'
+  ...
+# Subtest: boundary focus mode selects published boundary cluster items only
+ok 22 - boundary focus mode selects published boundary cluster items only
+  ---
+  duration_ms: 0.2663
+  type: 'test'
+  ...
+# Subtest: structure focus mode selects published structure cluster items only
+ok 23 - structure focus mode selects published structure cluster items only
+  ---
+  duration_ms: 0.3201
+  type: 'test'
+  ...
+# Subtest: scheduler keeps candidate windows bounded for expanded manifests
+ok 24 - scheduler keeps candidate windows bounded for expanded manifests
+  ---
+  duration_ms: 0.7565
+  type: 'test'
+  ...
+# Subtest: misconception retry
+    # Subtest: wrong answer with known misconception schedules sibling with different signature
+    ok 1 - wrong answer with known misconception schedules sibling with different signature
+      ---
+      duration_ms: 0.2773
+      type: 'test'
+      ...
+    # Subtest: retry does not reuse same variant signature if alternatives exist
+    ok 2 - retry does not reuse same variant signature if alternatives exist
+      ---
+      duration_ms: 0.3179
+      type: 'test'
+      ...
+    # Subtest: retry prefers different templateId over same templateId
+    ok 3 - retry prefers different templateId over same templateId
+      ---
+      duration_ms: 0.1043
+      type: 'test'
+      ...
+    # Subtest: retry falls back gracefully when family has only 1 template
+    ok 4 - retry falls back gracefully when family has only 1 template
+      ---
+      duration_ms: 0.1241
+      type: 'test'
+      ...
+    # Subtest: misconception tag not in any candidate falls back to standard selection
+    ok 5 - misconception tag not in any candidate falls back to standard selection
+      ---
+      duration_ms: 0.1409
+      type: 'test'
+      ...
+    # Subtest: misconception retry respects session anti-repeat (does not retry same misconception twice)
+    ok 6 - misconception retry respects session anti-repeat (does not retry same misconception twice)
+      ---
+      duration_ms: 0.1119
+      type: 'test'
+      ...
+    # Subtest: wrong fixed-item answer schedules generated sibling where appropriate
+    ok 7 - wrong fixed-item answer schedules generated sibling where appropriate
+      ---
+      duration_ms: 0.1293
+      type: 'test'
+      ...
+    1..7
+ok 25 - misconception retry
+  ---
+  duration_ms: 1.4027
+  type: 'suite'
+  ...
+# Subtest: per-signature exposure limits
+    # Subtest: same signature not selected twice in same session when alternatives exist
+    ok 1 - same signature not selected twice in same session when alternatives exist
+      ---
+      duration_ms: 0.2796
+      type: 'test'
+      ...
+    # Subtest: signature seen in last 3 attempts gets penalised weight (selects alternative)
+    ok 2 - signature seen in last 3 attempts gets penalised weight (selects alternative)
+      ---
+      duration_ms: 0.2592
+      type: 'test'
+      ...
+    # Subtest: signature seen within 7 days gets avoided when alternatives exist
+    ok 3 - signature seen within 7 days gets avoided when alternatives exist
+      ---
+      duration_ms: 0.2963
+      type: 'test'
+      ...
+    # Subtest: when ALL candidates seen within 7 days, least-recently-seen preferred (no deadlock)
+    ok 4 - when ALL candidates seen within 7 days, least-recently-seen preferred (no deadlock)
+      ---
+      duration_ms: 0.1176
+      type: 'test'
+      ...
+    # Subtest: misconception-retry overrides per-session block
+    ok 5 - misconception-retry overrides per-session block
+      ---
+      duration_ms: 0.1092
+      type: 'test'
+      ...
+    # Subtest: fixed items (no variantSignature) are never penalised by exposure limits
+    ok 6 - fixed items (no variantSignature) are never penalised by exposure limits
+      ---
+      duration_ms: 0.1058
+      type: 'test'
+      ...
+    # Subtest: exposure limits interact correctly with existing weak-mode priority weighting
+    ok 7 - exposure limits interact correctly with existing weak-mode priority weighting
+      ---
+      duration_ms: 0.1193
+      type: 'test'
+      ...
+    1..7
+ok 26 - per-signature exposure limits
+  ---
+  duration_ms: 1.3986
+  type: 'suite'
+  ...
+# Subtest: reason tags
+    # Subtest: due item returns reason: due-review
+    ok 1 - due item returns reason: due-review
+      ---
+      duration_ms: 0.3753
+      type: 'test'
+      ...
+    # Subtest: weak facet returns reason: weak-skill-repair
+    ok 2 - weak facet returns reason: weak-skill-repair
+      ---
+      duration_ms: 0.6981
+      type: 'test'
+      ...
+    # Subtest: item with different mode from last 3 returns reason: mixed-review
+    ok 3 - item with different mode from last 3 returns reason: mixed-review
+      ---
+      duration_ms: 0.2599
+      type: 'test'
+      ...
+    # Subtest: spaced-return classified when lastCorrectAt exceeds threshold
+    ok 4 - spaced-return classified when lastCorrectAt exceeds threshold
+      ---
+      duration_ms: 0.2519
+      type: 'test'
+      ...
+    # Subtest: retention-after-secure classified for secure items past threshold
+    ok 5 - retention-after-secure classified for secure items past threshold
+      ---
+      duration_ms: 0.2022
+      type: 'test'
+      ...
+    # Subtest: fallback reason when no specific policy matches
+    ok 6 - fallback reason when no specific policy matches
+      ---
+      duration_ms: 0.1667
+      type: 'test'
+      ...
+    # Subtest: weak mode due_facet source classified as due-review when within spaced threshold
+    ok 7 - weak mode due_facet source classified as due-review when within spaced threshold
+      ---
+      duration_ms: 1.0549
+      type: 'test'
+      ...
+    # Subtest: smart mode weak bucket item returns weak-skill-repair
+    ok 8 - smart mode weak bucket item returns weak-skill-repair
+      ---
+      duration_ms: 0.2392
+      type: 'test'
+      ...
+    1..8
+ok 27 - reason tags
+  ---
+  duration_ms: 3.4701
+  type: 'suite'
+  ...
+# Subtest: Punctuation text session disables submit for blank or whitespace-only answers
+ok 28 - Punctuation text session disables submit for blank or whitespace-only answers
+  ---
+  duration_ms: 0.7819
+  type: 'test'
+  ...
+# Subtest: Punctuation text session guards the submit handler against forged blank submits
+ok 29 - Punctuation text session guards the submit handler against forged blank submits
+  ---
+  duration_ms: 0.8285
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionSubmitLabel returns Save answer in GPS mode
+ok 30 - U1 session-ui: punctuationSessionSubmitLabel returns Save answer in GPS mode
+  ---
+  duration_ms: 0.5885
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionSubmitLabel returns Check in every other mode
+ok 31 - U1 session-ui: punctuationSessionSubmitLabel returns Check in every other mode
+  ---
+  duration_ms: 0.0748
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionSubmitLabel defaults to Check on null/invalid session
+ok 32 - U1 session-ui: punctuationSessionSubmitLabel defaults to Check on null/invalid session
+  ---
+  duration_ms: 0.0777
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns stem-prefill for insert/fix/paragraph
+ok 33 - U1 session-ui: punctuationSessionInputShape returns stem-prefill for insert/fix/paragraph
+  ---
+  duration_ms: 0.5085
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns blank+source for combine/transfer
+ok 34 - U1 session-ui: punctuationSessionInputShape returns blank+source for combine/transfer
+  ---
+  duration_ms: 0.0835
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns none for choose (radio) mode
+ok 35 - U1 session-ui: punctuationSessionInputShape returns none for choose (radio) mode
+  ---
+  duration_ms: 0.0525
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputShape returns none on empty/unknown mode (safe default)
+ok 36 - U1 session-ui: punctuationSessionInputShape returns none on empty/unknown mode (safe default)
+  ---
+  duration_ms: 0.113
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel renders Question X of N on a standard round
+ok 37 - U1 session-ui: punctuationSessionProgressLabel renders Question X of N on a standard round
+  ---
+  duration_ms: 0.0925
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel clamps answered past length to total
+ok 38 - U1 session-ui: punctuationSessionProgressLabel clamps answered past length to total
+  ---
+  duration_ms: 0.1705
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel handles length=0 fallback
+ok 39 - U1 session-ui: punctuationSessionProgressLabel handles length=0 fallback
+  ---
+  duration_ms: 0.2493
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionProgressLabel null/invalid returns Question 1
+ok 40 - U1 session-ui: punctuationSessionProgressLabel null/invalid returns Question 1
+  ---
+  duration_ms: 0.0923
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility GPS hides feedback until summary
+ok 41 - U1 session-ui: punctuationSessionHelpVisibility GPS hides feedback until summary
+  ---
+  duration_ms: 0.139
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility guided shows teach box during active-item
+ok 42 - U1 session-ui: punctuationSessionHelpVisibility guided shows teach box during active-item
+  ---
+  duration_ms: 0.0507
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility smart/weak hide teach box, feedback follows phase
+ok 43 - U1 session-ui: punctuationSessionHelpVisibility smart/weak hide teach box, feedback follows phase
+  ---
+  duration_ms: 0.042
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionHelpVisibility null session is fully off
+ok 44 - U1 session-ui: punctuationSessionHelpVisibility null session is fully off
+  ---
+  duration_ms: 0.0359
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputPlaceholder maps every known mode to a child string
+ok 45 - U1 session-ui: punctuationSessionInputPlaceholder maps every known mode to a child string
+  ---
+  duration_ms: 0.0478
+  type: 'test'
+  ...
+# Subtest: U1 session-ui: punctuationSessionInputPlaceholder falls back to generic prompt on unknown mode
+ok 46 - U1 session-ui: punctuationSessionInputPlaceholder falls back to generic prompt on unknown mode
+  ---
+  duration_ms: 0.0294
+  type: 'test'
+  ...
+# Subtest: U1 safety: session-ui.js does not import react
+ok 47 - U1 safety: session-ui.js does not import react
+  ---
+  duration_ms: 1.1965
+  type: 'test'
+  ...
+1..47
+# tests 66
+# suites 3
+# pass 66
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2049.9978

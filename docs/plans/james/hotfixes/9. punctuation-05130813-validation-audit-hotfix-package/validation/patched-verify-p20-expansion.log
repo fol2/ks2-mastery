@@ -1,0 +1,136 @@
+
+> ks2-mastery@0.1.0 verify:punctuation-qg:p20-expansion
+> node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-hyphen-quality.test.js tests/punctuation-apostrophe-contraction-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js
+
+P20 review register written: reports/punctuation/punctuation-qg-p20-review-register.json
+P20 negative-vector register written: reports/punctuation/punctuation-qg-p20-negative-vector-register.json
+P20 heavy-play simulation written: reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
+  one learner unique: 300
+  multi learner unique: 2525
+  open production ratio: 0.333
+
+> ks2-mastery@0.1.0 audit:punctuation-qg:p20-expansion
+> node scripts/audit-punctuation-qg-p20-expansion.mjs --out reports/punctuation/punctuation-qg-p20-expansion-audit.json
+
+Punctuation QG P20 expansion audit: PASS
+  release: punctuation-qg-p22-15072-2026-05-13
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15072/15072
+  generated families: 126
+  failing gates: none
+P20 expansion report validation: PASS
+  release: punctuation-qg-p22-15072-2026-05-13
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15072/15072
+TAP version 13
+# Subtest: Punctuation apostrophe-contraction runtime avoids ungrammatical generated clauses
+ok 1 - Punctuation apostrophe-contraction runtime avoids ungrammatical generated clauses
+  ---
+  duration_ms: 248.3664
+  type: 'test'
+  ...
+# Subtest: P20 apostrophe-contraction audit rejects old believe/moved grammar regressions
+ok 2 - P20 apostrophe-contraction audit rejects old believe/moved grammar regressions
+  ---
+  duration_ms: 0.7088
+  type: 'test'
+  ...
+# Subtest: P20 apostrophe-contraction audit rejects documented negative-auxiliary believe regressions
+ok 3 - P20 apostrophe-contraction audit rejects documented negative-auxiliary believe regressions
+  ---
+  duration_ms: 0.143
+  type: 'test'
+  ...
+# Subtest: Punctuation hyphen runtime avoids -ly compounds, no-space distractors, and article errors
+ok 4 - Punctuation hyphen runtime avoids -ly compounds, no-space distractors, and article errors
+  ---
+  duration_ms: 258.8598
+  type: 'test'
+  ...
+# Subtest: Punctuation manual and systematic hyphen banks stay free of -ly adverb hyphen examples
+ok 5 - Punctuation manual and systematic hyphen banks stay free of -ly adverb hyphen examples
+  ---
+  duration_ms: 17.4625
+  type: 'test'
+  ...
+# Subtest: P20 hyphen audit rejects explanation-only -ly compound examples
+ok 6 - P20 hyphen audit rejects explanation-only -ly compound examples
+  ---
+  duration_ms: 0.5042
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator accepts the current duplicate-free and hyphen-clean report
+ok 7 - P20 expansion report validator accepts the current duplicate-free and hyphen-clean report
+  ---
+  duration_ms: 48.4154
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects stale fixed-bank duplicate reports
+ok 8 - P20 expansion report validator rejects stale fixed-bank duplicate reports
+  ---
+  duration_ms: 49.3932
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects hyphen quality gate failures and counters
+ok 9 - P20 expansion report validator rejects hyphen quality gate failures and counters
+  ---
+  duration_ms: 98.1755
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects apostrophe-contraction grammar gate failures and counters
+ok 10 - P20 expansion report validator rejects apostrophe-contraction grammar gate failures and counters
+  ---
+  duration_ms: 50.2408
+  type: 'test'
+  ...
+# Subtest: P20 release identity and runtime pool scale are certified
+ok 11 - P20 release identity and runtime pool scale are certified
+  ---
+  duration_ms: 0.4995
+  type: 'test'
+  ...
+# Subtest: P20 learner-facing surfaces and generated family depth are heavy-play ready
+ok 12 - P20 learner-facing surfaces and generated family depth are heavy-play ready
+  ---
+  duration_ms: 0.6217
+  type: 'test'
+  ...
+# Subtest: P20 per-skill balance gives every published punctuation skill enough depth
+ok 13 - P20 per-skill balance gives every published punctuation skill enough depth
+  ---
+  duration_ms: 0.2989
+  type: 'test'
+  ...
+# Subtest: P20 marking, hyphen quality, review governance, and negative vectors are production-clean
+ok 14 - P20 marking, hyphen quality, review governance, and negative vectors are production-clean
+  ---
+  duration_ms: 0.1913
+  type: 'test'
+  ...
+# Subtest: P20 heavy-play scheduler simulation does not make repetition noticeable
+ok 15 - P20 heavy-play scheduler simulation does not make repetition noticeable
+  ---
+  duration_ms: 0.1777
+  type: 'test'
+  ...
+# Subtest: P20 expansion audit is globally PASS
+ok 16 - P20 expansion audit is globally PASS
+  ---
+  duration_ms: 0.1437
+  type: 'test'
+  ...
+# Subtest: P20 runtime pool has no duplicate learner-facing surfaces in fixed or generated items
+ok 17 - P20 runtime pool has no duplicate learner-facing surfaces in fixed or generated items
+  ---
+  duration_ms: 10.1399
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 595.8853

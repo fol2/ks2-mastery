@@ -106,3 +106,32 @@ test('P20 expansion report validator rejects hyphen quality gate failures and co
   assert.match(result.stderr, /"malformedCompoundFindingCount": 1/);
   assert.match(result.stderr, /"articleAgreementFindingCount": 1/);
 });
+
+test('P20 expansion report validator rejects apostrophe-contraction grammar gate failures and counters', () => {
+  ensureCurrentP20Report();
+  const report = readJsonReport(CURRENT_REPORT);
+  assert.ok(report, 'current P20 report must exist before synthesising apostrophe-contraction grammar fixture');
+  const contractionFailureReport = {
+    ...report,
+    gates: {
+      ...report.gates,
+      apostropheContractionGrammarQuality: {
+        ...report.gates.apostropheContractionGrammarQuality,
+        ok: false,
+        findingCount: 1,
+        findings: [{ itemId: 'fixture', phrase: "Maya you're believe" }],
+      },
+    },
+    counts: {
+      ...report.counts,
+      apostropheContractionGrammarFindings: 1,
+    },
+  };
+  const contractionFailurePath = writeTempReport('punctuation-p20-apostrophe-contraction-report-', contractionFailureReport);
+
+  const result = runValidator(contractionFailurePath);
+
+  assert.notEqual(result.status, 0, 'apostrophe-contraction grammar failure report unexpectedly passed validation');
+  assert.match(result.stderr, /apostrophe contraction grammar quality gate failed/);
+  assert.match(result.stderr, /"findingCount": 1/);
+});

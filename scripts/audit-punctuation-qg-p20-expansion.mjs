@@ -35,6 +35,8 @@ const OPEN_PRODUCTION_MODES = new Set(['combine', 'paragraph', 'transfer']);
 const ADVERBIAL_LY_HYPHEN_PATTERN = /\b(?:newly|carefully|brightly|slowly|quickly|quietly|neatly|clearly|safely|happily|sadly|fully|partly|mostly|closely|easily|gently|roughly|smoothly|badly|fairly|highly|lightly|loudly|recently|warmly|widely)-[a-z]+\b/gi;
 const MALFORMED_HYPHEN_DESIGN_PATTERN = /\b[a-z]+-[a-z]+design\b/gi;
 const HYF_ARTICLE_PATTERN = /\ba (?:ice[- ]cold|open[- ]ended|up[- ]to[- ]date)\b/gi;
+const APOSTROPHE_CONTRACTION_BAD_BELIEVE_PATTERN = /\b[A-Z][a-z]+\s+(?:haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+believe\b/gi;
+const APOSTROPHE_CONTRACTION_BAD_MOVED_PATTERN = /\b[A-Z][a-z]+\s+(?:didn't|couldn't|wouldn't|shouldn't|haven't|weren't|isn't|aren't|you're|they're|we're|I'll|you'll|we'll|they'll|I've)\s+moved\s+the\b/gi;
 const APPROVED_REVIEW_STATUSES = new Set([
   'approved',
   'approve',
@@ -680,6 +682,46 @@ export function buildHyphenCompoundQualityEvidence(items) {
   };
 }
 
+function normaliseApostropheQualityText(value) {
+  return String(value ?? '').replace(/[‘’]/g, "'");
+}
+
+export function buildApostropheContractionGrammarEvidence(items) {
+  const patterns = [
+    APOSTROPHE_CONTRACTION_BAD_BELIEVE_PATTERN,
+    APOSTROPHE_CONTRACTION_BAD_MOVED_PATTERN,
+  ];
+  const findings = [];
+  const seen = new Set();
+  for (const item of items) {
+    if (!Array.isArray(item.skillIds) || !item.skillIds.includes('apostrophe_contractions')) continue;
+    const text = normaliseApostropheQualityText(auditedLearnerAndModelText(item));
+    for (const pattern of patterns) {
+      pattern.lastIndex = 0;
+      for (const match of text.matchAll(pattern)) {
+        const phrase = match[0].replace(/\s+/g, ' ').trim();
+        const key = `${item.id}:${phrase.toLowerCase()}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        findings.push({
+          itemId: item.id,
+          familyId: item.generatorFamilyId || '',
+          mode: item.mode || '',
+          skillIds: item.skillIds || [],
+          phrase,
+          model: item.model || '',
+        });
+      }
+    }
+  }
+  return {
+    ok: findings.length === 0,
+    rule: "Apostrophe-contraction items must use contractions in grammatical KS2 sentences; generated clauses such as \"Maya you're believe\" or \"Noah weren't moved the\" are blocked.",
+    findingCount: findings.length,
+    findings: findings.slice(0, 25),
+  };
+}
+
 export function buildPunctuationQGP20ExpansionReport(options = {}) {
   const runtime = createPunctuationRuntimeManifest({
     manifest: PUNCTUATION_CONTENT_MANIFEST,
@@ -704,6 +746,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
   const generatedDuplicateSurfaces = findSurfaceDuplicates(generatedItems);
   const fixedDuplicateSurfaces = findSurfaceDuplicates(fixedItems);
   const hyphenCompoundQuality = buildHyphenCompoundQualityEvidence(items);
+  const apostropheContractionGrammarQuality = buildApostropheContractionGrammarEvidence(items);
   const reviewRegister = readJsonIfExists(options.reviewRegister || 'reports/punctuation/punctuation-qg-p20-review-register.json');
   const negativeVectorRegister = readJsonIfExists(options.negativeVectorRegister || 'reports/punctuation/punctuation-qg-p20-negative-vector-register.json');
   const heavyPlayReport = readJsonIfExists(options.heavyPlayReport || 'reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json');
@@ -727,6 +770,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
     hyphenAdverbialLyHyphenFindings: hyphenCompoundQuality.adverbialLyFindingCount,
     hyphenMalformedCompoundFindings: hyphenCompoundQuality.malformedCompoundFindingCount,
     hyphenArticleAgreementFindings: hyphenCompoundQuality.articleAgreementFindingCount,
+    apostropheContractionGrammarFindings: apostropheContractionGrammarQuality.findingCount,
     modelSelfMarkingFailures: modelFailures.length,
     byMode: groupCounts(items, (item) => item.mode),
     bySkill: groupCounts(items, (item) => item.skillIds || []),
@@ -804,6 +848,7 @@ export function buildPunctuationQGP20ExpansionReport(options = {}) {
       failures: modelFailures.slice(0, 25),
     },
     hyphenCompoundQuality,
+    apostropheContractionGrammarQuality,
     reviewGovernance: reviewCoverage,
     negativeVectorCoverage: negativeVectors,
     heavyPlayVariety: heavyPlay,

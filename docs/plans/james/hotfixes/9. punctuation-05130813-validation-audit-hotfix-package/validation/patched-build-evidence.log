@@ -1,0 +1,10 @@
+
+> ks2-mastery@0.1.0 punctuation:qg:p20:build-evidence
+> npm run build:punctuation-qg:p20-evidence
+
+
+> ks2-mastery@0.1.0 build:punctuation-qg:p20-evidence
+> node scripts/build-punctuation-qg-p20-evidence.mjs
+
+P20 review register written: reports/punctuation/punctuation-qg-p20-review-register.json
+P20 negative-vector register written: reports/punctuation/punctuation-qg-p20-negative-vector-register.json

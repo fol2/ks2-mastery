@@ -1,0 +1,168 @@
+This command did not complete inside the local execution window; do not treat it as a pass.
+The full partial log was excluded from the package to keep the package lightweight.
+
+--- BEGIN FIRST 80 LINES ---
+TAP version 13
+#   ALTERNATIVES: 13274 accepted alternatives verified
+#   NEGATIVES: 52140 negative examples verified
+#   CHOICES: 2420 choice items verified (exactly-one-correct)
+#   ┌──────────────────────────────────────────────────────────────┐
+#   │ PUNCTUATION ALTERNATIVE MARKING PROOF — PRODUCTION SUMMARY   │
+#   ├──────────────────────────────────────────────────────────────┤
+#   │ Total pool items:          15072                          │
+#   │   Fixed items:              512                          │
+#   │   Generated items:         14560                          │
+#   │ Choice items verified:     2420                          │
+#   │ Items with accepted array: 12652                          │
+#   │ Items with DSL tests:      14560                          │
+#   └──────────────────────────────────────────────────────────────┘
+# Subtest: accepted alternatives mark correct
+    # Subtest: se_insert_question — accepted "Why was the hall still locked?" marks correct
+    ok 1 - se_insert_question — accepted "Why was the hall still locked?" marks correct
+      ---
+      duration_ms: 145.13575
+      type: 'test'
+      ...
+    # Subtest: se_fix_statement — accepted "Do not forget your reading journal." marks correct
+    ok 2 - se_fix_statement — accepted "Do not forget your reading journal." marks correct
+      ---
+      duration_ms: 0.375051
+      type: 'test'
+      ...
+    # Subtest: se_transfer_why — accepted "Why was the gate still open?" marks correct
+    ok 3 - se_transfer_why — accepted "Why was the gate still open?" marks correct
+      ---
+      duration_ms: 1.982592
+      type: 'test'
+      ...
+    # Subtest: se_insert_quiet_command — accepted "Please close the classroom door." marks correct
+    ok 4 - se_insert_quiet_command — accepted "Please close the classroom door." marks correct
+      ---
+      duration_ms: 0.30744
+      type: 'test'
+      ...
+    # Subtest: se_fix_excited_statement — accepted "What a clever idea!" marks correct
+    ok 5 - se_fix_excited_statement — accepted "What a clever idea!" marks correct
+      ---
+      duration_ms: 0.246836
+      type: 'test'
+      ...
+    # Subtest: se_transfer_where — accepted "Where did the trail begin?" marks correct
+    ok 6 - se_transfer_where — accepted "Where did the trail begin?" marks correct
+      ---
+      duration_ms: 0.261618
+      type: 'test'
+      ...
+    # Subtest: lc_insert_supplies — accepted "We needed pencils, rulers and glue." marks correct
+    ok 7 - lc_insert_supplies — accepted "We needed pencils, rulers and glue." marks correct
+      ---
+      duration_ms: 2.119616
+      type: 'test'
+      ...
+    # Subtest: lc_fix_display — accepted "The display showed shells, pebbles and f..." marks correct
+    ok 8 - lc_fix_display — accepted "The display showed shells, pebbles and f..." marks correct
+      ---
+      duration_ms: 1.349023
+      type: 'test'
+      ...
+    # Subtest: lc_transfer_trip — accepted "For the trip, we packed torches, maps an..." marks correct
+    ok 9 - lc_transfer_trip — accepted "For the trip, we packed torches, maps an..." marks correct
+      ---
+      duration_ms: 0.764572
+      type: 'test'
+      ...
+    # Subtest: lc_transfer_bake_sale — accepted "For the bake sale we needed eggs, flour,..." marks correct
+    ok 10 - lc_transfer_bake_sale — accepted "For the bake sale we needed eggs, flour,..." marks correct
+      ---
+      duration_ms: 1.409271
+      type: 'test'
+      ...
+    # Subtest: lc_combine_trip_list — accepted "We packed torches, maps and water." marks correct
+    ok 11 - lc_combine_trip_list — accepted "We packed torches, maps and water." marks correct
+      ---
+      duration_ms: 0.983058
+      type: 'test'
+--- END FIRST 80 LINES ---
+
+--- BEGIN LAST 80 LINES BEFORE TIMEOUT ---
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1ivhbm6_37 — reject "For the kestrel rescue plan transfer ban..." marks incorrect
+    ok 11485 - gen_hyphen_transfer_1ivhbm6_37 — reject "For the kestrel rescue plan transfer ban..." marks incorrect
+      ---
+      duration_ms: 0.04173
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1ivhbm6_37 — reject "Hana chose an up to date design for the ..." marks incorrect
+    ok 11486 - gen_hyphen_transfer_1ivhbm6_37 — reject "Hana chose an up to date design for the ..." marks incorrect
+      ---
+      duration_ms: 0.050595
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1ivhbm6_37 — reject "Hana chose an up to date-design for the ..." marks incorrect
+    ok 11487 - gen_hyphen_transfer_1ivhbm6_37 — reject "Hana chose an up to date-design for the ..." marks incorrect
+      ---
+      duration_ms: 0.055486
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1ivhbm6_37 — reject "Hana chose an up-to-date-design for the ..." marks incorrect
+    ok 11488 - gen_hyphen_transfer_1ivhbm6_37 — reject "Hana chose an up-to-date-design for the ..." marks incorrect
+      ---
+      duration_ms: 0.077493
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1j5gxb5_38 — reject "For the lime garden task transfer bank, ..." marks incorrect
+    ok 11489 - gen_hyphen_transfer_1j5gxb5_38 — reject "For the lime garden task transfer bank, ..." marks incorrect
+      ---
+      duration_ms: 0.045849
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1j5gxb5_38 — reject "Ben chose a full size design for the fie..." marks incorrect
+    ok 11490 - gen_hyphen_transfer_1j5gxb5_38 — reject "Ben chose a full size design for the fie..." marks incorrect
+      ---
+      duration_ms: 0.038728
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1j5gxb5_38 — reject "Ben chose a full size-design for the fie..." marks incorrect
+    ok 11491 - gen_hyphen_transfer_1j5gxb5_38 — reject "Ben chose a full size-design for the fie..." marks incorrect
+      ---
+      duration_ms: 0.046706
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1j5gxb5_38 — reject "Ben chose a full-size-design for the fie..." marks incorrect
+    ok 11492 - gen_hyphen_transfer_1j5gxb5_38 — reject "Ben chose a full-size-design for the fie..." marks incorrect
+      ---
+      duration_ms: 0.04884
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1h7jpgc_39 — reject "For the amber garden task transfer bank,..." marks incorrect
+    ok 11493 - gen_hyphen_transfer_1h7jpgc_39 — reject "For the amber garden task transfer bank,..." marks incorrect
+      ---
+      duration_ms: 0.060861
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1h7jpgc_39 — reject "Maya chose a well known design for the s..." marks incorrect
+    ok 11494 - gen_hyphen_transfer_1h7jpgc_39 — reject "Maya chose a well known design for the s..." marks incorrect
+      ---
+      duration_ms: 0.04827
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1h7jpgc_39 — reject "Maya chose a well known-design for the s..." marks incorrect
+    ok 11495 - gen_hyphen_transfer_1h7jpgc_39 — reject "Maya chose a well known-design for the s..." marks incorrect
+      ---
+      duration_ms: 0.0595
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1h7jpgc_39 — reject "Maya chose a well-known-design for the s..." marks incorrect
+    ok 11496 - gen_hyphen_transfer_1h7jpgc_39 — reject "Maya chose a well-known-design for the s..." marks incorrect
+      ---
+      duration_ms: 0.045518
+      type: 'test'
+      ...
+    # Subtest: gen_hyphen_transfer_1hhjb5b_40 — reject "For the birch garden task transfer bank,..." marks incorrect
+    ok 11497 - gen_hyphen_transfer_1hhjb5b_40 — reject "For the birch garden task transfer bank,..." marks incorrect
+      ---
+      duration_ms: 0.056961
+      type: 'test'
+      ...
+--- END LAST 80 LINES BEFORE TIMEOUT ---

@@ -1,0 +1,108 @@
+{
+  "runtimeItems": 15072,
+  "apostropheContractionItems": 1078,
+  "affectedItems": 840,
+  "findings": 1443,
+  "byKind": {
+    "bad-moved": 960,
+    "bad-believe": 483
+  },
+  "samples": [
+    {
+      "kind": "bad-moved",
+      "itemId": "gen_apostrophe_contractions_transfer_zgt0fe_1",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Ivy haven't moved the",
+      "model": "Theo aren't believe Ivy haven't moved the tablet."
+    },
+    {
+      "kind": "bad-believe",
+      "itemId": "gen_apostrophe_contractions_transfer_zqsm4d_2",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Zara you're believe",
+      "model": "Zara you're believe Ethan weren't moved the torch."
+    },
+    {
+      "kind": "bad-moved",
+      "itemId": "gen_apostrophe_contractions_transfer_zqsm4d_2",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Ethan weren't moved the",
+      "model": "Zara you're believe Ethan weren't moved the torch."
+    },
+    {
+      "kind": "bad-believe",
+      "itemId": "gen_apostrophe_contractions_transfer_ywtt1g_3",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Noah they're believe",
+      "model": "Noah they're believe Sofia isn't moved the notebook."
+    },
+    {
+      "kind": "bad-moved",
+      "itemId": "gen_apostrophe_contractions_transfer_ywtt1g_3",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Sofia isn't moved the",
+      "model": "Noah they're believe Sofia isn't moved the notebook."
+    },
+    {
+      "kind": "bad-believe",
+      "itemId": "gen_apostrophe_contractions_transfer_z6teqf_4",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Amira we're believe",
+      "model": "Amira we're believe Leo aren't moved the model."
+    },
+    {
+      "kind": "bad-moved",
+      "itemId": "gen_apostrophe_contractions_transfer_z6teqf_4",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Leo aren't moved the",
+      "model": "Amira we're believe Leo aren't moved the model."
+    },
+    {
+      "kind": "bad-believe",
+      "itemId": "gen_apostrophe_contractions_transfer_yculni_5",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Felix I've believe",
+      "model": "Felix I've believe Nia you'll moved the poster."
+    },
+    {
+      "kind": "bad-moved",
+      "itemId": "gen_apostrophe_contractions_transfer_yculni_5",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Nia you'll moved the",
+      "model": "Felix I've believe Nia you'll moved the poster."
+    },
+    {
+      "kind": "bad-moved",
+      "itemId": "gen_apostrophe_contractions_transfer_ymu7ch_6",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Jude we'll moved the",
+      "model": "Ivy didn't believe Jude we'll moved the ticket."
+    },
+    {
+      "kind": "bad-moved",
+      "itemId": "gen_apostrophe_contractions_transfer_xsve9k_7",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Asha they'll moved the",
+      "model": "Ethan couldn't believe Asha they'll moved the badge."
+    },
+    {
+      "kind": "bad-moved",
+      "itemId": "gen_apostrophe_contractions_transfer_y2uzyj_8",
+      "familyId": "gen_apostrophe_contractions_transfer",
+      "mode": "transfer",
+      "phrase": "Kai I've moved the",
+      "model": "Sofia wouldn't believe Kai I've moved the camera."
+    }
+  ]
+}

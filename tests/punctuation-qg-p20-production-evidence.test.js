@@ -73,14 +73,14 @@ test('P20 live evidence validator CLI keeps flag values out of the smoke path', 
   assert.equal(parsed.expectedReleaseId, impossibleReleaseId);
 });
 
-test('P20 live evidence validator rejects stale P20 smoke for the current P21 release', () => {
+test('P20 live evidence validator rejects stale P20 smoke for the current release', () => {
   const { smokePath, auditPath } = writeEvidenceFixture({
     releaseId: 'punctuation-qg-p20-15072-2026-05-04',
   });
 
   const result = validatePunctuationQGP20LiveEvidence({ smokePath, auditPath });
   assert.equal(result.ok, false);
-  assert.match(result.failures.join('\n'), /production smoke releaseId=punctuation-qg-p20-15072-2026-05-04, expected punctuation-qg-p21-15072-2026-05-12/);
+  assert.match(result.failures.join('\n'), new RegExp(`production smoke releaseId=punctuation-qg-p20-15072-2026-05-04, expected ${PUNCTUATION_CURRENT_RELEASE_ID}`));
 });
 
 test('P20 live evidence validator requires persisted dash acceptance outcomes', () => {

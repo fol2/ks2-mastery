@@ -1,0 +1,35 @@
+Punctuation 05130813 validation audit + hotfix package
+
+created_utc=2026-05-13T07:39:17.733033+00:00
+source_zip=ks2-mastery-lean-05130813.zip
+source_zip_sha256=1c57a140600b2bb36e954c5814d626fac2ef451cf9d8ca733a87fc54b4e46c75
+patch_sha256=4c74d98b2d4c1fde428a5a4066edaab84ef8417e820c4ebd1b327392fe2b9471
+
+contents:
+- MANIFEST.txt (1970 bytes)
+- README.md (791 bytes)
+- contract/punctuation-05130813-apostrophe-contraction-quality-gate-contract.md (4417 bytes)
+- github-supplement/recent-punctuation-commits.md (1079 bytes)
+- patches/001-punctuation-05130813-apostrophe-contraction-quality-gate.patch (18425 bytes)
+- recommendations/punctuation-next-subject-quality-contract.md (1841 bytes)
+- validation/baseline-apostrophe-contraction-grammar-probe.json (3755 bytes)
+- validation/baseline-verify-p20-expansion.log (4504 bytes)
+- validation/baseline-verify-p20-full.log (5736 bytes)
+- validation/fresh-apply-v2-apostrophe-probe.json (173 bytes)
+- validation/fresh-apply-v2-verify-p20-expansion.log (5288 bytes)
+- validation/fresh-git-apply-check-v2.log (0 bytes)
+- validation/fresh-git-apply-v2.log (0 bytes)
+- validation/marking-oracle-timeout-note.md (632 bytes)
+- validation/patched-apostrophe-contraction-grammar-probe.json (118 bytes)
+- validation/patched-apostrophe-quality-and-validator-tests.log (1779 bytes)
+- validation/patched-audit-p20-expansion.log (398 bytes)
+- validation/patched-audit-summary.json (589 bytes)
+- validation/patched-build-evidence.log (405 bytes)
+- validation/patched-heavy-play.log (187 bytes)
+- validation/patched-marking-oracle-tests.partial-head-tail.log (8454 bytes)
+- validation/patched-production-evidence-shape-tests.log (982 bytes)
+- validation/patched-runtime-scheduler-session-ui-tests.log (15151 bytes)
+- validation/patched-validate-p20-expansion-report.log (170 bytes)
+- validation/patched-verify-p20-expansion.log (5502 bytes)
+- validation/patched-verify-p20-full-boundary.log (6042 bytes)
+- validation-summary.md (3455 bytes)

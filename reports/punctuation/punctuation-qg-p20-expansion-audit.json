@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "phase": "punctuation-qg-p20-expansion-audit",
   "status": "PASS",
-  "releaseId": "punctuation-qg-p21-15072-2026-05-12",
-  "generatedAt": "2026-05-12T15:23:12.048Z",
+  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
+  "generatedAt": "2026-05-13T08:50:10.999Z",
   "thresholds": {
     "phase": 20,
     "minRuntimeItems": 15000,
@@ -45,6 +45,7 @@
     "hyphenAdverbialLyHyphenFindings": 0,
     "hyphenMalformedCompoundFindings": 0,
     "hyphenArticleAgreementFindings": 0,
+    "apostropheContractionGrammarFindings": 0,
     "modelSelfMarkingFailures": 0,
     "byMode": {
       "choose": 2420,
@@ -75,11 +76,11 @@
     "releaseIdentity": {
       "ok": true,
       "release": {
-        "releaseId": "punctuation-qg-p21-15072-2026-05-12",
+        "releaseId": "punctuation-qg-p22-15072-2026-05-13",
         "matchesPattern": true,
-        "phase": 21,
+        "phase": 22,
         "embeddedRuntimeCount": 15072,
-        "releaseDate": "2026-05-12",
+        "releaseDate": "2026-05-13",
         "runtimeCountMatches": true,
         "isP20OrLater": true
       }
@@ -393,6 +394,12 @@
       "adverbialLyFindings": [],
       "malformedCompoundFindings": [],
       "articleAgreementFindings": []
+    },
+    "apostropheContractionGrammarQuality": {
+      "ok": true,
+      "rule": "Apostrophe-contraction items must use contractions in grammatical KS2 sentences; generated clauses such as \"Maya you're believe\" or \"Noah weren't moved the\" are blocked.",
+      "findingCount": 0,
+      "findings": []
     },
     "reviewGovernance": {
       "registerPath": "reports/punctuation/punctuation-qg-p20-review-register.json",

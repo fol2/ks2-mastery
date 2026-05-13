@@ -1,0 +1,137 @@
+
+> ks2-mastery@0.1.0 verify:punctuation-qg:p20
+> npm run verify:punctuation-qg:p20-expansion && npm run verify:punctuation-qg:p20-live
+
+
+> ks2-mastery@0.1.0 verify:punctuation-qg:p20-expansion
+> node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-hyphen-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js
+
+P20 review register written: reports/punctuation/punctuation-qg-p20-review-register.json
+P20 negative-vector register written: reports/punctuation/punctuation-qg-p20-negative-vector-register.json
+P20 heavy-play simulation written: reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
+  one learner unique: 300
+  multi learner unique: 2525
+  open production ratio: 0.333
+
+> ks2-mastery@0.1.0 audit:punctuation-qg:p20-expansion
+> node scripts/audit-punctuation-qg-p20-expansion.mjs --out reports/punctuation/punctuation-qg-p20-expansion-audit.json
+
+Punctuation QG P20 expansion audit: PASS
+  release: punctuation-qg-p21-15072-2026-05-12
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15072/15072
+  generated families: 126
+  failing gates: none
+P20 expansion report validation: PASS
+  release: punctuation-qg-p21-15072-2026-05-12
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15072/15072
+TAP version 13
+# Subtest: Punctuation hyphen runtime avoids -ly compounds, no-space distractors, and article errors
+ok 1 - Punctuation hyphen runtime avoids -ly compounds, no-space distractors, and article errors
+  ---
+  duration_ms: 638.894582
+  type: 'test'
+  ...
+# Subtest: Punctuation manual and systematic hyphen banks stay free of -ly adverb hyphen examples
+ok 2 - Punctuation manual and systematic hyphen banks stay free of -ly adverb hyphen examples
+  ---
+  duration_ms: 60.993851
+  type: 'test'
+  ...
+# Subtest: P20 hyphen audit rejects explanation-only -ly compound examples
+ok 3 - P20 hyphen audit rejects explanation-only -ly compound examples
+  ---
+  duration_ms: 0.905863
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator accepts the current duplicate-free and hyphen-clean report
+ok 4 - P20 expansion report validator accepts the current duplicate-free and hyphen-clean report
+  ---
+  duration_ms: 209.505648
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects stale fixed-bank duplicate reports
+ok 5 - P20 expansion report validator rejects stale fixed-bank duplicate reports
+  ---
+  duration_ms: 115.341371
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects hyphen quality gate failures and counters
+ok 6 - P20 expansion report validator rejects hyphen quality gate failures and counters
+  ---
+  duration_ms: 179.446372
+  type: 'test'
+  ...
+# Subtest: P20 release identity and runtime pool scale are certified
+ok 7 - P20 release identity and runtime pool scale are certified
+  ---
+  duration_ms: 1.901477
+  type: 'test'
+  ...
+# Subtest: P20 learner-facing surfaces and generated family depth are heavy-play ready
+ok 8 - P20 learner-facing surfaces and generated family depth are heavy-play ready
+  ---
+  duration_ms: 0.395251
+  type: 'test'
+  ...
+# Subtest: P20 per-skill balance gives every published punctuation skill enough depth
+ok 9 - P20 per-skill balance gives every published punctuation skill enough depth
+  ---
+  duration_ms: 0.311128
+  type: 'test'
+  ...
+# Subtest: P20 marking, hyphen quality, review governance, and negative vectors are production-clean
+ok 10 - P20 marking, hyphen quality, review governance, and negative vectors are production-clean
+  ---
+  duration_ms: 0.257431
+  type: 'test'
+  ...
+# Subtest: P20 heavy-play scheduler simulation does not make repetition noticeable
+ok 11 - P20 heavy-play scheduler simulation does not make repetition noticeable
+  ---
+  duration_ms: 0.208499
+  type: 'test'
+  ...
+# Subtest: P20 expansion audit is globally PASS
+ok 12 - P20 expansion audit is globally PASS
+  ---
+  duration_ms: 0.171821
+  type: 'test'
+  ...
+# Subtest: P20 runtime pool has no duplicate learner-facing surfaces in fixed or generated items
+ok 13 - P20 runtime pool has no duplicate learner-facing surfaces in fixed or generated items
+  ---
+  duration_ms: 30.663188
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1836.975465
+
+> ks2-mastery@0.1.0 verify:punctuation-qg:p20-live
+> node scripts/validate-punctuation-qg-p20-live-evidence.mjs reports/punctuation/punctuation-qg-p20-production-smoke.json && node --test tests/punctuation-qg-p20-production-evidence.test.js
+
+Punctuation QG P20 live evidence validation: FAIL
+  - production smoke is not valid JSON: Unexpected end of JSON input
+  - production smoke ok must be true
+  - origin=missing, expected https://ks2.eugnel.uk
+  - environment=missing, expected production
+  - releaseId=missing does not match punctuation-qg-p{phase}-{count}-{yyyy-mm-dd}
+  - production smoke releaseId=missing, expected punctuation-qg-p21-15072-2026-05-12
+  - runtime item count missing
+  - worker commit/version/deployment evidence missing
+  - authenticatedCoverage must be true
+  - adminHubCoverage/adminHubEvidence must be true
+  - smartSix.summaryTotal=undefined, expected 6
+  - smartSix.uniqueItems=undefined, expected 6
+  - smartSix.immediateRepeats=undefined, expected 0
+  - dashAcceptance missing spaced-hyphen
+  - dashAcceptance missing en-dash
+  - dashAcceptance missing em-dash

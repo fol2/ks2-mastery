@@ -1,0 +1,10 @@
+
+> ks2-mastery@0.1.0 audit:punctuation-qg:p20-expansion
+> node scripts/audit-punctuation-qg-p20-expansion.mjs --out reports/punctuation/punctuation-qg-p20-expansion-audit.json
+
+Punctuation QG P20 expansion audit: PASS
+  release: punctuation-qg-p22-15072-2026-05-13
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15072/15072
+  generated families: 126
+  failing gates: none
