@@ -104,8 +104,9 @@ Final post-live Code Reviewer:
 
 ## Sync Status
 
-The application commit was pushed to GitHub `main`:
+GitHub `main` includes both the deployed application/runtime change and the production evidence publication:
 
-- `origin/main`: `7c5f11e6c8433de7dbb9baf3104c67a383417013`
+- Deployed application/runtime commit: `7c5f11e6c8433de7dbb9baf3104c67a383417013`
+- Published production-evidence commit: `7e702a3cf5927ea87b9ab3b0ae64d384c0c6a2eb`
 
-This report and the package-local production smoke copy are recorded by the follow-up evidence commit.
+This report revision records the final sync wording after the Code Reviewer publication re-check. The authoritative final hand-off should confirm the latest `HEAD == origin/main` SHA after this report correction is pushed.
