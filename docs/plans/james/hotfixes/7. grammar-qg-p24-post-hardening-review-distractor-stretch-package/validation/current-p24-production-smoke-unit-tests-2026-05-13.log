@@ -1,0 +1,136 @@
+TAP version 13
+# Subtest: Grammar production smoke answers from the production-visible option set
+ok 1 - Grammar production smoke answers from the production-visible option set
+  ---
+  duration_ms: 2.3419
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke can select an incorrect visible option for repair coverage
+ok 2 - Grammar production smoke can select an incorrect visible option for repair coverage
+  ---
+  duration_ms: 0.4166
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke rejects option sets that do not match the regenerated item
+ok 3 - Grammar production smoke rejects option sets that do not match the regenerated item
+  ---
+  duration_ms: 1.5495
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke rejects extra production option fields
+ok 4 - Grammar production smoke rejects extra production option fields
+  ---
+  duration_ms: 0.3272
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke scans feedback and summary models for forbidden keys
+ok 5 - Grammar production smoke scans feedback and summary models for forbidden keys
+  ---
+  duration_ms: 0.5664
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke scans mini-test, support, and AI enrichment read models
+ok 6 - Grammar production smoke scans mini-test, support, and AI enrichment read models
+  ---
+  duration_ms: 0.5122
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke has visible-data probes for every answer-spec family
+ok 7 - Grammar production smoke has visible-data probes for every answer-spec family
+  ---
+  duration_ms: 1.7675
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke P24 fixtures expose no generic explanation distractors
+ok 8 - Grammar production smoke P24 fixtures expose no generic explanation distractors
+  ---
+  duration_ms: 0.7739
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke visible-choice scan includes table row column fallbacks
+ok 9 - Grammar production smoke visible-choice scan includes table row column fallbacks
+  ---
+  duration_ms: 0.2192
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke manual-review probe uses current visible input options
+ok 10 - Grammar production smoke manual-review probe uses current visible input options
+  ---
+  duration_ms: 0.4353
+  type: 'test'
+  ...
+# Subtest: P4 choose template visible payload contains prompt and options
+ok 11 - P4 choose template visible payload contains prompt and options
+  ---
+  duration_ms: 0.5999
+  type: 'test'
+  ...
+# Subtest: P4 classify template visible payload contains table_choice fields
+ok 12 - P4 classify template visible payload contains table_choice fields
+  ---
+  duration_ms: 0.5058
+  type: 'test'
+  ...
+# Subtest: P4 template visible payload does not contain hidden answer data
+ok 13 - P4 template visible payload does not contain hidden answer data
+  ---
+  duration_ms: 0.5947
+  type: 'test'
+  ...
+# Subtest: P4 template after answer does not leak reusable answer-key internals
+ok 14 - P4 template after answer does not leak reusable answer-key internals
+  ---
+  duration_ms: 0.77
+  type: 'test'
+  ...
+# Subtest: P4 classify template does not leak correct field values in visible metadata
+ok 15 - P4 classify template does not leak correct field values in visible metadata
+  ---
+  duration_ms: 0.2079
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 keeps the existing content release and template denominator
+ok 16 - Grammar QG P24 keeps the existing content release and template denominator
+  ---
+  duration_ms: 0.6593
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 removes generic explanation distractors from learner-visible choices
+ok 17 - Grammar QG P24 removes generic explanation distractors from learner-visible choices
+  ---
+  duration_ms: 439.2212
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 keeps selected-response options unique and away from duplicate correct answers
+ok 18 - Grammar QG P24 keeps selected-response options unique and away from duplicate correct answers
+  ---
+  duration_ms: 412.5563
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 visible-choice collector includes table row column fallbacks
+ok 19 - Grammar QG P24 visible-choice collector includes table row column fallbacks
+  ---
+  duration_ms: 0.3753
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 keeps manual-expansion explanation choices concept-specific
+ok 20 - Grammar QG P24 keeps manual-expansion explanation choices concept-specific
+  ---
+  duration_ms: 0.2803
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 renders stretch feedback only for correct practice feedback
+ok 21 - Grammar QG P24 renders stretch feedback only for correct practice feedback
+  ---
+  duration_ms: 285.5106
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2538.3637

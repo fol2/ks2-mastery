@@ -22,6 +22,7 @@ import {
   grammarSessionFooterNote,
   grammarFeedbackTone,
   grammarFeedbackNextStepCopy,
+  grammarFeedbackStretchCopy,
 } from '../src/subjects/grammar/session-ui.js';
 import {
   GRAMMAR_PRIMARY_MODE_CARDS,
@@ -283,6 +284,24 @@ test('U8 session-ui: grammarFeedbackNextStepCopy gives clear post-marking action
     grammarFeedbackNextStepCopy({ nonScored: true }),
     'Saved — keep going when you are ready.',
   );
+});
+
+
+test('U8 session-ui: grammarFeedbackStretchCopy gives non-scored challenge only after correct answers', () => {
+  assert.equal(
+    grammarFeedbackStretchCopy({ correct: true }, { currentItem: { questionType: 'choose' } }),
+    'Extra challenge: explain why one wrong option is a trap.',
+  );
+  assert.equal(
+    grammarFeedbackStretchCopy({ correct: true }, { currentItem: { questionType: 'rewrite' } }),
+    'Extra challenge: write one more example using the same rule.',
+  );
+  assert.equal(
+    grammarFeedbackStretchCopy({ correct: true }, { currentItem: { questionType: 'explain' } }),
+    'Extra challenge: turn your reason into one precise sentence using the grammar term.',
+  );
+  assert.equal(grammarFeedbackStretchCopy({ correct: false }, { currentItem: { questionType: 'choose' } }), '');
+  assert.equal(grammarFeedbackStretchCopy({ nonScored: true }, { currentItem: { questionType: 'choose' } }), '');
 });
 
 // -----------------------------------------------------------------------------

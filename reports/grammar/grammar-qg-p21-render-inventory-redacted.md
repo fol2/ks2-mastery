@@ -4,7 +4,7 @@ Content Release: grammar-qg-p21-2026-05-11
 Total Items: 16380
 Templates: 546
 Seed Range: 1..30
-Generated: 2026-05-11T13:45:52.177Z
+Generated: 2026-05-13T08:51:34.483Z
 
 _Answer internals stripped from this report._
 

@@ -46,25 +46,28 @@ function loadRenderer() {
      * \`serialiseGrammarQuestion()\` — it carries \`promptParts\`, \`inputSpec\`,
      * \`promptText\`, etc.
      */
-    export function renderGrammarItem(serialisedItem) {
+    export function renderGrammarItem(serialisedItem, overrides = {}) {
+      const session = {
+        id: 'test-session',
+        type: 'standard',
+        answered: 0,
+        targetCount: 10,
+        currentIndex: 0,
+        currentItem: serialisedItem,
+        supportGuidance: null,
+        goal: null,
+        ...(overrides.session || {}),
+      };
       const grammar = {
-        phase: 'session',
-        awaitingAdvance: false,
+        phase: overrides.phase || 'session',
+        awaitingAdvance: Boolean(overrides.awaitingAdvance),
         pendingCommand: null,
         error: null,
-        feedback: null,
+        feedback: overrides.feedback || null,
         aiEnrichment: null,
-        session: {
-          id: 'test-session',
-          type: 'standard',
-          answered: 0,
-          targetCount: 10,
-          currentIndex: 0,
-          currentItem: serialisedItem,
-          supportGuidance: null,
-          goal: null,
-        },
+        session,
         prefs: {},
+        ...(overrides.grammar || {}),
       };
       const actions = { dispatch() {} };
       return renderToStaticMarkup(
@@ -94,8 +97,8 @@ function loadRenderer() {
  * Render a serialised grammar item (from `serialiseGrammarQuestion()`) through
  * the real GrammarSessionScene React component and return the resulting HTML.
  */
-export function renderGrammarItem(serialisedItem) {
-  return loadRenderer().renderGrammarItem(serialisedItem);
+export function renderGrammarItem(serialisedItem, overrides = {}) {
+  return loadRenderer().renderGrammarItem(serialisedItem, overrides);
 }
 
 export function cleanupGrammarRenderHarness() {

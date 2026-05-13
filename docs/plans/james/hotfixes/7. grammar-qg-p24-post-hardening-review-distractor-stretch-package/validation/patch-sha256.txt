@@ -1,0 +1,2 @@
+be79c5c9afa7751ff99d599fca1a3219ea363b8a0a5bd8843a22c08369fb20ef  patches/001-grammar-qg-p24-distractor-quality-and-stretch-feedback.patch
+86771176dc8da0c02d1bb321faec0bc5545cef94b75845cb732ec17e7f21b249  patches/002-release-gate-atomic-monster-manifest-write.patch

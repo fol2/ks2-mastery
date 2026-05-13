@@ -1,0 +1,2 @@
+COMMAND: node scripts/audit-grammar-open-response-fairness.mjs --seeds=1,2,3 --out=docs\plans\james\hotfixes\7. grammar-qg-p24-post-hardening-review-distractor-stretch-package\validation\current-open-response-fairness-1-3-2026-05-13.json
+Open-response fairness audit: PASS (0 findings) -> D:\Coding\ks2-mastery\.worktrees\grammar-qg-p24-distractor-stretch\docs\plans\james\hotfixes\7. grammar-qg-p24-post-hardening-review-distractor-stretch-package\validation\current-open-response-fairness-1-3-2026-05-13.json

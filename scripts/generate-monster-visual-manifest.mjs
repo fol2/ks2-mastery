@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -90,5 +90,12 @@ const manifest = {
 const source = `// Generated from assets/monsters via scripts/generate-monster-visual-manifest.mjs\n// Do not edit by hand. Regenerate when monster asset folders change.\n\nexport const MONSTER_ASSET_MANIFEST = Object.freeze(${JSON.stringify(manifest, null, 2)});\n\nexport const MONSTER_ASSET_MANIFEST_HASH = ${JSON.stringify(manifestHash)};\n`;
 
 await mkdir(path.dirname(outputFile), { recursive: true });
-await writeFile(outputFile, source, 'utf8');
+const tempOutputFile = `${outputFile}.${process.pid}.${Date.now()}.tmp`;
+try {
+  await writeFile(tempOutputFile, source, 'utf8');
+  await rename(tempOutputFile, outputFile);
+} catch (err) {
+  await unlink(tempOutputFile).catch(() => {});
+  throw err;
+}
 console.log(`Generated ${path.relative(rootDir, outputFile)} with ${assets.length} monster assets.`);

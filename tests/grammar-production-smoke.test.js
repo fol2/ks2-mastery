@@ -8,9 +8,12 @@ import {
 } from '../worker/src/subjects/grammar/content.js';
 import {
   GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS,
+  GRAMMAR_P24_DISTRACTOR_SMOKE_ITEMS,
   assertNoForbiddenGrammarReadModelKeys,
   correctResponseFor,
+  genericExplanationDistractorHitsForProductionSmoke,
   incorrectResponseFor,
+  learnerVisibleChoiceLabelsForProductionSmoke,
   visibleResponseForAnswerSpecFamily,
 } from '../scripts/grammar-production-smoke.mjs';
 import {
@@ -256,6 +259,30 @@ test('Grammar production smoke has visible-data probes for every answer-spec fam
       assert.equal(result.correct, true, fixture.family);
     }
   }
+});
+
+test('Grammar production smoke P24 fixtures expose no generic explanation distractors', () => {
+  assert.equal(GRAMMAR_P24_DISTRACTOR_SMOKE_ITEMS.length, 2);
+  for (const fixture of GRAMMAR_P24_DISTRACTOR_SMOKE_ITEMS) {
+    const question = createGrammarQuestion({ templateId: fixture.templateId, seed: fixture.seed });
+    const labels = learnerVisibleChoiceLabelsForProductionSmoke(question.inputSpec);
+    assert.ok(labels.length > 0, `${fixture.id} should expose visible choices.`);
+    assert.deepEqual(genericExplanationDistractorHitsForProductionSmoke(question.inputSpec), []);
+  }
+});
+
+test('Grammar production smoke visible-choice scan includes table row column fallbacks', () => {
+  assert.deepEqual(
+    learnerVisibleChoiceLabelsForProductionSmoke({
+      type: 'table_choice',
+      columns: ['Fallback A', 'Fallback B'],
+      rows: [
+        { key: 'specific', label: 'Specific row', options: ['Specific A', 'Specific B'] },
+        { key: 'fallback', label: 'Fallback row' },
+      ],
+    }),
+    ['Specific A', 'Specific B', 'Fallback A', 'Fallback B'],
+  );
 });
 
 test('Grammar production smoke manual-review probe uses current visible input options', () => {

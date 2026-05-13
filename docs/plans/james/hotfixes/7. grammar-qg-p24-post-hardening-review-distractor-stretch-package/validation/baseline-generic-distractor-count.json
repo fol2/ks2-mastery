@@ -1,0 +1,248 @@
+{
+  "occurrenceCount": 1680,
+  "itemCount": 570,
+  "templateCount": 19,
+  "byTemplate": {
+    "qg_p18_p15_active_passive_explain_voice": 90,
+    "qg_p18_p15_adverbials_explain_fronted_adv": 90,
+    "qg_p18_p15_apostrophes_possession_explain_possession": 90,
+    "qg_p18_p15_boundary_punctuation_explain_boundary": 90,
+    "qg_p18_p15_clauses_explain_sub_clause": 90,
+    "qg_p18_p15_formality_explain_formality": 90,
+    "qg_p18_p15_hyphen_ambiguity_explain_hyphen": 90,
+    "qg_p18_p15_modal_verbs_explain_modal": 90,
+    "qg_p18_p15_noun_phrases_explain_np": 90,
+    "qg_p18_p15_parenthesis_commas_explain_parenthesis": 90,
+    "qg_p18_p15_pronouns_cohesion_explain_cohesion": 90,
+    "qg_p18_p15_relative_clauses_explain_relative_clause": 90,
+    "qg_p18_p15_sentence_functions_explain_function": 90,
+    "qg_p18_p15_speech_punctuation_explain_speech": 90,
+    "qg_p18_p15_standard_english_explain_standard": 90,
+    "qg_p18_p15_subject_object_explain_roles": 90,
+    "qg_p18_p15_tense_aspect_explain_tense": 90,
+    "qg_p18_p15_word_classes_explain_word_class": 90,
+    "qg_p21_sentence_functions_explanation_choice_variety": 60
+  },
+  "samples": [
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 1,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 2,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 3,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 4,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 5,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 6,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 7,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 8,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 9,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 10,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 11,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 12,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 13,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 14,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 15,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 16,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 17,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 18,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 19,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    },
+    {
+      "templateId": "qg_p18_p15_active_passive_explain_voice",
+      "seed": 20,
+      "conceptId": "active_passive",
+      "questionType": "explain",
+      "hits": [
+        "It only depends on the final punctuation mark.",
+        "It is correct because it sounds more exciting.",
+        "It is correct because it is the shortest option."
+      ]
+    }
+  ]
+}

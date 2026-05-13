@@ -1,11 +1,11 @@
 # Grammar QG P10 — Quality Register
 
 **Content Release:** grammar-qg-p21-2026-05-11
-**Generated:** 2026-05-11T13:45:56.455Z
+**Generated:** 2026-05-13T08:51:48.106Z
 **Templates:** 546
 **Approved:** 389 | **Blocked:** 0
 **High-risk (1..15 seeds):** 199
-**Adult review decisions:** 118
+**Adult review decisions:** 109
 
 ## Summary Table
 
@@ -3510,7 +3510,7 @@
   - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
   - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
   - Accepted example: The doer and receiver keep the same roles, but the sentence voice changes.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: Passive voice means the action is in the future.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -3767,7 +3767,7 @@
   - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
   - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
   - Accepted example: The apostrophe shows ownership, and its position shows whether the owner is singular or plural.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: Every plural noun needs an apostrophe.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -4075,9 +4075,9 @@
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Adult review decision:** approved_with_review
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
   - Accepted example: It begins with a subordinating conjunction and depends on the main clause.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: A subordinate clause can always stand alone as a full sentence.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -4163,7 +4163,7 @@
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
   - Accepted example: It uses precise vocabulary and avoids chatty wording.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: Formal writing should always use slang.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -4426,7 +4426,7 @@
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
   - Accepted example: It changes the force of the verb to show strong advice.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: All modal verbs show the same certainty.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -4590,11 +4590,6 @@
 - **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
 - **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Adult review decision:** approved_with_review
-  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
-  - Accepted example: It is centred on a noun and includes extra describing or specifying detail.
-  - Rejected alternative: It only depends on the final punctuation mark.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -4691,11 +4686,6 @@
 - **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
 - **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Adult review decision:** approved_with_review
-  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
-  - Accepted example: The extra information could be removed and the main sentence would still work.
-  - Rejected alternative: It only depends on the final punctuation mark.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -4900,11 +4890,6 @@
 - **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
 - **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Adult review decision:** approved_with_review
-  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
-  - Accepted example: The pronouns clearly refer back to the correct nouns without confusing the reader.
-  - Rejected alternative: It only depends on the final punctuation mark.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -4986,7 +4971,7 @@
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
   - Accepted example: It begins with a relative word and adds information about the noun before it.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: Any clause beginning with which is a question.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -5225,11 +5210,6 @@
 - **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
 - **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Adult review decision:** approved_with_review
-  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
-  - Accepted example: The spoken words are enclosed in speech marks and their punctuation is inside the marks.
-  - Rejected alternative: It only depends on the final punctuation mark.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -5358,7 +5338,7 @@
   - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
   - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
   - Accepted example: It uses the accepted written grammar form expected in formal school writing.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: It is Standard English because it sounds casual.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -5491,7 +5471,7 @@
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.
   - Accepted example: The subject does the action and the object receives it.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: The subject is always the first word.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14148,11 +14128,6 @@
 - **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
 - **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Adult review decision:** approved_with_review
-  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
-  - Accepted example: A KS2 exclamation often begins with what or how and shows strong feeling.
-  - Rejected alternative: It only depends on the final punctuation mark.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14201,11 +14176,6 @@
 - **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
 - **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Adult review decision:** approved_with_review
-  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
-  - Accepted example: These is a determiner because it comes before the noun and points to which biscuits.
-  - Rejected alternative: It only depends on the final punctuation mark.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14254,11 +14224,6 @@
 - **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
 - **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Adult review decision:** approved_with_review
-  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
-  - Accepted example: The expanded noun phrase adds detail while keeping garden as the main noun.
-  - Rejected alternative: It only depends on the final punctuation mark.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14307,11 +14272,6 @@
 - **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
 - **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Adult review decision:** approved_with_review
-  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
-  - Accepted example: At the edge of the forest tells us where and has been moved to the front.
-  - Rejected alternative: It only depends on the final punctuation mark.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14369,7 +14329,7 @@
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
   - Accepted example: Because it was icy depends on the main clause for the full sentence.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: A subordinate clause can always stand alone as a full sentence.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14427,7 +14387,7 @@
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
   - Accepted example: Who won the race adds information about the girl.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: Any clause beginning with which is a question.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14629,7 +14589,7 @@
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
   - Accepted example: The vocabulary and structure suit formal writing.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: Formal writing should always use slang.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14735,7 +14695,7 @@
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
   - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
   - Accepted example: The subject is the doer of the action.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: The subject is always the first word.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14791,9 +14751,9 @@
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Adult review decision:** approved_with_review
   - Risk: Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
+  - Rationale: The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.
   - Accepted example: Must shows stronger certainty than might, could or may.
-  - Rejected alternative: It only depends on the final punctuation mark.
+  - Rejected alternative: All modal verbs show the same certainty.
 - **Final action:** ship
 
 **Concrete examples:**
@@ -14890,11 +14850,6 @@
 - **Marking:** Golden answers mark correct across all 10 seeds; empty/whitespace rejected
 - **Feedback:** feedbackLong references grammar rule; feedbackShort provides one-line summary
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Adult review decision:** approved_with_review
-  - Risk: Template has a possible surface-cue risk, so option wording requires adult sign-off.
-  - Rationale: Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.
-  - Accepted example: A reporting clause before speech usually needs a comma before the opening speech marks.
-  - Rejected alternative: It only depends on the final punctuation mark.
 - **Final action:** ship
 
 **Concrete examples:**

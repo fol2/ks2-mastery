@@ -165,3 +165,26 @@ export function grammarFeedbackNextStepCopy(result) {
   if (tone === 'bad') return 'Fix it now: retry, see a worked solution, or try a similar question.';
   return 'Saved — keep going when you are ready.';
 }
+
+/**
+ * Optional post-success stretch cue. This is not scored, does not change
+ * mastery/reward state, and never appears for incorrect/non-scored answers.
+ * The aim is to turn a correct answer into one small metacognitive challenge
+ * for children who are ready to go beyond basic KS2 recall.
+ */
+export function grammarFeedbackStretchCopy(result, session = null) {
+  if (grammarFeedbackTone(result) !== 'good') return '';
+  const questionType = typeof session?.currentItem?.questionType === 'string'
+    ? session.currentItem.questionType
+    : '';
+  if (['choose', 'classify', 'identify', 'fill'].includes(questionType)) {
+    return 'Extra challenge: explain why one wrong option is a trap.';
+  }
+  if (['fix', 'rewrite', 'build'].includes(questionType)) {
+    return 'Extra challenge: write one more example using the same rule.';
+  }
+  if (questionType === 'explain') {
+    return 'Extra challenge: turn your reason into one precise sentence using the grammar term.';
+  }
+  return 'Extra challenge: name the rule you used in one sentence.';
+}

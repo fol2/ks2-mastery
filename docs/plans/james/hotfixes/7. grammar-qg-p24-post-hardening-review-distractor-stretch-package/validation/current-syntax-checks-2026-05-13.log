@@ -1,0 +1,8 @@
+node --check worker\src\subjects\grammar\content.js
+node --check src\subjects\grammar\session-ui.js
+node --check scripts\grammar-production-smoke.mjs
+node --check tests\grammar-production-smoke.test.js
+node --check tests\helpers\grammar-visible-choice-collector.js
+node --check tests\helpers\grammar-render-harness.js
+node --check tests\grammar-qg-p24-distractor-quality.test.js
+syntaxChecks=pass

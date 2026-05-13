@@ -13,6 +13,7 @@ import {
   grammarSessionInfoChips,
   grammarFeedbackTone,
   grammarFeedbackNextStepCopy,
+  grammarFeedbackStretchCopy,
 } from '../session-ui.js';
 import { dispatchGrammarAnswerFormSubmit } from '../form-submit.js';
 import { translateGrammarSessionError } from '../module.js';
@@ -243,12 +244,13 @@ function GrammarInput({ inputSpec, required = true, response = {}, describedBy =
   );
 }
 
-function FeedbackPanel({ feedback }) {
+function FeedbackPanel({ feedback, session }) {
   if (!feedback?.result) return null;
   const result = feedback.result;
   const tone = grammarFeedbackTone(result);
   const toneClass = tone === 'good' ? 'good' : tone === 'bad' ? 'warn' : 'neutral';
   const nextStepCopy = grammarFeedbackNextStepCopy(result);
+  const stretchCopy = grammarFeedbackStretchCopy(result, session);
   // SH2-U7 review follow-up (FIX-3): `data-grammar-session-feedback-live`
   // mirrors Punctuation's `data-punctuation-session-feedback-live` anchor
   // so agent-native / a11y scenes can query the live region deterministically
@@ -264,6 +266,7 @@ function FeedbackPanel({ feedback }) {
       <strong>{result.feedbackShort || (tone === 'good' ? 'Correct.' : tone === 'bad' ? 'Not quite.' : 'Saved for review')}</strong>
       <div>{result.feedbackLong || result.minimalHint || ''}</div>
       {nextStepCopy ? <div className="small muted" data-grammar-feedback-next-step>{nextStepCopy}</div> : null}
+      {stretchCopy ? <div className="small muted" data-grammar-feedback-stretch>{stretchCopy}</div> : null}
       {result.answerText ? <div className="small muted">Correct answer: {result.answerText}</div> : null}
     </div>
   );
@@ -739,7 +742,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             response={currentResponse}
             describedBy={errorMessageId}
           />
-          {!isMiniTest ? <FeedbackPanel feedback={grammar.feedback} /> : null}
+          {!isMiniTest ? <FeedbackPanel feedback={grammar.feedback} session={session} /> : null}
           {!isMiniTest && help.showWorkedSolution ? (
             <WorkedSolutionPanel solution={grammar.feedback?.workedSolution} />
           ) : null}

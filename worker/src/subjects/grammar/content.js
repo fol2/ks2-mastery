@@ -11610,16 +11610,78 @@ function manualExpansionCorrectText(caseItem) {
   return manualExpansionSafeText(caseItem?.expectedAnswerSummary);
 }
 
-function manualExpansionOptionValues(caseItem, correctText) {
+// P24: older manual expansion packs used generic explanation distractors that
+// train option-spotting rather than grammar reasoning. Replace those at runtime
+// with concept-specific misconception statements without rewriting the generated
+// source pack, so every selected-response surface stays learner-facing and
+// audits can verify the visible choices.
+const MANUAL_EXPANSION_GENERIC_EXPLANATION_DISTRACTORS = Object.freeze(new Set([
+  'It only depends on the final punctuation mark.',
+  'It is correct because it is the shortest option.',
+  'It is correct because it sounds more exciting.',
+  'It is correct because the sentence has a capital letter.',
+  'It is correct because the sentence mentions a person or thing.',
+]));
+
+const MANUAL_EXPANSION_DISTRACTOR_OVERRIDES_BY_CONCEPT = Object.freeze({
+  sentence_functions: Object.freeze([
+    'The function is decided only by the final punctuation mark.',
+    'Any short sentence is automatically a command.',
+    'Any sentence with strong feeling is automatically an exclamation.',
+  ]),
+});
+
+function manualExpansionIsGenericExplanationDistractor(value) {
+  return MANUAL_EXPANSION_GENERIC_EXPLANATION_DISTRACTORS.has(manualExpansionSafeText(value));
+}
+
+function manualExpansionConceptSpecificDistractors(family) {
+  const conceptId = manualExpansionPrimaryConcept(family);
+  const override = MANUAL_EXPANSION_DISTRACTOR_OVERRIDES_BY_CONCEPT[conceptId];
+  if (Array.isArray(override) && override.length >= 3) return override;
+  const distractors = P21_EXPLANATION_DISTRACTORS_BY_CONCEPT[conceptId];
+  return Array.isArray(distractors) && distractors.length >= 3
+    ? distractors
+    : [];
+}
+
+function manualExpansionOptionValues(caseItem, correctText, family = null) {
   const options = Array.isArray(caseItem?.options) ? caseItem.options : [];
   const out = [];
   const seen = new Set();
   const correctValue = manualExpansionAnswerValue(correctText);
   const correctComparable = manualExpansionComparableAnswer(correctValue);
+  const replacementPool = manualExpansionConceptSpecificDistractors(family)
+    .map(manualExpansionSafeText)
+    .filter(Boolean);
+  let replacementCursor = 0;
+
+  function nextConceptSpecificDistractor() {
+    for (let attempts = 0; attempts < replacementPool.length; attempts += 1) {
+      const candidate = replacementPool[replacementCursor % replacementPool.length];
+      replacementCursor += 1;
+      const value = manualExpansionAnswerValue(candidate);
+      const comparable = manualExpansionComparableAnswer(value);
+      if (!value || comparable === correctComparable || seen.has(value.toLowerCase())) continue;
+      return candidate;
+    }
+    return '';
+  }
 
   function add(value, label, rationale, { force = false } = {}) {
-    const cleanLabel = manualExpansionSafeText(label || value);
-    const cleanValue = manualExpansionAnswerValue(value || label);
+    let nextValue = value;
+    let nextLabel = label || value;
+    let nextRationale = rationale;
+    if (!force && (manualExpansionIsGenericExplanationDistractor(nextValue) || manualExpansionIsGenericExplanationDistractor(nextLabel))) {
+      const replacement = nextConceptSpecificDistractor();
+      if (replacement) {
+        nextValue = replacement;
+        nextLabel = replacement;
+        nextRationale = `Concept-specific distractor: ${replacement}`;
+      }
+    }
+    const cleanLabel = manualExpansionSafeText(nextLabel || nextValue);
+    const cleanValue = manualExpansionAnswerValue(nextValue || nextLabel);
     if (!cleanValue) return;
     if (!force && manualExpansionComparableAnswer(cleanValue) === correctComparable) return;
     const key = cleanValue.toLowerCase();
@@ -11628,7 +11690,7 @@ function manualExpansionOptionValues(caseItem, correctText) {
     out.push({
       value: cleanValue,
       label: cleanLabel || cleanValue,
-      rationale: manualExpansionSafeText(rationale),
+      rationale: manualExpansionSafeText(nextRationale),
     });
   }
 
@@ -11951,7 +12013,7 @@ function manualExpansionRows(caseItem, family) {
 function buildManualExpansionSelectedQuestion(template, seed, caseItem, family) {
   const correct = manualExpansionCorrectText(caseItem);
   const correctValue = manualExpansionAnswerValue(correct);
-  const options = manualExpansionOptionValues(caseItem, correct);
+  const options = manualExpansionOptionValues(caseItem, correct, family);
   const answerSpec = exactAnswerSpec(correctValue, options.map((option) => option.value).filter((value) => value !== correctValue), {
     misconception: manualExpansionMisconception(family),
     feedbackLong: manualExpansionSafeText(caseItem.feedbackLong) || `The correct option is: ${correct}`,
@@ -12107,7 +12169,7 @@ function buildManualExpansionTableQuestion(template, seed, caseItem, family) {
   const inputRows = rows.map((row) => {
     const rowOptions = row.options.length > 0
       ? row.options
-      : (globalColumns.length > 0 ? globalColumns : manualExpansionOptionValues(caseItem, row.correctAnswer).map((option) => option.value));
+      : (globalColumns.length > 0 ? globalColumns : manualExpansionOptionValues(caseItem, row.correctAnswer, family).map((option) => option.value));
     const correctValue = manualExpansionAnswerValue(row.correctAnswer);
     const correctComparable = manualExpansionComparableAnswer(correctValue);
     const options = dedupePlain([correctValue].concat(rowOptions.map(manualExpansionAnswerValue)))
@@ -12182,8 +12244,8 @@ const P21_DEFAULT_EXPLANATION_DISTRACTORS = Object.freeze([
 
 const P21_EXPLANATION_DISTRACTORS_BY_CONCEPT = Object.freeze({
   sentence_functions: Object.freeze([
-    'It is correct because the sentence has a capital letter.',
-    'It is correct because the sentence mentions a person or thing.',
+    'The function is decided only by the final punctuation mark.',
+    'Any short sentence is automatically a command.',
     'Any sentence with strong feeling is automatically an exclamation.',
   ]),
   word_classes: Object.freeze([

@@ -1,13 +1,13 @@
 {
   "metadata": {
     "contentReleaseId": "grammar-qg-p21-2026-05-11",
-    "generatedAt": "2026-05-11T13:45:56.455Z",
+    "generatedAt": "2026-05-13T08:51:48.106Z",
     "templateCount": 546,
     "approved": 389,
     "approvedWithLimitation": 157,
     "blocked": 0,
     "highRiskCount": 199,
-    "adultReviewDecisionCount": 118
+    "adultReviewDecisionCount": 109
   },
   "entries": [
     {
@@ -6281,9 +6281,9 @@
           "promptText": "Why is this a correct voice change? The bread was baked by the chef.",
           "options": [
             "The doer and receiver keep the same roles, but the sentence voice changes.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Passive voice means the action is in the future.",
+            "The first noun is always the doer.",
+            "Adding by always makes a sentence active."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The doer and receiver keep the same roles, but the sentence voice changes."
@@ -6293,9 +6293,9 @@
           "promptText": "Why is this a correct voice change? The trophy will be collected by the team.",
           "options": [
             "The doer and receiver keep the same roles, but the sentence voice changes.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Passive voice means the action is in the future.",
+            "The first noun is always the doer.",
+            "Adding by always makes a sentence active."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The doer and receiver keep the same roles, but the sentence voice changes."
@@ -6305,9 +6305,9 @@
           "promptText": "Why is this a correct voice change? The local park is maintained by the council.",
           "options": [
             "The doer and receiver keep the same roles, but the sentence voice changes.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Passive voice means the action is in the future.",
+            "The first noun is always the doer.",
+            "Adding by always makes a sentence active."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The doer and receiver keep the same roles, but the sentence voice changes."
@@ -6324,7 +6324,7 @@
         "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
         "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
         "acceptedExample": "The doer and receiver keep the same roles, but the sentence voice changes.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "Passive voice means the action is in the future.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -6592,9 +6592,9 @@
           "promptText": "Why does this sentence need a comma after \"Before sunrise\"? Before sunrise the campers packed their bags.",
           "options": [
             "It gives when, where or how information at the start of the sentence.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A fronted adverbial is correct without a comma.",
+            "Only single words can be adverbials.",
+            "An adverbial must always come at the end of a sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It gives when, where or how information at the start of the sentence."
@@ -6604,9 +6604,9 @@
           "promptText": "Why does this sentence need a comma after \"After the concert\"? After the concert the audience cheered loudly.",
           "options": [
             "It gives when, where or how information at the start of the sentence.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A fronted adverbial is correct without a comma.",
+            "Only single words can be adverbials.",
+            "An adverbial must always come at the end of a sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It gives when, where or how information at the start of the sentence."
@@ -6616,9 +6616,9 @@
           "promptText": "Why does this sentence need a comma after \"In the corner of the hall\"? In the corner of the hall the orchestra tuned up.",
           "options": [
             "It gives when, where or how information at the start of the sentence.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A fronted adverbial is correct without a comma.",
+            "Only single words can be adverbials.",
+            "An adverbial must always come at the end of a sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It gives when, where or how information at the start of the sentence."
@@ -6802,9 +6802,9 @@
           "promptText": "Why is \"the dog's bowl\" correct?",
           "options": [
             "The apostrophe shows ownership, and its position shows whether the owner is singular or plural.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Every plural noun needs an apostrophe.",
+            "An apostrophe always means a contraction.",
+            "The apostrophe goes wherever the word sounds paused."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The apostrophe shows ownership, and its position shows whether the owner is singular or plural."
@@ -6814,9 +6814,9 @@
           "promptText": "Why is \"the girls' boots\" correct?",
           "options": [
             "The apostrophe shows ownership, and its position shows whether the owner is singular or plural.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Every plural noun needs an apostrophe.",
+            "An apostrophe always means a contraction.",
+            "The apostrophe goes wherever the word sounds paused."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The apostrophe shows ownership, and its position shows whether the owner is singular or plural."
@@ -6826,9 +6826,9 @@
           "promptText": "Why is \"the teacher's desk\" correct?",
           "options": [
             "The apostrophe shows ownership, and its position shows whether the owner is singular or plural.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Every plural noun needs an apostrophe.",
+            "An apostrophe always means a contraction.",
+            "The apostrophe goes wherever the word sounds paused."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The apostrophe shows ownership, and its position shows whether the owner is singular or plural."
@@ -6845,7 +6845,7 @@
         "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
         "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
         "acceptedExample": "The apostrophe shows ownership, and its position shows whether the owner is singular or plural.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "Every plural noun needs an apostrophe.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -7271,9 +7271,9 @@
           "promptText": "Why is a semi-colon suitable here? The sky darkened; the gulls flew inland.",
           "options": [
             "semi-colon joins two closely related main clauses",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A colon can be used after any short phrase.",
+            "A semicolon joins two unrelated ideas.",
+            "A comma can always replace a full stop."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "semi-colon joins two closely related main clauses"
@@ -7283,9 +7283,9 @@
           "promptText": "Why is a colon suitable here? I needed only one thing: a torch.",
           "options": [
             "colon introduces the explanation of the thing needed",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A colon can be used after any short phrase.",
+            "A semicolon joins two unrelated ideas.",
+            "A comma can always replace a full stop."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "colon introduces the explanation of the thing needed"
@@ -7295,9 +7295,9 @@
           "promptText": "Why is a dash suitable here? The answer was obvious — nobody wanted to say it.",
           "options": [
             "dash creates a strong break before a surprising clause",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A colon can be used after any short phrase.",
+            "A semicolon joins two unrelated ideas.",
+            "A comma can always replace a full stop."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "dash creates a strong break before a surprising clause"
@@ -7441,9 +7441,9 @@
           "promptText": "Why is \"Although the wind was strong\" subordinate in this sentence? Although the wind was strong, the boat reached the shore.",
           "options": [
             "It begins with a subordinating conjunction and depends on the main clause.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A subordinate clause can always stand alone as a full sentence.",
+            "A clause does not need a verb.",
+            "The longest part of the sentence is always the main clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It begins with a subordinating conjunction and depends on the main clause."
@@ -7453,9 +7453,9 @@
           "promptText": "Why is \"When the bell rang\" subordinate in this sentence? When the bell rang, the pupils lined up quietly.",
           "options": [
             "It begins with a subordinating conjunction and depends on the main clause.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A subordinate clause can always stand alone as a full sentence.",
+            "A clause does not need a verb.",
+            "The longest part of the sentence is always the main clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It begins with a subordinating conjunction and depends on the main clause."
@@ -7465,9 +7465,9 @@
           "promptText": "Why is \"If the path is icy\" subordinate in this sentence? If the path is icy, wear your boots.",
           "options": [
             "It begins with a subordinating conjunction and depends on the main clause.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A subordinate clause can always stand alone as a full sentence.",
+            "A clause does not need a verb.",
+            "The longest part of the sentence is always the main clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It begins with a subordinating conjunction and depends on the main clause."
@@ -7482,15 +7482,14 @@
       "finalAction": "ship",
       "adultReviewDecision": {
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
+        "disambiguationRationale": "The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.",
         "acceptedExample": "It begins with a subordinating conjunction and depends on the main clause.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "A subordinate clause can always stand alone as a full sentence.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
         "reasons": [
-          "ambiguous-concept-area",
-          "likely-surface-cue"
+          "ambiguous-concept-area"
         ]
       }
     },
@@ -7624,9 +7623,9 @@
           "promptText": "Why is this version more formal? Please discover whether the hall is open.",
           "options": [
             "It uses precise vocabulary and avoids chatty wording.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Formal writing should always use slang.",
+            "The meaning is formal just because the sentence is longer.",
+            "A contraction is always the best choice in formal writing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses precise vocabulary and avoids chatty wording."
@@ -7636,9 +7635,9 @@
           "promptText": "Why is this version more formal? The club was established last year.",
           "options": [
             "It uses precise vocabulary and avoids chatty wording.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Formal writing should always use slang.",
+            "The meaning is formal just because the sentence is longer.",
+            "A contraction is always the best choice in formal writing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses precise vocabulary and avoids chatty wording."
@@ -7648,9 +7647,9 @@
           "promptText": "Why is this version more formal? We need to request more time.",
           "options": [
             "It uses precise vocabulary and avoids chatty wording.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Formal writing should always use slang.",
+            "The meaning is formal just because the sentence is longer.",
+            "A contraction is always the best choice in formal writing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses precise vocabulary and avoids chatty wording."
@@ -7667,7 +7666,7 @@
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
         "acceptedExample": "It uses precise vocabulary and avoids chatty wording.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "Formal writing should always use slang.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -7903,9 +7902,9 @@
           "promptText": "Why does \"man-eating shark\" need a hyphen?",
           "options": [
             "The hyphen links words so the reader sees the intended meaning clearly.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A hyphen is just a longer dash.",
+            "Hyphens are only used to make words look shorter.",
+            "The meaning stays the same whether or not the hyphen is used."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The hyphen links words so the reader sees the intended meaning clearly."
@@ -7915,9 +7914,9 @@
           "promptText": "Why does \"re-cover the chair\" need a hyphen?",
           "options": [
             "The hyphen links words so the reader sees the intended meaning clearly.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A hyphen is just a longer dash.",
+            "Hyphens are only used to make words look shorter.",
+            "The meaning stays the same whether or not the hyphen is used."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The hyphen links words so the reader sees the intended meaning clearly."
@@ -7927,9 +7926,9 @@
           "promptText": "Why does \"twenty-odd children\" need a hyphen?",
           "options": [
             "The hyphen links words so the reader sees the intended meaning clearly.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A hyphen is just a longer dash.",
+            "Hyphens are only used to make words look shorter.",
+            "The meaning stays the same whether or not the hyphen is used."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The hyphen links words so the reader sees the intended meaning clearly."
@@ -8164,9 +8163,9 @@
           "promptText": "Why is \"should\" the best modal verb? You should wear a helmet on this trail.",
           "options": [
             "It changes the force of the verb to show strong advice.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "All modal verbs show the same certainty.",
+            "A modal verb is any word that comes before a noun.",
+            "Will and might mean exactly the same thing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It changes the force of the verb to show strong advice."
@@ -8176,9 +8175,9 @@
           "promptText": "Why is \"might\" the best modal verb? It might snow tonight if the temperature falls.",
           "options": [
             "It changes the force of the verb to show possibility.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "All modal verbs show the same certainty.",
+            "A modal verb is any word that comes before a noun.",
+            "Will and might mean exactly the same thing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It changes the force of the verb to show possibility."
@@ -8188,9 +8187,9 @@
           "promptText": "Why is \"will\" the best modal verb? The train will arrive at six because it is on the timetable.",
           "options": [
             "It changes the force of the verb to show certainty.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "All modal verbs show the same certainty.",
+            "A modal verb is any word that comes before a noun.",
+            "Will and might mean exactly the same thing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It changes the force of the verb to show certainty."
@@ -8207,7 +8206,7 @@
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
         "acceptedExample": "It changes the force of the verb to show strong advice.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "All modal verbs show the same certainty.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -8511,9 +8510,9 @@
           "promptText": "Why is \"the nervous goalkeeper with muddy gloves\" an expanded noun phrase?",
           "options": [
             "It is centred on a noun and includes extra describing or specifying detail.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A noun phrase must always be a whole sentence.",
+            "The head noun is always the first word in the phrase.",
+            "Any phrase with an adjective is automatically a clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It is centred on a noun and includes extra describing or specifying detail."
@@ -8523,9 +8522,9 @@
           "promptText": "Why is \"a cracked wooden box beneath the stairs\" an expanded noun phrase?",
           "options": [
             "It is centred on a noun and includes extra describing or specifying detail.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A noun phrase must always be a whole sentence.",
+            "The head noun is always the first word in the phrase.",
+            "Any phrase with an adjective is automatically a clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It is centred on a noun and includes extra describing or specifying detail."
@@ -8535,9 +8534,9 @@
           "promptText": "Why is \"the tiny silver key on the hook\" an expanded noun phrase?",
           "options": [
             "It is centred on a noun and includes extra describing or specifying detail.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A noun phrase must always be a whole sentence.",
+            "The head noun is always the first word in the phrase.",
+            "Any phrase with an adjective is automatically a clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It is centred on a noun and includes extra describing or specifying detail."
@@ -8549,19 +8548,7 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship",
-      "adultReviewDecision": {
-        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
-        "acceptedExample": "It is centred on a noun and includes extra describing or specifying detail.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
-        "reviewerId": "grammar-engineering-review",
-        "reviewDate": "2026-04-30",
-        "finalStatus": "approved_with_review",
-        "reasons": [
-          "likely-surface-cue"
-        ]
-      }
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_noun_phrases_head_noun",
@@ -8735,9 +8722,9 @@
           "promptText": "Why do the commas work here? Our class visited York, the oldest city on our route, first.",
           "options": [
             "The extra information could be removed and the main sentence would still work.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Parenthesis always changes the main meaning of the sentence.",
+            "Only brackets can show parenthesis.",
+            "Commas for parenthesis are the same as list commas."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The extra information could be removed and the main sentence would still work."
@@ -8747,9 +8734,9 @@
           "promptText": "Why do the commas work here? Luca, who was first in line, opened the door.",
           "options": [
             "The extra information could be removed and the main sentence would still work.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Parenthesis always changes the main meaning of the sentence.",
+            "Only brackets can show parenthesis.",
+            "Commas for parenthesis are the same as list commas."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The extra information could be removed and the main sentence would still work."
@@ -8759,9 +8746,9 @@
           "promptText": "Why do the commas work here? The trophy, made of silver, stood on the shelf.",
           "options": [
             "The extra information could be removed and the main sentence would still work.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Parenthesis always changes the main meaning of the sentence.",
+            "Only brackets can show parenthesis.",
+            "Commas for parenthesis are the same as list commas."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The extra information could be removed and the main sentence would still work."
@@ -8773,19 +8760,7 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship",
-      "adultReviewDecision": {
-        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
-        "acceptedExample": "The extra information could be removed and the main sentence would still work.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
-        "reviewerId": "grammar-engineering-review",
-        "reviewDate": "2026-04-30",
-        "finalStatus": "approved_with_review",
-        "reasons": [
-          "likely-surface-cue"
-        ]
-      }
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_parenthesis_commas_parenthesis_choice",
@@ -9168,9 +9143,9 @@
           "promptText": "Why is this version clearer? Amira picked up the map. She folded it carefully.",
           "options": [
             "The pronouns clearly refer back to the correct nouns without confusing the reader.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A pronoun is clear as long as it appears after a noun.",
+            "Using more pronouns always makes writing clearer.",
+            "It does not matter if a pronoun could refer to two people."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The pronouns clearly refer back to the correct nouns without confusing the reader."
@@ -9180,9 +9155,9 @@
           "promptText": "Why is this version clearer? Lucas dropped the torch. He found it under the bench.",
           "options": [
             "The pronouns clearly refer back to the correct nouns without confusing the reader.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A pronoun is clear as long as it appears after a noun.",
+            "Using more pronouns always makes writing clearer.",
+            "It does not matter if a pronoun could refer to two people."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The pronouns clearly refer back to the correct nouns without confusing the reader."
@@ -9192,9 +9167,9 @@
           "promptText": "Why is this version clearer? The twins fed the rabbits. They cleaned the rabbits' hutch.",
           "options": [
             "The pronouns clearly refer back to the correct nouns without confusing the reader.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "A pronoun is clear as long as it appears after a noun.",
+            "Using more pronouns always makes writing clearer.",
+            "It does not matter if a pronoun could refer to two people."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The pronouns clearly refer back to the correct nouns without confusing the reader."
@@ -9206,19 +9181,7 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship",
-      "adultReviewDecision": {
-        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
-        "acceptedExample": "The pronouns clearly refer back to the correct nouns without confusing the reader.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
-        "reviewerId": "grammar-engineering-review",
-        "reviewDate": "2026-04-30",
-        "finalStatus": "approved_with_review",
-        "reasons": [
-          "likely-surface-cue"
-        ]
-      }
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_pronouns_cohesion_pronoun_referent",
@@ -9351,9 +9314,9 @@
           "promptText": "Why is \"who had lost her ticket\" a relative clause?",
           "options": [
             "It begins with a relative word and adds information about the noun before it.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Any clause beginning with which is a question.",
+            "Relative clauses never need commas.",
+            "Who and which can be swapped for any noun."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It begins with a relative word and adds information about the noun before it."
@@ -9363,9 +9326,9 @@
           "promptText": "Why is \"that was locked outside\" a relative clause?",
           "options": [
             "It begins with a relative word and adds information about the noun before it.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Any clause beginning with which is a question.",
+            "Relative clauses never need commas.",
+            "Who and which can be swapped for any noun."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It begins with a relative word and adds information about the noun before it."
@@ -9375,9 +9338,9 @@
           "promptText": "Why is \"which sits beside the sea\" a relative clause?",
           "options": [
             "It begins with a relative word and adds information about the noun before it.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Any clause beginning with which is a question.",
+            "Relative clauses never need commas.",
+            "Who and which can be swapped for any noun."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It begins with a relative word and adds information about the noun before it."
@@ -9394,7 +9357,7 @@
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
         "acceptedExample": "It begins with a relative word and adds information about the noun before it.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "Any clause beginning with which is a question.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -9599,9 +9562,9 @@
           "promptText": "Choose the best reason this sentence is a command: Close the library door quietly.",
           "options": [
             "It tells someone to do something.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The function is decided only by the final punctuation mark.",
+            "Any short sentence is automatically a command.",
+            "Any sentence with strong feeling is automatically an exclamation."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It tells someone to do something."
@@ -9611,9 +9574,9 @@
           "promptText": "Choose the best reason this sentence is an exclamation: How bright the comet looked!",
           "options": [
             "It uses What/How to show strong feeling.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The function is decided only by the final punctuation mark.",
+            "Any short sentence is automatically a command.",
+            "Any sentence with strong feeling is automatically an exclamation."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses What/How to show strong feeling."
@@ -9623,9 +9586,9 @@
           "promptText": "Choose the best reason this sentence is a question: Did Maya remember her reading journal?",
           "options": [
             "It asks for an answer.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The function is decided only by the final punctuation mark.",
+            "Any short sentence is automatically a command.",
+            "Any sentence with strong feeling is automatically an exclamation."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It asks for an answer."
@@ -9869,9 +9832,9 @@
           "promptText": "Why is this version correct? \"Where are you going?\" asked Mum.",
           "options": [
             "The spoken words are enclosed in speech marks and their punctuation is inside the marks.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Speech marks go around the whole sentence, including the report.",
+            "A reporting clause never needs punctuation.",
+            "Direct speech can be punctuated like ordinary narration."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The spoken words are enclosed in speech marks and their punctuation is inside the marks."
@@ -9881,9 +9844,9 @@
           "promptText": "Why is this version correct? \"Sit down!\" said the coach.",
           "options": [
             "The spoken words are enclosed in speech marks and their punctuation is inside the marks.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Speech marks go around the whole sentence, including the report.",
+            "A reporting clause never needs punctuation.",
+            "Direct speech can be punctuated like ordinary narration."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The spoken words are enclosed in speech marks and their punctuation is inside the marks."
@@ -9893,9 +9856,9 @@
           "promptText": "Why is this version correct? Dad asked, \"Have you packed your boots?\"",
           "options": [
             "The spoken words are enclosed in speech marks and their punctuation is inside the marks.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "Speech marks go around the whole sentence, including the report.",
+            "A reporting clause never needs punctuation.",
+            "Direct speech can be punctuated like ordinary narration."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The spoken words are enclosed in speech marks and their punctuation is inside the marks."
@@ -9907,19 +9870,7 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship",
-      "adultReviewDecision": {
-        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
-        "acceptedExample": "The spoken words are enclosed in speech marks and their punctuation is inside the marks.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
-        "reviewerId": "grammar-engineering-review",
-        "reviewDate": "2026-04-30",
-        "finalStatus": "approved_with_review",
-        "reasons": [
-          "likely-surface-cue"
-        ]
-      }
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p18_p15_speech_punctuation_speech_choice",
@@ -10127,9 +10078,9 @@
           "promptText": "Why is this the Standard English version? We were late for assembly.",
           "options": [
             "It uses the accepted written grammar form expected in formal school writing.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "It is Standard English because it sounds casual.",
+            "Any spoken form is correct in formal writing.",
+            "The verb form does not need to match the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses the accepted written grammar form expected in formal school writing."
@@ -10139,9 +10090,9 @@
           "promptText": "Why is this the Standard English version? I did my project yesterday.",
           "options": [
             "It uses the accepted written grammar form expected in formal school writing.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "It is Standard English because it sounds casual.",
+            "Any spoken form is correct in formal writing.",
+            "The verb form does not need to match the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses the accepted written grammar form expected in formal school writing."
@@ -10151,9 +10102,9 @@
           "promptText": "Why is this the Standard English version? She saw the poster in the library.",
           "options": [
             "It uses the accepted written grammar form expected in formal school writing.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "It is Standard English because it sounds casual.",
+            "Any spoken form is correct in formal writing.",
+            "The verb form does not need to match the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses the accepted written grammar form expected in formal school writing."
@@ -10170,7 +10121,7 @@
         "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
         "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
         "acceptedExample": "It uses the accepted written grammar form expected in formal school writing.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "It is Standard English because it sounds casual.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -10381,9 +10332,9 @@
           "promptText": "Why is \"the sandwich\" the object in this sentence? The noisy gull stole the sandwich from Max.",
           "options": [
             "The subject does the action and the object receives it.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The subject is always the first word.",
+            "The object is the person doing the action.",
+            "In passive sentences, the doer must be the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The subject does the action and the object receives it."
@@ -10393,9 +10344,9 @@
           "promptText": "Why is \"the ball\" the object in this sentence? After lunch, the tired goalkeeper caught the ball.",
           "options": [
             "The subject does the action and the object receives it.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The subject is always the first word.",
+            "The object is the person doing the action.",
+            "In passive sentences, the doer must be the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The subject does the action and the object receives it."
@@ -10405,9 +10356,9 @@
           "promptText": "Why is \"the museum\" the object in this sentence? On Friday morning, our science club visited the museum.",
           "options": [
             "The subject does the action and the object receives it.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The subject is always the first word.",
+            "The object is the person doing the action.",
+            "In passive sentences, the doer must be the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The subject does the action and the object receives it."
@@ -10424,7 +10375,7 @@
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The prompt anchors the choice to the displayed sentence/context, and the rejected alternatives map to named misconceptions.",
         "acceptedExample": "The subject does the action and the object receives it.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "The subject is always the first word.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -10726,9 +10677,9 @@
           "promptText": "Why does this answer fit the requested tense/aspect? I have finished my homework.",
           "options": [
             "It uses the verb form needed for the present perfect.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The tense is decided only by the last word.",
+            "Has and had mean exactly the same thing.",
+            "Progressive forms are the same as simple past forms."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses the verb form needed for the present perfect."
@@ -10738,9 +10689,9 @@
           "promptText": "Why does this answer fit the requested tense/aspect? She had packed her bag before the trip.",
           "options": [
             "It uses the verb form needed for the past perfect.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The tense is decided only by the last word.",
+            "Has and had mean exactly the same thing.",
+            "Progressive forms are the same as simple past forms."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses the verb form needed for the past perfect."
@@ -10750,9 +10701,9 @@
           "promptText": "Why does this answer fit the requested tense/aspect? The dog was chasing the cat.",
           "options": [
             "It uses the verb form needed for the past progressive.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The tense is decided only by the last word.",
+            "Has and had mean exactly the same thing.",
+            "Progressive forms are the same as simple past forms."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It uses the verb form needed for the past progressive."
@@ -10936,9 +10887,9 @@
           "promptText": "Why is \"carefully\" an adverb in this sentence? On Tuesday, Aisha carefully folded the blue scarf.",
           "options": [
             "It is an adverb because of the job it does in this sentence.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The word class is decided only by where the word appears in the sentence.",
+            "Every describing word is a noun.",
+            "A word keeps the same class in every sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It is an adverb because of the job it does in this sentence."
@@ -10948,9 +10899,9 @@
           "promptText": "Why is \"under\" a preposition in this sentence? The narrow boat drifted under the bridge.",
           "options": [
             "It is a preposition because of the job it does in this sentence.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The word class is decided only by where the word appears in the sentence.",
+            "Every describing word is a noun.",
+            "A word keeps the same class in every sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It is a preposition because of the job it does in this sentence."
@@ -10960,9 +10911,9 @@
           "promptText": "Why is \"Those\" a determiner in this sentence? Those silver badges belong to the choir.",
           "options": [
             "It is a determiner because of the job it does in this sentence.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it sounds more exciting.",
-            "It is correct because it is the shortest option."
+            "The word class is decided only by where the word appears in the sentence.",
+            "Every describing word is a noun.",
+            "A word keeps the same class in every sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It is a determiner because of the job it does in this sentence."
@@ -27304,9 +27255,9 @@
           "promptText": "Choose the best explanation for this answer. Which option gives an instruction about the gate? Answer: Close the gate before the puppy runs out.",
           "options": [
             "A command tells someone to do something.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The function is decided only by the final punctuation mark.",
+            "Any short sentence is automatically a command.",
+            "Any sentence with strong feeling is automatically an exclamation."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "A command tells someone to do something."
@@ -27316,9 +27267,9 @@
           "promptText": "Choose the best explanation for this answer. Which option asks about the red scarf? Answer: Where did you put the red scarf?",
           "options": [
             "A question asks for information and normally uses a question mark.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The function is decided only by the final punctuation mark.",
+            "Any short sentence is automatically a command.",
+            "Any sentence with strong feeling is automatically an exclamation."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "A question asks for information and normally uses a question mark."
@@ -27328,9 +27279,9 @@
           "promptText": "Choose the best explanation for this answer. Which option gives information about the lighthouse? Answer: The lighthouse flashed every ten seconds.",
           "options": [
             "A statement gives information.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The function is decided only by the final punctuation mark.",
+            "Any short sentence is automatically a command.",
+            "Any sentence with strong feeling is automatically an exclamation."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "A statement gives information."
@@ -27342,19 +27293,7 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship",
-      "adultReviewDecision": {
-        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
-        "acceptedExample": "A KS2 exclamation often begins with what or how and shows strong feeling.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
-        "reviewerId": "grammar-engineering-review",
-        "reviewDate": "2026-04-30",
-        "finalStatus": "approved_with_review",
-        "reasons": [
-          "likely-surface-cue"
-        ]
-      }
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p21_word_classes_closed_choice_variety",
@@ -27422,9 +27361,9 @@
           "promptText": "Choose the best explanation for this answer. In the sentence \"Ben often walks home\", what is \"often\"? Answer: adverb",
           "options": [
             "Often is an adverb because it tells us how frequently Ben walks.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The word class is decided only by where the word appears in the sentence.",
+            "Every describing word is a noun.",
+            "A word keeps the same class in every sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Often is an adverb because it tells us how frequently Ben walks."
@@ -27434,9 +27373,9 @@
           "promptText": "Choose the best explanation for this answer. In the sentence \"These biscuits are warm\", what is \"These\"? Answer: determiner",
           "options": [
             "These is a determiner because it comes before the noun and points to which biscuits.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The word class is decided only by where the word appears in the sentence.",
+            "Every describing word is a noun.",
+            "A word keeps the same class in every sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "These is a determiner because it comes before the noun and points to which biscuits."
@@ -27446,9 +27385,9 @@
           "promptText": "Choose the best explanation for this answer. In the sentence \"The marble rolled under the cupboard\", what is \"under\"? Answer: preposition",
           "options": [
             "Under is a preposition because it shows the marble's position.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The word class is decided only by where the word appears in the sentence.",
+            "Every describing word is a noun.",
+            "A word keeps the same class in every sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Under is a preposition because it shows the marble's position."
@@ -27460,19 +27399,7 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship",
-      "adultReviewDecision": {
-        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
-        "acceptedExample": "These is a determiner because it comes before the noun and points to which biscuits.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
-        "reviewerId": "grammar-engineering-review",
-        "reviewDate": "2026-04-30",
-        "finalStatus": "approved_with_review",
-        "reasons": [
-          "likely-surface-cue"
-        ]
-      }
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p21_noun_phrases_closed_choice_variety",
@@ -27540,9 +27467,9 @@
           "promptText": "Choose the best explanation for this answer. Which option is the expanded noun phrase about the key? Answer: the tiny silver key beside the vase",
           "options": [
             "The phrase is centred on the noun key and expands it with description.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A noun phrase must always be a whole sentence.",
+            "The head noun is always the first word in the phrase.",
+            "Any phrase with an adjective is automatically a clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The phrase is centred on the noun key and expands it with description."
@@ -27552,9 +27479,9 @@
           "promptText": "Choose the best explanation for this answer. Which word is the head noun in \"the old wooden boat\"? Answer: boat",
           "options": [
             "Boat is the noun at the centre of the noun phrase.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A noun phrase must always be a whole sentence.",
+            "The head noun is always the first word in the phrase.",
+            "Any phrase with an adjective is automatically a clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Boat is the noun at the centre of the noun phrase."
@@ -27564,9 +27491,9 @@
           "promptText": "Choose the best explanation for this answer. Which option is a noun phrase, not a clause? Answer: the nervous goalkeeper near the post",
           "options": [
             "A noun phrase does not contain its own subject-verb clause here.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A noun phrase must always be a whole sentence.",
+            "The head noun is always the first word in the phrase.",
+            "Any phrase with an adjective is automatically a clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "A noun phrase does not contain its own subject-verb clause here."
@@ -27578,19 +27505,7 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship",
-      "adultReviewDecision": {
-        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
-        "acceptedExample": "The expanded noun phrase adds detail while keeping garden as the main noun.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
-        "reviewerId": "grammar-engineering-review",
-        "reviewDate": "2026-04-30",
-        "finalStatus": "approved_with_review",
-        "reasons": [
-          "likely-surface-cue"
-        ]
-      }
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p21_adverbials_closed_choice_variety",
@@ -27658,9 +27573,9 @@
           "promptText": "Choose the best explanation for this answer. Which option correctly places the fronted adverbial after breakfast? Answer: After breakfast, the class walked to the hall.",
           "options": [
             "After breakfast is a fronted adverbial and needs a comma after it.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A fronted adverbial is correct without a comma.",
+            "Only single words can be adverbials.",
+            "An adverbial must always come at the end of a sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "After breakfast is a fronted adverbial and needs a comma after it."
@@ -27670,9 +27585,9 @@
           "promptText": "Choose the best explanation for this answer. Which opening phrase is a fronted adverbial of place? Answer: Beside the river,",
           "options": [
             "Beside the river tells us where and has been moved to the front.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A fronted adverbial is correct without a comma.",
+            "Only single words can be adverbials.",
+            "An adverbial must always come at the end of a sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Beside the river tells us where and has been moved to the front."
@@ -27682,9 +27597,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence needs a comma after the fronted adverbial? Answer: Without making a sound, the fox crossed the path.",
           "options": [
             "Without making a sound is a fronted adverbial telling us how.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A fronted adverbial is correct without a comma.",
+            "Only single words can be adverbials.",
+            "An adverbial must always come at the end of a sentence."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Without making a sound is a fronted adverbial telling us how."
@@ -27696,19 +27611,7 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship",
-      "adultReviewDecision": {
-        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
-        "acceptedExample": "At the edge of the forest tells us where and has been moved to the front.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
-        "reviewerId": "grammar-engineering-review",
-        "reviewDate": "2026-04-30",
-        "finalStatus": "approved_with_review",
-        "reasons": [
-          "likely-surface-cue"
-        ]
-      }
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p21_clauses_closed_choice_variety",
@@ -27788,9 +27691,9 @@
           "promptText": "Choose the best explanation for this answer. Which part is the subordinate clause in \"Because it was icy, we walked slowly\"? Answer: Because it was icy",
           "options": [
             "Because it was icy depends on the main clause for the full sentence.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A subordinate clause can always stand alone as a full sentence.",
+            "A clause does not need a verb.",
+            "The longest part of the sentence is always the main clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Because it was icy depends on the main clause for the full sentence."
@@ -27800,9 +27703,9 @@
           "promptText": "Choose the best explanation for this answer. Which part is the main clause in \"After the bell rang, the pupils lined up\"? Answer: the pupils lined up",
           "options": [
             "The pupils lined up can stand as the main idea of the sentence.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A subordinate clause can always stand alone as a full sentence.",
+            "A clause does not need a verb.",
+            "The longest part of the sentence is always the main clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The pupils lined up can stand as the main idea of the sentence."
@@ -27812,9 +27715,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence correctly uses although? Answer: Although the path was muddy, we reached the farm.",
           "options": [
             "Although introduces a subordinate clause that needs a main clause.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A subordinate clause can always stand alone as a full sentence.",
+            "A clause does not need a verb.",
+            "The longest part of the sentence is always the main clause."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Although introduces a subordinate clause that needs a main clause."
@@ -27831,7 +27734,7 @@
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
         "acceptedExample": "Because it was icy depends on the main clause for the full sentence.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "A subordinate clause can always stand alone as a full sentence.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -27918,9 +27821,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses a relative clause about a person? Answer: The girl who won the race smiled.",
           "options": [
             "Who won the race adds information about the girl.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Any clause beginning with which is a question.",
+            "Relative clauses never need commas.",
+            "Who and which can be swapped for any noun."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Who won the race adds information about the girl."
@@ -27930,9 +27833,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses which correctly for a thing? Answer: The kite, which was torn, dropped into the field.",
           "options": [
             "Which was torn is a relative clause about the kite.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Any clause beginning with which is a question.",
+            "Relative clauses never need commas.",
+            "Who and which can be swapped for any noun."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Which was torn is a relative clause about the kite."
@@ -27942,9 +27845,9 @@
           "promptText": "Choose the best explanation for this answer. Which option contains a relative clause about the shop? Answer: The shop that sells maps closes at five.",
           "options": [
             "That sells maps adds information about the shop.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Any clause beginning with which is a question.",
+            "Relative clauses never need commas.",
+            "Who and which can be swapped for any noun."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "That sells maps adds information about the shop."
@@ -27961,7 +27864,7 @@
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
         "acceptedExample": "Who won the race adds information about the girl.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "Any clause beginning with which is a question.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -28036,9 +27939,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses the present perfect? Answer: She has finished her homework.",
           "options": [
             "Has finished links a completed action to the present.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The tense is decided only by the last word.",
+            "Has and had mean exactly the same thing.",
+            "Progressive forms are the same as simple past forms."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Has finished links a completed action to the present."
@@ -28048,9 +27951,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses the past progressive? Answer: They were playing chess when the bell rang.",
           "options": [
             "Were playing shows an action in progress in the past.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The tense is decided only by the last word.",
+            "Has and had mean exactly the same thing.",
+            "Progressive forms are the same as simple past forms."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Were playing shows an action in progress in the past."
@@ -28060,9 +27963,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses the past perfect? Answer: Maya had packed her bag before the taxi arrived.",
           "options": [
             "Had packed shows an earlier past action before another past action.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The tense is decided only by the last word.",
+            "Has and had mean exactly the same thing.",
+            "Progressive forms are the same as simple past forms."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Had packed shows an earlier past action before another past action."
@@ -28142,9 +28045,9 @@
           "promptText": "Choose the best explanation for this answer. Which option uses the Standard English verb were? Answer: We were late for assembly.",
           "options": [
             "We were is the standard written form.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "It is Standard English because it sounds casual.",
+            "Any spoken form is correct in formal writing.",
+            "The verb form does not need to match the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "We were is the standard written form."
@@ -28154,9 +28057,9 @@
           "promptText": "Choose the best explanation for this answer. Which option uses the Standard English past-tense verb did? Answer: I did my homework before tea.",
           "options": [
             "Did is the standard past-tense form here.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "It is Standard English because it sounds casual.",
+            "Any spoken form is correct in formal writing.",
+            "The verb form does not need to match the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Did is the standard past-tense form here."
@@ -28166,9 +28069,9 @@
           "promptText": "Choose the best explanation for this answer. Which option uses the Standard English phrase should have? Answer: You should have checked your answer.",
           "options": [
             "Should have is the standard written form.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "It is Standard English because it sounds casual.",
+            "Any spoken form is correct in formal writing.",
+            "The verb form does not need to match the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Should have is the standard written form."
@@ -28248,9 +28151,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence keeps the pronoun reference clear? Answer: Amira picked up the map and folded it carefully.",
           "options": [
             "It clearly refers to the map.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A pronoun is clear as long as it appears after a noun.",
+            "Using more pronouns always makes writing clearer.",
+            "It does not matter if a pronoun could refer to two people."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "It clearly refers to the map."
@@ -28260,9 +28163,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence is clearer? Answer: Tom gave the trophy to Lucas because Lucas had won it.",
           "options": [
             "Repeating Lucas avoids an unclear he.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A pronoun is clear as long as it appears after a noun.",
+            "Using more pronouns always makes writing clearer.",
+            "It does not matter if a pronoun could refer to two people."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Repeating Lucas avoids an unclear he."
@@ -28272,9 +28175,9 @@
           "promptText": "Choose the best explanation for this answer. Which option improves cohesion without confusion? Answer: The kittens slept in the basket. They looked peaceful.",
           "options": [
             "They clearly refers to the kittens.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A pronoun is clear as long as it appears after a noun.",
+            "Using more pronouns always makes writing clearer.",
+            "It does not matter if a pronoun could refer to two people."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "They clearly refers to the kittens."
@@ -28366,9 +28269,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence is most formal? Answer: I would be grateful if you could reply soon.",
           "options": [
             "The vocabulary and structure suit formal writing.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Formal writing should always use slang.",
+            "The meaning is formal just because the sentence is longer.",
+            "A contraction is always the best choice in formal writing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The vocabulary and structure suit formal writing."
@@ -28378,9 +28281,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence is informal? Answer: That film was awesome!",
           "options": [
             "Awesome is chatty, informal vocabulary.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Formal writing should always use slang.",
+            "The meaning is formal just because the sentence is longer.",
+            "A contraction is always the best choice in formal writing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Awesome is chatty, informal vocabulary."
@@ -28390,9 +28293,9 @@
           "promptText": "Choose the best explanation for this answer. Which word is the most formal replacement for \"kids\"? Answer: children",
           "options": [
             "Children is more formal and precise than kids.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Formal writing should always use slang.",
+            "The meaning is formal just because the sentence is longer.",
+            "A contraction is always the best choice in formal writing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Children is more formal and precise than kids."
@@ -28409,7 +28312,7 @@
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
         "acceptedExample": "The vocabulary and structure suit formal writing.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "Formal writing should always use slang.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -28484,9 +28387,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence is active voice? Answer: The chef baked the bread.",
           "options": [
             "In active voice, the doer comes before the verb.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Passive voice means the action is in the future.",
+            "The first noun is always the doer.",
+            "Adding by always makes a sentence active."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "In active voice, the doer comes before the verb."
@@ -28496,9 +28399,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence is passive voice? Answer: The trophy was lifted by the captain.",
           "options": [
             "In passive voice, the thing affected comes first.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Passive voice means the action is in the future.",
+            "The first noun is always the doer.",
+            "Adding by always makes a sentence active."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "In passive voice, the thing affected comes first."
@@ -28508,9 +28411,9 @@
           "promptText": "Choose the best explanation for this answer. Which passive sentence keeps the same meaning as \"The dog chased the ball\"? Answer: The ball was chased by the dog.",
           "options": [
             "The ball is still the thing being chased.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Passive voice means the action is in the future.",
+            "The first noun is always the doer.",
+            "Adding by always makes a sentence active."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The ball is still the thing being chased."
@@ -28602,9 +28505,9 @@
           "promptText": "Choose the best explanation for this answer. In \"The cat chased the mouse\", what is the subject? Answer: The cat",
           "options": [
             "The subject is the doer of the action.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The subject is always the first word.",
+            "The object is the person doing the action.",
+            "In passive sentences, the doer must be the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The subject is the doer of the action."
@@ -28614,9 +28517,9 @@
           "promptText": "Choose the best explanation for this answer. In \"Jamal kicked the ball\", what is the object? Answer: the ball",
           "options": [
             "The object receives the action.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The subject is always the first word.",
+            "The object is the person doing the action.",
+            "In passive sentences, the doer must be the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The object receives the action."
@@ -28626,9 +28529,9 @@
           "promptText": "Choose the best explanation for this answer. In \"After lunch, Priya watered the plants\", what is the subject? Answer: Priya",
           "options": [
             "Priya is the person doing the watering.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "The subject is always the first word.",
+            "The object is the person doing the action.",
+            "In passive sentences, the doer must be the subject."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Priya is the person doing the watering."
@@ -28645,7 +28548,7 @@
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
         "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
         "acceptedExample": "The subject is the doer of the action.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "The subject is always the first word.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
@@ -28732,9 +28635,9 @@
           "promptText": "Choose the best explanation for this answer. Which modal verb shows the strongest certainty? Answer: must",
           "options": [
             "Must shows stronger certainty than might, could or may.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "All modal verbs show the same certainty.",
+            "A modal verb is any word that comes before a noun.",
+            "Will and might mean exactly the same thing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Must shows stronger certainty than might, could or may."
@@ -28744,9 +28647,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence shows possibility, not certainty? Answer: We might visit Gran on Saturday.",
           "options": [
             "Might suggests something is possible.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "All modal verbs show the same certainty.",
+            "A modal verb is any word that comes before a noun.",
+            "Will and might mean exactly the same thing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Might suggests something is possible."
@@ -28756,9 +28659,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence gives advice? Answer: You should wear a coat.",
           "options": [
             "Should is often used to give advice.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "All modal verbs show the same certainty.",
+            "A modal verb is any word that comes before a noun.",
+            "Will and might mean exactly the same thing."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Should is often used to give advice."
@@ -28773,15 +28676,14 @@
       "finalAction": "ship",
       "adultReviewDecision": {
         "ambiguousRisk": "Template covers a grammar area with plausible KS2 edge readings, so distractor intent requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
+        "disambiguationRationale": "The option set was reviewed against the prompt and answer specification; rejected alternatives remain grammatically distinct from the accepted answer.",
         "acceptedExample": "Must shows stronger certainty than might, could or may.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
+        "rejectedAlternative": "All modal verbs show the same certainty.",
         "reviewerId": "grammar-engineering-review",
         "reviewDate": "2026-04-30",
         "finalStatus": "approved_with_review",
         "reasons": [
-          "ambiguous-concept-area",
-          "likely-surface-cue"
+          "ambiguous-concept-area"
         ]
       }
     },
@@ -28851,9 +28753,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses commas to show parenthesis? Answer: The garden, full of roses, smelled sweet.",
           "options": [
             "The commas mark extra information that can be lifted out.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Parenthesis always changes the main meaning of the sentence.",
+            "Only brackets can show parenthesis.",
+            "Commas for parenthesis are the same as list commas."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The commas mark extra information that can be lifted out."
@@ -28863,9 +28765,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses brackets for parenthesis? Answer: Our teacher (who is very kind) helped us tidy.",
           "options": [
             "The brackets enclose the extra information.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Parenthesis always changes the main meaning of the sentence.",
+            "Only brackets can show parenthesis.",
+            "Commas for parenthesis are the same as list commas."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The brackets enclose the extra information."
@@ -28875,9 +28777,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses dashes to show parenthesis? Answer: The match - delayed by rain - started at four.",
           "options": [
             "The pair of dashes marks the extra information.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Parenthesis always changes the main meaning of the sentence.",
+            "Only brackets can show parenthesis.",
+            "Commas for parenthesis are the same as list commas."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The pair of dashes marks the extra information."
@@ -28957,9 +28859,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence punctuates direct speech correctly? Answer: \"Where are my shoes?\" asked Leo.",
           "options": [
             "The question mark belongs inside the speech marks.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Speech marks go around the whole sentence, including the report.",
+            "A reporting clause never needs punctuation.",
+            "Direct speech can be punctuated like ordinary narration."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The question mark belongs inside the speech marks."
@@ -28969,9 +28871,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses the comma before speech correctly? Answer: Sara said, \"I will meet you at the gate.\"",
           "options": [
             "A reporting clause before speech usually needs a comma before the opening speech marks.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Speech marks go around the whole sentence, including the report.",
+            "A reporting clause never needs punctuation.",
+            "Direct speech can be punctuated like ordinary narration."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "A reporting clause before speech usually needs a comma before the opening speech marks."
@@ -28981,9 +28883,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence keeps the exclamation mark inside the speech marks? Answer: \"Watch out!\" shouted Dad.",
           "options": [
             "The punctuation for the spoken words goes inside the speech marks.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Speech marks go around the whole sentence, including the report.",
+            "A reporting clause never needs punctuation.",
+            "Direct speech can be punctuated like ordinary narration."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The punctuation for the spoken words goes inside the speech marks."
@@ -28995,19 +28897,7 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship",
-      "adultReviewDecision": {
-        "ambiguousRisk": "Template has a possible surface-cue risk, so option wording requires adult sign-off.",
-        "disambiguationRationale": "Reviewer checked that the correct option is selected by grammar meaning, not by length or wording pattern; the item remains monitored in the distractor audit.",
-        "acceptedExample": "A reporting clause before speech usually needs a comma before the opening speech marks.",
-        "rejectedAlternative": "It only depends on the final punctuation mark.",
-        "reviewerId": "grammar-engineering-review",
-        "reviewDate": "2026-04-30",
-        "finalStatus": "approved_with_review",
-        "reasons": [
-          "likely-surface-cue"
-        ]
-      }
+      "finalAction": "ship"
     },
     {
       "templateId": "qg_p21_apostrophes_possession_closed_choice_variety",
@@ -29075,9 +28965,9 @@
           "promptText": "Choose the best explanation for this answer. Which phrase shows singular possession? Answer: Tom's pencil",
           "options": [
             "The apostrophe before s shows that one Tom owns the pencil.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Every plural noun needs an apostrophe.",
+            "An apostrophe always means a contraction.",
+            "The apostrophe goes wherever the word sounds paused."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The apostrophe before s shows that one Tom owns the pencil."
@@ -29087,9 +28977,9 @@
           "promptText": "Choose the best explanation for this answer. Which phrase shows that more than one girl owns the coats? Answer: the girls' coats",
           "options": [
             "For a regular plural ending in s, the apostrophe goes after the s.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Every plural noun needs an apostrophe.",
+            "An apostrophe always means a contraction.",
+            "The apostrophe goes wherever the word sounds paused."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "For a regular plural ending in s, the apostrophe goes after the s."
@@ -29099,9 +28989,9 @@
           "promptText": "Choose the best explanation for this answer. Which phrase shows that the children own the books? Answer: the children's books",
           "options": [
             "Children is an irregular plural, so add apostrophe s.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "Every plural noun needs an apostrophe.",
+            "An apostrophe always means a contraction.",
+            "The apostrophe goes wherever the word sounds paused."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "Children is an irregular plural, so add apostrophe s."
@@ -29181,9 +29071,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses a colon to introduce a list? Answer: Bring these items: a pen, a ruler and a book.",
           "options": [
             "A colon can introduce a list after a complete clause.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A colon can be used after any short phrase.",
+            "A semicolon joins two unrelated ideas.",
+            "A comma can always replace a full stop."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "A colon can introduce a list after a complete clause."
@@ -29193,9 +29083,9 @@
           "promptText": "Choose the best explanation for this answer. Which option links the storm clauses with a semicolon? Answer: The sky turned dark; the storm was close.",
           "options": [
             "A semicolon can link two complete, closely related clauses.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A colon can be used after any short phrase.",
+            "A semicolon joins two unrelated ideas.",
+            "A comma can always replace a full stop."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "A semicolon can link two complete, closely related clauses."
@@ -29205,9 +29095,9 @@
           "promptText": "Choose the best explanation for this answer. Which sentence uses a dash to add an explanation? Answer: Only one thing mattered - the lost key.",
           "options": [
             "The dash introduces an explanatory phrase.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A colon can be used after any short phrase.",
+            "A semicolon joins two unrelated ideas.",
+            "A comma can always replace a full stop."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The dash introduces an explanatory phrase."
@@ -29287,9 +29177,9 @@
           "promptText": "Choose the best explanation for this answer. Which phrase means the shark eats people? Answer: man-eating shark",
           "options": [
             "The hyphen joins man and eating so they work together as one modifier.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A hyphen is just a longer dash.",
+            "Hyphens are only used to make words look shorter.",
+            "The meaning stays the same whether or not the hyphen is used."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The hyphen joins man and eating so they work together as one modifier."
@@ -29299,9 +29189,9 @@
           "promptText": "Choose the best explanation for this answer. Which word means to cover something again? Answer: re-cover",
           "options": [
             "The hyphen separates re and cover to avoid confusion with recover.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A hyphen is just a longer dash.",
+            "Hyphens are only used to make words look shorter.",
+            "The meaning stays the same whether or not the hyphen is used."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The hyphen separates re and cover to avoid confusion with recover."
@@ -29311,9 +29201,9 @@
           "promptText": "Choose the best explanation for this answer. Which phrase uses a hyphen correctly before a noun? Answer: well-earned break",
           "options": [
             "The hyphen joins well and earned before the noun break.",
-            "It only depends on the final punctuation mark.",
-            "It is correct because it is the shortest option.",
-            "It is correct because it sounds more exciting."
+            "A hyphen is just a longer dash.",
+            "Hyphens are only used to make words look shorter.",
+            "The meaning stays the same whether or not the hyphen is used."
           ],
           "markingResult": "correct",
           "feedbackSnippet": "The hyphen joins well and earned before the noun break."

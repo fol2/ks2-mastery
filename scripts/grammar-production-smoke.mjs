@@ -197,6 +197,29 @@ const GRAMMAR_P20C_HOTFIX_SMOKE_ITEMS = Object.freeze([
   }),
 ]);
 
+export const GRAMMAR_P24_DISTRACTOR_SMOKE_ITEMS = Object.freeze([
+  Object.freeze({
+    id: 'active-passive-explanation',
+    templateId: 'qg_p18_p15_active_passive_explain_voice',
+    seed: 1,
+  }),
+  Object.freeze({
+    id: 'hyphen-ambiguity-explanation',
+    templateId: 'qg_p21_hyphen_ambiguity_explanation_choice_variety',
+    seed: 1,
+  }),
+]);
+
+const GRAMMAR_P24_GENERIC_EXPLANATION_DISTRACTORS = Object.freeze([
+  'It only depends on the final punctuation mark.',
+  'It is correct because it is the shortest option.',
+  'It is correct because it sounds more exciting.',
+  'It is correct because the sentence has a capital letter.',
+  'It is correct because the sentence mentions a person or thing.',
+]);
+
+const GRAMMAR_P24_GENERIC_EXPLANATION_DISTRACTOR_SET = new Set(GRAMMAR_P24_GENERIC_EXPLANATION_DISTRACTORS);
+
 export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
   Object.freeze({
     family: 'exact',
@@ -265,6 +288,44 @@ function visibleOptionValues(options) {
   return (Array.isArray(options) ? options : [])
     .map(visibleOptionValue)
     .filter((value) => value.trim());
+}
+
+function visibleChoiceLabel(option) {
+  if (Array.isArray(option)) return String(option[1] ?? option[0] ?? '');
+  if (option && typeof option === 'object') return String(option.label ?? option.value ?? '');
+  return String(option ?? '');
+}
+
+function visibleChoiceLabels(options) {
+  return (Array.isArray(options) ? options : [])
+    .map(visibleChoiceLabel)
+    .filter((value) => value.trim());
+}
+
+export function learnerVisibleChoiceLabelsForProductionSmoke(inputSpec) {
+  if (!inputSpec || typeof inputSpec !== 'object') return [];
+  if (Array.isArray(inputSpec.options) && inputSpec.options.length > 0) {
+    return visibleChoiceLabels(inputSpec.options);
+  }
+  if (inputSpec.type === 'table_choice') {
+    const rows = Array.isArray(inputSpec.rows) ? inputSpec.rows : [];
+    const columns = Array.isArray(inputSpec.columns) ? inputSpec.columns : [];
+    const rowLabels = rows.flatMap((row) => (
+      visibleChoiceLabels(Array.isArray(row?.options) && row.options.length > 0 ? row.options : columns)
+    ));
+    if (rowLabels.length > 0) return rowLabels;
+    return visibleChoiceLabels(inputSpec.columns);
+  }
+  if (inputSpec.type === 'multi') {
+    return (Array.isArray(inputSpec.fields) ? inputSpec.fields : [])
+      .flatMap((field) => visibleChoiceLabels(field.options));
+  }
+  return [];
+}
+
+export function genericExplanationDistractorHitsForProductionSmoke(inputSpec) {
+  return learnerVisibleChoiceLabelsForProductionSmoke(inputSpec)
+    .filter((label) => GRAMMAR_P24_GENERIC_EXPLANATION_DISTRACTOR_SET.has(label));
 }
 
 function firstVisibleOption(options) {
@@ -1022,6 +1083,79 @@ async function smokeGrammarP20cHotfixCases({ origin, cookie, learnerId, revision
   return { revision, cases };
 }
 
+async function smokeGrammarP24DistractorCases({ origin, cookie, learnerId, revision }) {
+  const cases = [];
+  for (const fixture of GRAMMAR_P24_DISTRACTOR_SMOKE_ITEMS) {
+    let step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'start-session',
+      payload: {
+        mode: 'smart',
+        roundLength: 1,
+        templateId: fixture.templateId,
+        seed: fixture.seed,
+      },
+    });
+    revision = step.revision;
+    const startModel = step.payload.subjectReadModel;
+    const item = startModel?.session?.currentItem;
+    assert.equal(startModel?.phase, 'session', `Grammar P24 ${fixture.id} did not start in session phase.`);
+    assert.equal(item?.templateId, fixture.templateId, `Grammar P24 ${fixture.id} served the wrong template.`);
+    assert.equal(
+      item?.contentReleaseId,
+      CONFIGURED_RELEASE_ID,
+      `Grammar P24 ${fixture.id} did not serve expected release ${CONFIGURED_RELEASE_ID}.`,
+    );
+    const labels = learnerVisibleChoiceLabelsForProductionSmoke(item?.inputSpec);
+    const hits = genericExplanationDistractorHitsForProductionSmoke(item?.inputSpec);
+    assert.deepEqual(hits, [], `Grammar P24 ${fixture.id} exposed generic explanation distractors: ${hits.join(', ')}`);
+    assertNoForbiddenGrammarReadModelKeys(startModel, `grammar.p24.${fixture.id}.startModel`);
+
+    const response = correctResponseFor(item);
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'submit-answer',
+      payload: { response },
+    });
+    revision = step.revision;
+    const feedbackModel = step.payload.subjectReadModel;
+    assert.equal(feedbackModel?.phase, 'feedback', `Grammar P24 ${fixture.id} submit did not return feedback phase.`);
+    assert.equal(feedbackModel?.feedback?.result?.correct, true, `Grammar P24 ${fixture.id} answer was not accepted.`);
+    assertNoForbiddenGrammarReadModelKeys(feedbackModel, `grammar.p24.${fixture.id}.feedbackModel`);
+
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'continue-session',
+    });
+    revision = step.revision;
+    const summaryModel = step.payload.subjectReadModel;
+    assert.equal(summaryModel?.phase, 'summary', `Grammar P24 ${fixture.id} did not reach summary.`);
+    assertNoForbiddenGrammarReadModelKeys(summaryModel, `grammar.p24.${fixture.id}.summaryModel`);
+
+    cases.push({
+      id: fixture.id,
+      templateId: fixture.templateId,
+      seed: fixture.seed,
+      visibleChoiceCount: labels.length,
+      genericHitCount: hits.length,
+      observedCorrect: feedbackModel.feedback.result.correct === true,
+    });
+  }
+  return { revision, cases };
+}
+
 async function smokeGrammar({ origin, cookie, learnerId, revision }) {
   const normal = await smokeGrammarNormalRound({ origin, cookie, learnerId, revision });
   const miniTest = await smokeGrammarMiniTest({
@@ -1066,9 +1200,15 @@ async function smokeGrammar({ origin, cookie, learnerId, revision }) {
     learnerId,
     revision: p20bHotfix.revision,
   });
+  const p24Distractors = await smokeGrammarP24DistractorCases({
+    origin,
+    cookie,
+    learnerId,
+    revision: p20cHotfix.revision,
+  });
 
   return {
-    revision: p20cHotfix.revision,
+    revision: p24Distractors.revision,
     normal,
     miniTest,
     repairAi,
@@ -1077,6 +1217,7 @@ async function smokeGrammar({ origin, cookie, learnerId, revision }) {
     p20aHotfix,
     p20bHotfix,
     p20cHotfix,
+    p24Distractors,
   };
 }
 
@@ -1127,6 +1268,7 @@ async function main() {
   let p20aHotfixResult = { ok: false, detail: '' };
   let p20bHotfixResult = { ok: false, detail: '' };
   let p20cHotfixResult = { ok: false, detail: '' };
+  let p24DistractorResult = { ok: false, detail: '' };
   let forbiddenKeyScanResult = { ok: true, detail: 'checked via assertNoForbiddenGrammarReadModelKeys in each phase' };
   let testedTemplateIds = [];
   let overallOk = true;
@@ -1158,6 +1300,10 @@ async function main() {
       ok: grammar.p20cHotfix.cases.every((item) => item.expectedCorrect === item.observedCorrect),
       detail: `cases=${grammar.p20cHotfix.cases.length}`,
     };
+    p24DistractorResult = {
+      ok: grammar.p24Distractors.cases.every((item) => item.genericHitCount === 0 && item.observedCorrect === true),
+      detail: `cases=${grammar.p24Distractors.cases.length}`,
+    };
     testedTemplateIds = [
       GRAMMAR_SMOKE_ITEM.templateId,
       GRAMMAR_MINI_TEST_ITEM.templateId,
@@ -1167,6 +1313,7 @@ async function main() {
       ...GRAMMAR_P20A_HOTFIX_SMOKE_ITEMS.map((item) => item.templateId),
       ...GRAMMAR_P20B_HOTFIX_SMOKE_ITEMS.map((item) => item.templateId),
       ...GRAMMAR_P20C_HOTFIX_SMOKE_ITEMS.map((item) => item.templateId),
+      ...GRAMMAR_P24_DISTRACTOR_SMOKE_ITEMS.map((item) => item.templateId),
     ];
   } catch (error) {
     overallOk = false;
@@ -1185,6 +1332,8 @@ async function main() {
       p20bHotfixResult = { ok: false, detail: msg };
     } else if (msg.includes('P20c')) {
       p20cHotfixResult = { ok: false, detail: msg };
+    } else if (msg.includes('P24')) {
+      p24DistractorResult = { ok: false, detail: msg };
     } else {
       normalRoundResult = { ok: false, detail: msg };
     }
@@ -1217,6 +1366,7 @@ async function main() {
           p20aHotfixCases: grammar.p20aHotfix.cases,
           p20bHotfixCases: grammar.p20bHotfix.cases,
           p20cHotfixCases: grammar.p20cHotfix.cases,
+          p24DistractorCases: grammar.p24Distractors.cases,
         },
         spelling: {
           progressTotal: spelling.progressTotal,
@@ -1271,6 +1421,12 @@ async function main() {
             cases: grammar.p20cHotfix.cases,
           }
         : { ok: false, cases: [] },
+      p24Distractors: grammar
+        ? {
+            ok: p24DistractorResult.ok,
+            cases: grammar.p24Distractors.cases,
+          }
+        : { ok: false, cases: [] },
       command,
       learnerFixtureType: 'demo-session',
       itemCreationResult: normalRoundResult,
@@ -1288,6 +1444,7 @@ async function main() {
       p20aHotfixResult,
       p20bHotfixResult,
       p20cHotfixResult,
+      p24DistractorResult,
       forbiddenKeyScanResult,
       failureDetails: overallOk ? null : {
         normalRoundResult,
@@ -1297,6 +1454,7 @@ async function main() {
         p20aHotfixResult,
         p20bHotfixResult,
         p20cHotfixResult,
+        p24DistractorResult,
       },
       timestamp: new Date().toISOString(),
       commitSha: getCommitSha(),
