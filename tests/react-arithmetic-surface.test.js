@@ -456,6 +456,92 @@ test('ArithmeticPracticeSurface renders missing-number placeholders as full answ
   assert.equal(result.ariaHidden, 'true');
 });
 
+test('ArithmeticPracticeSurface renders short-division visuals as formal long division', async () => {
+  const output = await runFixture(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.test/arithmetic',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.HTMLInputElement = dom.window.HTMLInputElement;
+    globalThis.HTMLTextAreaElement = dom.window.HTMLTextAreaElement;
+    globalThis.HTMLButtonElement = dom.window.HTMLButtonElement;
+    globalThis.Event = dom.window.Event;
+    globalThis.FormData = dom.window.FormData;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { act } = React;
+    const { ArithmeticPracticeSurface } = require(${arithmeticSurfaceSpecifier()});
+
+    const question = {
+      id: 'short-division-visual-regression',
+      templateLabel: 'Short division',
+      domain: 'Multiplication and division',
+      marks: 1,
+      stem: 'Work out:',
+      visual: '6 ) 354',
+      inputSpec: { type: 'number', label: 'Answer' },
+    };
+    const appState = {
+      learners: { selectedId: 'learner-arithmetic' },
+      subjectUi: {
+        arithmetic: {
+          phase: 'session',
+          session: {
+            id: 'short-division-visual-session',
+            mode: 'smart',
+            currentIndex: 0,
+            currentQuestion: question,
+          },
+        },
+      },
+    };
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      const actions = { dispatch() {}, navigateHome() {} };
+      await act(async () => {
+        root.render(React.createElement(ArithmeticPracticeSurface, { appState, actions }));
+      });
+
+      const visual = document.querySelector('.arithmetic-visual');
+      const longDivision = visual?.querySelector('[data-arithmetic-token="long-division"]');
+      process.stdout.write(JSON.stringify({
+        visualText: visual?.textContent.replace(/\\s+/g, ' ').trim() || '',
+        tokenLabel: longDivision?.getAttribute('data-arithmetic-label') || '',
+        divisor: longDivision?.querySelector('.arithmetic-long-division-divisor')?.textContent.replace(/\\s+/g, '') || '',
+        dividend: longDivision?.querySelector('.arithmetic-long-division-dividend')?.textContent.replace(/\\s+/g, '') || '',
+        hasBracket: Boolean(longDivision?.querySelector('.arithmetic-long-division-bracket')),
+        ariaHidden: longDivision?.getAttribute('aria-hidden') || '',
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exit(1);
+    });
+  `);
+
+  const result = JSON.parse(output);
+  assert.equal(result.tokenLabel, '354 divided by 6');
+  assert.equal(result.divisor, '6');
+  assert.equal(result.dividend, '354');
+  assert.equal(result.hasBracket, true);
+  assert.equal(result.ariaHidden, 'true');
+  assert.equal(result.visualText.includes(')'), false, 'raw long-division text should not leave the close-bracket glyph visible');
+});
+
 test('ArithmeticPracticeSurface renders arithmetic feedback, answers and review text through the math renderer', async () => {
   const output = await runFixture(`
     const { JSDOM } = require('jsdom');

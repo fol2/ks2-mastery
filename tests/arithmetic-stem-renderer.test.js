@@ -98,6 +98,34 @@ test('arithmetic stem renderer accepts LaTeX-style fraction and root syntax', ()
   assert.equal(arithmeticStemAriaLabel('\\frac{5+3}{5} = \\sqrt{16}'), '5 plus 3 over 5 equals square root of 16');
 });
 
+test('arithmetic stem renderer tokenises formal long-division visuals', () => {
+  const tokens = tokeniseArithmeticStem('6 ) 354');
+  assert.equal(tokens.length, 1);
+  assert.equal(tokens[0].type, 'long-division');
+  assert.equal(tokens[0].source, '6 ) 354');
+  assert.equal(tokens[0].divisorSource, '6');
+  assert.equal(tokens[0].dividendSource, '354');
+  assert.deepEqual(tokens[0].divisorTokens.map((token) => ({ type: token.type, text: token.text })), [
+    { type: 'number', text: '6' },
+  ]);
+  assert.deepEqual(tokens[0].dividendTokens.map((token) => ({ type: token.type, text: token.text })), [
+    { type: 'number', text: '354' },
+  ]);
+  assert.equal(arithmeticStemAriaLabel('6 ) 354'), '354 divided by 6');
+});
+
+test('arithmetic stem renderer keeps missing digits inside long-division layouts readable', () => {
+  const tokens = tokeniseArithmeticStem('7 ) 3□5');
+  assert.equal(tokens.length, 1);
+  assert.equal(tokens[0].type, 'long-division');
+  assert.deepEqual(tokens[0].dividendTokens.map((token) => ({ type: token.type, text: token.text, label: token.label })), [
+    { type: 'number', text: '3', label: undefined },
+    { type: 'placeholder', text: '□', label: 'blank' },
+    { type: 'number', text: '5', label: undefined },
+  ]);
+  assert.equal(arithmeticStemAriaLabel('7 ) 3□5'), '3 blank 5 divided by 7');
+});
+
 test('arithmetic stem renderer labels broader maths symbols semantically', () => {
   assert.equal(
     arithmeticStemAriaLabel('25% ≥ 1/4; x ≠ 0; 2^3 ≈ 8; ±5'),

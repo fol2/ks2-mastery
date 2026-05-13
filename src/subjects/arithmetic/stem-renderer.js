@@ -179,6 +179,46 @@ function expressionFractionToken(source, numeratorSource, denominatorSource) {
   };
 }
 
+function matchLongDivisionDividendAt(text, index) {
+  const match = /^[\d□,]+/.exec(text.slice(index));
+  if (!match) return null;
+  return {
+    source: match[0],
+    end: index + match[0].length,
+  };
+}
+
+function longDivisionToken(source, divisorSource, dividendSource) {
+  const divisor = normalisedSource(divisorSource);
+  const dividend = normalisedSource(dividendSource);
+  return {
+    type: 'long-division',
+    source,
+    divisorSource: divisor,
+    dividendSource: dividend,
+    divisorTokens: tokeniseArithmeticStem(divisor),
+    dividendTokens: tokeniseArithmeticStem(dividend),
+  };
+}
+
+function matchLongDivisionAt(text, index) {
+  const divisor = matchNumberAt(text, index);
+  if (!divisor || isInsideProseHyphen(text, index, divisor.end) || !isPlainInteger(divisor.source)) return null;
+  const bracketIndex = skipSpaces(text, divisor.end);
+  if (text[bracketIndex] !== ')') return null;
+  const dividendStart = skipSpaces(text, bracketIndex + 1);
+  const dividend = matchLongDivisionDividendAt(text, dividendStart);
+  if (!dividend) return null;
+  return {
+    token: longDivisionToken(
+      text.slice(index, dividend.end),
+      divisor.source,
+      dividend.source,
+    ),
+    end: dividend.end,
+  };
+}
+
 function matchGroupedSlashFractionAt(text, index) {
   const numeratorGroup = parseDelimited(text, index, '(', ')');
   if (numeratorGroup) {
@@ -291,6 +331,7 @@ function tokensAriaLabel(tokens = []) {
       if (token.type === 'fraction') return fractionAriaLabel(token);
       if (token.type === 'expression-fraction') return expressionFractionAriaLabel(token);
       if (token.type === 'sqrt') return sqrtAriaLabel(token);
+      if (token.type === 'long-division') return longDivisionAriaLabel(token);
       if (token.type === 'operator') return token.label;
       if (token.type === 'symbol') return token.label;
       if (token.type === 'placeholder') return token.label;
@@ -311,6 +352,10 @@ export function sqrtAriaLabel({ radicandTokens }) {
   return `square root of ${tokensAriaLabel(radicandTokens)}`;
 }
 
+export function longDivisionAriaLabel({ divisorTokens, dividendTokens }) {
+  return `${tokensAriaLabel(dividendTokens)} divided by ${tokensAriaLabel(divisorTokens)}`;
+}
+
 export function tokeniseArithmeticStem(stem = '') {
   const text = String(stem || '');
   const tokens = [];
@@ -321,6 +366,13 @@ export function tokeniseArithmeticStem(stem = '') {
     if (latex) {
       tokens.push(latex.token);
       cursor = latex.end;
+      continue;
+    }
+
+    const longDivision = matchLongDivisionAt(text, cursor);
+    if (longDivision) {
+      tokens.push(longDivision.token);
+      cursor = longDivision.end;
       continue;
     }
 

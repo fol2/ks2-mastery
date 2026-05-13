@@ -673,6 +673,56 @@ textarea:focus-visible {
   border-top: 1.5px solid currentColor;
 }
 
+.arithmetic-long-division {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: start;
+  column-gap: 0.18em;
+  margin: 0.08em 0.12em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.arithmetic-long-division-divisor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.65em;
+  padding-top: 0.42em;
+  font-weight: 800;
+}
+
+.arithmetic-long-division-bracket {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.65em;
+  min-width: 2.1em;
+  padding: 0.42em 0.5em 0.08em 0.42em;
+  border-top: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  border-top-left-radius: 0.52em;
+}
+
+.arithmetic-long-division-bracket::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -0.38em;
+  width: 0.48em;
+  height: calc(100% + 2px);
+  border-right: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  border-top-right-radius: 0.52em;
+}
+
+.arithmetic-long-division-dividend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.04em;
+  font-weight: 800;
+}
+
 .arithmetic-visual {
   white-space: pre-wrap;
 }

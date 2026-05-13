@@ -2,6 +2,7 @@ import {
   arithmeticStemAriaLabel,
   expressionFractionAriaLabel,
   fractionAriaLabel,
+  longDivisionAriaLabel,
   mixedNumberAriaLabel,
   sqrtAriaLabel,
   tokeniseArithmeticStem,
@@ -75,11 +76,32 @@ function ArithmeticSqrt({ token }) {
   );
 }
 
+function ArithmeticLongDivision({ token }) {
+  return (
+    <span
+      className="arithmetic-long-division"
+      data-arithmetic-token="long-division"
+      data-arithmetic-label={longDivisionAriaLabel(token)}
+      aria-hidden="true"
+    >
+      <span className="arithmetic-long-division-divisor">
+        <ArithmeticTokenSequence tokens={token.divisorTokens} />
+      </span>
+      <span className="arithmetic-long-division-bracket">
+        <span className="arithmetic-long-division-dividend">
+          <ArithmeticTokenSequence tokens={token.dividendTokens} />
+        </span>
+      </span>
+    </span>
+  );
+}
+
 function renderArithmeticToken(token, index) {
   const key = `${token.type}:${token.source || token.text}:${index}`;
   if (token.type === 'mixed-number') return <ArithmeticMixedNumber key={key} token={token} />;
   if (token.type === 'fraction' || token.type === 'expression-fraction') return <ArithmeticFraction key={key} token={token} />;
   if (token.type === 'sqrt') return <ArithmeticSqrt key={key} token={token} />;
+  if (token.type === 'long-division') return <ArithmeticLongDivision key={key} token={token} />;
   if (token.type === 'number' || token.type === 'operator' || token.type === 'symbol' || token.type === 'placeholder') {
     return <ArithmeticInlineToken key={key} token={token} />;
   }
