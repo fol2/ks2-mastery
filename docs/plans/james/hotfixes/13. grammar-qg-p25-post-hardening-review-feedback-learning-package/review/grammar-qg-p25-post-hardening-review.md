@@ -6,7 +6,7 @@ Primary source: uploaded `ks2-mastery-lean-05131153.zip`.
 
 Supplementary source: GitHub recent Grammar history was used only to orient the P24 lineage. The ZIP remains the authority for this review.
 
-Production: not independently certified by this package.
+Production: certified during completion with deployment and live smoke evidence in `grammar-qg-p25-completion-report-2026-05-13.md`.
 
 ## Snapshot health
 

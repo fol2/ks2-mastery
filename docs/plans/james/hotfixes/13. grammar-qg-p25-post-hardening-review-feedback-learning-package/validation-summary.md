@@ -87,4 +87,4 @@ Full repository gates in the development checkout:
 - npm: `10.9.2`
 - `.nvmrc`: `22`
 - Current validation ran in a full development checkout with React/jsdom dependencies installed; the render-harness tests executed instead of skipping.
-- Production deployment and live browser smoke are recorded separately in the completion report for this task.
+- Production deployment and live browser smoke are recorded in `grammar-qg-p25-completion-report-2026-05-13.md`.

@@ -1,0 +1,38 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "timestamp": "2026-05-13T15:35:21.994Z",
+  "commitSha": "f2bcc8452763bb38b8ab3c470ebe1a44a55d32f5",
+  "templateId": "qg_p21_relative_clauses_explanation_choice_variety",
+  "seed": 1,
+  "assertions": {
+    "incorrectLearningCue": {
+      "ok": true,
+      "correct": false,
+      "minimalHint": "A relative clause adds extra information about a noun. Find the noun it is attached to.",
+      "expectedText": "Remember: A relative clause adds extra information about a noun. Find the noun it is attached to.",
+      "browser": {
+        "selector": "[data-grammar-feedback-learning-cue]",
+        "observedText": "Remember: A relative clause adds extra information about a noun. Find the noun it is attached to.",
+        "screenshotPath": "docs/plans/james/hotfixes/13. grammar-qg-p25-post-hardening-review-feedback-learning-package/validation/current-production-p25-incorrect-feedback.png",
+        "consoleErrorCount": 0,
+        "requestFailureCount": 0,
+        "httpFailureCount": 0
+      }
+    },
+    "correctStretchCue": {
+      "ok": true,
+      "correct": true,
+      "minimalHint": "A relative clause adds extra information about a noun. Find the noun it is attached to.",
+      "expectedText": "Extra challenge: write one new sentence with who, which, or that.",
+      "browser": {
+        "selector": "[data-grammar-feedback-stretch]",
+        "observedText": "Extra challenge: write one new sentence with who, which, or that.",
+        "screenshotPath": "docs/plans/james/hotfixes/13. grammar-qg-p25-post-hardening-review-feedback-learning-package/validation/current-production-p25-correct-stretch.png",
+        "consoleErrorCount": 0,
+        "requestFailureCount": 0,
+        "httpFailureCount": 0
+      }
+    }
+  }
+}
