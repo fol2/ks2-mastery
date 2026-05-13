@@ -1,0 +1,4 @@
+Base: origin/main ec5bc1f0
+Command: git apply arithmetic-05131531-next-world-class.patch
+
+Result: passed

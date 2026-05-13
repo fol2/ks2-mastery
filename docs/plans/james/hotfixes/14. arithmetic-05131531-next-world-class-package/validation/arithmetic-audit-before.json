@@ -1,0 +1,133 @@
+{
+  "templates": 30,
+  "cases": 135000,
+  "correctFails": 0,
+  "malformedCommaAccepts": 25540,
+  "negDenAccepts": 22633,
+  "formalCommaVisuals": 16435,
+  "binaryArtifacts": 0,
+  "examples": {
+    "comma": [
+      {
+        "template": "bonds_missing",
+        "difficulty": 2,
+        "seed": 1,
+        "answer": 8780,
+        "malformed": "87,80",
+        "stem": "1,220 + □ = 10,000"
+      },
+      {
+        "template": "bonds_missing",
+        "difficulty": 2,
+        "seed": 2,
+        "answer": 6330,
+        "malformed": "63,30",
+        "stem": "3,670 + □ = 10,000"
+      },
+      {
+        "template": "bonds_missing",
+        "difficulty": 2,
+        "seed": 3,
+        "answer": 8507,
+        "malformed": "85,07",
+        "stem": "1,493 + □ = 10,000"
+      },
+      {
+        "template": "bonds_missing",
+        "difficulty": 2,
+        "seed": 4,
+        "answer": 6269,
+        "malformed": "62,69",
+        "stem": "3,731 + □ = 10,000"
+      },
+      {
+        "template": "bonds_missing",
+        "difficulty": 2,
+        "seed": 5,
+        "answer": 2927,
+        "malformed": "29,27",
+        "stem": "7,073 + □ = 10,000"
+      }
+    ],
+    "negDen": [
+      {
+        "template": "fraction_add_sub",
+        "difficulty": 0,
+        "seed": 1,
+        "expected": "1/2",
+        "bad": "-1/-2",
+        "stem": "3/4 − 1/4 ="
+      },
+      {
+        "template": "fraction_add_sub",
+        "difficulty": 0,
+        "seed": 2,
+        "expected": "1/5",
+        "bad": "-1/-5",
+        "stem": "3/5 − 2/5 ="
+      },
+      {
+        "template": "fraction_add_sub",
+        "difficulty": 0,
+        "seed": 3,
+        "expected": "1/2",
+        "bad": "-1/-2",
+        "stem": "3/4 − 1/4 ="
+      },
+      {
+        "template": "fraction_add_sub",
+        "difficulty": 0,
+        "seed": 4,
+        "expected": "1/5",
+        "bad": "-1/-5",
+        "stem": "2/5 − 1/5 ="
+      },
+      {
+        "template": "fraction_add_sub",
+        "difficulty": 0,
+        "seed": 5,
+        "expected": "3/5",
+        "bad": "-3/-5",
+        "stem": "7/10 − 1/10 ="
+      }
+    ],
+    "visual": [
+      {
+        "template": "column_addition",
+        "difficulty": 1,
+        "seed": 1,
+        "visual": "  5,747\n+ 9,829\n───────",
+        "stem": "Work out:"
+      },
+      {
+        "template": "column_addition",
+        "difficulty": 1,
+        "seed": 2,
+        "visual": "  7,608\n+ 3,924\n───────",
+        "stem": "Work out:"
+      },
+      {
+        "template": "column_addition",
+        "difficulty": 1,
+        "seed": 3,
+        "visual": "  7,867\n+ 5,330\n───────",
+        "stem": "Work out:"
+      },
+      {
+        "template": "column_addition",
+        "difficulty": 1,
+        "seed": 4,
+        "visual": "  9,312\n+ 3,997\n───────",
+        "stem": "Work out:"
+      },
+      {
+        "template": "column_addition",
+        "difficulty": 1,
+        "seed": 5,
+        "visual": "  7,207\n+ 7,954\n───────",
+        "stem": "Work out:"
+      }
+    ],
+    "binary": []
+  }
+}

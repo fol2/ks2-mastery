@@ -109,15 +109,60 @@ test('arithmetic marking rejects malformed mixed numbers and multi-character dig
   assert.equal(evaluateArithmeticQuestion(digitQuestion, { answer: `+${digit}` }).correct, false, 'missing digit answers must not accept signed notation');
 });
 
+test('arithmetic marking enforces disciplined comma grouping and fraction sign forms', () => {
+  const numberQuestion = { marks: 1, expected: { kind: 'number', value: 1234 } };
+  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1234' }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1,234' }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '12,34' }).correct, false, 'malformed thousands comma grouping must not be accepted');
+  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1,23,4' }).correct, false, 'multiple malformed comma groups must not be accepted');
+
+  const divisionQuestion = { marks: 1, expected: { kind: 'number', value: 1234, allowZeroRemainderText: true } };
+  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 r 0' }).correct, true, 'well-formed comma grouping can still be used with zero-remainder notation where allowed');
+  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 rem 0' }).correct, true, 'well-formed comma grouping can be used with zero-remainder rem notation');
+  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 remainder 0' }).correct, true, 'well-formed comma grouping can be used with zero-remainder word notation');
+  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 r 0' }).correct, false, 'malformed comma grouping is rejected even in division zero-remainder notation');
+  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 rem 0' }).correct, false, 'malformed comma grouping is rejected in rem notation');
+  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 remainder 0' }).correct, false, 'malformed comma grouping is rejected in remainder-word notation');
+
+  const fractionQuestion = { marks: 1, expected: { kind: 'fraction', n: 1, d: 2, preferMixed: false } };
+  assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '1/2' }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '1/-2' }).correct, false, 'negative denominator notation is not a valid KS2 positive fraction answer');
+  assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '-1/-2' }).correct, false, 'double-negative fraction notation is not a valid KS2 positive fraction answer');
+  assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '+1/+2' }).correct, false, 'signed denominators are rejected');
+
+  const negativeFractionQuestion = { marks: 1, expected: { kind: 'fraction', n: -1, d: 2, preferMixed: false } };
+  assert.equal(evaluateArithmeticQuestion(negativeFractionQuestion, { answer: '-1/2' }).correct, true, 'ordinary signed numerators remain valid for negative fraction answers');
+});
+
+test('arithmetic formal written-method visuals keep algorithm rows free from thousands commas', () => {
+  const formalTemplates = ['column_addition', 'column_subtraction', 'short_multiplication', 'short_division', 'long_multiplication', 'long_division'];
+  for (const templateId of formalTemplates) {
+    for (const difficulty of [0, 1, 2]) {
+      for (let seed = 1; seed <= 200; seed += 1) {
+        const question = generateArithmeticQuestion({ templateId, difficulty, seed });
+        assert.equal(/\d,\d/.test(question.visual || ''), false, `${templateId} d${difficulty} seed ${seed} should not put thousands commas inside formal working layout`);
+      }
+    }
+  }
+});
+
 test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
   const placeValue = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty: 2, seed: 96433 });
   assert.ok(placeValue.stem.includes('□'), 'place-value item contains a missing-value box');
   assert.ok(Number.isFinite(placeValue.expected.value), 'place-value expected value is finite');
 
+  const orderShapeFamilies = [new Set(), new Set(), new Set()];
   for (let seed = 1; seed <= 500; seed += 1) {
+    for (const difficulty of [0, 1, 2]) {
+      const item = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty, seed });
+      orderShapeFamilies[difficulty].add(item.stem.replace(/\d+/g, '#'));
+    }
+
     const order = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 2, seed });
     assert.equal(Number.isInteger(order.expected.value), true, `seed ${seed} should produce a whole-number result`);
+    assert.ok(order.expected.value >= 0, `seed ${seed} should not produce a negative stretch order-of-operations answer`);
     const testOrder = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 1, seed });
+    assert.equal(Number.isInteger(testOrder.expected.value), true, `seed ${seed} should produce a whole-number KS2 test-mode order-of-operations answer`);
     assert.ok(testOrder.expected.value >= 0, `seed ${seed} should not produce a negative KS2 test-mode order-of-operations answer`);
     const power = generateArithmeticQuestion({ templateId: 'powers_of_ten_shift', difficulty: 1, seed });
     assert.equal(String(power.expected.value).includes('000000000'), false, `seed ${seed} should not leak binary floating-point artefacts`);
@@ -137,6 +182,7 @@ test('arithmetic generators avoid malformed place-value items and repeating-deci
     const decimalPlaces = decimalRows.map((line) => line.slice(line.indexOf('.') + 1).trimEnd().length);
     assert.equal(new Set(decimalPlaces).size, 1, `decimal missing-digit seed ${seed} should preserve fixed decimal places`);
   }
+  assert.ok(orderShapeFamilies.every((shapes) => shapes.size >= 2), 'order-of-operations should expose multiple expression structures in every difficulty band');
 });
 
 test('arithmetic practice session keeps question isolated and emits reward unit evidence on clean win', () => {

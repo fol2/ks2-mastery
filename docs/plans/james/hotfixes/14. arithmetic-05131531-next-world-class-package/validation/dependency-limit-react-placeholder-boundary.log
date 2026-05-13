@@ -1,0 +1,10 @@
+Attempted command:
+node --test tests/arithmetic-placeholder-boundary.test.js tests/worker-arithmetic-runtime.test.js
+
+Result:
+worker-arithmetic-runtime passed, but arithmetic-placeholder-boundary could not run in this lean ZIP container because installed npm dependencies are absent. The failing import was package 'react' from src/subjects/placeholders/module-factory.js. This is an environment/dependency limit, not an Arithmetic patch failure.
+
+Relevant local environment:
+.nvmrc: 22
+local node: v18.20.4
+node_modules: absent in lean ZIP

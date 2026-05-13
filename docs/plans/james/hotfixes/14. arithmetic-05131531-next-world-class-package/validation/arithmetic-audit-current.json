@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "seedCount": 1500,
+  "checkedAt": "2026-05-13T15:47:27.566Z",
+  "metrics": {
+    "contentReleaseId": "arithmetic-ks2-worker-v1-2026-05-11",
+    "templates": 30,
+    "rewardUnits": 90,
+    "generatedCases": 135000,
+    "uniqueStemVisualCombinations": 82886,
+    "correctAnswerSelfMarkFailures": 0,
+    "malformedCommaAcceptances": 0,
+    "validCommaRejections": 0,
+    "negativeDenominatorFractionAcceptances": 0,
+    "formalVisualCommaFindings": 0,
+    "binaryDecimalArtifacts": 0,
+    "orderOfOperationsWholeNonNegativeFailures": 0,
+    "divisionZeroRemainderValidAcceptances": 9000
+  },
+  "zeroRemainderCommaDiscipline": {
+    "validForms": [
+      {
+        "answer": "1,234 r 0",
+        "correct": true
+      },
+      {
+        "answer": "1,234 rem 0",
+        "correct": true
+      },
+      {
+        "answer": "1,234 remainder 0",
+        "correct": true
+      }
+    ],
+    "malformedForms": [
+      {
+        "answer": "12,34 r 0",
+        "correct": false
+      },
+      {
+        "answer": "12,34 rem 0",
+        "correct": false
+      },
+      {
+        "answer": "12,34 remainder 0",
+        "correct": false
+      }
+    ],
+    "validCommaAccepted": true,
+    "malformedCommaRejected": true
+  },
+  "samples": {
+    "correctAnswerSelfMarkFailures": [],
+    "malformedCommaAcceptances": [],
+    "validCommaRejections": [],
+    "negativeDenominatorFractionAcceptances": [],
+    "formalVisualCommaFindings": [],
+    "binaryDecimalArtifacts": [],
+    "orderOfOperationsWholeNonNegativeFailures": []
+  }
+}

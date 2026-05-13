@@ -1,0 +1,118 @@
+TAP version 13
+# Subtest: arithmetic content generates and marks every template across difficulty bands
+ok 1 - arithmetic content generates and marks every template across difficulty bands
+  ---
+  duration_ms: 14.6832
+  type: 'test'
+  ...
+# Subtest: arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms
+ok 2 - arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms
+  ---
+  duration_ms: 0.1474
+  type: 'test'
+  ...
+# Subtest: arithmetic marking rejects stray units except where the question asks for a percentage
+ok 3 - arithmetic marking rejects stray units except where the question asks for a percentage
+  ---
+  duration_ms: 0.399
+  type: 'test'
+  ...
+# Subtest: arithmetic marking rejects malformed mixed numbers and multi-character digit answers
+ok 4 - arithmetic marking rejects malformed mixed numbers and multi-character digit answers
+  ---
+  duration_ms: 0.1564
+  type: 'test'
+  ...
+# Subtest: arithmetic marking enforces disciplined comma grouping and fraction sign forms
+ok 5 - arithmetic marking enforces disciplined comma grouping and fraction sign forms
+  ---
+  duration_ms: 0.2679
+  type: 'test'
+  ...
+# Subtest: arithmetic formal written-method visuals keep algorithm rows free from thousands commas
+ok 6 - arithmetic formal written-method visuals keep algorithm rows free from thousands commas
+  ---
+  duration_ms: 9.3825
+  type: 'test'
+  ...
+# Subtest: arithmetic generators avoid malformed place-value items and repeating-decimal order answers
+ok 7 - arithmetic generators avoid malformed place-value items and repeating-decimal order answers
+  ---
+  duration_ms: 19.9377
+  type: 'test'
+  ...
+# Subtest: arithmetic practice session keeps question isolated and emits reward unit evidence on clean win
+ok 8 - arithmetic practice session keeps question isolated and emits reward unit evidence on clean win
+  ---
+  duration_ms: 3.2094
+  type: 'test'
+  ...
+# Subtest: arithmetic test mode delays marking until finish-test
+ok 9 - arithmetic test mode delays marking until finish-test
+  ---
+  duration_ms: 1.638
+  type: 'test'
+  ...
+# Subtest: arithmetic practice blank submissions do not count as attempts or adaptive failures
+ok 10 - arithmetic practice blank submissions do not count as attempts or adaptive failures
+  ---
+  duration_ms: 1.075
+  type: 'test'
+  ...
+# Subtest: arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery
+ok 11 - arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery
+  ---
+  duration_ms: 1.4192
+  type: 'test'
+  ...
+# Subtest: arithmetic rejects stale session and question submissions without mutating state
+ok 12 - arithmetic rejects stale session and question submissions without mutating state
+  ---
+  duration_ms: 0.6311
+  type: 'test'
+  ...
+# Subtest: arithmetic requires fresh session and question ids for active write commands
+ok 13 - arithmetic requires fresh session and question ids for active write commands
+  ---
+  duration_ms: 1.5435
+  type: 'test'
+  ...
+# Subtest: arithmetic prefs ignore untrusted payload keys
+ok 14 - arithmetic prefs ignore untrusted payload keys
+  ---
+  duration_ms: 0.4913
+  type: 'test'
+  ...
+# Subtest: arithmetic duplicate practice submissions cannot mark the same current question twice
+ok 15 - arithmetic duplicate practice submissions cannot mark the same current question twice
+  ---
+  duration_ms: 0.8281
+  type: 'test'
+  ...
+# Subtest: arithmetic read model redacts answer data before the browser sees current questions
+ok 16 - arithmetic read model redacts answer data before the browser sees current questions
+  ---
+  duration_ms: 0.7146
+  type: 'test'
+  ...
+# Subtest: arithmetic reward projection updates the shared monster codex without touching other subjects
+ok 17 - arithmetic reward projection updates the shared monster codex without touching other subjects
+  ---
+  duration_ms: 0.7682
+  type: 'test'
+  ...
+# Subtest: arithmetic command response preserves server-side validation errors in subject UI
+ok 18 - arithmetic command response preserves server-side validation errors in subject UI
+  ---
+  duration_ms: 0.3057
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 220.0101

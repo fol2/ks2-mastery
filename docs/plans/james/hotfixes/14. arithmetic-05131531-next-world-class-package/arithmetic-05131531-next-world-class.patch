@@ -1,0 +1,267 @@
+diff --git a/scripts/build-bundles.mjs b/scripts/build-bundles.mjs
+index bf0d2973..2705d656 100644
+--- a/scripts/build-bundles.mjs
++++ b/scripts/build-bundles.mjs
+@@ -1,12 +1,47 @@
++import { mkdir, rm } from 'node:fs/promises';
++import path from 'node:path';
++import { setTimeout as sleep } from 'node:timers/promises';
++
++const rootDir = process.cwd();
++const distDir = path.join(rootDir, 'dist');
++const lockDir = path.join(distDir, 'public-build.lock');
++
++async function acquireBuildLock(timeoutMs = 120000) {
++  const startedAt = Date.now();
++  while (true) {
++    try {
++      await mkdir(lockDir);
++      return async () => {
++        await rm(lockDir, { recursive: true, force: true });
++      };
++    } catch (error) {
++      if (error?.code !== 'EEXIST') throw error;
++      if (Date.now() - startedAt > timeoutMs) {
++        throw new Error(`Timed out waiting for build-bundles lock at ${lockDir}`);
++      }
++      await sleep(100);
++    }
++  }
++}
++
+ // Awaited dynamic imports + process.exit(1) are deliberate: static top-level
+ // imports can let an async rejection in a chained script (e.g. esbuild
+ // failing inside build-client.mjs) settle after this entry's sync body
+ // finishes, leaving Node to exit 0 and hiding the failure from CI. The
+ // explicit await/catch guarantees a non-zero exit on any step failure.
++let releaseBuildLock = async () => {};
+ try {
++  // Node's test runner can execute build-facing tests concurrently.
++  // Share the public-build lock so bundle generation cannot race the
++  // public mirror step or another bundle generation process.
++  await mkdir(distDir, { recursive: true });
++  releaseBuildLock = await acquireBuildLock();
+   await import('./generate-monster-visual-manifest.mjs');
+   await import('./build-client.mjs');
++  await releaseBuildLock();
++  releaseBuildLock = async () => {};
+ } catch (error) {
++  await releaseBuildLock().catch(() => {});
+   console.error(error);
+   process.exit(1);
+ }
+diff --git a/shared/arithmetic/content.js b/shared/arithmetic/content.js
+index 4db10fad..f8eb7d6f 100644
+--- a/shared/arithmetic/content.js
++++ b/shared/arithmetic/content.js
+@@ -99,6 +99,18 @@ export function formatNumber(value) {
+   return numeric.toFixed(10).replace(/0+$/, '').replace(/\.$/, '');
+ }
+ 
++function plainIntegerText(value) {
++  const numeric = Number(value);
++  if (!Number.isFinite(numeric)) return String(value || '0');
++  return String(Math.trunc(numeric));
++}
++
++function hasValidCommaGrouping(value) {
++  const text = String(value || '');
++  if (!text.includes(',')) return true;
++  return /^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d*)?$/.test(text);
++}
++
+ function visualVertical(top, bottom, op, result = '') {
+   const lines = [String(top), `${op} ${String(bottom)}`];
+   const width = Math.max(...lines.map((line) => line.length), String(result || '').length, 4);
+@@ -136,12 +148,15 @@ export function parseNumberInput(value, options = {}) {
+   let text = raw
+     .replace(/[\u00A0\u202F]/g, ' ')
+     .replace(/[−–—]/g, '-')
+-    .replace(/[,]/g, '')
+     .trim();
+   if (options.allowPercentSymbol) text = text.replace(/\s*%$/, '');
+   if (options.allowCurrencySymbol) text = text.replace(/^£\s*/, '');
+   text = text.replace(/\s+/g, '');
+-  const zr = text.match(/^([+-]?\d+)\s*(?:r|rem|remainder)\s*0+$/i);
++  const remainderMatch = text.match(/^(.*?)(?:remainder|rem|r)0+$/i);
++  const numericPartForCommaCheck = remainderMatch ? remainderMatch[1] : text;
++  if (!hasValidCommaGrouping(numericPartForCommaCheck)) return null;
++  text = text.replace(/,/g, '');
++  const zr = text.match(/^([+-]?\d+)\s*(?:remainder|rem|r)\s*0+$/i);
+   if (zr) return options.allowZeroRemainderText ? Number(zr[1]) : null;
+   if (text.startsWith('+')) text = text.slice(1);
+   if (text.startsWith('.')) text = `0${text}`;
+@@ -180,11 +195,11 @@ export function parseFractionInput(value) {
+     const f = normaliseFraction(n, fracD);
+     return { value: n / fracD, n, d: fracD, normalN: f.n, normalD: f.d, simplified: validMixed && gcd(n, fracD) === 1, decimal: false, isFraction: true, mixed: true, validMixed };
+   }
+-  m = text.match(/^([+-]?\d+)\/([+-]?\d+)$/);
++  m = text.match(/^([+-]?\d+)\/(\d+)$/);
+   if (m) {
+     const n = Number(m[1]);
+     const d = Number(m[2]);
+-    if (!d) return null;
++    if (d <= 0) return null;
+     const f = normaliseFraction(n, d);
+     return { value: n / d, n, d, normalN: f.n, normalD: f.d, simplified: gcd(n, d) === 1, decimal: false, isFraction: true };
+   }
+@@ -404,7 +419,7 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
+       b = randInt(rng, 10 ** (digits - 1), 10 ** digits - 1);
+     } while (countColumnEvents(a, b, 'add') < minCarries);
+     const answer = a + b;
+-    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: visualVertical(formatNumber(a), formatNumber(b), '+'), inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, solutionLines: ['Add from right to left, exchanging where needed.', `${formatNumber(a)} + ${formatNumber(b)} = ${formatNumber(answer)}.`] });
++    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: visualVertical(plainIntegerText(a), plainIntegerText(b), '+'), inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, solutionLines: ['Add from right to left, exchanging where needed.', `${formatNumber(a)} + ${formatNumber(b)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'column_subtraction', label: 'Column subtraction', domain: 'Addition and subtraction', strand: 'operations_methods', skillIds: ['column_subtraction'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const digits = difficulty === 0 ? 3 : difficulty === 1 ? 4 : 5; let a; let b; const minExchanges = difficulty === 0 ? 1 : 2;
+@@ -414,7 +429,7 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
+       if (b >= a) [a, b] = [b, a];
+     } while (a <= b || countColumnEvents(a, b, 'subtract') < minExchanges);
+     const answer = a - b;
+-    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: visualVertical(formatNumber(a), formatNumber(b), '−'), inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, solutionLines: ['Subtract from right to left, exchanging where needed.', `${formatNumber(a)} − ${formatNumber(b)} = ${formatNumber(answer)}.`] });
++    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: visualVertical(plainIntegerText(a), plainIntegerText(b), '−'), inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, solutionLines: ['Subtract from right to left, exchanging where needed.', `${formatNumber(a)} − ${formatNumber(b)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'missing_number_inverse', label: 'Missing-number equation', domain: 'Addition and subtraction', strand: 'operations_methods', skillIds: ['inverse_missing'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const range = difficulty === 0 ? [60, 300] : difficulty === 1 ? [200, 2000] : [2000, 10000]; const style = pick(rng, ['add-right', 'add-left', 'subtract-start', 'subtract-part']); let stem; let answer; let line;
+@@ -464,19 +479,19 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
+   } }),
+   template({ id: 'short_multiplication', label: 'Short multiplication', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['short_multiplication'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const digits = difficulty === 0 ? 2 : difficulty === 1 ? 3 : 4; const a = randInt(rng, 10 ** (digits - 1), 10 ** digits - 1); const b = randInt(rng, 3, 9); const answer = a * b;
+-    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: visualVertical(formatNumber(a), String(b), '×'), inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, solutionLines: ['Multiply from right to left.', `${formatNumber(a)} × ${b} = ${formatNumber(answer)}.`] });
++    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: visualVertical(plainIntegerText(a), String(b), '×'), inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, solutionLines: ['Multiply from right to left.', `${formatNumber(a)} × ${b} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'short_division', label: 'Short division', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['short_division'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const divisor = randInt(rng, 2, 9); const quotient = difficulty === 0 ? randInt(rng, 10, 99) : difficulty === 1 ? randInt(rng, 50, 450) : randInt(rng, 200, 900); const dividend = divisor * quotient;
+-    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: `${divisor} ) ${formatNumber(dividend)}`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: quotient, misconception: 'remainder_interpretation', allowZeroRemainderText: true }, solutionLines: ['Use exact division.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
++    return makeQuestion(this, seed, difficulty, { stem: 'Work out:', visual: `${divisor} ) ${plainIntegerText(dividend)}`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: quotient, misconception: 'remainder_interpretation', allowZeroRemainderText: true }, solutionLines: ['Use exact division.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
+   } }),
+   template({ id: 'long_multiplication', label: 'Long multiplication', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['long_multiplication'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const a = difficulty === 0 ? randInt(rng, 120, 999) : difficulty === 1 ? randInt(rng, 200, 4999) : randInt(rng, 3000, 9999); const b = difficulty === 0 ? randInt(rng, 12, 39) : difficulty === 1 ? randInt(rng, 24, 79) : randInt(rng, 35, 96); const answer = a * b;
+-    return makeQuestion(this, seed, difficulty, { marks: 2, stem: 'Work out:', visual: visualVertical(formatNumber(a), formatNumber(b), '×'), inputSpec: { type: 'number', label: 'Final answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, manualMethodMark: true, solutionLines: ['Multiply by the ones digit, then by the tens digit, then combine partial products.', `${formatNumber(a)} × ${formatNumber(b)} = ${formatNumber(answer)}.`] });
++    return makeQuestion(this, seed, difficulty, { marks: 2, stem: 'Work out:', visual: visualVertical(plainIntegerText(a), plainIntegerText(b), '×'), inputSpec: { type: 'number', label: 'Final answer' }, expected: { kind: 'number', value: answer, misconception: 'regrouping_error' }, manualMethodMark: true, solutionLines: ['Multiply by the ones digit, then by the tens digit, then combine partial products.', `${formatNumber(a)} × ${formatNumber(b)} = ${formatNumber(answer)}.`] });
+   } }),
+   template({ id: 'long_division', label: 'Long division', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['long_division'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const divisor = difficulty === 0 ? randInt(rng, 12, 24) : difficulty === 1 ? randInt(rng, 14, 36) : randInt(rng, 18, 49); const quotient = difficulty === 0 ? randInt(rng, 30, 99) : difficulty === 1 ? randInt(rng, 80, 299) : randInt(rng, 200, 999); const dividend = divisor * quotient;
+-    return makeQuestion(this, seed, difficulty, { marks: 2, stem: 'Work out:', visual: `${divisor} ) ${formatNumber(dividend)}`, inputSpec: { type: 'number', label: 'Final answer' }, expected: { kind: 'number', value: quotient, misconception: 'remainder_interpretation', allowZeroRemainderText: true }, manualMethodMark: true, solutionLines: ['Use formal long division and keep checking partial products.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
++    return makeQuestion(this, seed, difficulty, { marks: 2, stem: 'Work out:', visual: `${divisor} ) ${plainIntegerText(dividend)}`, inputSpec: { type: 'number', label: 'Final answer' }, expected: { kind: 'number', value: quotient, misconception: 'remainder_interpretation', allowZeroRemainderText: true }, manualMethodMark: true, solutionLines: ['Use formal long division and keep checking partial products.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
+   } }),
+   template({ id: 'decimal_add_sub', label: 'Decimal addition and subtraction', domain: 'Decimals', strand: 'decimals_fractions', skillIds: ['decimals_add_sub'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
+     const rng = seededRng(seed); const op = pick(rng, ['+', '−']); const places = difficulty === 0 ? 1 : difficulty === 1 ? 2 : 3; let a = decimal(randInt(rng, 120, 9999) / (10 ** places), places); let b = decimal(randInt(rng, 10, 4999) / (10 ** places), places); if (op === '−' && b > a) [a, b] = [b, a]; const answer = decimal(op === '+' ? a + b : a - b, 6);
+@@ -592,17 +607,35 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
+     let expression;
+     let answer;
+     if (difficulty === 0) {
+-      const a = randInt(rng, 30, 120); const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9);
+-      expression = `(${a} + ${c}) − ${b} × 2`;
+-      answer = (a + c) - b * 2;
++      if (randInt(rng, 0, 1) === 0) {
++        const a = randInt(rng, 30, 120); const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9);
++        expression = `(${a} + ${c}) − ${b} × 2`;
++        answer = (a + c) - b * 2;
++      } else {
++        const a = randInt(rng, 18, 80); const b = randInt(rng, 2, 9); const c = randInt(rng, 3, 8);
++        expression = `${a} + ${b} × ${c}`;
++        answer = a + b * c;
++      }
+     } else if (difficulty === 1) {
+-      const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const d = randInt(rng, 10, 30); const product = b * c; const a = randInt(rng, Math.max(30, product - d + 5), Math.max(120, product + 60));
+-      expression = `${a} − ${b} × ${c} + ${d}`;
+-      answer = a - product + d;
++      if (randInt(rng, 0, 1) === 0) {
++        const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const d = randInt(rng, 10, 30); const product = b * c; const a = randInt(rng, Math.max(30, product - d + 5), Math.max(120, product + 60));
++        expression = `${a} − ${b} × ${c} + ${d}`;
++        answer = a - product + d;
++      } else {
++        const divisor = randInt(rng, 2, 9); const quotient = randInt(rng, 6, 24); const dividend = divisor * quotient; const subtract = randInt(rng, 4, 18); const start = randInt(rng, Math.max(12, subtract + 4), 80);
++        expression = `${start} + ${dividend} ÷ ${divisor} − ${subtract}`;
++        answer = start + quotient - subtract;
++      }
+     } else {
+-      const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const quotient = randInt(rng, 5, 24); const d = randInt(rng, 10, 30); const minuend = (b * c) + (quotient * c);
+-      expression = `(${minuend} − ${b * c}) ÷ ${c} + ${d}`;
+-      answer = quotient + d;
++      if (randInt(rng, 0, 1) === 0) {
++        const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const quotient = randInt(rng, 5, 24); const d = randInt(rng, 10, 30); const minuend = (b * c) + (quotient * c);
++        expression = `(${minuend} − ${b * c}) ÷ ${c} + ${d}`;
++        answer = quotient + d;
++      } else {
++        const bracketA = randInt(rng, 8, 35); const bracketB = randInt(rng, 4, 18); const multiplier = randInt(rng, 2, 6); const start = randInt(rng, (bracketA + bracketB) * multiplier + 10, (bracketA + bracketB) * multiplier + 90); const add = randInt(rng, 5, 35);
++        expression = `${start} − (${bracketA} + ${bracketB}) × ${multiplier} + ${add}`;
++        answer = start - (bracketA + bracketB) * multiplier + add;
++      }
+     }
+     return makeQuestion(this, seed, difficulty, { stem: `${expression} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'order_of_operations_error' }, solutionLines: ['Do brackets first, then multiplication or division, then addition or subtraction.', `${expression} = ${formatNumber(answer)}.`] });
+   } }),
+diff --git a/tests/worker-arithmetic-runtime.test.js b/tests/worker-arithmetic-runtime.test.js
+index 5855cb4a..d7d9967f 100644
+--- a/tests/worker-arithmetic-runtime.test.js
++++ b/tests/worker-arithmetic-runtime.test.js
+@@ -109,15 +109,60 @@ test('arithmetic marking rejects malformed mixed numbers and multi-character dig
+   assert.equal(evaluateArithmeticQuestion(digitQuestion, { answer: `+${digit}` }).correct, false, 'missing digit answers must not accept signed notation');
+ });
+ 
++test('arithmetic marking enforces disciplined comma grouping and fraction sign forms', () => {
++  const numberQuestion = { marks: 1, expected: { kind: 'number', value: 1234 } };
++  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1234' }).correct, true);
++  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1,234' }).correct, true);
++  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '12,34' }).correct, false, 'malformed thousands comma grouping must not be accepted');
++  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1,23,4' }).correct, false, 'multiple malformed comma groups must not be accepted');
++
++  const divisionQuestion = { marks: 1, expected: { kind: 'number', value: 1234, allowZeroRemainderText: true } };
++  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 r 0' }).correct, true, 'well-formed comma grouping can still be used with zero-remainder notation where allowed');
++  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 rem 0' }).correct, true, 'well-formed comma grouping can be used with zero-remainder rem notation');
++  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 remainder 0' }).correct, true, 'well-formed comma grouping can be used with zero-remainder word notation');
++  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 r 0' }).correct, false, 'malformed comma grouping is rejected even in division zero-remainder notation');
++  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 rem 0' }).correct, false, 'malformed comma grouping is rejected in rem notation');
++  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 remainder 0' }).correct, false, 'malformed comma grouping is rejected in remainder-word notation');
++
++  const fractionQuestion = { marks: 1, expected: { kind: 'fraction', n: 1, d: 2, preferMixed: false } };
++  assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '1/2' }).correct, true);
++  assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '1/-2' }).correct, false, 'negative denominator notation is not a valid KS2 positive fraction answer');
++  assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '-1/-2' }).correct, false, 'double-negative fraction notation is not a valid KS2 positive fraction answer');
++  assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '+1/+2' }).correct, false, 'signed denominators are rejected');
++
++  const negativeFractionQuestion = { marks: 1, expected: { kind: 'fraction', n: -1, d: 2, preferMixed: false } };
++  assert.equal(evaluateArithmeticQuestion(negativeFractionQuestion, { answer: '-1/2' }).correct, true, 'ordinary signed numerators remain valid for negative fraction answers');
++});
++
++test('arithmetic formal written-method visuals keep algorithm rows free from thousands commas', () => {
++  const formalTemplates = ['column_addition', 'column_subtraction', 'short_multiplication', 'short_division', 'long_multiplication', 'long_division'];
++  for (const templateId of formalTemplates) {
++    for (const difficulty of [0, 1, 2]) {
++      for (let seed = 1; seed <= 200; seed += 1) {
++        const question = generateArithmeticQuestion({ templateId, difficulty, seed });
++        assert.equal(/\d,\d/.test(question.visual || ''), false, `${templateId} d${difficulty} seed ${seed} should not put thousands commas inside formal working layout`);
++      }
++    }
++  }
++});
++
+ test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
+   const placeValue = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty: 2, seed: 96433 });
+   assert.ok(placeValue.stem.includes('□'), 'place-value item contains a missing-value box');
+   assert.ok(Number.isFinite(placeValue.expected.value), 'place-value expected value is finite');
+ 
++  const orderShapeFamilies = [new Set(), new Set(), new Set()];
+   for (let seed = 1; seed <= 500; seed += 1) {
++    for (const difficulty of [0, 1, 2]) {
++      const item = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty, seed });
++      orderShapeFamilies[difficulty].add(item.stem.replace(/\d+/g, '#'));
++    }
++
+     const order = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 2, seed });
+     assert.equal(Number.isInteger(order.expected.value), true, `seed ${seed} should produce a whole-number result`);
++    assert.ok(order.expected.value >= 0, `seed ${seed} should not produce a negative stretch order-of-operations answer`);
+     const testOrder = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 1, seed });
++    assert.equal(Number.isInteger(testOrder.expected.value), true, `seed ${seed} should produce a whole-number KS2 test-mode order-of-operations answer`);
+     assert.ok(testOrder.expected.value >= 0, `seed ${seed} should not produce a negative KS2 test-mode order-of-operations answer`);
+     const power = generateArithmeticQuestion({ templateId: 'powers_of_ten_shift', difficulty: 1, seed });
+     assert.equal(String(power.expected.value).includes('000000000'), false, `seed ${seed} should not leak binary floating-point artefacts`);
+@@ -137,6 +182,7 @@ test('arithmetic generators avoid malformed place-value items and repeating-deci
+     const decimalPlaces = decimalRows.map((line) => line.slice(line.indexOf('.') + 1).trimEnd().length);
+     assert.equal(new Set(decimalPlaces).size, 1, `decimal missing-digit seed ${seed} should preserve fixed decimal places`);
+   }
++  assert.ok(orderShapeFamilies.every((shapes) => shapes.size >= 2), 'order-of-operations should expose multiple expression structures in every difficulty band');
+ });
+ 
+ test('arithmetic practice session keeps question isolated and emits reward unit evidence on clean win', () => {

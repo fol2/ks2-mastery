@@ -1,0 +1,14 @@
+{
+  "templates": 30,
+  "rewardUnits": 90,
+  "cases": 135000,
+  "uniqueStemVisuals": 82886,
+  "correctFails": 0,
+  "malformedCommaAccepts": 0,
+  "validCommaRejects": 0,
+  "negDenAccepts": 0,
+  "formalCommaVisuals": 0,
+  "binaryArtifacts": 0,
+  "orderWholeNonNegativeFailures": 0,
+  "divisionR0Valid": 9000
+}
