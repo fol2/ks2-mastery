@@ -6,15 +6,15 @@
   "origin": "https://ks2.eugnel.uk",
   "contentReleaseId": "reading-poc-promoted-2026-05-05",
   "contentVersion": 6,
-  "commitSha": "b16cb890508add84fff616bc737b5dbac9568aaf",
+  "commitSha": "56e2d15abffd21381a53361117fee3ff82292293",
   "commitShaSource": "cli-or-ci-expected",
   "learnerFixtureType": "demo-session",
-  "accountId": "demo-_FHCR1hAY1VYIw",
-  "learnerId": "learner-demo-cWvz9nYiw3900Q",
+  "accountId": "demo-IvigqpgJybpjoQ",
+  "learnerId": "learner-demo-qOPiSmAYZ39BhA",
   "immediate": {
     "revision": 2,
-    "questionId": "p4p01_window_at_dawn_q1",
-    "passageId": "p4p01_window_at_dawn",
+    "questionId": "p4n14_forest_firebreaks_q2",
+    "passageId": "p4n14_forest_firebreaks",
     "content": {
       "releaseId": "reading-poc-promoted-2026-05-05",
       "version": 6,
@@ -40,14 +40,14 @@
     "staleErrorCleared": true
   },
   "staleWriteGuard": {
-    "expectedSessionId": "reading_session_mp3y02qc_bh2qsi7r",
+    "expectedSessionId": "reading_session_mp3yzt9y_li98hxkm",
     "expectedQuestionId": "stale-question-id",
-    "protectedQuestionId": "phase5_nonfiction_lighthouse_maintenance_q2",
+    "protectedQuestionId": "p4p01_window_at_dawn_q1",
     "changed": false,
     "revisionUnchanged": true,
     "staleResponsePersisted": false,
     "protectedQuestionResponsePersisted": false
   },
-  "timestamp": "2026-05-13T10:54:37.752Z",
-  "finishedAt": "2026-05-13T10:54:37.752Z"
+  "timestamp": "2026-05-13T11:22:25.125Z",
+  "finishedAt": "2026-05-13T11:22:25.125Z"
 }
