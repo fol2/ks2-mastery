@@ -7,6 +7,9 @@ Reading Phase 7 has been implemented, reviewed, deployed, and smoke-tested on pr
 ## Implementation
 
 - Implementation commit: `fb8cd61e46ec795ab3cea06a99726c46d954e21c`.
+- API production smoke evidence commit: `ad8f8ecf18414af30072a82e9ef3e39e42f0817c`.
+- Browser production smoke evidence commit: `bef9c3addde3d14bf164d12a8328f660020d332b`.
+- Later package commits are evidence-only or line-ending/checksum fixes. They do not change Reading runtime content or the production smoke target.
 - Base package: `docs/plans/james/hotfixes/15. reading-phase7-scale-expansion-package`.
 - Reading content version: 7.
 - Final content counts: 714 passages, 7,112 questions, 243 papers.
@@ -40,6 +43,11 @@ Reading Phase 7 has been implemented, reviewed, deployed, and smoke-tested on pr
 - Production browser smoke: passed on `/demo` for desktop 1280x800 and mobile 390x844.
 - Browser smoke evidence: `validation/production-reading-landing-browser-smoke-2026-05-13.json`.
 - Browser screenshots: `validation/production-reading-landing-screenshots-2026-05-13/`.
+
+## Checksum Stability
+
+- Package files are pinned to LF line endings through `.gitattributes`.
+- `SHA256SUMS.txt` uses POSIX separators and is verified against the checked-out package files.
 
 ## Artefacts
 

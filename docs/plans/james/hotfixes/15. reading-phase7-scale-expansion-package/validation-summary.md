@@ -64,3 +64,11 @@ Implemented in a dependency-complete worktree as the next Reading-only scale pat
 - Browser smoke checked the Reading landing, Reading setup controls, desktop session start, horizontal overflow, screenshots, console errors, request failures, and HTTP failures.
 - Browser evidence: `validation/production-reading-landing-browser-smoke-2026-05-13.json`.
 - Browser screenshots: `validation/production-reading-landing-screenshots-2026-05-13/`.
+
+## Evidence commit chain
+
+- Runtime implementation and deploy target: `fb8cd61e46ec795ab3cea06a99726c46d954e21c`.
+- API production smoke evidence commit: `ad8f8ecf18414af30072a82e9ef3e39e42f0817c`.
+- Browser production smoke evidence commit: `bef9c3addde3d14bf164d12a8328f660020d332b`.
+- Later commits in this package are evidence-only or line-ending/checksum fixes. They do not change Reading runtime content or the production smoke target.
+- The package is pinned to LF line endings through `.gitattributes` so `SHA256SUMS.txt` verifies consistently on Windows and Linux checkouts.
