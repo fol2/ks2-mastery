@@ -1,0 +1,346 @@
+{
+  "generatedAt": "2026-05-13T10:12:02.148Z",
+  "summary": {
+    "releaseId": "reading-poc-promoted-2026-05-05",
+    "version": 6,
+    "passageCount": 414,
+    "questionCount": 4112,
+    "paperCount": 143,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 139,
+      "non-fiction": 139,
+      "poetry": 136
+    },
+    "longPassageCount": 370
+  },
+  "phase6": {
+    "passageCount": 204,
+    "questionCount": 2040,
+    "paperCount": 68,
+    "genres": {
+      "fiction": 68,
+      "non-fiction": 68,
+      "poetry": 68
+    },
+    "longPassageCount": 204,
+    "difficultyValues": [
+      4,
+      5
+    ],
+    "questionCountsUnique": [
+      10
+    ],
+    "skillCounts": {
+      "2b": 204,
+      "2a": 204,
+      "2d": 340,
+      "2c": 204,
+      "2g": 272,
+      "2f": 408,
+      "2h": 204,
+      "P1": 51,
+      "P2": 51,
+      "P3": 51,
+      "P4": 51
+    },
+    "typeCounts": {
+      "short": 204,
+      "mcq": 612,
+      "evidenceShort": 204,
+      "open": 408,
+      "match": 204,
+      "order": 204,
+      "multiSelect": 204
+    },
+    "paperMarkTotalsUnique": [
+      50
+    ],
+    "paperGenreOrdersUnique": [
+      "fiction|non-fiction|poetry"
+    ]
+  },
+  "stretch": {
+    "eligiblePassages": 386,
+    "engineEligibleQuestions": 3106,
+    "nonPunctuationQuestionCount": 3493,
+    "sampleSessions": [
+      {
+        "randomValue": 0,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "tide_clock",
+        "isPhase6": false,
+        "questionCount": 6,
+        "maxScore": 16,
+        "skills": [
+          "2a",
+          "2d",
+          "2b",
+          "2b",
+          "2h",
+          "2d"
+        ],
+        "types": [
+          "mcq",
+          "evidenceShort",
+          "multiSelect",
+          "order",
+          "open",
+          "open"
+        ],
+        "punctuationQuestionCount": 0
+      },
+      {
+        "randomValue": 0.05,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "p4p04_winter_tree_voice",
+        "isPhase6": false,
+        "questionCount": 6,
+        "maxScore": 11,
+        "skills": [
+          "2g",
+          "2d",
+          "2e",
+          "2h",
+          "2f",
+          "2g"
+        ],
+        "types": [
+          "open",
+          "evidenceShort",
+          "short",
+          "match",
+          "order",
+          "multiSelect"
+        ],
+        "punctuationQuestionCount": 0
+      },
+      {
+        "randomValue": 0.1,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "p4n12_school_compost_cycle",
+        "isPhase6": false,
+        "questionCount": 6,
+        "maxScore": 11,
+        "skills": [
+          "2d",
+          "2f",
+          "2e",
+          "2h",
+          "2f",
+          "2b"
+        ],
+        "types": [
+          "evidenceShort",
+          "open",
+          "short",
+          "match",
+          "order",
+          "multiSelect"
+        ],
+        "punctuationQuestionCount": 0
+      },
+      {
+        "randomValue": 0.2,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "p4f28_hidden_courtyard",
+        "isPhase6": false,
+        "questionCount": 6,
+        "maxScore": 11,
+        "skills": [
+          "2d",
+          "2g",
+          "2e",
+          "2h",
+          "2f",
+          "2b"
+        ],
+        "types": [
+          "evidenceShort",
+          "open",
+          "short",
+          "match",
+          "order",
+          "multiSelect"
+        ],
+        "punctuationQuestionCount": 0
+      },
+      {
+        "randomValue": 0.35,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "phase5_nonfiction_forest_drainage",
+        "isPhase6": false,
+        "questionCount": 6,
+        "maxScore": 12,
+        "skills": [
+          "2d",
+          "2c",
+          "2f",
+          "2h",
+          "2f",
+          "2b"
+        ],
+        "types": [
+          "evidenceShort",
+          "mcq",
+          "open",
+          "match",
+          "order",
+          "multiSelect"
+        ],
+        "punctuationQuestionCount": 0
+      },
+      {
+        "randomValue": 0.5,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "phase6_nonfiction_urban_tree_maps",
+        "isPhase6": true,
+        "questionCount": 6,
+        "maxScore": 11,
+        "skills": [
+          "2d",
+          "2c",
+          "2f",
+          "2h",
+          "2f",
+          "2d"
+        ],
+        "types": [
+          "evidenceShort",
+          "mcq",
+          "open",
+          "match",
+          "order",
+          "multiSelect"
+        ],
+        "punctuationQuestionCount": 0
+      },
+      {
+        "randomValue": 0.65,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "phase6_poetry_under_the_bee_hotel",
+        "isPhase6": true,
+        "questionCount": 6,
+        "maxScore": 12,
+        "skills": [
+          "2d",
+          "2c",
+          "2g",
+          "2h",
+          "2f",
+          "2g"
+        ],
+        "types": [
+          "evidenceShort",
+          "mcq",
+          "open",
+          "match",
+          "order",
+          "multiSelect"
+        ],
+        "punctuationQuestionCount": 0
+      },
+      {
+        "randomValue": 0.8,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "phase6_fiction_music_hall_balcony",
+        "isPhase6": true,
+        "questionCount": 6,
+        "maxScore": 11,
+        "skills": [
+          "2d",
+          "2c",
+          "2g",
+          "2h",
+          "2f",
+          "2d"
+        ],
+        "types": [
+          "evidenceShort",
+          "mcq",
+          "open",
+          "match",
+          "order",
+          "multiSelect"
+        ],
+        "punctuationQuestionCount": 0
+      },
+      {
+        "randomValue": 0.95,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "phase6_nonfiction_tool_libraries",
+        "isPhase6": true,
+        "questionCount": 6,
+        "maxScore": 11,
+        "skills": [
+          "2d",
+          "2c",
+          "2f",
+          "2h",
+          "2f",
+          "2d"
+        ],
+        "types": [
+          "evidenceShort",
+          "mcq",
+          "open",
+          "match",
+          "order",
+          "multiSelect"
+        ],
+        "punctuationQuestionCount": 0
+      },
+      {
+        "randomValue": 0.999,
+        "mode": "stretch",
+        "delayedFeedback": true,
+        "strict": false,
+        "passageId": "phase6_poetry_at_the_town_archive",
+        "isPhase6": true,
+        "questionCount": 6,
+        "maxScore": 12,
+        "skills": [
+          "2d",
+          "2c",
+          "2g",
+          "2h",
+          "2f",
+          "2g"
+        ],
+        "types": [
+          "evidenceShort",
+          "mcq",
+          "open",
+          "match",
+          "order",
+          "multiSelect"
+        ],
+        "punctuationQuestionCount": 0
+      }
+    ]
+  },
+  "performance": {
+    "n": 100,
+    "p50Ms": 1.3118000000000052,
+    "p95Ms": 1.964100000000002,
+    "maxMs": 4.324600000000004
+  }
+}

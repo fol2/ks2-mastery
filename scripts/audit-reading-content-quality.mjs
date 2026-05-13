@@ -23,6 +23,17 @@ function replaceNormalisedPhrase(value, phrase, replacement) {
   return value.split(key).join(replacement);
 }
 
+function nonFictionTopicFromTitle(title) {
+  const raw = String(title || '');
+  return raw.match(/^How (.+) Works$/)?.[1]
+    || raw.match(/^(.+) in Practice$/)?.[1]
+    || '';
+}
+
+function replaceGeneratedCaseLabels(value) {
+  return value.replace(/\b[a-z]+ field note [0-9]+\b/g, 'CASE');
+}
+
 function stemShapeKey(stem, passage) {
   let key = norm(stem)
     .replace(/paragraph [0-9]+/g, 'paragraph #')
@@ -30,9 +41,11 @@ function stemShapeKey(stem, passage) {
   key = replaceNormalisedPhrase(key, passage.title, 'TEXT');
   const fictionName = String(passage.blocks?.[0] || '').match(/^([A-Z][a-z]+) reached\b/)?.[1] || '';
   key = replaceNormalisedPhrase(key, fictionName, 'PERSON');
-  const nonFictionTopic = String(passage.title || '').match(/^How (.+) Works$/)?.[1] || '';
+  const nonFictionTopic = nonFictionTopicFromTitle(passage.title);
   key = replaceNormalisedPhrase(key, `How ${nonFictionTopic} Works`, 'TEXT');
+  key = replaceNormalisedPhrase(key, `${nonFictionTopic} in Practice`, 'TEXT');
   key = replaceNormalisedPhrase(key, nonFictionTopic, 'TOPIC');
+  key = replaceGeneratedCaseLabels(key);
   return key
     .replace(/\b(red tin box|lantern map|seed bank|seed vault|rooftop rain|poem|passage|story|text)\b/g, 'TEXT')
     .replace(/\b(nia|mara|aunt lio|grandad)\b/g, 'PERSON');
@@ -43,6 +56,10 @@ function addGroup(map, key, value) {
   const rows = map.get(key) || [];
   rows.push(value);
   map.set(key, rows);
+}
+
+function isRecentExpansionRow(row) {
+  return row.includes('phase5_') || row.includes('phase6_');
 }
 
 function sentenceContaining(source, snippet) {
@@ -121,8 +138,8 @@ for (const [answer, rows] of duplicateModelAnswerGroups.entries()) {
   if (rows.length > 1) failures.push({ type: 'duplicate-model-answer', answer, rows });
 }
 for (const [shape, rows] of duplicateStemShapeGroups.entries()) {
-  const phase5Rows = rows.filter((row) => row.includes('phase5_'));
-  if (phase5Rows.length > 2) advisories.push({ type: 'repeated-stem-shape', shape, rows: phase5Rows });
+  const recentExpansionRows = rows.filter(isRecentExpansionRow);
+  if (recentExpansionRows.length > 2) advisories.push({ type: 'repeated-stem-shape', shape, rows: recentExpansionRows });
 }
 
 const questionMap = new Map(questionRows.map(({ question }) => [question.id, question]));

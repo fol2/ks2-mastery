@@ -1,0 +1,7 @@
+Command: npm run check
+Result: passed
+Wrangler command: node ./scripts/wrangler-oauth.mjs deploy --dry-run
+Build: npm run build && npm run assert:build-public && npm run audit:client
+Client bundle audit: passed
+Public files read: 881
+Dry run: --dry-run exiting now

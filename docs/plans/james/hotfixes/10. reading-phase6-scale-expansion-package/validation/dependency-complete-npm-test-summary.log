@@ -1,0 +1,4 @@
+Command: npm test
+Result: passed
+Full local log: C:\Users\fol2h\AppData\Local\Temp\ks2-reading-phase6\npm-test-final-case-anchor.log
+Summary: tests 111501; suites 819; pass 111489; fail 0; cancelled 0; skipped 12; todo 0; duration_ms 209817.8543

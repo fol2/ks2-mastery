@@ -24,6 +24,17 @@ function replaceNormalisedPhrase(value, phrase, replacement) {
   return value.split(key).join(replacement);
 }
 
+function nonFictionTopicFromTitle(title) {
+  const raw = String(title || '');
+  return raw.match(/^How (.+) Works$/)?.[1]
+    || raw.match(/^(.+) in Practice$/)?.[1]
+    || '';
+}
+
+function replaceGeneratedCaseLabels(value) {
+  return value.replace(/\b[a-z]+ field note [0-9]+\b/g, 'CASE');
+}
+
 function stemShapeKey(stem, passage) {
   let key = norm(stem)
     .replace(/\b(paragraph|section) [0-9]+\b/g, '$1 #')
@@ -32,24 +43,30 @@ function stemShapeKey(stem, passage) {
   key = replaceNormalisedPhrase(key, passage.title, 'TEXT');
   const fictionName = String(passage.blocks?.[0] || '').match(/^([A-Z][a-z]+) reached\b/)?.[1] || '';
   key = replaceNormalisedPhrase(key, fictionName, 'PERSON');
-  const nonFictionTopic = String(passage.title || '').match(/^How (.+) Works$/)?.[1] || '';
+  const nonFictionTopic = nonFictionTopicFromTitle(passage.title);
   key = replaceNormalisedPhrase(key, `How ${nonFictionTopic} Works`, 'TEXT');
+  key = replaceNormalisedPhrase(key, `${nonFictionTopic} in Practice`, 'TEXT');
   key = replaceNormalisedPhrase(key, nonFictionTopic, 'TOPIC');
+  key = replaceGeneratedCaseLabels(key);
   return key;
+}
+
+function isRecentExpansionRow(row) {
+  return row.includes('phase5_') || row.includes('phase6_');
 }
 
 test('reading content bank has varied original passages, papers and KS2 domains', () => {
   const summary = readingContentSummary();
   assert.equal(summary.releaseId, 'reading-poc-promoted-2026-05-05');
-  assert.equal(summary.version, 5);
-  assert.equal(summary.passageCount, 210);
-  assert.equal(summary.paperCount, 75);
-  assert.equal(summary.questionCount, 2072);
+  assert.equal(summary.version, 6);
+  assert.equal(summary.passageCount, 414);
+  assert.equal(summary.paperCount, 143);
+  assert.equal(summary.questionCount, 4112);
   assert.ok(Object.keys(READING_SKILLS).includes('2d'));
-  assert.equal(summary.genres.fiction, 71);
-  assert.equal(summary.genres['non-fiction'], 71);
-  assert.equal(summary.genres.poetry, 68);
-  assert.equal(summary.longPassageCount, 166);
+  assert.equal(summary.genres.fiction, 139);
+  assert.equal(summary.genres['non-fiction'], 139);
+  assert.equal(summary.genres.poetry, 136);
+  assert.equal(summary.longPassageCount, 370);
 });
 
 
@@ -115,7 +132,7 @@ test('reading model answers and stem shapes avoid repeated-question feel', () =>
   }
   const duplicateAnswers = [...answerGroups.entries()].filter(([, rows]) => rows.length > 1);
   const duplicateStemShapes = [...stemShapeGroups.entries()]
-    .map(([shape, rows]) => [shape, rows.filter((row) => row.includes('phase5_'))])
+    .map(([shape, rows]) => [shape, rows.filter(isRecentExpansionRow)])
     .filter(([, rows]) => rows.length > 2);
   assert.deepEqual(duplicateAnswers, []);
   assert.deepEqual(duplicateStemShapes, []);

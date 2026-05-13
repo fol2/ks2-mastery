@@ -44,13 +44,13 @@ function expectedContentSummary() {
   assert.equal(summary.releaseId, READING_CONTENT_RELEASE_ID);
   assert.equal(summary.version, READING_CONTENT_VERSION);
   assert.equal(summary.version, expectedVersion, 'Local Reading content version did not match the expected smoke version.');
-  assert.equal(summary.passageCount, 210);
-  assert.equal(summary.questionCount, 2072);
-  assert.equal(summary.paperCount, 75);
-  assert.equal(summary.genres.fiction, 71);
-  assert.equal(summary.genres['non-fiction'], 71);
-  assert.equal(summary.genres.poetry, 68);
-  assert.equal(summary.longPassageCount, 166);
+  assert.equal(summary.passageCount, 414);
+  assert.equal(summary.questionCount, 4112);
+  assert.equal(summary.paperCount, 143);
+  assert.equal(summary.genres.fiction, 139);
+  assert.equal(summary.genres['non-fiction'], 139);
+  assert.equal(summary.genres.poetry, 136);
+  assert.equal(summary.longPassageCount, 370);
   return summary;
 }
 
