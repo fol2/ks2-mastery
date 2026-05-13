@@ -85,11 +85,9 @@ PASS 24/24 expansion + 4/4 live
 
 ## Reviewer closure
 
-Independent reviewer closure is required before final sign-off:
+Independent reviewer closure is complete:
 
-- Code reviewer round 1: GREEN, no blockers or advisories.
-- Code reviewer round 2: BLOCKED on stale production SHA wording, stale final `npm test` count, and stale closure text from the `832b44ca3213e2cea2d5f2a47cf292783bfcbfd5` snapshot. This revision updates the production-smoked package commit to `96ed1daacb400bef3ce15f3ca787b22b79a4d16c`, keeps the final `npm test` count at `111507/111519`, and removes the stale sync-pending claim.
-- Contract auditor round 1: BLOCKED on report closure, commit/push sync, and missing scope rationale. The scope rationale is documented above.
-- Contract auditor round 2: BLOCKED on patch artefact reproducibility, stale completion-report text, and stale final `npm test` count. This revision regenerates the patch from the actual landed fix, refreshes fresh patch apply/test evidence, updates the final `npm test` count, and confirms pushed sync through `96ed1daacb400bef3ce15f3ca787b22b79a4d16c`.
+- Code reviewer final re-check: GREEN, no blockers or advisories.
+- Contract auditor final re-check: GREEN, no blockers or advisories after the final closure text update.
 
-This report must be updated with both green verdicts before final completion.
+Prior blocked review rounds were resolved by regenerating the patch artefact from the actual landed fix, refreshing fresh patch apply/test evidence, documenting the fixing-only proper-noun registry scope, separating production-smoked runtime evidence from package-only evidence commits, updating the final `npm test` count, and confirming `HEAD == origin/main`.

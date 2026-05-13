@@ -2,7 +2,7 @@
 dc7c7651c0a30fbee905e2346a661af4b4d62433a1bd965fb821bc503cbd9b3e  ./github-supplement/recent-punctuation-commits.md
 3c789c14cd9c1fe6dfd3b9618c480fcdc1eff5f804a3ee2f896949a8f5b5c48d  ./MANIFEST.txt
 cb93a4f878f8f2bcd8f3296de26ac46f201ae1a0f08e830b2277004247dc18a8  ./patches/001-punctuation-05131039-proper-noun-capitalisation-quality-gate.patch
-e581a7ab9e6635ddd4fe8fe848c83ae1be6b63ee8b70e637a197cfaf22c2ea21  ./punctuation-05131039-completion-report-2026-05-13.md
+f77eb7b9793578f4feab23e143676fa5ed831337a7af33298435a901009a443e  ./punctuation-05131039-completion-report-2026-05-13.md
 c2c0749340c4cb80c417de752400c9cdf19065163c1c4c8b008119966d2f1ef5  ./recommendations/punctuation-next-subject-quality-contract.md
 3575c432a1dfeecf92f97c4f106bad0b3056337e76c9562bf44f3115bdd6a504  ./validation-summary.md
 d2c3de6c9d4cd765194598ee880c2e1acb138499918fae76b750fd91b36dc34c  ./validation/baseline-p20-expansion.log
