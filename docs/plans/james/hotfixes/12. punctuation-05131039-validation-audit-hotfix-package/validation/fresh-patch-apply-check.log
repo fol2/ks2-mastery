@@ -1,1 +1,5 @@
+HEAD is now at b16cb890 Fix Arithmetic world-class contract gaps
+Removing shared/punctuation/proper-noun-tokens.js
+Removing tests/punctuation-proper-noun-capitalisation-quality.test.js
 git apply --check: PASS
+git apply --cached --check: PASS

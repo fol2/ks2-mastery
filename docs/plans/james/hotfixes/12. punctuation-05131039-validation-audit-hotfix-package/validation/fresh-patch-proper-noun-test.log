@@ -2,37 +2,37 @@ TAP version 13
 # Subtest: Punctuation runtime model answers capitalise proper names
 ok 1 - Punctuation runtime model answers capitalise proper names
   ---
-  duration_ms: 254.6882
+  duration_ms: 259.7811
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit rejects lowercase names in model answers and accepted answers
 ok 2 - P20 proper-noun audit rejects lowercase names in model answers and accepted answers
   ---
-  duration_ms: 0.5287
+  duration_ms: 0.5334
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit covers every systematic actor token
 ok 3 - P20 proper-noun audit covers every systematic actor token
   ---
-  duration_ms: 0.3228
+  duration_ms: 0.333
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit covers fixed place-name tokens
 ok 4 - P20 proper-noun audit covers fixed place-name tokens
   ---
-  duration_ms: 0.1048
+  duration_ms: 0.1091
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit covers every registered proper-name token
 ok 5 - P20 proper-noun audit covers every registered proper-name token
   ---
-  duration_ms: 0.9593
+  duration_ms: 0.7659
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit allows lowercase names in learner stems for capital-letter repair tasks
 ok 6 - P20 proper-noun audit allows lowercase names in learner stems for capital-letter repair tasks
   ---
-  duration_ms: 0.12
+  duration_ms: 0.0914
   type: 'test'
   ...
 1..6
@@ -43,4 +43,4 @@ ok 6 - P20 proper-noun audit allows lowercase names in learner stems for capital
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 777.2
+# duration_ms 547.2109

@@ -26,145 +26,145 @@ TAP version 13
 # Subtest: Punctuation apostrophe-contraction runtime avoids ungrammatical generated clauses
 ok 1 - Punctuation apostrophe-contraction runtime avoids ungrammatical generated clauses
   ---
-  duration_ms: 255.7109
+  duration_ms: 257.6036
   type: 'test'
   ...
 # Subtest: P20 apostrophe-contraction audit rejects old believe/moved grammar regressions
 ok 2 - P20 apostrophe-contraction audit rejects old believe/moved grammar regressions
   ---
-  duration_ms: 0.5592
+  duration_ms: 0.5644
   type: 'test'
   ...
 # Subtest: P20 apostrophe-contraction audit rejects documented negative-auxiliary believe regressions
 ok 3 - P20 apostrophe-contraction audit rejects documented negative-auxiliary believe regressions
   ---
-  duration_ms: 0.1223
+  duration_ms: 0.1228
   type: 'test'
   ...
 # Subtest: Punctuation hyphen runtime avoids -ly compounds, no-space distractors, and article errors
 ok 4 - Punctuation hyphen runtime avoids -ly compounds, no-space distractors, and article errors
   ---
-  duration_ms: 257.7888
+  duration_ms: 247.5547
   type: 'test'
   ...
 # Subtest: Punctuation manual and systematic hyphen banks stay free of -ly adverb hyphen examples
 ok 5 - Punctuation manual and systematic hyphen banks stay free of -ly adverb hyphen examples
   ---
-  duration_ms: 16.7859
+  duration_ms: 18.9111
   type: 'test'
   ...
 # Subtest: P20 hyphen audit rejects explanation-only -ly compound examples
 ok 6 - P20 hyphen audit rejects explanation-only -ly compound examples
   ---
-  duration_ms: 0.3543
+  duration_ms: 0.4972
   type: 'test'
   ...
 # Subtest: Punctuation runtime model answers capitalise proper names
 ok 7 - Punctuation runtime model answers capitalise proper names
   ---
-  duration_ms: 269.7763
+  duration_ms: 276.1302
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit rejects lowercase names in model answers and accepted answers
 ok 8 - P20 proper-noun audit rejects lowercase names in model answers and accepted answers
   ---
-  duration_ms: 0.518
+  duration_ms: 0.8999
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit covers every systematic actor token
 ok 9 - P20 proper-noun audit covers every systematic actor token
   ---
-  duration_ms: 0.3059
+  duration_ms: 0.5645
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit covers fixed place-name tokens
 ok 10 - P20 proper-noun audit covers fixed place-name tokens
   ---
-  duration_ms: 0.1166
+  duration_ms: 0.1887
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit covers every registered proper-name token
 ok 11 - P20 proper-noun audit covers every registered proper-name token
   ---
-  duration_ms: 0.774
+  duration_ms: 1.4296
   type: 'test'
   ...
 # Subtest: P20 proper-noun audit allows lowercase names in learner stems for capital-letter repair tasks
 ok 12 - P20 proper-noun audit allows lowercase names in learner stems for capital-letter repair tasks
   ---
-  duration_ms: 0.0909
+  duration_ms: 0.1599
   type: 'test'
   ...
 # Subtest: P20 expansion report validator accepts the current duplicate-free and hyphen-clean report
 ok 13 - P20 expansion report validator accepts the current duplicate-free and hyphen-clean report
   ---
-  duration_ms: 145.1186
+  duration_ms: 117.669
   type: 'test'
   ...
 # Subtest: P20 expansion report validator rejects stale fixed-bank duplicate reports
 ok 14 - P20 expansion report validator rejects stale fixed-bank duplicate reports
   ---
-  duration_ms: 46.8027
+  duration_ms: 50.7683
   type: 'test'
   ...
 # Subtest: P20 expansion report validator rejects hyphen quality gate failures and counters
 ok 15 - P20 expansion report validator rejects hyphen quality gate failures and counters
   ---
-  duration_ms: 47.0489
+  duration_ms: 46.8387
   type: 'test'
   ...
 # Subtest: P20 expansion report validator rejects apostrophe-contraction grammar gate failures and counters
 ok 16 - P20 expansion report validator rejects apostrophe-contraction grammar gate failures and counters
   ---
-  duration_ms: 46.5506
+  duration_ms: 44.6918
   type: 'test'
   ...
 # Subtest: P20 expansion report validator rejects proper-noun capitalisation gate failures and counters
 ok 17 - P20 expansion report validator rejects proper-noun capitalisation gate failures and counters
   ---
-  duration_ms: 45.3346
+  duration_ms: 45.2345
   type: 'test'
   ...
 # Subtest: P20 release identity and runtime pool scale are certified
 ok 18 - P20 release identity and runtime pool scale are certified
   ---
-  duration_ms: 0.7477
+  duration_ms: 0.479
   type: 'test'
   ...
 # Subtest: P20 learner-facing surfaces and generated family depth are heavy-play ready
 ok 19 - P20 learner-facing surfaces and generated family depth are heavy-play ready
   ---
-  duration_ms: 0.1609
+  duration_ms: 0.5428
   type: 'test'
   ...
 # Subtest: P20 per-skill balance gives every published punctuation skill enough depth
 ok 20 - P20 per-skill balance gives every published punctuation skill enough depth
   ---
-  duration_ms: 1.0222
+  duration_ms: 0.1676
   type: 'test'
   ...
 # Subtest: P20 marking, hyphen quality, review governance, and negative vectors are production-clean
 ok 21 - P20 marking, hyphen quality, review governance, and negative vectors are production-clean
   ---
-  duration_ms: 0.2037
+  duration_ms: 0.0958
   type: 'test'
   ...
 # Subtest: P20 heavy-play scheduler simulation does not make repetition noticeable
 ok 22 - P20 heavy-play scheduler simulation does not make repetition noticeable
   ---
-  duration_ms: 0.1412
+  duration_ms: 0.1364
   type: 'test'
   ...
 # Subtest: P20 expansion audit is globally PASS
 ok 23 - P20 expansion audit is globally PASS
   ---
-  duration_ms: 0.1066
+  duration_ms: 0.0886
   type: 'test'
   ...
 # Subtest: P20 runtime pool has no duplicate learner-facing surfaces in fixed or generated items
 ok 24 - P20 runtime pool has no duplicate learner-facing surfaces in fixed or generated items
   ---
-  duration_ms: 10.5938
+  duration_ms: 10.5841
   type: 'test'
   ...
 1..24
@@ -175,4 +175,4 @@ ok 24 - P20 runtime pool has no duplicate learner-facing surfaces in fixed or ge
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 619.5758
+# duration_ms 592.6886

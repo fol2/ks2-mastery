@@ -12,7 +12,7 @@ index 7bc506b0..fc97b2e7 100644
      "verify:punctuation-qg:p20": "npm run verify:punctuation-qg:p20-expansion && npm run verify:punctuation-qg:p20-live",
      "prepare": "simple-git-hooks"
 diff --git a/reports/punctuation/punctuation-qg-p20-expansion-audit.json b/reports/punctuation/punctuation-qg-p20-expansion-audit.json
-index 58b8045c..a981fe89 100644
+index 58b8045c..46da85b8 100644
 --- a/reports/punctuation/punctuation-qg-p20-expansion-audit.json
 +++ b/reports/punctuation/punctuation-qg-p20-expansion-audit.json
 @@ -2,8 +2,8 @@
@@ -22,7 +22,7 @@ index 58b8045c..a981fe89 100644
 -  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
 -  "generatedAt": "2026-05-13T09:20:43.284Z",
 +  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
-+  "generatedAt": "2026-05-13T11:28:04.367Z",
++  "generatedAt": "2026-05-13T11:06:43.171Z",
    "thresholds": {
      "phase": 20,
      "minRuntimeItems": 15000,
@@ -68,7 +68,7 @@ index 58b8045c..a981fe89 100644
    ]
  }
 diff --git a/reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json b/reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
-index 00ee4bff..77394bc7 100644
+index 00ee4bff..4bc89ac2 100644
 --- a/reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
 +++ b/reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
 @@ -3,8 +3,8 @@
@@ -78,12 +78,12 @@ index 00ee4bff..77394bc7 100644
 -  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
 -  "generatedAt": "2026-05-13T09:20:41.530Z",
 +  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
-+  "generatedAt": "2026-05-13T11:28:02.539Z",
++  "generatedAt": "2026-05-13T11:06:41.410Z",
    "observed": {
      "learnerCount": 10,
      "sessionsPerLearner": 50,
 diff --git a/reports/punctuation/punctuation-qg-p20-negative-vector-register.json b/reports/punctuation/punctuation-qg-p20-negative-vector-register.json
-index 5d7343dc..21a45156 100644
+index 5d7343dc..b4f504c4 100644
 --- a/reports/punctuation/punctuation-qg-p20-negative-vector-register.json
 +++ b/reports/punctuation/punctuation-qg-p20-negative-vector-register.json
 @@ -1,8 +1,8 @@
@@ -93,12 +93,12 @@ index 5d7343dc..21a45156 100644
 -  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
 -  "generatedAt": "2026-05-13T09:20:41.015Z",
 +  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
-+  "generatedAt": "2026-05-13T11:28:02.014Z",
++  "generatedAt": "2026-05-13T11:06:40.913Z",
    "status": "PASS",
    "byFamily": {
      "gen_apostrophe_contractions_fix": {
 diff --git a/reports/punctuation/punctuation-qg-p20-review-register.json b/reports/punctuation/punctuation-qg-p20-review-register.json
-index 67ced517..3972dd83 100644
+index 67ced517..d58fc923 100644
 --- a/reports/punctuation/punctuation-qg-p20-review-register.json
 +++ b/reports/punctuation/punctuation-qg-p20-review-register.json
 @@ -1,8 +1,8 @@
@@ -108,7 +108,7 @@ index 67ced517..3972dd83 100644
 -  "releaseId": "punctuation-qg-p22-15072-2026-05-13",
 -  "generatedAt": "2026-05-13T09:20:41.014Z",
 +  "releaseId": "punctuation-qg-p23-15072-2026-05-13",
-+  "generatedAt": "2026-05-13T11:28:02.013Z",
++  "generatedAt": "2026-05-13T11:06:40.912Z",
    "status": "PASS",
    "fixedBank": {
      "status": "inherited-approved",

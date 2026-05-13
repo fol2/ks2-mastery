@@ -46,6 +46,8 @@ Patch file:
 patches/001-punctuation-05131039-proper-noun-capitalisation-quality-gate.patch
 ```
 
+Patch-id matches the actual landed fix from `5c95335e^..5c95335e`: `4ccd5aa6b5be7af0422c905e32b9c7a4037a798f`.
+
 Patch changes:
 
 - fixes P20 sentence-ending generated model answers to restore proper-name capitals;
@@ -66,6 +68,7 @@ Fresh patch checks from a clean `5c95335e^` worktree:
 
 ```text
 git apply --check: PASS
+git apply --cached --check: PASS
 git apply: PASS
 node --test tests/punctuation-proper-noun-capitalisation-quality.test.js: PASS 6/6
 npm run verify:punctuation-qg:p20-expansion: PASS 24/24
@@ -93,7 +96,7 @@ GOLDEN MARKING: 452 templates tested, 612 accept cases passed, 1348 reject cases
 Full local verification after rebase:
 
 ```text
-npm test: PASS 111506/111518, 0 failed, 12 skipped
+npm test: PASS 111507/111519, 0 failed, 12 skipped
 npm run check: PASS
 ```
 

@@ -33,7 +33,7 @@ targeted runtime/UI/scheduler/marking suite
 PASS 71/71
 
 npm test
-PASS 111506/111518, 0 failed, 12 skipped
+PASS 111507/111519, 0 failed, 12 skipped
 
 npm run check
 PASS
@@ -43,6 +43,7 @@ Patch package gates:
 
 ```text
 git apply --check: PASS
+git apply --cached --check: PASS
 git apply: PASS
 fresh patch proper-noun test: PASS 6/6
 fresh patch P20 expansion: PASS 24/24
@@ -85,6 +86,7 @@ PASS 24/24 expansion + 4/4 live
 Independent reviewer closure is required before final sign-off:
 
 - Code reviewer: GREEN, no blockers or advisories.
-- Contract auditor round 1: BLOCKED on report closure, commit/push sync, and missing scope rationale. The scope rationale is documented above; commit/push sync and final auditor closure are the remaining actions before sign-off.
+- Contract auditor round 1: BLOCKED on report closure, commit/push sync, and missing scope rationale. The scope rationale is documented above.
+- Contract auditor round 2: BLOCKED on patch artefact reproducibility, stale completion-report text, and stale final `npm test` count. This revision regenerates the patch from the actual landed fix, refreshes fresh patch apply/test evidence, updates the final `npm test` count, and confirms pushed sync at `832b44ca3213e2cea2d5f2a47cf292783bfcbfd5`.
 
 This report must be updated with both green verdicts before final completion.
