@@ -13,6 +13,7 @@ import {
   grammarSessionInfoChips,
   grammarFeedbackTone,
   grammarFeedbackNextStepCopy,
+  grammarFeedbackLearningCueCopy,
   grammarFeedbackStretchCopy,
 } from '../session-ui.js';
 import { dispatchGrammarAnswerFormSubmit } from '../form-submit.js';
@@ -250,6 +251,7 @@ function FeedbackPanel({ feedback, session }) {
   const tone = grammarFeedbackTone(result);
   const toneClass = tone === 'good' ? 'good' : tone === 'bad' ? 'warn' : 'neutral';
   const nextStepCopy = grammarFeedbackNextStepCopy(result);
+  const learningCueCopy = grammarFeedbackLearningCueCopy(result);
   const stretchCopy = grammarFeedbackStretchCopy(result, session);
   // SH2-U7 review follow-up (FIX-3): `data-grammar-session-feedback-live`
   // mirrors Punctuation's `data-punctuation-session-feedback-live` anchor
@@ -265,6 +267,7 @@ function FeedbackPanel({ feedback, session }) {
     >
       <strong>{result.feedbackShort || (tone === 'good' ? 'Correct.' : tone === 'bad' ? 'Not quite.' : 'Saved for review')}</strong>
       <div>{result.feedbackLong || result.minimalHint || ''}</div>
+      {learningCueCopy ? <div className="small muted" data-grammar-feedback-learning-cue>{learningCueCopy}</div> : null}
       {nextStepCopy ? <div className="small muted" data-grammar-feedback-next-step>{nextStepCopy}</div> : null}
       {stretchCopy ? <div className="small muted" data-grammar-feedback-stretch>{stretchCopy}</div> : null}
       {result.answerText ? <div className="small muted">Correct answer: {result.answerText}</div> : null}

@@ -1,0 +1,36 @@
+{
+  "totalWrongSamples": 1167,
+  "affectedSamples": 1161,
+  "examples": [
+    {
+      "templateId": "sentence_type_table",
+      "seed": 1,
+      "feedbackLong": "How loudly the drums were beating! → exclamation | Why is the gate still open? → question | Our coach arrives at half past nine. → statement | Wait by the hall doors. → command",
+      "minimalHint": "Ask what the sentence is doing: telling, asking, ordering, or exclaiming."
+    },
+    {
+      "templateId": "sentence_type_table",
+      "seed": 2,
+      "feedbackLong": "Can we finish the poster tomorrow? → question | How loudly the drums were beating! → exclamation | Mia tucked the map into her coat pocket. → statement | Bring your reading record tomorrow. → command",
+      "minimalHint": "Ask what the sentence is doing: telling, asking, ordering, or exclaiming."
+    },
+    {
+      "templateId": "sentence_type_table",
+      "seed": 3,
+      "feedbackLong": "Where did you put the compass? → question | How loudly the drums were beating! → exclamation | Our coach arrives at half past nine. → statement | Bring your reading record tomorrow. → command",
+      "minimalHint": "Ask what the sentence is doing: telling, asking, ordering, or exclaiming."
+    },
+    {
+      "templateId": "question_mark_select",
+      "seed": 1,
+      "feedbackLong": "The sentences needing question marks are: Did the train arrive before noon; Is the platform open yet.",
+      "minimalHint": "Ask what the sentence is doing: telling, asking, ordering, or exclaiming."
+    },
+    {
+      "templateId": "question_mark_select",
+      "seed": 2,
+      "feedbackLong": "The sentences needing question marks are: Do you know the way to the hall; Can the guide meet us outside.",
+      "minimalHint": "Ask what the sentence is doing: telling, asking, ordering, or exclaiming."
+    }
+  ]
+}

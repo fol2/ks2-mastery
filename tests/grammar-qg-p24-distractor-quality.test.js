@@ -156,7 +156,7 @@ test('Grammar QG P24 renders stretch feedback only for correct practice feedback
   assert.ok(stretch, 'Correct practice feedback should render the stretch cue.');
   assert.equal(
     stretch.textContent.trim(),
-    'Extra challenge: turn your reason into one precise sentence using the grammar term.',
+    'Extra challenge: switch active and passive voice while keeping the meaning.',
   );
 
   const incorrectHtml = renderGrammarItem(serialised, {

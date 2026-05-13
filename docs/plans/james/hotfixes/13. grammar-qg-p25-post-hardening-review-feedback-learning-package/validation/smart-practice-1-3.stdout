@@ -1,0 +1,6 @@
+Grammar QG P21 smart-practice audit: PASS
+  Sessions: 33 (11 profiles × 3 seeds)
+  Failures: 0
+  Advisories: 0
+  JSON: /mnt/data/grammar-p25-patched/smart-practice-1-3.json
+  MD: /mnt/data/grammar-p25-patched/smart-practice-1-3.md

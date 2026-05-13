@@ -166,6 +166,63 @@ export function grammarFeedbackNextStepCopy(result) {
   return 'Saved — keep going when you are ready.';
 }
 
+function normaliseFeedbackCopy(value) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .replace(/[.!?]+$/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Concept-specific "what to check" cue for incorrect auto-marked feedback.
+ * The Worker already projects `minimalHint` with the misconception-specific
+ * result, but the React feedback panel previously chose `feedbackLong ||
+ * minimalHint`, so the hint disappeared whenever feedbackLong carried the
+ * correct answer. Keeping this as a pure helper makes the learning cue
+ * explicit, non-scored, and easy to regression-test.
+ */
+export function grammarFeedbackLearningCueCopy(result) {
+  if (grammarFeedbackTone(result) !== 'bad') return '';
+  if (result?.manualReviewOnly === true) return '';
+  const hint = typeof result?.minimalHint === 'string' ? result.minimalHint.trim() : '';
+  if (!hint) return '';
+  const feedbackLong = typeof result?.feedbackLong === 'string' ? result.feedbackLong.trim() : '';
+  if (normaliseFeedbackCopy(hint) === normaliseFeedbackCopy(feedbackLong)) return '';
+  return `Remember: ${hint}`;
+}
+
+const GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT = Object.freeze({
+  sentence_functions: 'Extra challenge: change the sentence into a different function without changing the topic.',
+  word_classes: 'Extra challenge: use the same word in a new sentence and name its job.',
+  noun_phrases: 'Extra challenge: expand the noun phrase with two precise details.',
+  adverbials: 'Extra challenge: move the adverbial to another position and check the comma.',
+  clauses: 'Extra challenge: add a main clause or subordinate clause to change the sentence shape.',
+  relative_clauses: 'Extra challenge: write one new sentence with who, which, or that.',
+  tense_aspect: 'Extra challenge: rewrite the sentence in a different tense or aspect.',
+  standard_english: 'Extra challenge: say why the standard form is better for formal writing.',
+  pronouns_cohesion: 'Extra challenge: name exactly who or what the pronoun refers to.',
+  formality: 'Extra challenge: make the sentence one step more formal without changing the meaning.',
+  active_passive: 'Extra challenge: switch active and passive voice while keeping the meaning.',
+  subject_object: 'Extra challenge: point to the subject and object in one new sentence.',
+  modal_verbs: 'Extra challenge: swap the modal verb to show less certainty.',
+  parenthesis_commas: 'Extra challenge: remove the parenthesis and check the sentence still works.',
+  speech_punctuation: 'Extra challenge: move the reporting clause and keep the speech punctuation correct.',
+  apostrophes_possession: 'Extra challenge: change the owner from one person to more than one and place the apostrophe.',
+  boundary_punctuation: 'Extra challenge: explain why a comma is too weak here.',
+  hyphen_ambiguity: 'Extra challenge: remove the hyphen and explain how the meaning changes.',
+});
+
+function primaryFeedbackConceptId(session = null) {
+  const skillIds = Array.isArray(session?.currentItem?.skillIds)
+    ? session.currentItem.skillIds
+    : [];
+  const conceptId = skillIds.find((id) => typeof id === 'string' && GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT[id]);
+  if (conceptId) return conceptId;
+  const conceptObjects = Array.isArray(session?.currentItem?.concepts) ? session.currentItem.concepts : [];
+  return conceptObjects.find((entry) => typeof entry?.id === 'string' && GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT[entry.id])?.id || '';
+}
+
 /**
  * Optional post-success stretch cue. This is not scored, does not change
  * mastery/reward state, and never appears for incorrect/non-scored answers.
@@ -174,6 +231,10 @@ export function grammarFeedbackNextStepCopy(result) {
  */
 export function grammarFeedbackStretchCopy(result, session = null) {
   if (grammarFeedbackTone(result) !== 'good') return '';
+  const conceptId = primaryFeedbackConceptId(session);
+  if (conceptId && GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT[conceptId]) {
+    return GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT[conceptId];
+  }
   const questionType = typeof session?.currentItem?.questionType === 'string'
     ? session.currentItem.questionType
     : '';

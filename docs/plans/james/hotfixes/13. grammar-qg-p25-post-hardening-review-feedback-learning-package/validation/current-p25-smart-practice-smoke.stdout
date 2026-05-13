@@ -1,0 +1,6 @@
+Grammar QG P21 smart-practice audit: PASS
+  Sessions: 33 (11 profiles × 3 seeds)
+  Failures: 0
+  Advisories: 0
+  JSON: D:\Coding\ks2-mastery\.worktrees\grammar-qg-p25-post-hardening-feedback\reports\grammar\grammar-qg-p25-smart-practice-smoke.json
+  MD: D:\Coding\ks2-mastery\.worktrees\grammar-qg-p25-post-hardening-feedback\reports\grammar\grammar-qg-p25-smart-practice-smoke.md

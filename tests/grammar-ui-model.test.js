@@ -22,6 +22,7 @@ import {
   grammarSessionFooterNote,
   grammarFeedbackTone,
   grammarFeedbackNextStepCopy,
+  grammarFeedbackLearningCueCopy,
   grammarFeedbackStretchCopy,
 } from '../src/subjects/grammar/session-ui.js';
 import {
@@ -54,6 +55,7 @@ import {
 } from '../src/platform/game/mastery/grammar.js';
 import { MONSTERS } from '../src/platform/game/monsters.js';
 import { buildCodexEntries } from '../src/surfaces/home/data.js';
+import { GRAMMAR_CONCEPTS } from '../worker/src/subjects/grammar/content.js';
 
 // -----------------------------------------------------------------------------
 // grammarSessionSubmitLabel
@@ -286,6 +288,27 @@ test('U8 session-ui: grammarFeedbackNextStepCopy gives clear post-marking action
   );
 });
 
+test('P25 session-ui: grammarFeedbackLearningCueCopy keeps misconception hints visible after misses', () => {
+  assert.equal(
+    grammarFeedbackLearningCueCopy({
+      correct: false,
+      feedbackLong: 'Correct answer: She has finished her homework.',
+      minimalHint: 'Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form.',
+    }),
+    'Remember: Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form.',
+  );
+  assert.equal(
+    grammarFeedbackLearningCueCopy({
+      correct: false,
+      feedbackLong: 'Check when the action happened.',
+      minimalHint: 'Check when the action happened.',
+    }),
+    '',
+  );
+  assert.equal(grammarFeedbackLearningCueCopy({ correct: true, minimalHint: 'Check the rule.' }), '');
+  assert.equal(grammarFeedbackLearningCueCopy({ correct: false, nonScored: true, minimalHint: 'Check the rule.' }), '');
+  assert.equal(grammarFeedbackLearningCueCopy({ correct: false, manualReviewOnly: true, minimalHint: 'Check the rule.' }), '');
+});
 
 test('U8 session-ui: grammarFeedbackStretchCopy gives non-scored challenge only after correct answers', () => {
   assert.equal(
@@ -300,8 +323,35 @@ test('U8 session-ui: grammarFeedbackStretchCopy gives non-scored challenge only 
     grammarFeedbackStretchCopy({ correct: true }, { currentItem: { questionType: 'explain' } }),
     'Extra challenge: turn your reason into one precise sentence using the grammar term.',
   );
+  assert.equal(
+    grammarFeedbackStretchCopy({ correct: true }, { currentItem: { questionType: 'choose', skillIds: ['relative_clauses'] } }),
+    'Extra challenge: write one new sentence with who, which, or that.',
+  );
   assert.equal(grammarFeedbackStretchCopy({ correct: false }, { currentItem: { questionType: 'choose' } }), '');
   assert.equal(grammarFeedbackStretchCopy({ nonScored: true }, { currentItem: { questionType: 'choose' } }), '');
+});
+
+test('P25 session-ui: grammarFeedbackStretchCopy covers every Grammar concept before question-type fallback', () => {
+  const fallback = grammarFeedbackStretchCopy(
+    { correct: true },
+    { currentItem: { questionType: 'choose', skillIds: ['unknown_concept'] } },
+  );
+  assert.equal(GRAMMAR_CONCEPTS.length, 18);
+  for (const concept of GRAMMAR_CONCEPTS) {
+    const copy = grammarFeedbackStretchCopy(
+      { correct: true },
+      { currentItem: { questionType: 'choose', skillIds: [concept.id] } },
+    );
+    assert.match(copy, /^Extra challenge: /, `${concept.id} should have child-facing stretch copy`);
+    assert.notEqual(copy, fallback, `${concept.id} should not fall back to question-type copy`);
+  }
+  assert.equal(
+    grammarFeedbackStretchCopy(
+      { correct: true },
+      { currentItem: { questionType: 'choose', concepts: [{ id: 'active_passive' }] } },
+    ),
+    'Extra challenge: switch active and passive voice while keeping the meaning.',
+  );
 });
 
 // -----------------------------------------------------------------------------

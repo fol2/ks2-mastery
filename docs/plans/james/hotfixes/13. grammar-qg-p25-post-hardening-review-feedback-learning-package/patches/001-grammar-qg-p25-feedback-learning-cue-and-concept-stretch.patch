@@ -1,0 +1,294 @@
+diff --git a/src/subjects/grammar/components/GrammarSessionScene.jsx b/src/subjects/grammar/components/GrammarSessionScene.jsx
+index a6d0ddea..86fb6998 100644
+--- a/src/subjects/grammar/components/GrammarSessionScene.jsx
++++ b/src/subjects/grammar/components/GrammarSessionScene.jsx
+@@ -13,6 +13,7 @@ import {
+   grammarSessionInfoChips,
+   grammarFeedbackTone,
+   grammarFeedbackNextStepCopy,
++  grammarFeedbackLearningCueCopy,
+   grammarFeedbackStretchCopy,
+ } from '../session-ui.js';
+ import { dispatchGrammarAnswerFormSubmit } from '../form-submit.js';
+@@ -250,6 +251,7 @@ function FeedbackPanel({ feedback, session }) {
+   const tone = grammarFeedbackTone(result);
+   const toneClass = tone === 'good' ? 'good' : tone === 'bad' ? 'warn' : 'neutral';
+   const nextStepCopy = grammarFeedbackNextStepCopy(result);
++  const learningCueCopy = grammarFeedbackLearningCueCopy(result);
+   const stretchCopy = grammarFeedbackStretchCopy(result, session);
+   // SH2-U7 review follow-up (FIX-3): `data-grammar-session-feedback-live`
+   // mirrors Punctuation's `data-punctuation-session-feedback-live` anchor
+@@ -265,6 +267,7 @@ function FeedbackPanel({ feedback, session }) {
+     >
+       <strong>{result.feedbackShort || (tone === 'good' ? 'Correct.' : tone === 'bad' ? 'Not quite.' : 'Saved for review')}</strong>
+       <div>{result.feedbackLong || result.minimalHint || ''}</div>
++      {learningCueCopy ? <div className="small muted" data-grammar-feedback-learning-cue>{learningCueCopy}</div> : null}
+       {nextStepCopy ? <div className="small muted" data-grammar-feedback-next-step>{nextStepCopy}</div> : null}
+       {stretchCopy ? <div className="small muted" data-grammar-feedback-stretch>{stretchCopy}</div> : null}
+       {result.answerText ? <div className="small muted">Correct answer: {result.answerText}</div> : null}
+diff --git a/src/subjects/grammar/session-ui.js b/src/subjects/grammar/session-ui.js
+index a04756a6..321195ce 100644
+--- a/src/subjects/grammar/session-ui.js
++++ b/src/subjects/grammar/session-ui.js
+@@ -166,6 +166,63 @@ export function grammarFeedbackNextStepCopy(result) {
+   return 'Saved — keep going when you are ready.';
+ }
+ 
++function normaliseFeedbackCopy(value) {
++  return String(value || '')
++    .replace(/\s+/g, ' ')
++    .replace(/[.!?]+$/g, '')
++    .trim()
++    .toLowerCase();
++}
++
++/**
++ * Concept-specific "what to check" cue for incorrect auto-marked feedback.
++ * The Worker already projects `minimalHint` with the misconception-specific
++ * result, but the React feedback panel previously chose `feedbackLong ||
++ * minimalHint`, so the hint disappeared whenever feedbackLong carried the
++ * correct answer. Keeping this as a pure helper makes the learning cue
++ * explicit, non-scored, and easy to regression-test.
++ */
++export function grammarFeedbackLearningCueCopy(result) {
++  if (grammarFeedbackTone(result) !== 'bad') return '';
++  if (result?.manualReviewOnly === true) return '';
++  const hint = typeof result?.minimalHint === 'string' ? result.minimalHint.trim() : '';
++  if (!hint) return '';
++  const feedbackLong = typeof result?.feedbackLong === 'string' ? result.feedbackLong.trim() : '';
++  if (normaliseFeedbackCopy(hint) === normaliseFeedbackCopy(feedbackLong)) return '';
++  return `Remember: ${hint}`;
++}
++
++const GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT = Object.freeze({
++  sentence_functions: 'Extra challenge: change the sentence into a different function without changing the topic.',
++  word_classes: 'Extra challenge: use the same word in a new sentence and name its job.',
++  noun_phrases: 'Extra challenge: expand the noun phrase with two precise details.',
++  adverbials: 'Extra challenge: move the adverbial to another position and check the comma.',
++  clauses: 'Extra challenge: add a main clause or subordinate clause to change the sentence shape.',
++  relative_clauses: 'Extra challenge: write one new sentence with who, which, or that.',
++  tense_aspect: 'Extra challenge: rewrite the sentence in a different tense or aspect.',
++  standard_english: 'Extra challenge: say why the standard form is better for formal writing.',
++  pronouns_cohesion: 'Extra challenge: name exactly who or what the pronoun refers to.',
++  formality: 'Extra challenge: make the sentence one step more formal without changing the meaning.',
++  active_passive: 'Extra challenge: switch active and passive voice while keeping the meaning.',
++  subject_object: 'Extra challenge: point to the subject and object in one new sentence.',
++  modal_verbs: 'Extra challenge: swap the modal verb to show less certainty.',
++  parenthesis_commas: 'Extra challenge: remove the parenthesis and check the sentence still works.',
++  speech_punctuation: 'Extra challenge: move the reporting clause and keep the speech punctuation correct.',
++  apostrophes_possession: 'Extra challenge: change the owner from one person to more than one and place the apostrophe.',
++  boundary_punctuation: 'Extra challenge: explain why a comma is too weak here.',
++  hyphen_ambiguity: 'Extra challenge: remove the hyphen and explain how the meaning changes.',
++});
++
++function primaryFeedbackConceptId(session = null) {
++  const skillIds = Array.isArray(session?.currentItem?.skillIds)
++    ? session.currentItem.skillIds
++    : [];
++  const conceptId = skillIds.find((id) => typeof id === 'string' && GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT[id]);
++  if (conceptId) return conceptId;
++  const conceptObjects = Array.isArray(session?.currentItem?.concepts) ? session.currentItem.concepts : [];
++  return conceptObjects.find((entry) => typeof entry?.id === 'string' && GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT[entry.id])?.id || '';
++}
++
+ /**
+  * Optional post-success stretch cue. This is not scored, does not change
+  * mastery/reward state, and never appears for incorrect/non-scored answers.
+@@ -174,6 +231,10 @@ export function grammarFeedbackNextStepCopy(result) {
+  */
+ export function grammarFeedbackStretchCopy(result, session = null) {
+   if (grammarFeedbackTone(result) !== 'good') return '';
++  const conceptId = primaryFeedbackConceptId(session);
++  if (conceptId && GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT[conceptId]) {
++    return GRAMMAR_FEEDBACK_STRETCH_BY_CONCEPT[conceptId];
++  }
+   const questionType = typeof session?.currentItem?.questionType === 'string'
+     ? session.currentItem.questionType
+     : '';
+diff --git a/tests/grammar-qg-p24-distractor-quality.test.js b/tests/grammar-qg-p24-distractor-quality.test.js
+index 730e9adb..4db0b50a 100644
+--- a/tests/grammar-qg-p24-distractor-quality.test.js
++++ b/tests/grammar-qg-p24-distractor-quality.test.js
+@@ -156,7 +156,7 @@ test('Grammar QG P24 renders stretch feedback only for correct practice feedback
+   assert.ok(stretch, 'Correct practice feedback should render the stretch cue.');
+   assert.equal(
+     stretch.textContent.trim(),
+-    'Extra challenge: turn your reason into one precise sentence using the grammar term.',
++    'Extra challenge: switch active and passive voice while keeping the meaning.',
+   );
+ 
+   const incorrectHtml = renderGrammarItem(serialised, {
+diff --git a/tests/grammar-qg-p25-feedback-learning-cue.test.js b/tests/grammar-qg-p25-feedback-learning-cue.test.js
+new file mode 100644
+index 00000000..fe4f5e85
+--- /dev/null
++++ b/tests/grammar-qg-p25-feedback-learning-cue.test.js
+@@ -0,0 +1,82 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import {
++  createGrammarQuestion,
++  serialiseGrammarQuestion,
++} from '../worker/src/subjects/grammar/content.js';
++
++async function loadRenderHarness(t) {
++  try {
++    const [{ JSDOM }, harness] = await Promise.all([
++      import('jsdom'),
++      import('./helpers/grammar-render-harness.js'),
++    ]);
++    return { JSDOM, ...harness };
++  } catch (error) {
++    t.skip(`React/jsdom render harness unavailable in this lean ZIP environment: ${error.message}`);
++    return null;
++  }
++}
++
++test('Grammar P25 feedback renders the misconception hint as well as the answer after a miss', async (t) => {
++  const harness = await loadRenderHarness(t);
++  if (!harness) return;
++  const { JSDOM, renderGrammarItem, cleanupGrammarRenderHarness } = harness;
++  t.after(() => cleanupGrammarRenderHarness());
++
++  const question = createGrammarQuestion({
++    templateId: 'qg_p18_p15_tense_aspect_tense_rewrite',
++    seed: 1,
++  });
++  const html = renderGrammarItem(serialiseGrammarQuestion(question), {
++    phase: 'feedback',
++    awaitingAdvance: true,
++    feedback: {
++      result: {
++        correct: false,
++        feedbackShort: 'Not quite.',
++        feedbackLong: 'Correct answer: She has finished her homework.',
++        minimalHint: 'Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form.',
++        answerText: 'She has finished her homework.',
++      },
++    },
++  });
++
++  const doc = new JSDOM(html).window.document;
++  const cue = doc.querySelector('[data-grammar-feedback-learning-cue]');
++  assert.ok(cue, 'Incorrect feedback should keep the minimal hint visible even when feedbackLong exists.');
++  assert.match(cue.textContent, /Remember: Check when the action happened/);
++  assert.match(doc.body.textContent, /Correct answer: She has finished her homework\./);
++});
++
++test('Grammar P25 feedback renders a concept-specific stretch cue after a correct answer', async (t) => {
++  const harness = await loadRenderHarness(t);
++  if (!harness) return;
++  const { JSDOM, renderGrammarItem, cleanupGrammarRenderHarness } = harness;
++  t.after(() => cleanupGrammarRenderHarness());
++
++  const question = createGrammarQuestion({
++    templateId: 'qg_p21_relative_clauses_explanation_choice_variety',
++    seed: 1,
++  });
++  const html = renderGrammarItem(serialiseGrammarQuestion(question), {
++    phase: 'feedback',
++    awaitingAdvance: true,
++    feedback: {
++      result: {
++        correct: true,
++        feedbackShort: 'Correct.',
++        feedbackLong: 'A relative clause adds information about a noun.',
++      },
++    },
++  });
++
++  const doc = new JSDOM(html).window.document;
++  const stretch = doc.querySelector('[data-grammar-feedback-stretch]');
++  assert.ok(stretch, 'Correct feedback should render the non-scored stretch cue.');
++  assert.equal(
++    stretch.textContent.trim(),
++    'Extra challenge: write one new sentence with who, which, or that.',
++  );
++});
+diff --git a/tests/grammar-ui-model.test.js b/tests/grammar-ui-model.test.js
+index 61b05dea..32a74081 100644
+--- a/tests/grammar-ui-model.test.js
++++ b/tests/grammar-ui-model.test.js
+@@ -22,6 +22,7 @@ import {
+   grammarSessionFooterNote,
+   grammarFeedbackTone,
+   grammarFeedbackNextStepCopy,
++  grammarFeedbackLearningCueCopy,
+   grammarFeedbackStretchCopy,
+ } from '../src/subjects/grammar/session-ui.js';
+ import {
+@@ -54,6 +55,7 @@ import {
+ } from '../src/platform/game/mastery/grammar.js';
+ import { MONSTERS } from '../src/platform/game/monsters.js';
+ import { buildCodexEntries } from '../src/surfaces/home/data.js';
++import { GRAMMAR_CONCEPTS } from '../worker/src/subjects/grammar/content.js';
+ 
+ // -----------------------------------------------------------------------------
+ // grammarSessionSubmitLabel
+@@ -286,6 +288,27 @@ test('U8 session-ui: grammarFeedbackNextStepCopy gives clear post-marking action
+   );
+ });
+ 
++test('P25 session-ui: grammarFeedbackLearningCueCopy keeps misconception hints visible after misses', () => {
++  assert.equal(
++    grammarFeedbackLearningCueCopy({
++      correct: false,
++      feedbackLong: 'Correct answer: She has finished her homework.',
++      minimalHint: 'Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form.',
++    }),
++    'Remember: Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form.',
++  );
++  assert.equal(
++    grammarFeedbackLearningCueCopy({
++      correct: false,
++      feedbackLong: 'Check when the action happened.',
++      minimalHint: 'Check when the action happened.',
++    }),
++    '',
++  );
++  assert.equal(grammarFeedbackLearningCueCopy({ correct: true, minimalHint: 'Check the rule.' }), '');
++  assert.equal(grammarFeedbackLearningCueCopy({ correct: false, nonScored: true, minimalHint: 'Check the rule.' }), '');
++  assert.equal(grammarFeedbackLearningCueCopy({ correct: false, manualReviewOnly: true, minimalHint: 'Check the rule.' }), '');
++});
+ 
+ test('U8 session-ui: grammarFeedbackStretchCopy gives non-scored challenge only after correct answers', () => {
+   assert.equal(
+@@ -300,10 +323,37 @@ test('U8 session-ui: grammarFeedbackStretchCopy gives non-scored challenge only
+     grammarFeedbackStretchCopy({ correct: true }, { currentItem: { questionType: 'explain' } }),
+     'Extra challenge: turn your reason into one precise sentence using the grammar term.',
+   );
++  assert.equal(
++    grammarFeedbackStretchCopy({ correct: true }, { currentItem: { questionType: 'choose', skillIds: ['relative_clauses'] } }),
++    'Extra challenge: write one new sentence with who, which, or that.',
++  );
+   assert.equal(grammarFeedbackStretchCopy({ correct: false }, { currentItem: { questionType: 'choose' } }), '');
+   assert.equal(grammarFeedbackStretchCopy({ nonScored: true }, { currentItem: { questionType: 'choose' } }), '');
+ });
+ 
++test('P25 session-ui: grammarFeedbackStretchCopy covers every Grammar concept before question-type fallback', () => {
++  const fallback = grammarFeedbackStretchCopy(
++    { correct: true },
++    { currentItem: { questionType: 'choose', skillIds: ['unknown_concept'] } },
++  );
++  assert.equal(GRAMMAR_CONCEPTS.length, 18);
++  for (const concept of GRAMMAR_CONCEPTS) {
++    const copy = grammarFeedbackStretchCopy(
++      { correct: true },
++      { currentItem: { questionType: 'choose', skillIds: [concept.id] } },
++    );
++    assert.match(copy, /^Extra challenge: /, `${concept.id} should have child-facing stretch copy`);
++    assert.notEqual(copy, fallback, `${concept.id} should not fall back to question-type copy`);
++  }
++  assert.equal(
++    grammarFeedbackStretchCopy(
++      { correct: true },
++      { currentItem: { questionType: 'choose', concepts: [{ id: 'active_passive' }] } },
++    ),
++    'Extra challenge: switch active and passive voice while keeping the meaning.',
++  );
++});
++
+ // -----------------------------------------------------------------------------
+ // GRAMMAR_PRIMARY_MODE_CARDS — roster + shape contract
+ // -----------------------------------------------------------------------------
