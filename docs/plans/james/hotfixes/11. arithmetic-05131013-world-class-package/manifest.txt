@@ -2,6 +2,7 @@ README.md
 contract/arithmetic-05131013-world-class-contract.md
 hashes/audit-sha256.txt
 hashes/patch-sha256.txt
+hashes/production-evidence-sha256.txt
 hashes/source-zip-sha256.txt
 manifest.txt
 patches/001-arithmetic-05131013-world-class.patch
@@ -24,7 +25,15 @@ validation/current-2026-05-13/README.md
 validation/current-2026-05-13/audits/arithmetic-custom-audit-2026-05-13.json
 validation/current-2026-05-13/audits/post-review-arithmetic-custom-audit-2026-05-13.json
 validation/current-2026-05-13/audits/post-rebase-arithmetic-custom-audit-2026-05-13.json
+validation/current-2026-05-13/audits/final-review-fix-arithmetic-custom-audit-2026-05-13.json
 validation/current-2026-05-13/audits/arithmetic-paper-realism-audit-2026-05-13.json
+validation/current-2026-05-13/audits/arithmetic-paper-realism-audit-rerun-2026-05-13.json
 validation/current-2026-05-13/scripts/arithmetic-paper-realism-audit.mjs
 validation/current-2026-05-13/scripts/arithmetic-production-browser-smoke.mjs
+validation/current-2026-05-13/arithmetic-05131013-production-smoke-2026-05-13.json
+validation/current-2026-05-13/arithmetic-05131013-production-browser-smoke-2026-05-13.json
+validation/current-2026-05-13/arithmetic-05131013-production-browser-smoke-2026-05-13.png
 validation/current-2026-05-13/logs/*
+arithmetic-05131013-world-class-completion-report-2026-05-13.md
+review/final-code-review-2026-05-13.md
+review/final-contract-audit-2026-05-13.md

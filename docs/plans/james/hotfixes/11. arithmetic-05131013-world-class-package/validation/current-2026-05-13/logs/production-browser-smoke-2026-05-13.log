@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "smokeType": "arithmetic-05131013-world-class-production-browser",
+  "environment": "production",
+  "origin": "https://ks2.eugnel.uk",
+  "learnerFixtureType": "demo-session-cookie",
+  "accountId": "demo-D3LCt-78O5QZyQ",
+  "learnerId": "learner-demo-H-TJVObe33_vYQ",
+  "browser": "chromium",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "flow": [
+    "open dashboard with demo session cookie",
+    "open Arithmetic subject",
+    "start Smart Arithmetic practice",
+    "submit an incorrect answer",
+    "observe worked solution feedback"
+  ],
+  "consoleErrors": [],
+  "consoleWarnings": [],
+  "pageErrors": [],
+  "requestFailures": [],
+  "httpFailures": [],
+  "screenshot": "docs/plans/james/hotfixes/11. arithmetic-05131013-world-class-package/validation/current-2026-05-13/arithmetic-05131013-production-browser-smoke-2026-05-13.png",
+  "finishedAt": "2026-05-13T10:53:39.578Z"
+}

@@ -127,10 +127,17 @@ for (const template of ARITHMETIC_TEMPLATES) {
       }
 
       if (expected.kind === 'fraction' && Math.abs(expected.n) > expected.d) {
-        const whole = Math.trunc(Math.abs(expected.n) / expected.d);
-        const malformed = expected.n < 0 ? `-${whole} ${expected.d}/${expected.d}` : `${whole} ${expected.d}/${expected.d}`;
-        const zeroWhole = `0 ${Math.abs(expected.n)}/${expected.d}`;
-        for (const probe of [malformed, zeroWhole]) {
+        const absoluteNumerator = Math.abs(expected.n);
+        const whole = Math.trunc(absoluteNumerator / expected.d);
+        const remainder = absoluteNumerator % expected.d;
+        const zeroWhole = `0 ${absoluteNumerator}/${expected.d}`;
+        const probes = [zeroWhole];
+        if (whole > 0 && remainder > 0) {
+          const shiftedWhole = whole - 1;
+          const improperNumerator = expected.d + remainder;
+          probes.push(expected.n < 0 ? `-${shiftedWhole} ${improperNumerator}/${expected.d}` : `${shiftedWhole} ${improperNumerator}/${expected.d}`);
+        }
+        for (const probe of probes) {
           summary.malformedMixedChecked += 1;
           if (evaluateArithmeticQuestion(question, { answer: probe }).correct) {
             summary.badMixedAccepts += 1;

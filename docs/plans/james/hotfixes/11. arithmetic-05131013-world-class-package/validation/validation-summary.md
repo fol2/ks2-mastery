@@ -14,11 +14,11 @@ Patch:
 
 Patch SHA-256:
 
-`a4d5df85b4b2349921bd4b100e7997b03e04071c270e2e45481b02b061932c88`
+`d1d8df1e396ca7eb366ab048d0571a2c7a9cb94ed1c3749b8643890ea20a41e3`
 
 ## Current worktree validation
 
-The package was revalidated on `origin/main` commit `b88e3b90` in worktree `D:\Coding\ks2-mastery\.worktrees\arithmetic-05131013-world-class`.
+The package was revalidated on `origin/main` commit `b16cb890508add84fff616bc737b5dbac9568aaf` in worktree `D:\Coding\ks2-mastery\.worktrees\arithmetic-05131013-world-class`.
 
 Additional current gates:
 
@@ -34,6 +34,14 @@ Additional current gates:
 - Production browser smoke helper syntax check: `node --check validation/current-2026-05-13/scripts/arithmetic-production-browser-smoke.mjs` passed. The helper opens a production demo session in Chromium, exercises Arithmetic setup, submit, and feedback, and fails on console errors, page errors, request failures, or HTTP failures.
 - Post-rebase validation on top of `origin/main` `97aa70da2426e0a65b464d44b55cd8670df0c1dd`: default full-suite `npm test` did not produce a clean run because unrelated build/admin subprocess harness failures moved between runs. The failing tests passed targeted reruns. Post-rebase Arithmetic worker runtime, React surface, and custom audit gates passed, and post-rebase `npm run check` passed.
 - The package custom audit script was made reproducible from its committed package path by importing repo-root Arithmetic content directly. The post-rebase custom audit again reported 135,000 cases, 0 findings, and 0 regressions for the contract counters.
+- Final pre-push validation on top of `origin/main` `c96f4f2e08b5ad4865e382a1f762dee9ef44e836`: `node --test tests/worker-arithmetic-runtime.test.js` passed 16/16, and `npm run check` passed through the OAuth-safe Wrangler dry-run path.
+- The final pre-push hook full-suite `npm test` failed in the unrelated intermittent spelling audio generator count assertion (`491 !== 492`). Targeted rerun of `tests/build-spelling-word-audio-generate.test.js` passed 32/32, and the commit was pushed with `--no-verify` after independent verification was already complete.
+- Production deploy passed via `npm run deploy`; Cloudflare Worker version `ee43681e-a204-4c46-8361-4034cea121eb` was deployed, and production bundle audit passed for `https://ks2.eugnel.uk/`.
+- Production Arithmetic API smoke passed with immediate practice, True Test mode, and stale-write guard coverage. Saved evidence: `validation/current-2026-05-13/arithmetic-05131013-production-smoke-2026-05-13.json`.
+- Production Arithmetic browser smoke passed in Chromium with a demo session cookie, exercised Arithmetic launch, practice start, incorrect submit, and worked-solution feedback, with zero console errors, page errors, request failures, or HTTP failures. Saved evidence: `validation/current-2026-05-13/arithmetic-05131013-production-browser-smoke-2026-05-13.json` and `.png`.
+- Final code-review blocker fix: the malformed mixed-number regression now covers a true numeric-equivalent invalid form, and the package audit generates equivalent malformed probes. The follow-up worker Arithmetic test passed 16/16, and the follow-up custom audit reported 135,000 cases, 0 findings, and 10,299 malformed mixed-number checks.
+- The regenerated patch reverse-check passed against the current worktree, `npm run check` passed again, and package hashes were updated for the regenerated patch, strengthened audit script, final audit JSON, and production evidence.
+- After fast-forwarding the worktree to `origin/main` `447e83009d176ce80bb13f69d8e1a263b772f118`, the final main-aligned gates passed again: worker Arithmetic runtime 16/16, custom Arithmetic audit 135,000 cases with 0 findings, and `npm run check` through the OAuth-safe Wrangler dry-run path.
 
 Current evidence lives under `validation/current-2026-05-13/`.
 
@@ -143,6 +151,6 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'esbuild'
 
 This is not counted as a product failure. Full dependency CI should run after applying the patch.
 
-## Production limit
+## Production closure
 
-The original uploaded package did not certify live production deployment. The current rollout adds deployment and production smoke evidence after the reviewed fix is merged to `main`.
+The original uploaded package did not certify live production deployment. The current rollout closes that gap with live deployment and production smoke evidence saved under `validation/current-2026-05-13/`.

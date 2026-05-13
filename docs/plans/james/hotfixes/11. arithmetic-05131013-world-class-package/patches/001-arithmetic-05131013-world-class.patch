@@ -233,18 +233,20 @@ index b2e00876..c7531e9c 100644
      return normaliseLineEndings(output).replace(/\n+$/, '');
    } finally {
 diff --git a/tests/worker-arithmetic-runtime.test.js b/tests/worker-arithmetic-runtime.test.js
-index 19d96694..25079123 100644
+index 19d96694..5855cb4a 100644
 --- a/tests/worker-arithmetic-runtime.test.js
 +++ b/tests/worker-arithmetic-runtime.test.js
-@@ -93,6 +93,20 @@ test('arithmetic marking rejects stray units except where the question asks for
+@@ -93,6 +93,22 @@ test('arithmetic marking rejects stray units except where the question asks for
    }
  });
  
 +test('arithmetic marking rejects malformed mixed numbers and multi-character digit answers', () => {
-+  const mixedQuestion = { marks: 1, expected: { kind: 'fraction', n: 3, d: 2, preferMixed: true } };
-+  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '1 1/2' }).correct, true);
-+  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '0 3/2' }).correct, false, 'zero-whole improper mixed notation is not a valid mixed number');
-+  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '1 3/2' }).correct, false, 'improper fractional part in a mixed number is not fully correct');
++  const mixedQuestion = { marks: 1, expected: { kind: 'fraction', n: 5, d: 2, preferMixed: true } };
++  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '2 1/2' }).correct, true);
++  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '1 3/2' }).correct, false, 'numeric-equivalent improper mixed notation is not fully correct');
++
++  const zeroWholeMixedQuestion = { marks: 1, expected: { kind: 'fraction', n: 3, d: 2, preferMixed: true } };
++  assert.equal(evaluateArithmeticQuestion(zeroWholeMixedQuestion, { answer: '0 3/2' }).correct, false, 'zero-whole improper mixed notation is not a valid mixed number');
 +
 +  const digitQuestion = generateArithmeticQuestion({ templateId: 'formal_missing_digit', difficulty: 1, seed: 12 });
 +  const digit = String(digitQuestion.expected.value);
@@ -257,7 +259,7 @@ index 19d96694..25079123 100644
  test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
    const placeValue = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty: 2, seed: 96433 });
    assert.ok(placeValue.stem.includes('□'), 'place-value item contains a missing-value box');
-@@ -101,8 +115,25 @@ test('arithmetic generators avoid malformed place-value items and repeating-deci
+@@ -101,8 +117,25 @@ test('arithmetic generators avoid malformed place-value items and repeating-deci
    for (let seed = 1; seed <= 500; seed += 1) {
      const order = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 2, seed });
      assert.equal(Number.isInteger(order.expected.value), true, `seed ${seed} should produce a whole-number result`);

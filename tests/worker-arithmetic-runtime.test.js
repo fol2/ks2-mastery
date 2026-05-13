@@ -94,10 +94,12 @@ test('arithmetic marking rejects stray units except where the question asks for 
 });
 
 test('arithmetic marking rejects malformed mixed numbers and multi-character digit answers', () => {
-  const mixedQuestion = { marks: 1, expected: { kind: 'fraction', n: 3, d: 2, preferMixed: true } };
-  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '1 1/2' }).correct, true);
-  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '0 3/2' }).correct, false, 'zero-whole improper mixed notation is not a valid mixed number');
-  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '1 3/2' }).correct, false, 'improper fractional part in a mixed number is not fully correct');
+  const mixedQuestion = { marks: 1, expected: { kind: 'fraction', n: 5, d: 2, preferMixed: true } };
+  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '2 1/2' }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '1 3/2' }).correct, false, 'numeric-equivalent improper mixed notation is not fully correct');
+
+  const zeroWholeMixedQuestion = { marks: 1, expected: { kind: 'fraction', n: 3, d: 2, preferMixed: true } };
+  assert.equal(evaluateArithmeticQuestion(zeroWholeMixedQuestion, { answer: '0 3/2' }).correct, false, 'zero-whole improper mixed notation is not a valid mixed number');
 
   const digitQuestion = generateArithmeticQuestion({ templateId: 'formal_missing_digit', difficulty: 1, seed: 12 });
   const digit = String(digitQuestion.expected.value);
