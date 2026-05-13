@@ -122,6 +122,38 @@ validation/npm-run-check-2026-05-13.log
 
 The `scripts/build-bundles.mjs` lock is included in this package as release-gate stabilisation. It prevents concurrent build-facing tests under the default Node test runner from racing the public build mirror or another bundle generation process.
 
+## Production deployment
+
+Deployed from commit `88556d57e0db564f7d08cf0ac6813fe0f28e0ef1`.
+
+```text
+npm run deploy
+Cloudflare Worker version: 05a91f8c-17ec-4cb5-8878-173269be80ab
+Production bundle audit: passed for https://ks2.eugnel.uk/
+Security-header checks: 5/5
+Cache-split checks: 15/15
+```
+
+Live Arithmetic smoke against `https://ks2.eugnel.uk`:
+
+```text
+ok: true
+templateCount: 30
+rewardUnitCount: 90
+delayedFeedbackBeforeFinish: true
+stale write changed: false
+stale write revisionUnchanged: true
+finishedAt: 2026-05-13T15:58:40.936Z
+```
+
+Evidence:
+
+```text
+validation/production-deploy-2026-05-13.log
+validation/arithmetic-production-smoke-2026-05-13-rerun.log
+validation/arithmetic-production-smoke-2026-05-13.json
+```
+
 ## Historical lean-ZIP limit
 
 The original lean-ZIP review environment did not include `node_modules`, so `tests/arithmetic-placeholder-boundary.test.js` could not run there because `react` was absent. That limitation is retained in `validation/dependency-limit-react-placeholder-boundary.log` as source-context history only. The final release gate above ran in the installed repository worktree with Node `v22.15.1`.

@@ -1,0 +1,189 @@
+{
+  "ok": true,
+  "smokeType": "arithmetic-production",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "https://ks2.eugnel.uk",
+  "contentReleaseId": "arithmetic-ks2-worker-v1-2026-05-11",
+  "learnerFixtureType": "demo-session",
+  "accountId": "demo-XaPrqO4pZD9a3g",
+  "learnerId": "learner-demo-ATLQ9zQ6b6jqnA",
+  "immediate": {
+    "revision": 2,
+    "sessionId": "arith_session_v9ga12",
+    "questionId": "arith_q_1kbaq5a",
+    "score": 0,
+    "maxScore": 2,
+    "content": {
+      "subjectId": "arithmetic",
+      "releaseId": "arithmetic-ks2-worker-v1-2026-05-11",
+      "templateCount": 30,
+      "skillCount": 24,
+      "rewardUnitCount": 90,
+      "strands": {
+        "facts_place_value": {
+          "id": "facts_place_value",
+          "name": "Number facts and place value"
+        },
+        "operations_methods": {
+          "id": "operations_methods",
+          "name": "Written operations and inverses"
+        },
+        "decimals_fractions": {
+          "id": "decimals_fractions",
+          "name": "Decimals and fractions"
+        },
+        "percentages_mixed": {
+          "id": "percentages_mixed",
+          "name": "Percentages and mixed arithmetic"
+        }
+      },
+      "skills": {
+        "number_bonds": {
+          "id": "number_bonds",
+          "strand": "facts_place_value",
+          "name": "Number bonds and complements"
+        },
+        "place_value_partition": {
+          "id": "place_value_partition",
+          "strand": "facts_place_value",
+          "name": "Place value partitioning"
+        },
+        "powers_of_10_shift": {
+          "id": "powers_of_10_shift",
+          "strand": "facts_place_value",
+          "name": "Multiply and divide by 10, 100 and 1,000"
+        },
+        "times_tables": {
+          "id": "times_tables",
+          "strand": "facts_place_value",
+          "name": "Times-table facts"
+        },
+        "division_facts": {
+          "id": "division_facts",
+          "strand": "facts_place_value",
+          "name": "Division facts and exact quotients"
+        },
+        "mental_addition": {
+          "id": "mental_addition",
+          "strand": "operations_methods",
+          "name": "Mental addition"
+        },
+        "mental_subtraction": {
+          "id": "mental_subtraction",
+          "strand": "operations_methods",
+          "name": "Mental subtraction"
+        },
+        "column_addition": {
+          "id": "column_addition",
+          "strand": "operations_methods",
+          "name": "Column addition"
+        },
+        "column_subtraction": {
+          "id": "column_subtraction",
+          "strand": "operations_methods",
+          "name": "Column subtraction"
+        },
+        "inverse_missing": {
+          "id": "inverse_missing",
+          "strand": "operations_methods",
+          "name": "Missing-number inverse equations"
+        },
+        "mental_multiplication": {
+          "id": "mental_multiplication",
+          "strand": "operations_methods",
+          "name": "Mental multiplication"
+        },
+        "short_multiplication": {
+          "id": "short_multiplication",
+          "strand": "operations_methods",
+          "name": "Short multiplication"
+        },
+        "short_division": {
+          "id": "short_division",
+          "strand": "operations_methods",
+          "name": "Short division"
+        },
+        "long_multiplication": {
+          "id": "long_multiplication",
+          "strand": "operations_methods",
+          "name": "Long multiplication"
+        },
+        "long_division": {
+          "id": "long_division",
+          "strand": "operations_methods",
+          "name": "Long division"
+        },
+        "decimals_add_sub": {
+          "id": "decimals_add_sub",
+          "strand": "decimals_fractions",
+          "name": "Decimal addition and subtraction"
+        },
+        "decimals_multiply": {
+          "id": "decimals_multiply",
+          "strand": "decimals_fractions",
+          "name": "Decimal multiplication"
+        },
+        "decimals_divide": {
+          "id": "decimals_divide",
+          "strand": "decimals_fractions",
+          "name": "Decimal division by whole numbers"
+        },
+        "fractions_of_amount": {
+          "id": "fractions_of_amount",
+          "strand": "decimals_fractions",
+          "name": "Fractions of amounts"
+        },
+        "fractions_calc": {
+          "id": "fractions_calc",
+          "strand": "decimals_fractions",
+          "name": "Fraction calculations"
+        },
+        "fractions_multiply": {
+          "id": "fractions_multiply",
+          "strand": "decimals_fractions",
+          "name": "Multiplying fractions"
+        },
+        "fdp_links": {
+          "id": "fdp_links",
+          "strand": "percentages_mixed",
+          "name": "Fraction, decimal and percentage links"
+        },
+        "percentages_of_amount": {
+          "id": "percentages_of_amount",
+          "strand": "percentages_mixed",
+          "name": "Percentages of amounts"
+        },
+        "order_of_operations": {
+          "id": "order_of_operations",
+          "strand": "percentages_mixed",
+          "name": "Order of operations"
+        }
+      },
+      "strandTotals": {
+        "facts_place_value": 12,
+        "operations_methods": 39,
+        "decimals_fractions": 30,
+        "percentages_mixed": 9
+      }
+    }
+  },
+  "trueTestMode": {
+    "revision": 5,
+    "sessionId": "arith_session_12ag5ck",
+    "questionCount": 12,
+    "firstQuestionId": "arith_q_1ltmsoi",
+    "delayedFeedbackBeforeFinish": true,
+    "summaryScore": 0,
+    "summaryMaxScore": 14
+  },
+  "staleWriteGuard": {
+    "expectedSessionId": "arith_session_14z4scn",
+    "expectedQuestionId": "stale-question-id",
+    "protectedQuestionId": "arith_q_c8gmrj",
+    "changed": false,
+    "revisionUnchanged": true,
+    "answeredCount": 0
+  },
+  "finishedAt": "2026-05-13T15:58:40.936Z"
+}
