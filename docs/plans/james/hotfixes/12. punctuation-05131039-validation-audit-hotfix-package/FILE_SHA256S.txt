@@ -1,10 +1,10 @@
 294b60b0cb53cf14175236571f9f3679ba7f3ebd977b6b275b3a3ff53852e6e1  ./contract/punctuation-05131039-proper-noun-capitalisation-quality-gate-contract.md
 dc7c7651c0a30fbee905e2346a661af4b4d62433a1bd965fb821bc503cbd9b3e  ./github-supplement/recent-punctuation-commits.md
-19cb5eb2059d9d552bdadb0ea16bd9b16332a825cfdd50a61da8151549f35970  ./MANIFEST.txt
+3c789c14cd9c1fe6dfd3b9618c480fcdc1eff5f804a3ee2f896949a8f5b5c48d  ./MANIFEST.txt
 cb93a4f878f8f2bcd8f3296de26ac46f201ae1a0f08e830b2277004247dc18a8  ./patches/001-punctuation-05131039-proper-noun-capitalisation-quality-gate.patch
-b9b0f485d707913b4bfdefde989bffff57621f5c19b340ea5918112df55caa38  ./punctuation-05131039-completion-report-2026-05-13.md
+e581a7ab9e6635ddd4fe8fe848c83ae1be6b63ee8b70e637a197cfaf22c2ea21  ./punctuation-05131039-completion-report-2026-05-13.md
 c2c0749340c4cb80c417de752400c9cdf19065163c1c4c8b008119966d2f1ef5  ./recommendations/punctuation-next-subject-quality-contract.md
-c4cb04b0f47de64e5135c4ff650f3754a910a4d1dccaf789b84a7538072332f4  ./validation-summary.md
+3575c432a1dfeecf92f97c4f106bad0b3056337e76c9562bf44f3115bdd6a504  ./validation-summary.md
 d2c3de6c9d4cd765194598ee880c2e1acb138499918fae76b750fd91b36dc34c  ./validation/baseline-p20-expansion.log
 2654c263a4e0a692abd3ba7ae8735da0267e997d864602e05368424daabeb3de  ./validation/baseline-proper-noun-probe.json
 c537d7f12828c9b16542c83e8f4ce47d5cf6243ac5f0e38b0c70ca6eec09f03f  ./validation/fresh-patch-apply-check.log
@@ -17,8 +17,8 @@ af17215d505f81ce8f88289877dc4d65e67907ec74b3bd3c0b42ec1732691843  ./validation/p
 49a18015f6e5f0296b6048fb78254c950e1bbadc6070d704b033ecbfd66338f6  ./validation/patched-p20-expansion-audit.json
 76dba78a05407c4d3c528a8461b8995efd01adea1c517c34cbbde4fdd62b413e  ./validation/patched-p20-expansion.log
 2e497708d16bbfa3ffdeb9130372153fb576b74827aa489506b49631423b1a20  ./validation/patched-p20-live.log
-9e8e8bd4b989c350df19a85ae91bd974c699f2708a27c66c3b91467a7c430643  ./validation/patched-production-smoke.json
-ca11e9c6eec5ae1ae00ee7a5f6a63bdf55e2ad33c823b68bbe8c0e604a9e90e7  ./validation/patched-production-smoke.log
+68398b1b7a192acc47d1b46cee839dfadcc6213e57db91d9b1972d8b10acedcc  ./validation/patched-production-smoke.json
+06754c05aed43f809de5bdcdbd7506f5d16b0599cc3af6afabb2ae9b2d980322  ./validation/patched-production-smoke.log
 d62b3c5fc2d9126dce97411360ebf8a6faaae29fe016f677af4e1dfa030ef135  ./validation/patched-proper-noun-probe.json
 f44b65e450664807c890e349ada9ad880dfab585d0f67d721d2fa769bc7673ed  ./validation/patched-review-register.json
 3fe3ec4d78faa781f4fe0f47459c8dda2db40f0cfc3a61b6a173cbb4d96ddcc6  ./validation/patched-targeted-runtime-ui-marking.log

@@ -102,21 +102,21 @@ npm run check: PASS
 
 ## Production validation
 
-Current deployed production evidence was generated after rebasing to latest `origin/main` and verifying `125cacb6374103fec99010caf347a0d2feb61b54` on `https://ks2.eugnel.uk`.
+Current deployed production evidence was generated after verifying production-smoked package commit `96ed1daacb400bef3ce15f3ca787b22b79a4d16c` on `https://ks2.eugnel.uk`. Post-smoke package-only commits update evidence text and checksums only; they do not change Punctuation runtime code.
 
 ```text
-npm run deploy: PASS before latest main verification
-Production bundle audit: PASS before latest main verification
+npm run deploy: PASS before production-smoked package verification
+Production bundle audit: PASS before production-smoked package verification
 latest-main production smoke: PASS
 ```
 
 Production smoke:
 
 ```text
-node scripts/punctuation-production-smoke.mjs --env production --authenticated --admin-hub --commit-sha 125cacb6374103fec99010caf347a0d2feb61b54 --out reports/punctuation/punctuation-qg-p20-production-smoke.json --timeout-ms 30000
+node scripts/punctuation-production-smoke.mjs --env production --authenticated --admin-hub --commit-sha 96ed1daacb400bef3ce15f3ca787b22b79a4d16c --out reports/punctuation/punctuation-qg-p20-production-smoke.json --timeout-ms 30000
 PASS
 origin: https://ks2.eugnel.uk
-worker SHA: 125cacb6374103fec99010caf347a0d2feb61b54
+worker SHA: 96ed1daacb400bef3ce15f3ca787b22b79a4d16c
 release: punctuation-qg-p23-15072-2026-05-13
 runtime items: 15072
 authenticatedCoverage: true

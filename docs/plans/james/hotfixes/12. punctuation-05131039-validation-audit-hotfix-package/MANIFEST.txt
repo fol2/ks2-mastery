@@ -4,7 +4,8 @@ Evidence boundary:
 - Primary: uploaded ZIP /mnt/data/ks2-mastery-lean-05131039.zip
 - User-stated filename: ks2-mastery-lean-05130839.zip
 - Patch base: 5c95335e^ (b16cb890508add84fff616bc737b5dbac9568aaf)
-- Production: latest main 125cacb6374103fec99010caf347a0d2feb61b54 verified on https://ks2.eugnel.uk with authenticated Punctuation production smoke
+- Production: production-smoked package commit 96ed1daacb400bef3ce15f3ca787b22b79a4d16c verified on https://ks2.eugnel.uk with authenticated Punctuation production smoke
+- Post-smoke package-only commits update evidence text and checksums only; they do not change Punctuation runtime code.
 - Checksum note: FILE_SHA256S.txt intentionally excludes itself to avoid an invalid self-hash.
 
 Contents:

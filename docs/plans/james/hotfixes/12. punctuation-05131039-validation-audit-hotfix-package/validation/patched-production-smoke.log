@@ -4,16 +4,16 @@
 |-------|-------|
 | OK | true |
 | Origin | https://ks2.eugnel.uk |
-| Account | demo-cK4EzaYsvjdP4Q |
-| Learner | learner-demo-HtPGoh-rmEoyDQ |
+| Account | demo-oVd6KuOGR_W1Fw |
+| Learner | learner-demo-4SLCnxAicCYfVg |
 | Environment | production |
-| Worker SHA | 125cacb6374103fec99010caf347a0d2feb61b54 |
+| Worker SHA | 96ed1daacb400bef3ce15f3ca787b22b79a4d16c |
 
 ## Punctuation
 
 | Metric | Value |
 |--------|-------|
-| Smart item | gen_sentence_endings_insert_1piivho_68 |
+| Smart item | gen_sentence_endings_insert_1v3nhka_84 |
 | Smart summary total | 1 |
 | Fixed items | 512 |
 | Generated items | 14560 |

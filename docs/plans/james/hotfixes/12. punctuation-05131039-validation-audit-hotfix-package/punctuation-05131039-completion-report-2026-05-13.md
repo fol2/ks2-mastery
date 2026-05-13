@@ -55,8 +55,10 @@ Production gates:
 npm run deploy
 PASS
 
-latest deployed main commit verified on production
-125cacb6374103fec99010caf347a0d2feb61b54
+production-smoked package commit verified on production
+96ed1daacb400bef3ce15f3ca787b22b79a4d16c
+
+Post-smoke package-only commits update evidence text and checksums only; they do not change Punctuation runtime code.
 
 production smoke
 PASS: https://ks2.eugnel.uk, production, punctuation-qg-p23-15072-2026-05-13, 15072 runtime items
@@ -85,8 +87,9 @@ PASS 24/24 expansion + 4/4 live
 
 Independent reviewer closure is required before final sign-off:
 
-- Code reviewer: GREEN, no blockers or advisories.
+- Code reviewer round 1: GREEN, no blockers or advisories.
+- Code reviewer round 2: BLOCKED on stale production SHA wording, stale final `npm test` count, and stale closure text from the `832b44ca3213e2cea2d5f2a47cf292783bfcbfd5` snapshot. This revision updates the production-smoked package commit to `96ed1daacb400bef3ce15f3ca787b22b79a4d16c`, keeps the final `npm test` count at `111507/111519`, and removes the stale sync-pending claim.
 - Contract auditor round 1: BLOCKED on report closure, commit/push sync, and missing scope rationale. The scope rationale is documented above.
-- Contract auditor round 2: BLOCKED on patch artefact reproducibility, stale completion-report text, and stale final `npm test` count. This revision regenerates the patch from the actual landed fix, refreshes fresh patch apply/test evidence, updates the final `npm test` count, and confirms pushed sync at `832b44ca3213e2cea2d5f2a47cf292783bfcbfd5`.
+- Contract auditor round 2: BLOCKED on patch artefact reproducibility, stale completion-report text, and stale final `npm test` count. This revision regenerates the patch from the actual landed fix, refreshes fresh patch apply/test evidence, updates the final `npm test` count, and confirms pushed sync through `96ed1daacb400bef3ce15f3ca787b22b79a4d16c`.
 
 This report must be updated with both green verdicts before final completion.
