@@ -1,0 +1,142 @@
+{
+  "ok": true,
+  "smokeType": "arithmetic-render-engine-production-browser",
+  "environment": "production",
+  "origin": "https://ks2.eugnel.uk",
+  "browser": "chromium",
+  "flows": [
+    "Demo -> Arithmetic -> Skill Builder -> Fraction calculations -> mixed-number equation -> wrong answer feedback",
+    "Demo -> Arithmetic -> Skill Builder -> Column addition -> formal visual equation"
+  ],
+  "mixedNumberFlow": {
+    "learnerFixtureType": "demo-session-cookie",
+    "accountId": "demo-iAQRp8PJdwhxbA",
+    "learnerId": "learner-demo-dGIUE1YgKTXwJA",
+    "attemptsBeforeMixedQuestion": 5,
+    "attemptedQuestionLabels": [
+      "5 eighths divided by 3 equals",
+      "1 quarter minus 0.1 equals",
+      "0.75 minus 1 quarter equals",
+      "7 eighths minus 5 eighths equals",
+      "3 and 3 fifths plus 1 and 4 fifths equals"
+    ],
+    "beforeSubmit": {
+      "text": "3 3 5 + 1 4 5 =",
+      "label": "3 and 3 fifths plus 1 and 4 fifths equals",
+      "tokenCount": 6,
+      "mixedNumberCount": 2,
+      "fractionCount": 2,
+      "operatorCount": 2,
+      "hiddenTokenCount": 6
+    },
+    "feedback": {
+      "text": "Not quite yetThe answer is 5 2 5.Answer: 5 2 5Small nudge: Check whether you are finding a fraction of an amount, combining fractions, or dividing a fraction.Worked solutionConvert to improper fractions or work with whole and fractional parts carefully.The answer is 5 2 5.",
+      "expressions": [
+        {
+          "text": "The answer is 5 2 5.",
+          "label": "The answer is 5 and 2 fifths."
+        },
+        {
+          "text": "5 2 5",
+          "label": "5 and 2 fifths"
+        },
+        {
+          "text": "The answer is 5 2 5.",
+          "label": "The answer is 5 and 2 fifths."
+        }
+      ],
+      "mixedNumbers": [
+        {
+          "text": "5 2 5",
+          "label": "5 and 2 fifths",
+          "ariaHidden": "true"
+        },
+        {
+          "text": "5 2 5",
+          "label": "5 and 2 fifths",
+          "ariaHidden": "true"
+        },
+        {
+          "text": "5 2 5",
+          "label": "5 and 2 fifths",
+          "ariaHidden": "true"
+        }
+      ]
+    },
+    "screenshots": [
+      "docs/plans/james/hotfixes/18. arithmetic-mixed-number-render-engine-package/validation/current-2026-05-13/production-arithmetic-render-engine-desktop-2026-05-13.png",
+      "docs/plans/james/hotfixes/18. arithmetic-mixed-number-render-engine-package/validation/current-2026-05-13/production-arithmetic-render-engine-mobile-2026-05-13.png"
+    ]
+  },
+  "formalVisualFlow": {
+    "learnerFixtureType": "demo-session-cookie",
+    "accountId": "demo-Bx_BcKxWS_hQ1A",
+    "learnerId": "learner-demo-f1K90Cv8AFwRDw",
+    "rendered": {
+      "stemLabel": "",
+      "visualText": "  127+ 482─────",
+      "lineCount": 3,
+      "expressionLabels": [
+        "127",
+        "plus 482"
+      ],
+      "tokens": [
+        {
+          "type": "number",
+          "text": "127",
+          "label": "",
+          "ariaHidden": "true"
+        },
+        {
+          "type": "operator",
+          "text": "+",
+          "label": "plus",
+          "ariaHidden": "true"
+        },
+        {
+          "type": "number",
+          "text": "482",
+          "label": "",
+          "ariaHidden": "true"
+        }
+      ],
+      "underlinePresent": true
+    },
+    "screenshots": [
+      "docs/plans/james/hotfixes/18. arithmetic-mixed-number-render-engine-package/validation/current-2026-05-13/production-arithmetic-render-engine-visual-desktop-2026-05-13.png",
+      "docs/plans/james/hotfixes/18. arithmetic-mixed-number-render-engine-package/validation/current-2026-05-13/production-arithmetic-render-engine-visual-mobile-2026-05-13.png"
+    ]
+  },
+  "viewportChecks": [
+    {
+      "name": "mixed-desktop",
+      "width": 1280,
+      "height": 900,
+      "screenshot": "docs/plans/james/hotfixes/18. arithmetic-mixed-number-render-engine-package/validation/current-2026-05-13/production-arithmetic-render-engine-desktop-2026-05-13.png"
+    },
+    {
+      "name": "mixed-mobile",
+      "width": 390,
+      "height": 844,
+      "screenshot": "docs/plans/james/hotfixes/18. arithmetic-mixed-number-render-engine-package/validation/current-2026-05-13/production-arithmetic-render-engine-mobile-2026-05-13.png"
+    },
+    {
+      "name": "visual-desktop",
+      "width": 1280,
+      "height": 900,
+      "screenshot": "docs/plans/james/hotfixes/18. arithmetic-mixed-number-render-engine-package/validation/current-2026-05-13/production-arithmetic-render-engine-visual-desktop-2026-05-13.png"
+    },
+    {
+      "name": "visual-mobile",
+      "width": 390,
+      "height": 844,
+      "screenshot": "docs/plans/james/hotfixes/18. arithmetic-mixed-number-render-engine-package/validation/current-2026-05-13/production-arithmetic-render-engine-visual-mobile-2026-05-13.png"
+    }
+  ],
+  "consoleErrors": [],
+  "consoleWarnings": [],
+  "pageErrors": [],
+  "requestFailures": [],
+  "httpFailures": [],
+  "finishedAt": "2026-05-13T21:09:11.071Z"
+}

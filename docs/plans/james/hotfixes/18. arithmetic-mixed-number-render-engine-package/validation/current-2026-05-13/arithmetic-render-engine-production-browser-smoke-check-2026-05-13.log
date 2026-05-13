@@ -1,0 +1,2 @@
+Command: node --check docs/plans/james/hotfixes/18. arithmetic-mixed-number-render-engine-package/validation/current-2026-05-13/scripts/arithmetic-render-engine-production-browser-smoke.mjs
+Result: passed
