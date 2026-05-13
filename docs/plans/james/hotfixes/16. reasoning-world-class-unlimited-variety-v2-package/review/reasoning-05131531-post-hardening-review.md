@@ -39,7 +39,7 @@ Runtime and test changes are limited to Reasoning content, Reasoning engine, Rea
 - Fresh patch dry-run: passed.
 - Fresh patch apply: passed.
 - Fresh patchcheck targeted suite: 49/49 passed.
-- Current repository `git apply --check`: passed against `origin/main` `cf165dae`.
+- Current repository `git apply --check`: passed against pre-merge base commit `cf165dae`.
 - Patched content audit: 138 templates × 300 seeds = 41,400 generated cases, 0 failures.
 - Fresh patchcheck content audit: 41,400 generated cases, 0 failures.
 - Current repository contract target list: 50/50 passed.

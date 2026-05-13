@@ -18,7 +18,7 @@ Apply from the repository root with:
 git apply "docs/plans/james/hotfixes/16. reasoning-world-class-unlimited-variety-v2-package/patches/005-reasoning-world-class-unlimited-variety-v2.patch"
 ```
 
-The refreshed repository patch is generated with `git diff --binary` and is verified with `git apply --check` against `origin/main` `cf165dae`.
+The refreshed repository patch is generated with `git diff --binary` and is verified with `git apply --check` against pre-merge base commit `cf165dae`.
 
 ## Release id
 

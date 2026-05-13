@@ -1,4 +1,4 @@
-git apply passed against origin/main cf165dae.
+git apply passed against base commit cf165dae.
  M .gitattributes
  M scripts/reasoning-production-smoke.mjs
  M shared/reasoning/content.js

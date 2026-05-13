@@ -84,7 +84,7 @@ Fresh patchcheck content audit repeated the same 41,400-case result with 0 failu
 - `patch --binary --dry-run -p1`: passed on the lean ZIP patchcheck.
 - `patch --binary -p1`: passed on the lean ZIP patchcheck.
 - Current repo-root patch command: `git apply "docs/plans/james/hotfixes/16. reasoning-world-class-unlimited-variety-v2-package/patches/005-reasoning-world-class-unlimited-variety-v2.patch"`.
-- Current patchcheck: `git apply --check` and `git apply` passed against `origin/main` `cf165dae`.
+- Current patchcheck: `git apply --check` and `git apply` passed against pre-merge base commit `cf165dae`.
 
 ## Current repository verification
 

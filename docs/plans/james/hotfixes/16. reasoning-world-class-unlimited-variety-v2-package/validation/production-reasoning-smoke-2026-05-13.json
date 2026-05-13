@@ -1,0 +1,85 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "sourceCommit": "bb47ac0df294e646f9bd8155cf3d0407511c4ca8",
+  "startedAt": "2026-05-13T18:06:00.515Z",
+  "finishedAt": "2026-05-13T18:06:03.447Z",
+  "learnerId": "learner-demo-nLZDe38TqSfoVA",
+  "finalRevision": 4,
+  "contentReleaseId": "reasoning-variety-expansion-v2-2026-05-13",
+  "content": {
+    "releaseId": "reasoning-variety-expansion-v2-2026-05-13",
+    "templateCount": 138,
+    "skillCount": 17,
+    "misconceptionCount": 20,
+    "satsFriendlyCount": 136,
+    "contextThemeCount": 23,
+    "themedTemplateCount": 28,
+    "extraCreditTemplateCount": 2,
+    "domains": {
+      "Number and place value": 12,
+      "Calculation": 13,
+      "Fractions": 12,
+      "Fractions, decimals and percentages": 12,
+      "Ratio and proportion": 12,
+      "Measure": 14,
+      "Geometry and measure": 12,
+      "Geometry": 12,
+      "Statistics": 12,
+      "Reasoning and checking": 15,
+      "Measure and money": 12
+    },
+    "skills": {
+      "pv_rounding": 8,
+      "reasonableness": 27,
+      "pv_compare": 10,
+      "inverse_missing": 15,
+      "mul_div_structure": 22,
+      "add_sub_multistep": 45,
+      "fractions_quantity": 8,
+      "fractions_compare": 5,
+      "percent_number": 7,
+      "fdp_equiv": 12,
+      "ratio_scale": 14,
+      "unit_conversion": 9,
+      "time_elapsed": 7,
+      "perimeter_area": 12,
+      "error_analysis": 22,
+      "geometry_angles": 12,
+      "statistics_reading": 14
+    },
+    "modes": [
+      "smart",
+      "skill",
+      "trouble",
+      "worked",
+      "faded",
+      "sats",
+      "satsset"
+    ]
+  },
+  "session": {
+    "id": "reasoning_session_mp4devix_qjgnzd62",
+    "mode": "smart",
+    "questionId": "q1",
+    "publicQuestionIdOpaque": true,
+    "firstWrongFinal": false,
+    "supportLevel": 2,
+    "markedCorrect": false,
+    "score": 0,
+    "maxScore": 2
+  },
+  "rewardProjection": {
+    "domainEvents": [
+      "reasoning.answer-submitted"
+    ],
+    "reactionSubjects": [],
+    "reactionCount": 0
+  },
+  "heroReadModel": {
+    "checked": true,
+    "available": false,
+    "status": 404,
+    "reason": "hero_shadow_disabled"
+  }
+}
