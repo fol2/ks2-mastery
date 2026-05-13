@@ -154,6 +154,12 @@ test('ArithmeticPracticeSurface remounts True Test answer fields from the curren
         answer: secondAnswer?.value || '',
         working: secondWorking?.value || '',
         stem: document.querySelector('.question-stem')?.textContent || '',
+        stemTokens: [...document.querySelectorAll('.question-stem [data-arithmetic-token]')].map((node) => ({
+          type: node.getAttribute('data-arithmetic-token'),
+          text: node.textContent,
+          label: node.getAttribute('data-arithmetic-label') || '',
+        })),
+        stemExpressionLabel: document.querySelector('.question-stem .arithmetic-expression')?.getAttribute('aria-label') || '',
       }));
       await act(async () => {
         root.unmount();
@@ -172,4 +178,392 @@ test('ArithmeticPracticeSurface remounts True Test answer fields from the curren
   assert.equal(result.answer, '36');
   assert.equal(result.working, '63 - 27 = 36');
   assert.match(result.stem, /63 - 27/);
+  assert.deepEqual(result.stemTokens, [
+    { type: 'number', text: '63', label: '' },
+    { type: 'operator', text: '-', label: 'minus' },
+    { type: 'number', text: '27', label: '' },
+  ]);
+  assert.equal(result.stemExpressionLabel, 'What is 63 minus 27?');
+});
+
+test('ArithmeticPracticeSurface renders mixed-number stems as grouped fraction UI', async () => {
+  const output = await runFixture(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/arithmetic',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.HTMLInputElement = dom.window.HTMLInputElement;
+    globalThis.HTMLTextAreaElement = dom.window.HTMLTextAreaElement;
+    globalThis.HTMLButtonElement = dom.window.HTMLButtonElement;
+    globalThis.Event = dom.window.Event;
+    globalThis.FormData = dom.window.FormData;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { act } = React;
+    const { ArithmeticPracticeSurface } = require(${arithmeticSurfaceSpecifier()});
+
+    const question = {
+      id: 'mixed-number-regression',
+      templateLabel: 'Mixed-number calculations',
+      domain: 'Fractions',
+      marks: 1,
+      stem: '5 3/8 − 1 1/8 =',
+      inputSpec: { label: 'Answer as a mixed number, fraction or whole number' },
+    };
+    const appState = {
+      learners: { selectedId: 'learner-arithmetic' },
+      subjectUi: {
+        arithmetic: {
+          phase: 'session',
+          prefs: { mode: 'smart', goal: '10q', testForm: 'short' },
+          session: {
+            id: 'mixed-number-session',
+            mode: 'smart',
+            currentIndex: 0,
+            questionCount: 1,
+            currentQuestion: question,
+          },
+        },
+      },
+    };
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      const actions = { dispatch() {}, navigateHome() {} };
+      await act(async () => {
+        root.render(React.createElement(ArithmeticPracticeSurface, { appState, actions }));
+      });
+
+      const stem = document.querySelector('.question-stem');
+      const mixedNumbers = [...document.querySelectorAll('[data-arithmetic-token="mixed-number"]')].map((node) => ({
+        text: node.textContent.replace(/\\s+/g, ' ').trim(),
+        label: node.getAttribute('data-arithmetic-label'),
+        ariaHidden: node.getAttribute('aria-hidden'),
+      }));
+      const fractions = [...document.querySelectorAll('[data-arithmetic-token="fraction"]')].map((node) => ({
+        numerator: node.querySelector('.arithmetic-fraction-numerator')?.textContent || '',
+        denominator: node.querySelector('.arithmetic-fraction-denominator')?.textContent || '',
+        ariaHidden: node.getAttribute('aria-hidden'),
+      }));
+
+      process.stdout.write(JSON.stringify({
+        stemText: stem?.textContent.replace(/\\s+/g, ' ').trim() || '',
+        stemExpressionLabel: stem?.querySelector('.arithmetic-expression')?.getAttribute('aria-label') || '',
+        expressionClassPresent: Boolean(document.querySelector('.arithmetic-expression')),
+        mixedNumbers,
+        fractions,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exit(1);
+    });
+  `);
+
+  const result = JSON.parse(output);
+  assert.equal(result.expressionClassPresent, true);
+  assert.deepEqual(result.mixedNumbers, [
+    { text: '5 3 8', label: '5 and 3 eighths', ariaHidden: 'true' },
+    { text: '1 1 8', label: '1 and 1 eighth', ariaHidden: 'true' },
+  ]);
+  assert.deepEqual(result.fractions, [
+    { numerator: '3', denominator: '8', ariaHidden: 'true' },
+    { numerator: '1', denominator: '8', ariaHidden: 'true' },
+  ]);
+  assert.equal(result.stemExpressionLabel, '5 and 3 eighths minus 1 and 1 eighth equals');
+  assert.equal(result.stemText.includes('11/8'), false, 'rendered stem must not collapse the second mixed number into 11/8');
+});
+
+test('ArithmeticPracticeSurface renders arithmetic feedback, answers and review text through the math renderer', async () => {
+  const output = await runFixture(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/arithmetic',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.HTMLInputElement = dom.window.HTMLInputElement;
+    globalThis.HTMLTextAreaElement = dom.window.HTMLTextAreaElement;
+    globalThis.HTMLButtonElement = dom.window.HTMLButtonElement;
+    globalThis.Event = dom.window.Event;
+    globalThis.FormData = dom.window.FormData;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { act } = React;
+    const { ArithmeticPracticeSurface } = require(${arithmeticSurfaceSpecifier()});
+
+    const question = {
+      id: 'mixed-number-feedback-regression',
+      templateLabel: 'Mixed-number calculations',
+      domain: 'Fractions',
+      marks: 1,
+      stem: '5 3/8 − 1 1/8 =',
+      inputSpec: { label: 'Answer as a mixed number, fraction or whole number' },
+      solutionLines: [
+        'Convert to improper fractions or work with whole and fractional parts carefully.',
+        'The answer is 4 1/4.',
+      ],
+    };
+    const feedback = {
+      result: {
+        correct: false,
+        score: 0,
+        maxScore: 1,
+        feedbackShort: 'Not quite.',
+        feedbackLong: 'The answer is 4 1/4.',
+        answerText: '4 1/4',
+        minimalHint: 'Check the operation.',
+      },
+      solutionLines: question.solutionLines,
+    };
+
+    function sessionState() {
+      return {
+        learners: { selectedId: 'learner-arithmetic' },
+        subjectUi: {
+          arithmetic: {
+            phase: 'session',
+            prefs: { mode: 'smart', goal: '10q', testForm: 'short' },
+            session: {
+              id: 'mixed-number-feedback-session',
+              mode: 'smart',
+              currentIndex: 0,
+              questionCount: 1,
+              currentQuestion: question,
+            },
+            feedback,
+          },
+        },
+      };
+    }
+
+    function summaryState() {
+      return {
+        learners: { selectedId: 'learner-arithmetic' },
+        subjectUi: {
+          arithmetic: {
+            phase: 'summary',
+            prefs: { mode: 'smart', goal: '10q', testForm: 'short' },
+            summary: { correct: 0, answered: 1, questionCount: 1, score: 0, maxScore: 1 },
+            session: {
+              id: 'mixed-number-summary-session',
+              mode: 'smart',
+              currentIndex: 0,
+              questionCount: 1,
+              paper: [{
+                index: 0,
+                question,
+                response: { answer: '4 1/4' },
+                result: feedback.result,
+              }],
+            },
+          },
+        },
+      };
+    }
+
+    function mixedLabels(root) {
+      return [...root.querySelectorAll('[data-arithmetic-token="mixed-number"]')]
+        .map((node) => node.getAttribute('data-arithmetic-label'));
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      const actions = { dispatch() {}, navigateHome() {} };
+      await act(async () => {
+        root.render(React.createElement(ArithmeticPracticeSurface, { appState: sessionState(), actions }));
+      });
+
+      const feedbackRoot = document.querySelector('.feedback.bad');
+      const feedbackLabels = mixedLabels(feedbackRoot);
+      const feedbackExpressionCount = feedbackRoot.querySelectorAll('.arithmetic-expression').length;
+      const feedbackText = feedbackRoot.textContent.replace(/\\s+/g, ' ').trim();
+
+      await act(async () => {
+        root.render(React.createElement(ArithmeticPracticeSurface, { appState: summaryState(), actions }));
+      });
+
+      const reviewRoot = document.querySelector('.review-list');
+      const reviewLabels = mixedLabels(reviewRoot);
+      const reviewExpressionCount = reviewRoot.querySelectorAll('.arithmetic-expression').length;
+      const reviewText = reviewRoot.textContent.replace(/\\s+/g, ' ').trim();
+
+      process.stdout.write(JSON.stringify({
+        feedbackLabels,
+        feedbackExpressionCount,
+        feedbackText,
+        reviewLabels,
+        reviewExpressionCount,
+        reviewText,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exit(1);
+    });
+  `);
+
+  const result = JSON.parse(output);
+  assert.equal(result.feedbackExpressionCount, 3, 'feedbackLong, answerText and worked solution should use the renderer');
+  assert.equal(result.feedbackLabels.filter((label) => label === '4 and 1 quarter').length, 3);
+  assert.equal(result.feedbackText.includes('41/4'), false, 'feedback answer must not collapse into 41/4');
+  assert.equal(result.reviewExpressionCount, 4, 'summary question, learner answer, feedback and worked solution should use the renderer');
+  assert.equal(result.reviewLabels.filter((label) => label === '4 and 1 quarter').length, 3);
+  assert.equal(result.reviewText.includes('41/4'), false, 'summary answer must not collapse into 41/4');
+});
+
+test('ArithmeticPracticeSurface renders formal visual equations through the math renderer', async () => {
+  const output = await runFixture(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/arithmetic',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.HTMLInputElement = dom.window.HTMLInputElement;
+    globalThis.HTMLTextAreaElement = dom.window.HTMLTextAreaElement;
+    globalThis.HTMLButtonElement = dom.window.HTMLButtonElement;
+    globalThis.Event = dom.window.Event;
+    globalThis.FormData = dom.window.FormData;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { act } = React;
+    const { ArithmeticPracticeSurface } = require(${arithmeticSurfaceSpecifier()});
+
+    const question = {
+      id: 'formal-visual-equation-regression',
+      templateLabel: 'Column addition',
+      domain: 'Addition and subtraction',
+      marks: 1,
+      stem: 'Work out:',
+      visual: '  375\\n+ 648\\n────',
+      inputSpec: { label: 'Answer' },
+      solutionLines: ['375 + 648 = 1,023.'],
+    };
+
+    function sessionState() {
+      return {
+        learners: { selectedId: 'learner-arithmetic' },
+        subjectUi: {
+          arithmetic: {
+            phase: 'session',
+            prefs: { mode: 'smart', goal: '10q', testForm: 'short' },
+            session: {
+              id: 'formal-visual-session',
+              mode: 'smart',
+              currentIndex: 0,
+              questionCount: 1,
+              currentQuestion: question,
+            },
+          },
+        },
+      };
+    }
+
+    function summaryState() {
+      return {
+        learners: { selectedId: 'learner-arithmetic' },
+        subjectUi: {
+          arithmetic: {
+            phase: 'summary',
+            prefs: { mode: 'smart', goal: '10q', testForm: 'short' },
+            summary: { correct: 0, answered: 1, questionCount: 1, score: 0, maxScore: 1 },
+            session: {
+              id: 'formal-visual-summary-session',
+              mode: 'smart',
+              currentIndex: 0,
+              questionCount: 1,
+              paper: [{
+                index: 0,
+                question,
+                response: { answer: '1023' },
+                result: { correct: false, score: 0, maxScore: 1, feedbackLong: 'The answer is 1,023.' },
+              }],
+            },
+          },
+        },
+      };
+    }
+
+    function visualSnapshot(root = document) {
+      const visual = root.querySelector('.arithmetic-visual');
+      return {
+        lineCount: visual?.querySelectorAll('.arithmetic-visual-line').length || 0,
+        expressionLabels: [...(visual?.querySelectorAll('.arithmetic-expression') || [])].map((node) => node.getAttribute('aria-label')),
+        tokens: [...(visual?.querySelectorAll('[data-arithmetic-token]') || [])].map((node) => ({
+          type: node.getAttribute('data-arithmetic-token'),
+          text: node.textContent,
+          label: node.getAttribute('data-arithmetic-label') || '',
+        })),
+        text: visual?.textContent || '',
+      };
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      const actions = { dispatch() {}, navigateHome() {} };
+      await act(async () => {
+        root.render(React.createElement(ArithmeticPracticeSurface, { appState: sessionState(), actions }));
+      });
+      const sessionVisual = visualSnapshot();
+
+      await act(async () => {
+        root.render(React.createElement(ArithmeticPracticeSurface, { appState: summaryState(), actions }));
+      });
+      const reviewVisual = visualSnapshot(document.querySelector('.review-list'));
+
+      process.stdout.write(JSON.stringify({ sessionVisual, reviewVisual }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exit(1);
+    });
+  `);
+
+  const result = JSON.parse(output);
+  for (const visual of [result.sessionVisual, result.reviewVisual]) {
+    assert.equal(visual.lineCount, 3);
+    assert.deepEqual(visual.expressionLabels, ['375', 'plus 648']);
+    assert.deepEqual(visual.tokens, [
+      { type: 'number', text: '375', label: '' },
+      { type: 'operator', text: '+', label: 'plus' },
+      { type: 'number', text: '648', label: '' },
+    ]);
+    assert.match(visual.text, /────/);
+  }
 });

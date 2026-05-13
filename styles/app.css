@@ -539,8 +539,107 @@ textarea:focus-visible {
   margin-bottom: 12px;
 }
 
+.arithmetic-expression {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.18em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.arithmetic-expression-text {
+  white-space: pre-wrap;
+}
+
+.arithmetic-mixed-number {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  padding: 0.03em 0.14em;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+}
+
+.arithmetic-mixed-whole {
+  line-height: 1;
+}
+
+.arithmetic-number,
+.arithmetic-operator,
+.arithmetic-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.2em;
+  line-height: 1;
+}
+
+.arithmetic-number {
+  padding: 0 0.03em;
+}
+
+.arithmetic-operator {
+  min-width: 1.1em;
+  font-weight: 800;
+}
+
+.arithmetic-placeholder {
+  min-width: 1.1em;
+}
+
+.arithmetic-copy-space {
+  display: none;
+}
+
+.arithmetic-fraction {
+  display: inline-grid;
+  grid-template-rows: auto auto;
+  align-items: center;
+  justify-items: center;
+  min-width: 1.35em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.arithmetic-fraction-numerator,
+.arithmetic-fraction-denominator {
+  display: block;
+  min-width: 100%;
+  padding: 0 0.12em;
+  text-align: center;
+  font-size: 0.82em;
+}
+
+.arithmetic-fraction-numerator {
+  border-bottom: 1.5px solid currentColor;
+  padding-bottom: 0.08em;
+}
+
+.arithmetic-fraction-denominator {
+  padding-top: 0.08em;
+}
+
 .arithmetic-visual {
   white-space: pre-wrap;
+}
+
+.arithmetic-visual-line {
+  display: block;
+  min-height: 1.2em;
+  white-space: pre;
+}
+
+.arithmetic-visual .arithmetic-expression {
+  gap: 0;
+  font-family: inherit;
+  white-space: pre;
+}
+
+.arithmetic-visual .arithmetic-expression-text {
+  white-space: pre;
 }
 
 .arithmetic-method-note,

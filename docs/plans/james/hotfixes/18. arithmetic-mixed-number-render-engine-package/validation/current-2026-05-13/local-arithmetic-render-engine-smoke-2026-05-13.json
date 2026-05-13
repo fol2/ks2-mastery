@@ -1,0 +1,180 @@
+{
+  "ok": true,
+  "localUrl": "http://127.0.0.1:56752/demo",
+  "flows": [
+    "Demo -> Arithmetic -> Skill Builder -> Fraction calculations -> mixed-number equation -> wrong answer feedback",
+    "Demo -> Arithmetic -> Skill Builder -> Column addition -> formal visual equation"
+  ],
+  "mixedNumberFlow": {
+    "attemptsBeforeMixedQuestion": 1,
+    "beforeSubmit": {
+      "text": "2\n3\n5\n \n+\n \n3\n3\n5\n \n=",
+      "label": "2 and 3 fifths plus 3 and 3 fifths equals"
+    },
+    "rendered": {
+      "expressionCount": 4,
+      "question": {
+        "text": "2 3 5 + 3 3 5 =",
+        "label": "2 and 3 fifths plus 3 and 3 fifths equals",
+        "tokens": [
+          {
+            "type": "mixed-number",
+            "text": "2 3 5",
+            "label": "2 and 3 fifths",
+            "ariaHidden": "true"
+          },
+          {
+            "type": "fraction",
+            "text": "3 5",
+            "label": "3 fifths",
+            "ariaHidden": "true"
+          },
+          {
+            "type": "operator",
+            "text": "+",
+            "label": "plus",
+            "ariaHidden": "true"
+          },
+          {
+            "type": "mixed-number",
+            "text": "3 3 5",
+            "label": "3 and 3 fifths",
+            "ariaHidden": "true"
+          },
+          {
+            "type": "fraction",
+            "text": "3 5",
+            "label": "3 fifths",
+            "ariaHidden": "true"
+          },
+          {
+            "type": "operator",
+            "text": "=",
+            "label": "equals",
+            "ariaHidden": "true"
+          }
+        ]
+      },
+      "feedback": {
+        "text": "Not quite yetThe answer is 6 1 5.Answer: 6 1 5Small nudge: Check whether you are finding a fraction of an amount, combining fractions, or dividing a fraction.Worked solutionConvert to improper fractions or work with whole and fractional parts carefully.The answer is 6 1 5.",
+        "expressions": [
+          {
+            "text": "The answer is 6 1 5.",
+            "label": "The answer is 6 and 1 fifth."
+          },
+          {
+            "text": "6 1 5",
+            "label": "6 and 1 fifth"
+          },
+          {
+            "text": "The answer is 6 1 5.",
+            "label": "The answer is 6 and 1 fifth."
+          }
+        ],
+        "mixedNumbers": [
+          {
+            "type": "mixed-number",
+            "text": "6 1 5",
+            "label": "6 and 1 fifth",
+            "ariaHidden": "true"
+          },
+          {
+            "type": "mixed-number",
+            "text": "6 1 5",
+            "label": "6 and 1 fifth",
+            "ariaHidden": "true"
+          },
+          {
+            "type": "mixed-number",
+            "text": "6 1 5",
+            "label": "6 and 1 fifth",
+            "ariaHidden": "true"
+          }
+        ]
+      },
+      "rawCollapseChecks": {
+        "questionHasSlash": false,
+        "feedbackHasCollapsedMixed": false
+      }
+    },
+    "accessibility": {
+      "expectedQuestionLabel": "2 and 3 fifths plus 3 and 3 fifths equals",
+      "fullExpressionNodes": [
+        {
+          "role": "math",
+          "name": "2 and 3 fifths plus 3 and 3 fifths equals",
+          "childNames": []
+        }
+      ],
+      "visualTokenChildrenHiddenFromAccessibilityTree": true
+    },
+    "screenshots": [
+      "D:\\Coding\\ks2-mastery\\.worktrees\\arithmetic-mixed-number-render-engine-20260513\\docs\\plans\\james\\hotfixes\\18. arithmetic-mixed-number-render-engine-package\\validation\\current-2026-05-13\\local-arithmetic-render-engine-desktop-2026-05-13.png",
+      "D:\\Coding\\ks2-mastery\\.worktrees\\arithmetic-mixed-number-render-engine-20260513\\docs\\plans\\james\\hotfixes\\18. arithmetic-mixed-number-render-engine-package\\validation\\current-2026-05-13\\local-arithmetic-render-engine-mobile-2026-05-13.png"
+    ]
+  },
+  "formalVisualFlow": {
+    "rendered": {
+      "stemLabel": "",
+      "visualText": "  559+ 651─────",
+      "lineCount": 3,
+      "expressionLabels": [
+        "559",
+        "plus 651"
+      ],
+      "tokens": [
+        {
+          "type": "number",
+          "text": "559",
+          "label": "",
+          "ariaHidden": "true"
+        },
+        {
+          "type": "operator",
+          "text": "+",
+          "label": "plus",
+          "ariaHidden": "true"
+        },
+        {
+          "type": "number",
+          "text": "651",
+          "label": "",
+          "ariaHidden": "true"
+        }
+      ],
+      "underlinePresent": true
+    },
+    "screenshots": [
+      "D:\\Coding\\ks2-mastery\\.worktrees\\arithmetic-mixed-number-render-engine-20260513\\docs\\plans\\james\\hotfixes\\18. arithmetic-mixed-number-render-engine-package\\validation\\current-2026-05-13\\local-arithmetic-render-engine-visual-desktop-2026-05-13.png",
+      "D:\\Coding\\ks2-mastery\\.worktrees\\arithmetic-mixed-number-render-engine-20260513\\docs\\plans\\james\\hotfixes\\18. arithmetic-mixed-number-render-engine-package\\validation\\current-2026-05-13\\local-arithmetic-render-engine-visual-mobile-2026-05-13.png"
+    ]
+  },
+  "viewportChecks": [
+    {
+      "name": "mixed-desktop",
+      "width": 1280,
+      "height": 900,
+      "screenshot": "D:\\Coding\\ks2-mastery\\.worktrees\\arithmetic-mixed-number-render-engine-20260513\\docs\\plans\\james\\hotfixes\\18. arithmetic-mixed-number-render-engine-package\\validation\\current-2026-05-13\\local-arithmetic-render-engine-desktop-2026-05-13.png"
+    },
+    {
+      "name": "mixed-mobile",
+      "width": 390,
+      "height": 844,
+      "screenshot": "D:\\Coding\\ks2-mastery\\.worktrees\\arithmetic-mixed-number-render-engine-20260513\\docs\\plans\\james\\hotfixes\\18. arithmetic-mixed-number-render-engine-package\\validation\\current-2026-05-13\\local-arithmetic-render-engine-mobile-2026-05-13.png"
+    },
+    {
+      "name": "visual-desktop",
+      "width": 1280,
+      "height": 900,
+      "screenshot": "D:\\Coding\\ks2-mastery\\.worktrees\\arithmetic-mixed-number-render-engine-20260513\\docs\\plans\\james\\hotfixes\\18. arithmetic-mixed-number-render-engine-package\\validation\\current-2026-05-13\\local-arithmetic-render-engine-visual-desktop-2026-05-13.png"
+    },
+    {
+      "name": "visual-mobile",
+      "width": 390,
+      "height": 844,
+      "screenshot": "D:\\Coding\\ks2-mastery\\.worktrees\\arithmetic-mixed-number-render-engine-20260513\\docs\\plans\\james\\hotfixes\\18. arithmetic-mixed-number-render-engine-package\\validation\\current-2026-05-13\\local-arithmetic-render-engine-visual-mobile-2026-05-13.png"
+    }
+  ],
+  "failures": [],
+  "finishedAt": "2026-05-13T20:51:19.580Z"
+}

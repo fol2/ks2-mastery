@@ -6,6 +6,7 @@ import {
   ARITHMETIC_TEST_FORMS,
 } from '../metadata.js';
 import { normaliseArithmeticReadModel } from '../client-read-models.js';
+import { ArithmeticMathText, ArithmeticQuestionStem, ArithmeticQuestionVisual } from './ArithmeticQuestionStem.jsx';
 
 function dispatch(actions, action, data = {}) {
   if (typeof actions?.dispatch === 'function') actions.dispatch(action, data);
@@ -40,13 +41,13 @@ function Feedback({ feedback }) {
   return (
     <div className={`feedback ${tone}`} role="status" aria-live="polite">
       <strong>{result.correct ? 'Correct' : result.score > 0 ? 'Partly right' : 'Not quite yet'}</strong>
-      <p>{result.feedbackLong || result.feedbackShort}</p>
-      {result.answerText ? <p><strong>Answer:</strong> {result.answerText}</p> : null}
+      <p><ArithmeticMathText text={result.feedbackLong || result.feedbackShort} /></p>
+      {result.answerText ? <p><strong>Answer:</strong> <ArithmeticMathText text={result.answerText} /></p> : null}
       {result.minimalHint ? <p><strong>Small nudge:</strong> {result.minimalHint}</p> : null}
       {feedback.solutionLines?.length ? (
         <div className="worked">
           <strong>Worked solution</strong>
-          <ol>{feedback.solutionLines.map((line) => <li key={line}>{line}</li>)}</ol>
+          <ol>{feedback.solutionLines.map((line) => <li key={line}><ArithmeticMathText text={line} /></li>)}</ol>
         </div>
       ) : null}
     </div>
@@ -78,8 +79,8 @@ function QuestionCard({ ui, actions }) {
         <span className="chip neutral">{question.marks} mark{question.marks === 1 ? '' : 's'}</span>
         {question.manualMethodMark ? <span className="chip warn">Final-answer auto-marking</span> : null}
       </div>
-      <p className="question-stem"><strong>{question.stem}</strong></p>
-      {question.visual ? <pre className="alg arithmetic-visual">{question.visual}</pre> : null}
+      <p className="question-stem"><strong><ArithmeticQuestionStem stem={question.stem} /></strong></p>
+      {question.visual ? <ArithmeticQuestionVisual visual={question.visual} /> : null}
       {question.manualMethodMark ? (
         <div className="feedback warn arithmetic-method-note">
           Official arithmetic papers can award a method mark on long multiplication and long division. This app auto-scores the final answer and leaves handwritten method quality for adult/self review.
@@ -153,11 +154,11 @@ function Summary({ ui, actions }) {
           {ui.session.paper.map((entry) => (
             <details key={entry.question?.id || entry.index}>
               <summary>Question {entry.index + 1}: {entry.result?.score ?? 0}/{entry.result?.maxScore ?? entry.question?.marks ?? 1}</summary>
-              <p>{entry.question?.stem}</p>
-              {entry.question?.visual ? <pre className="alg arithmetic-visual">{entry.question.visual}</pre> : null}
-              <p><strong>Your answer:</strong> {entry.response?.answer || 'blank'}</p>
-              <p><strong>Feedback:</strong> {entry.result?.feedbackLong || entry.result?.feedbackShort}</p>
-              {entry.question?.solutionLines?.length ? <ol>{entry.question.solutionLines.map((line) => <li key={line}>{line}</li>)}</ol> : null}
+              <p><ArithmeticQuestionStem stem={entry.question?.stem} /></p>
+              {entry.question?.visual ? <ArithmeticQuestionVisual visual={entry.question.visual} /> : null}
+              <p><strong>Your answer:</strong> <ArithmeticMathText text={entry.response?.answer || 'blank'} /></p>
+              <p><strong>Feedback:</strong> <ArithmeticMathText text={entry.result?.feedbackLong || entry.result?.feedbackShort} /></p>
+              {entry.question?.solutionLines?.length ? <ol>{entry.question.solutionLines.map((line) => <li key={line}><ArithmeticMathText text={line} /></li>)}</ol> : null}
             </details>
           ))}
         </div>
