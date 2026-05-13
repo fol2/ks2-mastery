@@ -3,7 +3,7 @@
   "phase": "punctuation-qg-p20-expansion-audit",
   "status": "PASS",
   "releaseId": "punctuation-qg-p24-15072-2026-05-13",
-  "generatedAt": "2026-05-13T16:54:09.343Z",
+  "generatedAt": "2026-05-13T17:13:34.564Z",
   "thresholds": {
     "phase": 20,
     "minRuntimeItems": 15000,
