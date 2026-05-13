@@ -1,0 +1,2 @@
+Command: node --check shared/arithmetic/content.js
+ExitCode: 0

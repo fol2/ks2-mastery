@@ -1,0 +1,25 @@
+Command: node arithmetic-05131013-current-audit.tmp.mjs
+{
+  "templateCount": 30,
+  "rewardUnitCount": 90,
+  "cases": 135000,
+  "uniqueStemVisual": 87214,
+  "correctFails": 0,
+  "unitPctBad": 0,
+  "poundBad": 0,
+  "r0Bad": 0,
+  "divisionR0Ok": 9000,
+  "explicitPctCases": 1556,
+  "exactPercentAccept": 1556,
+  "badMixedAccepts": 0,
+  "malformedMixedChecked": 11020,
+  "badDigitAccepts": 0,
+  "digitChecks": 18000,
+  "unsimplifiedInputFractions": 0,
+  "zeroFractionSubtractions": 0,
+  "negativeOrderD1": 0,
+  "formalDecimalBadVisual": 0,
+  "decimalArtifacts": 0,
+  "findings": []
+}
+ExitCode: 0

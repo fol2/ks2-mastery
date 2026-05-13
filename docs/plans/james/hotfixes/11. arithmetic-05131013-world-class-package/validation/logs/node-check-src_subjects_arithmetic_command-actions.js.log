@@ -1,0 +1,1 @@
+node --check src/subjects/arithmetic/command-actions.js

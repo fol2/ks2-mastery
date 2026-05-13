@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: arithmetic content generates and marks every template across difficulty bands
+ok 1 - arithmetic content generates and marks every template across difficulty bands
+  ---
+  duration_ms: 29.4393
+  type: 'test'
+  ...
+# Subtest: arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms
+ok 2 - arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms
+  ---
+  duration_ms: 0.3962
+  type: 'test'
+  ...
+# Subtest: arithmetic marking rejects stray units except where the question asks for a percentage
+ok 3 - arithmetic marking rejects stray units except where the question asks for a percentage
+  ---
+  duration_ms: 2.2005
+  type: 'test'
+  ...
+# Subtest: arithmetic marking rejects malformed mixed numbers and multi-character digit answers
+ok 4 - arithmetic marking rejects malformed mixed numbers and multi-character digit answers
+  ---
+  duration_ms: 0.5763
+  type: 'test'
+  ...
+# Subtest: arithmetic generators avoid malformed place-value items and repeating-decimal order answers
+ok 5 - arithmetic generators avoid malformed place-value items and repeating-decimal order answers
+  ---
+  duration_ms: 38.4235
+  type: 'test'
+  ...
+# Subtest: arithmetic practice session keeps question isolated and emits reward unit evidence on clean win
+ok 6 - arithmetic practice session keeps question isolated and emits reward unit evidence on clean win
+  ---
+  duration_ms: 5.984
+  type: 'test'
+  ...
+# Subtest: arithmetic test mode delays marking until finish-test
+ok 7 - arithmetic test mode delays marking until finish-test
+  ---
+  duration_ms: 3.019
+  type: 'test'
+  ...
+# Subtest: arithmetic practice blank submissions do not count as attempts or adaptive failures
+ok 8 - arithmetic practice blank submissions do not count as attempts or adaptive failures
+  ---
+  duration_ms: 1.6436
+  type: 'test'
+  ...
+# Subtest: arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery
+ok 9 - arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery
+  ---
+  duration_ms: 2.4017
+  type: 'test'
+  ...
+# Subtest: arithmetic rejects stale session and question submissions without mutating state
+ok 10 - arithmetic rejects stale session and question submissions without mutating state
+  ---
+  duration_ms: 1.5459
+  type: 'test'
+  ...
+# Subtest: arithmetic requires fresh session and question ids for active write commands
+ok 11 - arithmetic requires fresh session and question ids for active write commands
+  ---
+  duration_ms: 3.2244
+  type: 'test'
+  ...
+# Subtest: arithmetic prefs ignore untrusted payload keys
+ok 12 - arithmetic prefs ignore untrusted payload keys
+  ---
+  duration_ms: 1.0021
+  type: 'test'
+  ...
+# Subtest: arithmetic duplicate practice submissions cannot mark the same current question twice
+ok 13 - arithmetic duplicate practice submissions cannot mark the same current question twice
+  ---
+  duration_ms: 3.0352
+  type: 'test'
+  ...
+# Subtest: arithmetic read model redacts answer data before the browser sees current questions
+ok 14 - arithmetic read model redacts answer data before the browser sees current questions
+  ---
+  duration_ms: 1.0737
+  type: 'test'
+  ...
+# Subtest: arithmetic reward projection updates the shared monster codex without touching other subjects
+ok 15 - arithmetic reward projection updates the shared monster codex without touching other subjects
+  ---
+  duration_ms: 1.2737
+  type: 'test'
+  ...
+# Subtest: arithmetic command response preserves server-side validation errors in subject UI
+ok 16 - arithmetic command response preserves server-side validation errors in subject UI
+  ---
+  duration_ms: 0.4924
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 605.5478

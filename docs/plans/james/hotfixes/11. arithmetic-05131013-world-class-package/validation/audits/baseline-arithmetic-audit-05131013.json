@@ -1,0 +1,584 @@
+{
+  "templateCount": 30,
+  "rewardUnitCount": 90,
+  "cases": 135000,
+  "uniqueStemVisual": 88678,
+  "correctFails": 0,
+  "unitPctBad": 0,
+  "poundBad": 0,
+  "r0Bad": 0,
+  "divisionR0Ok": 9000,
+  "explicitPctCases": 1556,
+  "exactPercentAccept": 1556,
+  "badMixedAccepts": 5537,
+  "malformedMixedChecked": 11074,
+  "badDigitAccepts": 54000,
+  "digitChecks": 18000,
+  "unsimplifiedInputFractions": 10877,
+  "zeroFractionSubtractions": 135,
+  "negativeOrderD1": 110,
+  "formalDecimalBadVisual": 526,
+  "decimalArtifacts": 0,
+  "findings": [
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 11,
+      "difficulty": 0,
+      "stem": "2/4 of 56 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 28,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 13,
+      "difficulty": 0,
+      "stem": "2/4 of 20 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 10,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 42,
+      "difficulty": 0,
+      "stem": "2/4 of 72 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 36,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 102,
+      "difficulty": 0,
+      "stem": "2/4 of 64 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 32,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 122,
+      "difficulty": 0,
+      "stem": "2/4 of 64 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 32,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 137,
+      "difficulty": 0,
+      "stem": "2/4 of 20 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 10,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 142,
+      "difficulty": 0,
+      "stem": "2/4 of 44 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 22,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 145,
+      "difficulty": 0,
+      "stem": "2/4 of 68 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 34,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 150,
+      "difficulty": 0,
+      "stem": "2/4 of 76 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 38,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 165,
+      "difficulty": 0,
+      "stem": "2/4 of 24 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 12,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 171,
+      "difficulty": 0,
+      "stem": "2/4 of 16 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 8,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 186,
+      "difficulty": 0,
+      "stem": "2/4 of 72 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 36,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 188,
+      "difficulty": 0,
+      "stem": "2/4 of 64 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 32,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 190,
+      "difficulty": 0,
+      "stem": "2/4 of 48 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 24,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 196,
+      "difficulty": 0,
+      "stem": "2/4 of 64 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 32,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 204,
+      "difficulty": 0,
+      "stem": "2/4 of 36 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 18,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 221,
+      "difficulty": 0,
+      "stem": "2/4 of 44 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 22,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 226,
+      "difficulty": 0,
+      "stem": "2/4 of 28 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 14,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 249,
+      "difficulty": 0,
+      "stem": "2/4 of 60 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 30,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 252,
+      "difficulty": 0,
+      "stem": "2/4 of 68 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 34,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 262,
+      "difficulty": 0,
+      "stem": "2/4 of 60 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 30,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 263,
+      "difficulty": 0,
+      "stem": "2/4 of 68 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 34,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 264,
+      "difficulty": 0,
+      "stem": "2/4 of 24 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 12,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 277,
+      "difficulty": 0,
+      "stem": "2/4 of 80 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 40,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 287,
+      "difficulty": 0,
+      "stem": "2/4 of 24 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 12,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 291,
+      "difficulty": 0,
+      "stem": "2/4 of 28 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 14,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 305,
+      "difficulty": 0,
+      "stem": "2/4 of 36 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 18,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 332,
+      "difficulty": 0,
+      "stem": "2/4 of 40 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 20,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 335,
+      "difficulty": 0,
+      "stem": "2/4 of 16 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 8,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 342,
+      "difficulty": 0,
+      "stem": "2/4 of 60 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 30,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 351,
+      "difficulty": 0,
+      "stem": "2/4 of 60 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 30,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 357,
+      "difficulty": 0,
+      "stem": "2/4 of 40 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 20,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 358,
+      "difficulty": 0,
+      "stem": "2/4 of 72 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 36,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 365,
+      "difficulty": 0,
+      "stem": "2/4 of 32 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 16,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 376,
+      "difficulty": 0,
+      "stem": "2/4 of 48 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 24,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 391,
+      "difficulty": 0,
+      "stem": "2/4 of 48 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 24,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 400,
+      "difficulty": 0,
+      "stem": "2/4 of 20 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 10,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 409,
+      "difficulty": 0,
+      "stem": "2/4 of 56 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 28,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 445,
+      "difficulty": 0,
+      "stem": "2/4 of 24 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 12,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    },
+    {
+      "type": "unsimplified_input_fraction",
+      "templateId": "fraction_of_amount",
+      "seed": 462,
+      "difficulty": 0,
+      "stem": "2/4 of 24 =",
+      "visual": "",
+      "expected": {
+        "kind": "number",
+        "value": 12,
+        "misconception": "fraction_method_error"
+      },
+      "operand": "2/4"
+    }
+  ]
+}

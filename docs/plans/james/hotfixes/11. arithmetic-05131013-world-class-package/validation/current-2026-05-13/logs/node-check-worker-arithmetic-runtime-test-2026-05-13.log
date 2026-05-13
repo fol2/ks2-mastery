@@ -1,0 +1,2 @@
+Command: node --check tests/worker-arithmetic-runtime.test.js
+ExitCode: 0

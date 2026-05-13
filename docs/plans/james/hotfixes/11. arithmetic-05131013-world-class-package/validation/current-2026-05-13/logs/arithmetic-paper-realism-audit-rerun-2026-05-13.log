@@ -1,0 +1,53 @@
+Command: node docs\plans\james\hotfixes\11. arithmetic-05131013-world-class-package\validation\current-2026-05-13\scripts\arithmetic-paper-realism-audit.mjs
+{
+  "ok": true,
+  "auditedAt": "2026-05-13T10:12:08.791Z",
+  "audits": [
+    {
+      "name": "short",
+      "questionCount": 12,
+      "totalMarks": 14,
+      "difficultyCounts": {
+        "d0": 7,
+        "d1": 5
+      },
+      "strandCounts": {
+        "facts_place_value": 3,
+        "operations_methods": 4,
+        "decimals_fractions": 3,
+        "percentages_mixed": 2
+      },
+      "longMethodCount": 3,
+      "fractionPercentageCount": 3,
+      "maxDifficultyByHalf": {
+        "firstHalf": 0,
+        "secondHalf": 1
+      },
+      "issues": []
+    },
+    {
+      "name": "full",
+      "questionCount": 36,
+      "totalMarks": 40,
+      "difficultyCounts": {
+        "d0": 19,
+        "d1": 11,
+        "d2": 6
+      },
+      "strandCounts": {
+        "facts_place_value": 5,
+        "operations_methods": 14,
+        "decimals_fractions": 13,
+        "percentages_mixed": 4
+      },
+      "longMethodCount": 9,
+      "fractionPercentageCount": 13,
+      "maxDifficultyByHalf": {
+        "firstHalf": 1,
+        "secondHalf": 2
+      },
+      "issues": []
+    }
+  ]
+}
+ExitCode: 0

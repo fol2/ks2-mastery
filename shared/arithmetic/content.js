@@ -168,15 +168,17 @@ export function parseFractionInput(value) {
   }
   let m = text.match(/^([+-]?\d+)\s+(\d+)\/(\d+)$/);
   if (m) {
-    let whole = Number(m[1]);
+    const rawWhole = Number(m[1]);
+    let whole = rawWhole;
     const fracN = Number(m[2]);
     const fracD = Number(m[3]);
     if (!fracD) return null;
+    const validMixed = Math.abs(rawWhole) > 0 && fracN > 0 && fracN < fracD;
     const sign = whole < 0 ? -1 : 1;
     whole = Math.abs(whole);
     const n = sign * (whole * fracD + fracN);
     const f = normaliseFraction(n, fracD);
-    return { value: n / fracD, n, d: fracD, normalN: f.n, normalD: f.d, simplified: gcd(n, fracD) === 1, decimal: false, isFraction: true, mixed: true };
+    return { value: n / fracD, n, d: fracD, normalN: f.n, normalD: f.d, simplified: validMixed && gcd(n, fracD) === 1, decimal: false, isFraction: true, mixed: true, validMixed };
   }
   m = text.match(/^([+-]?\d+)\/([+-]?\d+)$/);
   if (m) {
@@ -193,6 +195,10 @@ export function parseFractionInput(value) {
 
 function equalNumeric(a, b, tolerance = 1e-9) {
   return Math.abs(Number(a) - Number(b)) <= tolerance;
+}
+
+function isSingleDigitAnswer(value) {
+  return /^[0-9]$/.test(String(value ?? '').replace(/[\u00A0\u202F]/g, ' ').trim());
 }
 
 function result({ correct, score, maxScore, misconception = null, feedbackShort = '', feedbackLong = '', answerText = '', minimalHint = '' }) {
@@ -221,16 +227,22 @@ function evaluateExpected(expected, response, marks = 1) {
     return result({ correct: true, score: marks, maxScore: marks, feedbackShort: 'Correct.', feedbackLong: `The answer is ${answerText}.`, answerText });
   }
 
+  const answerText = expected?.answerText || formatNumber(expected?.value);
+  if (expected?.kind === 'digit') {
+    if (!isSingleDigitAnswer(answer)) {
+      return result({ correct: false, score: 0, maxScore: marks, misconception: 'place_value_confusion', feedbackShort: 'Only enter the single missing digit, not the whole number.', answerText });
+    }
+    const digit = Number(String(answer).replace(/[\u00A0\u202F]/g, ' ').trim());
+    if (digit === Number(expected?.value)) return result({ correct: true, score: marks, maxScore: marks, feedbackShort: 'Correct.', feedbackLong: `The answer is ${answerText}.`, answerText });
+    return result({ correct: false, score: 0, maxScore: marks, misconception: expected?.misconception || 'place_value_confusion', feedbackShort: 'Not quite.', feedbackLong: `The answer is ${answerText}.`, answerText });
+  }
+
   const numeric = parseNumberInput(answer, {
     allowPercentSymbol: Boolean(expected?.allowPercentSymbol),
     allowCurrencySymbol: Boolean(expected?.allowCurrencySymbol),
     allowZeroRemainderText: Boolean(expected?.allowZeroRemainderText),
   });
-  const answerText = expected?.answerText || formatNumber(expected?.value);
   if (numeric === null) return result({ correct: false, score: 0, maxScore: marks, misconception: 'misread_question', feedbackShort: 'Enter a number.', answerText });
-  if (expected?.kind === 'digit' && (numeric < 0 || numeric > 9 || !Number.isInteger(numeric))) {
-    return result({ correct: false, score: 0, maxScore: marks, misconception: 'place_value_confusion', feedbackShort: 'Only enter the missing digit, not the whole number.', answerText });
-  }
   if (equalNumeric(numeric, expected?.value)) return result({ correct: true, score: marks, maxScore: marks, feedbackShort: 'Correct.', feedbackLong: `The answer is ${answerText}.`, answerText });
   let misconception = expected?.misconception || 'misread_question';
   if (Array.isArray(expected?.decimalShiftValues) && expected.decimalShiftValues.some((v) => equalNumeric(numeric, v))) misconception = 'decimal_point_error';
@@ -291,6 +303,39 @@ function pctFraction(percent) {
   const decimals = text.includes('.') ? text.split('.')[1].length : 0;
   const scale = 10 ** decimals;
   return normaliseFraction(Math.round(Number(percent) * scale), 100 * scale);
+}
+
+function properNumerator(rng, denominator, excluded = []) {
+  const excludedSet = new Set(excluded.map((value) => Number(value)));
+  const candidates = Array.from({ length: Math.max(0, denominator - 1) }, (_unused, index) => index + 1)
+    .filter((numerator) => gcd(numerator, denominator) === 1 && !excludedSet.has(numerator));
+  if (candidates.length) return pick(rng, candidates);
+  const fallback = Array.from({ length: Math.max(0, denominator - 1) }, (_unused, index) => index + 1)
+    .filter((numerator) => !excludedSet.has(numerator));
+  return fallback.length ? pick(rng, fallback) : 1;
+}
+
+function fixedDecimalText(value, places) {
+  return Number(value).toFixed(places);
+}
+
+function alignDecimalRows(values) {
+  const parts = values.map((value) => {
+    const text = String(value);
+    const [whole, fraction = ''] = text.split('.');
+    return { whole, fraction };
+  });
+  const left = Math.max(...parts.map((part) => part.whole.length));
+  const right = Math.max(...parts.map((part) => part.fraction.length));
+  return parts.map((part) => `${part.whole.padStart(left)}${right ? '.' : ''}${part.fraction.padEnd(right)}`);
+}
+
+function visualDecimalVertical(top, bottom, op, result = '') {
+  const rows = result === '' ? alignDecimalRows([top, bottom]) : alignDecimalRows([top, bottom, result]);
+  const width = Math.max(rows[0].length, rows[1].length + 2, result === '' ? 0 : rows[2].length, 4);
+  const padded = [rows[0].padStart(width), `${op} ${rows[1].padStart(width - 2)}`, '─'.repeat(width)];
+  if (result !== '') padded.push(rows[2].padStart(width));
+  return padded.join('\n');
 }
 
 function template(def) {
@@ -446,7 +491,7 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(dividend)} ÷ ${divisor} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: quotient, misconception: 'decimal_point_error', decimalShiftValues: [tidyDecimal(quotient * 10), tidyDecimal(quotient / 10)] }, solutionLines: ['Use inverse multiplication or short division with the decimal point lined up.', `${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`] });
   } }),
   template({ id: 'fraction_of_amount', label: 'Fractions of amounts', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_of_amount'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
-    const rng = seededRng(seed); const den = pick(rng, difficulty === 0 ? [2, 3, 4, 5] : difficulty === 1 ? [3, 4, 5, 8, 10, 12] : [6, 8, 9, 10, 12, 15, 20]); const num = randInt(rng, 1, den - 1); const onePart = difficulty === 0 ? randInt(rng, 4, 20) : difficulty === 1 ? randInt(rng, 8, 60) : randInt(rng, 16, 150); const total = den * onePart; const answer = num * onePart;
+    const rng = seededRng(seed); const den = pick(rng, difficulty === 0 ? [2, 3, 4, 5] : difficulty === 1 ? [3, 4, 5, 8, 10, 12] : [6, 8, 9, 10, 12, 15, 20]); const num = properNumerator(rng, den); const onePart = difficulty === 0 ? randInt(rng, 4, 20) : difficulty === 1 ? randInt(rng, 8, 60) : randInt(rng, 16, 150); const total = den * onePart; const answer = num * onePart;
     return makeQuestion(this, seed, difficulty, { stem: `${fractionText(num, den)} of ${formatNumber(total)} =`, inputSpec: { type: 'number', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'fraction_method_error' }, solutionLines: [`Find one part: ${formatNumber(total)} ÷ ${den} = ${formatNumber(onePart)}.`, `Then ${num} part(s): ${formatNumber(onePart)} × ${num} = ${formatNumber(answer)}.`] });
   } }),
   template({ id: 'fraction_add_sub', label: 'Fraction calculations', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_calc'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
@@ -459,32 +504,60 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
     if (difficulty === 0) {
       aD = pick(rng, [4, 5, 6, 8, 10, 12]);
       bD = aD;
-      aN = randInt(rng, 1, aD - 1);
-      bN = randInt(rng, 1, bD - 1);
+      aN = properNumerator(rng, aD);
+      bN = properNumerator(rng, bD, op === '−' ? [aN] : []);
     } else {
       const relatedDenominators = difficulty === 1
         ? [[3,6],[3,9],[4,8],[4,12],[5,10],[5,20],[6,12],[8,12],[10,20]]
         : [[6,8],[6,9],[8,12],[9,12],[10,15],[12,18],[12,20],[14,21],[15,20],[16,24],[18,30],[20,25]];
       [aD, bD] = pick(rng, relatedDenominators);
       if (randInt(rng, 0, 1)) [aD, bD] = [bD, aD];
-      aN = randInt(rng, 1, aD - 1);
-      bN = randInt(rng, 1, bD - 1);
+      aN = properNumerator(rng, aD);
+      bN = properNumerator(rng, bD);
     }
-    if (op === '−') {
-      if (aN / aD < bN / bD) [aN, aD, bN, bD] = [bN, bD, aN, aD];
-      if (aN / aD === bN / bD) aN = Math.min(aD - 1, aN + 1);
-    }
+    if (op === '−' && aN / aD < bN / bD) [aN, aD, bN, bD] = [bN, bD, aN, aD];
     const lcm = Math.abs(aD * bD) / gcd(aD, bD);
     const n = op === '+' ? aN * (lcm / aD) + bN * (lcm / bD) : aN * (lcm / aD) - bN * (lcm / bD);
     const f = normaliseFraction(n, lcm);
     return makeQuestion(this, seed, difficulty, { stem: `${fractionText(aN, aD)} ${op} ${fractionText(bN, bD)} =`, inputSpec: { type: 'text', label: 'Answer as a fraction or mixed number' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: true }, solutionLines: [aD === bD ? 'The denominators match, so keep the denominator.' : `Change both fractions to denominator ${lcm}.`, `The answer is ${mixedFractionText(f.n, f.d, true)}.`] });
   } }),
   template({ id: 'mixed_number_add_sub', label: 'Mixed-number calculations', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_calc'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
-    const rng = seededRng(seed); const den = pick(rng, difficulty === 0 ? [4, 5, 6] : [5, 6, 8, 10, 12]); const op = pick(rng, ['+', '−']); let w1 = randInt(rng, 1, 5), w2 = randInt(rng, 1, 4), n1 = randInt(rng, 1, den - 1), n2 = randInt(rng, 1, den - 1); if (op === '−' && (w1 + n1 / den) < (w2 + n2 / den)) { [w1, w2] = [w2, w1]; [n1, n2] = [n2, n1]; } const f = normaliseFraction(op === '+' ? (w1 * den + n1) + (w2 * den + n2) : (w1 * den + n1) - (w2 * den + n2), den);
-    return makeQuestion(this, seed, difficulty, { stem: `${w1} ${fractionText(n1, den)} ${op} ${w2} ${fractionText(n2, den)} =`, inputSpec: { type: 'text', label: 'Answer as a mixed number, fraction or whole number' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: true }, solutionLines: ['Convert to improper fractions or work with whole and fractional parts carefully.', `The answer is ${mixedFractionText(f.n, f.d, true)}.`] });
+    const rng = seededRng(seed);
+    const op = pick(rng, ['+', '−']);
+    let d1;
+    let d2;
+    if (difficulty === 2) {
+      [d1, d2] = pick(rng, [[4,8],[5,10],[6,12],[8,12],[10,20],[12,18],[12,24]]);
+      if (randInt(rng, 0, 1)) [d1, d2] = [d2, d1];
+    } else {
+      d1 = pick(rng, difficulty === 0 ? [4, 5, 6] : [5, 6, 8, 10, 12]);
+      d2 = d1;
+    }
+    let w1 = randInt(rng, 1, difficulty === 0 ? 4 : 6);
+    let w2 = randInt(rng, 1, difficulty === 0 ? 3 : 5);
+    let n1 = properNumerator(rng, d1);
+    let n2 = properNumerator(rng, d2);
+    let improper1 = w1 * d1 + n1;
+    let improper2 = w2 * d2 + n2;
+    if (op === '−') {
+      if (improper1 / d1 < improper2 / d2) {
+        [w1, w2] = [w2, w1];
+        [n1, n2] = [n2, n1];
+        [d1, d2] = [d2, d1];
+        [improper1, improper2] = [improper2, improper1];
+      }
+      if (improper1 / d1 === improper2 / d2) {
+        w1 += 1;
+        improper1 = w1 * d1 + n1;
+      }
+    }
+    const lcm = Math.abs(d1 * d2) / gcd(d1, d2);
+    const resultN = op === '+' ? improper1 * (lcm / d1) + improper2 * (lcm / d2) : improper1 * (lcm / d1) - improper2 * (lcm / d2);
+    const f = normaliseFraction(resultN, lcm);
+    return makeQuestion(this, seed, difficulty, { stem: `${w1} ${fractionText(n1, d1)} ${op} ${w2} ${fractionText(n2, d2)} =`, inputSpec: { type: 'text', label: 'Answer as a mixed number, fraction or whole number' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: true }, solutionLines: ['Convert to improper fractions or work with whole and fractional parts carefully.', `The answer is ${mixedFractionText(f.n, f.d, true)}.`] });
   } }),
   template({ id: 'fraction_divide_whole', label: 'Divide a fraction by a whole number', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_calc'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
-    const rng = seededRng(seed); const den = pick(rng, [3, 4, 5, 6, 8, 10, 12]); const num = randInt(rng, 1, den - 1); const divisor = randInt(rng, 2, difficulty === 0 ? 4 : 8); const f = normaliseFraction(num, den * divisor);
+    const rng = seededRng(seed); const den = pick(rng, difficulty === 0 ? [3, 4, 5, 6, 8] : difficulty === 1 ? [3, 4, 5, 6, 8, 10, 12] : [6, 8, 10, 12, 15, 16, 20]); const num = properNumerator(rng, den); const divisor = randInt(rng, 2, difficulty === 0 ? 4 : 8); const f = normaliseFraction(num, den * divisor);
     return makeQuestion(this, seed, difficulty, { stem: `${fractionText(num, den)} ÷ ${divisor} =`, inputSpec: { type: 'text', label: 'Answer as a fraction' }, expected: { kind: 'fraction', n: f.n, d: f.d, preferMixed: false }, solutionLines: [`Dividing by ${divisor} makes each part ${divisor} times smaller.`, `The answer is ${fractionText(f.n, f.d)}.`] });
   } }),
   template({ id: 'fraction_multiply_fraction', label: 'Multiplying fractions', domain: 'Fractions', strand: 'decimals_fractions', skillIds: ['fractions_multiply'], speedFriendly: false, testFriendly: true, generator(seed, difficulty = 1) {
@@ -523,9 +596,9 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
       expression = `(${a} + ${c}) − ${b} × 2`;
       answer = (a + c) - b * 2;
     } else if (difficulty === 1) {
-      const a = randInt(rng, 30, 120); const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const d = randInt(rng, 10, 30);
+      const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const d = randInt(rng, 10, 30); const product = b * c; const a = randInt(rng, Math.max(30, product - d + 5), Math.max(120, product + 60));
       expression = `${a} − ${b} × ${c} + ${d}`;
-      answer = a - b * c + d;
+      answer = a - product + d;
     } else {
       const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const quotient = randInt(rng, 5, 24); const d = randInt(rng, 10, 30); const minuend = (b * c) + (quotient * c);
       expression = `(${minuend} − ${b * c}) ÷ ${c} + ${d}`;
@@ -535,9 +608,9 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
   } }),
 
   template({ id: 'formal_decimal_missing_digit', label: 'Missing digit in a decimal calculation', domain: 'Decimals', strand: 'decimals_fractions', skillIds: ['decimals_add_sub', 'inverse_missing'], speedFriendly: false, testFriendly: false, generator(seed, difficulty = 1) {
-    const rng = seededRng(seed); const places = difficulty === 0 ? 1 : 2; const scale = 10 ** places; const add = randInt(rng, 0, 1) === 1; let a = randInt(rng, 12 * scale, 95 * scale); let b = randInt(rng, 4 * scale, 48 * scale); if (!add && b > a) [a, b] = [b, a]; const val = add ? a + b : a - b;
-    const rows = [formatNumber(a / scale), formatNumber(b / scale), formatNumber(val / scale)]; const candidates = []; rows.forEach((row, rowIndex) => { for (let i = 0; i < row.length; i += 1) if (/\d/.test(row[i])) candidates.push([rowIndex, i]); }); const [row, col] = pick(rng, candidates); const ans = Number(rows[row][col]); rows[row] = `${rows[row].slice(0, col)}□${rows[row].slice(col + 1)}`;
-    return makeQuestion(this, seed, difficulty, { stem: 'One digit is missing. What is the missing digit?', visual: visualVertical(rows[0], rows[1], add ? '+' : '−', rows[2]), inputSpec: { type: 'number', label: 'Missing digit' }, expected: { kind: 'digit', value: ans, misconception: 'digit_alignment' }, solutionLines: ['Line up decimal points and work column by column.', `The missing digit is ${ans}.`] });
+    const rng = seededRng(seed); const places = difficulty === 0 ? 1 : difficulty === 1 ? 2 : 3; const scale = 10 ** places; const add = randInt(rng, 0, 1) === 1; let a = randInt(rng, 12 * scale, (difficulty === 2 ? 160 : 95) * scale); let b = randInt(rng, 4 * scale, (difficulty === 2 ? 90 : 48) * scale); if (!add && b > a) [a, b] = [b, a]; const val = add ? a + b : a - b;
+    const rows = [fixedDecimalText(a / scale, places), fixedDecimalText(b / scale, places), fixedDecimalText(val / scale, places)]; const candidates = []; rows.forEach((row, rowIndex) => { for (let i = 0; i < row.length; i += 1) if (/\d/.test(row[i])) candidates.push([rowIndex, i]); }); const [row, col] = pick(rng, candidates); const ans = Number(rows[row][col]); rows[row] = `${rows[row].slice(0, col)}□${rows[row].slice(col + 1)}`;
+    return makeQuestion(this, seed, difficulty, { stem: 'One digit is missing. What is the missing digit?', visual: visualDecimalVertical(rows[0], rows[1], add ? '+' : '−', rows[2]), inputSpec: { type: 'number', label: 'Missing digit' }, expected: { kind: 'digit', value: ans, misconception: 'digit_alignment' }, solutionLines: ['Line up decimal points and work column by column.', `The missing digit is ${ans}.`] });
   } }),
   template({ id: 'short_multiplication_missing_digit', label: 'Missing digit in short multiplication', domain: 'Multiplication and division', strand: 'operations_methods', skillIds: ['short_multiplication', 'inverse_missing'], speedFriendly: false, testFriendly: false, generator(seed, difficulty = 1) {
     const rng = seededRng(seed); const digits = difficulty === 0 ? 3 : 4; const a = randInt(rng, 10 ** (digits - 1), 10 ** digits - 1); const b = randInt(rng, 3, 9); const product = a * b; const rows = [String(a), String(b), String(product)]; const row = pick(rng, [0, 2]); const col = randInt(rng, 0, rows[row].length - 1); const ans = Number(rows[row][col]); rows[row] = `${rows[row].slice(0, col)}□${rows[row].slice(col + 1)}`;
@@ -561,7 +634,11 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
         ? [[5,10],[25,100],[75,100],[1,20],[3,20],[7,20],[9,20],[11,20],[13,20],[17,20]]
         : [[5,100],[15,100],[35,100],[45,100],[55,100],[65,100],[85,100],[125,1000],[375,1000],[625,1000],[875,1000]];
     const [fn, fd] = pick(rng, fractionPool);
-    const [dn, dd] = pick(rng, decimalPool);
+    let [dn, dd] = pick(rng, decimalPool);
+    if (op === '−' && fn * dd === dn * fd) {
+      const alternatives = decimalPool.filter(([altN, altD]) => fn * altD !== altN * fd);
+      [dn, dd] = pick(rng, alternatives.length ? alternatives : decimalPool);
+    }
     let left = { text: fractionText(fn, fd), n: fn, d: fd, value: fn / fd };
     let right = { text: formatNumber(dn / dd), n: dn, d: dd, value: dn / dd };
     if (randInt(rng, 0, 1) === 1) [left, right] = [right, left];

@@ -1,0 +1,2 @@
+Command: node docs/plans/james/hotfixes/11. arithmetic-05131013-world-class-package/validation/audit-arithmetic-05131013.mjs --json
+ExitCode: 0

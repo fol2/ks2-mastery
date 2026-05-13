@@ -1,0 +1,94 @@
+TAP version 13
+# Subtest: U10 Apply seed: clicking Apply seed shows confirmation, typing correct learner ID enables dispatch
+ok 1 - U10 Apply seed: clicking Apply seed shows confirmation, typing correct learner ID enables dispatch
+  ---
+  duration_ms: 242.3084
+  type: 'test'
+  ...
+# Subtest: U10 Apply seed: interactive confirmation flow dispatches only after correct typed input
+ok 2 - U10 Apply seed: interactive confirmation flow dispatches only after correct typed input
+  ---
+  duration_ms: 144.1036
+  type: 'test'
+  ...
+# Subtest: U10 Delete permanently: shows critical confirmation with prompt ID typed input
+ok 3 - U10 Delete permanently: shows critical confirmation with prompt ID typed input
+  ---
+  duration_ms: 142.491
+  type: 'test'
+  ...
+# Subtest: U10 Archive: shows high-level confirmation without typed input
+ok 4 - U10 Archive: shows high-level confirmation without typed input
+  ---
+  duration_ms: 146.1646
+  type: 'test'
+  ...
+# Subtest: U10 Restore version: SSR renders select without restore button or confirm dialog
+ok 5 - U10 Restore version: SSR renders select without restore button or confirm dialog
+  ---
+  duration_ms: 211.0228
+  type: 'test'
+  ...
+# Subtest: U10 Publish: SSR renders Publish button without confirm dialog initially
+ok 6 - U10 Publish: SSR renders Publish button without confirm dialog initially
+  ---
+  duration_ms: 203.2131
+  type: 'test'
+  ...
+# Subtest: U10 Publish: confirmation dialog renders correct danger copy when triggered
+ok 7 - U10 Publish: confirmation dialog renders correct danger copy when triggered
+  ---
+  duration_ms: 141.9159
+  type: 'test'
+  ...
+# Subtest: U10 Cancel: AdminConfirmAction cancel callback is wired to onCancel prop
+ok 8 - U10 Cancel: AdminConfirmAction cancel callback is wired to onCancel prop
+  ---
+  duration_ms: 141.0571
+  type: 'test'
+  ...
+# Subtest: U10 Writing Try: Archive button renders with data-action but no immediate confirm dialog
+ok 9 - U10 Writing Try: Archive button renders with data-action but no immediate confirm dialog
+  ---
+  duration_ms: 197.4922
+  type: 'test'
+  ...
+# Subtest: U10 Classification: post-mega-seed-apply is critical, requires typed target
+ok 10 - U10 Classification: post-mega-seed-apply is critical, requires typed target
+  ---
+  duration_ms: 76.0321
+  type: 'test'
+  ...
+# Subtest: U10 Seed panel: non-admin role cannot see Apply seed button
+ok 11 - U10 Seed panel: non-admin role cannot see Apply seed button
+  ---
+  duration_ms: 239.0419
+  type: 'test'
+  ...
+# Subtest: U10 Restore flow: admin-registry-restore-flow container wraps the two-step restore
+ok 12 - U10 Restore flow: admin-registry-restore-flow container wraps the two-step restore
+  ---
+  duration_ms: 207.252
+  type: 'test'
+  ...
+# Subtest: U10 AdminConfirmAction: critical level with empty input renders disabled confirm
+ok 13 - U10 AdminConfirmAction: critical level with empty input renders disabled confirm
+  ---
+  duration_ms: 143.6208
+  type: 'test'
+  ...
+# Subtest: U10 AdminConfirmAction: high level enables confirm button immediately
+ok 14 - U10 AdminConfirmAction: high level enables confirm button immediately
+  ---
+  duration_ms: 143.7417
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2455.7941

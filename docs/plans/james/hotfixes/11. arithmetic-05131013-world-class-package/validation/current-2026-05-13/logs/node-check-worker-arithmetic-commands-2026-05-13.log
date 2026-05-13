@@ -1,0 +1,2 @@
+Command: node --check worker/src/subjects/arithmetic/commands.js
+ExitCode: 0

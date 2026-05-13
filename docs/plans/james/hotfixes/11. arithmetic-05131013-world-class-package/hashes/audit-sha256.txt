@@ -1,0 +1,7 @@
+a170da0667f668dce36c48c493a622c1824d40399157bd90ae348a7ed27a228c  /mnt/data/arithmetic-05131013-fresh-baseline-audit.json
+c63676e67597362a30c1265fa31505e0dccbd0665ffa050b94959028a3fe22a5  /mnt/data/arithmetic-05131013-fresh-patched-audit.json
+b8f6195e2517dd7a41a9cb57e3b943597df85e2eab864a5f7da1e4aa559223b8  validation/audit-arithmetic-05131013.mjs
+e2acaf85ff59c50ff8ec5146f9bea25dded63753d9bf2edc063a8ac6f23e63aa  validation/current-2026-05-13/audits/post-review-arithmetic-custom-audit-2026-05-13.json
+e780f26617749c530024f2c393297c80cd9b353c0fe59b48e54ba6f2de24aa81  validation/current-2026-05-13/audits/post-rebase-arithmetic-custom-audit-2026-05-13.json
+8eb9f921387aefe40bcaf4099185ec9348416267271760543692d8154021a074  validation/current-2026-05-13/scripts/arithmetic-paper-realism-audit.mjs
+1bdd6a189c05c47acd1b3b0f76cca9d7b8167562ca3f9fe813ea4efeb3571a2a  validation/current-2026-05-13/audits/arithmetic-paper-realism-audit-2026-05-13.json

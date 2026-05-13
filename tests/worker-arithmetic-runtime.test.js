@@ -93,6 +93,20 @@ test('arithmetic marking rejects stray units except where the question asks for 
   }
 });
 
+test('arithmetic marking rejects malformed mixed numbers and multi-character digit answers', () => {
+  const mixedQuestion = { marks: 1, expected: { kind: 'fraction', n: 3, d: 2, preferMixed: true } };
+  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '1 1/2' }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '0 3/2' }).correct, false, 'zero-whole improper mixed notation is not a valid mixed number');
+  assert.equal(evaluateArithmeticQuestion(mixedQuestion, { answer: '1 3/2' }).correct, false, 'improper fractional part in a mixed number is not fully correct');
+
+  const digitQuestion = generateArithmeticQuestion({ templateId: 'formal_missing_digit', difficulty: 1, seed: 12 });
+  const digit = String(digitQuestion.expected.value);
+  assert.equal(evaluateArithmeticQuestion(digitQuestion, { answer: digit }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(digitQuestion, { answer: `0${digit}` }).correct, false, 'missing digit answers must be exactly one digit');
+  assert.equal(evaluateArithmeticQuestion(digitQuestion, { answer: `${digit}.0` }).correct, false, 'missing digit answers must not accept decimal notation');
+  assert.equal(evaluateArithmeticQuestion(digitQuestion, { answer: `+${digit}` }).correct, false, 'missing digit answers must not accept signed notation');
+});
+
 test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
   const placeValue = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty: 2, seed: 96433 });
   assert.ok(placeValue.stem.includes('□'), 'place-value item contains a missing-value box');
@@ -101,8 +115,25 @@ test('arithmetic generators avoid malformed place-value items and repeating-deci
   for (let seed = 1; seed <= 500; seed += 1) {
     const order = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 2, seed });
     assert.equal(Number.isInteger(order.expected.value), true, `seed ${seed} should produce a whole-number result`);
+    const testOrder = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 1, seed });
+    assert.ok(testOrder.expected.value >= 0, `seed ${seed} should not produce a negative KS2 test-mode order-of-operations answer`);
     const power = generateArithmeticQuestion({ templateId: 'powers_of_ten_shift', difficulty: 1, seed });
     assert.equal(String(power.expected.value).includes('000000000'), false, `seed ${seed} should not leak binary floating-point artefacts`);
+
+    for (const templateId of ['fraction_add_sub', 'mixed_number_add_sub', 'fraction_decimal_hybrid']) {
+      const fractionQuestion = generateArithmeticQuestion({ templateId, difficulty: seed % 3, seed });
+      if (fractionQuestion.stem.includes('−')) {
+        assert.notEqual(fractionQuestion.expected.n, 0, `${templateId} seed ${seed} should avoid zero-result subtraction drills`);
+      }
+    }
+
+    const decimalMissing = generateArithmeticQuestion({ templateId: 'formal_decimal_missing_digit', difficulty: seed % 3, seed });
+    const decimalRows = decimalMissing.visual.split('\n').filter((line) => /[0-9□]/.test(line) && !/^─+$/.test(line.trim()));
+    assert.equal(decimalRows.every((line) => line.includes('.')), true, `decimal missing-digit seed ${seed} should keep decimal points visible in every row`);
+    const decimalColumns = decimalRows.map((line) => line.indexOf('.'));
+    assert.equal(new Set(decimalColumns).size, 1, `decimal missing-digit seed ${seed} should align decimal points`);
+    const decimalPlaces = decimalRows.map((line) => line.slice(line.indexOf('.') + 1).trimEnd().length);
+    assert.equal(new Set(decimalPlaces).size, 1, `decimal missing-digit seed ${seed} should preserve fixed decimal places`);
   }
 });
 

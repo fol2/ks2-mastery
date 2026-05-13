@@ -1,0 +1,1 @@
+node --check tests/worker-arithmetic-runtime.test.js

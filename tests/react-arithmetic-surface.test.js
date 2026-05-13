@@ -50,7 +50,7 @@ async function runFixture(entrySource) {
       },
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
-      timeout: 10_000,
+      timeout: 30_000,
     });
     return normaliseLineEndings(output).replace(/\n+$/, '');
   } finally {

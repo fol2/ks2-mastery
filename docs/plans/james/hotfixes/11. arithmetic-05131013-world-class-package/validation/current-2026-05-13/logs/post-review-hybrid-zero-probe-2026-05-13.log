@@ -1,0 +1,12 @@
+Command: node --input-type=module hybrid zero probe
+{
+  "stem": "0.3 − 1/4 =",
+  "expected": {
+    "kind": "fraction",
+    "n": 1,
+    "d": 20,
+    "preferMixed": true,
+    "allowDecimalEquivalent": true
+  }
+}
+ExitCode: 0

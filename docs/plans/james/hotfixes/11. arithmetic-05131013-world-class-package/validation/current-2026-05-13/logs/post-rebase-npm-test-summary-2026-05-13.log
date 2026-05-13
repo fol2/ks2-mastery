@@ -1,0 +1,38 @@
+Command: npm test
+Base: rebased on origin/main 97aa70da2426e0a65b464d44b55cd8670df0c1dd
+Result: failed in unrelated full-suite harness cases.
+
+Run 1:
+- tests: 111506
+- pass: 111492
+- fail: 2
+- failures:
+  - tests/build-public.test.js: public build emits the React app bundle entrypoint
+  - tests/worker-admin-ops-mutations-lifecycle.test.js: I3 rate limit 61st /ops-metadata PUT from same session hits 429
+
+Targeted reruns:
+- node --test tests/build-public.test.js: ExitCode 0
+- node --test tests/worker-admin-ops-mutations-lifecycle.test.js: ExitCode 0
+
+Run 2:
+- tests: 111506
+- pass: 111493
+- fail: 1
+- failure:
+  - tests/build-public.test.js: public build emits the React app bundle entrypoint
+
+Run 3:
+- command: npm test -- --test-concurrency=1
+- tests: 111506
+- pass: 111493
+- fail: 1
+- failure:
+  - tests/react-admin-destructive-tools.test.js: U10 Writing Try: Archive button renders with data-action but no immediate confirm dialog
+
+Targeted rerun:
+- node --test tests/react-admin-destructive-tools.test.js: ExitCode 0
+
+Conclusion:
+- The rebased full-suite failures moved between unrelated build/admin harness subprocess tests and reproduced no Arithmetic contract failure.
+- Post-rebase Arithmetic-specific worker, React surface, and custom audit gates passed.
+- Post-rebase npm run check passed through the OAuth-safe Wrangler dry-run path.
