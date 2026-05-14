@@ -1,0 +1,608 @@
+{
+  "checkedAt": "2026-05-14T19:28:41.839Z",
+  "productionOrigin": "https://ks2.eugnel.uk",
+  "matrix": {
+    "assetVersion": "20260514-subject-assets",
+    "subjects": [
+      "reading",
+      "arithmetic",
+      "reasoning"
+    ],
+    "subjectMonsterCount": 16,
+    "subjectMonsterIds": [
+      "readbloom",
+      "readrill",
+      "inferane",
+      "structurillon",
+      "lorequill",
+      "sumkrab",
+      "carryfin",
+      "fractail",
+      "perciva",
+      "arithon",
+      "numdrake",
+      "fractalon",
+      "measuron",
+      "georune",
+      "proofwyrm",
+      "strategon"
+    ],
+    "heroCampMonsterIds": [
+      "glossbloom",
+      "loomrill",
+      "mirrane",
+      "colisk",
+      "hyphang",
+      "carillon"
+    ],
+    "branches": [
+      "b1",
+      "b2"
+    ],
+    "stages": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "sizes": [
+      320,
+      640,
+      1280
+    ]
+  },
+  "bundle": {
+    "origin": "https://ks2.eugnel.uk",
+    "status": 200,
+    "htmlBytes": 5188,
+    "htmlScriptCount": 1,
+    "scriptCount": 6,
+    "assetVersion": "20260514-subject-assets",
+    "assetVersionSeen": true,
+    "subjectIdHits": 16,
+    "seenSubjectIds": [
+      "readbloom",
+      "readrill",
+      "inferane",
+      "structurillon",
+      "lorequill",
+      "sumkrab",
+      "carryfin",
+      "fractail",
+      "perciva",
+      "arithon",
+      "numdrake",
+      "fractalon",
+      "measuron",
+      "georune",
+      "proofwyrm",
+      "strategon"
+    ],
+    "missingSubjectIds": [],
+    "scripts": [
+      {
+        "src": "https://ks2.eugnel.uk/src/bundles/app.bundle.js?v=f3c17bbe998a",
+        "status": 200,
+        "contentType": "text/javascript",
+        "bytes": 749260,
+        "assetVersionSeen": false,
+        "seenSubjectIds": [
+          "readbloom",
+          "readrill",
+          "inferane",
+          "structurillon",
+          "lorequill",
+          "sumkrab",
+          "carryfin",
+          "fractail",
+          "perciva",
+          "arithon",
+          "numdrake",
+          "fractalon",
+          "measuron",
+          "georune",
+          "proofwyrm",
+          "strategon"
+        ],
+        "issues": []
+      },
+      {
+        "src": "https://ks2.eugnel.uk/src/bundles/chunk-BQQKSCD3.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "bytes": 350052,
+        "assetVersionSeen": true,
+        "seenSubjectIds": [
+          "readbloom",
+          "readrill",
+          "inferane",
+          "structurillon",
+          "lorequill",
+          "sumkrab",
+          "carryfin",
+          "fractail",
+          "perciva",
+          "arithon",
+          "numdrake",
+          "fractalon",
+          "measuron",
+          "georune",
+          "proofwyrm",
+          "strategon"
+        ],
+        "issues": []
+      },
+      {
+        "src": "https://ks2.eugnel.uk/src/bundles/chunk-EE2UYWMZ.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "bytes": 16057,
+        "assetVersionSeen": false,
+        "seenSubjectIds": [],
+        "issues": []
+      },
+      {
+        "src": "https://ks2.eugnel.uk/src/bundles/AdminHubSurface-2IK6LUIC.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "bytes": 232863,
+        "assetVersionSeen": false,
+        "seenSubjectIds": [],
+        "issues": []
+      },
+      {
+        "src": "https://ks2.eugnel.uk/src/bundles/ParentHubSurface-MRTSMHTL.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "bytes": 23497,
+        "assetVersionSeen": false,
+        "seenSubjectIds": [],
+        "issues": []
+      },
+      {
+        "src": "https://ks2.eugnel.uk/src/bundles/chunk-64YMC6P3.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "bytes": 2337,
+        "assetVersionSeen": false,
+        "seenSubjectIds": [],
+        "issues": []
+      }
+    ],
+    "issues": [],
+    "ok": true
+  },
+  "sourceCodex": {
+    "entryCount": 28,
+    "groupIds": [
+      "spelling",
+      "punctuation",
+      "grammar",
+      "reading",
+      "arithmetic",
+      "reasoning"
+    ],
+    "subjectEntryCount": 16,
+    "missingSubjectIds": [],
+    "reservedIdsPresent": [],
+    "visualSourceLeaks": [],
+    "monsterCount": 34,
+    "ok": true
+  },
+  "liveCodexUi": {
+    "origin": "https://ks2.eugnel.uk",
+    "screenshot": "docs\\plans\\james\\hotfixes\\18. monster-subject-asset-alignment-package\\evidence\\production-codex-ui\\production-codex-ui-2026-05-14.png",
+    "groupIds": [
+      "spelling",
+      "punctuation",
+      "grammar",
+      "reading",
+      "arithmetic",
+      "reasoning"
+    ],
+    "cardCount": 28,
+    "uniqueCardCount": 28,
+    "subjectCardCount": 16,
+    "missingSubjectIds": [],
+    "reservedIdsPresent": [],
+    "duplicateCardIds": [],
+    "browserFailures": [],
+    "state": {
+      "title": "Demo Learner's codex journal",
+      "rosterTitle": "Monster roster",
+      "subjectGroups": [
+        {
+          "subjectId": "spelling",
+          "heading": "Spelling",
+          "count": "0 / 4 caught"
+        },
+        {
+          "subjectId": "punctuation",
+          "heading": "Punctuation",
+          "count": "0 / 4 caught"
+        },
+        {
+          "subjectId": "grammar",
+          "heading": "Grammar",
+          "count": "0 / 4 caught"
+        },
+        {
+          "subjectId": "reading",
+          "heading": "Reading",
+          "count": "0 / 5 caught"
+        },
+        {
+          "subjectId": "arithmetic",
+          "heading": "Arithmetic",
+          "count": "0 / 5 caught"
+        },
+        {
+          "subjectId": "reasoning",
+          "heading": "Reasoning",
+          "count": "0 / 6 caught"
+        }
+      ],
+      "cards": [
+        {
+          "monsterId": "inklet",
+          "subjectId": "spelling",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Inklet not caught"
+        },
+        {
+          "monsterId": "glimmerbug",
+          "subjectId": "spelling",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Glimmerbug not caught"
+        },
+        {
+          "monsterId": "phaeton",
+          "subjectId": "spelling",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Phaeton not caught"
+        },
+        {
+          "monsterId": "vellhorn",
+          "subjectId": "spelling",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Vellhorn not caught"
+        },
+        {
+          "monsterId": "pealark",
+          "subjectId": "punctuation",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Pealark not caught"
+        },
+        {
+          "monsterId": "curlune",
+          "subjectId": "punctuation",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Curlune not caught"
+        },
+        {
+          "monsterId": "claspin",
+          "subjectId": "punctuation",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Claspin not caught"
+        },
+        {
+          "monsterId": "quoral",
+          "subjectId": "punctuation",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Quoral not caught"
+        },
+        {
+          "monsterId": "bracehart",
+          "subjectId": "grammar",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Bracehart not caught"
+        },
+        {
+          "monsterId": "chronalyx",
+          "subjectId": "grammar",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Chronalyx not caught"
+        },
+        {
+          "monsterId": "couronnail",
+          "subjectId": "grammar",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Couronnail not caught"
+        },
+        {
+          "monsterId": "concordium",
+          "subjectId": "grammar",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Concordium not caught"
+        },
+        {
+          "monsterId": "readbloom",
+          "subjectId": "reading",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Readbloom not caught"
+        },
+        {
+          "monsterId": "readrill",
+          "subjectId": "reading",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Readrill not caught"
+        },
+        {
+          "monsterId": "inferane",
+          "subjectId": "reading",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Inferane not caught"
+        },
+        {
+          "monsterId": "structurillon",
+          "subjectId": "reading",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Structurillon not caught"
+        },
+        {
+          "monsterId": "lorequill",
+          "subjectId": "reading",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Lorequill not caught"
+        },
+        {
+          "monsterId": "sumkrab",
+          "subjectId": "arithmetic",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Sumkrab not caught"
+        },
+        {
+          "monsterId": "carryfin",
+          "subjectId": "arithmetic",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Carryfin not caught"
+        },
+        {
+          "monsterId": "fractail",
+          "subjectId": "arithmetic",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Fractail not caught"
+        },
+        {
+          "monsterId": "perciva",
+          "subjectId": "arithmetic",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Perciva not caught"
+        },
+        {
+          "monsterId": "arithon",
+          "subjectId": "arithmetic",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Arithon not caught"
+        },
+        {
+          "monsterId": "numdrake",
+          "subjectId": "reasoning",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Numdrake not caught"
+        },
+        {
+          "monsterId": "fractalon",
+          "subjectId": "reasoning",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Fractalon not caught"
+        },
+        {
+          "monsterId": "measuron",
+          "subjectId": "reasoning",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Measuron not caught"
+        },
+        {
+          "monsterId": "georune",
+          "subjectId": "reasoning",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Georune not caught"
+        },
+        {
+          "monsterId": "proofwyrm",
+          "subjectId": "reasoning",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Proofwyrm not caught"
+        },
+        {
+          "monsterId": "strategon",
+          "subjectId": "reasoning",
+          "displayState": "fresh",
+          "title": "Unknown creature",
+          "imageAlt": "Strategon not caught"
+        }
+      ],
+      "bodyWidth": 1440,
+      "viewportWidth": 1440
+    },
+    "issues": [],
+    "ok": true
+  },
+  "subjectAssets": {
+    "checkedAssets": 480,
+    "failureCount": 0,
+    "failures": [],
+    "samples": [
+      {
+        "key": "readbloom/b1/stage-0/320",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-0.320.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 15740,
+        "hash": "842649bca72d4ab70a6b858c5b94196c57397a7c91340a074195b6c684796fa8"
+      },
+      {
+        "key": "readbloom/b1/stage-0/640",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-0.640.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 44812,
+        "hash": "6da51b0d901df341a33d72924299f45590330939ef63cf8dd9aeab0f30e40039"
+      },
+      {
+        "key": "readbloom/b1/stage-0/1280",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-0.1280.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 132576,
+        "hash": "0bf26513655196f11a6e27490d60bb2891523ec18eb13d82edc97f2b9ba1d212"
+      },
+      {
+        "key": "readbloom/b1/stage-1/320",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-1.320.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 19238,
+        "hash": "38e087d2ad7934cdeac011c97253f0d5eb53a3fc557a723e23327e18eb3910c3"
+      },
+      {
+        "key": "readbloom/b1/stage-1/640",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-1.640.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 52980,
+        "hash": "5b6637cc50aab3926404c3f0626a8c87eb8bd60f959fdd51c334494b84ba1be6"
+      },
+      {
+        "key": "readbloom/b1/stage-1/1280",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-1.1280.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 148194,
+        "hash": "be8be6174a17cdbd80cd89cb0fc7d59cc3a5494d0bddcdf991a8261aad1e52b0"
+      },
+      {
+        "key": "readbloom/b1/stage-2/320",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-2.320.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 27358,
+        "hash": "fe7f65f49b02e2ef8fb957a5af2310dbf93b96f433a4e4dd88527afa456bbaf9"
+      },
+      {
+        "key": "readbloom/b1/stage-2/640",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-2.640.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 78828,
+        "hash": "104835dd70765b3df8c0dd1e04299ae9efe0d577cbb1f0875e948a6bba11d7a0"
+      },
+      {
+        "key": "readbloom/b1/stage-2/1280",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-2.1280.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 224240,
+        "hash": "e45b24a7e7bd773699764f426314edc4f5005aa5eb698f91cfb0ed9e890c3068"
+      },
+      {
+        "key": "readbloom/b1/stage-3/320",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-3.320.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 26972,
+        "hash": "24b764cb26850b162ca959b44d7716d63ef9dd69ebfb4cd1dd08aa337139d4a0"
+      },
+      {
+        "key": "readbloom/b1/stage-3/640",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-3.640.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 77658,
+        "hash": "aa242cdb346ed51c518e846eeb83dc35aa7003304af12d38cebd69e9565d3937"
+      },
+      {
+        "key": "readbloom/b1/stage-3/1280",
+        "url": "https://ks2.eugnel.uk/assets/monsters/readbloom/b1/readbloom-b1-3.1280.webp?v=20260514-subject-assets",
+        "status": 200,
+        "contentType": "image/webp",
+        "cacheStatus": "HIT",
+        "bytes": 222870,
+        "hash": "ee797641fedcd3bd3ac8d57077dc9b47958dda0db941bc2718ba0d53c473a0dd"
+      }
+    ],
+    "ok": true
+  },
+  "heroCampHashAudit": {
+    "checkedHeroCampAssets": 180,
+    "failureCount": 0,
+    "failures": [],
+    "duplicateCount": 0,
+    "duplicates": [],
+    "ok": true
+  },
+  "allMonsterHashAudit": {
+    "checkedOtherMonsterAssets": 540,
+    "checkedOtherMonsterIds": [
+      "bracehart",
+      "carillon",
+      "chronalyx",
+      "claspin",
+      "colisk",
+      "concordium",
+      "couronnail",
+      "curlune",
+      "glimmerbug",
+      "glossbloom",
+      "hyphang",
+      "inklet",
+      "loomrill",
+      "mirrane",
+      "pealark",
+      "phaeton",
+      "quoral",
+      "vellhorn"
+    ],
+    "failureCount": 0,
+    "failures": [],
+    "duplicateCount": 0,
+    "duplicates": [],
+    "ok": true
+  },
+  "withinMonsterHashAudit": {
+    "duplicateCount": 0,
+    "duplicates": [],
+    "ok": true
+  },
+  "ok": true
+}

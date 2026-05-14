@@ -1,0 +1,11 @@
+Command: npm run deploy
+Result: passed
+Wrangler: 4.84.0
+Production origin: https://ks2.eugnel.uk
+Cloudflare version ID: fe3786c0-78cb-4627-918e-f644152a8493
+Uploaded files: 4 new or modified static assets, 1280 already uploaded
+Worker startup time: 261 ms
+Production bundle audit: passed
+Production bundle audit summary: 1 HTML-referenced bundle, 6 chunks scanned transitively, 19 direct paths, matrix demo check ok, security-header checks 5/5, cache-split checks 15/15
+
+The full deploy output was reduced after the passing run to avoid committing Wrangler table whitespace noise.
