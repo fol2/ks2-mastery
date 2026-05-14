@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readdir, rename, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -28,6 +28,7 @@ function assetSrc(monsterId, branch, stage, size) {
 
 const assets = [];
 const monsters = [];
+const contentHashRows = [];
 
 for (const monsterId of await listDirectories(assetsDir)) {
   const monsterDir = path.join(assetsDir, monsterId);
@@ -47,6 +48,11 @@ for (const monsterId of await listDirectories(assetsDir)) {
       const size = Number(rawSize);
       if (!byStage.has(stage)) byStage.set(stage, new Set());
       byStage.get(stage).add(size);
+      const filePath = path.join(branchDir, file);
+      contentHashRows.push({
+        path: path.relative(rootDir, filePath).replace(/\\/g, '/'),
+        hash: createHash('sha256').update(await readFile(filePath)).digest('hex'),
+      });
     }
 
     const stages = Array.from(byStage.keys()).sort((left, right) => left - right).map((stage) => {
@@ -73,9 +79,10 @@ for (const monsterId of await listDirectories(assetsDir)) {
 }
 
 assets.sort((left, right) => left.key.localeCompare(right.key));
+contentHashRows.sort((left, right) => left.path.localeCompare(right.path));
 
 const manifestHash = createHash('sha256')
-  .update(JSON.stringify({ assets, monsters }))
+  .update(JSON.stringify({ assets, monsters, contentHashRows }))
   .digest('hex')
   .slice(0, 24);
 

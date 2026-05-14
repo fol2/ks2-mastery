@@ -1,8 +1,10 @@
 {
-  "checkedAt": "2026-05-14T18:24:42.146Z",
+  "checkedAt": "2026-05-14T19:15:18.132Z",
   "rootDir": "D:\\Coding\\ks2-mastery\\.worktrees\\monster-codex-all-assets-20260514",
   "matrix": {
     "assetVersion": "20260514-subject-assets",
+    "manifestHash": "215003871b6d36015cbf28d5",
+    "manifestAssetCount": 340,
     "subjects": [
       "reading",
       "arithmetic",

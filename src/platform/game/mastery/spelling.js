@@ -23,6 +23,7 @@ import { activePunctuationMonsterSummaryFromState } from './punctuation.js';
 import { activeGrammarMonsterSummaryFromState, normaliseGrammarRewardState } from './grammar.js';
 import { activeReadingMonsterSummaryFromState } from './reading.js';
 import { activeArithmeticMonsterSummaryFromState } from './arithmetic.js';
+import { activeReasoningMonsterSummaryFromState } from './reasoning.js';
 
 function hasMonsterMasteryProgress(state) {
   if (!isPlainObject(state)) return false;
@@ -156,6 +157,7 @@ export function monsterSummaryFromState(state = {}, { punctuationStarView = null
     ...activeGrammarMonsterSummaryFromState(normalisedGrammarState),
     ...activeReadingMonsterSummaryFromState(state),
     ...activeArithmeticMonsterSummaryFromState(state),
+    ...activeReasoningMonsterSummaryFromState(state),
   ];
 }
 
@@ -195,5 +197,6 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
     ...activeGrammarMonsterSummaryFromState(normalisedBranchState),
     ...activeReadingMonsterSummaryFromState(branchState),
     ...activeArithmeticMonsterSummaryFromState(branchState),
+    ...activeReasoningMonsterSummaryFromState(branchState),
   ];
 }

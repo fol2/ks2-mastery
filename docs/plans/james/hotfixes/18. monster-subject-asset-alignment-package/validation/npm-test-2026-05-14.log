@@ -1,17 +1,12 @@
 Command: npm test
-Working directory: D:\Coding\ks2-mastery\.worktrees\monster-codex-all-assets-20260514
-Exit code: 0
-Captured: 2026-05-14
+Result: passed
+Tests: 111576
+Suites: 819
+Pass: 111564
+Fail: 0
+Cancelled: 0
+Skipped: 12
+Todo: 0
+Duration: 131962.3244 ms
 
-Summary from the full Node test runner output:
-
-tests 111574
-suites 819
-pass 111562
-fail 0
-cancelled 0
-skipped 12
-todo 0
-duration_ms 127843.1274
-
-The raw run emitted verbose Worker capacity traces from existing integration fixtures. Those traces were omitted from this committed evidence file because the authoritative gate is the test-runner summary above and the command exited with code 0.
+The full TAP output was reduced after the passing run to avoid committing about 19 MB of worker trace noise.

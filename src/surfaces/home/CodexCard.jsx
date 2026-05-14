@@ -12,6 +12,9 @@ export function CodexCard({ entry, onPractice, onPreview }) {
     <article
       className={codexEntryStateClassName('codex-card', entry)}
       style={codexCardStyle(entry)}
+      data-codex-monster-id={entry.id}
+      data-codex-subject-id={entry.subjectId || 'spelling'}
+      data-codex-display-state={entry.displayState}
     >
       <div className="codex-card-top">
         <div className="codex-portrait">

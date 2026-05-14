@@ -15,6 +15,7 @@ import {
   monsterAssetSrcSet,
 } from '../src/platform/game/monsters.js';
 import { monsterVisualSourceMonsterId } from '../src/platform/game/monster-visual-config.js';
+import { monsterSummaryFromState } from '../src/platform/game/mastery/spelling.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +29,7 @@ const SIZES = [320, 640, 1280];
 const manifestAssetsByKey = new Map(MONSTER_ASSET_MANIFEST.assets.map((asset) => [asset.key, asset]));
 const subjectMonsterIds = SUBJECTS_WITH_OWNED_ASSETS.flatMap((subject) => MONSTERS_BY_SUBJECT[subject]);
 const allMonsterIds = Object.keys(MONSTERS);
+const PRE_SUBJECT_ART_METADATA_ONLY_MANIFEST_HASH = '933ba1c0858d0f5b5b223a97';
 
 function monsterAssetPath(monsterId, branch, stage, size) {
   return path.join(rootDir, 'assets', 'monsters', monsterId, branch, `${monsterId}-${branch}-${stage}.${size}.webp`);
@@ -88,6 +90,14 @@ test('monsterAsset resolves subject monsters to subject-owned paths', () => {
   const srcSet = monsterAssetSrcSet('lorequill', 4, 'b2');
   assert.match(srcSet, /lorequill-b2-4\.320\.webp\?v=20260514-subject-assets 320w/);
   assert.match(srcSet, /lorequill-b2-4\.1280\.webp\?v=20260514-subject-assets 1280w/);
+});
+
+test('subject art rollout invalidates cached visual config compatibility hash', () => {
+  assert.notEqual(
+    MONSTER_ASSET_MANIFEST.manifestHash,
+    PRE_SUBJECT_ART_METADATA_ONLY_MANIFEST_HASH,
+    'manifestHash must reflect WebP byte changes, not only folder and filename metadata',
+  );
 });
 
 test('subject-owned Reading, Arithmetic, and Reasoning art is distinct from Hero Camp reserve art', () => {
@@ -200,4 +210,22 @@ test('subject-owned Reading, Arithmetic, and Reasoning monsters do not inherit a
     .filter((entry) => entry.sourceMonsterId !== entry.monsterId);
 
   assert.deepEqual(inheritedSources, []);
+});
+
+test('Reasoning monster progress reaches the shared Home and Codex summary', () => {
+  const summary = monsterSummaryFromState({
+    numdrake: {
+      caught: true,
+      branch: 'b2',
+      releaseId: 'reasoning-p1-2026-05-12',
+      mastered: ['reasoning-p1-2026-05-12:reasoning-evidence:pv_rounding:item-1'],
+      starHighWater: 10,
+    },
+  });
+
+  const numdrake = summary.find((entry) => entry.subjectId === 'reasoning' && entry.monster.id === 'numdrake');
+  assert.ok(numdrake, 'caught Reasoning monster should be present in the shared monster summary');
+  assert.equal(numdrake.progress.caught, true);
+  assert.equal(numdrake.progress.branch, 'b2');
+  assert.equal(numdrake.progress.displayStars, 10);
 });

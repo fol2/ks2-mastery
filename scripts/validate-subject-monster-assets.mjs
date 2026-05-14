@@ -8,6 +8,7 @@ import sharp from 'sharp';
 
 import { HERO_POOL_INITIAL_MONSTER_IDS } from '../shared/hero/hero-pool.js';
 import { MONSTER_ASSET_VERSION, MONSTERS, MONSTERS_BY_SUBJECT } from '../src/platform/game/monsters.js';
+import { MONSTER_ASSET_MANIFEST } from '../src/platform/game/monster-asset-manifest.js';
 import { monsterVisualSourceMonsterId } from '../src/platform/game/monster-visual-config.js';
 import { buildCodexEntries, buildCodexSubjectGroups } from '../src/surfaces/home/data.js';
 
@@ -298,6 +299,8 @@ const report = {
   rootDir,
   matrix: {
     assetVersion: MONSTER_ASSET_VERSION,
+    manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+    manifestAssetCount: MONSTER_ASSET_MANIFEST.assets.length,
     subjects,
     subjectMonsterCount: subjectMonsterIds.length,
     subjectMonsterIds,
@@ -346,6 +349,7 @@ console.log(JSON.stringify({
   ok: report.ok,
   report: rel(reportFile),
   contactSheets: report.contactSheets.map((sheet) => sheet.path),
+  manifestHash: report.matrix.manifestHash,
   codexEntries: report.codex.entryCount,
   heroCampDuplicates: report.heroCampHashAudit.duplicateCount,
   allMonsterDuplicates: report.allMonsterHashAudit.duplicateCount,

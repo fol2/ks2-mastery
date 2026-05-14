@@ -3,7 +3,7 @@
 
 export const MONSTER_ASSET_MANIFEST = Object.freeze({
   "schemaVersion": 1,
-  "manifestHash": "933ba1c0858d0f5b5b223a97",
+  "manifestHash": "215003871b6d36015cbf28d5",
   "assetRoot": "./assets/monsters",
   "monsters": [
     {
@@ -9021,4 +9021,4 @@ export const MONSTER_ASSET_MANIFEST = Object.freeze({
   ]
 });
 
-export const MONSTER_ASSET_MANIFEST_HASH = "933ba1c0858d0f5b5b223a97";
+export const MONSTER_ASSET_MANIFEST_HASH = "215003871b6d36015cbf28d5";

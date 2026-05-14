@@ -1,478 +1,628 @@
 TAP version 13
-# Subtest: Reading, Arithmetic, and Reasoning monsters own their visual asset ids
-ok 1 - Reading, Arithmetic, and Reasoning monsters own their visual asset ids
+# Subtest: hero mode treats reasoning as a ready subject with provider and launch adapter
+ok 1 - hero mode treats reasoning as a ready subject with provider and launch adapter
   ---
-  duration_ms: 0.9755
+  duration_ms: 1.0023
+  type: 'test'
+  ...
+# Subtest: hero reasoning provider returns task envelopes from the reasoning read model
+ok 2 - hero reasoning provider returns task envelopes from the reasoning read model
+  ---
+  duration_ms: 0.3538
+  type: 'test'
+  ...
+# Subtest: Reading, Arithmetic, and Reasoning monsters own their visual asset ids
+ok 3 - Reading, Arithmetic, and Reasoning monsters own their visual asset ids
+  ---
+  duration_ms: 0.6401
   type: 'test'
   ...
 # Subtest: subject-owned monster folders cover both branches, every stage, and every shipped size
-ok 2 - subject-owned monster folders cover both branches, every stage, and every shipped size
+ok 4 - subject-owned monster folders cover both branches, every stage, and every shipped size
   ---
-  duration_ms: 54.4757
+  duration_ms: 85.3257
   type: 'test'
   ...
 # Subtest: monsterAsset resolves subject monsters to subject-owned paths
-ok 3 - monsterAsset resolves subject monsters to subject-owned paths
+ok 5 - monsterAsset resolves subject monsters to subject-owned paths
   ---
-  duration_ms: 0.3262
+  duration_ms: 0.4563
+  type: 'test'
+  ...
+# Subtest: subject art rollout invalidates cached visual config compatibility hash
+ok 6 - subject art rollout invalidates cached visual config compatibility hash
+  ---
+  duration_ms: 0.1248
   type: 'test'
   ...
 # Subtest: subject-owned Reading, Arithmetic, and Reasoning art is distinct from Hero Camp reserve art
-ok 4 - subject-owned Reading, Arithmetic, and Reasoning art is distinct from Hero Camp reserve art
+ok 7 - subject-owned Reading, Arithmetic, and Reasoning art is distinct from Hero Camp reserve art
   ---
-  duration_ms: 106.4211
+  duration_ms: 108.9569
   type: 'test'
   ...
 # Subtest: subject-owned Reading, Arithmetic, and Reasoning art is distinct from every other monster family
-ok 5 - subject-owned Reading, Arithmetic, and Reasoning art is distinct from every other monster family
+ok 8 - subject-owned Reading, Arithmetic, and Reasoning art is distinct from every other monster family
   ---
-  duration_ms: 209.9421
+  duration_ms: 261.0113
   type: 'test'
   ...
 # Subtest: subject-owned Reading, Arithmetic, and Reasoning art is distinct across each monster branch and stage
-ok 6 - subject-owned Reading, Arithmetic, and Reasoning art is distinct across each monster branch and stage
+ok 9 - subject-owned Reading, Arithmetic, and Reasoning art is distinct across each monster branch and stage
   ---
-  duration_ms: 60.5791
+  duration_ms: 67.2567
   type: 'test'
   ...
 # Subtest: subject-owned Reading, Arithmetic, and Reasoning monsters do not inherit Hero Camp reserve visual sources
-ok 7 - subject-owned Reading, Arithmetic, and Reasoning monsters do not inherit Hero Camp reserve visual sources
+ok 10 - subject-owned Reading, Arithmetic, and Reasoning monsters do not inherit Hero Camp reserve visual sources
   ---
-  duration_ms: 0.1717
+  duration_ms: 0.1953
   type: 'test'
   ...
 # Subtest: subject-owned Reading, Arithmetic, and Reasoning monsters do not inherit any other monster visual source
-ok 8 - subject-owned Reading, Arithmetic, and Reasoning monsters do not inherit any other monster visual source
+ok 11 - subject-owned Reading, Arithmetic, and Reasoning monsters do not inherit any other monster visual source
   ---
-  duration_ms: 0.0779
+  duration_ms: 0.2027
+  type: 'test'
+  ...
+# Subtest: Reasoning monster progress reaches the shared Home and Codex summary
+ok 12 - Reasoning monster progress reaches the shared Home and Codex summary
+  ---
+  duration_ms: 1.7307
   type: 'test'
   ...
 # Subtest: monster asset manifest covers every current monster asset folder deterministically
-ok 9 - monster asset manifest covers every current monster asset folder deterministically
-  ---
-  duration_ms: 1.038
-  type: 'test'
-  ...
-# Subtest: bundled monster visual config preserves current tuned defaults
-ok 10 - bundled monster visual config preserves current tuned defaults
-  ---
-  duration_ms: 0.4821
-  type: 'test'
-  ...
-# Subtest: subject-owned legendary monsters keep their own visual source while using flight motion
-ok 11 - subject-owned legendary monsters keep their own visual source while using flight motion
-  ---
-  duration_ms: 0.2562
-  type: 'test'
-  ...
-# Subtest: bundled config has complete context values for every manifest asset
-ok 12 - bundled config has complete context values for every manifest asset
-  ---
-  duration_ms: 17.1537
-  type: 'test'
-  ...
-# Subtest: generated neutral defaults start unreviewed so publish has a review backlog
-ok 13 - generated neutral defaults start unreviewed so publish has a review backlog
-  ---
-  duration_ms: 8.0916
-  type: 'test'
-  ...
-# Subtest: publish validation blocks missing contexts while render resolution falls back
-ok 14 - publish validation blocks missing contexts while render resolution falls back
-  ---
-  duration_ms: 10.6437
-  type: 'test'
-  ...
-# Subtest: publish validation reports out-of-range visual fields
-ok 15 - publish validation reports out-of-range visual fields
-  ---
-  duration_ms: 13.2481
-  type: 'test'
-  ...
-# Subtest: publish validation rejects unsupported visual enum values
-ok 16 - publish validation rejects unsupported visual enum values
-  ---
-  duration_ms: 12.5872
-  type: 'test'
-  ...
-# Subtest: publish validation locks celebrationOverlay anchors at defaults until animation-pivot propagation follow-up lands
-ok 17 - publish validation locks celebrationOverlay anchors at defaults until animation-pivot propagation follow-up lands
-  ---
-  duration_ms: 21.3821
-  type: 'test'
-  ...
-# Subtest: publish validation accepts default celebrationOverlay anchors (0.5 / 1)
-ok 18 - publish validation accepts default celebrationOverlay anchors (0.5 / 1)
-  ---
-  duration_ms: 11.5384
-  type: 'test'
-  ...
-# Subtest: asset source helper preserves existing image path convention
-ok 19 - asset source helper preserves existing image path convention
-  ---
-  duration_ms: 0.2351
-  type: 'test'
-  ...
-# Subtest: runtime visual config normaliser accepts published config and rejects incompatible schemas
-ok 20 - runtime visual config normaliser accepts published config and rejects incompatible schemas
-  ---
-  duration_ms: 5.5417
-  type: 'test'
-  ...
-# Subtest: U7 adv-u7-r1-001: normaliser preserves compact pointer envelope as first-class state
-ok 21 - U7 adv-u7-r1-001: normaliser preserves compact pointer envelope as first-class state
-  ---
-  duration_ms: 0.1054
-  type: 'test'
-  ...
-# Subtest: U7 adv-u7-r1-001: normaliser rejects pointer with incompatible schemaVersion
-ok 22 - U7 adv-u7-r1-001: normaliser rejects pointer with incompatible schemaVersion
-  ---
-  duration_ms: 0.0406
-  type: 'test'
-  ...
-# Subtest: monster visual renderers use published config for meadow and reward toast
-ok 23 - monster visual renderers use published config for meadow and reward toast
-  ---
-  duration_ms: 222.3375
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound returns null when every subject has no due work
-ok 24 - selectTodaysBestRound returns null when every subject has no due work
-  ---
-  duration_ms: 0.6316
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound returns the subject with the highest due scalar
-ok 25 - selectTodaysBestRound returns the subject with the highest due scalar
-  ---
-  duration_ms: 0.1584
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound breaks ties by Spelling-first priority order
-ok 26 - selectTodaysBestRound breaks ties by Spelling-first priority order
-  ---
-  duration_ms: 0.0844
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound respects the Spelling → Punctuation → Grammar order on partial ties
-ok 27 - selectTodaysBestRound respects the Spelling → Punctuation → Grammar order on partial ties
-  ---
-  duration_ms: 0.1258
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound clamps missing / negative / non-numeric due values to zero
-ok 28 - selectTodaysBestRound clamps missing / negative / non-numeric due values to zero
-  ---
-  duration_ms: 0.0662
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound copes with a completely missing dashboardStats
-ok 29 - selectTodaysBestRound copes with a completely missing dashboardStats
-  ---
-  duration_ms: 0.0518
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound honours an explicit tiebreakSubjectId option
-ok 30 - selectTodaysBestRound honours an explicit tiebreakSubjectId option
-  ---
-  duration_ms: 0.0973
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound surfaces the caught monster companion when one exists for the recommended subject
-ok 31 - selectTodaysBestRound surfaces the caught monster companion when one exists for the recommended subject
-  ---
-  duration_ms: 0.1844
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound refuses a reserved-monster companion even when stale state annotates its subjectId
-ok 32 - selectTodaysBestRound refuses a reserved-monster companion even when stale state annotates its subjectId
-  ---
-  duration_ms: 0.2384
-  type: 'test'
-  ...
-# Subtest: selectTodaysBestRound leaves monsterCompanion null when no caught monster exists for the recommended subject
-ok 33 - selectTodaysBestRound leaves monsterCompanion null when no caught monster exists for the recommended subject
-  ---
-  duration_ms: 0.2366
-  type: 'test'
-  ...
-# Subtest: HomeSurface renders the "Today's best round" card and routes the CTA to the recommended subject
-ok 34 - HomeSurface renders the "Today's best round" card and routes the CTA to the recommended subject
-  ---
-  duration_ms: 220.6755
-  type: 'test'
-  ...
-# Subtest: HomeSurface renders the pre-U2 copy + Spelling CTA when no subject has any due work
-ok 35 - HomeSurface renders the pre-U2 copy + Spelling CTA when no subject has any due work
-  ---
-  duration_ms: 0.928
-  type: 'test'
-  ...
-# Subtest: HomeSurface labels the CTA with the picked subject name when Spelling is ahead
-ok 36 - HomeSurface labels the CTA with the picked subject name when Spelling is ahead
-  ---
-  duration_ms: 0.9838
-  type: 'test'
-  ...
-# Subtest: reading surface implements delegated full-list session UI inside the app frame
-ok 37 - reading surface implements delegated full-list session UI inside the app frame
-  ---
-  duration_ms: 1.3004
-  type: 'test'
-  ...
-# Subtest: reading landing uses the shared subject setup shell used by mature subjects
-ok 38 - reading landing uses the shared subject setup shell used by mature subjects
-  ---
-  duration_ms: 0.5061
-  type: 'test'
-  ...
-# Subtest: reading setup exposes stretch challenge without duplicate hero-card attributes
-ok 39 - reading setup exposes stretch challenge without duplicate hero-card attributes
-  ---
-  duration_ms: 0.6629
-  type: 'test'
-  ...
-# Subtest: reading setup prefs do not let stretch inherit focus or difficulty filters
-ok 40 - reading setup prefs do not let stretch inherit focus or difficulty filters
-  ---
-  duration_ms: 0.6532
-  type: 'test'
-  ...
-# Subtest: reading marking controls use mode-specific labels instead of a generic finish action
-ok 41 - reading marking controls use mode-specific labels instead of a generic finish action
-  ---
-  duration_ms: 0.6561
-  type: 'test'
-  ...
-# Subtest: reading one-question delayed-feedback surface has one save-and-next path
-ok 42 - reading one-question delayed-feedback surface has one save-and-next path
-  ---
-  duration_ms: 0.2928
-  type: 'test'
-  ...
-# Subtest: reading command actions serialise section responses and preserve stale guards
-ok 43 - reading command actions serialise section responses and preserve stale guards
-  ---
-  duration_ms: 0.2164
-  type: 'test'
-  ...
-# Subtest: reading read model exposes section question lists without pre-attempt feedback fields
-ok 44 - reading read model exposes section question lists without pre-attempt feedback fields
-  ---
-  duration_ms: 0.2104
-  type: 'test'
-  ...
-# Subtest: reading list-mode surface renders prefixed full-section form controls without feedback leakage
-ok 45 - reading list-mode surface renders prefixed full-section form controls without feedback leakage
-  ---
-  duration_ms: 311.0329
-  type: 'test'
-  ...
-# Subtest: reading setup renders aligned landing landmarks and one primary start action
-ok 46 - reading setup renders aligned landing landmarks and one primary start action
-  ---
-  duration_ms: 177.2565
-  type: 'test'
-  ...
-# Subtest: reading setup keeps selected primary mode semantics while pending
-ok 47 - reading setup keeps selected primary mode semantics while pending
-  ---
-  duration_ms: 170.8595
-  type: 'test'
-  ...
-# Subtest: reading setup degrades when monster-codex repository read fails
-ok 48 - reading setup degrades when monster-codex repository read fails
-  ---
-  duration_ms: 185.4093
-  type: 'test'
-  ...
-# Subtest: reading setup renders progressed monsters through Reading-owned visual assets
-ok 49 - reading setup renders progressed monsters through Reading-owned visual assets
-  ---
-  duration_ms: 180.1145
-  type: 'test'
-  ...
-# Subtest: reading setup fallback monster list is not shadowed by empty meadow copy
-ok 50 - reading setup fallback monster list is not shadowed by empty meadow copy
-  ---
-  duration_ms: 99.7561
-  type: 'test'
-  ...
-# Subtest: spelling setup shows only caught-meadow or empty state
-ok 51 - spelling setup shows only caught-meadow or empty state
-  ---
-  duration_ms: 795.152
-  type: 'test'
-  ...
-# Subtest: spelling setup renders pool choices without the legacy All label
-ok 52 - spelling setup renders pool choices without the legacy All label
-  ---
-  duration_ms: 6.1771
-  type: 'test'
-  ...
-# Subtest: home meadow shows an egg only once a species has been caught and hides uncaught species entirely
-ok 53 - home meadow shows an egg only once a species has been caught and hides uncaught species entirely
-  ---
-  duration_ms: 17.8543
-  type: 'test'
-  ...
-# Subtest: home meadow shows all eggs once every species has been caught but stays in stage zero
-ok 54 - home meadow shows all eggs once every species has been caught but stays in stage zero
-  ---
-  duration_ms: 0.9488
-  type: 'test'
-  ...
-# Subtest: home meadow uses punctuation displayState instead of legacy caught for Egg Found
-ok 55 - home meadow uses punctuation displayState instead of legacy caught for Egg Found
-  ---
-  duration_ms: 0.2317
-  type: 'test'
-  ...
-# Subtest: home meadow uses punctuation displayStage for evolved display
-ok 56 - home meadow uses punctuation displayStage for evolved display
-  ---
-  duration_ms: 0.1611
-  type: 'test'
-  ...
-# Subtest: home meadow uses seeded random foot positions for eggs
-ok 57 - home meadow uses seeded random foot positions for eggs
-  ---
-  duration_ms: 1.0756
-  type: 'test'
-  ...
-# Subtest: home meadow scales mature monsters while preserving path-specific lanes
-ok 58 - home meadow scales mature monsters while preserving path-specific lanes
-  ---
-  duration_ms: 1.2509
-  type: 'test'
-  ...
-# Subtest: home meadow hides every species for a fresh learner with nothing caught yet
-ok 59 - home meadow hides every species for a fresh learner with nothing caught yet
-  ---
-  duration_ms: 0.2195
-  type: 'test'
-  ...
-# Subtest: hero background rotation includes the new Scribe Downs landscapes
-ok 60 - hero background rotation includes the new Scribe Downs landscapes
-  ---
-  duration_ms: 0.2627
-  type: 'test'
-  ...
-# Subtest: hero background rotation only references existing image assets
-ok 61 - hero background rotation only references existing image assets
+ok 13 - monster asset manifest covers every current monster asset folder deterministically
   ---
   duration_ms: 1.0411
   type: 'test'
   ...
-# Subtest: spelling setup and session hero backgrounds use mode-specific Scribe Downs assets
-ok 62 - spelling setup and session hero backgrounds use mode-specific Scribe Downs assets
+# Subtest: bundled monster visual config preserves current tuned defaults
+ok 14 - bundled monster visual config preserves current tuned defaults
   ---
-  duration_ms: 2.7392
+  duration_ms: 0.4921
+  type: 'test'
+  ...
+# Subtest: subject-owned legendary monsters keep their own visual source while using flight motion
+ok 15 - subject-owned legendary monsters keep their own visual source while using flight motion
+  ---
+  duration_ms: 0.2633
+  type: 'test'
+  ...
+# Subtest: bundled config has complete context values for every manifest asset
+ok 16 - bundled config has complete context values for every manifest asset
+  ---
+  duration_ms: 24.8249
+  type: 'test'
+  ...
+# Subtest: generated neutral defaults start unreviewed so publish has a review backlog
+ok 17 - generated neutral defaults start unreviewed so publish has a review backlog
+  ---
+  duration_ms: 11.3992
+  type: 'test'
+  ...
+# Subtest: publish validation blocks missing contexts while render resolution falls back
+ok 18 - publish validation blocks missing contexts while render resolution falls back
+  ---
+  duration_ms: 14.2002
+  type: 'test'
+  ...
+# Subtest: publish validation reports out-of-range visual fields
+ok 19 - publish validation reports out-of-range visual fields
+  ---
+  duration_ms: 15.7108
+  type: 'test'
+  ...
+# Subtest: publish validation rejects unsupported visual enum values
+ok 20 - publish validation rejects unsupported visual enum values
+  ---
+  duration_ms: 19.2247
+  type: 'test'
+  ...
+# Subtest: publish validation locks celebrationOverlay anchors at defaults until animation-pivot propagation follow-up lands
+ok 21 - publish validation locks celebrationOverlay anchors at defaults until animation-pivot propagation follow-up lands
+  ---
+  duration_ms: 24.0925
+  type: 'test'
+  ...
+# Subtest: publish validation accepts default celebrationOverlay anchors (0.5 / 1)
+ok 22 - publish validation accepts default celebrationOverlay anchors (0.5 / 1)
+  ---
+  duration_ms: 12.0729
+  type: 'test'
+  ...
+# Subtest: asset source helper preserves existing image path convention
+ok 23 - asset source helper preserves existing image path convention
+  ---
+  duration_ms: 0.2324
+  type: 'test'
+  ...
+# Subtest: runtime visual config normaliser accepts published config and rejects incompatible schemas
+ok 24 - runtime visual config normaliser accepts published config and rejects incompatible schemas
+  ---
+  duration_ms: 5.8692
+  type: 'test'
+  ...
+# Subtest: U7 adv-u7-r1-001: normaliser preserves compact pointer envelope as first-class state
+ok 25 - U7 adv-u7-r1-001: normaliser preserves compact pointer envelope as first-class state
+  ---
+  duration_ms: 0.1156
+  type: 'test'
+  ...
+# Subtest: U7 adv-u7-r1-001: normaliser rejects pointer with incompatible schemaVersion
+ok 26 - U7 adv-u7-r1-001: normaliser rejects pointer with incompatible schemaVersion
+  ---
+  duration_ms: 0.0429
+  type: 'test'
+  ...
+# Subtest: monster visual renderers use published config for meadow and reward toast
+ok 27 - monster visual renderers use published config for meadow and reward toast
+  ---
+  duration_ms: 265.238
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound returns null when every subject has no due work
+ok 28 - selectTodaysBestRound returns null when every subject has no due work
+  ---
+  duration_ms: 0.6749
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound returns the subject with the highest due scalar
+ok 29 - selectTodaysBestRound returns the subject with the highest due scalar
+  ---
+  duration_ms: 0.1806
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound breaks ties by Spelling-first priority order
+ok 30 - selectTodaysBestRound breaks ties by Spelling-first priority order
+  ---
+  duration_ms: 0.1314
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound respects the Spelling → Punctuation → Grammar order on partial ties
+ok 31 - selectTodaysBestRound respects the Spelling → Punctuation → Grammar order on partial ties
+  ---
+  duration_ms: 0.2161
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound clamps missing / negative / non-numeric due values to zero
+ok 32 - selectTodaysBestRound clamps missing / negative / non-numeric due values to zero
+  ---
+  duration_ms: 0.1034
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound copes with a completely missing dashboardStats
+ok 33 - selectTodaysBestRound copes with a completely missing dashboardStats
+  ---
+  duration_ms: 0.0792
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound honours an explicit tiebreakSubjectId option
+ok 34 - selectTodaysBestRound honours an explicit tiebreakSubjectId option
+  ---
+  duration_ms: 0.1811
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound surfaces the caught monster companion when one exists for the recommended subject
+ok 35 - selectTodaysBestRound surfaces the caught monster companion when one exists for the recommended subject
+  ---
+  duration_ms: 0.2755
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound refuses a reserved-monster companion even when stale state annotates its subjectId
+ok 36 - selectTodaysBestRound refuses a reserved-monster companion even when stale state annotates its subjectId
+  ---
+  duration_ms: 0.3971
+  type: 'test'
+  ...
+# Subtest: selectTodaysBestRound leaves monsterCompanion null when no caught monster exists for the recommended subject
+ok 37 - selectTodaysBestRound leaves monsterCompanion null when no caught monster exists for the recommended subject
+  ---
+  duration_ms: 0.3105
+  type: 'test'
+  ...
+# Subtest: HomeSurface renders the "Today's best round" card and routes the CTA to the recommended subject
+ok 38 - HomeSurface renders the "Today's best round" card and routes the CTA to the recommended subject
+  ---
+  duration_ms: 248.7176
+  type: 'test'
+  ...
+# Subtest: HomeSurface renders the pre-U2 copy + Spelling CTA when no subject has any due work
+ok 39 - HomeSurface renders the pre-U2 copy + Spelling CTA when no subject has any due work
+  ---
+  duration_ms: 1.0209
+  type: 'test'
+  ...
+# Subtest: HomeSurface labels the CTA with the picked subject name when Spelling is ahead
+ok 40 - HomeSurface labels the CTA with the picked subject name when Spelling is ahead
+  ---
+  duration_ms: 1.0373
+  type: 'test'
+  ...
+# Subtest: reading surface implements delegated full-list session UI inside the app frame
+ok 41 - reading surface implements delegated full-list session UI inside the app frame
+  ---
+  duration_ms: 1.2129
+  type: 'test'
+  ...
+# Subtest: reading landing uses the shared subject setup shell used by mature subjects
+ok 42 - reading landing uses the shared subject setup shell used by mature subjects
+  ---
+  duration_ms: 0.3895
+  type: 'test'
+  ...
+# Subtest: reading setup exposes stretch challenge without duplicate hero-card attributes
+ok 43 - reading setup exposes stretch challenge without duplicate hero-card attributes
+  ---
+  duration_ms: 0.7507
+  type: 'test'
+  ...
+# Subtest: reading setup prefs do not let stretch inherit focus or difficulty filters
+ok 44 - reading setup prefs do not let stretch inherit focus or difficulty filters
+  ---
+  duration_ms: 0.528
+  type: 'test'
+  ...
+# Subtest: reading marking controls use mode-specific labels instead of a generic finish action
+ok 45 - reading marking controls use mode-specific labels instead of a generic finish action
+  ---
+  duration_ms: 0.7798
+  type: 'test'
+  ...
+# Subtest: reading one-question delayed-feedback surface has one save-and-next path
+ok 46 - reading one-question delayed-feedback surface has one save-and-next path
+  ---
+  duration_ms: 0.328
+  type: 'test'
+  ...
+# Subtest: reading command actions serialise section responses and preserve stale guards
+ok 47 - reading command actions serialise section responses and preserve stale guards
+  ---
+  duration_ms: 0.2228
+  type: 'test'
+  ...
+# Subtest: reading read model exposes section question lists without pre-attempt feedback fields
+ok 48 - reading read model exposes section question lists without pre-attempt feedback fields
+  ---
+  duration_ms: 0.2176
+  type: 'test'
+  ...
+# Subtest: reading list-mode surface renders prefixed full-section form controls without feedback leakage
+ok 49 - reading list-mode surface renders prefixed full-section form controls without feedback leakage
+  ---
+  duration_ms: 357.3731
+  type: 'test'
+  ...
+# Subtest: reading setup renders aligned landing landmarks and one primary start action
+ok 50 - reading setup renders aligned landing landmarks and one primary start action
+  ---
+  duration_ms: 207.4077
+  type: 'test'
+  ...
+# Subtest: reading setup keeps selected primary mode semantics while pending
+ok 51 - reading setup keeps selected primary mode semantics while pending
+  ---
+  duration_ms: 224.1806
+  type: 'test'
+  ...
+# Subtest: reading setup degrades when monster-codex repository read fails
+ok 52 - reading setup degrades when monster-codex repository read fails
+  ---
+  duration_ms: 238.819
+  type: 'test'
+  ...
+# Subtest: reading setup renders progressed monsters through Reading-owned visual assets
+ok 53 - reading setup renders progressed monsters through Reading-owned visual assets
+  ---
+  duration_ms: 201.4183
+  type: 'test'
+  ...
+# Subtest: reading setup fallback monster list is not shadowed by empty meadow copy
+ok 54 - reading setup fallback monster list is not shadowed by empty meadow copy
+  ---
+  duration_ms: 112.2806
+  type: 'test'
+  ...
+# Subtest: server reasoning engine returns exact due retry questions and emits evidence on independent success
+ok 55 - server reasoning engine returns exact due retry questions and emits evidence on independent success
+  ---
+  duration_ms: 21.8536
+  type: 'test'
+  ...
+# Subtest: reasoning reward projection updates direct and grand monsters with independent state ids
+ok 56 - reasoning reward projection updates direct and grand monsters with independent state ids
+  ---
+  duration_ms: 0.954
+  type: 'test'
+  ...
+# Subtest: server reasoning engine uses the injected command clock for support and session records
+ok 57 - server reasoning engine uses the injected command clock for support and session records
+  ---
+  duration_ms: 2.9694
+  type: 'test'
+  ...
+# Subtest: reasoning first-wrong feedback gives only a nudge until support is requested
+ok 58 - reasoning first-wrong feedback gives only a nudge until support is requested
+  ---
+  duration_ms: 2.3634
+  type: 'test'
+  ...
+# Subtest: reasoning support requests are blocked before effort, in strict mode, and after marking
+ok 59 - reasoning support requests are blocked before effort, in strict mode, and after marking
+  ---
+  duration_ms: 4.997
+  type: 'test'
+  ...
+# Subtest: worked and faded Reasoning modes expose seeded support without marking as independent
+ok 60 - worked and faded Reasoning modes expose seeded support without marking as independent
+  ---
+  duration_ms: 1.3512
+  type: 'test'
+  ...
+# Subtest: reasoning support command actions send stale-session and stale-question guards
+ok 61 - reasoning support command actions send stale-session and stale-question guards
+  ---
+  duration_ms: 0.484
+  type: 'test'
+  ...
+# Subtest: reasoning command actions include optional working for single and list responses
+ok 62 - reasoning command actions include optional working for single and list responses
+  ---
+  duration_ms: 13.3008
+  type: 'test'
+  ...
+# Subtest: reasoning read model redacts legacy persisted first-wrong result fields
+ok 63 - reasoning read model redacts legacy persisted first-wrong result fields
+  ---
+  duration_ms: 1.2305
+  type: 'test'
+  ...
+# Subtest: duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+ok 64 - duplicate Reasoning evidence keys update practice but do not re-emit evidence-earned events
+  ---
+  duration_ms: 2.8661
+  type: 'test'
+  ...
+# Subtest: Reasoning read models keep domain and skill hints hidden until marking or support
+ok 65 - Reasoning read models keep domain and skill hints hidden until marking or support
+  ---
+  duration_ms: 4.1693
+  type: 'test'
+  ...
+# Subtest: Reasoning first-wrong feedback question stays redacted before support
+ok 66 - Reasoning first-wrong feedback question stays redacted before support
+  ---
+  duration_ms: 1.8774
+  type: 'test'
+  ...
+# Subtest: Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+ok 67 - Reasoning clears stale feedback when moving away from an unresolved first-wrong question
+  ---
+  duration_ms: 1.4782
+  type: 'test'
+  ...
+# Subtest: Reasoning list responses can be cleared and working is preserved in state and events
+ok 68 - Reasoning list responses can be cleared and working is preserved in state and events
+  ---
+  duration_ms: 3.4254
+  type: 'test'
+  ...
+# Subtest: supported Reasoning success updates practice but does not award monster evidence
+ok 69 - supported Reasoning success updates practice but does not award monster evidence
+  ---
+  duration_ms: 2.3319
+  type: 'test'
+  ...
+# Subtest: Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+ok 70 - Reasoning numeric answers accept common KS2 unit suffixes without changing the mark scheme
+  ---
+  duration_ms: 1.2779
+  type: 'test'
+  ...
+# Subtest: worker subject runtime wires reasoning command handlers
+ok 71 - worker subject runtime wires reasoning command handlers
+  ---
+  duration_ms: 3.8558
+  type: 'test'
+  ...
+# Subtest: Reasoning scheduler avoids obvious template repeats and salts item seeds inside one round
+ok 72 - Reasoning scheduler avoids obvious template repeats and salts item seeds inside one round
+  ---
+  duration_ms: 7.4383
+  type: 'test'
+  ...
+# Subtest: Reasoning scheduler gates extra-credit templates until the learner has enough independent evidence
+ok 73 - Reasoning scheduler gates extra-credit templates until the learner has enough independent evidence
+  ---
+  duration_ms: 7.9339
+  type: 'test'
+  ...
+# Subtest: Reasoning scheduler rotates context themes inside one round when themed templates are selected
+ok 74 - Reasoning scheduler rotates context themes inside one round when themed templates are selected
+  ---
+  duration_ms: 6.473
+  type: 'test'
+  ...
+# Subtest: reasoning module is live and not a placeholder
+ok 75 - reasoning module is live and not a placeholder
+  ---
+  duration_ms: 0.8103
+  type: 'test'
+  ...
+# Subtest: spelling setup shows only caught-meadow or empty state
+ok 76 - spelling setup shows only caught-meadow or empty state
+  ---
+  duration_ms: 951.4883
+  type: 'test'
+  ...
+# Subtest: spelling setup renders pool choices without the legacy All label
+ok 77 - spelling setup renders pool choices without the legacy All label
+  ---
+  duration_ms: 8.2582
+  type: 'test'
+  ...
+# Subtest: home meadow shows an egg only once a species has been caught and hides uncaught species entirely
+ok 78 - home meadow shows an egg only once a species has been caught and hides uncaught species entirely
+  ---
+  duration_ms: 17.8429
+  type: 'test'
+  ...
+# Subtest: home meadow shows all eggs once every species has been caught but stays in stage zero
+ok 79 - home meadow shows all eggs once every species has been caught but stays in stage zero
+  ---
+  duration_ms: 1.0497
+  type: 'test'
+  ...
+# Subtest: home meadow uses punctuation displayState instead of legacy caught for Egg Found
+ok 80 - home meadow uses punctuation displayState instead of legacy caught for Egg Found
+  ---
+  duration_ms: 0.2641
+  type: 'test'
+  ...
+# Subtest: home meadow uses punctuation displayStage for evolved display
+ok 81 - home meadow uses punctuation displayStage for evolved display
+  ---
+  duration_ms: 0.1733
+  type: 'test'
+  ...
+# Subtest: home meadow uses seeded random foot positions for eggs
+ok 82 - home meadow uses seeded random foot positions for eggs
+  ---
+  duration_ms: 1.1228
+  type: 'test'
+  ...
+# Subtest: home meadow scales mature monsters while preserving path-specific lanes
+ok 83 - home meadow scales mature monsters while preserving path-specific lanes
+  ---
+  duration_ms: 1.2449
+  type: 'test'
+  ...
+# Subtest: home meadow hides every species for a fresh learner with nothing caught yet
+ok 84 - home meadow hides every species for a fresh learner with nothing caught yet
+  ---
+  duration_ms: 0.2315
+  type: 'test'
+  ...
+# Subtest: hero background rotation includes the new Scribe Downs landscapes
+ok 85 - hero background rotation includes the new Scribe Downs landscapes
+  ---
+  duration_ms: 0.2683
+  type: 'test'
+  ...
+# Subtest: hero background rotation only references existing image assets
+ok 86 - hero background rotation only references existing image assets
+  ---
+  duration_ms: 1.1224
+  type: 'test'
+  ...
+# Subtest: spelling setup and session hero backgrounds use mode-specific Scribe Downs assets
+ok 87 - spelling setup and session hero backgrounds use mode-specific Scribe Downs assets
+  ---
+  duration_ms: 3.8808
   type: 'test'
   ...
 # Subtest: home subject cards use the region cover banners
-ok 63 - home subject cards use the region cover banners
+ok 88 - home subject cards use the region cover banners
   ---
-  duration_ms: 0.3196
+  duration_ms: 0.3875
   type: 'test'
   ...
 # Subtest: codex entries show fresh creatures as unknown and caught stage-zero creatures as eggs
-ok 64 - codex entries show fresh creatures as unknown and caught stage-zero creatures as eggs
+ok 89 - codex entries show fresh creatures as unknown and caught stage-zero creatures as eggs
   ---
-  duration_ms: 0.9977
+  duration_ms: 1.0717
   type: 'test'
   ...
 # Subtest: codex entries use punctuation displayState for first-Star Egg Found
-ok 65 - codex entries use punctuation displayState for first-Star Egg Found
+ok 90 - codex entries use punctuation displayState for first-Star Egg Found
   ---
-  duration_ms: 0.2476
+  duration_ms: 0.2368
   type: 'test'
   ...
 # Subtest: codex entries use punctuation displayStage for evolved visual state
-ok 66 - codex entries use punctuation displayStage for evolved visual state
+ok 91 - codex entries use punctuation displayStage for evolved visual state
   ---
-  duration_ms: 0.1548
+  duration_ms: 0.1602
   type: 'test'
   ...
 # Subtest: codex progress copy omits total and remaining counts
-ok 67 - codex progress copy omits total and remaining counts
+ok 92 - codex progress copy omits total and remaining counts
   ---
-  duration_ms: 0.1852
+  duration_ms: 0.1881
   type: 'test'
   ...
 # Subtest: egg breath styles are stable while offsetting different creatures
-ok 68 - egg breath styles are stable while offsetting different creatures
+ok 93 - egg breath styles are stable while offsetting different creatures
   ---
-  duration_ms: 0.3044
+  duration_ms: 0.299
   type: 'test'
   ...
 # Subtest: monster motion styles slow down as codex stages mature
-ok 69 - monster motion styles slow down as codex stages mature
+ok 94 - monster motion styles slow down as codex stages mature
   ---
-  duration_ms: 0.2476
+  duration_ms: 0.2613
   type: 'test'
   ...
 # Subtest: codex hero favours the most powerful caught creature and uses species priority at equal level
-ok 70 - codex hero favours the most powerful caught creature and uses species priority at equal level
+ok 95 - codex hero favours the most powerful caught creature and uses species priority at equal level
   ---
-  duration_ms: 0.3391
+  duration_ms: 0.2502
   type: 'test'
   ...
 # Subtest: codex hero uses the highest-priority unknown creature for a fresh profile
-ok 71 - codex hero uses the highest-priority unknown creature for a fresh profile
+ok 96 - codex hero uses the highest-priority unknown creature for a fresh profile
   ---
-  duration_ms: 0.1854
+  duration_ms: 0.1407
   type: 'test'
   ...
 # Subtest: codex synthesises uncaught entries for every registered subject monster
-ok 72 - codex synthesises uncaught entries for every registered subject monster
+ok 97 - codex synthesises uncaught entries for every registered subject monster
   ---
-  duration_ms: 0.2364
+  duration_ms: 0.248
   type: 'test'
   ...
 # Subtest: codex entries use grammar displayState for first-Star Egg Found
-ok 73 - codex entries use grammar displayState for first-Star Egg Found
+ok 98 - codex entries use grammar displayState for first-Star Egg Found
   ---
-  duration_ms: 0.1438
+  duration_ms: 0.1445
   type: 'test'
   ...
 # Subtest: codex entries map grammar display stages to monster asset stages
-ok 74 - codex entries map grammar display stages to monster asset stages
+ok 99 - codex entries map grammar display stages to monster asset stages
   ---
-  duration_ms: 0.1824
+  duration_ms: 0.2501
   type: 'test'
   ...
 # Subtest: home meadow keeps grammar first-Star Egg Found as an egg
-ok 75 - home meadow keeps grammar first-Star Egg Found as an egg
+ok 100 - home meadow keeps grammar first-Star Egg Found as an egg
   ---
-  duration_ms: 0.103
+  duration_ms: 0.1086
   type: 'test'
   ...
 # Subtest: home meadow maps grammar hatch displayState to asset stage 1
-ok 76 - home meadow maps grammar hatch displayState to asset stage 1
+ok 101 - home meadow maps grammar hatch displayState to asset stage 1
   ---
-  duration_ms: 0.0887
+  duration_ms: 0.0909
   type: 'test'
   ...
 # Subtest: codex subject groups arrive in learner subject order with totals
-ok 77 - codex subject groups arrive in learner subject order with totals
+ok 102 - codex subject groups arrive in learner subject order with totals
   ---
-  duration_ms: 0.297
+  duration_ms: 0.3001
   type: 'test'
   ...
 # Subtest: formatSubjectList honours Oxford comma for three or more items
-ok 78 - formatSubjectList honours Oxford comma for three or more items
+ok 103 - formatSubjectList honours Oxford comma for three or more items
   ---
-  duration_ms: 0.1078
+  duration_ms: 0.0839
   type: 'test'
   ...
-1..78
-# tests 78
+1..103
+# tests 103
 # suites 0
-# pass 78
+# pass 103
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 1277.2478
+# duration_ms 1520.6495

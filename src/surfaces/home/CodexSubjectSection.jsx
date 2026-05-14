@@ -17,6 +17,7 @@ export function CodexSubjectSection({ group, onPractice, onPreview, defaultOpen 
       className={sectionClass}
       style={{ '--subject-accent': decor.accent }}
       aria-labelledby={headingId}
+      data-codex-subject-id={subjectId}
     >
       <h2 className="codex-subject-head" id={headingId}>
         <button
