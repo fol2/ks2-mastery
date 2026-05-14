@@ -587,6 +587,7 @@ textarea:focus-visible {
   font-size: 1.5em;
   font-weight: 800;
   line-height: 1;
+  transform: translateY(-0.04em);
 }
 
 .arithmetic-symbol {
@@ -700,6 +701,7 @@ textarea:focus-visible {
   font-size: 1.5em;
   font-weight: 800;
   line-height: 1;
+  transform: translateY(-0.04em);
 }
 
 .arithmetic-visual {

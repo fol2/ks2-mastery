@@ -12,6 +12,11 @@ function cssBlock(selector) {
 }
 
 test('arithmetic operator glyphs render at one and a half times the numeric text size', () => {
-  assert.match(cssBlock('.arithmetic-operator'), /font-size:\s*1\.5em\s*;/);
-  assert.match(cssBlock('.arithmetic-long-division-operator'), /font-size:\s*1\.5em\s*;/);
+  const inlineOperatorBlock = cssBlock('.arithmetic-operator');
+  const longDivisionOperatorBlock = cssBlock('.arithmetic-long-division-operator');
+
+  assert.match(inlineOperatorBlock, /font-size:\s*1\.5em\s*;/);
+  assert.match(longDivisionOperatorBlock, /font-size:\s*1\.5em\s*;/);
+  assert.match(inlineOperatorBlock, /transform:\s*translateY\(-0\.04em\)\s*;/);
+  assert.match(longDivisionOperatorBlock, /transform:\s*translateY\(-0\.04em\)\s*;/);
 });
