@@ -104,23 +104,16 @@ const CODEX_FEATURE_FOOT_PAD_BY_ASSET = Object.freeze({
   }),
 });
 
-const VISUAL_SOURCE_MONSTER_BY_SUBJECT_MONSTER = Object.freeze({
-  readbloom: 'glossbloom',
-  readrill: 'loomrill',
-  inferane: 'mirrane',
-  structurillon: 'carillon',
-  lorequill: 'phaeton',
-  sumkrab: 'colisk',
-  carryfin: 'hyphang',
-  fractail: 'glossbloom',
-  perciva: 'carillon',
-  arithon: 'phaeton',
-  numdrake: 'colisk',
-  fractalon: 'hyphang',
-  measuron: 'curlune',
-  georune: 'carillon',
-  proofwyrm: 'mirrane',
-  strategon: 'phaeton',
+const VISUAL_SOURCE_MONSTER_BY_SUBJECT_MONSTER = Object.freeze({});
+
+const MEADOW_PATH_BY_MONSTER = Object.freeze({
+  inklet: 'walk',
+  glimmerbug: 'fly-a',
+  phaeton: 'fly-b',
+  vellhorn: 'walk-b',
+  lorequill: 'fly-b',
+  arithon: 'fly-b',
+  strategon: 'fly-b',
 });
 
 const DEFAULT_CONTEXT_VALUES = Object.freeze({
@@ -189,8 +182,12 @@ export function buildMonsterAssetKey(monsterId, branch = 'b1', stage = 0) {
   return `${String(monsterId || '').trim()}-${String(branch || 'b1').trim()}-${normaliseStage(stage)}`;
 }
 
-function visualSourceMonsterId(monsterId) {
+export function monsterVisualSourceMonsterId(monsterId) {
   return VISUAL_SOURCE_MONSTER_BY_SUBJECT_MONSTER[monsterId] || monsterId;
+}
+
+function visualSourceMonsterId(monsterId) {
+  return monsterVisualSourceMonsterId(monsterId);
 }
 
 function visualSourceAssetKey(asset) {
@@ -199,12 +196,7 @@ function visualSourceAssetKey(asset) {
 
 export function defaultMonsterMeadowPath(monsterId, stage = 1) {
   if (normaliseStage(stage) === 0) return 'none';
-  const sourceMonsterId = visualSourceMonsterId(monsterId);
-  if (sourceMonsterId === 'inklet') return 'walk';
-  if (sourceMonsterId === 'glimmerbug') return 'fly-a';
-  if (sourceMonsterId === 'phaeton') return 'fly-b';
-  if (sourceMonsterId === 'vellhorn') return 'walk-b';
-  return 'walk';
+  return MEADOW_PATH_BY_MONSTER[monsterId] || 'walk';
 }
 
 export function monsterVisualFaceSign(monsterId, branch, stage) {

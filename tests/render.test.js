@@ -505,16 +505,18 @@ test('codex synthesises uncaught entries for every registered subject monster', 
   ]);
 
   const ids = entries.map((entry) => entry.id);
-  // Phase 3 U0 roster: 4 spelling + 4 punctuation (Pealark, Claspin, Curlune,
-  // Quoral; Colisk/Hyphang/Carillon reserved) + 4 grammar (Bracehart,
-  // Chronalyx, Couronnail, Concordium; Glossbloom/Loomrill/Mirrane reserved)
-  // = 12 active cards. Reserved entries must never surface here.
-  assert.equal(entries.length, 12, 'expected active 12-card roster: 4 spelling + 4 punctuation + 4 grammar');
+  // Active learner-facing roster: 4 spelling + 4 punctuation + 4 grammar
+  // + 5 reading + 5 arithmetic + 6 reasoning = 28 active cards. Reserved
+  // Grammar/Punctuation entries must never surface here.
+  assert.equal(entries.length, 28, 'expected active 28-card roster across all six subjects');
   assert.ok(ids.includes('bracehart'), 'grammar lead synthesised');
   assert.ok(ids.includes('concordium'), 'grammar legendary synthesised');
   assert.ok(ids.includes('pealark'), 'punctuation lead synthesised');
-  // Reserved Grammar ids never enter the Codex pipeline.
-  for (const reservedId of ['glossbloom', 'loomrill', 'mirrane']) {
+  assert.ok(ids.includes('readbloom'), 'reading lead synthesised');
+  assert.ok(ids.includes('arithon'), 'arithmetic legendary synthesised');
+  assert.ok(ids.includes('strategon'), 'reasoning legendary synthesised');
+  // Reserved Hero Camp ids never enter the Codex pipeline.
+  for (const reservedId of ['glossbloom', 'loomrill', 'mirrane', 'colisk', 'hyphang', 'carillon']) {
     assert.equal(ids.includes(reservedId), false, `reserved Grammar id ${reservedId} must not leak into Codex entries`);
   }
 
@@ -525,6 +527,12 @@ test('codex synthesises uncaught entries for every registered subject monster', 
   assert.equal(grammarEgg.secureLabel, 'No secure units yet');
   assert.equal(grammarEgg.wordBand, 'Sentence and clause');
   assert.equal(grammarEgg.nextGoal, 'Find this egg with a grammar round');
+
+  const readingEgg = entries.find((entry) => entry.id === 'readbloom');
+  assert.equal(readingEgg.subjectId, 'reading');
+  assert.equal(readingEgg.secureLabel, 'No secure evidence yet');
+  assert.equal(readingEgg.wordBand, 'Vocabulary and author word choice');
+  assert.equal(readingEgg.nextGoal, 'Find this egg with a reading round');
 });
 
 test('codex entries use grammar displayState for first-Star Egg Found', async () => {
@@ -665,7 +673,7 @@ test('home meadow maps grammar hatch displayState to asset stage 1', async () =>
   assert.notEqual(monster.path, 'none');
 });
 
-test('codex subject groups arrive in spelling → punctuation → grammar order with totals', async () => {
+test('codex subject groups arrive in learner subject order with totals', async () => {
   const { buildCodexEntries, buildCodexSubjectGroups } = await import('../src/surfaces/home/data.js');
   const entries = buildCodexEntries([
     { monster: MONSTERS.inklet, progress: { caught: true, mastered: 4, stage: 1, level: 1, branch: 'b1' } },
@@ -675,7 +683,7 @@ test('codex subject groups arrive in spelling → punctuation → grammar order 
 
   assert.deepEqual(
     groups.map((group) => group.subjectId),
-    ['spelling', 'punctuation', 'grammar'],
+    ['spelling', 'punctuation', 'grammar', 'reading', 'arithmetic', 'reasoning'],
   );
 
   const spelling = groups.find((group) => group.subjectId === 'spelling');
@@ -692,6 +700,19 @@ test('codex subject groups arrive in spelling → punctuation → grammar order 
   assert.equal(grammar.entries.length, 4);
   assert.equal(grammar.totals.caught, 0);
   assert.equal(grammar.status, 'unstarted');
+
+  const reading = groups.find((group) => group.subjectId === 'reading');
+  assert.equal(reading.subjectName, 'Reading');
+  assert.equal(reading.entries.length, 5);
+  assert.equal(reading.totals.caught, 0);
+
+  const arithmetic = groups.find((group) => group.subjectId === 'arithmetic');
+  assert.equal(arithmetic.entries.length, 5);
+  assert.equal(arithmetic.status, 'unstarted');
+
+  const reasoning = groups.find((group) => group.subjectId === 'reasoning');
+  assert.equal(reasoning.entries.length, 6);
+  assert.equal(reasoning.status, 'unstarted');
 });
 
 test('formatSubjectList honours Oxford comma for three or more items', async () => {

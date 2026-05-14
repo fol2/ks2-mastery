@@ -1,0 +1,2616 @@
+{
+  "checkedAt": "2026-05-14T18:24:42.146Z",
+  "rootDir": "D:\\Coding\\ks2-mastery\\.worktrees\\monster-codex-all-assets-20260514",
+  "matrix": {
+    "assetVersion": "20260514-subject-assets",
+    "subjects": [
+      "reading",
+      "arithmetic",
+      "reasoning"
+    ],
+    "subjectMonsterCount": 16,
+    "subjectMonsterIds": [
+      "readbloom",
+      "readrill",
+      "inferane",
+      "structurillon",
+      "lorequill",
+      "sumkrab",
+      "carryfin",
+      "fractail",
+      "perciva",
+      "arithon",
+      "numdrake",
+      "fractalon",
+      "measuron",
+      "georune",
+      "proofwyrm",
+      "strategon"
+    ],
+    "heroCampMonsterIds": [
+      "glossbloom",
+      "loomrill",
+      "mirrane",
+      "colisk",
+      "hyphang",
+      "carillon"
+    ],
+    "branches": [
+      "b1",
+      "b2"
+    ],
+    "stages": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "sizes": [
+      320,
+      640,
+      1280
+    ]
+  },
+  "codex": {
+    "entryCount": 28,
+    "groupIds": [
+      "spelling",
+      "punctuation",
+      "grammar",
+      "reading",
+      "arithmetic",
+      "reasoning"
+    ],
+    "groupTotals": {
+      "spelling": {
+        "caught": 1,
+        "total": 4,
+        "progressPct": 1
+      },
+      "punctuation": {
+        "caught": 0,
+        "total": 4,
+        "progressPct": 0
+      },
+      "grammar": {
+        "caught": 0,
+        "total": 4,
+        "progressPct": 0
+      },
+      "reading": {
+        "caught": 0,
+        "total": 5,
+        "progressPct": 0
+      },
+      "arithmetic": {
+        "caught": 0,
+        "total": 5,
+        "progressPct": 0
+      },
+      "reasoning": {
+        "caught": 0,
+        "total": 6,
+        "progressPct": 0
+      }
+    },
+    "sampledSubjectIds": {
+      "readbloom": "reading",
+      "readrill": "reading",
+      "inferane": "reading",
+      "structurillon": "reading",
+      "lorequill": "reading",
+      "sumkrab": "arithmetic",
+      "carryfin": "arithmetic",
+      "fractail": "arithmetic",
+      "perciva": "arithmetic",
+      "arithon": "arithmetic",
+      "numdrake": "reasoning",
+      "fractalon": "reasoning",
+      "measuron": "reasoning",
+      "georune": "reasoning",
+      "proofwyrm": "reasoning",
+      "strategon": "reasoning"
+    },
+    "reservedEntryIdsPresent": [],
+    "ok": true
+  },
+  "visualSources": {
+    "checked": 16,
+    "inheritedSourceCount": 0,
+    "inheritedSources": [],
+    "heroCampSourceLeakCount": 0,
+    "heroCampSourceLeaks": [],
+    "ok": true
+  },
+  "heroCampHashAudit": {
+    "checkedSubjectAssets": 480,
+    "checkedHeroCampAssets": 180,
+    "duplicateCount": 0,
+    "duplicates": [],
+    "ok": true
+  },
+  "allMonsterHashAudit": {
+    "checkedSubjectAssets": 480,
+    "checkedAgainstAssets": 1020,
+    "duplicateCount": 0,
+    "duplicates": [],
+    "ok": true
+  },
+  "withinMonsterHashAudit": {
+    "checkedSubjectAssets": 480,
+    "duplicateCount": 0,
+    "duplicates": [],
+    "ok": true
+  },
+  "runtimeImageAudit": {
+    "checkedAssets": 480,
+    "alphaCheckedAssets": 160,
+    "failureCount": 0,
+    "failures": [],
+    "samples": [
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b1\\readbloom-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18777,
+          "minX": 93,
+          "minY": 64,
+          "maxX": 226,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b1\\readbloom-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16503,
+          "minX": 79,
+          "minY": 67,
+          "maxX": 240,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b1\\readbloom-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 19421,
+          "minX": 61,
+          "minY": 58,
+          "maxX": 258,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b1\\readbloom-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22190,
+          "minX": 65,
+          "minY": 49,
+          "maxX": 254,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b1\\readbloom-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 38390,
+          "minX": 23,
+          "minY": 7,
+          "maxX": 300,
+          "maxY": 308
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b2\\readbloom-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18777,
+          "minX": 93,
+          "minY": 64,
+          "maxX": 226,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b2\\readbloom-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16503,
+          "minX": 79,
+          "minY": 67,
+          "maxX": 240,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b2\\readbloom-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 19421,
+          "minX": 61,
+          "minY": 58,
+          "maxX": 258,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b2\\readbloom-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22190,
+          "minX": 65,
+          "minY": 49,
+          "maxX": 254,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readbloom",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\readbloom\\b2\\readbloom-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 38390,
+          "minX": 19,
+          "minY": 7,
+          "maxX": 296,
+          "maxY": 308
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b1\\readrill-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21659,
+          "minX": 82,
+          "minY": 64,
+          "maxX": 237,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b1\\readrill-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20695,
+          "minX": 74,
+          "minY": 67,
+          "maxX": 245,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b1\\readrill-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21017,
+          "minX": 58,
+          "minY": 68,
+          "maxX": 261,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b1\\readrill-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 27001,
+          "minX": 51,
+          "minY": 63,
+          "maxX": 268,
+          "maxY": 256
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b1\\readrill-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 40127,
+          "minX": 19,
+          "minY": 18,
+          "maxX": 302,
+          "maxY": 292
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b2\\readrill-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21659,
+          "minX": 82,
+          "minY": 64,
+          "maxX": 237,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b2\\readrill-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20695,
+          "minX": 74,
+          "minY": 67,
+          "maxX": 245,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b2\\readrill-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21017,
+          "minX": 58,
+          "minY": 68,
+          "maxX": 261,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b2\\readrill-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 27001,
+          "minX": 51,
+          "minY": 63,
+          "maxX": 268,
+          "maxY": 256
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "readrill",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\readrill\\b2\\readrill-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 40127,
+          "minX": 17,
+          "minY": 18,
+          "maxX": 300,
+          "maxY": 292
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b1\\inferane-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20249,
+          "minX": 87,
+          "minY": 64,
+          "maxX": 232,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b1\\inferane-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16245,
+          "minX": 68,
+          "minY": 71,
+          "maxX": 252,
+          "maxY": 248
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b1\\inferane-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 19579,
+          "minX": 72,
+          "minY": 57,
+          "maxX": 247,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b1\\inferane-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 28510,
+          "minX": 54,
+          "minY": 51,
+          "maxX": 266,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b1\\inferane-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 42764,
+          "minX": 22,
+          "minY": 7,
+          "maxX": 300,
+          "maxY": 309
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b2\\inferane-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20249,
+          "minX": 87,
+          "minY": 64,
+          "maxX": 232,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b2\\inferane-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16245,
+          "minX": 67,
+          "minY": 71,
+          "maxX": 251,
+          "maxY": 248
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b2\\inferane-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 19579,
+          "minX": 72,
+          "minY": 57,
+          "maxX": 247,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b2\\inferane-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 28510,
+          "minX": 53,
+          "minY": 51,
+          "maxX": 265,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "inferane",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\inferane\\b2\\inferane-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 42764,
+          "minX": 19,
+          "minY": 7,
+          "maxX": 297,
+          "maxY": 309
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b1\\structurillon-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20943,
+          "minX": 90,
+          "minY": 64,
+          "maxX": 229,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b1\\structurillon-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21416,
+          "minX": 67,
+          "minY": 78,
+          "maxX": 252,
+          "maxY": 241
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b1\\structurillon-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 24389,
+          "minX": 63,
+          "minY": 58,
+          "maxX": 256,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b1\\structurillon-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 27360,
+          "minX": 65,
+          "minY": 51,
+          "maxX": 254,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b1\\structurillon-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 48979,
+          "minX": 20,
+          "minY": 14,
+          "maxX": 307,
+          "maxY": 301
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b2\\structurillon-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20943,
+          "minX": 90,
+          "minY": 64,
+          "maxX": 229,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b2\\structurillon-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21416,
+          "minX": 67,
+          "minY": 78,
+          "maxX": 252,
+          "maxY": 241
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b2\\structurillon-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 24389,
+          "minX": 63,
+          "minY": 58,
+          "maxX": 256,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b2\\structurillon-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 27360,
+          "minX": 65,
+          "minY": 51,
+          "maxX": 254,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "structurillon",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\structurillon\\b2\\structurillon-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 48979,
+          "minX": 12,
+          "minY": 14,
+          "maxX": 299,
+          "maxY": 301
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b1\\lorequill-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17550,
+          "minX": 101,
+          "minY": 55,
+          "maxX": 219,
+          "maxY": 258
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b1\\lorequill-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 11620,
+          "minX": 77,
+          "minY": 62,
+          "maxX": 246,
+          "maxY": 243
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b1\\lorequill-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18850,
+          "minX": 40,
+          "minY": 55,
+          "maxX": 287,
+          "maxY": 256
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b1\\lorequill-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 27230,
+          "minX": 21,
+          "minY": 34,
+          "maxX": 304,
+          "maxY": 271
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b1\\lorequill-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 36031,
+          "minX": 13,
+          "minY": 19,
+          "maxX": 313,
+          "maxY": 283
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b2\\lorequill-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17549,
+          "minX": 100,
+          "minY": 55,
+          "maxX": 218,
+          "maxY": 258
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b2\\lorequill-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 11624,
+          "minX": 76,
+          "minY": 55,
+          "maxX": 245,
+          "maxY": 243
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b2\\lorequill-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18839,
+          "minX": 38,
+          "minY": 47,
+          "maxX": 284,
+          "maxY": 256
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b2\\lorequill-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 27233,
+          "minX": 18,
+          "minY": 26,
+          "maxX": 300,
+          "maxY": 270
+        }
+      },
+      {
+        "subjectId": "reading",
+        "monsterId": "lorequill",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\lorequill\\b2\\lorequill-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 36032,
+          "minX": 9,
+          "minY": 11,
+          "maxX": 308,
+          "maxY": 283
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b1\\sumkrab-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 26798,
+          "minX": 65,
+          "minY": 64,
+          "maxX": 254,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b1\\sumkrab-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 14958,
+          "minX": 67,
+          "minY": 94,
+          "maxX": 252,
+          "maxY": 225
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b1\\sumkrab-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 19477,
+          "minX": 58,
+          "minY": 81,
+          "maxX": 261,
+          "maxY": 238
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b1\\sumkrab-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 23388,
+          "minX": 51,
+          "minY": 71,
+          "maxX": 268,
+          "maxY": 248
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b1\\sumkrab-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 41062,
+          "minX": 7,
+          "minY": 41,
+          "maxX": 311,
+          "maxY": 290
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b2\\sumkrab-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 26798,
+          "minX": 65,
+          "minY": 64,
+          "maxX": 254,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b2\\sumkrab-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 14958,
+          "minX": 67,
+          "minY": 94,
+          "maxX": 252,
+          "maxY": 225
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b2\\sumkrab-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 19477,
+          "minX": 58,
+          "minY": 81,
+          "maxX": 261,
+          "maxY": 238
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b2\\sumkrab-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 23388,
+          "minX": 51,
+          "minY": 71,
+          "maxX": 268,
+          "maxY": 248
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "sumkrab",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\sumkrab\\b2\\sumkrab-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 41062,
+          "minX": 8,
+          "minY": 41,
+          "maxX": 312,
+          "maxY": 290
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b1\\carryfin-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 19023,
+          "minX": 87,
+          "minY": 64,
+          "maxX": 232,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b1\\carryfin-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 14246,
+          "minX": 82,
+          "minY": 67,
+          "maxX": 237,
+          "maxY": 251
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b1\\carryfin-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20141,
+          "minX": 74,
+          "minY": 58,
+          "maxX": 245,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b1\\carryfin-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 24607,
+          "minX": 61,
+          "minY": 51,
+          "maxX": 259,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b1\\carryfin-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 47046,
+          "minX": 11,
+          "minY": 12,
+          "maxX": 315,
+          "maxY": 308
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b2\\carryfin-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 19023,
+          "minX": 87,
+          "minY": 64,
+          "maxX": 232,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b2\\carryfin-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 14246,
+          "minX": 82,
+          "minY": 67,
+          "maxX": 237,
+          "maxY": 251
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b2\\carryfin-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20141,
+          "minX": 74,
+          "minY": 58,
+          "maxX": 245,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b2\\carryfin-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 24607,
+          "minX": 60,
+          "minY": 51,
+          "maxX": 258,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "carryfin",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\carryfin\\b2\\carryfin-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 47046,
+          "minX": 4,
+          "minY": 12,
+          "maxX": 308,
+          "maxY": 308
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b1\\fractail-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20382,
+          "minX": 91,
+          "minY": 64,
+          "maxX": 228,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b1\\fractail-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17245,
+          "minX": 67,
+          "minY": 87,
+          "maxX": 252,
+          "maxY": 232
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b1\\fractail-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21024,
+          "minX": 58,
+          "minY": 59,
+          "maxX": 261,
+          "maxY": 260
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b1\\fractail-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22134,
+          "minX": 51,
+          "minY": 63,
+          "maxX": 268,
+          "maxY": 256
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b1\\fractail-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 41159,
+          "minX": 18,
+          "minY": 3,
+          "maxX": 308,
+          "maxY": 302
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b2\\fractail-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20382,
+          "minX": 91,
+          "minY": 64,
+          "maxX": 228,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b2\\fractail-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17245,
+          "minX": 67,
+          "minY": 87,
+          "maxX": 252,
+          "maxY": 232
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b2\\fractail-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21024,
+          "minX": 58,
+          "minY": 59,
+          "maxX": 261,
+          "maxY": 260
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b2\\fractail-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22134,
+          "minX": 51,
+          "minY": 63,
+          "maxX": 268,
+          "maxY": 256
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "fractail",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\fractail\\b2\\fractail-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 41159,
+          "minX": 11,
+          "minY": 3,
+          "maxX": 301,
+          "maxY": 302
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b1\\perciva-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20119,
+          "minX": 91,
+          "minY": 64,
+          "maxX": 228,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b1\\perciva-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18887,
+          "minX": 67,
+          "minY": 76,
+          "maxX": 252,
+          "maxY": 244
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b1\\perciva-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22652,
+          "minX": 58,
+          "minY": 61,
+          "maxX": 261,
+          "maxY": 258
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b1\\perciva-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 23655,
+          "minX": 51,
+          "minY": 53,
+          "maxX": 268,
+          "maxY": 266
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b1\\perciva-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 43082,
+          "minX": 46,
+          "minY": 8,
+          "maxX": 292,
+          "maxY": 305
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b2\\perciva-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20119,
+          "minX": 91,
+          "minY": 64,
+          "maxX": 228,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b2\\perciva-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18887,
+          "minX": 67,
+          "minY": 76,
+          "maxX": 252,
+          "maxY": 244
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b2\\perciva-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22652,
+          "minX": 58,
+          "minY": 61,
+          "maxX": 261,
+          "maxY": 258
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b2\\perciva-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 23655,
+          "minX": 51,
+          "minY": 53,
+          "maxX": 268,
+          "maxY": 266
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "perciva",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\perciva\\b2\\perciva-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 43082,
+          "minX": 27,
+          "minY": 8,
+          "maxX": 273,
+          "maxY": 305
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b1\\arithon-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16552,
+          "minX": 104,
+          "minY": 55,
+          "maxX": 214,
+          "maxY": 257
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b1\\arithon-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 10640,
+          "minX": 86,
+          "minY": 69,
+          "maxX": 235,
+          "maxY": 259
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b1\\arithon-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20028,
+          "minX": 40,
+          "minY": 48,
+          "maxX": 278,
+          "maxY": 281
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b1\\arithon-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 28803,
+          "minX": 21,
+          "minY": 20,
+          "maxX": 297,
+          "maxY": 290
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b1\\arithon-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 36042,
+          "minX": 10,
+          "minY": 9,
+          "maxX": 306,
+          "maxY": 300
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b2\\arithon-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16550,
+          "minX": 105,
+          "minY": 55,
+          "maxX": 216,
+          "maxY": 257
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b2\\arithon-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 10630,
+          "minX": 74,
+          "minY": 69,
+          "maxX": 239,
+          "maxY": 247
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b2\\arithon-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20029,
+          "minX": 42,
+          "minY": 48,
+          "maxX": 279,
+          "maxY": 267
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b2\\arithon-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 28804,
+          "minX": 23,
+          "minY": 20,
+          "maxX": 298,
+          "maxY": 277
+        }
+      },
+      {
+        "subjectId": "arithmetic",
+        "monsterId": "arithon",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\arithon\\b2\\arithon-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 36036,
+          "minX": 13,
+          "minY": 9,
+          "maxX": 309,
+          "maxY": 287
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b1\\numdrake-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21112,
+          "minX": 87,
+          "minY": 64,
+          "maxX": 233,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b1\\numdrake-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17051,
+          "minX": 67,
+          "minY": 72,
+          "maxX": 252,
+          "maxY": 247
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b1\\numdrake-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21603,
+          "minX": 58,
+          "minY": 65,
+          "maxX": 261,
+          "maxY": 254
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b1\\numdrake-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 26216,
+          "minX": 51,
+          "minY": 60,
+          "maxX": 268,
+          "maxY": 259
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b1\\numdrake-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 50602,
+          "minX": 15,
+          "minY": 7,
+          "maxX": 307,
+          "maxY": 305
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b2\\numdrake-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21112,
+          "minX": 86,
+          "minY": 64,
+          "maxX": 232,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b2\\numdrake-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17051,
+          "minX": 67,
+          "minY": 72,
+          "maxX": 252,
+          "maxY": 247
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b2\\numdrake-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21603,
+          "minX": 58,
+          "minY": 65,
+          "maxX": 261,
+          "maxY": 254
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b2\\numdrake-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 26216,
+          "minX": 51,
+          "minY": 60,
+          "maxX": 268,
+          "maxY": 259
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "numdrake",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\numdrake\\b2\\numdrake-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 50602,
+          "minX": 12,
+          "minY": 7,
+          "maxX": 304,
+          "maxY": 305
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b1\\fractalon-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18892,
+          "minX": 93,
+          "minY": 64,
+          "maxX": 227,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b1\\fractalon-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16839,
+          "minX": 77,
+          "minY": 67,
+          "maxX": 242,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b1\\fractalon-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18242,
+          "minX": 71,
+          "minY": 58,
+          "maxX": 248,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b1\\fractalon-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22511,
+          "minX": 58,
+          "minY": 51,
+          "maxX": 261,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b1\\fractalon-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 44783,
+          "minX": 21,
+          "minY": 13,
+          "maxX": 303,
+          "maxY": 311
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b2\\fractalon-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18892,
+          "minX": 92,
+          "minY": 64,
+          "maxX": 226,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b2\\fractalon-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16839,
+          "minX": 77,
+          "minY": 67,
+          "maxX": 242,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b2\\fractalon-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18242,
+          "minX": 71,
+          "minY": 58,
+          "maxX": 248,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b2\\fractalon-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22511,
+          "minX": 58,
+          "minY": 51,
+          "maxX": 261,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "fractalon",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\fractalon\\b2\\fractalon-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 44783,
+          "minX": 16,
+          "minY": 13,
+          "maxX": 298,
+          "maxY": 311
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b1\\measuron-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16853,
+          "minX": 103,
+          "minY": 57,
+          "maxX": 217,
+          "maxY": 258
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b1\\measuron-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 11653,
+          "minX": 77,
+          "minY": 103,
+          "maxX": 247,
+          "maxY": 234
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b1\\measuron-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21113,
+          "minX": 48,
+          "minY": 81,
+          "maxX": 269,
+          "maxY": 266
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b1\\measuron-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 31322,
+          "minX": 26,
+          "minY": 49,
+          "maxX": 291,
+          "maxY": 281
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b1\\measuron-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 41391,
+          "minX": 13,
+          "minY": 33,
+          "maxX": 304,
+          "maxY": 290
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b2\\measuron-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 16854,
+          "minX": 102,
+          "minY": 57,
+          "maxX": 216,
+          "maxY": 258
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b2\\measuron-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 11652,
+          "minX": 84,
+          "minY": 103,
+          "maxX": 245,
+          "maxY": 244
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b2\\measuron-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 21125,
+          "minX": 50,
+          "minY": 81,
+          "maxX": 271,
+          "maxY": 279
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b2\\measuron-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 31327,
+          "minX": 28,
+          "minY": 49,
+          "maxX": 293,
+          "maxY": 296
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "measuron",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\measuron\\b2\\measuron-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 41394,
+          "minX": 15,
+          "minY": 33,
+          "maxX": 306,
+          "maxY": 308
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b1\\georune-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20596,
+          "minX": 91,
+          "minY": 64,
+          "maxX": 229,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b1\\georune-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17370,
+          "minX": 68,
+          "minY": 72,
+          "maxX": 252,
+          "maxY": 247
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b1\\georune-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18718,
+          "minX": 64,
+          "minY": 58,
+          "maxX": 255,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b1\\georune-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22189,
+          "minX": 61,
+          "minY": 49,
+          "maxX": 258,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b1\\georune-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 39114,
+          "minX": 35,
+          "minY": 5,
+          "maxX": 299,
+          "maxY": 304
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b2\\georune-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20596,
+          "minX": 90,
+          "minY": 64,
+          "maxX": 228,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b2\\georune-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17370,
+          "minX": 67,
+          "minY": 72,
+          "maxX": 251,
+          "maxY": 247
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b2\\georune-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18718,
+          "minX": 64,
+          "minY": 58,
+          "maxX": 255,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b2\\georune-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22189,
+          "minX": 61,
+          "minY": 49,
+          "maxX": 258,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "georune",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\georune\\b2\\georune-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 39114,
+          "minX": 20,
+          "minY": 5,
+          "maxX": 284,
+          "maxY": 304
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b1\\proofwyrm-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18432,
+          "minX": 96,
+          "minY": 64,
+          "maxX": 223,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b1\\proofwyrm-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18237,
+          "minX": 80,
+          "minY": 67,
+          "maxX": 239,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b1\\proofwyrm-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20904,
+          "minX": 76,
+          "minY": 58,
+          "maxX": 243,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b1\\proofwyrm-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 23119,
+          "minX": 69,
+          "minY": 49,
+          "maxX": 250,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b1\\proofwyrm-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 44782,
+          "minX": 37,
+          "minY": 7,
+          "maxX": 291,
+          "maxY": 302
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b2\\proofwyrm-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18432,
+          "minX": 96,
+          "minY": 64,
+          "maxX": 223,
+          "maxY": 255
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b2\\proofwyrm-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 18237,
+          "minX": 80,
+          "minY": 67,
+          "maxX": 239,
+          "maxY": 252
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b2\\proofwyrm-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 20904,
+          "minX": 76,
+          "minY": 58,
+          "maxX": 243,
+          "maxY": 261
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b2\\proofwyrm-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 23119,
+          "minX": 69,
+          "minY": 49,
+          "maxX": 250,
+          "maxY": 268
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "proofwyrm",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\proofwyrm\\b2\\proofwyrm-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 44782,
+          "minX": 28,
+          "minY": 7,
+          "maxX": 282,
+          "maxY": 302
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b1",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b1\\strategon-b1-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17424,
+          "minX": 101,
+          "minY": 55,
+          "maxX": 217,
+          "maxY": 257
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b1",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b1\\strategon-b1-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 12950,
+          "minX": 64,
+          "minY": 68,
+          "maxX": 252,
+          "maxY": 250
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b1",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b1\\strategon-b1-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22229,
+          "minX": 33,
+          "minY": 41,
+          "maxX": 283,
+          "maxY": 272
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b1",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b1\\strategon-b1-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 30556,
+          "minX": 14,
+          "minY": 17,
+          "maxX": 301,
+          "maxY": 279
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b1",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b1\\strategon-b1-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 37543,
+          "minX": 5,
+          "minY": 7,
+          "maxX": 308,
+          "maxY": 289
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b2",
+        "stage": 0,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b2\\strategon-b2-0.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 17429,
+          "minX": 102,
+          "minY": 55,
+          "maxX": 218,
+          "maxY": 258
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b2",
+        "stage": 1,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b2\\strategon-b2-1.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 12952,
+          "minX": 66,
+          "minY": 68,
+          "maxX": 255,
+          "maxY": 250
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b2",
+        "stage": 2,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b2\\strategon-b2-2.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 22230,
+          "minX": 35,
+          "minY": 41,
+          "maxX": 286,
+          "maxY": 272
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b2",
+        "stage": 3,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b2\\strategon-b2-3.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 30558,
+          "minX": 17,
+          "minY": 17,
+          "maxX": 305,
+          "maxY": 279
+        }
+      },
+      {
+        "subjectId": "reasoning",
+        "monsterId": "strategon",
+        "branch": "b2",
+        "stage": 4,
+        "size": 320,
+        "path": "assets\\monsters\\strategon\\b2\\strategon-b2-4.320.webp",
+        "alphaBounds": {
+          "alphaPixelCount": 37522,
+          "minX": 11,
+          "minY": 7,
+          "maxX": 313,
+          "maxY": 289
+        }
+      }
+    ],
+    "ok": true
+  },
+  "contactSheets": [
+    {
+      "branch": "b1",
+      "path": "docs\\plans\\james\\hotfixes\\18. monster-subject-asset-alignment-package\\evidence\\runtime-preview\\subject-monsters-b1-all-stages-contact-sheet-2026-05-14.png",
+      "rowOrder": [
+        "readbloom",
+        "readrill",
+        "inferane",
+        "structurillon",
+        "lorequill",
+        "sumkrab",
+        "carryfin",
+        "fractail",
+        "perciva",
+        "arithon",
+        "numdrake",
+        "fractalon",
+        "measuron",
+        "georune",
+        "proofwyrm",
+        "strategon"
+      ],
+      "columnStages": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "branch": "b2",
+      "path": "docs\\plans\\james\\hotfixes\\18. monster-subject-asset-alignment-package\\evidence\\runtime-preview\\subject-monsters-b2-all-stages-contact-sheet-2026-05-14.png",
+      "rowOrder": [
+        "readbloom",
+        "readrill",
+        "inferane",
+        "structurillon",
+        "lorequill",
+        "sumkrab",
+        "carryfin",
+        "fractail",
+        "perciva",
+        "arithon",
+        "numdrake",
+        "fractalon",
+        "measuron",
+        "georune",
+        "proofwyrm",
+        "strategon"
+      ],
+      "columnStages": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  ],
+  "ok": true
+}

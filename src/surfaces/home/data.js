@@ -23,8 +23,14 @@ const MONSTER_VARIANTS = ['b1', 'b2'];
 const PUNCTUATION_CODEX_STAR_MILESTONES = [1, 10, 30, 60, 100];
 const PUNCTUATION_GRAND_CODEX_STAR_MILESTONES = [1, 10, 25, 50, 100];
 const GRAMMAR_CODEX_STAR_MILESTONES = [1, 15, 35, 65, 100];
+const READING_CODEX_STAR_MILESTONES = [1, 10, 30, 60, 100];
+const READING_GRAND_CODEX_STAR_MILESTONES = [1, 10, 25, 50, 100];
+const ARITHMETIC_CODEX_STAR_MILESTONES = [1, 20, 45, 70, 100];
+const ARITHMETIC_GRAND_CODEX_STAR_MILESTONES = [1, 15, 35, 65, 100];
+const REASONING_CODEX_STAR_MILESTONES = [1, 10, 30, 60, 100];
+const REASONING_GRAND_CODEX_STAR_MILESTONES = [1, 10, 25, 50, 100];
 // Higher number = higher feature weight in pickFeaturedCodexEntry. The grand
-// creatures (Phaeton, Quoral, Concordium) outrank their direct siblings so
+// creatures outrank their direct siblings so
 // they win tie-breaks when a learner catches the grand. Reserved Punctuation
 // and Grammar creatures sit below their active direct siblings and far below
 // the grand — they are filtered out of active surfaces before ranking
@@ -83,6 +89,22 @@ const CODEX_POWER_RANK = Object.freeze({
   // strictly above every active Grammar direct. See `grammar-monster-roster`
   // test "Codex landmine #2" which locks this invariant.
   concordium: 18,
+  readbloom: 19,
+  readrill: 20,
+  inferane: 21,
+  structurillon: 22,
+  lorequill: 23,
+  sumkrab: 24,
+  carryfin: 25,
+  fractail: 26,
+  perciva: 27,
+  arithon: 28,
+  numdrake: 29,
+  fractalon: 30,
+  measuron: 31,
+  georune: 32,
+  proofwyrm: 33,
+  strategon: 34,
 });
 
 const SUBJECT_NAMES = Object.freeze({
@@ -283,7 +305,11 @@ function variantForMonster(monsterId, stage, catalogueBranch) {
 }
 
 function subjectUsesStarDisplayState(subjectId) {
-  return subjectId === 'punctuation' || subjectId === 'grammar';
+  return subjectId === 'punctuation'
+    || subjectId === 'grammar'
+    || subjectId === 'reading'
+    || subjectId === 'arithmetic'
+    || subjectId === 'reasoning';
 }
 
 function grammarAssetStageForDisplayState(displayState, displayStage, fallbackStage) {
@@ -737,10 +763,10 @@ function withSynthesisedUncaughtMonsters(summary = []) {
     summary.map(({ monster }) => monster?.id).filter(Boolean),
   );
   const synthesised = [];
-  // Scope iteration to `CODEX_SUBJECT_GROUP_IDS` (defined below) so reserved
-  // subject buckets (`punctuationReserve`, `grammarReserve`) never enter the
-  // Codex pipeline. Without this guard, every uncaught reserved monster would
-  // surface as a "not caught" Codex card, leaking the retired roster.
+  // Scope iteration to active learner-facing subject groups only. Reserved
+  // buckets (`punctuationReserve`, `grammarReserve`) never enter the Codex
+  // pipeline; without this guard, every uncaught reserve monster would surface
+  // as a "not caught" Codex card, leaking the retired Hero Camp roster.
   for (const subjectId of CODEX_SUBJECT_GROUP_IDS) {
     const monsterIds = MONSTERS_BY_SUBJECT[subjectId] || [];
     for (const monsterId of monsterIds) {
@@ -759,8 +785,15 @@ function withSynthesisedUncaughtMonsters(summary = []) {
 
 // Subject groups rendered in Codex. Reserved / non-learner-facing groupings
 // inside MONSTERS_BY_SUBJECT (e.g. `punctuationReserve`) are excluded so the
-// Codex keeps the spelling -> punctuation -> grammar ordering learners expect.
-const CODEX_SUBJECT_GROUP_IDS = Object.freeze(['spelling', 'punctuation', 'grammar']);
+// Codex only shows active subject monsters.
+const CODEX_SUBJECT_GROUP_IDS = Object.freeze([
+  'spelling',
+  'punctuation',
+  'grammar',
+  'reading',
+  'arithmetic',
+  'reasoning',
+]);
 
 export function buildCodexSubjectGroups(entries = []) {
   return CODEX_SUBJECT_GROUP_IDS
@@ -847,7 +880,7 @@ function codexPowerRank(monsterId) {
 // would progress through, deliberately excluding non-learner-facing groupings
 // (reserved monsters) that otherwise appear as extra entries in
 // Object.keys(MONSTERS_BY_SUBJECT).
-const SUBJECT_PRIORITY_ORDER = Object.freeze(['spelling', 'punctuation', 'grammar']);
+const SUBJECT_PRIORITY_ORDER = CODEX_SUBJECT_GROUP_IDS;
 function subjectPriority(subjectId) {
   const idx = SUBJECT_PRIORITY_ORDER.indexOf(subjectId);
   return idx === -1 ? 999 : idx;
@@ -860,7 +893,7 @@ function subjectPriority(subjectId) {
  * holds the `{ pct, due, streak, nextUp }` projection each subject module
  * emits from `getDashboardStats`). Ranks subjects by the `due` scalar
  * descending, clamped to a non-negative integer. Ties are broken by
- * `SUBJECT_PRIORITY_ORDER` so Spelling wins a straight three-way tie
+ * `SUBJECT_PRIORITY_ORDER` so Spelling wins a straight full-subject tie
  * (preserves the pre-U2 Spelling-first CTA for fresh learners whose stats
  * happen to collide on due counts). The caller can override the tiebreak
  * via `options.tiebreakSubjectId` — e.g. a future phase that wants to
@@ -967,6 +1000,16 @@ function secureProgressLabel(subjectId, mastered) {
     if (count > 1) return `${count} secure units`;
     return 'No secure units yet';
   }
+  if (subjectId === 'arithmetic') {
+    if (count === 1) return '1 secure unit';
+    if (count > 1) return `${count} secure units`;
+    return 'No secure units yet';
+  }
+  if (subjectId === 'reading' || subjectId === 'reasoning') {
+    if (count === 1) return '1 secure piece of evidence';
+    if (count > 1) return `${count} secure pieces of evidence`;
+    return 'No secure evidence yet';
+  }
   if (count === 1) return '1 secure word';
   if (count > 1) return `${count} secure words`;
   return 'No secure words yet';
@@ -1000,11 +1043,17 @@ function codexNextGoal({ subjectId, caught, nextMilestone }) {
   if (!caught && nextMilestone) {
     if (subjectId === 'punctuation') return 'Find this egg with a punctuation round';
     if (subjectId === 'grammar') return 'Find this egg with a grammar round';
+    if (subjectId === 'reading') return 'Find this egg with a reading round';
+    if (subjectId === 'arithmetic') return 'Find this egg with an arithmetic round';
+    if (subjectId === 'reasoning') return 'Find this egg with a reasoning round';
     return 'Secure words to catch this creature';
   }
   if (nextMilestone) {
     if (subjectId === 'punctuation') return 'Earn punctuation Stars for the next change';
     if (subjectId === 'grammar') return 'Earn Grammar Stars for the next change';
+    if (subjectId === 'reading') return 'Earn Reading Stars for the next change';
+    if (subjectId === 'arithmetic') return 'Earn Arithmetic Stars for the next change';
+    if (subjectId === 'reasoning') return 'Earn Reasoning Stars for the next change';
     return 'Keep securing words for the next change';
   }
   return 'Fully evolved';
@@ -1019,6 +1068,24 @@ function nextCodexMilestone(monsterId, mastered, { subjectId = 'spelling', max =
   }
   if (subjectId === 'grammar') {
     return GRAMMAR_CODEX_STAR_MILESTONES.find((threshold) => mastered < threshold) || null;
+  }
+  if (subjectId === 'reading') {
+    const thresholds = monsterId === 'lorequill'
+      ? READING_GRAND_CODEX_STAR_MILESTONES
+      : READING_CODEX_STAR_MILESTONES;
+    return thresholds.find((threshold) => mastered < threshold) || null;
+  }
+  if (subjectId === 'arithmetic') {
+    const thresholds = monsterId === 'arithon'
+      ? ARITHMETIC_GRAND_CODEX_STAR_MILESTONES
+      : ARITHMETIC_CODEX_STAR_MILESTONES;
+    return thresholds.find((threshold) => mastered < threshold) || null;
+  }
+  if (subjectId === 'reasoning') {
+    const thresholds = monsterId === 'strategon'
+      ? REASONING_GRAND_CODEX_STAR_MILESTONES
+      : REASONING_CODEX_STAR_MILESTONES;
+    return thresholds.find((threshold) => mastered < threshold) || null;
   }
   const thresholds = monsterId === 'phaeton' ? PHAETON_STAGE_THRESHOLDS : DIRECT_STAGE_THRESHOLDS;
   return thresholds.find((threshold) => mastered < threshold) || null;
@@ -1046,6 +1113,31 @@ function codexWordBand(monsterId, subjectId = 'spelling') {
     if (monsterId === 'mirrane') return 'Voice and role';
     if (monsterId === 'concordium') return 'Whole grammar codex';
     return 'Grammar codex';
+  }
+  if (subjectId === 'reading') {
+    if (monsterId === 'readbloom') return 'Vocabulary and author word choice';
+    if (monsterId === 'readrill') return 'Retrieval and summary';
+    if (monsterId === 'inferane') return 'Inference, prediction and evidence';
+    if (monsterId === 'structurillon') return 'Structure and comparison';
+    if (monsterId === 'lorequill') return 'Whole reading codex';
+    return 'Reading codex';
+  }
+  if (subjectId === 'arithmetic') {
+    if (monsterId === 'sumkrab') return 'Facts and place value';
+    if (monsterId === 'carryfin') return 'Written methods and inverses';
+    if (monsterId === 'fractail') return 'Decimals and fractions';
+    if (monsterId === 'perciva') return 'Percentages and mixed arithmetic';
+    if (monsterId === 'arithon') return 'Whole arithmetic codex';
+    return 'Arithmetic codex';
+  }
+  if (subjectId === 'reasoning') {
+    if (monsterId === 'numdrake') return 'Number, place value and calculation';
+    if (monsterId === 'fractalon') return 'Fractions, decimals, percentages and ratio';
+    if (monsterId === 'measuron') return 'Measures, time and money';
+    if (monsterId === 'georune') return 'Geometry and statistics';
+    if (monsterId === 'proofwyrm') return 'Checking and explaining';
+    if (monsterId === 'strategon') return 'Whole reasoning codex';
+    return 'Reasoning codex';
   }
   if (monsterId === 'inklet') return 'Years 3-4 spellings';
   if (monsterId === 'glimmerbug') return 'Years 5-6 spellings';

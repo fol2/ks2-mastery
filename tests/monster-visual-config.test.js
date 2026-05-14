@@ -10,6 +10,7 @@ import {
   MONSTER_VISUAL_PATH_OPTIONS,
   buildMonsterAssetKey,
   monsterVisualAssetSources,
+  monsterVisualSourceMonsterId,
   normaliseMonsterVisualRuntimeConfig,
   resolveMonsterVisual,
   validateMonsterVisualConfigForPublish,
@@ -71,7 +72,7 @@ test('bundled monster visual config preserves current tuned defaults', () => {
   assert.equal(feature.source, 'bundled');
 });
 
-test('subject-owned legendary monsters preserve their source-family visual tuning', () => {
+test('subject-owned legendary monsters keep their own visual source while using flight motion', () => {
   for (const monsterId of ['lorequill', 'arithon', 'strategon']) {
     const meadow = resolveMonsterVisual({
       monsterId,
@@ -79,10 +80,11 @@ test('subject-owned legendary monsters preserve their source-family visual tunin
       stage: 4,
       context: 'meadow',
     });
-    assert.equal(meadow.path, 'fly-b', `${monsterId} should keep Phaeton meadow path`);
-    assert.equal(meadow.motionProfile, 'fly-b', `${monsterId} should keep Phaeton meadow motion`);
-    assert.equal(meadow.facing, 'left', `${monsterId} should keep Phaeton b2 stage 4 facing`);
-    assert.equal(meadow.faceSign, -1, `${monsterId} should keep Phaeton b2 stage 4 face sign`);
+    assert.equal(monsterVisualSourceMonsterId(monsterId), monsterId, `${monsterId} should not borrow another visual source`);
+    assert.equal(meadow.path, 'fly-b', `${monsterId} should keep legendary meadow path`);
+    assert.equal(meadow.motionProfile, 'fly-b', `${monsterId} should keep legendary meadow motion`);
+    assert.equal(meadow.facing, 'left', `${monsterId} should use its own generated facing default`);
+    assert.equal(meadow.faceSign, -1, `${monsterId} should use its own generated face sign`);
 
     const feature = resolveMonsterVisual({
       monsterId,
@@ -90,12 +92,12 @@ test('subject-owned legendary monsters preserve their source-family visual tunin
       stage: 4,
       context: 'codexFeature',
     });
-    assert.equal(feature.footPad, 4, `${monsterId} should keep Phaeton b1 stage 4 codex foot pad`);
-    assert.equal(BUNDLED_MONSTER_VISUAL_CONFIG.assets[`${monsterId}-b1-4`].provenance, 'current-tuned-default');
+    assert.equal(feature.footPad, 0, `${monsterId} should not inherit another monster foot pad`);
+    assert.equal(BUNDLED_MONSTER_VISUAL_CONFIG.assets[`${monsterId}-b1-4`].provenance, 'generated-neutral-default');
     assert.equal(
       BUNDLED_MONSTER_VISUAL_CONFIG.assets[`${monsterId}-b1-4`].review.contexts.codexFeature.reviewed,
-      true,
-      `${monsterId} tuned copied visual should be reviewed by default`,
+      false,
+      `${monsterId} generated visual defaults should stay in the review backlog`,
     );
   }
 });
@@ -123,8 +125,8 @@ test('generated neutral defaults start unreviewed so publish has a review backlo
     BUNDLED_MONSTER_VISUAL_CONFIG.assets[asset.key]?.provenance === 'current-tuned-default'
   ));
 
-  assert.equal(generatedAssets.length, 270);
-  assert.equal(tunedAssets.length, 70);
+  assert.equal(generatedAssets.length, 300);
+  assert.equal(tunedAssets.length, 40);
   assert.ok(generatedAssets.every((asset) => (
     MONSTER_VISUAL_CONTEXTS.every((context) => (
       BUNDLED_MONSTER_VISUAL_CONFIG.assets[asset.key].review.contexts[context].reviewed === false
@@ -265,9 +267,9 @@ test('asset source helper preserves existing image path convention', () => {
     preferredSize: 640,
   });
 
-  assert.equal(sources.src, './assets/monsters/inklet/b1/inklet-b1-0.640.webp?v=20260513-subject-assets');
-  assert.match(sources.srcSet, /inklet-b1-0\.320\.webp\?v=20260513-subject-assets 320w/);
-  assert.match(sources.srcSet, /inklet-b1-0\.1280\.webp\?v=20260513-subject-assets 1280w/);
+  assert.equal(sources.src, './assets/monsters/inklet/b1/inklet-b1-0.640.webp?v=20260514-subject-assets');
+  assert.match(sources.srcSet, /inklet-b1-0\.320\.webp\?v=20260514-subject-assets 320w/);
+  assert.match(sources.srcSet, /inklet-b1-0\.1280\.webp\?v=20260514-subject-assets 1280w/);
 });
 
 test('runtime visual config normaliser accepts published config and rejects incompatible schemas', () => {

@@ -1,0 +1,11 @@
+Command: npm run check
+Working directory: D:\Coding\ks2-mastery\.worktrees\monster-codex-all-assets-20260514
+Exit code: 0
+
+Wrangler: 4.84.0
+Build command: npm run build && npm run assert:build-public && npm run audit:client
+Monster asset manifest: Generated src\platform\game\monster-asset-manifest.js with 340 monster assets.
+Client bundle audit: passed (1285 public files, 6 chunks scanned, main bundle 209111 / 232000 bytes gzip).
+Dry-run asset scan: Read 1409 files from dist\public.
+Dry-run upload summary: Total Upload 23391.85 KiB / gzip 2231.18 KiB.
+Result: --dry-run exited successfully.

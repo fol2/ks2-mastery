@@ -385,7 +385,7 @@ export const PUNCTUATION_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 25, 50, 1
 const PUNCTUATION_DISPLAY_STATES = Object.freeze(['egg-found', 'hatch', 'evolve', 'strong', 'mega']);
 const DEFAULT_MONSTER_BRANCH = 'b1';
 const MONSTER_ASSET_SIZES = Object.freeze([320, 640, 1280]);
-export const MONSTER_ASSET_VERSION = '20260513-subject-assets';
+export const MONSTER_ASSET_VERSION = '20260514-subject-assets';
 
 export function normaliseMonsterBranch(value, fallback = DEFAULT_MONSTER_BRANCH) {
   return MONSTER_BRANCHES.includes(value) ? value : fallback;
