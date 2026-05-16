@@ -47,7 +47,8 @@ export async function cleanOutputDir(dir = outputDir, rootDirArg = rootDir) {
 // Policy: the stamp is null-unless-clean so dirty-tree dev builds and CI
 // shallow clones never pollute production telemetry. Concretely:
 //   - `.git` missing / git not installed -> null (CI edge)
-//   - `git status --porcelain` reports any dirty line -> null (dev edge)
+//   - `git status --porcelain --untracked-files=no` reports any non-build
+//     generated dirty line -> null (dev edge)
 //   - `git rev-parse` returns a non-hex 6-40 char value (defence-in-depth) -> null
 // Auto-reopen (U17) short-circuits on NULL release per its condition-3 check,
 // so a null stamp simply means "don't trigger reopens against this event".
@@ -62,12 +63,38 @@ export async function cleanOutputDir(dir = outputDir, rootDirArg = rootDir) {
 // `tests/helpers/build-hash-resolver.js`, which drifted silently if the
 // production helper's regex / ordering changed. The production default is
 // `nodeExecSync`; tests pass a stub that returns canned output or throws.
+const BUILD_GENERATED_STATUS_PATHS = new Set([
+  'src/platform/game/monster-asset-manifest.js',
+  'worker/src/generated-build-version.js',
+  'worker/src/generated-csp-hash.js',
+]);
+
+function normaliseGitStatusPath(line) {
+  const pathText = String(line || '').slice(3).trim();
+  if (!pathText || pathText.includes(' -> ')) return pathText;
+  return pathText.replaceAll('\\', '/');
+}
+
+function isBuildGeneratedStatusLine(line) {
+  const statusCode = String(line || '').slice(0, 2);
+  const filePath = normaliseGitStatusPath(line);
+  if (!filePath || !BUILD_GENERATED_STATUS_PATHS.has(filePath)) return false;
+  return statusCode.trim() === 'M';
+}
+
+function hasNonGeneratedDirtyStatus(statusOutput) {
+  return String(statusOutput || '')
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .some((line) => !isBuildGeneratedStatusLine(line));
+}
+
 function resolveBuildHash({ execSync = nodeExecSync } = {}) {
   try {
     const hash = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
     if (!/^[a-f0-9]{6,40}$/.test(hash)) return null;
-    const dirty = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
-    return dirty ? null : hash;
+    const statusOutput = execSync('git status --porcelain --untracked-files=no', { encoding: 'utf8' });
+    return hasNonGeneratedDirtyStatus(statusOutput) ? null : hash;
   } catch {
     return null;
   }

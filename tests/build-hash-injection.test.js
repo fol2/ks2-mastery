@@ -79,6 +79,37 @@ test('U16 — resolveBuildHash returns null when the tree is dirty', async () =>
   assert.equal(result, null);
 });
 
+test('U16 — resolveBuildHash allows build-generated tracked files dirtied by the build pipeline', async () => {
+  const { resolveBuildHash } = await import('../scripts/build-client.mjs');
+  const result = resolveBuildHash({
+    execSync: stubbedExecSync({
+      revParseOutput: 'abc1234\n',
+      statusOutput: [
+        ' M src/platform/game/monster-asset-manifest.js',
+        ' M worker/src/generated-build-version.js',
+        ' M worker/src/generated-csp-hash.js',
+        '',
+      ].join('\n'),
+    }),
+  });
+  assert.equal(result, 'abc1234');
+});
+
+test('U16 — resolveBuildHash still rejects mixed generated and real dirty source', async () => {
+  const { resolveBuildHash } = await import('../scripts/build-client.mjs');
+  const result = resolveBuildHash({
+    execSync: stubbedExecSync({
+      revParseOutput: 'abc1234\n',
+      statusOutput: [
+        ' M src/platform/game/monster-asset-manifest.js',
+        ' M src/main.js',
+        '',
+      ].join('\n'),
+    }),
+  });
+  assert.equal(result, null);
+});
+
 test('U16 — resolveBuildHash returns null when execSync throws (missing .git / CI shallow)', async () => {
   const { resolveBuildHash } = await import('../scripts/build-client.mjs');
   const result = resolveBuildHash({ execSync: stubbedExecSync({ throwOnRevParse: true }) });
