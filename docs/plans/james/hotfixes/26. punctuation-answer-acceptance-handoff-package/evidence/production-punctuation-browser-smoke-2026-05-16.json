@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "workerCommitSha": "99fbe5ee09a4b9cac56b69593cb7d6066f4f57e8",
+  "workerVersionId": "61a087f5-5433-4f82-ba4f-38a7de329477",
+  "startedAt": "2026-05-16T21:11:47.112Z",
+  "completedAt": "2026-05-16T21:12:02.055Z",
+  "probes": [
+    {
+      "name": "desktop-1024",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "length": "8",
+      "ok": true,
+      "ctaRoundLength": "8",
+      "sessionTextMatched": true,
+      "selectedAriaChecked": "true",
+      "consoleErrors": [],
+      "requestFailures": [],
+      "httpFailures": [],
+      "screenshot": "docs/plans/james/hotfixes/26. punctuation-answer-acceptance-handoff-package/evidence/production-punctuation-browser-screenshots-2026-05-16/desktop-1024-selected-8.png"
+    },
+    {
+      "name": "mobile-390",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "length": "12",
+      "ok": true,
+      "ctaRoundLength": "12",
+      "sessionTextMatched": true,
+      "selectedAriaChecked": "true",
+      "consoleErrors": [],
+      "requestFailures": [],
+      "httpFailures": [],
+      "screenshot": "docs/plans/james/hotfixes/26. punctuation-answer-acceptance-handoff-package/evidence/production-punctuation-browser-screenshots-2026-05-16/mobile-390-selected-12.png"
+    }
+  ]
+}

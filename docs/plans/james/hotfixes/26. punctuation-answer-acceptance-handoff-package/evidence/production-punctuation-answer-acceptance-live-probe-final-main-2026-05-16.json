@@ -1,0 +1,234 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "workerCommitSha": "6a0551ab3c5f3064aef5c92ce674fba9aeb41a0d",
+  "workerVersionId": "34cdc3d4-9cbe-4862-931c-ecfddf7b3c17",
+  "startedAt": "2026-05-16T21:54:29.232Z",
+  "completedAt": "2026-05-16T21:54:33.903Z",
+  "coverageBoundary": "Production command-path probe covers one live direct-speech correct answer, one live direct-speech duplicated-terminal rejection, one live multiline bullet correct answer, and one live bullet lower-case stem rejection. Reporting-after final-stop rejection is covered by local full-runtime adversarial probes and by the deployed commit attestation, not by this randomised live session probe.",
+  "probes": [
+    {
+      "label": "speech.correctAnswer.liveSuccess",
+      "ok": true,
+      "revision": 4,
+      "answeredItems": 1,
+      "sessionsSearched": 1,
+      "seenItems": [
+        {
+          "itemId": "gen_p20_speech_choose_1wcbfpt_70",
+          "source": "generated",
+          "mode": "choose",
+          "skillIds": [
+            "speech"
+          ]
+        },
+        {
+          "itemId": "gen_p20_speech_insert_hc0n31_11",
+          "source": "generated",
+          "mode": "insert",
+          "skillIds": [
+            "speech"
+          ]
+        }
+      ],
+      "itemId": "gen_p20_speech_insert_hc0n31_11",
+      "source": "generated",
+      "mode": "insert",
+      "skillIds": [
+        "speech"
+      ],
+      "submittedAnswer": {
+        "typed": "Hana said, \"Move the tray slowly.\""
+      },
+      "feedbackKind": "success",
+      "misconceptionTags": [],
+      "localMark": {
+        "correct": true,
+        "expected": "Hana said, \"Move the tray slowly.\"",
+        "note": "Direct speech needs a reporting comma and punctuation inside the closing inverted comma.",
+        "misconceptionTags": [],
+        "facets": []
+      }
+    },
+    {
+      "label": "speech.duplicatedTerminal.liveError",
+      "ok": true,
+      "revision": 4,
+      "answeredItems": 1,
+      "sessionsSearched": 1,
+      "seenItems": [
+        {
+          "itemId": "gen_p20_speech_choose_z1vn2v_86",
+          "source": "generated",
+          "mode": "choose",
+          "skillIds": [
+            "speech"
+          ]
+        },
+        {
+          "itemId": "gen_speech_insert_1ddpqzh_60",
+          "source": "generated",
+          "mode": "insert",
+          "skillIds": [
+            "speech"
+          ]
+        }
+      ],
+      "itemId": "gen_speech_insert_1ddpqzh_60",
+      "source": "generated",
+      "mode": "insert",
+      "skillIds": [
+        "speech"
+      ],
+      "submittedAnswer": {
+        "typed": "Evan asked, \"Can I test the light??\""
+      },
+      "feedbackKind": "error",
+      "misconceptionTags": [
+        "speech.punctuation_missing"
+      ],
+      "localMark": {
+        "correct": false,
+        "expected": "Evan asked, \"Can I test the light?\"",
+        "note": "The punctuation mark belongs inside the closing speech mark.",
+        "misconceptionTags": [
+          "speech.punctuation_missing"
+        ],
+        "facets": [
+          {
+            "id": "quote_variant",
+            "ok": true,
+            "label": "Matched inverted commas"
+          },
+          {
+            "id": "speech_punctuation",
+            "ok": false,
+            "label": "Speech punctuation inside the closing inverted comma"
+          },
+          {
+            "id": "reporting_clause",
+            "ok": true,
+            "label": "Reporting-clause comma"
+          },
+          {
+            "id": "reporting_clause_words",
+            "ok": true,
+            "label": "Reporting clause preserved"
+          },
+          {
+            "id": "capitalisation",
+            "ok": true,
+            "label": "Capital letters"
+          },
+          {
+            "id": "preservation",
+            "ok": true,
+            "label": "Target words preserved"
+          },
+          {
+            "id": "unwanted_punctuation",
+            "ok": true,
+            "label": "No extra or missing punctuation outside the quote"
+          },
+          {
+            "id": "reporting_position",
+            "ok": true,
+            "label": "reporting_position"
+          }
+        ]
+      }
+    },
+    {
+      "label": "bullet.correctAnswer.liveSuccess",
+      "ok": true,
+      "revision": 4,
+      "answeredItems": 1,
+      "sessionsSearched": 1,
+      "seenItems": [
+        {
+          "itemId": "gen_p20_bullet_points_choose_l96fo9_91",
+          "source": "generated",
+          "mode": "choose",
+          "skillIds": [
+            "bullet_points"
+          ]
+        },
+        {
+          "itemId": "gen_p20_bullet_points_insert_1yx61bk_49",
+          "source": "generated",
+          "mode": "insert",
+          "skillIds": [
+            "bullet_points"
+          ]
+        }
+      ],
+      "itemId": "gen_p20_bullet_points_insert_1yx61bk_49",
+      "source": "generated",
+      "mode": "insert",
+      "skillIds": [
+        "bullet_points"
+      ],
+      "submittedAnswer": {
+        "typed": "Remember:\n- Tickets\n- Badges\n- Programmes"
+      },
+      "feedbackKind": "success",
+      "misconceptionTags": [],
+      "localMark": {
+        "correct": true,
+        "expected": "Remember:\n- Tickets\n- Badges\n- Programmes",
+        "note": "A bullet list should use a consistent marker and consistent punctuation style.",
+        "misconceptionTags": [],
+        "facets": []
+      }
+    },
+    {
+      "label": "bullet.lowercaseStem.liveError",
+      "ok": true,
+      "revision": 4,
+      "answeredItems": 1,
+      "sessionsSearched": 1,
+      "seenItems": [
+        {
+          "itemId": "fx12_bullet_points_016",
+          "source": "fixed",
+          "mode": "choose",
+          "skillIds": [
+            "bullet_points"
+          ]
+        },
+        {
+          "itemId": "gen_p20_bullet_points_insert_4mji8k_32",
+          "source": "generated",
+          "mode": "insert",
+          "skillIds": [
+            "bullet_points"
+          ]
+        }
+      ],
+      "itemId": "gen_p20_bullet_points_insert_4mji8k_32",
+      "source": "generated",
+      "mode": "insert",
+      "skillIds": [
+        "bullet_points"
+      ],
+      "submittedAnswer": {
+        "typed": "remember:\n- Notebooks\n- Pencils\n- Rulers"
+      },
+      "feedbackKind": "error",
+      "misconceptionTags": [
+        "bullet.marker_missing",
+        "bullet.inconsistent_punctuation"
+      ],
+      "localMark": {
+        "correct": false,
+        "expected": "Remember:\n- Notebooks\n- Pencils\n- Rulers",
+        "note": "A bullet list should use a consistent marker and consistent punctuation style.",
+        "misconceptionTags": [
+          "bullet.marker_missing",
+          "bullet.inconsistent_punctuation"
+        ],
+        "facets": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "releaseId": "punctuation-qg-p24-15072-2026-05-13",
+  "productionDepth": 120,
+  "runtimeItems": 15072,
+  "generatedItems": 14560,
+  "fixedItems": 512,
+  "results": {
+    "duplicateTerminal": {
+      "acceptedIncorrectCount": 0,
+      "byFamilyMode": {},
+      "examples": []
+    },
+    "noTerminal": {
+      "acceptedIncorrectCount": 0,
+      "byFamilyMode": {},
+      "examples": []
+    },
+    "lowercaseStart": {
+      "acceptedIncorrectCount": 0,
+      "byFamilyMode": {},
+      "examples": []
+    },
+    "appendExtra": {
+      "acceptedIncorrectCount": 18,
+      "byFamilyMode": {
+        "fixed:se_transfer_why:transfer": 1,
+        "fixed:se_transfer_where:transfer": 1,
+        "fixed:lc_transfer_trip:transfer": 1,
+        "fixed:ac_transfer_contractions:transfer": 1,
+        "fixed:ac_transfer_dont_theyre:transfer": 1,
+        "fixed:ap_transfer_possession:transfer": 1,
+        "fixed:sp_transfer_question:transfer": 1,
+        "fixed:sp_fa_transfer_at_last_speech:transfer": 1,
+        "fixed:fa_transfer_after_lunch:transfer": 1,
+        "fixed:cc_transfer_morning:transfer": 1,
+        "fixed:cc_transfer_after_the_match:transfer": 1,
+        "fixed:sc_transfer_rain_pitch:transfer": 1,
+        "fixed:dc_transfer_flooded_route:transfer": 1,
+        "fixed:dc_transfer_curtain_rose:transfer": 1,
+        "fixed:hy_transfer_well_known:transfer": 1,
+        "fixed:hy_transfer_man_eating_shark:transfer": 1,
+        "fixed:hy_transfer_part_time_job:transfer": 1,
+        "fixed:pa_transfer_library:transfer": 1
+      },
+      "examples": [
+        {
+          "id": "se_transfer_why",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "sentence_endings"
+          ],
+          "model": "Why was the gate still open?",
+          "mutated": "Why was the gate still open extra?",
+          "note": "That begins like a question and ends with a question mark.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "se_transfer_where",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "sentence_endings"
+          ],
+          "model": "Where did the trail begin?",
+          "mutated": "Where did the trail begin extra?",
+          "note": "That begins like a question and ends with a question mark.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "lc_transfer_trip",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "list_commas"
+          ],
+          "model": "For the trip, we packed torches, maps and water.",
+          "mutated": "For the trip, we packed torches, maps and water extra.",
+          "note": "The list items are preserved and separated clearly.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "ac_transfer_contractions",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "apostrophe_contractions"
+          ],
+          "model": "We can't leave yet because we're still tidying up.",
+          "mutated": "We can't leave yet because we're still tidying up extra.",
+          "note": "Good. The required punctuated forms are present.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "ac_transfer_dont_theyre",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "apostrophe_contractions"
+          ],
+          "model": "Don't worry because they're on the way.",
+          "mutated": "Don't worry because they're on the way extra.",
+          "note": "Good. The required punctuated forms are present.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "ap_transfer_possession",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "apostrophe_possession"
+          ],
+          "model": "The children's paintings were hanging beside the teachers' notices.",
+          "mutated": "The children's paintings were hanging beside the teachers' notices extra.",
+          "note": "Good. The required punctuated forms are present.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "sp_transfer_question",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "speech"
+          ],
+          "model": "Mia asked, \"Can we start now?\"",
+          "mutated": "Mia asked, \"Can we start now extra?\"",
+          "note": "The spoken words are punctuated as a question.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "sp_fa_transfer_at_last_speech",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "speech",
+            "fronted_adverbial"
+          ],
+          "model": "At last, Noah shouted, \"We made it!\"",
+          "mutated": "At last, Noah shouted, \"We made it extra!\"",
+          "note": "That combines a fronted adverbial with direct speech.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "fa_transfer_after_lunch",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "fronted_adverbial"
+          ],
+          "model": "After lunch, we practised our lines.",
+          "mutated": "After lunch, we practised our lines extra.",
+          "note": "The opening phrase is followed by a comma.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "cc_transfer_morning",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "comma_clarity"
+          ],
+          "model": "In the morning, the path was quiet.",
+          "mutated": "In the morning, the path was quiet extra.",
+          "note": "The opening phrase is followed by a comma.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "cc_transfer_after_the_match",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "comma_clarity"
+          ],
+          "model": "After the match, the team shook hands.",
+          "mutated": "After the match, the team shook hands extra.",
+          "note": "The opening phrase is followed by a comma.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "sc_transfer_rain_pitch",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "semicolon"
+          ],
+          "model": "The rain had stopped; the pitch was still slippery.",
+          "mutated": "The rain had stopped; the pitch was still slippery extra.",
+          "note": "The related clauses are joined with the target boundary mark.",
+          "misconceptionTags": []
+        }
+      ]
+    }
+  }
+}

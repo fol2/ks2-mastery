@@ -1,0 +1,25 @@
+review_pack_path= /mnt/data/punctuation-review-pack-patched.json
+releaseId=None
+productionDepth=120
+totalItems=15072
+fixedCount=512
+generatedCount=14560
+items_reviewed=15072
+top-level keys= ['_meta', 'items', 'perceivedVariety']
+items= 15072
+item_level_reviewer_decision_counts=
+{'approved': 92, 'missing': 14980}
+source_counts=
+{'fixed': 512, 'generated': 14560}
+family_decision_counts_from_report_if_available=not in review pack; see generated reports/punctuation review register produced by P20 expansion command
+sample_missing_decision_generated_ids=
+fx_se_choose_river_question fixed  choose
+fx_se_choose_command_full_stop fixed  choose
+fx_se_choose_exclamation_idea fixed  choose
+fx_se_choose_statement_forest fixed  choose
+fx_lc_choose_sports_day fixed  choose
+fx_lc_choose_art_table fixed  choose
+fx_lc_choose_library_bag fixed  choose
+fx_lc_choose_cake_stall fixed  choose
+fx_ac_choose_cant_were fixed  choose
+fx_ac_choose_theyve_dont fixed  choose

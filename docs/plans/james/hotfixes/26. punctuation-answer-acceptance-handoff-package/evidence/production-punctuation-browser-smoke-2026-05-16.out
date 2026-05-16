@@ -1,0 +1,5 @@
+punctuation-round-length-production-smoke @ https://ks2.eugnel.uk
+ok: true
+desktop-1024: length 8, selected=true, cta=8, session=true, ok=true
+mobile-390: length 12, selected=true, cta=12, session=true, ok=true
+wrote: docs/plans/james/hotfixes/26. punctuation-answer-acceptance-handoff-package/evidence/production-punctuation-browser-smoke-2026-05-16.json

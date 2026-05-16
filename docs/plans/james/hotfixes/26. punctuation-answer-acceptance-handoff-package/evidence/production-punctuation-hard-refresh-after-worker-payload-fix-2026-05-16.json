@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "workerCommitSha": "07c0151b222e8815f3a3396d85e5c2a93fb711fd",
+  "workerVersionId": "fc2e81df-23b6-4aa3-9212-40ec586bf462",
+  "startedAt": "2026-05-16T21:47:07.939Z",
+  "completedAt": "2026-05-16T21:47:15.961Z",
+  "version": {
+    "ok": true,
+    "buildId": "07c0151b",
+    "buildHash": "07c0151b",
+    "release": null,
+    "source": "git.rev-parse",
+    "generatedAt": "2026-05-16T21:38:55.383Z"
+  },
+  "hardRefresh": {
+    "serviceWorkers": "block",
+    "cacheHeaders": "no-cache",
+    "selectedRoundLength": "8",
+    "selectedAriaChecked": "true",
+    "ctaRoundLength": "8",
+    "screenshot": "docs/plans/james/hotfixes/26. punctuation-answer-acceptance-handoff-package/evidence/production-punctuation-hard-refresh-after-worker-payload-fix-2026-05-16.png"
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requestFailures": [],
+  "httpFailures": []
+}

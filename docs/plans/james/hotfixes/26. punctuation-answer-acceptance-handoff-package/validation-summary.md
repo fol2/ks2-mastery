@@ -18,7 +18,7 @@ The existing P20 expansion suite passed locally, so the broad generator/repetiti
 | `duplicateTerminal` | 506 | Speech and paragraph answers with `??`, `..`, etc. could be accepted. |
 | `noTerminal` | 102 | Some speech/reporting-after and paragraph answers missing final punctuation could be accepted. |
 | `lowercaseStart` | 305 | Paragraph and bullet answers with lower-case starts could be accepted. |
-| `appendExtra` | 18 | Open transfer answers could accept an appended extra word; left as advisory because transfer/free-writing tolerance needs a product decision. |
+| `appendExtra` | 18 | Open transfer/free-writing answers could accept an appended extra word; recorded as product-policy tolerance outside this terminal-punctuation false-positive hotfix. |
 
 ## Patch applied
 
@@ -77,18 +77,39 @@ Adjacent Hero UI tests:
 
 ## Production evidence status
 
+2026-05-16 full-checkout execution update:
+
+- Status: `DONE — LIVE VERIFIED`.
+- Punctuation marking hardening commit: `99fbe5ee09a4b9cac56b69593cb7d6066f4f57e8`.
+- Punctuation command-path multiline payload fix commit: `07c0151b222e8815f3a3396d85e5c2a93fb711fd`.
+- Final deployed source observed on production: `6a0551ab3c5f3064aef5c92ce674fba9aeb41a0d`.
+- Final Worker version ID: `34cdc3d4-9cbe-4862-931c-ecfddf7b3c17`.
+- Production origin: `https://ks2.eugnel.uk`.
+- Production version endpoint: `/api/version` returned build hash `6a0551ab`.
+- Production smoke evidence: `reports/punctuation/punctuation-qg-p20-production-smoke.json`.
+- Final package evidence copy: `evidence/production-punctuation-smoke-final-main-2026-05-16.json`.
+- Final browser smoke evidence: `evidence/production-punctuation-browser-smoke-final-main-2026-05-16.json`.
+- Final hard-refresh browser evidence: `evidence/production-punctuation-hard-refresh-final-main-2026-05-16.json`.
+- Final command-path answer-acceptance evidence: `evidence/production-punctuation-answer-acceptance-live-probe-final-main-2026-05-16.json`.
+- Final P20 live validator evidence: `evidence/production-p20-live-verify-final-main-2026-05-16.out`.
+- `npm run verify:punctuation-qg:p20-live`: PASS, including `4/4` live-evidence tests.
+
+Earlier production artefacts for commits `99fbe5ee09a4b9cac56b69593cb7d6066f4f57e8` and `07c0151b222e8815f3a3396d85e5c2a93fb711fd` remain in the package as chronology, but the final status relies on the `final-main` artefacts above.
+
+Historical package status before this execution:
+
 `npm run verify:punctuation-qg:p20-live` failed because the expected production smoke evidence file is missing:
 
 - Missing: `reports/punctuation/punctuation-qg-p20-production-smoke.json`
 - Missing required live evidence fields include origin `https://ks2.eugnel.uk`, environment `production`, release ID, runtime item count, worker commit/version/deployment evidence, authenticated coverage, admin hub evidence, smart-six evidence, and dash-acceptance evidence.
 
-Therefore the correct status is:
+Therefore the old package status was:
 
 `IMPLEMENTED + LOCAL VERIFIED — PRODUCTION NOT PROVEN`
 
-It must not be called `DONE` until live production is verified after hard refresh on `https://ks2.eugnel.uk`.
+That old status is superseded by the 2026-05-16 full-checkout deployment and live verification above.
 
-## Review-pack advisory
+## Review-pack coverage boundary
 
 `node scripts/review-punctuation-questions.mjs --json --out ...` produced a 15,072-item review pack, but item-level reviewer decisions are sparse:
 
@@ -104,9 +125,9 @@ The generated-family review register produced by the P20 expansion evidence is s
 
 This means the local agent must not claim “every generated item was individually adult-reviewed” unless a separate item-level decision register exists. The defensible claim is family-level generated review plus fixed-bank inherited approval, subject to local-agent audit.
 
-## Local limitations
+## Historical local limitations
 
-- Production was not live-verified.
+- Production was not live-verified in the original handoff package. It is now live-verified in `evidence/execution-evidence-2026-05-16.md`.
 - Lean ZIP omits real asset payloads and reports by design; full build/deploy certification is outside this snapshot.
 - `npm run check` failed because `assets/monsters` is omitted from the lean ZIP, which blocks the build’s monster visual manifest generation.
-- Open transfer extra-word acceptance remains an advisory requiring a product/marking-policy decision before tightening, because strict extra-word rejection may over-constrain legitimate transfer/free-writing answers.
+- Open transfer extra-word acceptance remains product-policy tolerance for open transfer/free-writing surfaces, not part of this terminal-punctuation false-positive hotfix.

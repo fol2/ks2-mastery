@@ -1,0 +1,316 @@
+TAP version 13
+# Subtest: speech rubric accepts straight, curly, single, and double inverted commas
+ok 1 - speech rubric accepts straight, curly, single, and double inverted commas
+  ---
+  duration_ms: 1.937358
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects punctuation outside the closing inverted comma
+ok 2 - speech rubric rejects punctuation outside the closing inverted comma
+  ---
+  duration_ms: 0.511575
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects duplicated speech terminals and incomplete reporting-after clauses
+ok 3 - speech rubric rejects duplicated speech terminals and incomplete reporting-after clauses
+  ---
+  duration_ms: 0.36967
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects missing, unmatched, and mixed quote pairs
+ok 4 - speech rubric rejects missing, unmatched, and mixed quote pairs
+  ---
+  duration_ms: 0.256521
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects missing reporting comma and changed target words
+ok 5 - speech rubric rejects missing reporting comma and changed target words
+  ---
+  duration_ms: 1.073841
+  type: 'test'
+  ...
+# Subtest: endmarks and apostrophe marking handles exact answers and constrained transfer
+ok 6 - endmarks and apostrophe marking handles exact answers and constrained transfer
+  ---
+  duration_ms: 0.951105
+  type: 'test'
+  ...
+# Subtest: paragraph and bullet marking reject missing terminals, duplicated terminals, and lower-case starts
+ok 7 - paragraph and bullet marking reject missing terminals, duplicated terminals, and lower-case starts
+  ---
+  duration_ms: 1.825002
+  type: 'test'
+  ...
+# Subtest: comma list transfer requires preserved items and KS2 list comma placement
+ok 8 - comma list transfer requires preserved items and KS2 list comma placement
+  ---
+  duration_ms: 4.213965
+  type: 'test'
+  ...
+# Subtest: fronted adverbial and clarity transfers require the opening phrase comma
+ok 9 - fronted adverbial and clarity transfers require the opening phrase comma
+  ---
+  duration_ms: 0.746375
+  type: 'test'
+  ...
+# Subtest: boundary transfer validators require target marks between preserved clauses
+ok 10 - boundary transfer validators require target marks between preserved clauses
+  ---
+  duration_ms: 1.350634
+  type: 'test'
+  ...
+# Subtest: dash-clause model display teaches a spaced en dash
+ok 11 - dash-clause model display teaches a spaced en dash
+  ---
+  duration_ms: 0.34424
+  type: 'test'
+  ...
+# Subtest: fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers
+ok 12 - fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers
+  ---
+  duration_ms: 0.417772
+  type: 'test'
+  ...
+# Subtest: hyphen transfer validator requires the exact hyphenated phrase
+ok 13 - hyphen transfer validator requires the exact hyphenated phrase
+  ---
+  duration_ms: 1.08525
+  type: 'test'
+  ...
+# Subtest: P2 U3 free-text fixed anchors accept golden answers and tag representative misconceptions
+ok 14 - P2 U3 free-text fixed anchors accept golden answers and tag representative misconceptions
+  ---
+  duration_ms: 1.589176
+  type: 'test'
+  ...
+# Subtest: P2 U3 transfer anchors reject target-only sentence fragments
+ok 15 - P2 U3 transfer anchors reject target-only sentence fragments
+  ---
+  duration_ms: 0.330122
+  type: 'test'
+  ...
+# Subtest: mixed transfer validators constrain fronted speech and colon-list stems
+ok 16 - mixed transfer validators constrain fronted speech and colon-list stems
+  ---
+  duration_ms: 2.174991
+  type: 'test'
+  ...
+# Subtest: structure transfer validators require explicit punctuation roles
+ok 17 - structure transfer validators require explicit punctuation roles
+  ---
+  duration_ms: 2.127993
+  type: 'test'
+  ...
+# Subtest: structure exact marking honours parenthesis variants and line-based bullet lists
+ok 18 - structure exact marking honours parenthesis variants and line-based bullet lists
+  ---
+  duration_ms: 1.079219
+  type: 'test'
+  ...
+# Subtest: choice marking accepts integer indexes only without coercing malformed values
+ok 19 - choice marking accepts integer indexes only without coercing malformed values
+  ---
+  duration_ms: 0.228193
+  type: 'test'
+  ...
+# Subtest: empty, whitespace-only, overlong, and unsupported answer payloads return marked results
+ok 20 - empty, whitespace-only, overlong, and unsupported answer payloads return marked results
+  ---
+  duration_ms: 0.133867
+  type: 'test'
+  ...
+# Subtest: punctuation manifest publishes paragraph repair items as score-bearing text practice
+ok 21 - punctuation manifest publishes paragraph repair items as score-bearing text practice
+  ---
+  duration_ms: 1.190882
+  type: 'test'
+  ...
+# Subtest: paragraph marking accepts fully repaired passages and isolates failed speech facets
+ok 22 - paragraph marking accepts fully repaired passages and isolates failed speech facets
+  ---
+  duration_ms: 2.683335
+  type: 'test'
+  ...
+# Subtest: paragraph marking rejects partial colon, semi-colon, and apostrophe repairs
+ok 23 - paragraph marking rejects partial colon, semi-colon, and apostrophe repairs
+  ---
+  duration_ms: 1.368334
+  type: 'test'
+  ...
+# Subtest: paragraph marking rejects incomplete passages, token soup, and extra sentences
+ok 24 - paragraph marking rejects incomplete passages, token soup, and extra sentences
+  ---
+  duration_ms: 0.748771
+  type: 'test'
+  ...
+# Subtest: paragraph bullet repair preserves line breaks and rejects inline or mixed punctuation
+ok 25 - paragraph bullet repair preserves line breaks and rejects inline or mixed punctuation
+  ---
+  duration_ms: 1.282669
+  type: 'test'
+  ...
+# Subtest: generated paragraph items are deterministic, multi-skill aware, and markable
+ok 26 - generated paragraph items are deterministic, multi-skill aware, and markable
+  ---
+  duration_ms: 11.145749
+  type: 'test'
+  ...
+# Subtest: smart, weak, and focused scheduling can select paragraph repair at controlled frequency
+ok 27 - smart, weak, and focused scheduling can select paragraph repair at controlled frequency
+  ---
+  duration_ms: 9.759458
+  type: 'test'
+  ...
+# Subtest: focused scheduling avoids immediately repeating the only paragraph item
+ok 28 - focused scheduling avoids immediately repeating the only paragraph item
+  ---
+  duration_ms: 0.524951
+  type: 'test'
+  ...
+# Subtest: focused scheduling avoids back-to-back paragraph mode in the runtime manifest
+ok 29 - focused scheduling avoids back-to-back paragraph mode in the runtime manifest
+  ---
+  duration_ms: 4.494293
+  type: 'test'
+  ...
+# Subtest: paragraph attempts update every included skill-by-mode facet
+ok 30 - paragraph attempts update every included skill-by-mode facet
+  ---
+  duration_ms: 4.043473
+  type: 'test'
+  ...
+# Subtest: missing reporting comma is rejected even with reportingPosition any (double quotes)
+ok 31 - missing reporting comma is rejected even with reportingPosition any (double quotes)
+  ---
+  duration_ms: 2.86984
+  type: 'test'
+  ...
+# Subtest: missing reporting comma produces speech.reporting_comma_missing tag
+ok 32 - missing reporting comma produces speech.reporting_comma_missing tag
+  ---
+  duration_ms: 0.499522
+  type: 'test'
+  ...
+# Subtest: reporting comma present is accepted (double quotes)
+ok 33 - reporting comma present is accepted (double quotes)
+  ---
+  duration_ms: 0.18088
+  type: 'test'
+  ...
+# Subtest: reporting-after form is accepted (double quotes)
+ok 34 - reporting-after form is accepted (double quotes)
+  ---
+  duration_ms: 0.299515
+  type: 'test'
+  ...
+# Subtest: missing reporting comma is rejected with curly quotes
+ok 35 - missing reporting comma is rejected with curly quotes
+  ---
+  duration_ms: 0.483249
+  type: 'test'
+  ...
+# Subtest: reporting comma present is accepted with curly quotes
+ok 36 - reporting comma present is accepted with curly quotes
+  ---
+  duration_ms: 0.132955
+  type: 'test'
+  ...
+# Subtest: reporting-after form is accepted with curly quotes
+ok 37 - reporting-after form is accepted with curly quotes
+  ---
+  duration_ms: 1.44063
+  type: 'test'
+  ...
+# Subtest: missing reporting comma is rejected with single quotes
+ok 38 - missing reporting comma is rejected with single quotes
+  ---
+  duration_ms: 0.334497
+  type: 'test'
+  ...
+# Subtest: reporting comma present is accepted with single quotes
+ok 39 - reporting comma present is accepted with single quotes
+  ---
+  duration_ms: 0.305235
+  type: 'test'
+  ...
+# Subtest: reporting-after form is accepted with single quotes
+ok 40 - reporting-after form is accepted with single quotes
+  ---
+  duration_ms: 0.349472
+  type: 'test'
+  ...
+# Subtest: reportingPosition before rejects reporting-after shape
+ok 41 - reportingPosition before rejects reporting-after shape
+  ---
+  duration_ms: 0.211034
+  type: 'test'
+  ...
+# Subtest: reportingPosition before accepts reporting-before shape
+ok 42 - reportingPosition before accepts reporting-before shape
+  ---
+  duration_ms: 0.113852
+  type: 'test'
+  ...
+# Subtest: reportingPosition after rejects reporting-before shape
+ok 43 - reportingPosition after rejects reporting-before shape
+  ---
+  duration_ms: 0.096816
+  type: 'test'
+  ...
+# Subtest: reportingPosition after accepts reporting-after shape
+ok 44 - reportingPosition after accepts reporting-after shape
+  ---
+  duration_ms: 0.084354
+  type: 'test'
+  ...
+# Subtest: real sp_transfer_question item: missing comma rejected
+ok 45 - real sp_transfer_question item: missing comma rejected
+  ---
+  duration_ms: 0.084099
+  type: 'test'
+  ...
+# Subtest: real sp_transfer_question item: with comma accepted
+ok 46 - real sp_transfer_question item: with comma accepted
+  ---
+  duration_ms: 0.07536
+  type: 'test'
+  ...
+# Subtest: real sp_transfer_question item: reporting-after accepted
+ok 47 - real sp_transfer_question item: reporting-after accepted
+  ---
+  duration_ms: 0.069896
+  type: 'test'
+  ...
+# Subtest: evaluateSpeechRubric returns reporting_clause facet false for missing comma
+ok 48 - evaluateSpeechRubric returns reporting_clause facet false for missing comma
+  ---
+  duration_ms: 0.08238
+  type: 'test'
+  ...
+# Subtest: evaluateSpeechRubric returns reporting_position facet true for any position
+ok 49 - evaluateSpeechRubric returns reporting_position facet true for any position
+  ---
+  duration_ms: 0.062275
+  type: 'test'
+  ...
+# Subtest: evaluateSpeechRubric returns reporting_position facet false for wrong position
+ok 50 - evaluateSpeechRubric returns reporting_position facet false for wrong position
+  ---
+  duration_ms: 0.058
+  type: 'test'
+  ...
+# Subtest: speech-only shape (no reporting clause) is accepted with reportingPosition: any
+ok 51 - speech-only shape (no reporting clause) is accepted with reportingPosition: any
+  ---
+  duration_ms: 0.080192
+  type: 'test'
+  ...
+1..51
+# tests 51
+# suites 0
+# pass 51
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 538.408607

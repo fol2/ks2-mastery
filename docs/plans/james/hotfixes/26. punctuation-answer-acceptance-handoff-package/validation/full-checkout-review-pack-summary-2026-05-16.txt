@@ -1,0 +1,1 @@
+QA pack written to docs\plans\james\hotfixes\26. punctuation-answer-acceptance-handoff-package\validation\full-checkout-punctuation-review-pack-2026-05-16.json

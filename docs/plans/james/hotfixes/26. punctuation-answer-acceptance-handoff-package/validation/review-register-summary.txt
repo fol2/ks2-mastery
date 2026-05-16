@@ -1,0 +1,8 @@
+path= /mnt/data/ks2-punctuation-work/reports/punctuation/punctuation-qg-p20-review-register.json
+status= PASS
+schemaVersion= 1
+releaseId= punctuation-qg-p24-15072-2026-05-13
+familyDecisions= 126
+family_decision_counts= {'approved': 126}
+fixedBank_groups= 4
+fixedBank_values= {'status': 'inherited-approved', 'reviewer': 'p12-p14-fixed-bank-governance', 'scope': 'fixed-bank', 'rationale': 'Fixed bank was already part of the P14 delivered runtime; P20 generated duplicate checks report legacy fixed duplicates separately.'}

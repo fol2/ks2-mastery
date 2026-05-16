@@ -1,0 +1,731 @@
+{
+  "releaseId": "punctuation-qg-p24-15072-2026-05-13",
+  "productionDepth": 120,
+  "runtimeItems": 15072,
+  "generatedItems": 14560,
+  "fixedItems": 512,
+  "results": {
+    "duplicateTerminal": {
+      "acceptedIncorrectCount": 506,
+      "byFamilyMode": {
+        "fixed:sp_insert_question:insert": 1,
+        "fixed:sp_fix_question:fix": 1,
+        "fixed:pg_fronted_speech:paragraph": 1,
+        "fixed:pg_parenthesis_speech:paragraph": 1,
+        "fixed:pg_colon_semicolon:paragraph": 1,
+        "fixed:pg_apostrophe_mix:paragraph": 1,
+        "generated:gen_apostrophe_mix_paragraph:paragraph": 100,
+        "generated:gen_speech_insert:insert": 100,
+        "generated:gen_fronted_speech_paragraph:paragraph": 100,
+        "generated:gen_colon_semicolon_paragraph:paragraph": 100,
+        "generated:gen_parenthesis_speech_paragraph:paragraph": 100
+      },
+      "examples": [
+        {
+          "id": "sp_insert_question",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "insert",
+          "skillIds": [
+            "speech"
+          ],
+          "model": "Ella asked, \"Can we start now?\"",
+          "mutated": "Ella asked, \"Can we start now??\"",
+          "note": "This is a spoken question, so the question mark belongs inside the inverted commas.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "sp_fix_question",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "fix",
+          "skillIds": [
+            "speech"
+          ],
+          "model": "\"Where are we meeting?\" asked Zara.",
+          "mutated": "\"Where are we meeting?\" asked Zara..",
+          "note": "The question mark belongs inside the closing inverted comma because it is part of the spoken words.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "pg_fronted_speech",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "paragraph",
+          "skillIds": [
+            "fronted_adverbial",
+            "speech"
+          ],
+          "model": "After lunch, Mia asked, \"Can we start now?\"",
+          "mutated": "After lunch, Mia asked, \"Can we start now??\"",
+          "note": "The fronted adverbial needs a comma, and the spoken question needs inverted commas and a question mark inside the speech.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "pg_parenthesis_speech",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "paragraph",
+          "skillIds": [
+            "parenthesis",
+            "speech"
+          ],
+          "model": "The museum, a former station, was busy. Noor said, \"The queue is moving.\"",
+          "mutated": "The museum, a former station, was busy. Noor said, \"The queue is moving..\"",
+          "note": "The extra detail is marked as parenthesis, and the spoken sentence is punctuated inside inverted commas.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "pg_colon_semicolon",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "paragraph",
+          "skillIds": [
+            "colon_list",
+            "semicolon"
+          ],
+          "model": "The kit included three tools: a torch, a rope and a map. The weather changed; the team packed quickly.",
+          "mutated": "The kit included three tools: a torch, a rope and a map. The weather changed; the team packed quickly..",
+          "note": "A colon introduces the list, and a semi-colon joins the related clauses.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "pg_apostrophe_mix",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "We can't find the children's coats. The girls' bags are in the hall.",
+          "mutated": "We can't find the children's coats. The girls' bags are in the hall..",
+          "note": "Can't is a contraction, children's is an irregular plural possession, and girls' shows possession by more than one girl.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_aeyym4_1",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "I can't forget the wildlife monitors' posters. The box was beside the art studio.",
+          "mutated": "I can't forget the wildlife monitors' posters. The box was beside the art studio..",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_aoykb3_2",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "You shouldn't forget the wildlife leaders' clipboards. The box was beside the wildlife centre.",
+          "mutated": "You shouldn't forget the wildlife leaders' clipboards. The box was beside the wildlife centre..",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_ayy602_3",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "It isn't safe to forget the wildlife helpers' whistles. The box was beside the greenhouse.",
+          "mutated": "It isn't safe to forget the wildlife helpers' whistles. The box was beside the greenhouse..",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_b8xrp1_4",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "You're ready to check the wildlife captains' weather charts. The box was beside the archive room.",
+          "mutated": "You're ready to check the wildlife captains' weather charts. The box was beside the archive room..",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_9b0ju8_5",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "They'll check the choir helpers' compasses. The box was beside the forest path.",
+          "mutated": "They'll check the choir helpers' compasses. The box was beside the forest path..",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_9l05j7_6",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "She's ready to check the choir captains' model bridges. The box was beside the workshop.",
+          "mutated": "She's ready to check the choir captains' model bridges. The box was beside the workshop..",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        }
+      ]
+    },
+    "noTerminal": {
+      "acceptedIncorrectCount": 102,
+      "byFamilyMode": {
+        "fixed:sp_fix_question:fix": 1,
+        "fixed:pg_apostrophe_mix:paragraph": 1,
+        "generated:gen_apostrophe_mix_paragraph:paragraph": 100
+      },
+      "examples": [
+        {
+          "id": "sp_fix_question",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "fix",
+          "skillIds": [
+            "speech"
+          ],
+          "model": "\"Where are we meeting?\" asked Zara.",
+          "mutated": "\"Where are we meeting?\" asked Zara",
+          "note": "The question mark belongs inside the closing inverted comma because it is part of the spoken words.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "pg_apostrophe_mix",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "We can't find the children's coats. The girls' bags are in the hall.",
+          "mutated": "We can't find the children's coats. The girls' bags are in the hall",
+          "note": "Can't is a contraction, children's is an irregular plural possession, and girls' shows possession by more than one girl.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_aeyym4_1",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "I can't forget the wildlife monitors' posters. The box was beside the art studio.",
+          "mutated": "I can't forget the wildlife monitors' posters. The box was beside the art studio",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_aoykb3_2",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "You shouldn't forget the wildlife leaders' clipboards. The box was beside the wildlife centre.",
+          "mutated": "You shouldn't forget the wildlife leaders' clipboards. The box was beside the wildlife centre",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_ayy602_3",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "It isn't safe to forget the wildlife helpers' whistles. The box was beside the greenhouse.",
+          "mutated": "It isn't safe to forget the wildlife helpers' whistles. The box was beside the greenhouse",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_b8xrp1_4",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "You're ready to check the wildlife captains' weather charts. The box was beside the archive room.",
+          "mutated": "You're ready to check the wildlife captains' weather charts. The box was beside the archive room",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_9b0ju8_5",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "They'll check the choir helpers' compasses. The box was beside the forest path.",
+          "mutated": "They'll check the choir helpers' compasses. The box was beside the forest path",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_9l05j7_6",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "She's ready to check the choir captains' model bridges. The box was beside the workshop.",
+          "mutated": "She's ready to check the choir captains' model bridges. The box was beside the workshop",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_9uzr86_7",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "I can't forget the sailing monitors' library cards. The box was beside the book corner.",
+          "mutated": "I can't forget the sailing monitors' library cards. The box was beside the book corner",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_a4zcx5_8",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "You shouldn't forget the sailing leaders' magnifying glasses. The box was beside the riverbank.",
+          "mutated": "You shouldn't forget the sailing leaders' magnifying glasses. The box was beside the riverbank",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_cmvs5w_9",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "It isn't safe to forget the sailing helpers' safety cones. The box was beside the football pitch.",
+          "mutated": "It isn't safe to forget the sailing helpers' safety cones. The box was beside the football pitch",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_cwvduv_10",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "You're ready to check the sailing captains' helmets. The box was beside the bird hide.",
+          "mutated": "You're ready to check the sailing captains' helmets. The box was beside the bird hide",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        }
+      ]
+    },
+    "lowercaseStart": {
+      "acceptedIncorrectCount": 305,
+      "byFamilyMode": {
+        "fixed:bp_insert_kit:insert": 1,
+        "fixed:bp_fix_consistency:fix": 1,
+        "fixed:bp_transfer_class:transfer": 1,
+        "fixed:pg_bullet_consistency:paragraph": 1,
+        "fixed:pg_apostrophe_mix:paragraph": 1,
+        "generated:gen_apostrophe_mix_paragraph:paragraph": 100,
+        "generated:gen_bullet_points_fix:fix": 100,
+        "generated:gen_bullet_points_paragraph:paragraph": 100
+      },
+      "examples": [
+        {
+          "id": "bp_insert_kit",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "insert",
+          "skillIds": [
+            "bullet_points"
+          ],
+          "model": "Bring:\n- a drink\n- a hat\n- a sketchbook",
+          "mutated": "bring:\n- a drink\n- a hat\n- a sketchbook",
+          "note": "The stem introduces the bullet list and the items are marked consistently.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "bp_fix_consistency",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "fix",
+          "skillIds": [
+            "bullet_points"
+          ],
+          "model": "Bring:\n- a drink\n- a hat\n- a sketchbook",
+          "mutated": "bring:\n- a drink\n- a hat\n- a sketchbook",
+          "note": "The stem introduces the bullet list and the items are marked consistently.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "bp_transfer_class",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "bullet_points"
+          ],
+          "model": "Bring:\n- a drink\n- a hat\n- a sketchbook",
+          "mutated": "bring:\n- a drink\n- a hat\n- a sketchbook",
+          "note": "The stem introduces the bullet list and the items are marked consistently.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "pg_bullet_consistency",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "paragraph",
+          "skillIds": [
+            "bullet_points"
+          ],
+          "model": "Bring:\n- a drink\n- a hat\n- a sketchbook",
+          "mutated": "bring:\n- a drink\n- a hat\n- a sketchbook",
+          "note": "The stem needs a colon, each bullet stays on its own line, and the bullet punctuation is consistent.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "pg_apostrophe_mix",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "We can't find the children's coats. The girls' bags are in the hall.",
+          "mutated": "we can't find the children's coats. The girls' bags are in the hall.",
+          "note": "Can't is a contraction, children's is an irregular plural possession, and girls' shows possession by more than one girl.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_aeyym4_1",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "I can't forget the wildlife monitors' posters. The box was beside the art studio.",
+          "mutated": "i can't forget the wildlife monitors' posters. The box was beside the art studio.",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_aoykb3_2",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "You shouldn't forget the wildlife leaders' clipboards. The box was beside the wildlife centre.",
+          "mutated": "you shouldn't forget the wildlife leaders' clipboards. The box was beside the wildlife centre.",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_ayy602_3",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "It isn't safe to forget the wildlife helpers' whistles. The box was beside the greenhouse.",
+          "mutated": "it isn't safe to forget the wildlife helpers' whistles. The box was beside the greenhouse.",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_b8xrp1_4",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "You're ready to check the wildlife captains' weather charts. The box was beside the archive room.",
+          "mutated": "you're ready to check the wildlife captains' weather charts. The box was beside the archive room.",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_9b0ju8_5",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "They'll check the choir helpers' compasses. The box was beside the forest path.",
+          "mutated": "they'll check the choir helpers' compasses. The box was beside the forest path.",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_9l05j7_6",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "She's ready to check the choir captains' model bridges. The box was beside the workshop.",
+          "mutated": "she's ready to check the choir captains' model bridges. The box was beside the workshop.",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "gen_apostrophe_mix_paragraph_9uzr86_7",
+          "source": "generated",
+          "familyId": "gen_apostrophe_mix_paragraph",
+          "mode": "paragraph",
+          "skillIds": [
+            "apostrophe_contractions",
+            "apostrophe_possession"
+          ],
+          "model": "I can't forget the sailing monitors' library cards. The box was beside the book corner.",
+          "mutated": "i can't forget the sailing monitors' library cards. The box was beside the book corner.",
+          "note": "The passage needs apostrophes for both the contraction and the possessive noun phrase.",
+          "misconceptionTags": []
+        }
+      ]
+    },
+    "appendExtra": {
+      "acceptedIncorrectCount": 18,
+      "byFamilyMode": {
+        "fixed:se_transfer_why:transfer": 1,
+        "fixed:se_transfer_where:transfer": 1,
+        "fixed:lc_transfer_trip:transfer": 1,
+        "fixed:ac_transfer_contractions:transfer": 1,
+        "fixed:ac_transfer_dont_theyre:transfer": 1,
+        "fixed:ap_transfer_possession:transfer": 1,
+        "fixed:sp_transfer_question:transfer": 1,
+        "fixed:sp_fa_transfer_at_last_speech:transfer": 1,
+        "fixed:fa_transfer_after_lunch:transfer": 1,
+        "fixed:cc_transfer_morning:transfer": 1,
+        "fixed:cc_transfer_after_the_match:transfer": 1,
+        "fixed:sc_transfer_rain_pitch:transfer": 1,
+        "fixed:dc_transfer_flooded_route:transfer": 1,
+        "fixed:dc_transfer_curtain_rose:transfer": 1,
+        "fixed:hy_transfer_well_known:transfer": 1,
+        "fixed:hy_transfer_man_eating_shark:transfer": 1,
+        "fixed:hy_transfer_part_time_job:transfer": 1,
+        "fixed:pa_transfer_library:transfer": 1
+      },
+      "examples": [
+        {
+          "id": "se_transfer_why",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "sentence_endings"
+          ],
+          "model": "Why was the gate still open?",
+          "mutated": "Why was the gate still open extra?",
+          "note": "That begins like a question and ends with a question mark.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "se_transfer_where",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "sentence_endings"
+          ],
+          "model": "Where did the trail begin?",
+          "mutated": "Where did the trail begin extra?",
+          "note": "That begins like a question and ends with a question mark.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "lc_transfer_trip",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "list_commas"
+          ],
+          "model": "For the trip, we packed torches, maps and water.",
+          "mutated": "For the trip, we packed torches, maps and water extra.",
+          "note": "The list items are preserved and separated clearly.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "ac_transfer_contractions",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "apostrophe_contractions"
+          ],
+          "model": "We can't leave yet because we're still tidying up.",
+          "mutated": "We can't leave yet because we're still tidying up extra.",
+          "note": "Good. The required punctuated forms are present.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "ac_transfer_dont_theyre",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "apostrophe_contractions"
+          ],
+          "model": "Don't worry because they're on the way.",
+          "mutated": "Don't worry because they're on the way extra.",
+          "note": "Good. The required punctuated forms are present.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "ap_transfer_possession",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "apostrophe_possession"
+          ],
+          "model": "The children's paintings were hanging beside the teachers' notices.",
+          "mutated": "The children's paintings were hanging beside the teachers' notices extra.",
+          "note": "Good. The required punctuated forms are present.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "sp_transfer_question",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "speech"
+          ],
+          "model": "Mia asked, \"Can we start now?\"",
+          "mutated": "Mia asked, \"Can we start now extra?\"",
+          "note": "The spoken words are punctuated as a question.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "sp_fa_transfer_at_last_speech",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "speech",
+            "fronted_adverbial"
+          ],
+          "model": "At last, Noah shouted, \"We made it!\"",
+          "mutated": "At last, Noah shouted, \"We made it extra!\"",
+          "note": "That combines a fronted adverbial with direct speech.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "fa_transfer_after_lunch",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "fronted_adverbial"
+          ],
+          "model": "After lunch, we practised our lines.",
+          "mutated": "After lunch, we practised our lines extra.",
+          "note": "The opening phrase is followed by a comma.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "cc_transfer_morning",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "comma_clarity"
+          ],
+          "model": "In the morning, the path was quiet.",
+          "mutated": "In the morning, the path was quiet extra.",
+          "note": "The opening phrase is followed by a comma.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "cc_transfer_after_the_match",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "comma_clarity"
+          ],
+          "model": "After the match, the team shook hands.",
+          "mutated": "After the match, the team shook hands extra.",
+          "note": "The opening phrase is followed by a comma.",
+          "misconceptionTags": []
+        },
+        {
+          "id": "sc_transfer_rain_pitch",
+          "source": "fixed",
+          "familyId": "",
+          "mode": "transfer",
+          "skillIds": [
+            "semicolon"
+          ],
+          "model": "The rain had stopped; the pitch was still slippery.",
+          "mutated": "The rain had stopped; the pitch was still slippery extra.",
+          "note": "The related clauses are joined with the target boundary mark.",
+          "misconceptionTags": []
+        }
+      ]
+    }
+  }
+}

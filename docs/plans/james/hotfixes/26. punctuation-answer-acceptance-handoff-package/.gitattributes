@@ -1,0 +1,4 @@
+patches/*.patch whitespace=-blank-at-eol,-blank-at-eof
+validation/*.log whitespace=-blank-at-eol
+validation/*.txt whitespace=-blank-at-eol,-blank-at-eof
+evidence/*.out whitespace=-blank-at-eol,-blank-at-eof
