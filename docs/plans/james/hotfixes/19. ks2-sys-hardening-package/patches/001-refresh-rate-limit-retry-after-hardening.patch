@@ -1,0 +1,202 @@
+--- a/src/platform/core/repositories/api.js
++++ b/src/platform/core/repositories/api.js
+@@ -208,8 +208,31 @@
+   return `/${['api', ...segments].join('/')}`;
+ }
+ 
++function parseRetryAfterSeconds(value, now = Date.now()) {
++  if (value === null || value === undefined || value === '') return null;
++  const numeric = Number(value);
++  if (Number.isFinite(numeric) && numeric >= 0) return Math.ceil(numeric);
++  const parsedDate = Date.parse(String(value));
++  if (Number.isFinite(parsedDate)) {
++    return Math.max(0, Math.ceil((parsedDate - Number(now || Date.now())) / 1000));
++  }
++  return null;
++}
++
++function responseRetryAfterSeconds(response, payload) {
++  const headerRetryAfter = parseRetryAfterSeconds(response?.headers?.get?.('retry-after'));
++  if (headerRetryAfter !== null) return headerRetryAfter;
++  return parseRetryAfterSeconds(payload?.retryAfterSeconds);
++}
++
++function bootstrapRetryAfterMs(error) {
++  const seconds = parseRetryAfterSeconds(error?.retryAfterSeconds ?? error?.payload?.retryAfterSeconds);
++  if (seconds === null) return null;
++  return Math.min(BOOTSTRAP_BACKOFF_MAX_MS, Math.max(0, seconds * 1000));
++}
++
+ class RepositoryHttpError extends Error {
+-  constructor({ url, method, status = 0, payload = null, text = '', correlationId = null }) {
++  constructor({ url, method, status = 0, payload = null, text = '', correlationId = null, retryAfterSeconds = null }) {
+     const message = payload?.message
+       || (typeof text === 'string' && text.trim())
+       || `Repository sync failed (${status}).`;
+@@ -221,7 +244,8 @@
+     this.payload = payload;
+     this.text = text;
+     this.code = payload?.code || null;
+-    this.retryable = status >= 500 || status === 0;
++    this.retryAfterSeconds = parseRetryAfterSeconds(retryAfterSeconds);
++    this.retryable = this.status === 429 || this.status >= 500 || this.status === 0;
+     this.correlationId = correlationId || payload?.correlationId || payload?.requestId || null;
+   }
+ }
+@@ -297,6 +321,7 @@
+       payload,
+       text,
+       correlationId: payload?.mutation?.correlationId || payload?.correlationId || payload?.requestId || null,
++      retryAfterSeconds: responseRetryAfterSeconds(response, payload),
+     });
+   }
+ 
+@@ -1069,7 +1094,7 @@
+ 
+ function classifyError(error, fallbackScope = 'remote-sync') {
+   if (error instanceof RepositoryHttpError) {
+-    const retryable = error.status >= 500 || error.status === 0;
++    const retryable = error.status === 429 || error.status >= 500 || error.status === 0;
+     const staleWrite = error.status === 409 && error.code === 'stale_write';
+     return createPersistenceError({
+       phase: error.status === 409 ? 'remote-conflict' : 'remote-write',
+@@ -1084,6 +1109,7 @@
+         payload: error.payload && typeof error.payload === 'object' ? error.payload : null,
+         url: error.url,
+         method: error.method,
++        retryAfterSeconds: error.retryAfterSeconds,
+       },
+     });
+   }
+@@ -1112,7 +1138,7 @@
+ 
+ function isBootstrapBackoffError(error) {
+   if (!(error instanceof RepositoryHttpError)) return false;
+-  if (error.status >= 500) return true;
++  if (error.status >= 500 || error.status === 429) return true;
+ 
+   const signal = [
+     error.code,
+@@ -1271,7 +1297,7 @@
+ 
+   function scheduleBootstrapBackoff(error) {
+     const attempt = Math.max(1, Number(bootstrapBackoff?.attempt || 0) + 1);
+-    const retryAfterMs = bootstrapBackoffDelay(attempt, random);
++    const retryAfterMs = bootstrapRetryAfterMs(error) ?? bootstrapBackoffDelay(attempt, random);
+     const retryAt = currentTime() + retryAfterMs;
+     bootstrapBackoff = {
+       attempt,
+--- a/worker/src/errors.js
++++ b/worker/src/errors.js
+@@ -161,13 +161,20 @@
+   }
+ }
+ 
++function retryAfterHeader(extra = {}) {
++  const seconds = Number(extra?.retryAfterSeconds);
++  if (!Number.isFinite(seconds) || seconds < 0) return null;
++  return String(Math.ceil(seconds));
++}
++
+ export function errorResponse(error) {
+   if (error instanceof HttpError) {
++    const retryAfter = retryAfterHeader(error.extra);
+     return json({
+       ok: false,
+       message: error.message,
+       ...error.extra,
+-    }, error.status);
++    }, error.status, retryAfter ? { 'retry-after': retryAfter } : {});
+   }
+ 
+   return json({
+--- a/tests/persistence.test.js
++++ b/tests/persistence.test.js
+@@ -570,6 +570,73 @@
+   const recovered = await reloadedDuringBackoff.persistence.retry();
+ 
+   assert.equal(bootstrapRequestCount(), 3);
++  assert.equal(recovered.mode, 'remote-sync');
++  assert.equal(recovered.lastError, null);
++});
++
++test('bootstrap 429 Retry-After with a usable cache degrades once and persists reload backoff', async () => {
++  const storage = installMemoryStorage();
++  const server = createMockRepositoryServer({ learners: learnerSnapshot() });
++  let now = 1_000;
++  let rateLimitBootstrap = false;
++  let bootstrapRequests = 0;
++  const fetchWithRetryAfter = async (input, init = {}) => {
++    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
++    const method = String(init?.method || 'GET').toUpperCase();
++    if (url.pathname === '/api/bootstrap' && method === 'GET') {
++      bootstrapRequests += 1;
++      if (rateLimitBootstrap) {
++        return new Response(JSON.stringify({
++          ok: false,
++          code: 'bootstrap_rate_limited',
++          message: 'Bootstrap is cooling down after repeated refreshes.',
++        }), {
++          status: 429,
++          headers: {
++            'content-type': 'application/json; charset=utf-8',
++            'retry-after': '7',
++          },
++        });
++      }
++    }
++    return server.fetch(input, init);
++  };
++  const commonOptions = {
++    baseUrl: 'https://repo.test',
++    fetch: fetchWithRetryAfter,
++    storage,
++    now: () => now,
++    random: () => 0,
++  };
++
++  const warmRepositories = createApiPlatformRepositories(commonOptions);
++  await warmRepositories.hydrate();
++  assert.equal(bootstrapRequests, 1);
++
++  rateLimitBootstrap = true;
++  const restoredRepositories = createApiPlatformRepositories(commonOptions);
++  await restoredRepositories.hydrate();
++
++  const degraded = restoredRepositories.persistence.read();
++  assert.equal(bootstrapRequests, 2);
++  assert.equal(degraded.mode, 'degraded');
++  assert.equal(degraded.trustedState, 'local-cache');
++  assert.equal(degraded.cacheState, 'stale-copy');
++  assert.equal(degraded.lastError.code, 'bootstrap_rate_limited');
++  assert.equal(degraded.lastError.details.retryAfterSeconds, 7);
++  assert.equal(degraded.lastError.details.bootstrapBackoff.retryAfterMs, 7_000);
++  assert.equal(JSON.parse(storage.getItem(DEFAULT_API_CACHE_STORAGE_KEY)).bootstrapBackoff.retryAt, 8_000);
++
++  const reloadedDuringBackoff = createApiPlatformRepositories(commonOptions);
++  await reloadedDuringBackoff.hydrate();
++  assert.equal(bootstrapRequests, 2);
++  assert.equal(reloadedDuringBackoff.persistence.read().lastError.code, 'bootstrap_retry_backoff');
++
++  rateLimitBootstrap = false;
++  now = 8_000;
++  const recovered = await reloadedDuringBackoff.persistence.retry();
++
++  assert.equal(bootstrapRequests, 3);
+   assert.equal(recovered.mode, 'remote-sync');
+   assert.equal(recovered.lastError, null);
+ });
+--- a/tests/worker-rate-limit-ipv6-propagation.test.js
++++ b/tests/worker-rate-limit-ipv6-propagation.test.js
+@@ -255,6 +255,11 @@
+     const payload = await response.json().catch(() => ({}));
+     assert.equal(response.status, 400, 'demo create should return a BadRequestError when rate-limited');
+     assert.equal(payload.code, 'demo_rate_limited', 'demo rate-limit code must propagate');
++    assert.equal(
++      response.headers.get('retry-after'),
++      String(payload.retryAfterSeconds),
++      'rate-limited HttpError responses should surface retry-after for browser/client backoff',
++    );
+   } finally {
+     server.close();
+   }

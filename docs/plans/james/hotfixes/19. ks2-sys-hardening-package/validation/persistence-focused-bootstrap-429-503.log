@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: bootstrap 503 with a usable cache degrades once and backs off immediate full-bootstrap retries
+ok 1 - bootstrap 503 with a usable cache degrades once and backs off immediate full-bootstrap retries
+  ---
+  duration_ms: 231.898041
+  type: 'test'
+  ...
+# Subtest: bootstrap 429 Retry-After with a usable cache degrades once and persists reload backoff
+ok 2 - bootstrap 429 Retry-After with a usable cache degrades once and persists reload backoff
+  ---
+  duration_ms: 206.077418
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1266.16795

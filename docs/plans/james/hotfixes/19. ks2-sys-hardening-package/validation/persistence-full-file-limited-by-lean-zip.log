@@ -1,0 +1,176 @@
+TAP version 13
+# Subtest: platform export and import preserve Grammar state, preferences, and adult summary drafts
+ok 1 - platform export and import preserve Grammar state, preferences, and adult summary drafts
+  ---
+  duration_ms: 6.292548
+  type: 'test'
+  ...
+# [ks2-sync] {"event":"sync.operation_failed","id":"sync-mp88k3a2-49t640cb","kind":"learners.write","scopeType":"account","scopeId":"account","expectedRevision":0,"error":{"phase":"remote-write","scope":"learners","code":"remote_error","message":"remote unavailable","retryable":true,"correlationId":null,"resolution":"retry-sync","details":{"status":503,"payload":{"ok":false,"message":"remote unavailable"},"url":"https://repo.test/api/learners","method":"PUT","retryAfterSeconds":null},"at":1778929272220},"at":"2026-05-16T11:01:12.220Z"}
+# Subtest: retired legacy runtime pending writes are discarded once remote bootstrap succeeds
+not ok 2 - retired legacy runtime pending writes are discarded once remote bootstrap succeeds
+  ---
+  duration_ms: 925.596246
+  type: 'test'
+  location: '/mnt/data/ks2-sys-hardening-work/tests/persistence.test.js:140:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Build failed with 1 error:
+    src/surfaces/hubs/AdminVisualEngineSection.jsx:9:35: ERROR: Could not resolve "../../../reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json"
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    failureErrorWithLog (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1748:15)
+    /mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1207:25
+    /mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1159:52
+    buildResponseToResult (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1205:7)
+    /mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1232:16
+    responseCallbacks.<computed> (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:884:9)
+    handleIncomingPacket (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:939:12)
+    Socket.readFromStdout (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:862:7)
+    Socket.emit (node:events:518:28)
+    addChunk (node:internal/streams/readable:561:12)
+  ...
+# [ks2-sync] {"event":"sync.operation_failed","id":"sync-mp88k3aa-tmt3rtqv","kind":"learners.write","scopeType":"account","scopeId":"account","expectedRevision":0,"error":{"phase":"remote-write","scope":"learners","code":"remote_error","message":"try again later","retryable":true,"correlationId":null,"resolution":"retry-sync","details":{"status":503,"payload":{"ok":false,"message":"try again later"},"url":"https://repo.test/api/learners","method":"PUT","retryAfterSeconds":null},"at":1778929272227},"at":"2026-05-16T11:01:12.227Z"}
+# Subtest: remote write failure is surfaced as degraded persistence instead of pretending the write succeeded
+ok 3 - remote write failure is surfaced as degraded persistence instead of pretending the write succeeded
+  ---
+  duration_ms: 9.48665
+  type: 'test'
+  ...
+# Subtest: retryable remote failures can leave degraded mode and clear pending writes once sync succeeds
+ok 4 - retryable remote failures can leave degraded mode and clear pending writes once sync succeeds
+  ---
+  duration_ms: 109.511511
+  type: 'test'
+  ...
+# Subtest: successful sync logging is quiet by default and available behind the debug flag
+ok 5 - successful sync logging is quiet by default and available behind the debug flag
+  ---
+  duration_ms: 10.930245
+  type: 'test'
+  ...
+# [ks2-sync] {"event":"sync.operation_failed","id":"sync-mp88k3dr-a1bj6glt","kind":"learners.write","scopeType":"account","scopeId":"account","expectedRevision":0,"error":{"phase":"remote-write","scope":"learners","code":"remote_error","message":"write failed","retryable":true,"correlationId":null,"resolution":"retry-sync","details":{"status":503,"payload":{"ok":false,"message":"write failed"},"url":"https://repo.test/api/learners","method":"PUT","retryAfterSeconds":null},"at":1778929272351},"at":"2026-05-16T11:01:12.352Z"}
+# Subtest: in-flight remote writes stay in remote-sync mode instead of showing degraded
+ok 6 - in-flight remote writes stay in remote-sync mode instead of showing degraded
+  ---
+  duration_ms: 4.35051
+  type: 'test'
+  ...
+# [ks2-sync] {"event":"sync.operation_failed","id":"sync-mp88k3gq-x21gp524","kind":"learners.write","scopeType":"account","scopeId":"account","expectedRevision":0,"error":{"phase":"remote-write","scope":"learners","code":"remote_error","message":"worker offline","retryable":true,"correlationId":null,"resolution":"retry-sync","details":{"status":503,"payload":{"ok":false,"message":"worker offline"},"url":"https://repo.test/api/learners","method":"PUT","retryAfterSeconds":null},"at":1778929272458},"at":"2026-05-16T11:01:12.458Z"}
+# Subtest: reload after failed sync keeps the local cache ahead of stale remote data instead of losing the unsynced change
+ok 7 - reload after failed sync keeps the local cache ahead of stale remote data instead of losing the unsynced change
+  ---
+  duration_ms: 107.116464
+  type: 'test'
+  ...
+# [ks2-sync] {"event":"sync.operation_failed","id":"sync-mp88k3ma-uvh8c4ti","kind":"learners.write","scopeType":"account","scopeId":"account","expectedRevision":0,"error":{"phase":"remote-write","scope":"learners","code":"remote_error","message":"write failed","retryable":true,"correlationId":null,"resolution":"retry-sync","details":{"status":503,"payload":{"ok":false,"message":"write failed"},"url":"https://repo.test/api/learners","method":"PUT","retryAfterSeconds":null},"at":1778929272658},"at":"2026-05-16T11:01:12.658Z"}
+# Subtest: degraded persistence is rendered as explicit shell feedback and clears once sync is restored
+not ok 8 - degraded persistence is rendered as explicit shell feedback and clears once sync is restored
+  ---
+  duration_ms: 199.201328
+  type: 'test'
+  location: '/mnt/data/ks2-sys-hardening-work/tests/persistence.test.js:438:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Build failed with 1 error:
+    src/surfaces/hubs/AdminVisualEngineSection.jsx:9:35: ERROR: Could not resolve "../../../reports/ui-refactor/ui-refactor-p4-production-visual-evidence-2026-05-01.json"
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    failureErrorWithLog (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1748:15)
+    /mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1207:25
+    /mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1159:52
+    buildResponseToResult (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1205:7)
+    /mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:1232:16
+    responseCallbacks.<computed> (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:884:9)
+    handleIncomingPacket (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:939:12)
+    Socket.readFromStdout (/mnt/data/ks2-sys-hardening-work/node_modules/esbuild/lib/main.js:862:7)
+    Socket.emit (node:events:518:28)
+    addChunk (node:internal/streams/readable:561:12)
+  ...
+# Subtest: api cache is scoped by auth session so degraded fallback does not leak between accounts
+ok 9 - api cache is scoped by auth session so degraded fallback does not leak between accounts
+  ---
+  duration_ms: 6.588699
+  type: 'test'
+  ...
+# Subtest: bootstrap 503 with a usable cache degrades once and backs off immediate full-bootstrap retries
+ok 10 - bootstrap 503 with a usable cache degrades once and backs off immediate full-bootstrap retries
+  ---
+  duration_ms: 206.160334
+  type: 'test'
+  ...
+# [ks2-sync] {"event":"sync.operation_failed","id":"sync-mp88k3xu-thx7odhg","kind":"learners.write","scopeType":"account","scopeId":"account","expectedRevision":0,"error":{"phase":"remote-write","scope":"learners","code":"remote_error","message":"write temporarily unavailable","retryable":true,"correlationId":null,"resolution":"retry-sync","details":{"status":503,"payload":{"ok":false,"message":"write temporarily unavailable"},"url":"https://repo.test/api/learners","method":"PUT","retryAfterSeconds":null},"at":1778929273075},"at":"2026-05-16T11:01:13.075Z"}
+# Subtest: bootstrap 429 Retry-After with a usable cache degrades once and persists reload backoff
+ok 11 - bootstrap 429 Retry-After with a usable cache degrades once and persists reload backoff
+  ---
+  duration_ms: 204.105331
+  type: 'test'
+  ...
+# Subtest: bootstrap backoff blocks retry flush from masking pending-write recovery state
+ok 12 - bootstrap backoff blocks retry flush from masking pending-write recovery state
+  ---
+  duration_ms: 208.943234
+  type: 'test'
+  ...
+# Subtest: bootstrap hydrate backs off when another tab is already refreshing a usable cache
+ok 13 - bootstrap hydrate backs off when another tab is already refreshing a usable cache
+  ---
+  duration_ms: 153.704562
+  type: 'test'
+  ...
+# Subtest: bootstrap hydrate backs off when another tab wins the coordination race
+ok 14 - bootstrap hydrate backs off when another tab wins the coordination race
+  ---
+  duration_ms: 133.651155
+  type: 'test'
+  ...
+# Subtest: bootstrap hydrate backs off when a confirmed lease is overwritten before fetch
+ok 15 - bootstrap hydrate backs off when a confirmed lease is overwritten before fetch
+  ---
+  duration_ms: 103.322584
+  type: 'test'
+  ...
+# Subtest: bootstrap coordination lease covers a slow in-flight refresh
+ok 16 - bootstrap coordination lease covers a slow in-flight refresh
+  ---
+  duration_ms: 153.035691
+  type: 'test'
+  ...
+# Subtest: bootstrap coordination backoff does not overwrite a fresher shared cache
+ok 17 - bootstrap coordination backoff does not overwrite a fresher shared cache
+  ---
+  duration_ms: 1.195805
+  type: 'test'
+  ...
+# Subtest: bootstrap failure backoff preserves a fresher shared cache and pending queue
+ok 18 - bootstrap failure backoff preserves a fresher shared cache and pending queue
+  ---
+  duration_ms: 103.404068
+  type: 'test'
+  ...
+# Subtest: subject command responses update the api cache without queuing broad runtime writes
+ok 19 - subject command responses update the api cache without queuing broad runtime writes
+  ---
+  duration_ms: 2.482896
+  type: 'test'
+  ...
+# Subtest: subject commands refresh stale learner revision without a second bootstrap
+ok 20 - subject commands refresh stale learner revision without a second bootstrap
+  ---
+  duration_ms: 2.199312
+  type: 'test'
+  ...
+# Subtest: subject commands fall back to bootstrap when stale revision hints are missing
+ok 21 - subject commands fall back to bootstrap when stale revision hints are missing
+  ---
+  duration_ms: 103.850031
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 19
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3562.617056

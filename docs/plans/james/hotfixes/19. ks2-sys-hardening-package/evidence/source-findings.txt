@@ -1,0 +1,197 @@
+Key searches and source findings
+================================
+
+Bootstrap 429/backoff gap in original ZIP:
+224:    this.retryable = status >= 500 || status === 0;
+1072:    const retryable = error.status >= 500 || error.status === 0;
+1115:  if (error.status >= 500) return true;
+
+HttpError retryAfterSeconds/header gap in original ZIP:
+export function errorResponse(error) {
+  if (error instanceof HttpError) {
+    return json({
+      ok: false,
+      message: error.message,
+      ...error.extra,
+    }, error.status);
+  }
+
+
+Rate limit helper currently emits Retry-After only where helper is used:
+// -- I1 (reviewer) — shared 429 helper --------------------------------
+//
+// Every rate-limit 429 response on the worker now flows through this
+// helper so the RFC 9110 `Retry-After` header is always emitted. HTTP
+// clients, browsers, and proxies use the header to back off cleanly
+// rather than busy-looping the endpoint. The payload keeps the same
+// JSON shape consumers have relied on (`ok`, `code`, `retryAfterSeconds`)
+// plus any caller-supplied extras (`message`, etc.).
+//
+// `retryAfterSeconds` is coerced to a finite non-negative integer; the
+// fall-back of 0 matches "retry immediately" per RFC 9110 and keeps the
+// rate-limit response consistent even if the caller passes an absurd
+// value.
+
+function sanitiseRetryAfter(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.ceil(n);
+}
+
+export function rateLimitResponse({ code, retryAfterSeconds = 0, extra = {} } = {}) {
+  const seconds = sanitiseRetryAfter(retryAfterSeconds);
+  const body = { ok: false, code, retryAfterSeconds: seconds, ...extra };
+  return new Response(JSON.stringify(body), {
+    status: 429,
+    headers: {
+      'content-type': 'application/json',
+      'retry-after': String(seconds),
+    },
+  });
+}
+
+Demo create limiter budget and error payload source:
+23:const DEMO_LIMITS = {
+24:  createIp: 30,
+85:    limit: DEMO_LIMITS.createIp,
+92:      code: 'demo_rate_limited',
+93:      retryAfterSeconds: result.retryAfterSeconds,
+102:    limit: DEMO_LIMITS.resetAccount,
+109:      code: 'demo_rate_limited',
+110:      retryAfterSeconds: result.retryAfterSeconds,
+125:      code: 'demo_rate_limited',
+126:      retryAfterSeconds: result.retryAfterSeconds,
+147:      limit: DEMO_LIMITS.commandIp,
+152:      limit: DEMO_LIMITS.commandAccount,
+157:      limit: DEMO_LIMITS.commandSession,
+162:      limit: DEMO_LIMITS.commandType,
+175:      limit: DEMO_LIMITS.parentHubIp,
+180:      limit: DEMO_LIMITS.parentHubAccount,
+185:      limit: DEMO_LIMITS.parentHubSession,
+202:      limit: DEMO_LIMITS.ttsIp,
+207:      limit: DEMO_LIMITS.ttsAccount,
+212:      limit: DEMO_LIMITS.ttsSession,
+217:      limit: DEMO_LIMITS.ttsFallbackType,
+230:      limit: DEMO_LIMITS.ttsLookupIp,
+235:      limit: DEMO_LIMITS.ttsLookupAccount,
+240:      limit: DEMO_LIMITS.ttsLookupSession,
+
+Update/deploy fallback evidence:
+index.html:98:  <script type="module" src="./src/bundles/app.bundle.js"></script>
+worker/src/security-headers.js:151:// `app.bundle.js` is deliberately excluded: it is a stable entry filename
+worker/src/security-headers.js:156:const STABLE_SOURCE_ENTRY_BUNDLES = new Set(['/src/bundles/app.bundle.js']);
+src/platform/react/ErrorBoundary.jsx:2:import { isChunkLoadError } from './chunk-load-detect.js';
+src/platform/react/ErrorBoundary.jsx:3:import { clearChunkReloadAttempt, scheduleChunkReloadOnce } from './chunk-load-recovery.js';
+src/platform/react/ErrorBoundary.jsx:20:// U7 hardening-residuals: chunk-load-specific fallback with a reload CTA.
+src/platform/react/ErrorBoundary.jsx:21:// When a React.lazy() chunk fails to load, the user sees a clear "Reload"
+src/platform/react/ErrorBoundary.jsx:23:// chunks from the server, which resolves the stale-deploy scenario.
+src/platform/react/ErrorBoundary.jsx:30:          A code update may have been deployed while you were using the app.
+src/platform/react/ErrorBoundary.jsx:31:          Reload the page to get the latest version.
+src/platform/react/ErrorBoundary.jsx:39:            Reload
+src/platform/react/ErrorBoundary.jsx:50:    clearChunkReloadAttempt();
+src/platform/react/ErrorBoundary.jsx:60:    scheduleChunkReloadOnce(error);
+src/platform/react/ErrorBoundary.jsx:65:      // U7: chunk-load errors get a dedicated reload CTA so the user
+src/platform/react/ErrorBoundary.jsx:66:      // can recover from stale-deploy chunk mismatches with one click.
+src/platform/react/chunk-load-recovery.js:1:import { isChunkLoadError } from './chunk-load-detect.js';
+src/platform/react/chunk-load-recovery.js:3:export const CHUNK_RELOAD_SESSION_KEY = 'ks2_chunk_reload_attempted';
+src/platform/react/chunk-load-recovery.js:21:export function clearChunkReloadAttempt(storage = readSessionStorage()) {
+src/platform/react/chunk-load-recovery.js:29:export function scheduleChunkReloadOnce(error, {
+
+Wrangler app hostname and build/deploy config excerpt:
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ks2-mastery",
+  "main": "./worker/src/index.js",
+  "compatibility_date": "2026-04-20",
+  "preview_urls": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  // U5 (sys-hardening p1): Cloudflare remote-build hosts run `npm install`
+  // as part of this command chain. `@playwright/test` is a devDependency but
+  // the deployed Worker never uses the Playwright browser. The repo root
+  // `.npmrc` sets `playwright_skip_browser_download=true`, which Playwright
+  // treats as equivalent to `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`, so every
+  // `npm install` (including this remote build) skips the ~300 MB Chromium
+  // download by default. No extra env var is required.
+  // (See `docs/operations/capacity.md#playwright-test-suite`.)
+  "build": {
+    "command": "npm run build && npm run assert:build-public && npm run audit:client"
+  },
+  "assets": {
+    "directory": "./dist/public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*",
+      "/demo",
+      "/src/*",
+      "/shared/*",
+      "/worker/*",
+      "/tests/*",
+      "/docs/*",
+      "/legacy/*",
+      "/migration-plan.md"
+    ]
+  },
+  "vars": {
+    "APP_NAME": "KS2 Mastery",
+    "APP_HOSTNAME": "ks2.eugnel.uk",
+    "AUTH_MODE": "production",
+    "ENVIRONMENT": "production",
+    "PUNCTUATION_SUBJECT_ENABLED": "true",
+    "SOCIAL_LOGIN_WIRE_ENABLED": "true",
+    "HERO_MODE_SHADOW_ENABLED": "false",
+    "HERO_MODE_LAUNCH_ENABLED": "false",
+    "HERO_MODE_CHILD_UI_ENABLED": "false",
+    "HERO_MODE_PROGRESS_ENABLED": "false",
+    "HERO_MODE_ECONOMY_ENABLED": "false",
+    "HERO_MODE_CAMP_ENABLED": "false"
+    // Secret: HERO_INTERNAL_ACCOUNTS — JSON array of account IDs for Ring 4
+    // internal production override. Listed accounts get all 6 Hero flags
+    // force-enabled regardless of the vars above. Set via:
+    //   npx wrangler secret put HERO_INTERNAL_ACCOUNTS
+    // Value: '["account-id-1","account-id-2"]'
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ks2-mastery-db",
+      "database_id": "6c63ae44-358d-43b8-8d24-9bd7ebacc0cb",
+      "migrations_dir": "./worker/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "SPELLING_AUDIO_BUCKET",
+      "bucket_name": "ks2-spelling-buffers"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LEARNER_LOCK",
+        "class_name": "LearnerLock"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v2-spelling-lock-sqlite",
+      "new_sqlite_classes": ["SpellingLockDO"]
+    },
+    {
+      "tag": "v3-replace-spelling-lock-with-learner-lock",
+      "deleted_classes": ["SpellingLockDO"],
+      "new_sqlite_classes": ["LearnerLock"]
+    }
+  ],
+  // U11 (P1.5 Phase C): daily KPI reconciliation + retention sweeps.
+  // Primary at 04:00 UTC with a fallback retry at 05:00 UTC so a
+  // crashed/locked primary recovers within an hour rather than 24h.
+  // See worker/src/index.js::runScheduledHandler for the entrypoint.
+  "triggers": {
+    "crons": ["0 4 * * *", "0 5 * * *"]
+  }
+}

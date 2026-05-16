@@ -45,6 +45,16 @@ const DEFAULT_EXCLUDES = [
   // Generated validation artefacts are useful in-repo, but not required for code review bundles.
   'reports/**',
   'output/**',
+  // Historical planning archives frequently contain heavy screenshots/log bundles.
+  'docs/plans/**/archive/**',
+  // Planning validation evidence can include very large logs/screenshots that are non-runtime.
+  'docs/plans/**/validation/**',
+  'docs/plans/**/*.log',
+  'docs/plans/**/*.png',
+  'docs/plans/**/*.jpg',
+  'docs/plans/**/*.jpeg',
+  'docs/plans/**/*.webp',
+  'docs/plans/**/*.zip',
 ];
 const TRACKED_PROFILE_EXCLUDES = [
   ...DEFAULT_EXCLUDES,

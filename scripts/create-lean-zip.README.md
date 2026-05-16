@@ -46,6 +46,14 @@ Default excludes still apply after profile selection:
 - `.worktrees/**`
 - `reports/**`
 - `output/**`
+- `docs/plans/**/archive/**`
+- `docs/plans/**/validation/**`
+- `docs/plans/**/*.log`
+- `docs/plans/**/*.png`
+- `docs/plans/**/*.jpg`
+- `docs/plans/**/*.jpeg`
+- `docs/plans/**/*.webp`
+- `docs/plans/**/*.zip`
 
 The `review` allowlist does not select `docs/plans/**` by default. The broader `tracked` profile also excludes `docs/plans/**` because planning packs frequently contain logs, screenshots, nested ZIPs, and historical patch bundles.
 
