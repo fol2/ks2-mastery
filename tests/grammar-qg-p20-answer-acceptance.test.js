@@ -239,6 +239,33 @@ test('P20b internal punctuation rewrites accept omission of only the incidental 
   );
 });
 
+test('P20d tense-aspect repair prompts do not leak the corrected answer', () => {
+  const forbiddenCorrectedFragments = [
+    /\bhave\s+finished\b/i,
+    /\bhad\s+packed\b/i,
+    /\bwas\s+chasing\b/i,
+    /\bhave\s+eaten\b/i,
+    /\bhad\s+left\b/i,
+  ];
+
+  for (let seed = 1; seed <= 30; seed += 1) {
+    const question = createGrammarQuestion({
+      templateId: 'qg_p18_p16_tense_aspect_fix_wrong_form',
+      seed,
+    });
+    const serialised = serialiseGrammarQuestion(question);
+
+    assert.equal(question.answerSpec.kind, 'manualReviewOnly');
+    assert.equal(question.manualReviewOnly, true);
+    assert.equal(question.nonScored, true);
+    assert.doesNotMatch(serialised.promptText, /(?:→|->)/, `seed ${seed} exposes the corrected answer arrow`);
+    assert.match(serialised.promptText, /^Fix this sentence so it uses the /);
+    for (const forbidden of forbiddenCorrectedFragments) {
+      assert.doesNotMatch(serialised.promptText, forbidden, `seed ${seed} leaks a corrected tense phrase`);
+    }
+  }
+});
+
 test('P20b possessive scenario prompts show the scenario after a colon', () => {
   for (const templateId of [
     'qg_p18_p18_apostrophes_possession_diagnostic_identify',

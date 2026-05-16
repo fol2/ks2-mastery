@@ -1,0 +1,5 @@
+
+> ks2-mastery@0.1.0 audit:grammar-qg:p20-quality
+> node scripts/audit-grammar-qg-p20-quality-hardening.mjs --out=reports/grammar/grammar-qg-p20-quality-hardening.json
+
+Grammar QG P20 quality-hardening audit: PASS -> D:\Coding\ks2-mastery\.worktrees\grammar-production-grade-handoff-20260516\reports\grammar\grammar-qg-p20-quality-hardening.json

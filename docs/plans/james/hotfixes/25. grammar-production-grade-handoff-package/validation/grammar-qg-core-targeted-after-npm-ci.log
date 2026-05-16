@@ -1,0 +1,167 @@
+### grammar-qg-core-targeted-after-npm-ci
+cmd: node --test tests/grammar-question-generator-audit.test.js tests/grammar-qg-p20-quality-hardening.test.js tests/grammar-qg-p21-pool-expansion.test.js tests/grammar-qg-p21-local-repetition.test.js tests/grammar-qg-p24-distractor-quality.test.js tests/grammar-qg-p25-feedback-learning-cue.test.js
+TAP version 13
+# Subtest: P20 quality-hardening audit passes a reviewer smoke window across all five phases
+ok 1 - P20 quality-hardening audit passes a reviewer smoke window across all five phases
+  ---
+  duration_ms: 1508.719086
+  type: 'test'
+  ...
+# Subtest: P20 metadata keeps recovered closed families visible for reviewers
+ok 2 - P20 metadata keeps recovered closed families visible for reviewers
+  ---
+  duration_ms: 0.783295
+  type: 'test'
+  ...
+# Subtest: P20 does not hide learner-facing prompt defects behind HTML stripping
+ok 3 - P20 does not hide learner-facing prompt defects behind HTML stripping
+  ---
+  duration_ms: 603.088419
+  type: 'test'
+  ...
+# Subtest: P20c generated source compaction preserves manual-review fairness flags
+ok 4 - P20c generated source compaction preserves manual-review fairness flags
+  ---
+  duration_ms: 61.169826
+  type: 'test'
+  ...
+# Subtest: P20c manual expansion freshness check tolerates Windows line endings
+ok 5 - P20c manual expansion freshness check tolerates Windows line endings
+  ---
+  duration_ms: 1.061639
+  type: 'test'
+  ...
+# Subtest: P20d apostrophes possession rewrite families do not share identical learner prompts
+ok 6 - P20d apostrophes possession rewrite families do not share identical learner prompts
+  ---
+  duration_ms: 22.368329
+  type: 'test'
+  ...
+# Subtest: P20d learner-facing surfaces do not collide across Grammar templates in the release window
+ok 7 - P20d learner-facing surfaces do not collide across Grammar templates in the release window
+  ---
+  duration_ms: 4536.256415
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+ok 8 - Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+  ---
+  duration_ms: 5035.052574
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+ok 9 - Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+  ---
+  duration_ms: 2.606457
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 templates are runtime-certified and safe to schedule
+ok 10 - Grammar QG P21 templates are runtime-certified and safe to schedule
+  ---
+  duration_ms: 0.526836
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 selected-response cases mark exactly one visible option correct
+ok 11 - Grammar QG P21 selected-response cases mark exactly one visible option correct
+  ---
+  duration_ms: 124.096571
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 explanation templates use concept-specific misconception options
+ok 12 - Grammar QG P21 explanation templates use concept-specific misconception options
+  ---
+  duration_ms: 82.355241
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 keeps the existing content release and template denominator
+ok 13 - Grammar QG P24 keeps the existing content release and template denominator
+  ---
+  duration_ms: 1.758409
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 removes generic explanation distractors from learner-visible choices
+ok 14 - Grammar QG P24 removes generic explanation distractors from learner-visible choices
+  ---
+  duration_ms: 2203.929693
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 keeps selected-response options unique and away from duplicate correct answers
+ok 15 - Grammar QG P24 keeps selected-response options unique and away from duplicate correct answers
+  ---
+  duration_ms: 1802.014067
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 visible-choice collector includes table row column fallbacks
+ok 16 - Grammar QG P24 visible-choice collector includes table row column fallbacks
+  ---
+  duration_ms: 0.978071
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 keeps manual-expansion explanation choices concept-specific
+ok 17 - Grammar QG P24 keeps manual-expansion explanation choices concept-specific
+  ---
+  duration_ms: 0.910607
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 renders stretch feedback only for correct practice feedback
+ok 18 - Grammar QG P24 renders stretch feedback only for correct practice feedback
+  ---
+  duration_ms: 890.091231
+  type: 'test'
+  ...
+# Subtest: Grammar P25 feedback renders the misconception hint as well as the answer after a miss
+ok 19 - Grammar P25 feedback renders the misconception hint as well as the answer after a miss
+  ---
+  duration_ms: 7482.095753
+  type: 'test'
+  ...
+# Subtest: Grammar P25 feedback renders a concept-specific stretch cue after a correct answer
+ok 20 - Grammar P25 feedback renders a concept-specific stretch cue after a correct answer
+  ---
+  duration_ms: 261.351508
+  type: 'test'
+  ...
+# Subtest: Grammar question-generator audit covers the current template inventory
+ok 21 - Grammar question-generator audit covers the current template inventory
+  ---
+  duration_ms: 1290.443427
+  type: 'test'
+  ...
+# Subtest: Grammar generated variants have stable answer-safe signatures
+ok 22 - Grammar generated variants have stable answer-safe signatures
+  ---
+  duration_ms: 895.098968
+  type: 'test'
+  ...
+# Subtest: Grammar question-generator P20 quality-recovery denominator assertions
+ok 23 - Grammar question-generator P20 quality-recovery denominator assertions
+  ---
+  duration_ms: 4714.844623
+  type: 'test'
+  ...
+# Subtest: Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+ok 24 - Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+  ---
+  duration_ms: 3102.537532
+  type: 'test'
+  ...
+# Subtest: Grammar generated variant signatures ignore choice shuffle order only
+ok 25 - Grammar generated variant signatures ignore choice shuffle order only
+  ---
+  duration_ms: 1.062699
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12580.69592
+
+real	0m12.729s
+user	0m39.050s
+sys	0m3.400s
+exit=0

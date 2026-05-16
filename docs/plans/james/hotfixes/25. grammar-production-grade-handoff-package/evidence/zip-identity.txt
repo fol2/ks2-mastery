@@ -1,0 +1,46 @@
+Source ZIP: /mnt/data/ks2-mastery-lean-05161311.zip
+ZIP size: 8065602 bytes
+e45296872ddb84c23f725d1a81eaf3aaf5fc55dde2f7d8ec38523023707f465d  /mnt/data/ks2-mastery-lean-05161311.zip
+    testing: ./.githooks/pre-push     OK
+No errors detected in compressed data of /mnt/data/ks2-mastery-lean-05161311.zip.
+
+Node/npm:
+v22.16.0
+10.9.2
+.nvmrc: 22
+
+Git metadata: absent
+
+Top-level dirs/files excerpt:
+
+.gitattributes
+.githooks
+.github
+.gitignore
+.npmrc
+.nvmrc
+AGENTS.md
+LEAN_ZIP_MANIFEST.txt
+README.md
+_headers
+content
+favicon.ico
+index.html
+legacy
+llms.txt
+manifest.webmanifest
+migration-plan.md
+package-lock.json
+package.json
+playwright.config.mjs
+robots.txt
+scripts
+shared
+sitemap.xml
+skills
+skills-lock.json
+src
+styles
+tests
+worker
+wrangler.jsonc

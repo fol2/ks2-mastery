@@ -1,6 +1,5 @@
-import test, { after } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import { JSDOM } from 'jsdom';
 
 import {
   GRAMMAR_CONTENT_RELEASE_ID,
@@ -13,10 +12,6 @@ import {
   collectVisibleChoiceGroups,
   collectVisibleChoices,
 } from './helpers/grammar-visible-choice-collector.js';
-import {
-  cleanupGrammarRenderHarness,
-  renderGrammarItem,
-} from './helpers/grammar-render-harness.js';
 
 const GENERIC_EXPLANATION_DISTRACTORS = new Set([
   'It only depends on the final punctuation mark.',
@@ -26,13 +21,22 @@ const GENERIC_EXPLANATION_DISTRACTORS = new Set([
   'It is correct because the sentence mentions a person or thing.',
 ]);
 
+async function loadRenderHarness(t) {
+  try {
+    const [{ JSDOM }, harness] = await Promise.all([
+      import('jsdom'),
+      import('./helpers/grammar-render-harness.js'),
+    ]);
+    return { JSDOM, ...harness };
+  } catch (error) {
+    t.skip(`React/jsdom render harness unavailable in this lean ZIP environment: ${error.message}`);
+    return null;
+  }
+}
+
 function comparableOption(value) {
   return normaliseSmartPunctuation(value).toLowerCase();
 }
-
-after(() => {
-  cleanupGrammarRenderHarness();
-});
 
 test('Grammar QG P24 keeps the existing content release and template denominator', () => {
   assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p21-2026-05-11');
@@ -133,7 +137,12 @@ test('Grammar QG P24 keeps manual-expansion explanation choices concept-specific
   assert.ok(labels.includes('Adding by always makes a sentence active.'));
 });
 
-test('Grammar QG P24 renders stretch feedback only for correct practice feedback', () => {
+test('Grammar QG P24 renders stretch feedback only for correct practice feedback', async (t) => {
+  const harness = await loadRenderHarness(t);
+  if (!harness) return;
+  const { JSDOM, renderGrammarItem, cleanupGrammarRenderHarness } = harness;
+  t.after(() => cleanupGrammarRenderHarness());
+
   const question = createGrammarQuestion({
     templateId: 'qg_p18_p15_active_passive_explain_voice',
     seed: 1,

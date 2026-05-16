@@ -1,0 +1,160 @@
+TAP version 13
+# Subtest: P20 quality-hardening audit passes a reviewer smoke window across all five phases
+ok 1 - P20 quality-hardening audit passes a reviewer smoke window across all five phases
+  ---
+  duration_ms: 390.8031
+  type: 'test'
+  ...
+# Subtest: P20 metadata keeps recovered closed families visible for reviewers
+ok 2 - P20 metadata keeps recovered closed families visible for reviewers
+  ---
+  duration_ms: 0.4326
+  type: 'test'
+  ...
+# Subtest: P20 does not hide learner-facing prompt defects behind HTML stripping
+ok 3 - P20 does not hide learner-facing prompt defects behind HTML stripping
+  ---
+  duration_ms: 164.5043
+  type: 'test'
+  ...
+# Subtest: P20c generated source compaction preserves manual-review fairness flags
+ok 4 - P20c generated source compaction preserves manual-review fairness flags
+  ---
+  duration_ms: 8.0188
+  type: 'test'
+  ...
+# Subtest: P20c manual expansion freshness check tolerates Windows line endings
+ok 5 - P20c manual expansion freshness check tolerates Windows line endings
+  ---
+  duration_ms: 0.3614
+  type: 'test'
+  ...
+# Subtest: P20d apostrophes possession rewrite families do not share identical learner prompts
+ok 6 - P20d apostrophes possession rewrite families do not share identical learner prompts
+  ---
+  duration_ms: 20.1669
+  type: 'test'
+  ...
+# Subtest: P20d learner-facing surfaces do not collide across Grammar templates in the release window
+ok 7 - P20d learner-facing surfaces do not collide across Grammar templates in the release window
+  ---
+  duration_ms: 1355.7632
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+ok 8 - Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+  ---
+  duration_ms: 1462.2417
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+ok 9 - Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+  ---
+  duration_ms: 1.5218
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 templates are runtime-certified and safe to schedule
+ok 10 - Grammar QG P21 templates are runtime-certified and safe to schedule
+  ---
+  duration_ms: 0.2908
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 selected-response cases mark exactly one visible option correct
+ok 11 - Grammar QG P21 selected-response cases mark exactly one visible option correct
+  ---
+  duration_ms: 27.6539
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 explanation templates use concept-specific misconception options
+ok 12 - Grammar QG P21 explanation templates use concept-specific misconception options
+  ---
+  duration_ms: 15.5505
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 keeps the existing content release and template denominator
+ok 13 - Grammar QG P24 keeps the existing content release and template denominator
+  ---
+  duration_ms: 0.9384
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 removes generic explanation distractors from learner-visible choices
+ok 14 - Grammar QG P24 removes generic explanation distractors from learner-visible choices
+  ---
+  duration_ms: 949.7139
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 keeps selected-response options unique and away from duplicate correct answers
+ok 15 - Grammar QG P24 keeps selected-response options unique and away from duplicate correct answers
+  ---
+  duration_ms: 870.7353
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 visible-choice collector includes table row column fallbacks
+ok 16 - Grammar QG P24 visible-choice collector includes table row column fallbacks
+  ---
+  duration_ms: 0.5274
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 keeps manual-expansion explanation choices concept-specific
+ok 17 - Grammar QG P24 keeps manual-expansion explanation choices concept-specific
+  ---
+  duration_ms: 0.3901
+  type: 'test'
+  ...
+# Subtest: Grammar QG P24 renders stretch feedback only for correct practice feedback
+ok 18 - Grammar QG P24 renders stretch feedback only for correct practice feedback
+  ---
+  duration_ms: 25293.802
+  type: 'test'
+  ...
+# Subtest: Grammar P25 feedback renders the misconception hint as well as the answer after a miss
+ok 19 - Grammar P25 feedback renders the misconception hint as well as the answer after a miss
+  ---
+  duration_ms: 27236.7242
+  type: 'test'
+  ...
+# Subtest: Grammar P25 feedback renders a concept-specific stretch cue after a correct answer
+ok 20 - Grammar P25 feedback renders a concept-specific stretch cue after a correct answer
+  ---
+  duration_ms: 978.9816
+  type: 'test'
+  ...
+# Subtest: Grammar question-generator audit covers the current template inventory
+ok 21 - Grammar question-generator audit covers the current template inventory
+  ---
+  duration_ms: 277.1729
+  type: 'test'
+  ...
+# Subtest: Grammar generated variants have stable answer-safe signatures
+ok 22 - Grammar generated variants have stable answer-safe signatures
+  ---
+  duration_ms: 276.0169
+  type: 'test'
+  ...
+# Subtest: Grammar question-generator P20 quality-recovery denominator assertions
+ok 23 - Grammar question-generator P20 quality-recovery denominator assertions
+  ---
+  duration_ms: 1398.498
+  type: 'test'
+  ...
+# Subtest: Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+ok 24 - Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+  ---
+  duration_ms: 1343.8127
+  type: 'test'
+  ...
+# Subtest: Grammar generated variant signatures ignore choice shuffle order only
+ok 25 - Grammar generated variant signatures ignore choice shuffle order only
+  ---
+  duration_ms: 0.4148
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 28620.0709

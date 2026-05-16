@@ -1,0 +1,202 @@
+TAP version 13
+# Subtest: Grammar production smoke answers from the production-visible option set
+ok 1 - Grammar production smoke answers from the production-visible option set
+  ---
+  duration_ms: 2.114
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke can select an incorrect visible option for repair coverage
+ok 2 - Grammar production smoke can select an incorrect visible option for repair coverage
+  ---
+  duration_ms: 0.3906
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke rejects option sets that do not match the regenerated item
+ok 3 - Grammar production smoke rejects option sets that do not match the regenerated item
+  ---
+  duration_ms: 1.4917
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke rejects extra production option fields
+ok 4 - Grammar production smoke rejects extra production option fields
+  ---
+  duration_ms: 0.3119
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke scans feedback and summary models for forbidden keys
+ok 5 - Grammar production smoke scans feedback and summary models for forbidden keys
+  ---
+  duration_ms: 0.5493
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke scans mini-test, support, and AI enrichment read models
+ok 6 - Grammar production smoke scans mini-test, support, and AI enrichment read models
+  ---
+  duration_ms: 0.4835
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke has visible-data probes for every answer-spec family
+ok 7 - Grammar production smoke has visible-data probes for every answer-spec family
+  ---
+  duration_ms: 1.5963
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke P24 fixtures expose no generic explanation distractors
+ok 8 - Grammar production smoke P24 fixtures expose no generic explanation distractors
+  ---
+  duration_ms: 0.7537
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke P20d fixtures keep repair prompts non-leaking and non-scored
+ok 9 - Grammar production smoke P20d fixtures keep repair prompts non-leaking and non-scored
+  ---
+  duration_ms: 1.12
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke visible-choice scan includes table row column fallbacks
+ok 10 - Grammar production smoke visible-choice scan includes table row column fallbacks
+  ---
+  duration_ms: 0.2735
+  type: 'test'
+  ...
+# Subtest: Grammar production smoke manual-review probe uses current visible input options
+ok 11 - Grammar production smoke manual-review probe uses current visible input options
+  ---
+  duration_ms: 0.3228
+  type: 'test'
+  ...
+# Subtest: P4 choose template visible payload contains prompt and options
+ok 12 - P4 choose template visible payload contains prompt and options
+  ---
+  duration_ms: 0.471
+  type: 'test'
+  ...
+# Subtest: P4 classify template visible payload contains table_choice fields
+ok 13 - P4 classify template visible payload contains table_choice fields
+  ---
+  duration_ms: 0.3406
+  type: 'test'
+  ...
+# Subtest: P4 template visible payload does not contain hidden answer data
+ok 14 - P4 template visible payload does not contain hidden answer data
+  ---
+  duration_ms: 0.4976
+  type: 'test'
+  ...
+# Subtest: P4 template after answer does not leak reusable answer-key internals
+ok 15 - P4 template after answer does not leak reusable answer-key internals
+  ---
+  duration_ms: 0.6495
+  type: 'test'
+  ...
+# Subtest: P4 classify template does not leak correct field values in visible metadata
+ok 16 - P4 classify template does not leak correct field values in visible metadata
+  ---
+  duration_ms: 0.2138
+  type: 'test'
+  ...
+# Subtest: P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+ok 17 - P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+  ---
+  duration_ms: 2.2561
+  type: 'test'
+  ...
+# Subtest: P20 accepts harmless learner formatting around deterministic subject/object answers
+ok 18 - P20 accepts harmless learner formatting around deterministic subject/object answers
+  ---
+  duration_ms: 0.497
+  type: 'test'
+  ...
+# Subtest: P20 acceptedSet answers accept harmless terminal sentence punctuation
+ok 19 - P20 acceptedSet answers accept harmless terminal sentence punctuation
+  ---
+  duration_ms: 0.2771
+  type: 'test'
+  ...
+# Subtest: P20 recovered punctuation rewrites still require the grammar-critical punctuation
+ok 20 - P20 recovered punctuation rewrites still require the grammar-critical punctuation
+  ---
+  duration_ms: 0.6315
+  type: 'test'
+  ...
+# Subtest: P20 recovered punctuation rewrites allow incidental final full-stop omission without dropping the target comma
+ok 21 - P20 recovered punctuation rewrites allow incidental final full-stop omission without dropping the target comma
+  ---
+  duration_ms: 0.2955
+  type: 'test'
+  ...
+# Subtest: P20 recovered modal-verb blanks accept the modal answer as well as the full sentence
+ok 22 - P20 recovered modal-verb blanks accept the modal answer as well as the full sentence
+  ---
+  duration_ms: 0.8944
+  type: 'test'
+  ...
+# Subtest: P20 recovered tense-form fixes accept the corrected verb phrase as well as the full sentence
+ok 23 - P20 recovered tense-form fixes accept the corrected verb phrase as well as the full sentence
+  ---
+  duration_ms: 0.2911
+  type: 'test'
+  ...
+# Subtest: P20 boundary punctuation labels accept semicolon spelling variants
+ok 24 - P20 boundary punctuation labels accept semicolon spelling variants
+  ---
+  duration_ms: 0.2289
+  type: 'test'
+  ...
+# Subtest: P20 keeps genuinely open clause-combine writing as manual-review-only
+ok 25 - P20 keeps genuinely open clause-combine writing as manual-review-only
+  ---
+  duration_ms: 0.3436
+  type: 'test'
+  ...
+# Subtest: P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+ok 26 - P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+  ---
+  duration_ms: 1.0982
+  type: 'test'
+  ...
+# Subtest: P20b punctuation-mark label prompts accept the mark symbol as well as the word label
+ok 27 - P20b punctuation-mark label prompts accept the mark symbol as well as the word label
+  ---
+  duration_ms: 0.6426
+  type: 'test'
+  ...
+# Subtest: P20b internal punctuation rewrites accept omission of only the incidental final full stop
+ok 28 - P20b internal punctuation rewrites accept omission of only the incidental final full stop
+  ---
+  duration_ms: 1.0948
+  type: 'test'
+  ...
+# Subtest: P20d tense-aspect repair prompts do not leak the corrected answer
+ok 29 - P20d tense-aspect repair prompts do not leak the corrected answer
+  ---
+  duration_ms: 2.1405
+  type: 'test'
+  ...
+# Subtest: P20b possessive scenario prompts show the scenario after a colon
+ok 30 - P20b possessive scenario prompts show the scenario after a colon
+  ---
+  duration_ms: 0.5605
+  type: 'test'
+  ...
+# Subtest: P20d possessive precision rewrite prompt is distinct from the base possessive rewrite family
+ok 31 - P20d possessive precision rewrite prompt is distinct from the base possessive rewrite family
+  ---
+  duration_ms: 0.2812
+  type: 'test'
+  ...
+# Subtest: P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking
+ok 32 - P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking
+  ---
+  duration_ms: 0.11
+  type: 'test'
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 32
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 135.8689

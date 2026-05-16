@@ -1,0 +1,5 @@
+
+> ks2-mastery@0.1.0 audit:grammar-qg:open-response-fairness
+> node scripts/audit-grammar-open-response-fairness.mjs --seeds=1..30 --out=reports/grammar/grammar-qg-p20-open-response-fairness.json
+
+Open-response fairness audit: PASS (0 findings) -> D:\Coding\ks2-mastery\.worktrees\grammar-production-grade-handoff-20260516\reports\grammar\grammar-qg-p20-open-response-fairness.json

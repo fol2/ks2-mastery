@@ -1,0 +1,447 @@
+### grammar-answer-targeted
+cmd: node --test tests/grammar-answer-spec.test.js tests/grammar-answer-spec-audit.test.js tests/grammar-qg-p20-answer-acceptance.test.js
+TAP version 13
+# Subtest: audit doc exists on disk
+not ok 1 - audit doc exists on disk
+  ---
+  duration_ms: 4.014671
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:103:1'
+  failureType: 'testCodeFailure'
+  error: 'audit doc should exist at docs/plans/james/grammar/grammar-answer-spec-audit.md'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:104:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: classification table has one row per template
+not ok 2 - classification table has one row per template
+  ---
+  duration_ms: 0.659484
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:110:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:111:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: every proposed answerSpec.kind is in ANSWER_SPEC_KINDS
+not ok 3 - every proposed answerSpec.kind is in ANSWER_SPEC_KINDS
+  ---
+  duration_ms: 0.460246
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:120:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:121:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: new opt-in generated templates must emit validated answerSpec data
+ok 4 - new opt-in generated templates must emit validated answerSpec data
+  ---
+  duration_ms: 281.416681
+  type: 'test'
+  ...
+# Subtest: every template id in the audit doc exists in GRAMMAR_TEMPLATES
+not ok 5 - every template id in the audit doc exists in GRAMMAR_TEMPLATES
+  ---
+  duration_ms: 0.842829
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:148:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:149:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: no duplicate template ids in the audit doc
+not ok 6 - no duplicate template ids in the audit doc
+  ---
+  duration_ms: 0.518402
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:168:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:169:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: audit lists at least 5 manual-review-only candidates in section 3
+not ok 7 - audit lists at least 5 manual-review-only candidates in section 3
+  ---
+  duration_ms: 0.414284
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:182:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:183:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: audit lists all 6 P1 focus concepts as high-priority in section 4
+not ok 8 - audit lists all 6 P1 focus concepts as high-priority in section 4
+  ---
+  duration_ms: 0.386057
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:200:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:201:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: every template carrying a P1 focus concept is priority=high
+not ok 9 - every template carrying a P1 focus concept is priority=high
+  ---
+  duration_ms: 0.975935
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:218:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:222:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: release-id bump is YES for every constructed-response row
+not ok 10 - release-id bump is YES for every constructed-response row
+  ---
+  duration_ms: 0.983431
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:240:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:246:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: release-id bump is NO for every selected-response row
+not ok 11 - release-id bump is NO for every selected-response row
+  ---
+  duration_ms: 0.711727
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:261:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:265:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: audit table proposes the expected current answer-spec distribution
+not ok 12 - audit table proposes the expected current answer-spec distribution
+  ---
+  duration_ms: 0.362299
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:280:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/mnt/data/ks2-grammar-review-work/docs/plans/james/grammar/grammar-answer-spec-audit.md'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:442:20)
+    readAuditDoc (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:39:13)
+    TestContext.<anonymous> (file:///mnt/data/ks2-grammar-review-work/tests/grammar-answer-spec-audit.test.js:284:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: ANSWER_SPEC_KINDS lists all six declarative types
+ok 13 - ANSWER_SPEC_KINDS lists all six declarative types
+  ---
+  duration_ms: 2.974355
+  type: 'test'
+  ...
+# Subtest: exact: rejects near-miss punctuation, accepts byte-identical
+ok 14 - exact: rejects near-miss punctuation, accepts byte-identical
+  ---
+  duration_ms: 1.438818
+  type: 'test'
+  ...
+# Subtest: normalisedText: accepts whitespace + case variants, preserves the golden
+ok 15 - normalisedText: accepts whitespace + case variants, preserves the golden
+  ---
+  duration_ms: 1.336236
+  type: 'test'
+  ...
+# Subtest: normalisedText: preserves grammar-critical terminal apostrophes while stripping real wrapper quotes
+ok 16 - normalisedText: preserves grammar-critical terminal apostrophes while stripping real wrapper quotes
+  ---
+  duration_ms: 0.722694
+  type: 'test'
+  ...
+# Subtest: normalisedText: accepts semicolon spelling aliases for punctuation mark labels
+ok 17 - normalisedText: accepts semicolon spelling aliases for punctuation mark labels
+  ---
+  duration_ms: 0.7741
+  type: 'test'
+  ...
+# Subtest: acceptedSet: two equivalent clause-combine sentences both score full marks
+ok 18 - acceptedSet: two equivalent clause-combine sentences both score full marks
+  ---
+  duration_ms: 1.184175
+  type: 'test'
+  ...
+# Subtest: acceptedSet: near-miss punctuation gets partial credit when maxScore > 1
+ok 19 - acceptedSet: near-miss punctuation gets partial credit when maxScore > 1
+  ---
+  duration_ms: 0.907921
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: optionalCommas accepts variant without surrounding commas
+ok 20 - punctuationPattern: optionalCommas accepts variant without surrounding commas
+  ---
+  duration_ms: 0.81621
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: optionalCommas=false rejects comma-free variant
+ok 21 - punctuationPattern: optionalCommas=false rejects comma-free variant
+  ---
+  duration_ms: 0.682396
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: optionalTerminalFullStop accepts only incidental final full-stop differences
+ok 22 - punctuationPattern: optionalTerminalFullStop accepts only incidental final full-stop differences
+  ---
+  duration_ms: 0.985762
+  type: 'test'
+  ...
+# Subtest: punctuationPattern: keeps hyphen and dash distinct in punctuation-sensitive tasks
+ok 23 - punctuationPattern: keeps hyphen and dash distinct in punctuation-sensitive tasks
+  ---
+  duration_ms: 2.58044
+  type: 'test'
+  ...
+# Subtest: multiField: scores each sub-field independently and aggregates
+ok 24 - multiField: scores each sub-field independently and aggregates
+  ---
+  duration_ms: 0.814314
+  type: 'test'
+  ...
+# Subtest: manualReviewOnly: never auto-scores correct
+ok 25 - manualReviewOnly: never auto-scores correct
+  ---
+  duration_ms: 0.312739
+  type: 'test'
+  ...
+# Subtest: markByAnswerSpec preserves spec-owned answer text and hint metadata
+ok 26 - markByAnswerSpec preserves spec-owned answer text and hint metadata
+  ---
+  duration_ms: 0.211362
+  type: 'test'
+  ...
+# Subtest: markByAnswerSpec tolerates missing/malformed input gracefully
+ok 27 - markByAnswerSpec tolerates missing/malformed input gracefully
+  ---
+  duration_ms: 0.363894
+  type: 'test'
+  ...
+# Subtest: validateAnswerSpec: all kinds with golden + nearMiss pass
+ok 28 - validateAnswerSpec: all kinds with golden + nearMiss pass
+  ---
+  duration_ms: 0.446977
+  type: 'test'
+  ...
+# Subtest: validateAnswerSpec: rejects missing golden (except manualReviewOnly)
+ok 29 - validateAnswerSpec: rejects missing golden (except manualReviewOnly)
+  ---
+  duration_ms: 0.964186
+  type: 'test'
+  ...
+# Subtest: validateAnswerSpec: multiField recursively validates subfields
+ok 30 - validateAnswerSpec: multiField recursively validates subfields
+  ---
+  duration_ms: 0.257638
+  type: 'test'
+  ...
+# Subtest: Backcompat: acceptedSet answerSpec still scores correctly through markByAnswerSpec
+ok 31 - Backcompat: acceptedSet answerSpec still scores correctly through markByAnswerSpec
+  ---
+  duration_ms: 0.487696
+  type: 'test'
+  ...
+# Subtest: P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+ok 32 - P20 accepts logically equivalent word-class labels without making learners type one exact phrase
+  ---
+  duration_ms: 7.459572
+  type: 'test'
+  ...
+# Subtest: P20 accepts harmless learner formatting around deterministic subject/object answers
+ok 33 - P20 accepts harmless learner formatting around deterministic subject/object answers
+  ---
+  duration_ms: 1.92252
+  type: 'test'
+  ...
+# Subtest: P20 acceptedSet answers accept harmless terminal sentence punctuation
+ok 34 - P20 acceptedSet answers accept harmless terminal sentence punctuation
+  ---
+  duration_ms: 1.343011
+  type: 'test'
+  ...
+# Subtest: P20 recovered punctuation rewrites still require the grammar-critical punctuation
+ok 35 - P20 recovered punctuation rewrites still require the grammar-critical punctuation
+  ---
+  duration_ms: 5.676786
+  type: 'test'
+  ...
+# Subtest: P20 recovered punctuation rewrites allow incidental final full-stop omission without dropping the target comma
+ok 36 - P20 recovered punctuation rewrites allow incidental final full-stop omission without dropping the target comma
+  ---
+  duration_ms: 1.262467
+  type: 'test'
+  ...
+# Subtest: P20 recovered modal-verb blanks accept the modal answer as well as the full sentence
+ok 37 - P20 recovered modal-verb blanks accept the modal answer as well as the full sentence
+  ---
+  duration_ms: 2.932445
+  type: 'test'
+  ...
+# Subtest: P20 recovered tense-form fixes accept the corrected verb phrase as well as the full sentence
+ok 38 - P20 recovered tense-form fixes accept the corrected verb phrase as well as the full sentence
+  ---
+  duration_ms: 1.072913
+  type: 'test'
+  ...
+# Subtest: P20 boundary punctuation labels accept semicolon spelling variants
+ok 39 - P20 boundary punctuation labels accept semicolon spelling variants
+  ---
+  duration_ms: 0.630569
+  type: 'test'
+  ...
+# Subtest: P20 keeps genuinely open clause-combine writing as manual-review-only
+ok 40 - P20 keeps genuinely open clause-combine writing as manual-review-only
+  ---
+  duration_ms: 1.209407
+  type: 'test'
+  ...
+# Subtest: P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+ok 41 - P20 serialised learner prompts remove legacy tag spacing and awkward table-row copy
+  ---
+  duration_ms: 3.559187
+  type: 'test'
+  ...
+# Subtest: P20b punctuation-mark label prompts accept the mark symbol as well as the word label
+ok 42 - P20b punctuation-mark label prompts accept the mark symbol as well as the word label
+  ---
+  duration_ms: 2.140877
+  type: 'test'
+  ...
+# Subtest: P20b internal punctuation rewrites accept omission of only the incidental final full stop
+ok 43 - P20b internal punctuation rewrites accept omission of only the incidental final full stop
+  ---
+  duration_ms: 5.079342
+  type: 'test'
+  ...
+# Subtest: P20b possessive scenario prompts show the scenario after a colon
+ok 44 - P20b possessive scenario prompts show the scenario after a colon
+  ---
+  duration_ms: 1.81522
+  type: 'test'
+  ...
+# Subtest: P20d possessive precision rewrite prompt is distinct from the base possessive rewrite family
+ok 45 - P20d possessive precision rewrite prompt is distinct from the base possessive rewrite family
+  ---
+  duration_ms: 0.919385
+  type: 'test'
+  ...
+# Subtest: P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking
+ok 46 - P20c hyphen rewrite tasks reject dash substitutions in punctuationPattern marking
+  ---
+  duration_ms: 0.394737
+  type: 'test'
+  ...
+1..46
+# tests 46
+# suites 0
+# pass 35
+# fail 11
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 945.466793
+
+real	0m1.128s
+user	0m2.050s
+sys	0m0.330s
+exit=1

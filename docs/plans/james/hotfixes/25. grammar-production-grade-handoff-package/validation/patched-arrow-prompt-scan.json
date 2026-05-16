@@ -1,0 +1,157 @@
+{
+  "totalArrowPrompts": 30,
+  "targetTenseFixWrongFormArrowPrompts": 0,
+  "findings": [
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 1,
+      "prompt": "Explain how the active sentence changes into the passive: The chef baked the bread. → The bread was baked by the chef."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 2,
+      "prompt": "Explain how the active sentence changes into the passive: The storm damaged the roof. → The roof was damaged by the storm."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 3,
+      "prompt": "Explain how the active sentence changes into the passive: The council maintains the park. → The park is maintained by the council."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 4,
+      "prompt": "Explain how the active sentence changes into the passive: The team will collect the trophy. → The trophy will be collected by the team."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 5,
+      "prompt": "Explain how the active sentence changes into the passive: The artist painted the mural. → The mural was painted by the artist."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 6,
+      "prompt": "Explain how the active sentence changes into the passive: The librarian sorted the books. → The books were sorted by the librarian."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 7,
+      "prompt": "Explain how the active sentence changes into the passive: The cat chased the mouse. → The mouse was chased by the cat."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 8,
+      "prompt": "Explain how the active sentence changes into the passive: The gardener watered the seedlings. → The seedlings were watered by the gardener."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 9,
+      "prompt": "Explain how the active sentence changes into the passive: The mechanic repaired the engine. → The engine was repaired by the mechanic."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 10,
+      "prompt": "Explain how the active sentence changes into the passive: The pupils will display the posters. → The posters will be displayed by the pupils."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 11,
+      "prompt": "Explain how the active sentence changes into the passive: The dog found the missing glove. → The missing glove was found by the dog."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 12,
+      "prompt": "Explain how the active sentence changes into the passive: The builders fixed the fence. → The fence was fixed by the builders."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 13,
+      "prompt": "Explain how the active sentence changes into the passive: The chef baked the bread. → The bread was baked by the chef."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 14,
+      "prompt": "Explain how the active sentence changes into the passive: The storm damaged the roof. → The roof was damaged by the storm."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 15,
+      "prompt": "Explain how the active sentence changes into the passive: The council maintains the park. → The park is maintained by the council."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 16,
+      "prompt": "Explain how the active sentence changes into the passive: The team will collect the trophy. → The trophy will be collected by the team."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 17,
+      "prompt": "Explain how the active sentence changes into the passive: The artist painted the mural. → The mural was painted by the artist."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 18,
+      "prompt": "Explain how the active sentence changes into the passive: The librarian sorted the books. → The books were sorted by the librarian."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 19,
+      "prompt": "Explain how the active sentence changes into the passive: The cat chased the mouse. → The mouse was chased by the cat."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 20,
+      "prompt": "Explain how the active sentence changes into the passive: The gardener watered the seedlings. → The seedlings were watered by the gardener."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 21,
+      "prompt": "Explain how the active sentence changes into the passive: The mechanic repaired the engine. → The engine was repaired by the mechanic."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 22,
+      "prompt": "Explain how the active sentence changes into the passive: The pupils will display the posters. → The posters will be displayed by the pupils."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 23,
+      "prompt": "Explain how the active sentence changes into the passive: The dog found the missing glove. → The missing glove was found by the dog."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 24,
+      "prompt": "Explain how the active sentence changes into the passive: The builders fixed the fence. → The fence was fixed by the builders."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 25,
+      "prompt": "Explain how the active sentence changes into the passive: The chef baked the bread. → The bread was baked by the chef."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 26,
+      "prompt": "Explain how the active sentence changes into the passive: The storm damaged the roof. → The roof was damaged by the storm."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 27,
+      "prompt": "Explain how the active sentence changes into the passive: The council maintains the park. → The park is maintained by the council."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 28,
+      "prompt": "Explain how the active sentence changes into the passive: The team will collect the trophy. → The trophy will be collected by the team."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 29,
+      "prompt": "Explain how the active sentence changes into the passive: The artist painted the mural. → The mural was painted by the artist."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 30,
+      "prompt": "Explain how the active sentence changes into the passive: The librarian sorted the books. → The books were sorted by the librarian."
+    }
+  ],
+  "targetFindings": []
+}

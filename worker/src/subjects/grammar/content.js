@@ -11930,6 +11930,19 @@ function manualExpansionReadablePromptText(caseItem, fallback = '', family = nul
   if (caseId.includes(':subject_object:find_subject:')) {
     return raw.replace(/^What\s+is\s+the\s+subject\s+of\s+this\s+sentence\?\s*/i, 'Find the subject in this sentence: ');
   }
+  const isP18TenseAspectFixWrongForm = familyId === 'qg_p18_p16_tense_aspect_fix_wrong_form'
+    || caseId.includes(':tense_aspect:fix_wrong_form:')
+    || (sourcePack === 'grammar-qg-p16-manual-expansion-delta-110-families'
+      && caseId.includes('fix_wrong_form'));
+  if (isP18TenseAspectFixWrongForm) {
+    const tenseMatch = raw.match(/^Fix\s+this\s+attempted\s+([^:]+?)\s+sentence:\s*(.*?)\s*(?:→|->)\s*.+$/i);
+    if (tenseMatch) {
+      const targetForm = manualExpansionSafeText(tenseMatch[1]);
+      const sourceSentence = manualExpansionSafeText(tenseMatch[2]);
+      const terminal = /[.?!]$/.test(sourceSentence) ? '' : '.';
+      return `Fix this sentence so it uses the ${targetForm}: ${sourceSentence}${terminal}`;
+    }
+  }
   const isP18PossessivePrecisionRewrite = familyId === 'qg_p18_p18_apostrophes_possession_precision_repair_or_rewrite'
     || caseId.includes(':apostrophes_possession:precision_repair_or_rewrite:')
     || (sourcePack === 'grammar-qg-p18-manual-expansion-delta-100-families'

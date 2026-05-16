@@ -1,0 +1,159 @@
+### grammar-qg-core-targeted
+cmd: node --test tests/grammar-question-generator-audit.test.js tests/grammar-qg-p20-quality-hardening.test.js tests/grammar-qg-p21-pool-expansion.test.js tests/grammar-qg-p21-local-repetition.test.js tests/grammar-qg-p24-distractor-quality.test.js tests/grammar-qg-p25-feedback-learning-cue.test.js
+TAP version 13
+# Subtest: P20 quality-hardening audit passes a reviewer smoke window across all five phases
+ok 1 - P20 quality-hardening audit passes a reviewer smoke window across all five phases
+  ---
+  duration_ms: 1040.021314
+  type: 'test'
+  ...
+# Subtest: P20 metadata keeps recovered closed families visible for reviewers
+ok 2 - P20 metadata keeps recovered closed families visible for reviewers
+  ---
+  duration_ms: 1.17286
+  type: 'test'
+  ...
+# Subtest: P20 does not hide learner-facing prompt defects behind HTML stripping
+ok 3 - P20 does not hide learner-facing prompt defects behind HTML stripping
+  ---
+  duration_ms: 399.164186
+  type: 'test'
+  ...
+# Subtest: P20c generated source compaction preserves manual-review fairness flags
+ok 4 - P20c generated source compaction preserves manual-review fairness flags
+  ---
+  duration_ms: 22.717075
+  type: 'test'
+  ...
+# Subtest: P20c manual expansion freshness check tolerates Windows line endings
+ok 5 - P20c manual expansion freshness check tolerates Windows line endings
+  ---
+  duration_ms: 0.750499
+  type: 'test'
+  ...
+# Subtest: P20d apostrophes possession rewrite families do not share identical learner prompts
+ok 6 - P20d apostrophes possession rewrite families do not share identical learner prompts
+  ---
+  duration_ms: 24.891737
+  type: 'test'
+  ...
+# Subtest: P20d learner-facing surfaces do not collide across Grammar templates in the release window
+ok 7 - P20d learner-facing surfaces do not collide across Grammar templates in the release window
+  ---
+  duration_ms: 2803.470717
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+ok 8 - Grammar QG P21 local learner simulation avoids exact prompt/variant repeats in focused practice
+  ---
+  duration_ms: 3015.630117
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+ok 9 - Grammar QG P21 adds a certified closed-response expansion layer across all concepts
+  ---
+  duration_ms: 2.768793
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 templates are runtime-certified and safe to schedule
+ok 10 - Grammar QG P21 templates are runtime-certified and safe to schedule
+  ---
+  duration_ms: 0.561101
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 selected-response cases mark exactly one visible option correct
+ok 11 - Grammar QG P21 selected-response cases mark exactly one visible option correct
+  ---
+  duration_ms: 122.752588
+  type: 'test'
+  ...
+# Subtest: Grammar QG P21 explanation templates use concept-specific misconception options
+ok 12 - Grammar QG P21 explanation templates use concept-specific misconception options
+  ---
+  duration_ms: 73.444268
+  type: 'test'
+  ...
+# node:internal/modules/package_json_reader:256
+#   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+#         ^
+# Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'jsdom' imported from /mnt/data/ks2-grammar-review-work/tests/grammar-qg-p24-distractor-quality.test.js
+#     at Object.getPackageJSONURL (node:internal/modules/package_json_reader:256:9)
+#     at packageResolve (node:internal/modules/esm/resolve:768:81)
+#     at moduleResolve (node:internal/modules/esm/resolve:854:18)
+#     at defaultResolve (node:internal/modules/esm/resolve:984:11)
+#     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:780:12)
+#     at \#cachedDefaultResolve (node:internal/modules/esm/loader:704:25)
+#     at ModuleLoader.resolve (node:internal/modules/esm/loader:687:38)
+#     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:305:38)
+#     at ModuleJob._link (node:internal/modules/esm/module_job:137:49) {
+#   code: 'ERR_MODULE_NOT_FOUND'
+# }
+# Node.js v22.16.0
+# Subtest: tests/grammar-qg-p24-distractor-quality.test.js
+not ok 4 - tests/grammar-qg-p24-distractor-quality.test.js
+  ---
+  duration_ms: 367.808171
+  type: 'test'
+  location: '/mnt/data/ks2-grammar-review-work/tests/grammar-qg-p24-distractor-quality.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Grammar P25 feedback renders the misconception hint as well as the answer after a miss
+ok 14 - Grammar P25 feedback renders the misconception hint as well as the answer after a miss # SKIP React/jsdom render harness unavailable in this lean ZIP environment: Cannot find package 'jsdom' imported from /mnt/data/ks2-grammar-review-work/tests/grammar-qg-p25-feedback-learning-cue.test.js
+  ---
+  duration_ms: 7.26647
+  type: 'test'
+  ...
+# Subtest: Grammar P25 feedback renders a concept-specific stretch cue after a correct answer
+ok 15 - Grammar P25 feedback renders a concept-specific stretch cue after a correct answer # SKIP React/jsdom render harness unavailable in this lean ZIP environment: Cannot find package 'jsdom' imported from /mnt/data/ks2-grammar-review-work/tests/grammar-qg-p25-feedback-learning-cue.test.js
+  ---
+  duration_ms: 3.31746
+  type: 'test'
+  ...
+# Subtest: Grammar question-generator audit covers the current template inventory
+ok 16 - Grammar question-generator audit covers the current template inventory
+  ---
+  duration_ms: 802.96839
+  type: 'test'
+  ...
+# Subtest: Grammar generated variants have stable answer-safe signatures
+ok 17 - Grammar generated variants have stable answer-safe signatures
+  ---
+  duration_ms: 519.244916
+  type: 'test'
+  ...
+# Subtest: Grammar question-generator P20 quality-recovery denominator assertions
+ok 18 - Grammar question-generator P20 quality-recovery denominator assertions
+  ---
+  duration_ms: 3017.111434
+  type: 'test'
+  ...
+# Subtest: Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+ok 19 - Grammar P6 baseline fixture remains frozen while P20 supersedes the live audit output
+  ---
+  duration_ms: 2884.29864
+  type: 'test'
+  ...
+# Subtest: Grammar generated variant signatures ignore choice shuffle order only
+ok 20 - Grammar generated variant signatures ignore choice shuffle order only
+  ---
+  duration_ms: 1.17863
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 17
+# fail 1
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 8406.35877
+
+real	0m8.579s
+user	0m20.260s
+sys	0m1.260s
+exit=1
