@@ -35,3 +35,13 @@ Target checkout execution update:
 - `git apply --check --verbose` passed for `patches/001-reading-answer-acceptance-hardening.patch` on the target checkout.
 - The package patch applied cleanly and was then minimally adapted to preserve source-affirmed negative keyword phrases in the current target content.
 - Runtime: Node `v22.15.1`, npm `11.6.2`.
+
+Live production update:
+
+- Deployment command: `npm run deploy`.
+- Deployed source commit: `7833139303bf04a6ec50a862b7950d22ffb7190a`.
+- Cloudflare Worker version ID: `af00e7b0-8530-4e23-be38-6896984183e3`.
+- Production origin: `https://ks2.eugnel.uk`.
+- Production bundle audit passed after deployment.
+- Reading production smoke, stretch production smoke, landing browser smoke, and hard-refresh resume smoke all passed against `https://ks2.eugnel.uk`.
+- Final production status for this execution layer: `DONE — LIVE VERIFIED`.

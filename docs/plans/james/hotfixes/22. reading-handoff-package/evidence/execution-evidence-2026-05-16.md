@@ -62,4 +62,39 @@ Large raw `npm test` logs were removed after their pass/fail summaries were reco
 
 ## Production status
 
-Production deployment and live smoke were still pending when this local evidence file was first written. Do not claim `DONE — LIVE VERIFIED` until the production deploy and hard-refresh checks are recorded.
+Final production status: `DONE — LIVE VERIFIED`.
+
+Production deploy:
+
+- Command: `npm run deploy`.
+- Deployed origin: `https://ks2.eugnel.uk`.
+- Deployed source commit: `7833139303bf04a6ec50a862b7950d22ffb7190a`.
+- Cloudflare Worker version ID: `af00e7b0-8530-4e23-be38-6896984183e3`.
+- Deploy evidence: `production-deploy-2026-05-16.out`.
+- Production bundle audit: pass for `https://ks2.eugnel.uk/`, with matrix demo check `ok`, security-header checks `5/5`, and cache-split checks `15/15`.
+
+Production smoke:
+
+- `npm run smoke:production:reading`: pass against `https://ks2.eugnel.uk`.
+- npm `11.6.2` stripped flag arguments for the smoke script, so the artefacted command was rerun directly as `node scripts/reading-production-smoke.mjs --commit-sha=7833139303bf04a6ec50a862b7950d22ffb7190a --smoke-type=reading-handoff-22-production --out=docs/plans/james/hotfixes/22. reading-handoff-package/evidence/production-reading-smoke-2026-05-16.json`.
+- Reading production smoke result: pass, content version `7`, immediate round scored `1/1`, delayed paper used `28` questions and `50` marks, stale write guard preserved revision and did not persist stale responses.
+- `npm run smoke:production:reading-stretch`: pass against `https://ks2.eugnel.uk`.
+- Artefacted stretch command: `node scripts/reading-stretch-production-smoke.mjs --commit-sha=7833139303bf04a6ec50a862b7950d22ffb7190a --out=docs/plans/james/hotfixes/22. reading-handoff-package/evidence/production-reading-stretch-smoke-2026-05-16.json`.
+- Stretch result: pass, delayed feedback leak prevented, `6` questions, high-depth type present, punctuation-only questions absent.
+- `npm run smoke:production:reading-landing`: pass against `https://ks2.eugnel.uk`.
+- Artefacted landing command: `node scripts/reading-landing-production-smoke.mjs --origin=https://ks2.eugnel.uk --out=docs/plans/james/hotfixes/22. reading-handoff-package/evidence/production-reading-landing-smoke-2026-05-16.json --screenshot-dir=docs/plans/james/hotfixes/22. reading-handoff-package/evidence/production-reading-landing-screenshots-2026-05-16`.
+- Landing result: pass on `1280x800` and `390x844`, with no page errors, console errors, request failures, or HTTP failures.
+- Landing screenshots: `production-reading-landing-screenshots-2026-05-16/reading-landing-1280x800.png`, `production-reading-landing-screenshots-2026-05-16/reading-session-1280x800.png`, and `production-reading-landing-screenshots-2026-05-16/reading-landing-390x844.png`.
+
+Hard-refresh browser check:
+
+- Artefact: `production-reading-hard-refresh-2026-05-16.json`.
+- Screenshot: `production-reading-hard-refresh-2026-05-16.png`.
+- Journey: demo session, open Reading, start a list-mode Reading session, browser reload, reopen Reading from the dashboard, and confirm the active Reading form resumes.
+- Result: pass.
+- Notes: the hard reload returns the demo shell to the subject grid first, then reopening Reading resumes the active form. No page, console, request, or HTTP failures were recorded.
+
+Reviewer outputs:
+
+- Code Reviewer: `PASS — no blockers, no advisories, findings=[]`.
+- Contract Auditor: `PASS — no blockers, no advisories, findings=[]`.

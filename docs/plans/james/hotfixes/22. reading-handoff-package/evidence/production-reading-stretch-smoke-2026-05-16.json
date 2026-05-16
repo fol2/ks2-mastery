@@ -1,0 +1,104 @@
+{
+  "ok": true,
+  "smokeType": "reading-stretch-production",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "https://ks2.eugnel.uk",
+  "contentReleaseId": "reading-poc-promoted-2026-05-05",
+  "contentVersion": 7,
+  "commitSha": "7833139303bf04a6ec50a862b7950d22ffb7190a",
+  "commitShaSource": "cli-or-ci-expected",
+  "learnerFixtureType": "demo-session",
+  "accountId": "demo-IgVugDF7vs8D5w",
+  "learnerId": "learner-demo-Sjby-y3pyZxNZQ",
+  "staleSetupPayload": {
+    "mode": "stretch",
+    "viewMode": "one",
+    "difficulty": "1",
+    "focusSkillId": "P1"
+  },
+  "session": {
+    "id": "reading_session_mp8jaj0s_hbufxub9",
+    "passage": {
+      "id": "p4n18_cave_paintings",
+      "title": "Reading Cave Paintings",
+      "difficulty": 3,
+      "isLong": true,
+      "wordCount": 145
+    },
+    "strict": false,
+    "delayedFeedback": true,
+    "questionCount": 6,
+    "questionDetails": [
+      {
+        "id": "p4n18_cave_paintings_q3",
+        "passageId": "p4n18_cave_paintings",
+        "type": "evidenceShort",
+        "skill": "2d",
+        "marks": 2
+      },
+      {
+        "id": "p4n18_cave_paintings_q5",
+        "passageId": "p4n18_cave_paintings",
+        "type": "open",
+        "skill": "2f",
+        "marks": 2
+      },
+      {
+        "id": "p4n18_cave_paintings_q6",
+        "passageId": "p4n18_cave_paintings",
+        "type": "short",
+        "skill": "2e",
+        "marks": 1
+      },
+      {
+        "id": "p4n18_cave_paintings_q7",
+        "passageId": "p4n18_cave_paintings",
+        "type": "match",
+        "skill": "2h",
+        "marks": 2
+      },
+      {
+        "id": "p4n18_cave_paintings_q8",
+        "passageId": "p4n18_cave_paintings",
+        "type": "order",
+        "skill": "2f",
+        "marks": 2
+      },
+      {
+        "id": "p4n18_cave_paintings_q9",
+        "passageId": "p4n18_cave_paintings",
+        "type": "multiSelect",
+        "skill": "2b",
+        "marks": 2
+      }
+    ],
+    "selectedQuestionTypeCount": 6,
+    "hasHighDepthQuestionType": true,
+    "hasPunctuationOnlyQuestion": false
+  },
+  "submitted": {
+    "questionId": "p4n18_cave_paintings_q3",
+    "phase": "question",
+    "answeredCount": 1,
+    "markedCount": 0,
+    "delayedFeedbackLeakPrevented": true
+  },
+  "marked": {
+    "phase": "summary",
+    "summary": {
+      "sessionId": "reading_session_mp8jaj0s_hbufxub9",
+      "mode": "stretch",
+      "paperId": "",
+      "paperTitle": "",
+      "questionCount": 6,
+      "score": 2,
+      "maxScore": 11,
+      "accuracy": 18,
+      "completedAt": 1778947302446
+    }
+  },
+  "finalRevision": 3,
+  "timestamp": "2026-05-16T16:01:42.574Z",
+  "finishedAt": "2026-05-16T16:01:42.574Z"
+}

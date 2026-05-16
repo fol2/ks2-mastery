@@ -12,4 +12,5 @@
 
 - The GitHub/local target checkout was verified separately from the lean ZIP snapshot at `24ba39c05d34be365447763eacd8801995b2b2c2`.
 - `tests/reading-session-interface.test.js` passed in the dependency-complete target checkout; the earlier `esbuild` limitation applies only to the lean ZIP review environment.
-- Production remains a separate evidence layer until deployment and live smoke checks are recorded against `https://ks2.eugnel.uk`.
+- Production was deployed and live-smoked against `https://ks2.eugnel.uk` from commit `7833139303bf04a6ec50a862b7950d22ffb7190a`.
+- The work does not expand the Reading bank beyond the current version `7` content. Expansion toward `10K+` remains a separate staged task.

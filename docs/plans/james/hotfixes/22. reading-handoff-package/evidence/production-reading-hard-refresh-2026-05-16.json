@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "smokeType": "reading-hard-refresh-production",
+  "origin": "https://ks2.eugnel.uk",
+  "commitSha": "7833139303bf04a6ec50a862b7950d22ffb7190a",
+  "hardRefreshPerformed": true,
+  "checkedJourney": "demo session -> Reading list-mode session -> browser reload -> reopen Reading -> active Reading form resumes",
+  "beforeReload": {
+    "url": "https://ks2.eugnel.uk/?demo=1",
+    "hasQuestionList": true,
+    "hasQuestionCard": true,
+    "hasActiveForm": true,
+    "title": "Answer this text's question list"
+  },
+  "afterReloadInitial": {
+    "url": "https://ks2.eugnel.uk/?demo=1",
+    "hasSubjectGrid": true,
+    "hasSetupMain": false,
+    "hasQuestionList": false,
+    "hasQuestionCard": false,
+    "hasActiveForm": false
+  },
+  "afterReopen": {
+    "url": "https://ks2.eugnel.uk/?demo=1",
+    "hasSetupMain": false,
+    "hasQuestionList": true,
+    "hasQuestionCard": true,
+    "hasActiveForm": true,
+    "title": "Answer this text's question list"
+  },
+  "failures": {
+    "pageErrors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "httpFailures": []
+  },
+  "screenshot": "D:\\Coding\\ks2-mastery\\.worktrees\\reading-handoff-package-20260516\\docs\\plans\\james\\hotfixes\\22. reading-handoff-package\\evidence\\production-reading-hard-refresh-2026-05-16.png",
+  "generatedAt": "2026-05-16T16:04:27.370Z"
+}

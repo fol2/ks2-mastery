@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "smokeType": "reading-handoff-22-production",
+  "environment": "production",
+  "deployedUrl": "https://ks2.eugnel.uk",
+  "origin": "https://ks2.eugnel.uk",
+  "contentReleaseId": "reading-poc-promoted-2026-05-05",
+  "contentVersion": 7,
+  "commitSha": "7833139303bf04a6ec50a862b7950d22ffb7190a",
+  "commitShaSource": "cli-or-ci-expected",
+  "learnerFixtureType": "demo-session",
+  "accountId": "demo-Q1mKB0VVMAOZoQ",
+  "learnerId": "learner-demo-b10mEw8bGIv5oA",
+  "immediate": {
+    "revision": 2,
+    "questionId": "phase5_nonfiction_winter_market_safety_q2",
+    "passageId": "phase5_nonfiction_winter_market_safety",
+    "content": {
+      "releaseId": "reading-poc-promoted-2026-05-05",
+      "version": 7,
+      "passageCount": 714,
+      "questionCount": 7112,
+      "paperCount": 243,
+      "skillCount": 12,
+      "genres": {
+        "fiction": 239,
+        "non-fiction": 239,
+        "poetry": 236
+      },
+      "longPassageCount": 670
+    },
+    "score": 1,
+    "maxScore": 1
+  },
+  "delayedPaper": {
+    "revision": 6,
+    "paperId": "phase7_paper_001",
+    "questionCount": 28,
+    "maxScore": 50,
+    "staleErrorCleared": true
+  },
+  "staleWriteGuard": {
+    "expectedSessionId": "reading_session_mp8ja8jw_4uy6l0nd",
+    "expectedQuestionId": "stale-question-id",
+    "protectedQuestionId": "rtb_q2",
+    "changed": false,
+    "revisionUnchanged": true,
+    "staleResponsePersisted": false,
+    "protectedQuestionResponsePersisted": false
+  },
+  "timestamp": "2026-05-16T16:01:28.563Z",
+  "finishedAt": "2026-05-16T16:01:28.563Z"
+}

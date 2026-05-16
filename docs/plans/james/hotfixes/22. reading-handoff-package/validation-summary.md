@@ -124,4 +124,14 @@ Patched answer-acceptance audit:
 - Source-affirmed negation candidates: `7` checked, passed.
 - Pre-marking read-model leaks: `0`.
 
-Production is still not proven by this local section; it must be updated after deploy and live smoke evidence.
+Production deployment and live evidence:
+
+- Deployment command: `npm run deploy`.
+- Deployed source commit: `7833139303bf04a6ec50a862b7950d22ffb7190a`.
+- Cloudflare Worker version ID: `af00e7b0-8530-4e23-be38-6896984183e3`.
+- Production bundle audit: pass for `https://ks2.eugnel.uk/`.
+- `npm run smoke:production:reading`: pass. Artefact: `evidence/production-reading-smoke-2026-05-16.json`.
+- `npm run smoke:production:reading-stretch`: pass. Artefact: `evidence/production-reading-stretch-smoke-2026-05-16.json`.
+- `npm run smoke:production:reading-landing`: pass. Artefact: `evidence/production-reading-landing-smoke-2026-05-16.json`; screenshots in `evidence/production-reading-landing-screenshots-2026-05-16/`.
+- Hard-refresh browser check: pass. Artefact: `evidence/production-reading-hard-refresh-2026-05-16.json`; screenshot: `evidence/production-reading-hard-refresh-2026-05-16.png`.
+- Final production status: `DONE — LIVE VERIFIED`.
