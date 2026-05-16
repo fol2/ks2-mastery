@@ -1,0 +1,9 @@
+Source ZIP: /mnt/data/ks2-mastery-lean-05161145.zip
+SHA-256: 2eadb98eca14a740a7a67cf54b00f14ef5acca1a8cb9509bb774a7d0c8db00c2
+Size: 7,988,805 bytes
+Integrity: unzip -t passed (No errors detected)
+Extraction: rootless archive; no .git metadata
+Node runtime: v22.16.0; .nvmrc expects 22
+Manifest: review profile, mode=omit, copied=1544, omitted=3594, placeholders=0; docs/reports/assets omitted by profile
+Production: not checked; no live ks2.eugnel.uk evidence in package
+GitHub: repo metadata only checked via GitHub connector: fol2/ks2-mastery, default branch main, public repo; no exact-file GitHub override used for patch authority.

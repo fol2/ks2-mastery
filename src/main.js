@@ -951,6 +951,9 @@ const HERO_STALE_ERROR_CODES = new Set([
   'hero_quest_stale',
   'hero_quest_fingerprint_mismatch',
   'hero_active_session_conflict',
+  'hero_task_already_completed',
+  'hero_task_claim_pending',
+  'hero_task_blocked',
 ]);
 
 async function startHeroTask({ questId, questFingerprint, taskId } = {}) {
@@ -1015,8 +1018,8 @@ async function startHeroTask({ questId, questFingerprint, taskId } = {}) {
     }
 
     if (HERO_STALE_ERROR_CODES.has(code)) {
-      // Stale quest / fingerprint mismatch / active session conflict:
-      // clear pending, refetch read model, show gentle message.
+      // Stale quest / fingerprint mismatch / progress conflict: clear pending,
+      // refetch read model, and avoid trapping the learner on a hard error.
       patchHeroUi({
         status: 'ready',
         pendingTaskKey: '',

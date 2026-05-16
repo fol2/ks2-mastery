@@ -1,0 +1,33 @@
+
+> ks2-mastery@0.1.0 verify:hero-pA7
+> node --test tests/hero-pA7-wrangler-oauth.test.js
+
+TAP version 13
+# Subtest: Hero Mode pA7 Wrangler OAuth wrapper
+    # Subtest: preserves argv boundaries for D1 --command SQL and strips API tokens locally
+    ok 1 - preserves argv boundaries for D1 --command SQL and strips API tokens locally
+      ---
+      duration_ms: 218.61059
+      type: 'test'
+      ...
+    # Subtest: preserves the Cloudflare token only inside Workers CI builds
+    ok 2 - preserves the Cloudflare token only inside Workers CI builds
+      ---
+      duration_ms: 196.583308
+      type: 'test'
+      ...
+    1..2
+ok 1 - Hero Mode pA7 Wrangler OAuth wrapper
+  ---
+  duration_ms: 416.495779
+  type: 'suite'
+  ...
+1..1
+# tests 2
+# suites 1
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 566.66089

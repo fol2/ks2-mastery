@@ -1,0 +1,365 @@
+diff --git a/src/main.js b/src/main.js
+index c5a4cde..2931d0d 100644
+--- a/src/main.js
++++ b/src/main.js
+@@ -951,6 +951,9 @@ const HERO_STALE_ERROR_CODES = new Set([
+   'hero_quest_stale',
+   'hero_quest_fingerprint_mismatch',
+   'hero_active_session_conflict',
++  'hero_task_already_completed',
++  'hero_task_claim_pending',
++  'hero_task_blocked',
+ ]);
+ 
+ async function startHeroTask({ questId, questFingerprint, taskId } = {}) {
+@@ -1015,8 +1018,8 @@ async function startHeroTask({ questId, questFingerprint, taskId } = {}) {
+     }
+ 
+     if (HERO_STALE_ERROR_CODES.has(code)) {
+-      // Stale quest / fingerprint mismatch / active session conflict:
+-      // clear pending, refetch read model, show gentle message.
++      // Stale quest / fingerprint mismatch / progress conflict: clear pending,
++      // refetch read model, and avoid trapping the learner on a hard error.
+       patchHeroUi({
+         status: 'ready',
+         pendingTaskKey: '',
+diff --git a/src/platform/hero/hero-ui-model.js b/src/platform/hero/hero-ui-model.js
+index a83c0d5..11acc7d 100644
+--- a/src/platform/hero/hero-ui-model.js
++++ b/src/platform/hero/hero-ui-model.js
+@@ -24,17 +24,8 @@ export function buildHeroHomeModel(heroUi) {
+   const childVisible = readModel?.childVisible === true;
+   const enabled = uiEnabled && childVisible;
+ 
+-  // First task from dailyQuest.tasks where launchStatus === 'launchable'
+-  const tasks = readModel?.dailyQuest?.tasks;
+-  const nextTask = Array.isArray(tasks)
+-    ? tasks.find((t) => t?.launchStatus === 'launchable') || null
+-    : null;
+-
+   const activeHeroSession = readModel?.activeHeroSession || null;
+ 
+-  const canStart = enabled && nextTask !== null && activeHeroSession === null;
+-  const canContinue = enabled && activeHeroSession !== null;
+-
+   const effortPlanned = readModel?.dailyQuest?.effortPlanned || 0;
+   const eligibleSubjects = (readModel?.eligibleSubjects || []).map(e => typeof e === 'string' ? e : e?.subjectId || '').filter(Boolean);
+   const lockedSubjects = (readModel?.lockedSubjects || []).map(e => typeof e === 'string' ? e : e?.subjectId || '').filter(Boolean);
+@@ -52,6 +43,27 @@ export function buildHeroHomeModel(heroUi) {
+     && typeof lastClaim.dateKey === 'string'
+     && lastClaim.dateKey === readModel?.dateKey
+   );
++  const lastClaimMarksTaskComplete = (
++    lastClaimMatchesReadModel
++    && typeof lastClaim?.taskId === 'string'
++    && (lastClaim.status === 'claimed' || lastClaim.status === 'already-completed')
++  );
++  const readModelCompletedTaskIds = Array.isArray(progress?.completedTaskIds)
++    ? progress.completedTaskIds
++    : [];
++  const completedTaskIds = lastClaimMarksTaskComplete && !readModelCompletedTaskIds.includes(lastClaim.taskId)
++    ? [...readModelCompletedTaskIds, lastClaim.taskId]
++    : readModelCompletedTaskIds;
++  const completedTaskIdSet = new Set(completedTaskIds);
++
++  // The next CTA must not loop back to a task that was already completed,
++  // is waiting for a claim, or is still active. `launchStatus` describes
++  // subject availability, while `completionStatus` describes daily progress.
++  const tasks = readModel?.dailyQuest?.tasks;
++  const nextTask = Array.isArray(tasks)
++    ? tasks.find((t) => isStartableHeroTask(t, { completedTaskIds: completedTaskIdSet, activeHeroSession })) || null
++    : null;
++
+   const readModelHasClaimCompletion = progress?.status === 'completed';
+   const readModelHasAwardSnapshot = readModel?.economy?.today?.awardStatus === 'awarded';
+   const lastClaimCompletedDaily = (
+@@ -67,8 +79,16 @@ export function buildHeroHomeModel(heroUi) {
+   const pendingCompletedHeroSession = readModel?.pendingCompletedHeroSession || null;
+   const canClaim = readModel?.claim?.enabled === true;
+   const dailyStatus = shouldProjectClaimCompletion ? 'completed' : (progress?.status || 'none');
+-  const effortCompleted = progress?.effortCompleted || 0;
+-  const completedTaskIds = progress?.completedTaskIds || [];
++  const readModelEffortCompleted = typeof progress?.effortCompleted === 'number' ? progress.effortCompleted : 0;
++  const claimEffortCompleted = lastClaimMatchesReadModel && typeof lastClaim?.effortCompleted === 'number'
++    ? lastClaim.effortCompleted
++    : null;
++  const effortCompleted = claimEffortCompleted !== null
++    ? Math.max(readModelEffortCompleted, claimEffortCompleted)
++    : readModelEffortCompleted;
++
++  const canStart = enabled && nextTask !== null && activeHeroSession === null && dailyStatus !== 'completed' && !claiming;
++  const canContinue = enabled && activeHeroSession !== null;
+ 
+   // P4 U6: Economy fields from read model v5
+   const economyBlock = readModel?.economy || null;
+@@ -128,3 +148,21 @@ export function buildHeroHomeModel(heroUi) {
+     campEnabled,
+   };
+ }
++
++function isStartableHeroTask(task, { completedTaskIds, activeHeroSession } = {}) {
++  if (!task || task.launchStatus !== 'launchable') return false;
++  if (completedTaskIds?.has?.(task.taskId)) return false;
++  if (activeHeroSession?.taskId === task.taskId) return false;
++
++  const completionStatus = task.completionStatus || 'not-started';
++  if (
++    completionStatus === 'completed'
++    || completionStatus === 'completed-unclaimed'
++    || completionStatus === 'in-progress'
++    || completionStatus === 'blocked'
++  ) {
++    return false;
++  }
++
++  return true;
++}
+diff --git a/tests/hero-completion-flow-e2e.test.js b/tests/hero-completion-flow-e2e.test.js
+index fe036e0..6a43702 100644
+--- a/tests/hero-completion-flow-e2e.test.js
++++ b/tests/hero-completion-flow-e2e.test.js
+@@ -402,6 +402,52 @@ test('U12 Flow 1: full happy path — read-model v4 → start → complete → c
+   server.close();
+ });
+ 
++// ── Flow 1b: Completed-task relaunch guard ─────────────────────────────
++
++test('U12 Flow 1b: completed Hero task cannot be relaunched and must not trap the learner in a repeat loop', async () => {
++  const server = createFullP3Server();
++  await seedLearner(server, 'adult-a', 'learner-1');
++  const claimable = await startAndCompleteTask(server, 'learner-1', 'adult-a');
++
++  const claimRevision = getLearnerRevision(server);
++  const claimResp = await postHeroCommand(server, {
++    command: 'claim-task',
++    learnerId: 'learner-1',
++    questId: claimable.questId,
++    questFingerprint: claimable.questFingerprint,
++    taskId: claimable.taskId,
++    requestId: 'e2e-flow1b-claim',
++    expectedLearnerRevision: claimRevision,
++  });
++  const claimPayload = await claimResp.json();
++  assert.equal(claimResp.status, 200, `Claim must succeed: ${JSON.stringify(claimPayload)}`);
++  assert.equal(claimPayload.heroClaim.status, 'claimed');
++
++  const readModelPayload = await getReadModel(server, 'learner-1');
++  const completedTask = readModelPayload.hero.dailyQuest.tasks.find(t => t.taskId === claimable.taskId);
++  assert.equal(completedTask?.completionStatus, 'completed');
++
++  const relaunchRevision = getLearnerRevision(server);
++  const relaunchResp = await postHeroCommand(server, {
++    command: 'start-task',
++    learnerId: 'learner-1',
++    questId: claimable.questId,
++    questFingerprint: claimable.questFingerprint,
++    taskId: claimable.taskId,
++    requestId: 'e2e-flow1b-relaunch-completed',
++    expectedLearnerRevision: relaunchRevision,
++  });
++  const relaunchPayload = await relaunchResp.json();
++
++  assert.equal(relaunchResp.status, 409, `Relaunch must be rejected: ${JSON.stringify(relaunchPayload)}`);
++  assert.equal(
++    relaunchPayload.error?.code || relaunchPayload.code,
++    'hero_task_already_completed',
++  );
++
++  server.close();
++});
++
+ // ── Flow 2: Duplicate claim — same requestId ──────────────────────────
+ 
+ test('U12 Flow 2: duplicate claim with same requestId → idempotent response', async () => {
+diff --git a/tests/hero-ui-progress-flow.test.js b/tests/hero-ui-progress-flow.test.js
+index ac3949d..df36cee 100644
+--- a/tests/hero-ui-progress-flow.test.js
++++ b/tests/hero-ui-progress-flow.test.js
+@@ -721,6 +721,104 @@ describe('dashboard-load repair logic (pure state checks)', () => {
+   });
+ });
+ 
++// ---------------------------------------------------------------------------
++// buildHeroHomeModel — next Hero task progression
++// ---------------------------------------------------------------------------
++
++describe('buildHeroHomeModel — next task progression', () => {
++  it('advances the start CTA to the next uncompleted launchable task', () => {
++    const rm = readModelFixture({
++      effortPlanned: 12,
++      tasks: [
++        { taskId: 'task-a', subjectId: 'spelling', launchStatus: 'launchable', completionStatus: 'completed' },
++        { taskId: 'task-b', subjectId: 'grammar', launchStatus: 'launchable', completionStatus: 'not-started' },
++      ],
++      progress: {
++        status: 'active',
++        effortCompleted: 6,
++        effortPlanned: 12,
++        completedTaskIds: ['task-a'],
++      },
++    });
++    const heroUi = heroUiFixture({ readModel: rm });
++    const model = buildHeroHomeModel(heroUi);
++
++    assert.equal(model.nextTask.taskId, 'task-b');
++    assert.equal(model.canStart, true);
++    assert.deepEqual(model.completedTaskIds, ['task-a']);
++  });
++
++  it('projects a just-claimed task so the dashboard advances before read-model refresh', () => {
++    const rm = readModelFixture({
++      effortPlanned: 12,
++      tasks: [
++        { taskId: 'task-a', subjectId: 'spelling', launchStatus: 'launchable', completionStatus: 'not-started' },
++        { taskId: 'task-b', subjectId: 'grammar', launchStatus: 'launchable', completionStatus: 'not-started' },
++      ],
++      progress: {
++        status: 'active',
++        effortCompleted: 0,
++        effortPlanned: 12,
++        completedTaskIds: [],
++      },
++    });
++    const lastClaim = {
++      status: 'claimed',
++      taskId: 'task-a',
++      dateKey: '2026-04-28',
++      questId: 'quest-001',
++      questFingerprint: 'hero-qf-test-abc',
++      dailyStatus: 'active',
++      effortCompleted: 6,
++      effortPlanned: 12,
++      coinsEnabled: false,
++      coinsAwarded: 0,
++      coinBalance: 0,
++    };
++    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
++    const model = buildHeroHomeModel(heroUi);
++
++    assert.deepEqual(model.completedTaskIds, ['task-a']);
++    assert.equal(model.effortCompleted, 6);
++    assert.equal(model.nextTask.taskId, 'task-b');
++    assert.equal(model.canStart, true);
++  });
++
++  it('does not offer a start CTA after a matching final claim completes the daily quest', () => {
++    const rm = readModelFixture({
++      effortPlanned: 6,
++      tasks: [
++        { taskId: 'task-a', subjectId: 'spelling', launchStatus: 'launchable', completionStatus: 'not-started' },
++      ],
++      progress: {
++        status: 'active',
++        effortCompleted: 0,
++        effortPlanned: 6,
++        completedTaskIds: [],
++      },
++    });
++    const lastClaim = {
++      status: 'claimed',
++      taskId: 'task-a',
++      dateKey: '2026-04-28',
++      questId: 'quest-001',
++      questFingerprint: 'hero-qf-test-abc',
++      dailyStatus: 'completed',
++      effortCompleted: 6,
++      effortPlanned: 6,
++      coinsEnabled: true,
++      coinsAwarded: 100,
++      coinBalance: 100,
++    };
++    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
++    const model = buildHeroHomeModel(heroUi);
++
++    assert.equal(model.dailyStatus, 'completed');
++    assert.equal(model.nextTask, null);
++    assert.equal(model.canStart, false);
++  });
++});
++
+ // ---------------------------------------------------------------------------
+ // buildHeroHomeModel — backwards compatibility (P2 fields preserved)
+ // ---------------------------------------------------------------------------
+diff --git a/worker/src/hero/launch.js b/worker/src/hero/launch.js
+index 942a0bc..878b5c5 100644
+--- a/worker/src/hero/launch.js
++++ b/worker/src/hero/launch.js
+@@ -124,12 +124,18 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now,
+     accountId: callerAccountId,
+     now,
+   });
++  const progressEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_PROGRESS_ENABLED);
++  const heroProgressState = progressEnabled && typeof repository.readHeroProgress === 'function'
++    ? await repository.readHeroProgress(learnerId)
++    : null;
+   const heroReadModel = buildHeroShadowReadModel({
+     learnerId,
+     accountId: callerAccountId || '',
+     subjectReadModels,
+     now,
+-    env,
++    env: resolvedEnv,
++    heroProgressState,
++    progressEnabled,
+   });
+ 
+   const quest = heroReadModel.dailyQuest;
+@@ -144,6 +150,21 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now,
+     // Same taskId → safe idempotent-style response
+     if (activeSession.taskId === taskId) {
+       const matchingTask = quest?.tasks?.find((t) => t.taskId === taskId) || null;
++      const matchingCompletionStatus = matchingTask?.completionStatus || 'not-started';
++      if (matchingCompletionStatus === 'completed') {
++        throw new ConflictError('Hero task is already completed.', {
++          code: 'hero_task_already_completed',
++          taskId,
++          questId,
++        });
++      }
++      if (matchingCompletionStatus === 'completed-unclaimed') {
++        throw new ConflictError('Hero task is waiting for its completion claim.', {
++          code: 'hero_task_claim_pending',
++          taskId,
++          questId,
++        });
++      }
+       const activeQuestId = activeSession.questId || questId;
+       const activeSessionEffortTarget = Number(activeSession.effortTarget);
+       const activeEffortTarget = Number.isFinite(activeSessionEffortTarget) && activeSessionEffortTarget > 0
+@@ -265,6 +286,36 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now,
+     });
+   }
+ 
++  const completionStatus = task.completionStatus || 'not-started';
++  if (completionStatus === 'completed') {
++    throw new ConflictError('Hero task is already completed.', {
++      code: 'hero_task_already_completed',
++      taskId,
++      questId,
++    });
++  }
++  if (completionStatus === 'completed-unclaimed') {
++    throw new ConflictError('Hero task is waiting for its completion claim.', {
++      code: 'hero_task_claim_pending',
++      taskId,
++      questId,
++    });
++  }
++  if (completionStatus === 'in-progress') {
++    throw new ConflictError('Hero task is already in progress.', {
++      code: 'hero_active_session_conflict',
++      taskId,
++      questId,
++    });
++  }
++  if (completionStatus === 'blocked') {
++    throw new ConflictError('Hero task is blocked.', {
++      code: 'hero_task_blocked',
++      taskId,
++      questId,
++    });
++  }
++
+   if (task.launchStatus !== 'launchable') {
+     throw new ConflictError('Hero task is not launchable.', {
+       code: 'hero_task_not_launchable',

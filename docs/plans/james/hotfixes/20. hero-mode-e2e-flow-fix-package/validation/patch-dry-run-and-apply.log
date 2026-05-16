@@ -1,0 +1,9 @@
+Command source:
+  Fresh extraction from /mnt/data/ks2-mastery-lean-05161145.zip
+  git apply --check /mnt/data/001-hero-mode-e2e-flow-fix.patch
+  git apply /mnt/data/001-hero-mode-e2e-flow-fix.patch
+
+Result:
+  git apply --check: PASS
+  git apply: PASS
+  Fresh patched smoke test: PASS, 56 tests, 0 failures

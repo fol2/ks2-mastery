@@ -722,6 +722,141 @@ describe('dashboard-load repair logic (pure state checks)', () => {
 });
 
 // ---------------------------------------------------------------------------
+// buildHeroHomeModel — next Hero task progression
+// ---------------------------------------------------------------------------
+
+describe('buildHeroHomeModel — next task progression', () => {
+  it('advances the start CTA to the next uncompleted launchable task', () => {
+    const rm = readModelFixture({
+      effortPlanned: 12,
+      tasks: [
+        { taskId: 'task-a', subjectId: 'spelling', launchStatus: 'launchable', completionStatus: 'completed' },
+        { taskId: 'task-b', subjectId: 'grammar', launchStatus: 'launchable', completionStatus: 'not-started' },
+      ],
+      progress: {
+        status: 'active',
+        effortCompleted: 6,
+        effortPlanned: 12,
+        completedTaskIds: ['task-a'],
+      },
+    });
+    const heroUi = heroUiFixture({ readModel: rm });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.nextTask.taskId, 'task-b');
+    assert.equal(model.canStart, true);
+    assert.deepEqual(model.completedTaskIds, ['task-a']);
+  });
+
+  it('projects a just-claimed task so the dashboard advances before read-model refresh', () => {
+    const rm = readModelFixture({
+      effortPlanned: 12,
+      tasks: [
+        { taskId: 'task-a', subjectId: 'spelling', launchStatus: 'launchable', completionStatus: 'not-started' },
+        { taskId: 'task-b', subjectId: 'grammar', launchStatus: 'launchable', completionStatus: 'not-started' },
+      ],
+      progress: {
+        status: 'active',
+        effortCompleted: 0,
+        effortPlanned: 12,
+        completedTaskIds: [],
+      },
+    });
+    const lastClaim = {
+      status: 'claimed',
+      taskId: 'task-a',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      dailyStatus: 'active',
+      effortCompleted: 6,
+      effortPlanned: 12,
+      coinsEnabled: false,
+      coinsAwarded: 0,
+      coinBalance: 0,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.deepEqual(model.completedTaskIds, ['task-a']);
+    assert.equal(model.effortCompleted, 6);
+    assert.equal(model.nextTask.taskId, 'task-b');
+    assert.equal(model.canStart, true);
+  });
+
+  it('does not offer a start CTA after a matching final claim completes the daily quest', () => {
+    const rm = readModelFixture({
+      effortPlanned: 6,
+      tasks: [
+        { taskId: 'task-a', subjectId: 'spelling', launchStatus: 'launchable', completionStatus: 'not-started' },
+      ],
+      progress: {
+        status: 'active',
+        effortCompleted: 0,
+        effortPlanned: 6,
+        completedTaskIds: [],
+      },
+    });
+    const lastClaim = {
+      status: 'claimed',
+      taskId: 'task-a',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      dailyStatus: 'completed',
+      effortCompleted: 6,
+      effortPlanned: 6,
+      coinsEnabled: true,
+      coinsAwarded: 100,
+      coinBalance: 100,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'completed');
+    assert.equal(model.nextTask, null);
+    assert.equal(model.canStart, false);
+  });
+
+  it('clears the next task when a final claim completes the daily quest before the read model catches up', () => {
+    const rm = readModelFixture({
+      effortPlanned: 12,
+      tasks: [
+        { taskId: 'task-a', subjectId: 'spelling', launchStatus: 'launchable', completionStatus: 'not-started' },
+        { taskId: 'task-b', subjectId: 'grammar', launchStatus: 'launchable', completionStatus: 'not-started' },
+      ],
+      progress: {
+        status: 'active',
+        effortCompleted: 6,
+        effortPlanned: 12,
+        completedTaskIds: ['task-a'],
+      },
+    });
+    const lastClaim = {
+      status: 'claimed',
+      taskId: 'task-b',
+      dateKey: '2026-04-28',
+      questId: 'quest-001',
+      questFingerprint: 'hero-qf-test-abc',
+      dailyStatus: 'completed',
+      effortCompleted: 12,
+      effortPlanned: 12,
+      coinsEnabled: true,
+      coinsAwarded: 100,
+      coinBalance: 100,
+    };
+    const heroUi = heroUiFixture({ readModel: rm, lastClaim });
+    const model = buildHeroHomeModel(heroUi);
+
+    assert.equal(model.dailyStatus, 'completed');
+    assert.deepEqual(model.completedTaskIds, ['task-a', 'task-b']);
+    assert.equal(model.effortCompleted, 12);
+    assert.equal(model.nextTask, null);
+    assert.equal(model.canStart, false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // buildHeroHomeModel — backwards compatibility (P2 fields preserved)
 // ---------------------------------------------------------------------------
 

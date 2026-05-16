@@ -24,16 +24,7 @@ export function buildHeroHomeModel(heroUi) {
   const childVisible = readModel?.childVisible === true;
   const enabled = uiEnabled && childVisible;
 
-  // First task from dailyQuest.tasks where launchStatus === 'launchable'
-  const tasks = readModel?.dailyQuest?.tasks;
-  const nextTask = Array.isArray(tasks)
-    ? tasks.find((t) => t?.launchStatus === 'launchable') || null
-    : null;
-
   const activeHeroSession = readModel?.activeHeroSession || null;
-
-  const canStart = enabled && nextTask !== null && activeHeroSession === null;
-  const canContinue = enabled && activeHeroSession !== null;
 
   const effortPlanned = readModel?.dailyQuest?.effortPlanned || 0;
   const eligibleSubjects = (readModel?.eligibleSubjects || []).map(e => typeof e === 'string' ? e : e?.subjectId || '').filter(Boolean);
@@ -52,6 +43,27 @@ export function buildHeroHomeModel(heroUi) {
     && typeof lastClaim.dateKey === 'string'
     && lastClaim.dateKey === readModel?.dateKey
   );
+  const lastClaimMarksTaskComplete = (
+    lastClaimMatchesReadModel
+    && typeof lastClaim?.taskId === 'string'
+    && (lastClaim.status === 'claimed' || lastClaim.status === 'already-completed')
+  );
+  const readModelCompletedTaskIds = Array.isArray(progress?.completedTaskIds)
+    ? progress.completedTaskIds
+    : [];
+  const completedTaskIds = lastClaimMarksTaskComplete && !readModelCompletedTaskIds.includes(lastClaim.taskId)
+    ? [...readModelCompletedTaskIds, lastClaim.taskId]
+    : readModelCompletedTaskIds;
+  const completedTaskIdSet = new Set(completedTaskIds);
+
+  // The next CTA must not loop back to a task that was already completed,
+  // is waiting for a claim, or is still active. `launchStatus` describes
+  // subject availability, while `completionStatus` describes daily progress.
+  const tasks = readModel?.dailyQuest?.tasks;
+  const startableNextTask = Array.isArray(tasks)
+    ? tasks.find((t) => isStartableHeroTask(t, { completedTaskIds: completedTaskIdSet, activeHeroSession })) || null
+    : null;
+
   const readModelHasClaimCompletion = progress?.status === 'completed';
   const readModelHasAwardSnapshot = readModel?.economy?.today?.awardStatus === 'awarded';
   const lastClaimCompletedDaily = (
@@ -67,8 +79,17 @@ export function buildHeroHomeModel(heroUi) {
   const pendingCompletedHeroSession = readModel?.pendingCompletedHeroSession || null;
   const canClaim = readModel?.claim?.enabled === true;
   const dailyStatus = shouldProjectClaimCompletion ? 'completed' : (progress?.status || 'none');
-  const effortCompleted = progress?.effortCompleted || 0;
-  const completedTaskIds = progress?.completedTaskIds || [];
+  const nextTask = dailyStatus === 'completed' ? null : startableNextTask;
+  const readModelEffortCompleted = typeof progress?.effortCompleted === 'number' ? progress.effortCompleted : 0;
+  const claimEffortCompleted = lastClaimMatchesReadModel && typeof lastClaim?.effortCompleted === 'number'
+    ? lastClaim.effortCompleted
+    : null;
+  const effortCompleted = claimEffortCompleted !== null
+    ? Math.max(readModelEffortCompleted, claimEffortCompleted)
+    : readModelEffortCompleted;
+
+  const canStart = enabled && nextTask !== null && activeHeroSession === null && dailyStatus !== 'completed' && !claiming;
+  const canContinue = enabled && activeHeroSession !== null;
 
   // P4 U6: Economy fields from read model v5
   const economyBlock = readModel?.economy || null;
@@ -127,4 +148,22 @@ export function buildHeroHomeModel(heroUi) {
     showCoinBalance,
     campEnabled,
   };
+}
+
+function isStartableHeroTask(task, { completedTaskIds, activeHeroSession } = {}) {
+  if (!task || task.launchStatus !== 'launchable') return false;
+  if (completedTaskIds?.has?.(task.taskId)) return false;
+  if (activeHeroSession?.taskId === task.taskId) return false;
+
+  const completionStatus = task.completionStatus || 'not-started';
+  if (
+    completionStatus === 'completed'
+    || completionStatus === 'completed-unclaimed'
+    || completionStatus === 'in-progress'
+    || completionStatus === 'blocked'
+  ) {
+    return false;
+  }
+
+  return true;
 }

@@ -203,6 +203,14 @@ function getHeroProgressRow(server, learnerId) {
   return JSON.parse(row.state_json);
 }
 
+function writeHeroProgressRow(server, learnerId, progressState, accountId = 'adult-a') {
+  server.DB.db.prepare(
+    `UPDATE child_game_state
+     SET state_json = ?, updated_at = ?, updated_by_account_id = ?
+     WHERE learner_id = ? AND system_id = 'hero-mode'`,
+  ).run(JSON.stringify(progressState), heroTestNow(server), accountId, learnerId);
+}
+
 function getHeroEvents(server) {
   return server.DB.db.prepare(
     `SELECT id, learner_id, event_type, event_json, created_at FROM event_log WHERE event_type LIKE 'hero.%' ORDER BY created_at`,
@@ -398,6 +406,138 @@ test('U12 Flow 1: full happy path — read-model v4 → start → complete → c
     assert.equal(completedTask.completionStatus, 'completed',
       'Task must show completionStatus=completed in read model after claim');
   }
+
+  server.close();
+});
+
+// ── Flow 1b: Completed-task relaunch guard ─────────────────────────────
+
+test('U12 Flow 1b: completed Hero task cannot be relaunched and must not trap the learner in a repeat loop', async () => {
+  const server = createFullP3Server();
+  await seedLearner(server, 'adult-a', 'learner-1');
+  const claimable = await startAndCompleteTask(server, 'learner-1', 'adult-a');
+
+  const claimRevision = getLearnerRevision(server);
+  const claimResp = await postHeroCommand(server, {
+    command: 'claim-task',
+    learnerId: 'learner-1',
+    questId: claimable.questId,
+    questFingerprint: claimable.questFingerprint,
+    taskId: claimable.taskId,
+    requestId: 'e2e-flow1b-claim',
+    expectedLearnerRevision: claimRevision,
+  });
+  const claimPayload = await claimResp.json();
+  assert.equal(claimResp.status, 200, `Claim must succeed: ${JSON.stringify(claimPayload)}`);
+  assert.equal(claimPayload.heroClaim.status, 'claimed');
+
+  const readModelPayload = await getReadModel(server, 'learner-1');
+  const completedTask = readModelPayload.hero.dailyQuest.tasks.find(t => t.taskId === claimable.taskId);
+  assert.equal(completedTask?.completionStatus, 'completed');
+
+  const relaunchRevision = getLearnerRevision(server);
+  const relaunchResp = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-1',
+    questId: claimable.questId,
+    questFingerprint: claimable.questFingerprint,
+    taskId: claimable.taskId,
+    requestId: 'e2e-flow1b-relaunch-completed',
+    expectedLearnerRevision: relaunchRevision,
+  });
+  const relaunchPayload = await relaunchResp.json();
+
+  assert.equal(relaunchResp.status, 409, `Relaunch must be rejected: ${JSON.stringify(relaunchPayload)}`);
+  assert.equal(
+    relaunchPayload.error?.code || relaunchPayload.code,
+    'hero_task_already_completed',
+  );
+
+  server.close();
+});
+
+test('U12 Flow 1c: completed-unclaimed Hero task cannot be relaunched while a claim is pending', async () => {
+  const server = createFullP3Server();
+  await seedLearner(server, 'adult-a', 'learner-1');
+  const claimable = await startAndCompleteTask(server, 'learner-1', 'adult-a');
+
+  server.DB.db.prepare(`
+    UPDATE child_subject_state SET ui_json = '{"session": null}' WHERE learner_id = ? AND subject_id = ?
+  `).run('learner-1', claimable.subjectId);
+
+  const readModelPayload = await getReadModel(server, 'learner-1');
+  const pendingTask = readModelPayload.hero.dailyQuest.tasks.find(t => t.taskId === claimable.taskId);
+  assert.equal(pendingTask?.completionStatus, 'completed-unclaimed');
+
+  const relaunchRevision = getLearnerRevision(server);
+  const relaunchResp = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-1',
+    questId: readModelPayload.hero.dailyQuest.questId,
+    questFingerprint: readModelPayload.hero.questFingerprint,
+    taskId: claimable.taskId,
+    requestId: 'e2e-flow1c-relaunch-claim-pending',
+    expectedLearnerRevision: relaunchRevision,
+  });
+  const relaunchPayload = await relaunchResp.json();
+
+  assert.equal(relaunchResp.status, 409, `Relaunch must be rejected: ${JSON.stringify(relaunchPayload)}`);
+  assert.equal(
+    relaunchPayload.error?.code || relaunchPayload.code,
+    'hero_task_claim_pending',
+  );
+
+  server.close();
+});
+
+test('U12 Flow 1d: blocked Hero task cannot return already-started from a stale active session', async () => {
+  const server = createFullP3Server();
+  await seedLearner(server, 'adult-a', 'learner-1');
+
+  const readModelPayload = await getReadModel(server, 'learner-1');
+  const launchable = findFirstLaunchableTask(readModelPayload);
+  assert.ok(launchable, 'Must have a launchable task');
+
+  const revision = getLearnerRevision(server);
+  const startResp = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-1',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'e2e-flow1d-start',
+    expectedLearnerRevision: revision,
+  });
+  const startPayload = await startResp.json();
+  assert.equal(startResp.status, 200, `Start must succeed: ${JSON.stringify(startPayload)}`);
+
+  const progress = getHeroProgressRow(server, 'learner-1');
+  assert.ok(progress?.daily?.tasks?.[launchable.taskId], 'Started task must exist in Hero progress');
+  progress.daily.tasks[launchable.taskId] = {
+    ...progress.daily.tasks[launchable.taskId],
+    status: 'blocked',
+  };
+  writeHeroProgressRow(server, 'learner-1', progress);
+
+  const refreshedPayload = await getReadModel(server, 'learner-1');
+
+  const relaunchRevision = getLearnerRevision(server);
+  const relaunchResp = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-1',
+    questId: refreshedPayload.hero.dailyQuest.questId,
+    questFingerprint: refreshedPayload.hero.questFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'e2e-flow1d-relaunch-blocked',
+    expectedLearnerRevision: relaunchRevision,
+  });
+  const relaunchPayload = await relaunchResp.json();
+
+  assert.equal(relaunchResp.status, 409, `Blocked task relaunch must be rejected: ${JSON.stringify(relaunchPayload)}`);
+  assert.equal(
+    relaunchPayload.error?.code || relaunchPayload.code,
+    'hero_task_blocked',
+  );
 
   server.close();
 });

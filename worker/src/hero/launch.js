@@ -124,12 +124,18 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     accountId: callerAccountId,
     now,
   });
+  const progressEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_PROGRESS_ENABLED);
+  const heroProgressState = progressEnabled && typeof repository.readHeroProgress === 'function'
+    ? await repository.readHeroProgress(learnerId)
+    : null;
   const heroReadModel = buildHeroShadowReadModel({
     learnerId,
     accountId: callerAccountId || '',
     subjectReadModels,
     now,
-    env,
+    env: resolvedEnv,
+    heroProgressState,
+    progressEnabled,
   });
 
   const quest = heroReadModel.dailyQuest;
@@ -144,6 +150,31 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     // Same taskId → safe idempotent-style response
     if (activeSession.taskId === taskId) {
       const matchingTask = quest?.tasks?.find((t) => t.taskId === taskId) || null;
+      const matchingProgressTask = heroProgressState?.daily?.tasks?.[taskId] || null;
+      const matchingCompletionStatus = matchingTask?.completionStatus
+        || progressTaskConflictStatus(matchingProgressTask)
+        || 'not-started';
+      if (matchingCompletionStatus === 'completed') {
+        throw new ConflictError('Hero task is already completed.', {
+          code: 'hero_task_already_completed',
+          taskId,
+          questId,
+        });
+      }
+      if (matchingCompletionStatus === 'completed-unclaimed') {
+        throw new ConflictError('Hero task is waiting for its completion claim.', {
+          code: 'hero_task_claim_pending',
+          taskId,
+          questId,
+        });
+      }
+      if (matchingCompletionStatus === 'blocked') {
+        throw new ConflictError('Hero task is blocked.', {
+          code: 'hero_task_blocked',
+          taskId,
+          questId,
+        });
+      }
       const activeQuestId = activeSession.questId || questId;
       const activeSessionEffortTarget = Number(activeSession.effortTarget);
       const activeEffortTarget = Number.isFinite(activeSessionEffortTarget) && activeSessionEffortTarget > 0
@@ -265,6 +296,36 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     });
   }
 
+  const completionStatus = task.completionStatus || 'not-started';
+  if (completionStatus === 'completed') {
+    throw new ConflictError('Hero task is already completed.', {
+      code: 'hero_task_already_completed',
+      taskId,
+      questId,
+    });
+  }
+  if (completionStatus === 'completed-unclaimed') {
+    throw new ConflictError('Hero task is waiting for its completion claim.', {
+      code: 'hero_task_claim_pending',
+      taskId,
+      questId,
+    });
+  }
+  if (completionStatus === 'in-progress') {
+    throw new ConflictError('Hero task is already in progress.', {
+      code: 'hero_active_session_conflict',
+      taskId,
+      questId,
+    });
+  }
+  if (completionStatus === 'blocked') {
+    throw new ConflictError('Hero task is blocked.', {
+      code: 'hero_task_blocked',
+      taskId,
+      questId,
+    });
+  }
+
   if (task.launchStatus !== 'launchable') {
     throw new ConflictError('Hero task is not launchable.', {
       code: 'hero_task_not_launchable',
@@ -339,4 +400,11 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
   };
 
   return { heroLaunch, subjectCommand, questContext };
+}
+
+function progressTaskConflictStatus(progressTask) {
+  if (!progressTask || typeof progressTask !== 'object') return null;
+  if (progressTask.status === 'completed') return 'completed';
+  if (progressTask.status === 'blocked') return 'blocked';
+  return null;
 }
