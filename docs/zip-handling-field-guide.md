@@ -59,26 +59,27 @@ sed -n '1,180p' "$WORK/scripts/create-lean-zip.README.md" 2>/dev/null || true
 sed -n '1,220p' "$WORK/package.json" 2>/dev/null || true
 ```
 
-Why this order matters: `README.md` tells you the repo architecture and operating assumptions; `LEAN_ZIP_MANIFEST.txt` tells you which files are intentionally omitted or replaced; `package.json` tells you the safe project scripts; `scripts/create-lean-zip.README.md` tells you how to interpret the lean archive.
+Why this order matters: `README.md` tells you the repo architecture and operating assumptions; `LEAN_ZIP_MANIFEST.txt` tells you which profile was used and which files were intentionally omitted; `package.json` tells you the safe project scripts; `scripts/create-lean-zip.README.md` tells you how to interpret the lean archive.
 
 ## Understand lean ZIP semantics
 
-For this project, the lean ZIP is a review/development package, not a production-complete asset bundle.
+For this project, the lean ZIP is a code-review package, not a production-complete asset or release-evidence bundle.
 
-The lean ZIP script keeps repository structure visible, excludes heavy asset payloads, and usually replaces excluded files with 0-byte placeholders. That means a 0-byte file under `assets/**` is not automatically corruption. It is probably intentional.
+The default `review` profile includes source, scripts, tests, fixtures, Worker code, shared modules, and repo config. It omits heavy assets, generated reports, validation output, and planning packs. Placeholder entries are now opt-in via `--mode placeholder`.
 
-From the current KS2 lean bundle, the manifest pattern was:
+From the current KS2 lean bundle, the manifest pattern is:
 
 ```text
-mode=placeholder
-exclude_globs=assets/**
-tracked_total=2293
-copied=1510
-omitted=783
-placeholders=783
+profile=review
+mode=omit
+tracked_total=5137
+selected_by_profile=1543
+copied=1543
+omitted=3594
+outside_profile=3594
 ```
 
-Practical implication: do not open a 0-byte WebP/PNG and conclude the app has broken assets. Read the manifest first. If a test or visual build depends on real assets, the lean ZIP may not be enough.
+Practical implication: missing assets, reports, or planning packs are intentional in a default lean ZIP. Read the manifest first. If a test, release audit, or visual build depends on omitted artefacts, the lean ZIP may not be enough.
 
 ## Safe extraction pattern
 
@@ -186,7 +187,7 @@ Find placeholders quickly.
 find . -type f -size 0 | sed -n '1,120p'
 ```
 
-Interpret them using `LEAN_ZIP_MANIFEST.txt`. In KS2 lean ZIPs, most 0-byte files under `assets/**` are deliberate placeholder files. Treat them as “intentionally omitted payload visible by path”, not as empty source files.
+Interpret them using `LEAN_ZIP_MANIFEST.txt`. In older KS2 lean ZIPs, many 0-byte files under `assets/**` were deliberate placeholder files. In current default ZIPs, placeholders only appear if the archive was created with `--mode placeholder`.
 
 Bad conclusion:
 
@@ -195,6 +196,10 @@ Bad conclusion:
 Better conclusion:
 
 > The lean ZIP intentionally replaced omitted assets with 0-byte placeholders. Code review can continue, but visual asset completeness cannot be certified from this bundle.
+
+For current default `mode=omit` bundles, the better conclusion is:
+
+> The lean ZIP intentionally omitted assets/evidence/planning packs. Code review can continue, but visual asset completeness and release evidence cannot be certified from this bundle.
 
 ## Testing from a lean ZIP
 
@@ -220,8 +225,9 @@ Be cautious with full `npm test` or `npm run check` from a lean ZIP:
 
 - `node_modules` may not exist.
 - Real assets may be omitted.
+- Generated reports or planning documents may be omitted.
 - Cloudflare/Wrangler scripts may expect environment configuration.
-- Browser/golden tests may depend on assets that the lean archive intentionally replaced.
+- Browser/golden tests may depend on assets that the lean archive intentionally omitted.
 - Some scripts may rely on Git history unless the project provides a ZIP-safe bypass.
 
 ## When to use GitHub API as a supplement
@@ -253,7 +259,6 @@ When an API tool is available, fetch exact files rather than browsing broadly. U
 ```text
 README.md
 scripts/create-lean-zip.README.md
-docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p1-completion-report.md
 docs/operations/capacity.md
 package.json
 ```
@@ -270,8 +275,6 @@ LEAN_ZIP_MANIFEST.txt
 scripts/create-lean-zip.README.md
 package.json
 
-docs/plans/james/sys-hardening/
-docs/plans/james/sys-hardening/A/
 docs/operations/capacity.md
 docs/operations/capacity-cpu-d1-evidence.md
 docs/operations/capacity-tail-latency.md

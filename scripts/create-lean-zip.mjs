@@ -2,19 +2,71 @@ import { mkdtemp, mkdir, rm, copyFile, writeFile, lstat, symlink, stat } from 'n
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
 const repoRoot = process.cwd();
 const repoName = path.basename(repoRoot);
+const REVIEW_INCLUDE_GLOBS = [
+  '.gitattributes',
+  '.gitignore',
+  '.npmrc',
+  '.nvmrc',
+  'AGENTS.md',
+  'README.md',
+  '_headers',
+  'favicon.ico',
+  'index.html',
+  'llms.txt',
+  'manifest.webmanifest',
+  'migration-plan.md',
+  'package-lock.json',
+  'package.json',
+  'playwright.config.mjs',
+  'robots.txt',
+  'sitemap.xml',
+  'skills-lock.json',
+  'wrangler.jsonc',
+  '.github/**',
+  '.githooks/**',
+  'content/**',
+  'legacy/**',
+  'scripts/**',
+  'shared/**',
+  'skills/**',
+  'src/**',
+  'styles/**',
+  'tests/**',
+  'worker/**',
+];
 const DEFAULT_EXCLUDES = [
   'assets/**',
   'worktrees/**',
   '.worktrees/**',
-  // Generated validation artefacts: useful in-repo, not required in lean runtime/share bundles.
+  // Generated validation artefacts are useful in-repo, but not required for code review bundles.
   'reports/**',
   'output/**',
-  // Historical planning archives frequently contain heavy screenshots/log bundles.
-  'docs/plans/**/archive/**',
 ];
+const TRACKED_PROFILE_EXCLUDES = [
+  ...DEFAULT_EXCLUDES,
+  // Planning packs frequently contain screenshots, logs, nested ZIPs, and historical patch bundles.
+  'docs/plans/**',
+];
+const PROFILES = {
+  review: {
+    description: 'code review bundle: source, scripts, tests, fixtures, and repo config',
+    includes: REVIEW_INCLUDE_GLOBS,
+    excludes: DEFAULT_EXCLUDES,
+    defaultMode: 'omit',
+    defaultMaxMb: 25,
+  },
+  tracked: {
+    description: 'broader tracked-file snapshot with bulky evidence and planning packs excluded',
+    includes: [],
+    excludes: TRACKED_PROFILE_EXCLUDES,
+    defaultMode: 'omit',
+    defaultMaxMb: 25,
+  },
+};
 
 function pad2(value) {
   return String(value).padStart(2, '0');
@@ -42,25 +94,31 @@ const defaultOutput = path.resolve(
 );
 
 const HELP_TEXT = `
-Create a lean development/share ZIP from tracked files.
+Create a lean code review ZIP from tracked files.
 
 Usage:
   node scripts/create-lean-zip.mjs [options]
 
 Options:
   --output <path>        ZIP output path (exact path, no auto suffix)
-  --exclude <glob>       Exclude glob (repeatable). Default: ${DEFAULT_EXCLUDES.join(', ')}
+  --profile <profile>    Bundle profile:
+                         - review  : source, scripts, tests, fixtures, repo config (default)
+                         - tracked : broader tracked snapshot, still excluding bulky artefacts
+  --include <glob>       Add an include glob to the review profile (repeatable)
+  --exclude <glob>       Exclude glob (repeatable). Review default: ${PROFILES.review.excludes.join(', ')}
   --mode <mode>          How to treat excluded files:
                          - omit        : do not include excluded files
-                         - placeholder : include 0-byte files at same paths (default)
+                         - placeholder : include 0-byte files at same paths
                          - symlink     : include symlinks to .lean-omitted (best-effort)
-  --max-mb <number>      Target threshold in MB for reporting (default: 100)
+  --max-mb <number>      Target threshold in MB for reporting (default: ${PROFILES.review.defaultMaxMb})
   --name <filename>      Override generated ZIP filename (auto adds -MMDDHHMM before extension)
   --help                 Show this message
 
 Examples:
   node scripts/create-lean-zip.mjs
+  node scripts/create-lean-zip.mjs --profile tracked
   node scripts/create-lean-zip.mjs --mode omit
+  node scripts/create-lean-zip.mjs --include "docs/operations/**"
   node scripts/create-lean-zip.mjs --exclude "assets/**" --exclude "tests/playwright/**"
   node scripts/create-lean-zip.mjs --name ks2-dev-share.zip
 `.trim();
@@ -68,9 +126,11 @@ Examples:
 function parseArgs(argv) {
   const config = {
     output: defaultOutput,
-    excludes: [...DEFAULT_EXCLUDES],
-    mode: 'placeholder',
-    maxMb: 100,
+    profile: 'review',
+    includes: [],
+    excludes: [],
+    mode: null,
+    maxMb: null,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -78,6 +138,20 @@ function parseArgs(argv) {
     if (arg === '--help') return { help: true, config };
     if (arg === '--output') {
       config.output = path.resolve(repoRoot, argv[++i] || '');
+      continue;
+    }
+    if (arg === '--profile') {
+      const value = argv[++i];
+      if (!Object.hasOwn(PROFILES, value)) {
+        throw new Error(`Invalid --profile "${value}". Use ${Object.keys(PROFILES).join('|')}.`);
+      }
+      config.profile = value;
+      continue;
+    }
+    if (arg === '--include') {
+      const value = argv[++i];
+      if (!value) throw new Error('Missing value for --include');
+      config.includes.push(value);
       continue;
     }
     if (arg === '--exclude') {
@@ -109,8 +183,13 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  // Deduplicate excludes while preserving order.
-  config.excludes = [...new Set(config.excludes)];
+  const profile = PROFILES[config.profile];
+  config.includes = profile.includes.length === 0
+    ? []
+    : [...new Set([...profile.includes, ...config.includes])];
+  config.excludes = [...new Set([...profile.excludes, ...config.excludes])];
+  config.mode = config.mode || profile.defaultMode;
+  config.maxMb = config.maxMb || profile.defaultMaxMb;
   return { help: false, config };
 }
 
@@ -128,12 +207,31 @@ function gitTrackedFiles() {
 function globToRegex(glob) {
   // Minimal glob syntax support for share packaging:
   // ** => any path chars, * => segment chars except "/".
-  const escaped = glob
-    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-    .replace(/\*\*/g, '__DOUBLE_STAR__')
-    .replace(/\*/g, '[^/]*')
-    .replace(/__DOUBLE_STAR__/g, '.*');
-  return new RegExp(`^${escaped}$`);
+  let regex = '';
+  for (let i = 0; i < glob.length; i += 1) {
+    const char = glob[i];
+    const next = glob[i + 1];
+    const afterNext = glob[i + 2];
+
+    if (char === '*' && next === '*') {
+      if (afterNext === '/') {
+        regex += '(?:.*/)?';
+        i += 2;
+      } else {
+        regex += '.*';
+        i += 1;
+      }
+      continue;
+    }
+
+    if (char === '*') {
+      regex += '[^/]*';
+      continue;
+    }
+
+    regex += char.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp(`^${regex}$`);
 }
 
 async function ensureParent(filePath) {
@@ -189,6 +287,10 @@ function runZipWithFallback(stagingRoot, zipOutput) {
 }
 
 async function packageLeanZip(config) {
+  const includes = config.includes.map((glob) => ({
+    glob,
+    regex: globToRegex(glob),
+  }));
   const excludes = config.excludes.map((glob) => ({
     glob,
     regex: globToRegex(glob),
@@ -200,8 +302,11 @@ async function packageLeanZip(config) {
 
   const stats = {
     totalTracked: files.length,
+    selected: 0,
     copied: 0,
     omitted: 0,
+    outsideProfile: 0,
+    excluded: 0,
     placeholders: 0,
     symlinks: 0,
     missing: 0,
@@ -216,6 +321,7 @@ async function packageLeanZip(config) {
     }
 
     for (const relPath of files) {
+      const inProfile = includes.length === 0 || includes.some((rule) => rule.regex.test(relPath));
       const shouldExclude = excludes.some((rule) => rule.regex.test(relPath));
       const src = path.join(repoRoot, relPath);
       const dest = path.join(stagingRoot, relPath);
@@ -237,21 +343,30 @@ async function packageLeanZip(config) {
         continue;
       }
 
-      if (!shouldExclude) {
+      if (inProfile && !shouldExclude) {
         await ensureParent(dest);
         await copyFile(src, dest);
+        stats.selected += 1;
         stats.copied += 1;
         continue;
       }
 
       stats.omitted += 1;
-      stats.omittedPaths.push(relPath);
-      await ensureParent(dest);
+      if (!inProfile) {
+        stats.outsideProfile += 1;
+        stats.omittedPaths.push({ path: relPath, reason: 'outside-profile' });
+      } else {
+        stats.selected += 1;
+        stats.excluded += 1;
+        stats.omittedPaths.push({ path: relPath, reason: 'excluded' });
+      }
 
       if (config.mode === 'omit') {
         // No file written.
         continue;
       }
+
+      await ensureParent(dest);
 
       if (config.mode === 'placeholder') {
         await writeFile(dest, '');
@@ -269,17 +384,23 @@ async function packageLeanZip(config) {
 
     const manifest = [
       `repo=${repoName}`,
+      `profile=${config.profile}`,
+      `profile_description=${PROFILES[config.profile].description}`,
       `mode=${config.mode}`,
+      `include_globs=${config.includes.length > 0 ? config.includes.join(',') : '(all tracked files)'}`,
       `exclude_globs=${config.excludes.join(',')}`,
       `tracked_total=${stats.totalTracked}`,
+      `selected_by_profile=${stats.selected}`,
       `copied=${stats.copied}`,
       `omitted=${stats.omitted}`,
+      `outside_profile=${stats.outsideProfile}`,
+      `excluded=${stats.excluded}`,
       `placeholders=${stats.placeholders}`,
       `symlinks=${stats.symlinks}`,
       `missing=${stats.missing}`,
       '',
       'omitted_paths:',
-      ...stats.omittedPaths.map((p) => `- ${p}`),
+      ...stats.omittedPaths.map((entry) => `- ${entry.path} [${entry.reason}]`),
       '',
       'missing_paths:',
       ...stats.missingPaths.map((p) => `- ${p}`),
@@ -297,9 +418,11 @@ async function packageLeanZip(config) {
 
     console.log(`Lean ZIP created: ${zipOutput}`);
     console.log(`Size: ${sizeMb.toFixed(2)} MB (target < ${config.maxMb} MB: ${pass ? 'PASS' : 'FAIL'})`);
+    console.log(`Profile: ${config.profile} (${PROFILES[config.profile].description})`);
     console.log(`Tracked files: ${stats.totalTracked}`);
+    console.log(`Selected by profile: ${stats.selected}`);
     console.log(`Copied files: ${stats.copied}`);
-    console.log(`Excluded files: ${stats.omitted}`);
+    console.log(`Omitted files: ${stats.omitted} (outside profile=${stats.outsideProfile}, excluded=${stats.excluded})`);
     if (stats.missing > 0) {
       console.log(`Missing tracked files skipped: ${stats.missing}`);
     }
@@ -317,7 +440,7 @@ async function packageLeanZip(config) {
   }
 }
 
-async function main() {
+export async function main() {
   try {
     const parsed = parseArgs(process.argv.slice(2));
     if (parsed.help) {
@@ -331,4 +454,15 @@ async function main() {
   }
 }
 
-await main();
+export {
+  DEFAULT_EXCLUDES,
+  PROFILES,
+  REVIEW_INCLUDE_GLOBS,
+  globToRegex,
+  parseArgs,
+  packageLeanZip,
+};
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await main();
+}
