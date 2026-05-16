@@ -208,8 +208,31 @@ function legacyRuntimePath(...segments) {
   return `/${['api', ...segments].join('/')}`;
 }
 
+function parseRetryAfterSeconds(value, now = Date.now()) {
+  if (value === null || value === undefined || value === '') return null;
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric >= 0) return Math.ceil(numeric);
+  const parsedDate = Date.parse(String(value));
+  if (Number.isFinite(parsedDate)) {
+    return Math.max(0, Math.ceil((parsedDate - Number(now || Date.now())) / 1000));
+  }
+  return null;
+}
+
+function responseRetryAfterSeconds(response, payload) {
+  const headerRetryAfter = parseRetryAfterSeconds(response?.headers?.get?.('retry-after'));
+  if (headerRetryAfter !== null) return headerRetryAfter;
+  return parseRetryAfterSeconds(payload?.retryAfterSeconds);
+}
+
+function bootstrapRetryAfterMs(error) {
+  const seconds = parseRetryAfterSeconds(error?.retryAfterSeconds ?? error?.payload?.retryAfterSeconds);
+  if (seconds === null) return null;
+  return Math.min(BOOTSTRAP_BACKOFF_MAX_MS, Math.max(0, seconds * 1000));
+}
+
 class RepositoryHttpError extends Error {
-  constructor({ url, method, status = 0, payload = null, text = '', correlationId = null }) {
+  constructor({ url, method, status = 0, payload = null, text = '', correlationId = null, retryAfterSeconds = null }) {
     const message = payload?.message
       || (typeof text === 'string' && text.trim())
       || `Repository sync failed (${status}).`;
@@ -221,7 +244,8 @@ class RepositoryHttpError extends Error {
     this.payload = payload;
     this.text = text;
     this.code = payload?.code || null;
-    this.retryable = status >= 500 || status === 0;
+    this.retryAfterSeconds = parseRetryAfterSeconds(retryAfterSeconds);
+    this.retryable = this.status === 429 || this.status >= 500 || this.status === 0;
     this.correlationId = correlationId || payload?.correlationId || payload?.requestId || null;
   }
 }
@@ -297,6 +321,7 @@ async function fetchJson(fetchFn, url, init, authSession) {
       payload,
       text,
       correlationId: payload?.mutation?.correlationId || payload?.correlationId || payload?.requestId || null,
+      retryAfterSeconds: responseRetryAfterSeconds(response, payload),
     });
   }
 
@@ -1069,7 +1094,7 @@ function createOperation(kind, payload = {}, syncState = emptySyncState(), now =
 
 function classifyError(error, fallbackScope = 'remote-sync') {
   if (error instanceof RepositoryHttpError) {
-    const retryable = error.status >= 500 || error.status === 0;
+    const retryable = error.status === 429 || error.status >= 500 || error.status === 0;
     const staleWrite = error.status === 409 && error.code === 'stale_write';
     return createPersistenceError({
       phase: error.status === 409 ? 'remote-conflict' : 'remote-write',
@@ -1084,6 +1109,7 @@ function classifyError(error, fallbackScope = 'remote-sync') {
         payload: error.payload && typeof error.payload === 'object' ? error.payload : null,
         url: error.url,
         method: error.method,
+        retryAfterSeconds: error.retryAfterSeconds,
       },
     });
   }
@@ -1112,7 +1138,7 @@ function hasCacheFallback(bundle, operations) {
 
 function isBootstrapBackoffError(error) {
   if (!(error instanceof RepositoryHttpError)) return false;
-  if (error.status >= 500) return true;
+  if (error.status >= 500 || error.status === 429) return true;
 
   const signal = [
     error.code,
@@ -1271,7 +1297,7 @@ export function createApiPlatformRepositories({
 
   function scheduleBootstrapBackoff(error) {
     const attempt = Math.max(1, Number(bootstrapBackoff?.attempt || 0) + 1);
-    const retryAfterMs = bootstrapBackoffDelay(attempt, random);
+    const retryAfterMs = bootstrapRetryAfterMs(error) ?? bootstrapBackoffDelay(attempt, random);
     const retryAt = currentTime() + retryAfterMs;
     bootstrapBackoff = {
       attempt,

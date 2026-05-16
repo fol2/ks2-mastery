@@ -11904,6 +11904,39 @@ html { scroll-behavior: smooth; }
   white-space: pre-wrap;
 }
 
+.system-update-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto 16px;
+  max-width: 1180px;
+  width: calc(100% - 32px);
+  padding: 12px 16px;
+  border: 1px solid color-mix(in oklab, var(--warn) 32%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--warn-soft, #f7ebd0) 72%, var(--paper));
+  color: var(--ink);
+  box-shadow: 0 8px 24px rgba(36, 49, 66, 0.08);
+}
+
+.system-update-banner strong {
+  flex: 0 0 auto;
+}
+
+.system-update-banner span {
+  min-width: 0;
+  line-height: 1.45;
+}
+
+@media (max-width: 560px) {
+  .system-update-banner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    width: calc(100% - 24px);
+  }
+}
+
 .error-boundary-body {
   margin-top: 8px;
 }

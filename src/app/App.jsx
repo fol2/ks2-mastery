@@ -105,6 +105,16 @@ function SubjectTopNav({ chrome, actions, currentScreen }) {
   );
 }
 
+function UpdateReadyBanner({ snapshot }) {
+  if (snapshot?.status !== 'ready') return null;
+  return (
+    <section className="system-update-banner" role="status" aria-live="polite" data-testid="system-update-banner">
+      <strong>Update ready</strong>
+      <span>An update is ready. Finish this question, then we will refresh safely.</span>
+    </section>
+  );
+}
+
 // U6: React ErrorBoundary capture hook. The boundary fires this on every
 // componentDidCatch; captureClientError is idempotent, bounded, and never
 // throws. credentialFetch is intentionally omitted — error-capture.js reuses
@@ -214,6 +224,7 @@ export function App({ controller, runtime }) {
           route surfaces. The bar polls GET /api/ops/active-messages every 5 min
           and fail-open (no banner on fetch error). */}
       <ActiveMessagesBar fetchActiveMessages={runtime.fetchActiveMessages} />
+      <UpdateReadyBanner snapshot={appState.systemUpdate} />
       {screen === 'dashboard' && (
         <>
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />

@@ -226,6 +226,11 @@ test('auth login: IPv6 /64 bucketing — two low-64 suffixes share the bucket an
     const payload = await response.json().catch(() => ({}));
     assert.equal(response.status, 400, 'login should return a BadRequestError when rate-limited');
     assert.equal(payload.code, 'rate_limited', 'login rate-limit code must propagate');
+    assert.equal(
+      response.headers.get('retry-after'),
+      String(payload.retryAfterSeconds),
+      'auth rate-limited HttpError responses should surface retry-after for browser/client backoff',
+    );
   } finally {
     server.close();
   }
@@ -255,6 +260,11 @@ test('demo create: IPv6 /64 bucketing — low-64 rotation still hits the seeded 
     const payload = await response.json().catch(() => ({}));
     assert.equal(response.status, 400, 'demo create should return a BadRequestError when rate-limited');
     assert.equal(payload.code, 'demo_rate_limited', 'demo rate-limit code must propagate');
+    assert.equal(
+      response.headers.get('retry-after'),
+      String(payload.retryAfterSeconds),
+      'rate-limited HttpError responses should surface retry-after for browser/client backoff',
+    );
   } finally {
     server.close();
   }
@@ -323,6 +333,11 @@ test('tts endpoint: IPv6 /64 bucketing — rotated low-64 still hits the seeded 
     const payload = await response.json().catch(() => ({}));
     assert.equal(response.status, 400, 'tts should return a BadRequestError when rate-limited');
     assert.equal(payload.code, 'tts_lookup_rate_limited', 'tts lookup rate-limit code must propagate');
+    assert.equal(
+      response.headers.get('retry-after'),
+      String(payload.retryAfterSeconds),
+      'TTS rate-limited HttpError responses should surface retry-after for browser/client backoff',
+    );
   } finally {
     server.close();
   }

@@ -87,6 +87,7 @@ import {
   listIncidents,
   getIncident,
 } from './admin-incident.js';
+import { BUILD_VERSION } from './generated-build-version.js';
 
 
 // U7 (sys-hardening p1): CSP report endpoint constants. The endpoint
@@ -317,6 +318,42 @@ function redirect(location, status = 302, cookies = []) {
     },
   });
   return withCookies(response, cookies);
+}
+
+const BUILD_HASH_PATTERN = /^[a-f0-9]{6,40}$/;
+
+function normaliseVersionText(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function normaliseBuildHash(value) {
+  const text = normaliseVersionText(value);
+  return text && BUILD_HASH_PATTERN.test(text) ? text : null;
+}
+
+function buildVersionPayload(env = {}) {
+  const envBuildHash = normaliseBuildHash(env.BUILD_HASH);
+  const generatedBuildHash = normaliseBuildHash(BUILD_VERSION.buildHash);
+  const buildHash = envBuildHash || generatedBuildHash;
+  const release = normaliseVersionText(env.RELEASE);
+  const generatedAt = generatedBuildHash || !buildHash
+    ? normaliseVersionText(BUILD_VERSION.generatedAt)
+    : null;
+  const source = envBuildHash
+    ? 'env.BUILD_HASH'
+    : generatedBuildHash
+      ? normaliseVersionText(BUILD_VERSION.source) || 'generated-build-version'
+      : release
+        ? 'env.RELEASE'
+        : normaliseVersionText(BUILD_VERSION.source) || 'unavailable';
+  return {
+    ok: true,
+    buildId: buildHash || release,
+    buildHash,
+    release,
+    source,
+    generatedAt,
+  };
 }
 
 function isDemoSubresourceRequest(request) {
@@ -776,6 +813,10 @@ export function createWorkerApp({
             },
             now: new Date(now()).toISOString(),
           });
+        }
+
+        if (url.pathname === '/api/version' && request.method === 'GET') {
+          return json(buildVersionPayload(env));
         }
 
         if (url.pathname === '/api/security/csp-report' && request.method === 'POST') {

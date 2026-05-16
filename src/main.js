@@ -101,6 +101,11 @@ import { installGlobalErrorCapture } from './platform/ops/error-capture.js';
 import { createHeroModeClient } from './platform/hero/hero-client.js';
 import { buildHeroHomeModel } from './platform/hero/hero-ui-model.js';
 import { isHeroSessionTerminal } from '../shared/hero/completion-status.js';
+import { createDemoSessionStarter } from './platform/auth/demo-start-guard.js';
+import {
+  createBuildUpdateDetector,
+  resolveClientBuildId,
+} from './platform/react/build-update-detector.js';
 
 const root = document.getElementById('app');
 const credentialFetch = createCredentialFetch();
@@ -216,21 +221,11 @@ async function startSocialAuth(provider) {
   globalThis.location.href = payload.redirectUrl;
 }
 
-async function startDemoSession() {
-  /* U2: demo sessions must NOT restore admin return — clear the stash
-     unconditionally before the redirect. */
-  clearAdminReturn();
-  const response = await credentialFetch('/api/demo/session', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({}),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload?.session?.accountId) {
-    throw new Error(payload.message || 'Could not start the demo.');
-  }
-  globalThis.location.href = '/';
-}
+const startDemoSession = createDemoSessionStarter({
+  credentialFetch,
+  clearAdminReturn,
+  location: globalThis.location,
+});
 
 function renderAuthRoot({ error = '', code = '' } = {}) {
   // SH2-U3: pass `code` + `message` as a structured initialError when the
@@ -1511,6 +1506,12 @@ const controller = createAppController({
   },
 });
 store = controller.store;
+const buildUpdateDetector = createBuildUpdateDetector({
+  loadedBuildId: resolveClientBuildId(),
+  fetchFn: credentialFetch,
+  getState: () => store.getState(),
+  setSystemUpdate: (snapshot) => store.patch(() => ({ systemUpdate: snapshot })),
+});
 remoteSpellingActions = createRemoteSpellingActionHandler({
   store,
   services,
@@ -2804,6 +2805,7 @@ function afterReactRender(appState) {
   const modalIsVisibleNow = modalIsOpen();
   previousModalVisible = modalIsVisibleNow;
   ensureSpellingAutoAdvanceFromCurrentState();
+  buildUpdateDetector.afterRender(appState);
 
   if (boot.session.signedIn) {
     if (appState.route.screen === 'parent-hub') {
@@ -2987,6 +2989,7 @@ const handleAdminHashChange = () => {
   }
 };
 globalThis.addEventListener('hashchange', handleAdminHashChange);
+buildUpdateDetector.start();
 
 createRoot(root).render(
   <App

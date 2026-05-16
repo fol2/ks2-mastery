@@ -41,6 +41,15 @@ const DEFAULT_SUBJECT_UI = {
   error: '',
 };
 
+const DEFAULT_SYSTEM_UPDATE = {
+  status: 'idle',
+  currentBuildId: null,
+  latestBuildId: null,
+  source: '',
+  checkedAt: 0,
+  reason: '',
+};
+
 function makeLearner(name = 'Learner 1') {
   return {
     id: uid('learner'),
@@ -101,6 +110,7 @@ function emptyState(subjects, learner) {
     persistence: defaultPersistenceSnapshot(),
     transientUi: normaliseTransientUi(),
     toasts: [],
+    systemUpdate: { ...DEFAULT_SYSTEM_UPDATE },
     monsterCelebrations: emptyMonsterCelebrations(),
   };
 }
@@ -147,6 +157,19 @@ function normaliseRoute(rawRoute, subjects) {
 
 function normaliseToasts(rawValue) {
   return normaliseRewardToastEvents(rawValue);
+}
+
+function normaliseSystemUpdate(rawValue) {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+  if (raw.status !== 'ready') return { ...DEFAULT_SYSTEM_UPDATE };
+  return {
+    status: 'ready',
+    currentBuildId: typeof raw.currentBuildId === 'string' && raw.currentBuildId ? raw.currentBuildId.slice(0, 80) : null,
+    latestBuildId: typeof raw.latestBuildId === 'string' && raw.latestBuildId ? raw.latestBuildId.slice(0, 80) : null,
+    source: typeof raw.source === 'string' ? raw.source.slice(0, 80) : '',
+    checkedAt: Number.isFinite(Number(raw.checkedAt)) ? Number(raw.checkedAt) : 0,
+    reason: typeof raw.reason === 'string' ? raw.reason.slice(0, 80) : '',
+  };
 }
 
 const VALID_SPELLING_WORD_BANK_FILTERS = new Set([
@@ -294,6 +317,7 @@ function stateFromRepositories(subjects, repositories) {
     persistence: repositories.persistence.read(),
     transientUi: normaliseTransientUi(),
     toasts: [],
+    systemUpdate: { ...DEFAULT_SYSTEM_UPDATE },
     monsterCelebrations: emptyMonsterCelebrations(),
   };
 }
@@ -307,6 +331,7 @@ function sanitiseState(rawState, subjects, { rehydrate = false } = {}) {
     persistence: normalisePersistenceSnapshot(rawState?.persistence),
     transientUi: normaliseTransientUi(rawState?.transientUi),
     toasts: normaliseToasts(rawState?.toasts),
+    systemUpdate: normaliseSystemUpdate(rawState?.systemUpdate),
     monsterCelebrations: normaliseMonsterCelebrations(rawState?.monsterCelebrations),
   };
 }
@@ -409,6 +434,7 @@ export function createStore(
   function reloadFromRepositories({ preserveRoute = false, preserveMonsterCelebrations = false } = {}) {
     const previousRoute = state.route;
     const previousMonsterCelebrations = state.monsterCelebrations;
+    const previousSystemUpdate = state.systemUpdate;
     const nextState = stateFromRepositories(registry, resolvedRepositories);
     // adv-219-006: `reloadFromRepositories` re-reads every subject UI entry
     // from the persisted `subjectStates` snapshot, which makes this a
@@ -422,6 +448,7 @@ export function createStore(
     state = sanitiseState({
       ...nextState,
       route: preserveRoute ? previousRoute : nextState.route,
+      systemUpdate: previousSystemUpdate,
       monsterCelebrations: preserveMonsterCelebrations
         ? previousMonsterCelebrations
         : nextState.monsterCelebrations,

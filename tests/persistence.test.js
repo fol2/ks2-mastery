@@ -574,6 +574,73 @@ test('bootstrap 503 with a usable cache degrades once and backs off immediate fu
   assert.equal(recovered.lastError, null);
 });
 
+test('bootstrap 429 Retry-After with a usable cache degrades once and persists reload backoff', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({ learners: learnerSnapshot() });
+  let now = 1_000;
+  let rateLimitBootstrap = false;
+  let bootstrapRequests = 0;
+  const fetchWithRetryAfter = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    const method = String(init?.method || 'GET').toUpperCase();
+    if (url.pathname === '/api/bootstrap' && method === 'GET') {
+      bootstrapRequests += 1;
+      if (rateLimitBootstrap) {
+        return new Response(JSON.stringify({
+          ok: false,
+          code: 'bootstrap_rate_limited',
+          message: 'Bootstrap is cooling down after repeated refreshes.',
+        }), {
+          status: 429,
+          headers: {
+            'content-type': 'application/json; charset=utf-8',
+            'retry-after': '7',
+          },
+        });
+      }
+    }
+    return server.fetch(input, init);
+  };
+  const commonOptions = {
+    baseUrl: 'https://repo.test',
+    fetch: fetchWithRetryAfter,
+    storage,
+    now: () => now,
+    random: () => 0,
+  };
+
+  const warmRepositories = createApiPlatformRepositories(commonOptions);
+  await warmRepositories.hydrate();
+  assert.equal(bootstrapRequests, 1);
+
+  rateLimitBootstrap = true;
+  const restoredRepositories = createApiPlatformRepositories(commonOptions);
+  await restoredRepositories.hydrate();
+
+  const degraded = restoredRepositories.persistence.read();
+  assert.equal(bootstrapRequests, 2);
+  assert.equal(degraded.mode, 'degraded');
+  assert.equal(degraded.trustedState, 'local-cache');
+  assert.equal(degraded.cacheState, 'stale-copy');
+  assert.equal(degraded.lastError.code, 'bootstrap_rate_limited');
+  assert.equal(degraded.lastError.details.retryAfterSeconds, 7);
+  assert.equal(degraded.lastError.details.bootstrapBackoff.retryAfterMs, 7_000);
+  assert.equal(JSON.parse(storage.getItem(DEFAULT_API_CACHE_STORAGE_KEY)).bootstrapBackoff.retryAt, 8_000);
+
+  const reloadedDuringBackoff = createApiPlatformRepositories(commonOptions);
+  await reloadedDuringBackoff.hydrate();
+  assert.equal(bootstrapRequests, 2);
+  assert.equal(reloadedDuringBackoff.persistence.read().lastError.code, 'bootstrap_retry_backoff');
+
+  rateLimitBootstrap = false;
+  now = 8_000;
+  const recovered = await reloadedDuringBackoff.persistence.retry();
+
+  assert.equal(bootstrapRequests, 3);
+  assert.equal(recovered.mode, 'remote-sync');
+  assert.equal(recovered.lastError, null);
+});
+
 test('bootstrap backoff blocks retry flush from masking pending-write recovery state', async () => {
   const storage = installMemoryStorage();
   const server = createMockRepositoryServer();

@@ -161,13 +161,20 @@ export class SessionInvalidatedError extends HttpError {
   }
 }
 
+function retryAfterHeader(extra = {}) {
+  const seconds = Number(extra?.retryAfterSeconds);
+  if (!Number.isFinite(seconds) || seconds < 0) return null;
+  return String(Math.ceil(seconds));
+}
+
 export function errorResponse(error) {
   if (error instanceof HttpError) {
+    const retryAfter = retryAfterHeader(error.extra);
     return json({
       ok: false,
       message: error.message,
       ...error.extra,
-    }, error.status);
+    }, error.status, retryAfter ? { 'retry-after': retryAfter } : {});
   }
 
   return json({
