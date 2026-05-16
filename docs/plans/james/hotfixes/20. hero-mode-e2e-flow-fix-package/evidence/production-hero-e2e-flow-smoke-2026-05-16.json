@@ -1,0 +1,292 @@
+{
+  "ok": true,
+  "startedAt": "2026-05-16T12:28:57.566Z",
+  "completedAt": "2026-05-16T12:30:27.251Z",
+  "origin": "https://ks2.eugnel.uk",
+  "database": "ks2-mastery-db",
+  "internalBoundary": {
+    "realAccountCount": 1,
+    "learnerCount": 3,
+    "accountProof": "sha256-16:b709571a7f45edfc",
+    "source": "remote D1 child_game_state joined through account_learner_memberships"
+  },
+  "secretReassertions": [
+    {
+      "name": "HERO_INTERNAL_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EXTERNAL_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EXCLUDED_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EMERGENCY_DISABLED",
+      "valueKind": "scalar",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_ROLLOUT_PERCENT",
+      "valueKind": "scalar",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EXTERNAL_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    },
+    {
+      "name": "HERO_EXTERNAL_ACCOUNTS",
+      "valueKind": "json-array",
+      "status": "uploaded"
+    }
+  ],
+  "demo": {
+    "accountType": "demo",
+    "accountProof": "sha256-16:3c10b0e2b2cb4864",
+    "learnerProof": "sha256-16:1b7ba1f7fad4543b"
+  },
+  "steps": [
+    {
+      "name": "boundary-secrets-reasserted",
+      "pass": true
+    },
+    {
+      "name": "demo-punctuation-primed",
+      "pass": true,
+      "summaryTotal": 1
+    },
+    {
+      "name": "temporary-demo-external-allowlist-enabled",
+      "pass": true
+    },
+    {
+      "name": "hero-read-model-enabled",
+      "pass": true,
+      "taskCount": 1,
+      "selectedSubject": "punctuation",
+      "selectedTaskId": "hero-task-e0fdd17c",
+      "initialBalance": 0,
+      "waitedMs": 7333,
+      "observations": [
+        {
+          "status": 404,
+          "visible": false,
+          "hidden": true,
+          "code": "hero_shadow_disabled"
+        },
+        {
+          "status": 200,
+          "visible": true,
+          "hidden": false,
+          "code": null
+        }
+      ]
+    },
+    {
+      "name": "hero-start-task",
+      "pass": true,
+      "subjectId": "punctuation",
+      "taskId": "hero-task-e0fdd17c"
+    },
+    {
+      "name": "hero-duplicate-start-same-active-task-already-started",
+      "pass": true,
+      "status": "already-started",
+      "taskId": "hero-task-e0fdd17c",
+      "subjectId": "punctuation"
+    },
+    {
+      "name": "hero-subject-session-completed",
+      "pass": true,
+      "summaryTotal": 6,
+      "answeredCount": 6
+    },
+    {
+      "name": "hero-pending-completed-session",
+      "pass": true,
+      "practiceSessionPresent": true
+    },
+    {
+      "name": "hero-claim-task",
+      "pass": true,
+      "status": "claimed",
+      "coinsAwarded": 100,
+      "dailyStatus": "completed",
+      "coinBalance": 100
+    },
+    {
+      "name": "hero-duplicate-claim-idempotent",
+      "pass": true,
+      "status": "already-completed",
+      "coinsAwarded": 0,
+      "dailyCoinsAlreadyAwarded": true
+    },
+    {
+      "name": "hero-after-claim-read-model-coins",
+      "pass": true,
+      "dailyStatus": "completed",
+      "coinsAwarded": 100,
+      "coinBalance": 100
+    },
+    {
+      "name": "hero-camp-insufficient-coins",
+      "pass": true,
+      "status": 409,
+      "code": "hero_insufficient_coins",
+      "monsterId": "glossbloom",
+      "inviteCost": 150,
+      "balance": 100
+    },
+    {
+      "name": "hero-commands-did-not-mutate-subject-stars-mastery-or-monsters",
+      "pass": true,
+      "comparedCommands": [
+        "claim-task",
+        "duplicate-claim-task",
+        "blocked-unlock-monster"
+      ],
+      "snapshot": {
+        "subjectDataHashes": [
+          {
+            "subjectId": "punctuation",
+            "hash": "sha256-16:2ec1f17dc5e2c9f5",
+            "bytes": 7931
+          }
+        ],
+        "monsterCodexHash": "sha256-16:6c710e375bc4ebfd",
+        "monsterCodexBytes": 210
+      }
+    }
+  ],
+  "cleanup": [
+    {
+      "name": "external-allowlist-restored-empty",
+      "pass": true
+    },
+    {
+      "name": "demo-non-cohort-hidden-after-restore",
+      "pass": true,
+      "status": 404,
+      "code": "hero_shadow_disabled",
+      "waitedMs": 8163,
+      "observations": [
+        {
+          "status": 200,
+          "visible": true,
+          "hidden": false,
+          "code": null
+        },
+        {
+          "status": 404,
+          "visible": false,
+          "hidden": true,
+          "code": "hero_shadow_disabled"
+        }
+      ]
+    },
+    {
+      "name": "demo-runtime-rows-cleaned",
+      "pass": true,
+      "tables": [
+        "event_log",
+        "child_game_state",
+        "practice_sessions",
+        "child_subject_state",
+        "learner_activity_feed",
+        "learner_read_models",
+        "mutation_receipts"
+      ]
+    }
+  ],
+  "browserUi": [
+    {
+      "name": "enabled-browser-ui-mobile-390",
+      "pass": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "checks": {
+        "heroQuestCardVisible": true,
+        "heroCampPanelAbsentOnHome": true,
+        "heroCampEntryVisible": true,
+        "heroCampPanelVisibleOnCampPage": true,
+        "heroCampMonsterCount": 6,
+        "homeToSubject": true,
+        "homeToHeroCamp": true,
+        "heroCampToHome": true,
+        "subjectToCodex": true,
+        "codexToHome": true,
+        "overflow": {
+          "home": {
+            "selector": "html",
+            "clientWidth": 390,
+            "scrollWidth": 390,
+            "ok": true
+          },
+          "camp": {
+            "selector": "html",
+            "clientWidth": 390,
+            "scrollWidth": 390,
+            "ok": true
+          },
+          "subject": {
+            "selector": "html",
+            "clientWidth": 390,
+            "scrollWidth": 390,
+            "ok": true
+          },
+          "codex": {
+            "selector": "html",
+            "clientWidth": 390,
+            "scrollWidth": 390,
+            "ok": true
+          }
+        }
+      },
+      "consoleErrors": [],
+      "requestFailures": [],
+      "httpFailures": [],
+      "screenshots": {
+        "home": "docs/plans/james/hotfixes/20. hero-mode-e2e-flow-fix-package/evidence/production-hero-e2e-flow-screenshots-2026-05-16/mobile-home-hero-quest.png",
+        "camp": "docs/plans/james/hotfixes/20. hero-mode-e2e-flow-fix-package/evidence/production-hero-e2e-flow-screenshots-2026-05-16/mobile-hero-camp-page.png",
+        "subject": "docs/plans/james/hotfixes/20. hero-mode-e2e-flow-fix-package/evidence/production-hero-e2e-flow-screenshots-2026-05-16/mobile-subject-punctuation.png",
+        "codex": "docs/plans/james/hotfixes/20. hero-mode-e2e-flow-fix-package/evidence/production-hero-e2e-flow-screenshots-2026-05-16/mobile-codex.png"
+      }
+    },
+    {
+      "name": "claimed-browser-ui-mobile-390",
+      "pass": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "checks": {
+        "heroCompleteCardVisible": true,
+        "coinsAwardedText": "100 Hero Coins added.",
+        "coinBalanceText": "Balance: 100 Hero Coins.",
+        "overflow": {
+          "home": {
+            "selector": "html",
+            "clientWidth": 390,
+            "scrollWidth": 390,
+            "ok": true
+          }
+        }
+      },
+      "consoleErrors": [],
+      "requestFailures": [],
+      "httpFailures": [],
+      "screenshots": {
+        "postClaimHome": "docs/plans/james/hotfixes/20. hero-mode-e2e-flow-fix-package/evidence/production-hero-e2e-flow-screenshots-2026-05-16/mobile-home-hero-claim-coins.png"
+      }
+    }
+  ]
+}
