@@ -152,8 +152,9 @@ export function buildHeroHomeModel(heroUi) {
 
 function isStartableHeroTask(task, { completedTaskIds, activeHeroSession } = {}) {
   if (!task || task.launchStatus !== 'launchable') return false;
-  if (completedTaskIds?.has?.(task.taskId)) return false;
-  if (activeHeroSession?.taskId === task.taskId) return false;
+  const taskId = typeof task.taskId === 'string' && task.taskId ? task.taskId : null;
+  if (taskId && completedTaskIds?.has?.(taskId)) return false;
+  if (taskId && activeHeroSession?.taskId === taskId) return false;
 
   const completionStatus = task.completionStatus || 'not-started';
   if (
