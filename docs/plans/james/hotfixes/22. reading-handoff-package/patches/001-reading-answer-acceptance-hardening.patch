@@ -1,0 +1,145 @@
+--- a/worker/src/subjects/reading/engine.js
++++ b/worker/src/subjects/reading/engine.js
+@@ -141,10 +141,57 @@
+   'except',
+ ]);
+ 
++const GLOBAL_LEADING_CONTRADICTION_CUES = new Set([
++  'not',
++  'never',
++  'cannot',
++  'cant',
++  'wont',
++  'isnt',
++  'arent',
++  'wasnt',
++  'werent',
++  'doesnt',
++  'dont',
++  'didnt',
++  'hasnt',
++  'havent',
++  'hadnt',
++  'wouldnt',
++  'shouldnt',
++  'couldnt',
++  'false',
++  'wrong',
++  'incorrect',
++  'opposite',
++]);
++
++const NEAR_NEGATION_CORRECTION_TOKENS = new Set([
++  'but',
++]);
++
++const EXPLICIT_ERROR_CORRECTION_TOKENS = new Set([
++  'but',
++  'however',
++  'instead',
++]);
++
+ function cueIsSoftened(tokens, cueIndex) {
+   return tokens[cueIndex] === 'not' && tokens[cueIndex + 1] === 'only';
+ }
+ 
++function hasUnresolvedLeadingContradiction(text) {
++  const tokens = tokeniseWithBoundaries(text);
++  if (!tokens.length) return false;
++  const firstToken = tokens[0];
++  if (!GLOBAL_LEADING_CONTRADICTION_CUES.has(firstToken)) return false;
++  if (cueIsSoftened(tokens, 0)) return false;
++  if (['wrong', 'false', 'incorrect', 'opposite'].includes(firstToken)) {
++    return !tokens.slice(1, 12).some((token) => EXPLICIT_ERROR_CORRECTION_TOKENS.has(token));
++  }
++  return !tokens.slice(1, 9).some((token) => NEAR_NEGATION_CORRECTION_TOKENS.has(token));
++}
++
+ function bridgeLooksLikeLocalNegation(tokens, cueIndex, startIndex) {
+   const bridge = tokens.slice(cueIndex + 1, startIndex);
+   return bridge.length <= 5 && !bridge.some((token) => CONTRADICTION_BREAK_TOKENS.has(token));
+@@ -290,6 +337,7 @@
+   if (!check) return false;
+   const norm = normaliseText(text);
+   if (!norm) return false;
++  if (hasUnresolvedLeadingContradiction(text) && !checkExplicitlyAllowsLeadingContradiction(text, check)) return false;
+   if (check.exactAny && check.exactAny.some((answer) => {
+     const candidate = normaliseText(answer);
+     return norm === candidate || containsPhraseWithoutContradiction(text, answer);
+@@ -328,9 +376,24 @@
+   return overlap / Math.min(setA.size, setB.size);
+ }
+ 
++function checkExplicitlyAllowsLeadingContradiction(text, check) {
++  const norm = normaliseText(text);
++  const candidates = [
++    ...(check?.exactAny || []),
++    ...(check?.containsAny || []),
++  ];
++  return candidates.some((answer) => {
++    const candidate = normaliseText(answer);
++    const firstCandidateToken = tokenise(candidate)[0] || '';
++    return GLOBAL_LEADING_CONTRADICTION_CUES.has(firstCandidateToken)
++      && (norm === candidate || containsPhraseWithoutContradiction(text, answer));
++  });
++}
++
+ function evidenceMatches(text, check) {
+   if (!text || !check) return false;
+   if (checkMatches(text, check)) return true;
++  if (hasUnresolvedLeadingContradiction(text) && !checkExplicitlyAllowsLeadingContradiction(text, check)) return false;
+   if (check.containsAny && check.containsAny.some((snippet) => overlapRatio(text, snippet) >= 0.55 && !overlapIsLocallyContradicted(text, snippet))) return true;
+   return false;
+ }
+@@ -615,7 +678,8 @@
+     });
+   }
+   if (qType === 'multiSelect') {
+-    const selected = new Set((response.answer || []).map(Number));
++    const rawAnswer = Array.isArray(response.answer) ? response.answer : [];
++    const selected = new Set(rawAnswer.map(Number));
+     const correctSet = new Set((question.correctSet || []).map(Number));
+     let score = 0;
+     if (setEqual(selected, correctSet)) score = question.marks;
+--- a/tests/worker-reading-runtime.test.js
++++ b/tests/worker-reading-runtime.test.js
+@@ -146,6 +146,39 @@
+   assert.equal(checkMatches('folded slips of paper, but not coins', { keywordAny: [['fold', 'slip', 'paper']] }), true);
+ });
+ 
++test('reading answer checks reject globally negated long model-answer parrots', () => {
++  const swifts = READING_PASSAGES.find((passage) => passage.id === 'city_swifts');
++  const swQ1 = swifts.questions.find((question) => question.id === 'sw_q1');
++  assert.equal(evaluateReadingQuestion(swQ1, { answer: swQ1.modelAnswer }).score, swQ1.marks);
++  assert.equal(evaluateReadingQuestion(swQ1, { answer: `not ${swQ1.modelAnswer}` }).score, 0);
++
++  const redTinBox = READING_PASSAGES.find((passage) => passage.id === 'red_tin_box');
++  const rtbQ3 = redTinBox.questions.find((question) => question.id === 'rtb_q3');
++  const validEvidence = rtbQ3.evidenceCheck.containsAny[0];
++  assert.equal(evaluateReadingQuestion(rtbQ3, { answer: rtbQ3.modelAnswer, evidence: validEvidence }).score, rtbQ3.marks);
++  assert.equal(evaluateReadingQuestion(rtbQ3, { answer: `not ${rtbQ3.modelAnswer}`, evidence: validEvidence }).score, rtbQ3.evidenceMarks);
++
++  const museum = READING_PASSAGES.find((passage) => passage.id === 'museum_after_closing');
++  const macQ5 = museum.questions.find((question) => question.id === 'mac_q5');
++  assert.equal(evaluateReadingQuestion(macQ5, { answer: macQ5.modelAnswer }).score, macQ5.marks);
++  assert.equal(evaluateReadingQuestion(macQ5, { answer: `not ${macQ5.modelAnswer}` }).score, 0);
++
++  assert.equal(checkMatches('not folded slips of paper, but folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), true);
++  assert.equal(checkMatches('not only speech marks', { containsAny: ['speech marks'] }), true);
++});
++
++test('reading multi-select marking treats malformed answers as wrong instead of throwing', () => {
++  const tideClock = READING_PASSAGES.find((passage) => passage.id === 'tide_clock');
++  const question = tideClock.questions.find((candidate) => candidate.id === 'tc_q6');
++  assert.equal(question.type, 'multiSelect');
++  for (const answer of ['0', {}, { 0: '0' }]) {
++    assert.doesNotThrow(() => evaluateReadingQuestion(question, { answer }));
++    const result = evaluateReadingQuestion(question, { answer });
++    assert.equal(result.score, 0);
++    assert.equal(result.correct, false);
++  }
++});
++
+ test('reading evidence fallback does not award marks for negated evidence quotes', () => {
+   const question = {
+     id: 'negated_evidence_probe',

@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-05-16T15:48:59.303Z",
+  "content": {
+    "releaseId": "reading-poc-promoted-2026-05-05",
+    "version": 7,
+    "passageCount": 714,
+    "questionCount": 7112,
+    "paperCount": 243,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 239,
+      "non-fiction": 239,
+      "poetry": 236
+    },
+    "longPassageCount": 670
+  },
+  "typeCounts": {
+    "short": 1177,
+    "mcq": 1821,
+    "evidenceShort": 710,
+    "open": 1312,
+    "match": 699,
+    "order": 696,
+    "multiSelect": 697
+  },
+  "canonicalAcceptance": {
+    "checked": 7112,
+    "failures": 0,
+    "sampleFailures": []
+  },
+  "negatedModelAnswerProbe": {
+    "checked": 3199,
+    "suspiciousFullMarks": 0,
+    "sampleRowIds": []
+  },
+  "evidenceContradictionProbe": {
+    "checked": 710,
+    "suspiciousFullMarks": 0,
+    "sampleRowIds": []
+  },
+  "malformedPayloadProbe": {
+    "checked": 21,
+    "throws": 0,
+    "acceptedFullMarks": 0,
+    "sampleRowIds": []
+  },
+  "sourceAffirmedNegationProbe": {
+    "checked": 7,
+    "passed": true,
+    "rowId": "seed_vault_guardians:svg_q10",
+    "candidateFailures": []
+  },
+  "readModelLeakProbe": {
+    "checked": 5,
+    "leaks": []
+  },
+  "failures": []
+}

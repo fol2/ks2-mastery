@@ -1,0 +1,128 @@
+{
+  "generatedAt": "2026-05-16T15:25:34.970Z",
+  "content": {
+    "releaseId": "reading-poc-promoted-2026-05-05",
+    "version": 7,
+    "passageCount": 714,
+    "questionCount": 7112,
+    "paperCount": 243,
+    "skillCount": 12,
+    "genres": {
+      "fiction": 239,
+      "non-fiction": 239,
+      "poetry": 236
+    },
+    "longPassageCount": 670
+  },
+  "typeCounts": {
+    "short": 1177,
+    "mcq": 1821,
+    "evidenceShort": 710,
+    "open": 1312,
+    "match": 699,
+    "order": 696,
+    "multiSelect": 697
+  },
+  "canonicalAcceptance": {
+    "checked": 7112,
+    "failures": 0,
+    "sampleFailures": []
+  },
+  "negatedModelAnswerProbe": {
+    "checked": 3199,
+    "suspiciousFullMarks": 2774,
+    "sampleRowIds": [
+      "red_tin_box:rtb_q3",
+      "city_swifts:sw_q1",
+      "city_swifts:sw_q3",
+      "city_swifts:sw_q5",
+      "city_swifts:sw_q6",
+      "museum_after_closing:mac_q5",
+      "greenhouse_window:gw_q2",
+      "greenhouse_window:gw_q5",
+      "salt_marsh_makers:sm_q5",
+      "salt_marsh_makers:sm_q7",
+      "night_ferry:nf_q2",
+      "night_ferry:nf_q4",
+      "night_ferry:nf_q5",
+      "night_ferry:nf_q6",
+      "tide_clock:tc_q3",
+      "tide_clock:tc_q4",
+      "tide_clock:tc_q5",
+      "tide_clock:tc_q7",
+      "tide_clock:tc_q8",
+      "tide_clock:tc_q9"
+    ]
+  },
+  "evidenceContradictionProbe": {
+    "checked": 710,
+    "suspiciousFullMarks": 1,
+    "sampleRowIds": [
+      "phase5_fiction_basket_workshop:phase5_fiction_basket_workshop_q3"
+    ]
+  },
+  "malformedPayloadProbe": {
+    "checked": 21,
+    "throws": 3,
+    "acceptedFullMarks": 0,
+    "sampleRowIds": [
+      "tide_clock:tc_q6: (response.answer || []).map is not a function",
+      "tide_clock:tc_q6: (response.answer || []).map is not a function",
+      "tide_clock:tc_q6: (response.answer || []).map is not a function"
+    ]
+  },
+  "sourceAffirmedNegationProbe": {
+    "checked": 1,
+    "passed": true,
+    "rowId": "seed_vault_guardians:svg_q10"
+  },
+  "readModelLeakProbe": {
+    "checked": 5,
+    "leaks": []
+  },
+  "failures": [
+    {
+      "type": "negated-model-answer-full-marks",
+      "count": 2774,
+      "samples": [
+        "red_tin_box:rtb_q3",
+        "city_swifts:sw_q1",
+        "city_swifts:sw_q3",
+        "city_swifts:sw_q5",
+        "city_swifts:sw_q6",
+        "museum_after_closing:mac_q5",
+        "greenhouse_window:gw_q2",
+        "greenhouse_window:gw_q5",
+        "salt_marsh_makers:sm_q5",
+        "salt_marsh_makers:sm_q7",
+        "night_ferry:nf_q2",
+        "night_ferry:nf_q4",
+        "night_ferry:nf_q5",
+        "night_ferry:nf_q6",
+        "tide_clock:tc_q3",
+        "tide_clock:tc_q4",
+        "tide_clock:tc_q5",
+        "tide_clock:tc_q7",
+        "tide_clock:tc_q8",
+        "tide_clock:tc_q9"
+      ]
+    },
+    {
+      "type": "negated-evidence-full-marks",
+      "count": 1,
+      "samples": [
+        "phase5_fiction_basket_workshop:phase5_fiction_basket_workshop_q3"
+      ]
+    },
+    {
+      "type": "malformed-payload-not-rejected-cleanly",
+      "throws": 3,
+      "acceptedFullMarks": 0,
+      "samples": [
+        "tide_clock:tc_q6: (response.answer || []).map is not a function",
+        "tide_clock:tc_q6: (response.answer || []).map is not a function",
+        "tide_clock:tc_q6: (response.answer || []).map is not a function"
+      ]
+    }
+  ]
+}

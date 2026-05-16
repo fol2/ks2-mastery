@@ -141,8 +141,55 @@ const CONTRADICTION_BREAK_TOKENS = new Set([
   'except',
 ]);
 
+const GLOBAL_LEADING_CONTRADICTION_CUES = new Set([
+  'not',
+  'never',
+  'cannot',
+  'cant',
+  'wont',
+  'isnt',
+  'arent',
+  'wasnt',
+  'werent',
+  'doesnt',
+  'dont',
+  'didnt',
+  'hasnt',
+  'havent',
+  'hadnt',
+  'wouldnt',
+  'shouldnt',
+  'couldnt',
+  'false',
+  'wrong',
+  'incorrect',
+  'opposite',
+]);
+
+const NEAR_NEGATION_CORRECTION_TOKENS = new Set([
+  'but',
+]);
+
+const EXPLICIT_ERROR_CORRECTION_TOKENS = new Set([
+  'but',
+  'however',
+  'instead',
+]);
+
 function cueIsSoftened(tokens, cueIndex) {
   return tokens[cueIndex] === 'not' && tokens[cueIndex + 1] === 'only';
+}
+
+function hasUnresolvedLeadingContradiction(text) {
+  const tokens = tokeniseWithBoundaries(text);
+  if (!tokens.length) return false;
+  const firstToken = tokens[0];
+  if (!GLOBAL_LEADING_CONTRADICTION_CUES.has(firstToken)) return false;
+  if (cueIsSoftened(tokens, 0)) return false;
+  if (['wrong', 'false', 'incorrect', 'opposite'].includes(firstToken)) {
+    return !tokens.slice(1, 12).some((token) => EXPLICIT_ERROR_CORRECTION_TOKENS.has(token));
+  }
+  return !tokens.slice(1, 9).some((token) => NEAR_NEGATION_CORRECTION_TOKENS.has(token));
 }
 
 function bridgeLooksLikeLocalNegation(tokens, cueIndex, startIndex) {
@@ -280,6 +327,8 @@ function groupMatchesWithoutContradiction(text, group) {
     .flatMap((stem) => String(stem || '').toLowerCase().trim().split(/\s+/))
     .filter(Boolean);
   if (!parts.length) return false;
+  const groupPhrase = parts.join(' ');
+  if (startsWithGlobalContradictionCue(groupPhrase) && containsPhraseWithoutContradiction(text, groupPhrase)) return true;
   return parts.every((part) => {
     const positions = stemPositions(tokens, part);
     return positions.some((position) => !spanIsLocallyContradicted(tokens, position, [part]));
@@ -290,6 +339,7 @@ export function checkMatches(text, check) {
   if (!check) return false;
   const norm = normaliseText(text);
   if (!norm) return false;
+  if (hasUnresolvedLeadingContradiction(text) && !checkExplicitlyAllowsLeadingContradiction(text, check)) return false;
   if (check.exactAny && check.exactAny.some((answer) => {
     const candidate = normaliseText(answer);
     return norm === candidate || containsPhraseWithoutContradiction(text, answer);
@@ -328,9 +378,38 @@ function overlapRatio(a, b) {
   return overlap / Math.min(setA.size, setB.size);
 }
 
+function checkExplicitlyAllowsLeadingContradiction(text, check) {
+  const norm = normaliseText(text);
+  const textFirstToken = firstToken(norm);
+  const candidates = [
+    ...(check?.exactAny || []),
+    ...(check?.containsAny || []),
+    ...(check?.keywordAny || []).map((group) => (group || [])
+      .flatMap((stem) => String(stem || '').toLowerCase().trim().split(/\s+/))
+      .filter(Boolean)
+      .join(' ')),
+  ];
+  return candidates.some((answer) => {
+    const candidate = normaliseText(answer);
+    const candidateFirstToken = firstToken(candidate);
+    return candidateFirstToken === textFirstToken
+      && GLOBAL_LEADING_CONTRADICTION_CUES.has(candidateFirstToken)
+      && (norm === candidate || containsPhraseWithoutContradiction(text, answer));
+  });
+}
+
+function startsWithGlobalContradictionCue(text) {
+  return GLOBAL_LEADING_CONTRADICTION_CUES.has(firstToken(text));
+}
+
+function firstToken(text) {
+  return tokenise(text)[0] || '';
+}
+
 function evidenceMatches(text, check) {
   if (!text || !check) return false;
   if (checkMatches(text, check)) return true;
+  if (hasUnresolvedLeadingContradiction(text) && !checkExplicitlyAllowsLeadingContradiction(text, check)) return false;
   if (check.containsAny && check.containsAny.some((snippet) => overlapRatio(text, snippet) >= 0.55 && !overlapIsLocallyContradicted(text, snippet))) return true;
   return false;
 }
@@ -615,7 +694,8 @@ export function evaluateReadingQuestion(question, response = {}) {
     });
   }
   if (qType === 'multiSelect') {
-    const selected = new Set((response.answer || []).map(Number));
+    const rawAnswer = Array.isArray(response.answer) ? response.answer : [];
+    const selected = new Set(rawAnswer.map(Number));
     const correctSet = new Set((question.correctSet || []).map(Number));
     let score = 0;
     if (setEqual(selected, correctSet)) score = question.marks;

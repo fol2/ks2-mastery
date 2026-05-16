@@ -8,6 +8,7 @@
     "build:bundles": "node ./scripts/build-bundles.mjs",
     "audit:client": "node ./scripts/audit-client-bundle.mjs",
     "audit:reading-content": "node scripts/audit-reading-content-quality.mjs --out=reports/reading/reading-content-quality-audit.json",
+    "audit:reading-answer-acceptance": "node scripts/audit-reading-answer-acceptance.mjs --out=reports/reading/reading-answer-acceptance-audit.json",
     "audit:punctuation-content": "node ./scripts/audit-punctuation-content.mjs",
     "audit:grammar-qg": "node scripts/audit-grammar-question-generator.mjs --json",
     "audit:grammar-qg:deep": "node scripts/audit-grammar-question-generator.mjs --deep --json",

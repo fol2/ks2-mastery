@@ -1,0 +1,30 @@
+{
+  "questionId": "tc_q6",
+  "questionType": "multiSelect",
+  "outcomes": [
+    {
+      "answerShape": "string",
+      "threw": false,
+      "score": 0,
+      "correct": false
+    },
+    {
+      "answerShape": "object",
+      "threw": false,
+      "score": 0,
+      "correct": false
+    },
+    {
+      "answerShape": "object",
+      "threw": false,
+      "score": 0,
+      "correct": false
+    },
+    {
+      "answerShape": "array",
+      "threw": false,
+      "score": 1,
+      "correct": false
+    }
+  ]
+}

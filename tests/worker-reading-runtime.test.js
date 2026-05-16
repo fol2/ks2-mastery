@@ -146,6 +146,39 @@ test('reading phrase checks reject locally negated correct phrases', () => {
   assert.equal(checkMatches('folded slips of paper, but not coins', { keywordAny: [['fold', 'slip', 'paper']] }), true);
 });
 
+test('reading answer checks reject globally negated long model-answer parrots', () => {
+  const swifts = READING_PASSAGES.find((passage) => passage.id === 'city_swifts');
+  const swQ1 = swifts.questions.find((question) => question.id === 'sw_q1');
+  assert.equal(evaluateReadingQuestion(swQ1, { answer: swQ1.modelAnswer }).score, swQ1.marks);
+  assert.equal(evaluateReadingQuestion(swQ1, { answer: `not ${swQ1.modelAnswer}` }).score, 0);
+
+  const redTinBox = READING_PASSAGES.find((passage) => passage.id === 'red_tin_box');
+  const rtbQ3 = redTinBox.questions.find((question) => question.id === 'rtb_q3');
+  const validEvidence = rtbQ3.evidenceCheck.containsAny[0];
+  assert.equal(evaluateReadingQuestion(rtbQ3, { answer: rtbQ3.modelAnswer, evidence: validEvidence }).score, rtbQ3.marks);
+  assert.equal(evaluateReadingQuestion(rtbQ3, { answer: `not ${rtbQ3.modelAnswer}`, evidence: validEvidence }).score, rtbQ3.evidenceMarks);
+
+  const museum = READING_PASSAGES.find((passage) => passage.id === 'museum_after_closing');
+  const macQ5 = museum.questions.find((question) => question.id === 'mac_q5');
+  assert.equal(evaluateReadingQuestion(macQ5, { answer: macQ5.modelAnswer }).score, macQ5.marks);
+  assert.equal(evaluateReadingQuestion(macQ5, { answer: `not ${macQ5.modelAnswer}` }).score, 0);
+
+  assert.equal(checkMatches('not folded slips of paper, but folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), true);
+  assert.equal(checkMatches('not only speech marks', { containsAny: ['speech marks'] }), true);
+});
+
+test('reading multi-select marking treats malformed answers as wrong instead of throwing', () => {
+  const tideClock = READING_PASSAGES.find((passage) => passage.id === 'tide_clock');
+  const question = tideClock.questions.find((candidate) => candidate.id === 'tc_q6');
+  assert.equal(question.type, 'multiSelect');
+  for (const answer of ['0', {}, { 0: '0' }]) {
+    assert.doesNotThrow(() => evaluateReadingQuestion(question, { answer }));
+    const result = evaluateReadingQuestion(question, { answer });
+    assert.equal(result.score, 0);
+    assert.equal(result.correct, false);
+  }
+});
+
 test('reading evidence fallback does not award marks for negated evidence quotes', () => {
   const question = {
     id: 'negated_evidence_probe',
@@ -220,6 +253,12 @@ test('reading evidence checks accept source-affirmed negation snippets', () => {
 
   assert.equal(checkMatches('A few seeds are kept locally, and duplicate samples are sent to another seed bank so one accident cannot erase a variety.', svgQ3.evidenceCheck), true);
   assert.equal(checkMatches('A seed bank is not a museum of dead things.', svgQ10.evidenceCheck), true);
+  assert.equal(checkMatches('not dead', { keywordAny: [['not', 'dead']] }), true);
+  assert.equal(checkMatches('not just scrap', { keywordAny: [['not', 'just', 'scrap']] }), true);
+  assert.equal(checkMatches('cannot always know', { keywordAny: [['cannot', 'always', 'know']] }), true);
+  assert.equal(checkMatches('not folded slips of paper', { keywordAny: [['fold', 'slip', 'paper']] }), false);
+  assert.equal(checkMatches('wrong line', { keywordAny: [['wrong', 'line']] }), true);
+  assert.equal(checkMatches('not the wrong line', { keywordAny: [['wrong', 'line']] }), false);
 
   const marked = evaluateReadingQuestion(svgQ10, {
     answer: 'It is not dead; it is living and can grow for future harvests.',

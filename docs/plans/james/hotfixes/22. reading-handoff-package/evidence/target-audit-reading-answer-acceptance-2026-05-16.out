@@ -1,0 +1,4 @@
+
+> ks2-mastery@0.1.0 audit:reading-answer-acceptance
+> node scripts/audit-reading-answer-acceptance.mjs --out=reports/reading/reading-answer-acceptance-audit.json
+

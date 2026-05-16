@@ -1,0 +1,121 @@
+{
+  "checked": 3909,
+  "suspiciousCount": 2775,
+  "sample": [
+    {
+      "type": "evidenceShort-answer-neg",
+      "row": "red_tin_box:rtb_q3",
+      "model": "She starts to see the house and day differently, noticing interesting details instead of just feeling bored. Evidence could include: \"the house around her seemed to change\"."
+    },
+    {
+      "type": "short",
+      "row": "city_swifts:sw_q1",
+      "model": "They spend most of their lives in the air and can even eat, drink and sleep while flying.",
+      "score": 1
+    },
+    {
+      "type": "evidenceShort-answer-neg",
+      "row": "city_swifts:sw_q3",
+      "model": "Repairs can remove the holes where swifts nest, so they may lose their usual home. Evidence could include: \"the narrow holes ... may disappear\"."
+    },
+    {
+      "type": "open",
+      "row": "city_swifts:sw_q5",
+      "model": "Paragraph 3 moves from explaining why towns can suit swifts to warning that building repairs can remove nest spaces, and then it adds a solution: swift bricks.",
+      "score": 2
+    },
+    {
+      "type": "open",
+      "row": "city_swifts:sw_q6",
+      "model": "It makes the swifts' evening flight sound noisy, lively and memorable, helping the reader picture the birds twisting through the air.",
+      "score": 2
+    },
+    {
+      "type": "open",
+      "row": "museum_after_closing:mac_q5",
+      "model": "The poem uses quiet images such as the fading shoe-squeak and careful moonlight, but it also gives objects secret activity: maps dream, portraits listen and the museum hums with \"quiet industries\".",
+      "score": 3
+    },
+    {
+      "type": "evidenceShort-answer-neg",
+      "row": "greenhouse_window:gw_q2",
+      "model": "We can tell Sami feels guilty because he thinks the problem is his fault and starts apologising straight away. Evidence could include: \"he began apologising before she had even put down her bag\"."
+    },
+    {
+      "type": "open",
+      "row": "greenhouse_window:gw_q5",
+      "model": "The phrase shows that the seedlings are recovering. Instead of seeming weak and in trouble, they seem active and ready to grow toward the light.",
+      "score": 2
+    },
+    {
+      "type": "open",
+      "row": "salt_marsh_makers:sm_q5",
+      "model": "The writer begins with how messy or untrustworthy a marsh can seem, then gradually shows that this same untidy movement is what makes it strong and useful.",
+      "score": 2
+    },
+    {
+      "type": "open",
+      "row": "salt_marsh_makers:sm_q7",
+      "model": "The phrase makes the marsh sound active and productive. It is \"building\" by trapping silt and gradually shaping the coastline.",
+      "score": 2
+    },
+    {
+      "type": "short",
+      "row": "night_ferry:nf_q2",
+      "model": "The town seems to loosen and its lights fade or grow smaller as the ferry moves away.",
+      "score": 1
+    },
+    {
+      "type": "open",
+      "row": "night_ferry:nf_q4",
+      "model": "The phrase turns the engine's steady sound into counting, which suggests rhythm, movement and the sense that the journey is carrying everyone forward.",
+      "score": 2
+    },
+    {
+      "type": "open",
+      "row": "night_ferry:nf_q5",
+      "model": "The poem describes a calm night journey by ferry as the travellers leave the town behind and move across dark water.",
+      "score": 2
+    },
+    {
+      "type": "open",
+      "row": "night_ferry:nf_q6",
+      "model": "The town behind the ferry feels warm and familiar, with windows, talk and chimneys, while the water ahead feels darker and more unknown as the channel \"folds up night\".",
+      "score": 2
+    },
+    {
+      "type": "evidenceShort-answer-neg",
+      "row": "tide_clock:tc_q3",
+      "model": "His notes suggest he was careful, observant and practical. Evidence could include: \"trust the sea, not the crowd\"."
+    },
+    {
+      "type": "open",
+      "row": "tide_clock:tc_q4",
+      "model": "Possible answers include: she heard faint ticking, found sand stuck in a gear, found Elias Penhal's notebook, or found the faded green flood line.",
+      "score": 2
+    },
+    {
+      "type": "open",
+      "row": "tide_clock:tc_q5",
+      "model": "The paragraph raises tension because the organisers politely ignore Mara's warning and trust their printed table or app instead. That creates a conflict between careful observation and confident planning, so the reader begins to worry that Mara may be right too late.",
+      "score": 3
+    },
+    {
+      "type": "evidenceShort-answer-neg",
+      "row": "tide_clock:tc_q7",
+      "model": "By the end, Mara trusts close observation more than the crowd's confidence. Evidence could include: \"It had been written by someone who had watched.\""
+    },
+    {
+      "type": "open",
+      "row": "tide_clock:tc_q8",
+      "model": "The final sentence personifies the harbour, making it seem as if it has a voice. This ties the ending to the story's theme of paying attention and gives the ending a satisfying sense that Mara has learned how to listen properly.",
+      "score": 3
+    },
+    {
+      "type": "open",
+      "row": "tide_clock:tc_q9",
+      "model": "Mara discovers mechanical signs that the clock is not completely dead, such as ticking and a jammed gear, and historical clues such as Elias Penhal's notebook and the flood line. These matter because they help her understand real signs of danger and later warn the walkers in time.",
+      "score": 3
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: HomeHeroScene renders children (subject cards) unchanged inside the scene wrapper
+ok 1 - HomeHeroScene renders children (subject cards) unchanged inside the scene wrapper
+  ---
+  duration_ms: 159.8377
+  type: 'test'
+  ...
+# Subtest: HomeHeroScene renders one primary action button with correct data-action
+ok 2 - HomeHeroScene renders one primary action button with correct data-action
+  ---
+  duration_ms: 138.2932
+  type: 'test'
+  ...
+# Subtest: HomeHeroScene does not introduce Hero/Camp/Coin economy copy
+ok 3 - HomeHeroScene does not introduce Hero/Camp/Coin economy copy
+  ---
+  duration_ms: 158.4703
+  type: 'test'
+  ...
+# Subtest: HomeHeroScene renders without crash when todayFocus is absent
+ok 4 - HomeHeroScene renders without crash when todayFocus is absent
+  ---
+  duration_ms: 145.6119
+  type: 'test'
+  ...
+# Subtest: HomeHeroScene renders without crash when creatureHighlights is absent
+ok 5 - HomeHeroScene renders without crash when creatureHighlights is absent
+  ---
+  duration_ms: 146.7414
+  type: 'test'
+  ...
+# Subtest: HomeHeroScene accepts heroQuest prop without error (forward-compat)
+ok 6 - HomeHeroScene accepts heroQuest prop without error (forward-compat)
+  ---
+  duration_ms: 141.3749
+  type: 'test'
+  ...
+# Subtest: HomeSurface wraps subject cards inside HomeHeroScene while preserving data-action selectors
+ok 7 - HomeSurface wraps subject cards inside HomeHeroScene while preserving data-action selectors
+  ---
+  duration_ms: 196.7899
+  type: 'test'
+  ...
+# Subtest: HomeHeroScene.jsx source does not contain Hero/Camp/Coin economy copy in executable code
+ok 8 - HomeHeroScene.jsx source does not contain Hero/Camp/Coin economy copy in executable code
+  ---
+  duration_ms: 0.5309
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1153.9706
