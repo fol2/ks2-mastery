@@ -71,8 +71,8 @@ function createServerPersistence({ learnerId, data, now }) {
 }
 
 function typedAnswerFromPayload(payload = {}) {
-  if (typeof payload.typed === 'string') return payload.typed;
-  if (typeof payload.answer === 'string') return payload.answer;
+  if (typeof payload.typed === 'string') return { typed: payload.typed };
+  if (typeof payload.answer === 'string') return { typed: payload.answer };
   const choiceIndex = parseChoiceIndex(payload.choiceIndex);
   if (choiceIndex != null) return { choiceIndex };
   return '';

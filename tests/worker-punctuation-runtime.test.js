@@ -367,6 +367,48 @@ test('punctuation command route serves paragraph items through redacted multilin
   }
 });
 
+test('punctuation command route preserves multiline typed answers for bullet text items', async () => {
+  const harness = createHarness();
+  try {
+    let step = await harness.command('start-session', {
+      mode: 'guided',
+      guidedSkillId: 'bullet_points',
+      roundLength: '3',
+    });
+
+    while (
+      step.body.subjectReadModel.phase === 'active-item'
+      && step.body.subjectReadModel.session.currentItem.inputKind !== 'text'
+    ) {
+      const session = step.body.subjectReadModel.session;
+      const submit = await harness.command(
+        'submit-answer',
+        answerPayloadForSession(session, correctAnswerFor(session.currentItem)),
+      );
+      assert.equal(submit.body.subjectReadModel.feedback.kind, 'success');
+      step = await harness.command('continue-session');
+    }
+
+    const session = step.body.subjectReadModel.session;
+    const item = session.currentItem;
+    assert.equal(step.body.subjectReadModel.phase, 'active-item');
+    assert.equal(item.inputKind, 'text');
+    assert.equal(item.skillIds.includes('bullet_points'), true);
+
+    const answer = correctAnswerFor(item);
+    assert.match(answer.typed, /\n-\s+/);
+    const submit = await harness.command(
+      'submit-answer',
+      answerPayloadForSession(session, answer),
+    );
+
+    assert.equal(submit.body.subjectReadModel.feedback.kind, 'success');
+    assert.equal(submit.body.domainEvents.some((event) => event.type === 'punctuation.item-attempted'), true);
+  } finally {
+    harness.close();
+  }
+});
+
 test('punctuation command route runs GPS mode with delayed feedback and final review', async () => {
   const harness = createHarness();
   try {
