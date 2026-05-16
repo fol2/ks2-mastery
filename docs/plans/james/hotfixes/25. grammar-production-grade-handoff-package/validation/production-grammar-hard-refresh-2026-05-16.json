@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "timestamp": "2026-05-16T20:54:37.495Z",
+  "journey": [
+    "open /demo",
+    "open Grammar dashboard",
+    "start a Grammar round",
+    "hard reload while the active Grammar item is visible",
+    "reopen Grammar if the reload returns to the subject grid",
+    "submit the active item after reload",
+    "observe Grammar feedback"
+  ],
+  "hardRefreshPerformed": true,
+  "answerKind": "freeText",
+  "promptBeforeReload": "Transfer task: solve this standard english item, then write a new sentence or phrase that shows the same rule. Item: They ___ finished the model.",
+  "promptAfterReload": "Transfer task: solve this standard english item, then write a new sentence or phrase that shows the same rule. Item: They ___ finished the model.",
+  "postReloadSurface": "session",
+  "versionBefore": {
+    "ok": true,
+    "status": 200,
+    "body": {
+      "ok": true,
+      "buildId": "8f32b996",
+      "buildHash": "8f32b996",
+      "release": null,
+      "source": "git.rev-parse",
+      "generatedAt": "2026-05-16T20:52:48.172Z"
+    }
+  },
+  "versionAfter": {
+    "ok": true,
+    "status": 200,
+    "body": {
+      "ok": true,
+      "buildId": "8f32b996",
+      "buildHash": "8f32b996",
+      "release": null,
+      "source": "git.rev-parse",
+      "generatedAt": "2026-05-16T20:52:48.172Z"
+    }
+  },
+  "screenshotPath": "docs\\plans\\james\\hotfixes\\25. grammar-production-grade-handoff-package\\validation\\production-grammar-hard-refresh-2026-05-16.png",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requestFailures": [],
+  "httpFailures": [],
+  "feedbackText": "Saved for review.The original answer is have. The transfer example must preserve the grammar rule: Standard English uses have with they.Saved — keep going when you are ready."
+}

@@ -1,0 +1,5 @@
+command=npm test
+runner=node ./scripts/run-node-tests.mjs
+result=pass
+npm_test_exit_code=0
+note=raw spec output was intentionally not retained because it is very large; targeted TAP logs in this package retain detailed Grammar and adjacent test counts.

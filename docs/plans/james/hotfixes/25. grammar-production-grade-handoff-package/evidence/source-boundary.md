@@ -1,6 +1,6 @@
 # Source-boundary summary
 
-Primary snapshot: uploaded ZIP `/mnt/data/ks2-mastery-lean-05161311.zip`.
+Primary package snapshot: uploaded ZIP `/mnt/data/ks2-mastery-lean-05161311.zip`.
 
 ZIP identity:
 
@@ -10,18 +10,24 @@ ZIP identity:
 - Shape: rootless repository archive
 - Git metadata: absent
 - Runtime declared by ZIP: `.nvmrc` = `22`
-- Runtime used locally: Node `v22.16.0`, npm `10.9.2`
 
-ZIP evidence proves only the uploaded snapshot. GitHub evidence proves only fetched paths/ref. Local-run evidence proves only this extracted ZIP environment. Production evidence proves production only when the live site is checked.
+Implementation source:
 
-GitHub supplement used:
+- Repository checkout: `D:\Coding\ks2-mastery`
+- Worktree: `.worktrees\grammar-production-grade-handoff-20260516`
+- Branch: `codex/grammar-production-grade-handoff-20260516`
+- Base commit: `c8527251c0772c92af20f0b18bec3fc572ff3b75`
+- Deployed source commit: `8f32b9961728228e8dcfcd87870be12979a06fe8`
+- Production build hash: `8f32b996`
 
-- Repository: `fol2/ks2-mastery`
-- Ref: `main`, exact-file fetches only; no repository-wide commit identity was established in this package.
-- Purpose: compare missing docs and implementation context, not override ZIP evidence.
+Runtime used locally:
 
-Production:
+- Node: `v22.15.1`
+- npm: `11.6.2`
 
-- `https://ks2.eugnel.uk` landing page was reachable in the browser fetch layer.
-- `/demo` timed out in the browser fetch layer, so no Grammar learner journey, hard-refresh journey, release/version identity, or answer marking path was live-verified.
-- Production status for this package: `NOT PROVEN`.
+Boundary statement:
+
+- ZIP evidence proves only the uploaded snapshot.
+- Git worktree evidence proves the committed implementation and validation in the full checkout.
+- Production evidence proves the deployed Git commit on `https://ks2.eugnel.uk`.
+- Production status for this package: `DONE — LIVE VERIFIED`.
