@@ -1,0 +1,97 @@
+{
+  "ok": true,
+  "probeType": "arithmetic-hardening-production",
+  "origin": "https://ks2.eugnel.uk",
+  "hardeningDemo": {
+    "accountId": "demo-Pn1A77WOwIlzHg",
+    "learnerId": "learner-demo-G3fi4k3bR99ALA"
+  },
+  "malformedDigitSpaced": {
+    "stem": "7,582 = 7,000 + 500 + □ + 2",
+    "expected": 80,
+    "submitted": "8 0",
+    "correct": false,
+    "score": 0,
+    "maxScore": 1,
+    "zeroExpandedTermsSeenAcrossAttempts": 0
+  },
+  "correctAcceptance": {
+    "stem": "4,675 = 4,000 + □ + 70 + 5",
+    "expected": 600,
+    "submitted": "600",
+    "correct": true,
+    "score": 1,
+    "maxScore": 1,
+    "totalQuestions": 2
+  },
+  "noDueFallback": {
+    "accountId": "demo-MHuahlx3EHY-6w",
+    "learnerId": "learner-demo-NCVcekO7JY4Wlw",
+    "finalPhase": "summary",
+    "summary": {
+      "id": "arith_session_1gk7tdj",
+      "mode": "smart",
+      "goal": "due",
+      "answered": 10,
+      "questionCount": 10,
+      "correct": 0,
+      "score": 0,
+      "maxScore": 10,
+      "completedAt": "2026-05-16T20:38:06.660Z",
+      "autoCompleted": false
+    },
+    "observed": [
+      {
+        "index": 0,
+        "phaseAfterSubmit": "session",
+        "answered": 1
+      },
+      {
+        "index": 1,
+        "phaseAfterSubmit": "session",
+        "answered": 2
+      },
+      {
+        "index": 2,
+        "phaseAfterSubmit": "session",
+        "answered": 3
+      },
+      {
+        "index": 3,
+        "phaseAfterSubmit": "session",
+        "answered": 4
+      },
+      {
+        "index": 4,
+        "phaseAfterSubmit": "session",
+        "answered": 5
+      },
+      {
+        "index": 5,
+        "phaseAfterSubmit": "session",
+        "answered": 6
+      },
+      {
+        "index": 6,
+        "phaseAfterSubmit": "session",
+        "answered": 7
+      },
+      {
+        "index": 7,
+        "phaseAfterSubmit": "session",
+        "answered": 8
+      },
+      {
+        "index": 8,
+        "phaseAfterSubmit": "session",
+        "answered": 9
+      },
+      {
+        "index": 9,
+        "phaseAfterSubmit": "summary",
+        "answered": 10
+      }
+    ]
+  },
+  "finishedAt": "2026-05-16T20:38:06.736Z"
+}

@@ -246,12 +246,16 @@ function maybeQueueRetry(data, question, result, now) {
   data.retryQueue = data.retryQueue.sort((a, b) => a.dueAt - b.dueAt).slice(-200);
 }
 
+function dueSkillIdSet(data, now) {
+  return new Set(Object.keys(ARITHMETIC_SKILLS).filter((skillId) => {
+    const node = data.skills[skillId];
+    return Boolean(node?.attempts && Number(node.dueAt) <= now);
+  }));
+}
+
 function dueCount(data, now) {
   let count = data.retryQueue.filter((entry) => Number(entry.dueAt) <= now).length;
-  for (const skillId of Object.keys(ARITHMETIC_SKILLS)) {
-    const node = data.skills[skillId];
-    if (node?.attempts && Number(node.dueAt) <= now) count += 1;
-  }
+  count += dueSkillIdSet(data, now).size;
   return count;
 }
 
@@ -331,20 +335,13 @@ function chooseDueRetry(data, mode, focusSkillId, now) {
   return selected;
 }
 
-function chooseTemplate(data, prefs, now, seedToken) {
-  const mode = prefs.mode || 'smart';
-  const focusSkillId = prefs.focusSkillId || '';
-  let candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => {
-    if (mode === 'speed' && !templateRef.speedFriendly) return false;
-    if ((mode === 'skill' || mode === 'speed') && focusSkillId) return templateRef.skillIds.includes(focusSkillId);
-    return true;
-  });
-  if (mode === 'clinic') {
-    const weakSkills = new Set(statusRows(data, now).filter((row) => row.status === 'weak').map((row) => row.skillId));
-    const recentWrong = new Set((data.recentAttempts || []).slice(-20).filter((attempt) => !attempt.correct).flatMap((attempt) => attempt.skillIds || []));
-    candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => templateRef.skillIds.some((skillId) => weakSkills.has(skillId) || recentWrong.has(skillId)));
-  }
-  if (!candidates.length) candidates = ARITHMETIC_TEMPLATES.slice();
+function templateMatchesPrefs(templateRef, mode, focusSkillId) {
+  if (mode === 'speed' && !templateRef.speedFriendly) return false;
+  if ((mode === 'skill' || mode === 'speed') && focusSkillId) return templateRef.skillIds.includes(focusSkillId);
+  return true;
+}
+
+function chooseWeightedTemplate(candidates, data, now, seedToken) {
   const recentTemplateIds = (data.recentAttempts || []).slice(-6).map((attempt) => attempt.templateId);
   const weights = candidates.map((templateRef) => {
     const strength = average(templateRef.skillIds.map((skillId) => normaliseNode(data.skills[skillId]).strength || 0.25));
@@ -364,11 +361,42 @@ function chooseTemplate(data, prefs, now, seedToken) {
   return candidates[candidates.length - 1];
 }
 
+function chooseTemplate(data, prefs, now, seedToken) {
+  const mode = prefs.mode || 'smart';
+  const focusSkillId = prefs.focusSkillId || '';
+  let candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => templateMatchesPrefs(templateRef, mode, focusSkillId));
+  if (mode === 'clinic') {
+    const weakSkills = new Set(statusRows(data, now).filter((row) => row.status === 'weak').map((row) => row.skillId));
+    const recentWrong = new Set((data.recentAttempts || []).slice(-20).filter((attempt) => !attempt.correct).flatMap((attempt) => attempt.skillIds || []));
+    candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => templateRef.skillIds.some((skillId) => weakSkills.has(skillId) || recentWrong.has(skillId)));
+  }
+  if (!candidates.length) candidates = ARITHMETIC_TEMPLATES.slice();
+  return chooseWeightedTemplate(candidates, data, now, seedToken);
+}
+
+function chooseDueSkillTemplate(data, prefs, now, seedToken) {
+  const mode = prefs.mode || 'smart';
+  const focusSkillId = prefs.focusSkillId || '';
+  const dueSkillIds = dueSkillIdSet(data, now);
+  if (!dueSkillIds.size) return null;
+  let candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => {
+    if (!templateMatchesPrefs(templateRef, mode, focusSkillId)) return false;
+    return templateRef.skillIds.some((skillId) => dueSkillIds.has(skillId));
+  });
+  if (!candidates.length && focusSkillId) {
+    candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => templateRef.skillIds.some((skillId) => dueSkillIds.has(skillId)));
+  }
+  if (!candidates.length) return null;
+  return chooseWeightedTemplate(candidates, data, now, `${seedToken}:due-skill`);
+}
+
 function generateNextQuestion({ data, prefs, now, requestId, sessionId, position }) {
   const retry = chooseDueRetry(data, prefs.mode, prefs.focusSkillId, now);
   if (retry) return generateArithmeticQuestion({ templateId: retry.templateId, seed: retry.questionSeed, difficulty: retry.difficulty });
   const seedToken = `${requestId}:${sessionId}:${position}:${data.recentAttempts.length}`;
-  const templateRef = chooseTemplate(data, prefs, now, seedToken);
+  const templateRef = prefs.goal === 'due'
+    ? (chooseDueSkillTemplate(data, prefs, now, seedToken) || chooseTemplate(data, prefs, now, seedToken))
+    : chooseTemplate(data, prefs, now, seedToken);
   const difficulty = difficultyForTemplate(data, templateRef, prefs.mode);
   return generateArithmeticQuestion({ templateId: templateRef.id, seed: hashString(seedToken), difficulty });
 }
@@ -391,9 +419,13 @@ function sessionTargetFor(goal) {
   return 0;
 }
 
-function goalComplete(session, data, now) {
+function goalComplete(session, data, now, lastResult = null) {
   if (!session || session.mode === 'test') return false;
-  if (session.goal === 'due') return session.dueStart > 0 && dueCount(data, now) === 0;
+  if (session.goal === 'due') {
+    if (session.dueStart > 0) return Boolean(lastResult?.correct) && dueCount(data, now) === 0;
+    const fallbackTarget = sessionTargetFor('10q');
+    return fallbackTarget > 0 && (Number(session.answered) || 0) >= fallbackTarget;
+  }
   const target = sessionTargetFor(session.goal);
   return target > 0 && (Number(session.answered) || 0) >= target;
 }
@@ -626,7 +658,7 @@ function submitPractice({ learnerId, state, data, payload, requestId, now }) {
   session.maxScore += result.maxScore;
   state.error = '';
   state.feedback = { questionId: question.id, result, response, solutionLines: question.solutionLines || [], checkLine: question.checkLine || '' };
-  if (goalComplete(session, data, now)) {
+  if (goalComplete(session, data, now, result)) {
     events.push(...completeSession({ learnerId, state, data, now, requestId }));
   } else {
     session.waitingForContinue = true;

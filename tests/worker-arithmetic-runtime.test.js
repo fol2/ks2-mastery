@@ -15,10 +15,18 @@ import {
 import { buildArithmeticReadModel } from '../worker/src/subjects/arithmetic/read-models.js';
 import { applyArithmeticCommandResponse } from '../src/subjects/arithmetic/command-actions.js';
 import { projectArithmeticRewards } from '../worker/src/projections/rewards.js';
+import { MONSTERS, MONSTERS_BY_SUBJECT } from '../src/platform/game/monsters.js';
+import { ARITHMETIC_MONSTER_IDS } from '../src/platform/game/mastery/shared.js';
+import { arithmeticProvider } from '../worker/src/hero/providers/arithmetic.js';
+import { mapToSubjectPayload as mapArithmeticHeroPayload } from '../worker/src/hero/launch-adapters/arithmetic.js';
 
 function publicQuestionId(session, index = session?.currentIndex || 0) {
   const question = session?.mode === 'test' ? session?.paper?.[index]?.question : session?.currentQuestion;
   return arithmeticPublicQuestionId({ sessionId: session?.id || '', question, index });
+}
+
+function answerFor(question) {
+  return question.expected.kind === 'fraction' ? `${question.expected.n}/${question.expected.d}` : String(question.expected.value);
 }
 
 test('arithmetic content generates and marks every template across difficulty bands', () => {
@@ -113,16 +121,21 @@ test('arithmetic marking enforces disciplined comma grouping and fraction sign f
   const numberQuestion = { marks: 1, expected: { kind: 'number', value: 1234 } };
   assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1234' }).correct, true);
   assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1,234' }).correct, true);
+  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1 234' }).correct, true, 'well-formed space grouping is allowed');
   assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '12,34' }).correct, false, 'malformed thousands comma grouping must not be accepted');
   assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1,23,4' }).correct, false, 'multiple malformed comma groups must not be accepted');
+  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '12 34' }).correct, false, 'malformed thousands space grouping must not be accepted');
+  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1 2 3 4' }).correct, false, 'digit-spaced answers must not be accepted as a number');
 
   const divisionQuestion = { marks: 1, expected: { kind: 'number', value: 1234, allowZeroRemainderText: true } };
   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 r 0' }).correct, true, 'well-formed comma grouping can still be used with zero-remainder notation where allowed');
   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 rem 0' }).correct, true, 'well-formed comma grouping can be used with zero-remainder rem notation');
   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 remainder 0' }).correct, true, 'well-formed comma grouping can be used with zero-remainder word notation');
+  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1 234 r 0' }).correct, true, 'well-formed space grouping can be used with zero-remainder notation');
   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 r 0' }).correct, false, 'malformed comma grouping is rejected even in division zero-remainder notation');
   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 rem 0' }).correct, false, 'malformed comma grouping is rejected in rem notation');
   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 remainder 0' }).correct, false, 'malformed comma grouping is rejected in remainder-word notation');
+  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12 34 r 0' }).correct, false, 'malformed space grouping is rejected in division zero-remainder notation');
 
   const fractionQuestion = { marks: 1, expected: { kind: 'fraction', n: 1, d: 2, preferMixed: false } };
   assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '1/2' }).correct, true);
@@ -146,10 +159,129 @@ test('arithmetic formal written-method visuals keep algorithm rows free from tho
   }
 });
 
+
+test('arithmetic due goal targets due skills and falls back to a bounded smart session when no work is due', () => {
+  const now = 1700000000000;
+  const makeDueData = () => ({
+    prefs: { mode: 'smart', goal: 'due', focusSkillId: '', testForm: 'short' },
+    skills: {
+      number_bonds: {
+        attempts: 1,
+        correct: 1,
+        wrong: 0,
+        strength: 0.62,
+        intervalDays: 1,
+        dueAt: now - 1000,
+        lastSeenAt: new Date(now - 86400000).toISOString(),
+        lastWrongAt: null,
+        correctStreak: 1,
+      },
+    },
+    templates: {},
+    rewardUnits: {},
+    misconceptions: {},
+    retryQueue: [],
+    recentAttempts: [],
+    sessions: [],
+    streak: { lastPracticeDay: null, days: 0 },
+  });
+
+  const engine = createServerArithmeticEngine({ now: () => now });
+  const dueStarted = engine.apply({
+    learnerId: 'learner-due',
+    subjectRecord: { ui: {}, data: makeDueData() },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: 'due' },
+    requestId: 'due-start-targeted',
+  });
+  assert.equal(dueStarted.state.session.dueStart, 1);
+  assert.equal(dueStarted.state.session.currentQuestion.skillIds.includes('number_bonds'), true, 'due goal should open on a currently due skill');
+
+  const wrongDue = engine.apply({
+    learnerId: 'learner-due',
+    subjectRecord: { ui: dueStarted.state, data: dueStarted.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: dueStarted.state.session.id,
+      expectedQuestionId: publicQuestionId(dueStarted.state.session),
+      response: { answer: '999999999' },
+    },
+    requestId: 'due-submit-wrong',
+  });
+  assert.equal(wrongDue.state.summary, null, 'a wrong due-review answer must not mark due review complete');
+  assert.equal(wrongDue.state.session.status, 'active');
+
+  const dueStartedAgain = engine.apply({
+    learnerId: 'learner-due-correct',
+    subjectRecord: { ui: {}, data: makeDueData() },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: 'due' },
+    requestId: 'due-start-correct',
+  });
+  const dueCorrect = engine.apply({
+    learnerId: 'learner-due-correct',
+    subjectRecord: { ui: dueStartedAgain.state, data: dueStartedAgain.data },
+    command: 'submit-answer',
+    payload: {
+      expectedSessionId: dueStartedAgain.state.session.id,
+      expectedQuestionId: publicQuestionId(dueStartedAgain.state.session),
+      response: { answer: answerFor(dueStartedAgain.state.session.currentQuestion) },
+    },
+    requestId: 'due-submit-correct',
+  });
+  assert.equal(dueCorrect.state.phase, 'summary', 'a correct answer that clears the only due skill may complete the due review');
+  assert.equal(dueCorrect.state.summary.answered, 1);
+
+  let step = engine.apply({
+    learnerId: 'learner-empty-due',
+    subjectRecord: { ui: {}, data: {} },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: 'due' },
+    requestId: 'empty-due-start',
+  });
+  assert.equal(step.state.session.dueStart, 0);
+  for (let index = 0; index < 10 && step.state.phase !== 'summary'; index += 1) {
+    const submit = engine.apply({
+      learnerId: 'learner-empty-due',
+      subjectRecord: { ui: step.state, data: step.data },
+      command: 'submit-answer',
+      payload: {
+        expectedSessionId: step.state.session.id,
+        expectedQuestionId: publicQuestionId(step.state.session),
+        response: { answer: answerFor(step.state.session.currentQuestion) },
+      },
+      requestId: `empty-due-submit-${index}`,
+    });
+    step = submit;
+    if (step.state.phase !== 'summary') {
+      step = engine.apply({
+        learnerId: 'learner-empty-due',
+        subjectRecord: { ui: step.state, data: step.data },
+        command: 'continue-session',
+        payload: {
+          expectedSessionId: step.state.session.id,
+          expectedQuestionId: publicQuestionId(step.state.session),
+        },
+        requestId: `empty-due-continue-${index}`,
+      });
+    }
+  }
+  assert.equal(step.state.phase, 'summary', 'due goal should not create an endless session when no work is due');
+  assert.equal(step.state.summary.answered, 10);
+});
+
 test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
   const placeValue = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty: 2, seed: 96433 });
   assert.ok(placeValue.stem.includes('□'), 'place-value item contains a missing-value box');
   assert.ok(Number.isFinite(placeValue.expected.value), 'place-value expected value is finite');
+
+  for (let seed = 1; seed <= 500; seed += 1) {
+    for (const difficulty of [0, 1, 2]) {
+      const item = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty, seed });
+      const expandedTerms = item.stem.split(' = ')[1].split(' + ');
+      assert.equal(expandedTerms.includes('0'), false, `place-value partitioning seed ${seed} d${difficulty} should not display zero-value expanded terms`);
+    }
+  }
 
   const orderShapeFamilies = [new Set(), new Set(), new Set()];
   for (let seed = 1; seed <= 500; seed += 1) {
@@ -578,10 +710,46 @@ test('arithmetic reward projection updates the shared monster codex without touc
     contentReleaseId: 'arithmetic-ks2-worker-v1-2026-05-11',
     createdAt: '2026-05-11T00:00:00.000Z',
   };
-  const projected = projectArithmeticRewards({ learnerId: 'learner-reward', domainEvents: [event], gameState: {} });
+  const existingCodex = {
+    inklet: { caught: true, mastered: ['spelling-unit'] },
+    quoral: { caught: true, mastered: ['punctuation-unit'] },
+  };
+  const projected = projectArithmeticRewards({
+    learnerId: 'learner-reward',
+    domainEvents: [event],
+    gameState: { 'monster-codex': existingCodex },
+    random: () => 0,
+  });
+  assert.deepEqual(
+    MONSTERS_BY_SUBJECT.arithmetic.filter((monsterId) => MONSTERS[monsterId]),
+    [...ARITHMETIC_MONSTER_IDS],
+    'Arithmetic mastery monster ids must exist in the shared monster roster',
+  );
   assert.ok(projected.rewardEvents.length >= 1);
   assert.ok(projected.rewardEvents.every((rewardEvent) => rewardEvent.subjectId === 'arithmetic'));
   assert.ok(projected.gameState['monster-codex'].sumkrab || projected.gameState['monster-codex'].arithon);
+  assert.deepEqual(projected.gameState['monster-codex'].inklet, existingCodex.inklet);
+  assert.deepEqual(projected.gameState['monster-codex'].quoral, existingCodex.quoral);
+});
+
+test('arithmetic Hero due-review envelopes launch the due goal', () => {
+  const providerResult = arithmeticProvider({
+    content: { rewardUnitCount: 90 },
+    stats: { overview: { totalQuestions: 12, due: 1, weak: 0, securedSkills: 0, securedRewardUnits: 0, accuracy: 0.8 } },
+    analytics: { skills: [{ skillId: 'number_bonds', status: 'due' }] },
+  });
+  const dueEnvelope = providerResult.envelopes.find((envelope) => envelope.intent === 'due-review');
+  assert.ok(dueEnvelope, 'Arithmetic provider should expose a due-review envelope when due work exists');
+
+  const dueLaunch = mapArithmeticHeroPayload(dueEnvelope);
+  assert.equal(dueLaunch.launchable, true);
+  assert.equal(dueLaunch.subjectId, 'arithmetic');
+  assert.equal(dueLaunch.payload.mode, 'smart');
+  assert.equal(dueLaunch.payload.goal, 'due');
+
+  const miniTestLaunch = mapArithmeticHeroPayload({ subjectId: 'arithmetic', intent: 'breadth-maintenance', launcher: 'mini-test' });
+  assert.equal(miniTestLaunch.payload.mode, 'test');
+  assert.equal(miniTestLaunch.payload.goal, '10q');
 });
 
 

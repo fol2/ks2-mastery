@@ -1,0 +1,343 @@
+--- a/shared/arithmetic/content.js
++++ b/shared/arithmetic/content.js
+@@ -105,10 +105,19 @@
+   return String(Math.trunc(numeric));
+ }
+ 
+-function hasValidCommaGrouping(value) {
+-  const text = String(value || '');
+-  if (!text.includes(',')) return true;
+-  return /^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d*)?$/.test(text);
++function normaliseGroupingSpaces(value) {
++  return String(value || '').replace(/\s+/g, ' ').trim();
++}
++
++function hasValidNumberGrouping(value) {
++  const text = normaliseGroupingSpaces(value);
++  if (!text) return true;
++  const hasComma = text.includes(',');
++  const hasSpace = /\s/.test(text);
++  if (!hasComma && !hasSpace) return true;
++  if (hasComma && hasSpace) return false;
++  if (hasComma) return /^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d*)?$/.test(text);
++  return /^[+-]?\d{1,3}(?: \d{3})+(?:\.\d*)?$/.test(text);
+ }
+ 
+ function visualVertical(top, bottom, op, result = '') {
+@@ -151,11 +160,10 @@
+     .trim();
+   if (options.allowPercentSymbol) text = text.replace(/\s*%$/, '');
+   if (options.allowCurrencySymbol) text = text.replace(/^£\s*/, '');
+-  text = text.replace(/\s+/g, '');
+-  const remainderMatch = text.match(/^(.*?)(?:remainder|rem|r)0+$/i);
+-  const numericPartForCommaCheck = remainderMatch ? remainderMatch[1] : text;
+-  if (!hasValidCommaGrouping(numericPartForCommaCheck)) return null;
+-  text = text.replace(/,/g, '');
++  const remainderMatch = text.match(/^(.*?)(?:\s*(?:remainder|rem|r)\s*)0+$/i);
++  const numericPartForGroupingCheck = remainderMatch ? remainderMatch[1] : text;
++  if (!hasValidNumberGrouping(numericPartForGroupingCheck)) return null;
++  text = text.replace(/,/g, '').replace(/\s+/g, '');
+   const zr = text.match(/^([+-]?\d+)\s*(?:remainder|rem|r)\s*0+$/i);
+   if (zr) return options.allowZeroRemainderText ? Number(zr[1]) : null;
+   if (text.startsWith('+')) text = text.slice(1);
+@@ -374,7 +382,10 @@
+       indexes = values.map((v, i) => v ? i : -1).filter((i) => i >= 0);
+     } while (indexes.length < 3);
+     const missing = pick(rng, indexes.slice(1));
+-    const expanded = values.map((v, i) => i === missing ? '□' : formatNumber(v));
++    const expanded = values.flatMap((v, i) => {
++      if (i === missing) return ['□'];
++      return v ? [formatNumber(v)] : [];
++    });
+     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(Number(parts.join('')))} = ${expanded.join(' + ')}`, inputSpec: { type: 'number', label: 'Missing place-value part' }, expected: { kind: 'number', value: values[missing], misconception: 'place_value_confusion' }, solutionLines: ['Read the number one place at a time.', `The missing part is ${formatNumber(values[missing])}.`] });
+   } }),
+   template({ id: 'powers_of_ten_shift', label: 'Multiply and divide by powers of 10', domain: 'Place value', strand: 'facts_place_value', skillIds: ['powers_of_10_shift'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {
+
+--- a/worker/src/subjects/arithmetic/engine.js
++++ b/worker/src/subjects/arithmetic/engine.js
+@@ -246,12 +246,16 @@
+   data.retryQueue = data.retryQueue.sort((a, b) => a.dueAt - b.dueAt).slice(-200);
+ }
+ 
++function dueSkillIdSet(data, now) {
++  return new Set(Object.keys(ARITHMETIC_SKILLS).filter((skillId) => {
++    const node = data.skills[skillId];
++    return Boolean(node?.attempts && Number(node.dueAt) <= now);
++  }));
++}
++
+ function dueCount(data, now) {
+   let count = data.retryQueue.filter((entry) => Number(entry.dueAt) <= now).length;
+-  for (const skillId of Object.keys(ARITHMETIC_SKILLS)) {
+-    const node = data.skills[skillId];
+-    if (node?.attempts && Number(node.dueAt) <= now) count += 1;
+-  }
++  count += dueSkillIdSet(data, now).size;
+   return count;
+ }
+ 
+@@ -331,20 +335,13 @@
+   return selected;
+ }
+ 
+-function chooseTemplate(data, prefs, now, seedToken) {
+-  const mode = prefs.mode || 'smart';
+-  const focusSkillId = prefs.focusSkillId || '';
+-  let candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => {
+-    if (mode === 'speed' && !templateRef.speedFriendly) return false;
+-    if ((mode === 'skill' || mode === 'speed') && focusSkillId) return templateRef.skillIds.includes(focusSkillId);
+-    return true;
+-  });
+-  if (mode === 'clinic') {
+-    const weakSkills = new Set(statusRows(data, now).filter((row) => row.status === 'weak').map((row) => row.skillId));
+-    const recentWrong = new Set((data.recentAttempts || []).slice(-20).filter((attempt) => !attempt.correct).flatMap((attempt) => attempt.skillIds || []));
+-    candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => templateRef.skillIds.some((skillId) => weakSkills.has(skillId) || recentWrong.has(skillId)));
+-  }
+-  if (!candidates.length) candidates = ARITHMETIC_TEMPLATES.slice();
++function templateMatchesPrefs(templateRef, mode, focusSkillId) {
++  if (mode === 'speed' && !templateRef.speedFriendly) return false;
++  if ((mode === 'skill' || mode === 'speed') && focusSkillId) return templateRef.skillIds.includes(focusSkillId);
++  return true;
++}
++
++function chooseWeightedTemplate(candidates, data, now, seedToken) {
+   const recentTemplateIds = (data.recentAttempts || []).slice(-6).map((attempt) => attempt.templateId);
+   const weights = candidates.map((templateRef) => {
+     const strength = average(templateRef.skillIds.map((skillId) => normaliseNode(data.skills[skillId]).strength || 0.25));
+@@ -364,11 +361,42 @@
+   return candidates[candidates.length - 1];
+ }
+ 
++function chooseTemplate(data, prefs, now, seedToken) {
++  const mode = prefs.mode || 'smart';
++  const focusSkillId = prefs.focusSkillId || '';
++  let candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => templateMatchesPrefs(templateRef, mode, focusSkillId));
++  if (mode === 'clinic') {
++    const weakSkills = new Set(statusRows(data, now).filter((row) => row.status === 'weak').map((row) => row.skillId));
++    const recentWrong = new Set((data.recentAttempts || []).slice(-20).filter((attempt) => !attempt.correct).flatMap((attempt) => attempt.skillIds || []));
++    candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => templateRef.skillIds.some((skillId) => weakSkills.has(skillId) || recentWrong.has(skillId)));
++  }
++  if (!candidates.length) candidates = ARITHMETIC_TEMPLATES.slice();
++  return chooseWeightedTemplate(candidates, data, now, seedToken);
++}
++
++function chooseDueSkillTemplate(data, prefs, now, seedToken) {
++  const mode = prefs.mode || 'smart';
++  const focusSkillId = prefs.focusSkillId || '';
++  const dueSkillIds = dueSkillIdSet(data, now);
++  if (!dueSkillIds.size) return null;
++  let candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => {
++    if (!templateMatchesPrefs(templateRef, mode, focusSkillId)) return false;
++    return templateRef.skillIds.some((skillId) => dueSkillIds.has(skillId));
++  });
++  if (!candidates.length && focusSkillId) {
++    candidates = ARITHMETIC_TEMPLATES.filter((templateRef) => templateRef.skillIds.some((skillId) => dueSkillIds.has(skillId)));
++  }
++  if (!candidates.length) return null;
++  return chooseWeightedTemplate(candidates, data, now, `${seedToken}:due-skill`);
++}
++
+ function generateNextQuestion({ data, prefs, now, requestId, sessionId, position }) {
+   const retry = chooseDueRetry(data, prefs.mode, prefs.focusSkillId, now);
+   if (retry) return generateArithmeticQuestion({ templateId: retry.templateId, seed: retry.questionSeed, difficulty: retry.difficulty });
+   const seedToken = `${requestId}:${sessionId}:${position}:${data.recentAttempts.length}`;
+-  const templateRef = chooseTemplate(data, prefs, now, seedToken);
++  const templateRef = prefs.goal === 'due'
++    ? (chooseDueSkillTemplate(data, prefs, now, seedToken) || chooseTemplate(data, prefs, now, seedToken))
++    : chooseTemplate(data, prefs, now, seedToken);
+   const difficulty = difficultyForTemplate(data, templateRef, prefs.mode);
+   return generateArithmeticQuestion({ templateId: templateRef.id, seed: hashString(seedToken), difficulty });
+ }
+@@ -391,9 +419,13 @@
+   return 0;
+ }
+ 
+-function goalComplete(session, data, now) {
++function goalComplete(session, data, now, lastResult = null) {
+   if (!session || session.mode === 'test') return false;
+-  if (session.goal === 'due') return session.dueStart > 0 && dueCount(data, now) === 0;
++  if (session.goal === 'due') {
++    if (session.dueStart > 0) return Boolean(lastResult?.correct) && dueCount(data, now) === 0;
++    const fallbackTarget = sessionTargetFor('10q');
++    return fallbackTarget > 0 && (Number(session.answered) || 0) >= fallbackTarget;
++  }
+   const target = sessionTargetFor(session.goal);
+   return target > 0 && (Number(session.answered) || 0) >= target;
+ }
+@@ -626,7 +658,7 @@
+   session.maxScore += result.maxScore;
+   state.error = '';
+   state.feedback = { questionId: question.id, result, response, solutionLines: question.solutionLines || [], checkLine: question.checkLine || '' };
+-  if (goalComplete(session, data, now)) {
++  if (goalComplete(session, data, now, result)) {
+     events.push(...completeSession({ learnerId, state, data, now, requestId }));
+   } else {
+     session.waitingForContinue = true;
+
+--- a/tests/worker-arithmetic-runtime.test.js
++++ b/tests/worker-arithmetic-runtime.test.js
+@@ -21,6 +21,10 @@
+   return arithmeticPublicQuestionId({ sessionId: session?.id || '', question, index });
+ }
+ 
++function answerFor(question) {
++  return question.expected.kind === 'fraction' ? `${question.expected.n}/${question.expected.d}` : String(question.expected.value);
++}
++
+ test('arithmetic content generates and marks every template across difficulty bands', () => {
+   for (const template of ARITHMETIC_TEMPLATES) {
+     for (const difficulty of [0, 1, 2]) {
+@@ -113,16 +117,21 @@
+   const numberQuestion = { marks: 1, expected: { kind: 'number', value: 1234 } };
+   assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1234' }).correct, true);
+   assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1,234' }).correct, true);
++  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1 234' }).correct, true, 'well-formed space grouping is allowed');
+   assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '12,34' }).correct, false, 'malformed thousands comma grouping must not be accepted');
+   assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1,23,4' }).correct, false, 'multiple malformed comma groups must not be accepted');
++  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '12 34' }).correct, false, 'malformed thousands space grouping must not be accepted');
++  assert.equal(evaluateArithmeticQuestion(numberQuestion, { answer: '1 2 3 4' }).correct, false, 'digit-spaced answers must not be accepted as a number');
+ 
+   const divisionQuestion = { marks: 1, expected: { kind: 'number', value: 1234, allowZeroRemainderText: true } };
+   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 r 0' }).correct, true, 'well-formed comma grouping can still be used with zero-remainder notation where allowed');
+   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 rem 0' }).correct, true, 'well-formed comma grouping can be used with zero-remainder rem notation');
+   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1,234 remainder 0' }).correct, true, 'well-formed comma grouping can be used with zero-remainder word notation');
++  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '1 234 r 0' }).correct, true, 'well-formed space grouping can be used with zero-remainder notation');
+   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 r 0' }).correct, false, 'malformed comma grouping is rejected even in division zero-remainder notation');
+   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 rem 0' }).correct, false, 'malformed comma grouping is rejected in rem notation');
+   assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12,34 remainder 0' }).correct, false, 'malformed comma grouping is rejected in remainder-word notation');
++  assert.equal(evaluateArithmeticQuestion(divisionQuestion, { answer: '12 34 r 0' }).correct, false, 'malformed space grouping is rejected in division zero-remainder notation');
+ 
+   const fractionQuestion = { marks: 1, expected: { kind: 'fraction', n: 1, d: 2, preferMixed: false } };
+   assert.equal(evaluateArithmeticQuestion(fractionQuestion, { answer: '1/2' }).correct, true);
+@@ -146,11 +155,130 @@
+   }
+ });
+ 
++
++test('arithmetic due goal targets due skills and falls back to a bounded smart session when no work is due', () => {
++  const now = 1700000000000;
++  const makeDueData = () => ({
++    prefs: { mode: 'smart', goal: 'due', focusSkillId: '', testForm: 'short' },
++    skills: {
++      number_bonds: {
++        attempts: 1,
++        correct: 1,
++        wrong: 0,
++        strength: 0.62,
++        intervalDays: 1,
++        dueAt: now - 1000,
++        lastSeenAt: new Date(now - 86400000).toISOString(),
++        lastWrongAt: null,
++        correctStreak: 1,
++      },
++    },
++    templates: {},
++    rewardUnits: {},
++    misconceptions: {},
++    retryQueue: [],
++    recentAttempts: [],
++    sessions: [],
++    streak: { lastPracticeDay: null, days: 0 },
++  });
++
++  const engine = createServerArithmeticEngine({ now: () => now });
++  const dueStarted = engine.apply({
++    learnerId: 'learner-due',
++    subjectRecord: { ui: {}, data: makeDueData() },
++    command: 'start-session',
++    payload: { mode: 'smart', goal: 'due' },
++    requestId: 'due-start-targeted',
++  });
++  assert.equal(dueStarted.state.session.dueStart, 1);
++  assert.equal(dueStarted.state.session.currentQuestion.skillIds.includes('number_bonds'), true, 'due goal should open on a currently due skill');
++
++  const wrongDue = engine.apply({
++    learnerId: 'learner-due',
++    subjectRecord: { ui: dueStarted.state, data: dueStarted.data },
++    command: 'submit-answer',
++    payload: {
++      expectedSessionId: dueStarted.state.session.id,
++      expectedQuestionId: publicQuestionId(dueStarted.state.session),
++      response: { answer: '999999999' },
++    },
++    requestId: 'due-submit-wrong',
++  });
++  assert.equal(wrongDue.state.summary, null, 'a wrong due-review answer must not mark due review complete');
++  assert.equal(wrongDue.state.session.status, 'active');
++
++  const dueStartedAgain = engine.apply({
++    learnerId: 'learner-due-correct',
++    subjectRecord: { ui: {}, data: makeDueData() },
++    command: 'start-session',
++    payload: { mode: 'smart', goal: 'due' },
++    requestId: 'due-start-correct',
++  });
++  const dueCorrect = engine.apply({
++    learnerId: 'learner-due-correct',
++    subjectRecord: { ui: dueStartedAgain.state, data: dueStartedAgain.data },
++    command: 'submit-answer',
++    payload: {
++      expectedSessionId: dueStartedAgain.state.session.id,
++      expectedQuestionId: publicQuestionId(dueStartedAgain.state.session),
++      response: { answer: answerFor(dueStartedAgain.state.session.currentQuestion) },
++    },
++    requestId: 'due-submit-correct',
++  });
++  assert.equal(dueCorrect.state.phase, 'summary', 'a correct answer that clears the only due skill may complete the due review');
++  assert.equal(dueCorrect.state.summary.answered, 1);
++
++  let step = engine.apply({
++    learnerId: 'learner-empty-due',
++    subjectRecord: { ui: {}, data: {} },
++    command: 'start-session',
++    payload: { mode: 'smart', goal: 'due' },
++    requestId: 'empty-due-start',
++  });
++  assert.equal(step.state.session.dueStart, 0);
++  for (let index = 0; index < 10 && step.state.phase !== 'summary'; index += 1) {
++    const submit = engine.apply({
++      learnerId: 'learner-empty-due',
++      subjectRecord: { ui: step.state, data: step.data },
++      command: 'submit-answer',
++      payload: {
++        expectedSessionId: step.state.session.id,
++        expectedQuestionId: publicQuestionId(step.state.session),
++        response: { answer: answerFor(step.state.session.currentQuestion) },
++      },
++      requestId: `empty-due-submit-${index}`,
++    });
++    step = submit;
++    if (step.state.phase !== 'summary') {
++      step = engine.apply({
++        learnerId: 'learner-empty-due',
++        subjectRecord: { ui: step.state, data: step.data },
++        command: 'continue-session',
++        payload: {
++          expectedSessionId: step.state.session.id,
++          expectedQuestionId: publicQuestionId(step.state.session),
++        },
++        requestId: `empty-due-continue-${index}`,
++      });
++    }
++  }
++  assert.equal(step.state.phase, 'summary', 'due goal should not create an endless session when no work is due');
++  assert.equal(step.state.summary.answered, 10);
++});
++
+ test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
+   const placeValue = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty: 2, seed: 96433 });
+   assert.ok(placeValue.stem.includes('□'), 'place-value item contains a missing-value box');
+   assert.ok(Number.isFinite(placeValue.expected.value), 'place-value expected value is finite');
+ 
++  for (let seed = 1; seed <= 500; seed += 1) {
++    for (const difficulty of [0, 1, 2]) {
++      const item = generateArithmeticQuestion({ templateId: 'place_value_partition', difficulty, seed });
++      const expandedTerms = item.stem.split(' = ')[1].split(' + ');
++      assert.equal(expandedTerms.includes('0'), false, `place-value partitioning seed ${seed} d${difficulty} should not display zero-value expanded terms`);
++    }
++  }
++
+   const orderShapeFamilies = [new Set(), new Set(), new Set()];
+   for (let seed = 1; seed <= 500; seed += 1) {
+     for (const difficulty of [0, 1, 2]) {
+

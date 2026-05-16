@@ -1,0 +1,65 @@
+
+> ks2-mastery@0.1.0 check
+> node ./scripts/wrangler-oauth.mjs deploy --dry-run
+
+
+ ⛅️ wrangler 4.84.0 (update available 4.92.0)
+─────────────────────────────────────────────
+[custom build] Running: npm run build && npm run assert:build-public && npm run audit:client
+[custom build] 
+[custom build] > ks2-mastery@0.1.0 build
+[custom build] > node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs
+[custom build] 
+[custom build] 
+[custom build] Generated src\platform\game\monster-asset-manifest.js with 340 monster assets.
+[custom build] 
+[custom build] 
+[custom build]   src\bundles\app.bundle.js                 736.6kb
+[custom build]   src\bundles\chunk-BQQKSCD3.js             341.8kb
+[custom build]   src\bundles\AdminHubSurface-2IK6LUIC.js   227.4kb
+[custom build]   src\bundles\ParentHubSurface-MRTSMHTL.js   22.9kb
+[custom build]   src\bundles\chunk-EE2UYWMZ.js              15.7kb
+[custom build]   ...and 3 more output files...
+[custom build] 
+[custom build] Done in 64ms
+[custom build] 
+[custom build] 
+[custom build] > ks2-mastery@0.1.0 assert:build-public
+[custom build] > node ./scripts/assert-build-public.mjs
+[custom build] 
+[custom build] 
+[custom build] 
+[custom build] > ks2-mastery@0.1.0 audit:client
+[custom build] > node ./scripts/audit-client-bundle.mjs
+[custom build] 
+[custom build] 
+[custom build] Allowlisted token present: /api/learners (platform learner-profile mutation route; not a subject engine/runtime route)
+[custom build] 
+[custom build] Allowlisted token present: /api/content/spelling (operator content import/export endpoint; content datasets are fetched only on explicit admin action)
+[custom build] Allowlisted token present: /api/admin/monster-visual-config (admin-only monster visual draft/publish endpoint; production renderers receive only the published bootstrap payload)
+[custom build] Allowlisted token present: /api/subjects/spelling/word-bank (authorised server read model endpoint for Word Bank rows and detail)
+[custom build] Allowlisted token present: /api/subjects/ (server-authoritative subject command boundary)
+[custom build] Client bundle audit passed (1285 public files, 6 chunks scanned, main bundle 210699 / 232000 bytes gzip).
+[custom build] 
+✨ Read 1409 files from the assets directory D:\Coding\ks2-mastery\.worktrees\arithmetic-hardening-handoff-20260516\dist\public
+Total Upload: 23401.07 KiB / gzip: 2233.20 KiB
+Your Worker has access to the following bindings:
+Binding                                                     Resource                  
+env.LEARNER_LOCK (LearnerLock)                              Durable Object            
+env.DB (ks2-mastery-db)                                     D1 Database               
+env.SPELLING_AUDIO_BUCKET (ks2-spelling-buffers)            R2 Bucket                 
+env.ASSETS                                                  Assets                    
+env.APP_NAME ("KS2 Mastery")                                Environment Variable      
+env.APP_HOSTNAME ("ks2.eugnel.uk")                          Environment Variable      
+env.AUTH_MODE ("production")                                Environment Variable      
+env.ENVIRONMENT ("production")                              Environment Variable      
+env.PUNCTUATION_SUBJECT_ENABLED ("true")                    Environment Variable      
+env.SOCIAL_LOGIN_WIRE_ENABLED ("true")                      Environment Variable      
+env.HERO_MODE_SHADOW_ENABLED ("false")                      Environment Variable      
+env.HERO_MODE_LAUNCH_ENABLED ("false")                      Environment Variable      
+env.HERO_MODE_CHILD_UI_ENABLED ("false")                    Environment Variable      
+env.HERO_MODE_PROGRESS_ENABLED ("false")                    Environment Variable      
+env.HERO_MODE_ECONOMY_ENABLED ("false")                     Environment Variable      
+env.HERO_MODE_CAMP_ENABLED ("false")                        Environment Variable      
+
+--dry-run: exiting now.

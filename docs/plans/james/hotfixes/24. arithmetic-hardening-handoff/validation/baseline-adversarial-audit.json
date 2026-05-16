@@ -1,0 +1,91 @@
+{
+  "templates": 30,
+  "difficulties": 3,
+  "seedsPerDifficulty": 2000,
+  "generatedCases": 180000,
+  "correctRejected": 0,
+  "digitSpacesAccepted": 93471,
+  "zeroExpandedTerms": 2003,
+  "examples": [
+    {
+      "kind": "digit-spaces-accepted",
+      "templateId": "bonds_missing",
+      "difficulty": 0,
+      "seed": 1,
+      "answer": "44",
+      "spacedAnswer": "4 4 ",
+      "stem": "6 + □ = 50"
+    },
+    {
+      "kind": "digit-spaces-accepted",
+      "templateId": "bonds_missing",
+      "difficulty": 0,
+      "seed": 2,
+      "answer": "32",
+      "spacedAnswer": "3 2 ",
+      "stem": "18 + □ = 50"
+    },
+    {
+      "kind": "digit-spaces-accepted",
+      "templateId": "bonds_missing",
+      "difficulty": 0,
+      "seed": 3,
+      "answer": "43",
+      "spacedAnswer": "4 3 ",
+      "stem": "7 + □ = 50"
+    },
+    {
+      "kind": "digit-spaces-accepted",
+      "templateId": "bonds_missing",
+      "difficulty": 0,
+      "seed": 4,
+      "answer": "63",
+      "spacedAnswer": "6 3 ",
+      "stem": "37 + □ = 100"
+    },
+    {
+      "kind": "digit-spaces-accepted",
+      "templateId": "bonds_missing",
+      "difficulty": 0,
+      "seed": 5,
+      "answer": "14",
+      "spacedAnswer": "1 4 ",
+      "stem": "36 + □ = 50"
+    },
+    {
+      "kind": "zero-expanded-term",
+      "templateId": "place_value_partition",
+      "difficulty": 0,
+      "seed": 1,
+      "stem": "6,059 = 6,000 + 0 + 50 + □"
+    },
+    {
+      "kind": "zero-expanded-term",
+      "templateId": "place_value_partition",
+      "difficulty": 0,
+      "seed": 4,
+      "stem": "9,320 = 9,000 + □ + 20 + 0"
+    },
+    {
+      "kind": "zero-expanded-term",
+      "templateId": "place_value_partition",
+      "difficulty": 0,
+      "seed": 6,
+      "stem": "5,062 = 5,000 + 0 + 60 + □"
+    },
+    {
+      "kind": "zero-expanded-term",
+      "templateId": "place_value_partition",
+      "difficulty": 0,
+      "seed": 7,
+      "stem": "1,096 = 1,000 + 0 + 90 + □"
+    },
+    {
+      "kind": "zero-expanded-term",
+      "templateId": "place_value_partition",
+      "difficulty": 0,
+      "seed": 12,
+      "stem": "3,059 = 3,000 + 0 + □ + 9"
+    }
+  ]
+}

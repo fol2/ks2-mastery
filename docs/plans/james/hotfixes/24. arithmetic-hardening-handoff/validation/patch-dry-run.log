@@ -1,0 +1,3 @@
+checking file shared/arithmetic/content.js
+checking file worker/src/subjects/arithmetic/engine.js
+checking file tests/worker-arithmetic-runtime.test.js

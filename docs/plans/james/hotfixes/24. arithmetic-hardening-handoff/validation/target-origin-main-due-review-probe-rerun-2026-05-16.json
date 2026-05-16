@@ -1,0 +1,27 @@
+{
+  "dueStart": 1,
+  "firstQuestionTemplate": "bonds_missing",
+  "firstQuestionSkillIds": [
+    "number_bonds"
+  ],
+  "firstQuestionTargetsDueSkill": true,
+  "wrongAnswerPhase": "session",
+  "wrongAnswerSummary": null,
+  "wrongAnswerSessionStatus": "active",
+  "emptyDueStart": 0,
+  "emptyDueAfterTenCorrectPhase": "summary",
+  "emptyDueAfterTenCorrectSummary": {
+    "id": "arith_session_1rnumbd",
+    "mode": "smart",
+    "goal": "due",
+    "answered": 10,
+    "questionCount": 10,
+    "correct": 10,
+    "score": 10,
+    "maxScore": 10,
+    "completedAt": "2023-11-14T22:13:20.000Z",
+    "autoCompleted": false
+  },
+  "emptyDueAfterTenIterations": 10,
+  "emptyDueAfterTenAnswered": 10
+}

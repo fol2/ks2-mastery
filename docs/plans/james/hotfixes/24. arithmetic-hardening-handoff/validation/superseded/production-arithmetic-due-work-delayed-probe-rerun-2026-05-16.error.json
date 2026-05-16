@@ -1,0 +1,5 @@
+{
+  "ok": false,
+  "error": "AssertionError [ERR_ASSERTION]: Wrong due-review answer unexpectedly completed the due session.\n    at main (file:///D:/Coding/ks2-mastery/.worktrees/arithmetic-hardening-handoff-20260516/[eval1]:90:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+  "finishedAt": "2026-05-16T21:13:03.321Z"
+}

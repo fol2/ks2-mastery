@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "probeType": "arithmetic-production-due-work-d1-seeded",
+  "origin": "https://ks2.eugnel.uk",
+  "deploymentExpectation": "after redeploy 34cdc3d4-9cbe-4862-931c-ecfddf7b3c17",
+  "demoAccountId": "demo-8z_CYX3xJZJl6Q",
+  "learnerId": "learner-demo-BXg18LmhPaKH8w",
+  "missedStem": "7,941 = 7,000 + 900 + □ + 1",
+  "missedQuestionId": "arith_q_1jfosna",
+  "d1MutationScope": "demo learner arithmetic data_json dueAt fields only",
+  "d1UpdateSucceeded": true,
+  "dueSessionId": "arith_session_10wk6ug",
+  "dueStem": "7,941 = 7,000 + 900 + □ + 1",
+  "dueMatchedMissedQuestion": true,
+  "wrongDuePhase": "session",
+  "wrongDueFeedbackPresent": true,
+  "wrongDueCorrect": false,
+  "wrongDueSummary": null,
+  "finishedAt": "2026-05-16T21:19:07.223Z"
+}

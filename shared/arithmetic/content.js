@@ -105,10 +105,19 @@ function plainIntegerText(value) {
   return String(Math.trunc(numeric));
 }
 
-function hasValidCommaGrouping(value) {
-  const text = String(value || '');
-  if (!text.includes(',')) return true;
-  return /^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d*)?$/.test(text);
+function normaliseGroupingSpaces(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function hasValidNumberGrouping(value) {
+  const text = normaliseGroupingSpaces(value);
+  if (!text) return true;
+  const hasComma = text.includes(',');
+  const hasSpace = /\s/.test(text);
+  if (!hasComma && !hasSpace) return true;
+  if (hasComma && hasSpace) return false;
+  if (hasComma) return /^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d*)?$/.test(text);
+  return /^[+-]?\d{1,3}(?: \d{3})+(?:\.\d*)?$/.test(text);
 }
 
 function visualVertical(top, bottom, op, result = '') {
@@ -151,11 +160,10 @@ export function parseNumberInput(value, options = {}) {
     .trim();
   if (options.allowPercentSymbol) text = text.replace(/\s*%$/, '');
   if (options.allowCurrencySymbol) text = text.replace(/^£\s*/, '');
-  text = text.replace(/\s+/g, '');
-  const remainderMatch = text.match(/^(.*?)(?:remainder|rem|r)0+$/i);
-  const numericPartForCommaCheck = remainderMatch ? remainderMatch[1] : text;
-  if (!hasValidCommaGrouping(numericPartForCommaCheck)) return null;
-  text = text.replace(/,/g, '');
+  const remainderMatch = text.match(/^(.*?)(?:\s*(?:remainder|rem|r)\s*)0+$/i);
+  const numericPartForGroupingCheck = remainderMatch ? remainderMatch[1] : text;
+  if (!hasValidNumberGrouping(numericPartForGroupingCheck)) return null;
+  text = text.replace(/,/g, '').replace(/\s+/g, '');
   const zr = text.match(/^([+-]?\d+)\s*(?:remainder|rem|r)\s*0+$/i);
   if (zr) return options.allowZeroRemainderText ? Number(zr[1]) : null;
   if (text.startsWith('+')) text = text.slice(1);
@@ -374,7 +382,10 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
       indexes = values.map((v, i) => v ? i : -1).filter((i) => i >= 0);
     } while (indexes.length < 3);
     const missing = pick(rng, indexes.slice(1));
-    const expanded = values.map((v, i) => i === missing ? '□' : formatNumber(v));
+    const expanded = values.flatMap((v, i) => {
+      if (i === missing) return ['□'];
+      return v ? [formatNumber(v)] : [];
+    });
     return makeQuestion(this, seed, difficulty, { stem: `${formatNumber(Number(parts.join('')))} = ${expanded.join(' + ')}`, inputSpec: { type: 'number', label: 'Missing place-value part' }, expected: { kind: 'number', value: values[missing], misconception: 'place_value_confusion' }, solutionLines: ['Read the number one place at a time.', `The missing part is ${formatNumber(values[missing])}.`] });
   } }),
   template({ id: 'powers_of_ten_shift', label: 'Multiply and divide by powers of 10', domain: 'Place value', strand: 'facts_place_value', skillIds: ['powers_of_10_shift'], speedFriendly: true, testFriendly: true, generator(seed, difficulty = 1) {

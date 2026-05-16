@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "url": "https://ks2.eugnel.uk/arithmetic",
+  "deployedVersionId": "34cdc3d4-9cbe-4862-931c-ecfddf7b3c17",
+  "demoAccountId": "demo-EI6_2iUchDrPOA",
+  "hardRefreshPerformed": true,
+  "screenshotPath": "docs/plans/james/hotfixes/24. arithmetic-hardening-handoff/evidence/production-hard-refresh-arithmetic-rerun-2026-05-16.png",
+  "title": "KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice",
+  "bodyIncludesArithmetic": true,
+  "bodySample": "K\nKS2 Mastery\nCODEX JOURNAL\nDemo Learner · Y5\nNothing caught yet\n\nNothing caught yet. Your meadow stays tidy. Finish a round to see your first monster appear.\n\nEvening, Demo Learner. A fresh round is waiting.\nToday's words are waiting.\nNothing due today — explore for fun.\nBegin today's round\nOpen codex\nYour subjects\nTHE SCRIBE DOWNS\nSpelling\n\nLearn tricky words by sound, sight and meaning.\n\n0%\nFresh spellings · 0 due\nTHE PRISM STEPS\nArithmetic\n\nBuild KS2 arithmetic fluency through mixed retrieval, written methods, exact marking, SATs-style practice and spaced review.\n\n0%\nSmart Arithmetic review · 0 due\nPARADOX SPIRES\nReasoning\n\nPlan multi-step maths, choose the structure, work accurately and check reasonableness.\n\n0%\nSmart Reasoning review · 0 due\nTHE CLAUSE CONSERVATORY\nGrammar\n\nWord classes, clauses, tenses and sentence shape.\n\n0%\nStart Grammar retrieval · 0 due\nBELLSTORM COAST\nPunctuation\n\nPractise the KS2 punctuation progression: Smart Review, Guided focus, Weak Spots, GPS tests, sentence combining, paragraph repair, and transfer.\n\n0%\nSmart Review · 0 due\nTHE MOONLEAF ARCHIVE\nReading\n\nRead original KS2 passages, answer from evidence, and strengthen retrieval, vocabulary, infere",
+  "consoleIssues": [],
+  "failedRequests": [
+    {
+      "url": "https://ks2.eugnel.uk/api/auth/session",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "finishedAt": "2026-05-16T21:20:37.852Z"
+}

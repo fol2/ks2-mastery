@@ -14,7 +14,7 @@ export function mapToSubjectPayload(taskEnvelope) {
     subjectId: 'arithmetic',
     payload: {
       mode,
-      goal: mode === 'test' ? '10q' : '10q',
+      goal: taskEnvelope?.intent === 'due-review' ? 'due' : '10q',
       testForm: mode === 'test' ? 'short' : 'short',
       heroContext: taskEnvelope?.heroContext || null,
     },

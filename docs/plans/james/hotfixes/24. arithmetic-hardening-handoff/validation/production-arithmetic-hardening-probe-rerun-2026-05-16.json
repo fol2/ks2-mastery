@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "probeType": "arithmetic-hardening-production-rerun",
+  "origin": "https://ks2.eugnel.uk",
+  "demoAccountId": "demo-ytcAyygDu19z3A",
+  "learnerId": "learner-demo-MI3u0YVxlHBDAw",
+  "malformedDigitSpaced": {
+    "stem": "6,320 = 6,000 + □ + 20",
+    "expected": 300,
+    "submitted": "3 0 0",
+    "correct": false,
+    "score": 0
+  },
+  "correctAcceptance": {
+    "stem": "7,717 = 7,000 + □ + 10 + 7",
+    "expected": 700,
+    "correct": true,
+    "score": 1
+  },
+  "finishedAt": "2026-05-16T21:20:00.663Z"
+}

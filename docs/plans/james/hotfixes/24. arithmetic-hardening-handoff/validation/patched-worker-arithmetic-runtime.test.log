@@ -1,0 +1,105 @@
+TAP version 13
+# Subtest: arithmetic content generates and marks every template across difficulty bands
+ok 1 - arithmetic content generates and marks every template across difficulty bands
+  ---
+  duration_ms: 42.281589
+  ...
+# Subtest: arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms
+ok 2 - arithmetic marking keeps the v6 mixed-fraction and Unicode fraction answer forms
+  ---
+  duration_ms: 0.439491
+  ...
+# Subtest: arithmetic marking rejects stray units except where the question asks for a percentage
+ok 3 - arithmetic marking rejects stray units except where the question asks for a percentage
+  ---
+  duration_ms: 2.094265
+  ...
+# Subtest: arithmetic marking rejects malformed mixed numbers and multi-character digit answers
+ok 4 - arithmetic marking rejects malformed mixed numbers and multi-character digit answers
+  ---
+  duration_ms: 0.423988
+  ...
+# Subtest: arithmetic marking enforces disciplined comma grouping and fraction sign forms
+ok 5 - arithmetic marking enforces disciplined comma grouping and fraction sign forms
+  ---
+  duration_ms: 1.623878
+  ...
+# Subtest: arithmetic formal written-method visuals keep algorithm rows free from thousands commas
+ok 6 - arithmetic formal written-method visuals keep algorithm rows free from thousands commas
+  ---
+  duration_ms: 42.296885
+  ...
+# Subtest: arithmetic due goal targets due skills and falls back to a bounded smart session when no work is due
+ok 7 - arithmetic due goal targets due skills and falls back to a bounded smart session when no work is due
+  ---
+  duration_ms: 33.540985
+  ...
+# Subtest: arithmetic generators avoid malformed place-value items and repeating-decimal order answers
+ok 8 - arithmetic generators avoid malformed place-value items and repeating-decimal order answers
+  ---
+  duration_ms: 97.824485
+  ...
+# Subtest: arithmetic practice session keeps question isolated and emits reward unit evidence on clean win
+ok 9 - arithmetic practice session keeps question isolated and emits reward unit evidence on clean win
+  ---
+  duration_ms: 3.753723
+  ...
+# Subtest: arithmetic test mode delays marking until finish-test
+ok 10 - arithmetic test mode delays marking until finish-test
+  ---
+  duration_ms: 8.227006
+  ...
+# Subtest: arithmetic practice blank submissions do not count as attempts or adaptive failures
+ok 11 - arithmetic practice blank submissions do not count as attempts or adaptive failures
+  ---
+  duration_ms: 2.45463
+  ...
+# Subtest: arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery
+ok 12 - arithmetic blank True Test questions are scored as blank but do not poison adaptive mastery
+  ---
+  duration_ms: 3.614268
+  ...
+# Subtest: arithmetic rejects stale session and question submissions without mutating state
+ok 13 - arithmetic rejects stale session and question submissions without mutating state
+  ---
+  duration_ms: 1.701301
+  ...
+# Subtest: arithmetic requires fresh session and question ids for active write commands
+ok 14 - arithmetic requires fresh session and question ids for active write commands
+  ---
+  duration_ms: 4.625847
+  ...
+# Subtest: arithmetic prefs ignore untrusted payload keys
+ok 15 - arithmetic prefs ignore untrusted payload keys
+  ---
+  duration_ms: 1.692833
+  ...
+# Subtest: arithmetic duplicate practice submissions cannot mark the same current question twice
+ok 16 - arithmetic duplicate practice submissions cannot mark the same current question twice
+  ---
+  duration_ms: 1.764311
+  ...
+# Subtest: arithmetic read model redacts answer data before the browser sees current questions
+ok 17 - arithmetic read model redacts answer data before the browser sees current questions
+  ---
+  duration_ms: 2.966195
+  ...
+# Subtest: arithmetic reward projection updates the shared monster codex without touching other subjects
+ok 18 - arithmetic reward projection updates the shared monster codex without touching other subjects
+  ---
+  duration_ms: 3.112253
+  ...
+# Subtest: arithmetic command response preserves server-side validation errors in subject UI
+ok 19 - arithmetic command response preserves server-side validation errors in subject UI
+  ---
+  duration_ms: 1.074944
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 980.155431

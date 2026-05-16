@@ -1,0 +1,33 @@
+ZIP path: /mnt/data/ks2-mastery-lean-05161311.zip
+ZIP size: 8065602 bytes
+e45296872ddb84c23f725d1a81eaf3aaf5fc55dde2f7d8ec38523023707f465d  /mnt/data/ks2-mastery-lean-05161311.zip
+    testing: ./legacy/vendor/sentence-bank-05.js   OK
+    testing: ./legacy/vendor/sentence-bank-06.js   OK
+    testing: ./legacy/vendor/word-list.js   OK
+    testing: ./legacy/vendor/word-meta.js   OK
+    testing: ./content/spelling.explanations.json   OK
+    testing: ./content/spelling.seed.json   OK
+    testing: ./.github/actions/       OK
+    testing: ./.github/workflows/     OK
+    testing: ./.github/workflows/audit.yml   OK
+    testing: ./.github/workflows/ci.yml   OK
+    testing: ./.github/workflows/mega-invariant-nightly.yml   OK
+    testing: ./.github/workflows/node-test.yml   OK
+    testing: ./.github/workflows/playwright-nightly.yml   OK
+    testing: ./.github/workflows/playwright.yml   OK
+    testing: ./.github/workflows/punctuation-content-audit.yml   OK
+    testing: ./.github/workflows/README.md   OK
+    testing: ./.github/actions/classify-docs-only/   OK
+    testing: ./.github/actions/classify-docs-only/action.yml   OK
+    testing: ./.githooks/pre-push     OK
+No errors detected in compressed data of /mnt/data/ks2-mastery-lean-05161311.zip.
+
+Node: v18.20.4
+npm: 9.2.0
+.nvmrc: 22
+
+No .git metadata in this ZIP extraction
+
+Root file/dir count:
+20
+12

@@ -1,0 +1,16 @@
+{
+  "dueStart": 1,
+  "firstQuestionTemplate": "column_subtraction",
+  "firstQuestionSkillIds": [
+    "column_subtraction"
+  ],
+  "firstQuestionTargetsDueSkill": false,
+  "wrongAnswerPhase": "session",
+  "wrongAnswerSummary": null,
+  "wrongAnswerSessionStatus": "active",
+  "emptyDueStart": 0,
+  "emptyDueAfterTenCorrectPhase": "session",
+  "emptyDueAfterTenCorrectSummary": null,
+  "emptyDueAfterTenIterations": 10,
+  "emptyDueAfterTenAnswered": 10
+}

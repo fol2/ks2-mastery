@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "arithmeticMonsterIds": [
+    "sumkrab",
+    "carryfin",
+    "fractail",
+    "perciva",
+    "arithon"
+  ],
+  "missingMonsterIds": [],
+  "rewardEventSubjects": [
+    "arithmetic",
+    "arithmetic"
+  ],
+  "rewardEventMonsterIds": [
+    "sumkrab",
+    "arithon"
+  ],
+  "nonArithmeticCodexUnchanged": {
+    "inklet": true,
+    "quoral": true
+  },
+  "heroDueEnvelope": {
+    "subjectId": "arithmetic",
+    "intent": "due-review",
+    "launcher": "smart-practice",
+    "effortTarget": 2,
+    "reasonTags": [
+      "due-arithmetic-review",
+      "spaced-retrieval"
+    ],
+    "debugReason": "Arithmetic has 1 due review signal(s).",
+    "heroContext": null
+  },
+  "heroDueLaunchPayload": {
+    "mode": "smart",
+    "goal": "due",
+    "testForm": "short",
+    "heroContext": null
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "demoAccountId": "demo-SItEQ9VzfV5UqQ",
+  "learnerId": "learner-demo-YxkyvjntJf0tow",
+  "missedStem": "8,272 = 8,000 + 200 + 70 + □",
+  "missedQuestionId": "arith_q_inm5my",
+  "initialWrongPhase": "session",
+  "initialWrongAnswered": 1,
+  "waitStartedAt": "2026-05-16T20:57:02.862Z",
+  "waitMs": 960000
+}

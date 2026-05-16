@@ -1,0 +1,9 @@
+Local ZIP git blob SHAs:
+shared/arithmetic/content.js	bytes=60597	git_blob_sha=9764a27ceb889c390995f5ab7e17793f050bb448	sha256=97fb96ab40582678bcdfe37b787ee280112e788e56a71c617a1bf63d0dfa9704
+worker/src/subjects/arithmetic/engine.js	bytes=30650	git_blob_sha=88bd323d31ebb04975b7ec16ead48a7efd9a11da	sha256=87755bf089db7b9984630f91f8febf155b75b9ff5b9b9ac0be9e8c9118aa12a6
+
+GitHub main blob SHAs fetched via connector:
+shared/arithmetic/content.js git_blob_sha=f8eb7d6ff4e8530188eff684d9e2e87a39cc98eb
+worker/src/subjects/arithmetic/engine.js git_blob_sha=3a47f805b39a319125ca82e4942a00cbbcf43d00
+
+Interpretation: uploaded ZIP and GitHub main are divergent for the two core arithmetic files; the patch is generated against the ZIP snapshot, not GitHub main.

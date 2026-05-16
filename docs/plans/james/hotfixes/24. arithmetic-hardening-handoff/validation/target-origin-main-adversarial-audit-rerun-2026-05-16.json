@@ -1,0 +1,10 @@
+{
+  "templates": 30,
+  "difficulties": 3,
+  "seedsPerDifficulty": 2000,
+  "generatedCases": 180000,
+  "correctRejected": 0,
+  "digitSpacesAccepted": 0,
+  "zeroExpandedTerms": 0,
+  "examples": []
+}
