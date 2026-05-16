@@ -1,0 +1,425 @@
+{
+  "count": 60,
+  "findings": [
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 1,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: I finish my homework. → i have finished my homework."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 2,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: She packs her bag before the trip. → she had packed her bag before the trip."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 3,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: The dog chases the cat. → the dog was chasing the cat."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 4,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: We eat lunch. → we have eaten lunch."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 5,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: The train leaves before we arrive. → the train had left before we arrived."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 6,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: Maya reads the book. → maya was reading the book."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 7,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: They build the model. → they have built the model."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 8,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: Omar locks the gate before the storm. → omar had locked the gate before the storm."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 9,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: The birds fly over the lake. → the birds were flying over the lake."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 10,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: I write the letter. → i have written the letter."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 11,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: The class starts before I enter. → the class had started before i entered."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 12,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: The team practises. → the team was practising."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 13,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: I finish my homework. → i have finished my homework."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 14,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: She packs her bag before the trip. → she had packed her bag before the trip."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 15,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: The dog chases the cat. → the dog was chasing the cat."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 16,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: We eat lunch. → we have eaten lunch."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 17,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: The train leaves before we arrive. → the train had left before we arrived."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 18,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: Maya reads the book. → maya was reading the book."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 19,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: They build the model. → they have built the model."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 20,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: Omar locks the gate before the storm. → omar had locked the gate before the storm."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 21,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: The birds fly over the lake. → the birds were flying over the lake."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 22,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: I write the letter. → i have written the letter."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 23,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: The class starts before I enter. → the class had started before i entered."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 24,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: The team practises. → the team was practising."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 25,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: I finish my homework. → i have finished my homework."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 26,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: She packs her bag before the trip. → she had packed her bag before the trip."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 27,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: The dog chases the cat. → the dog was chasing the cat."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 28,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted present perfect sentence: We eat lunch. → we have eaten lunch."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 29,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past perfect sentence: The train leaves before we arrive. → the train had left before we arrived."
+    },
+    {
+      "templateId": "qg_p18_p16_tense_aspect_fix_wrong_form",
+      "seed": 30,
+      "questionType": "fix",
+      "kind": "manualReviewOnly",
+      "prompt": "Fix this attempted past progressive sentence: Maya reads the book. → maya was reading the book."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 1,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The chef baked the bread. → The bread was baked by the chef."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 2,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The storm damaged the roof. → The roof was damaged by the storm."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 3,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The council maintains the park. → The park is maintained by the council."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 4,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The team will collect the trophy. → The trophy will be collected by the team."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 5,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The artist painted the mural. → The mural was painted by the artist."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 6,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The librarian sorted the books. → The books were sorted by the librarian."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 7,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The cat chased the mouse. → The mouse was chased by the cat."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 8,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The gardener watered the seedlings. → The seedlings were watered by the gardener."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 9,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The mechanic repaired the engine. → The engine was repaired by the mechanic."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 10,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The pupils will display the posters. → The posters will be displayed by the pupils."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 11,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The dog found the missing glove. → The missing glove was found by the dog."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 12,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The builders fixed the fence. → The fence was fixed by the builders."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 13,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The chef baked the bread. → The bread was baked by the chef."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 14,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The storm damaged the roof. → The roof was damaged by the storm."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 15,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The council maintains the park. → The park is maintained by the council."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 16,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The team will collect the trophy. → The trophy will be collected by the team."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 17,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The artist painted the mural. → The mural was painted by the artist."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 18,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The librarian sorted the books. → The books were sorted by the librarian."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 19,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The cat chased the mouse. → The mouse was chased by the cat."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 20,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The gardener watered the seedlings. → The seedlings were watered by the gardener."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 21,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The mechanic repaired the engine. → The engine was repaired by the mechanic."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 22,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The pupils will display the posters. → The posters will be displayed by the pupils."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 23,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The dog found the missing glove. → The missing glove was found by the dog."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 24,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The builders fixed the fence. → The fence was fixed by the builders."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 25,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The chef baked the bread. → The bread was baked by the chef."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 26,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The storm damaged the roof. → The roof was damaged by the storm."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 27,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The council maintains the park. → The park is maintained by the council."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 28,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The team will collect the trophy. → The trophy will be collected by the team."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 29,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The artist painted the mural. → The mural was painted by the artist."
+    },
+    {
+      "templateId": "qg_p18_p18_active_passive_application_transfer",
+      "seed": 30,
+      "questionType": "explain",
+      "kind": "manualReviewOnly",
+      "prompt": "Explain how the active sentence changes into the passive: The librarian sorted the books. → The books were sorted by the librarian."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+### audit-grammar-p20-quality
+cmd: npm run audit:grammar-qg:p20-quality
+
+> ks2-mastery@0.1.0 audit:grammar-qg:p20-quality
+> node scripts/audit-grammar-qg-p20-quality-hardening.mjs --out=reports/grammar/grammar-qg-p20-quality-hardening.json
+
+Grammar QG P20 quality-hardening audit: PASS -> /mnt/data/ks2-grammar-review-work/reports/grammar/grammar-qg-p20-quality-hardening.json
+
+real	0m4.964s
+user	0m5.670s
+sys	0m0.290s
+exit=0

@@ -1,0 +1,7 @@
+
+> ks2-mastery@0.1.0 audit:grammar-qg:p21-local-repetition
+> node scripts/audit-grammar-qg-p21-local-repetition.mjs --out=reports/grammar/grammar-qg-p21-local-repetition.json
+
+Grammar P21 local repetition audit: pass
+scenarios=54 violations=0 warnings=0
+wrote /mnt/data/ks2-grammar-review-work/reports/grammar/grammar-qg-p21-local-repetition.json

@@ -1,0 +1,5 @@
+### audit-grammar-p21-local-repetition
+cmd: npm run audit:grammar-qg:p21-local-repetition
+
+> ks2-mastery@0.1.0 audit:grammar-qg:p21-local-repetition
+> node scripts/audit-grammar-qg-p21-local-repetition.mjs --out=reports/grammar/grammar-qg-p21-local-repetition.json

@@ -5,9 +5,11 @@ import {
   createGrammarQuestion,
   evaluateGrammarQuestion,
   GRAMMAR_TEMPLATES,
+  serialiseGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
 import {
   GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS,
+  GRAMMAR_P20D_PROMPT_LEAK_SMOKE_ITEMS,
   GRAMMAR_P24_DISTRACTOR_SMOKE_ITEMS,
   assertNoForbiddenGrammarReadModelKeys,
   correctResponseFor,
@@ -268,6 +270,22 @@ test('Grammar production smoke P24 fixtures expose no generic explanation distra
     const labels = learnerVisibleChoiceLabelsForProductionSmoke(question.inputSpec);
     assert.ok(labels.length > 0, `${fixture.id} should expose visible choices.`);
     assert.deepEqual(genericExplanationDistractorHitsForProductionSmoke(question.inputSpec), []);
+  }
+});
+
+test('Grammar production smoke P20d fixtures keep repair prompts non-leaking and non-scored', () => {
+  assert.equal(GRAMMAR_P20D_PROMPT_LEAK_SMOKE_ITEMS.length, 5);
+  for (const fixture of GRAMMAR_P20D_PROMPT_LEAK_SMOKE_ITEMS) {
+    const question = createGrammarQuestion({ templateId: fixture.templateId, seed: fixture.seed });
+    const serialised = serialiseGrammarQuestion(question);
+    assert.equal(question.answerSpec.kind, 'manualReviewOnly', fixture.id);
+    assert.equal(question.manualReviewOnly, true, fixture.id);
+    assert.equal(question.nonScored, true, fixture.id);
+    assert.match(serialised.promptText, /^Fix this sentence so it uses the /i, fixture.id);
+    assert.doesNotMatch(serialised.promptText, /(?:→|->)/, fixture.id);
+    for (const fragment of fixture.forbiddenFragments) {
+      assert.doesNotMatch(serialised.promptText, new RegExp(fragment, 'i'), fixture.id);
+    }
   }
 });
 

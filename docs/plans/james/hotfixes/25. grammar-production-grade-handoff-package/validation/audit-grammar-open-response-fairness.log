@@ -1,0 +1,12 @@
+### audit-grammar-open-response-fairness
+cmd: npm run audit:grammar-qg:open-response-fairness
+
+> ks2-mastery@0.1.0 audit:grammar-qg:open-response-fairness
+> node scripts/audit-grammar-open-response-fairness.mjs --seeds=1..30 --out=reports/grammar/grammar-qg-p20-open-response-fairness.json
+
+Open-response fairness audit: PASS (0 findings) -> /mnt/data/ks2-grammar-review-work/reports/grammar/grammar-qg-p20-open-response-fairness.json
+
+real	0m3.014s
+user	0m3.320s
+sys	0m0.340s
+exit=0
