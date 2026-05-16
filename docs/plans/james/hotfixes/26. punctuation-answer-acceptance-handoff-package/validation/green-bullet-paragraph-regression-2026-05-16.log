@@ -1,0 +1,161 @@
+TAP version 13
+#   GOLDEN MARKING: 452 templates tested, 612 accept cases passed, 1348 reject cases passed
+# Subtest: self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK
+ok 1 - self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK
+  ---
+  duration_ms: 1.4957
+  type: 'test'
+  ...
+# Subtest: golden marking tests: generated choice families accept only their correct option
+ok 2 - golden marking tests: generated choice families accept only their correct option
+  ---
+  duration_ms: 2.0155
+  type: 'test'
+  ...
+# Subtest: golden marking tests: all DSL families pass accept cases and fail reject cases
+ok 3 - golden marking tests: all DSL families pass accept cases and fail reject cases
+  ---
+  duration_ms: 144.7161
+  type: 'test'
+  ...
+# Subtest: vacuous truth guard: every DSL family has templates with at least 4 test cases each
+ok 4 - vacuous truth guard: every DSL family has templates with at least 4 test cases each
+  ---
+  duration_ms: 7.3185
+  type: 'test'
+  ...
+# Subtest: speech rubric accepts straight, curly, single, and double inverted commas
+ok 5 - speech rubric accepts straight, curly, single, and double inverted commas
+  ---
+  duration_ms: 3.6154
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects punctuation outside the closing inverted comma
+ok 6 - speech rubric rejects punctuation outside the closing inverted comma
+  ---
+  duration_ms: 0.8908
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects duplicated speech terminals and incomplete reporting-after clauses
+ok 7 - speech rubric rejects duplicated speech terminals and incomplete reporting-after clauses
+  ---
+  duration_ms: 0.4937
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects missing, unmatched, and mixed quote pairs
+ok 8 - speech rubric rejects missing, unmatched, and mixed quote pairs
+  ---
+  duration_ms: 0.4115
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects missing reporting comma and changed target words
+ok 9 - speech rubric rejects missing reporting comma and changed target words
+  ---
+  duration_ms: 1.5215
+  type: 'test'
+  ...
+# Subtest: endmarks and apostrophe marking handles exact answers and constrained transfer
+ok 10 - endmarks and apostrophe marking handles exact answers and constrained transfer
+  ---
+  duration_ms: 0.8929
+  type: 'test'
+  ...
+# Subtest: paragraph and bullet marking reject missing terminals, duplicated terminals, and lower-case starts
+ok 11 - paragraph and bullet marking reject missing terminals, duplicated terminals, and lower-case starts
+  ---
+  duration_ms: 2.2761
+  type: 'test'
+  ...
+# Subtest: bullet paragraph marking preserves optional consistent item stops while enforcing strict stem and terminal runs
+ok 12 - bullet paragraph marking preserves optional consistent item stops while enforcing strict stem and terminal runs
+  ---
+  duration_ms: 0.7436
+  type: 'test'
+  ...
+# Subtest: comma list transfer requires preserved items and KS2 list comma placement
+ok 13 - comma list transfer requires preserved items and KS2 list comma placement
+  ---
+  duration_ms: 4.5443
+  type: 'test'
+  ...
+# Subtest: fronted adverbial and clarity transfers require the opening phrase comma
+ok 14 - fronted adverbial and clarity transfers require the opening phrase comma
+  ---
+  duration_ms: 0.944
+  type: 'test'
+  ...
+# Subtest: boundary transfer validators require target marks between preserved clauses
+ok 15 - boundary transfer validators require target marks between preserved clauses
+  ---
+  duration_ms: 0.8001
+  type: 'test'
+  ...
+# Subtest: dash-clause model display teaches a spaced en dash
+ok 16 - dash-clause model display teaches a spaced en dash
+  ---
+  duration_ms: 0.2664
+  type: 'test'
+  ...
+# Subtest: fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers
+ok 17 - fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers
+  ---
+  duration_ms: 0.4489
+  type: 'test'
+  ...
+# Subtest: hyphen transfer validator requires the exact hyphenated phrase
+ok 18 - hyphen transfer validator requires the exact hyphenated phrase
+  ---
+  duration_ms: 1.1628
+  type: 'test'
+  ...
+# Subtest: P2 U3 free-text fixed anchors accept golden answers and tag representative misconceptions
+ok 19 - P2 U3 free-text fixed anchors accept golden answers and tag representative misconceptions
+  ---
+  duration_ms: 1.8429
+  type: 'test'
+  ...
+# Subtest: P2 U3 transfer anchors reject target-only sentence fragments
+ok 20 - P2 U3 transfer anchors reject target-only sentence fragments
+  ---
+  duration_ms: 0.4341
+  type: 'test'
+  ...
+# Subtest: mixed transfer validators constrain fronted speech and colon-list stems
+ok 21 - mixed transfer validators constrain fronted speech and colon-list stems
+  ---
+  duration_ms: 2.1248
+  type: 'test'
+  ...
+# Subtest: structure transfer validators require explicit punctuation roles
+ok 22 - structure transfer validators require explicit punctuation roles
+  ---
+  duration_ms: 2.2814
+  type: 'test'
+  ...
+# Subtest: structure exact marking honours parenthesis variants and line-based bullet lists
+ok 23 - structure exact marking honours parenthesis variants and line-based bullet lists
+  ---
+  duration_ms: 1.2203
+  type: 'test'
+  ...
+# Subtest: choice marking accepts integer indexes only without coercing malformed values
+ok 24 - choice marking accepts integer indexes only without coercing malformed values
+  ---
+  duration_ms: 0.3597
+  type: 'test'
+  ...
+# Subtest: empty, whitespace-only, overlong, and unsupported answer payloads return marked results
+ok 25 - empty, whitespace-only, overlong, and unsupported answer payloads return marked results
+  ---
+  duration_ms: 0.1871
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 692.2739

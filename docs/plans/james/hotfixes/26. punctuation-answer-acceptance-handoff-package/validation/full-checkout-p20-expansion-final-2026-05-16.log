@@ -1,0 +1,220 @@
+
+> ks2-mastery@0.1.0 verify:punctuation-qg:p20-expansion
+> node scripts/build-punctuation-qg-p20-evidence.mjs && node scripts/simulate-punctuation-qg-p20-heavy-play.mjs && npm run audit:punctuation-qg:p20-expansion && node scripts/validate-punctuation-qg-p20-expansion-report.mjs reports/punctuation/punctuation-qg-p20-expansion-audit.json && node --test tests/punctuation-surface-language-quality.test.js tests/punctuation-hyphen-quality.test.js tests/punctuation-apostrophe-contraction-quality.test.js tests/punctuation-proper-noun-capitalisation-quality.test.js tests/punctuation-qg-p20-expansion.test.js tests/punctuation-qg-p20-expansion-report-validator.test.js tests/punctuation-qg-p20-runtime-surface-uniqueness.test.js
+
+P20 review register written: reports/punctuation/punctuation-qg-p20-review-register.json
+P20 negative-vector register written: reports/punctuation/punctuation-qg-p20-negative-vector-register.json
+P20 heavy-play simulation written: reports/punctuation/punctuation-qg-p20-heavy-play-simulation.json
+  one learner unique: 300
+  multi learner unique: 2525
+  open production ratio: 0.333
+
+> ks2-mastery@0.1.0 audit:punctuation-qg:p20-expansion
+> node scripts/audit-punctuation-qg-p20-expansion.mjs --out reports/punctuation/punctuation-qg-p20-expansion-audit.json
+
+Punctuation QG P20 expansion audit: PASS
+  release: punctuation-qg-p24-15072-2026-05-13
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15072/15072
+  generated families: 126
+  failing gates: none
+P20 expansion report validation: PASS
+  release: punctuation-qg-p24-15072-2026-05-13
+  runtime/generated/fixed: 15072/14560/512
+  unique surfaces/signatures: 15072/15072
+TAP version 13
+# Subtest: Punctuation apostrophe-contraction runtime avoids ungrammatical generated clauses
+ok 1 - Punctuation apostrophe-contraction runtime avoids ungrammatical generated clauses
+  ---
+  duration_ms: 247.3559
+  type: 'test'
+  ...
+# Subtest: P20 apostrophe-contraction audit rejects old believe/moved grammar regressions
+ok 2 - P20 apostrophe-contraction audit rejects old believe/moved grammar regressions
+  ---
+  duration_ms: 0.5591
+  type: 'test'
+  ...
+# Subtest: P20 apostrophe-contraction audit rejects documented negative-auxiliary believe regressions
+ok 3 - P20 apostrophe-contraction audit rejects documented negative-auxiliary believe regressions
+  ---
+  duration_ms: 0.1322
+  type: 'test'
+  ...
+# Subtest: Punctuation hyphen runtime avoids -ly compounds, no-space distractors, and article errors
+ok 4 - Punctuation hyphen runtime avoids -ly compounds, no-space distractors, and article errors
+  ---
+  duration_ms: 240.6393
+  type: 'test'
+  ...
+# Subtest: Punctuation manual and systematic hyphen banks stay free of -ly adverb hyphen examples
+ok 5 - Punctuation manual and systematic hyphen banks stay free of -ly adverb hyphen examples
+  ---
+  duration_ms: 17.1404
+  type: 'test'
+  ...
+# Subtest: P20 hyphen audit rejects explanation-only -ly compound examples
+ok 6 - P20 hyphen audit rejects explanation-only -ly compound examples
+  ---
+  duration_ms: 0.3616
+  type: 'test'
+  ...
+# Subtest: Punctuation runtime model answers capitalise proper names
+ok 7 - Punctuation runtime model answers capitalise proper names
+  ---
+  duration_ms: 274.2464
+  type: 'test'
+  ...
+# Subtest: P20 proper-noun audit rejects lowercase names in model answers and accepted answers
+ok 8 - P20 proper-noun audit rejects lowercase names in model answers and accepted answers
+  ---
+  duration_ms: 0.5599
+  type: 'test'
+  ...
+# Subtest: P20 proper-noun audit covers every systematic actor token
+ok 9 - P20 proper-noun audit covers every systematic actor token
+  ---
+  duration_ms: 0.3397
+  type: 'test'
+  ...
+# Subtest: P20 proper-noun audit covers fixed place-name tokens
+ok 10 - P20 proper-noun audit covers fixed place-name tokens
+  ---
+  duration_ms: 0.104
+  type: 'test'
+  ...
+# Subtest: P20 proper-noun audit covers every registered proper-name token
+ok 11 - P20 proper-noun audit covers every registered proper-name token
+  ---
+  duration_ms: 0.7579
+  type: 'test'
+  ...
+# Subtest: P20 proper-noun audit allows lowercase names in learner stems for capital-letter repair tasks
+ok 12 - P20 proper-noun audit allows lowercase names in learner stems for capital-letter repair tasks
+  ---
+  duration_ms: 0.0876
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator accepts the current duplicate-free and hyphen-clean report
+ok 13 - P20 expansion report validator accepts the current duplicate-free and hyphen-clean report
+  ---
+  duration_ms: 53.0386
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects stale fixed-bank duplicate reports
+ok 14 - P20 expansion report validator rejects stale fixed-bank duplicate reports
+  ---
+  duration_ms: 49.1521
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects stale release reports after the P24 bump
+ok 15 - P20 expansion report validator rejects stale release reports after the P24 bump
+  ---
+  duration_ms: 55.3096
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects hyphen quality gate failures and counters
+ok 16 - P20 expansion report validator rejects hyphen quality gate failures and counters
+  ---
+  duration_ms: 50.0405
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects apostrophe-contraction grammar gate failures and counters
+ok 17 - P20 expansion report validator rejects apostrophe-contraction grammar gate failures and counters
+  ---
+  duration_ms: 44.9188
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects proper-noun capitalisation gate failures and counters
+ok 18 - P20 expansion report validator rejects proper-noun capitalisation gate failures and counters
+  ---
+  duration_ms: 44.0048
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects dash typography gate failures and counters
+ok 19 - P20 expansion report validator rejects dash typography gate failures and counters
+  ---
+  duration_ms: 48.9381
+  type: 'test'
+  ...
+# Subtest: P20 expansion report validator rejects redundant phrase gate failures and counters
+ok 20 - P20 expansion report validator rejects redundant phrase gate failures and counters
+  ---
+  duration_ms: 47.3976
+  type: 'test'
+  ...
+# Subtest: P20 release identity and runtime pool scale are certified
+ok 21 - P20 release identity and runtime pool scale are certified
+  ---
+  duration_ms: 1.0289
+  type: 'test'
+  ...
+# Subtest: P20 learner-facing surfaces and generated family depth are heavy-play ready
+ok 22 - P20 learner-facing surfaces and generated family depth are heavy-play ready
+  ---
+  duration_ms: 0.0979
+  type: 'test'
+  ...
+# Subtest: P20 per-skill balance gives every published punctuation skill enough depth
+ok 23 - P20 per-skill balance gives every published punctuation skill enough depth
+  ---
+  duration_ms: 0.1182
+  type: 'test'
+  ...
+# Subtest: P20 marking, subject language quality, review governance, and negative vectors are production-clean
+ok 24 - P20 marking, subject language quality, review governance, and negative vectors are production-clean
+  ---
+  duration_ms: 0.0993
+  type: 'test'
+  ...
+# Subtest: P20 heavy-play scheduler simulation does not make repetition noticeable
+ok 25 - P20 heavy-play scheduler simulation does not make repetition noticeable
+  ---
+  duration_ms: 0.0747
+  type: 'test'
+  ...
+# Subtest: P20 expansion audit is globally PASS
+ok 26 - P20 expansion audit is globally PASS
+  ---
+  duration_ms: 0.0628
+  type: 'test'
+  ...
+# Subtest: P20 runtime pool has no duplicate learner-facing surfaces in fixed or generated items
+ok 27 - P20 runtime pool has no duplicate learner-facing surfaces in fixed or generated items
+  ---
+  duration_ms: 11.4273
+  type: 'test'
+  ...
+# Subtest: P20 runtime blocks accidental repeated list entries and repeated parenthesis descriptors
+ok 28 - P20 runtime blocks accidental repeated list entries and repeated parenthesis descriptors
+  ---
+  duration_ms: 306.0065
+  type: 'test'
+  ...
+# Subtest: redundant phrase quality gate catches learner-facing self-repetition
+ok 29 - redundant phrase quality gate catches learner-facing self-repetition
+  ---
+  duration_ms: 0.2703
+  type: 'test'
+  ...
+# Subtest: P20 runtime models dash clauses with real dash typography
+ok 30 - P20 runtime models dash clauses with real dash typography
+  ---
+  duration_ms: 217.1479
+  type: 'test'
+  ...
+# Subtest: dash typography gate catches learner-facing spaced hyphen-minus but keeps accepted-answer keyboard tolerance
+ok 31 - dash typography gate catches learner-facing spaced hyphen-minus but keeps accepted-answer keyboard tolerance
+  ---
+  duration_ms: 0.2431
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 866.065

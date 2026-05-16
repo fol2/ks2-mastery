@@ -1,0 +1,207 @@
+--- a/shared/punctuation/marking.js
++++ b/shared/punctuation/marking.js
+@@ -23,7 +23,7 @@
+   single_sentence: 'One combined sentence',
+   sentence_completeness: 'Complete sentence',
+   token_variety: 'Used different words',
+-  unwanted_punctuation: 'No duplicated punctuation outside the quote',
++  unwanted_punctuation: 'No extra or missing punctuation outside the quote',
+ });
+
+ /**
+@@ -253,14 +253,26 @@
+   return true;
+ }
+
++function terminalRunAtEnd(value) {
++  const clean = normaliseAnswerText(value);
++  return clean.match(/([.?!]+)(?:[\"'”’])?$/)?.[1] || '';
++}
++
++function hasSingleTerminalAtEnd(value, requiredTerminal = null) {
++  const run = terminalRunAtEnd(value);
++  if (run.length !== 1) return false;
++  return requiredTerminal ? run === requiredTerminal : true;
++}
++
+ function speechPunctuationOk(quoted, requiredTerminal = null) {
+-  const clean = normaliseAnswerText(quoted);
+-  if (requiredTerminal) return clean.endsWith(requiredTerminal);
+-  return /[.?!]$/.test(clean);
++  return hasSingleTerminalAtEnd(quoted, requiredTerminal);
+ }
+
+-function hasDuplicatedOutsidePunctuation(text, pair) {
+-  return /^[.?!]/.test(afterClosingQuote(text, pair));
++function afterQuotePunctuationOk(text, pair, shape = null) {
++  const outside = afterClosingQuote(text, pair);
++  if (/^[.?!]/.test(outside)) return false;
++  if (shape !== 'reporting-after') return true;
++  return terminalRunAtEnd(outside) === '.';
+ }
+
+ function wordSequencePreserved(text, words = []) {
+@@ -790,8 +802,8 @@
+     .map((entry) => canonicalPunctuationLineText(entry))
+     .filter(Boolean);
+   const firstLine = lines[0] || '';
+-  const stemPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:?$`, 'i') : null;
+-  const colonPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:$`, 'i') : null;
++  const stemPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:?$`) : null;
++  const colonPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:$`) : null;
+   const stemOk = Boolean(stemPattern?.test(firstLine));
+   const colonOk = Boolean(colonPattern?.test(firstLine));
+   const bulletLines = lines.slice(1);
+@@ -955,7 +967,7 @@
+     : sentenceStartsWithCapital(text);
+   const capitalOk = sentenceCapitalOk && quotedWordsStartWithCapital(quoted);
+   const wordsOk = includesWords(quoted, rubric.spokenWords || rubric.words);
+-  const unwantedOk = !hasDuplicatedOutsidePunctuation(text, quote.pair);
++  const unwantedOk = afterQuotePunctuationOk(text, quote.pair, shape);
+
+   // Position constraint: reject shape that contradicts explicit rubric position
+   const positionOk = rubric?.reportingPosition === 'any'
+@@ -1002,7 +1014,11 @@
+   if (!positionOk) tags.push('speech.wrong_reporting_position');
+   if (!capitalOk) tags.push('speech.capitalisation_missing');
+   if (!wordsOk) tags.push('speech.words_changed');
+-  if (!unwantedOk) tags.push('speech.unwanted_punctuation');
++  if (!unwantedOk) {
++    tags.push(shape === 'reporting-after'
++      ? 'speech.reporting_clause_terminal_missing'
++      : 'speech.unwanted_punctuation');
++  }
+   if (expectedClauseWords && !clauseWordsOk) tags.push('speech.reporting_clause_changed');
+
+   return {
+@@ -1523,6 +1539,18 @@
+   return count;
+ }
+
++function startsWithExpectedCapital(value) {
++  return /^(["'“‘]?)[A-Z]/.test(normaliseAnswerText(value));
++}
++
++function hasExpectedFinalTerminal(value) {
++  return /[.?!]["']?$/.test(canonicalPunctuationText(value));
++}
++
++function hasDuplicatedTerminalRun(value) {
++  return /[.?!]{2,}/.test(canonicalPunctuationText(value));
++}
++
+ function markParagraphPassageShape(item, rawText = '') {
+   const expectedText = item.model || acceptedAnswers(item)[0] || '';
+   const expectedWords = stripPunctuation(expectedText);
+@@ -1531,17 +1559,30 @@
+   const expectedSentenceBoundaries = countProseSentenceBoundaries(expectedText);
+   const typedSentenceBoundaries = countProseSentenceBoundaries(rawText);
+   const sentenceBoundaryOk = expectedSentenceBoundaries === 0 || typedSentenceBoundaries >= expectedSentenceBoundaries;
+-  const correct = wordsOk && sentenceBoundaryOk;
++  const finalTerminalOk = !hasExpectedFinalTerminal(expectedText) || hasSingleTerminalAtEnd(rawText);
++  const terminalOk = sentenceBoundaryOk && finalTerminalOk && !hasDuplicatedTerminalRun(rawText);
++  const capitalOk = !startsWithExpectedCapital(expectedText) || startsWithExpectedCapital(rawText);
++  const correct = wordsOk && terminalOk && capitalOk;
++  const note = correct
++    ? 'The passage wording is preserved.'
++    : !wordsOk
++      ? 'Keep the whole passage wording and do not add extra sentences.'
++      : !capitalOk
++        ? 'Start the passage with the expected capital letter.'
++        : 'Keep the sentence-ending punctuation between the passage sentences.';
++  const tags = [];
++  if (!wordsOk) tags.push('paragraph.words_changed');
++  if (wordsOk && !terminalOk) tags.push('paragraph.sentence_boundary_missing');
++  if (wordsOk && !capitalOk) tags.push('paragraph.capitalisation_missing');
+   return {
+     correct,
+     expected: item.model || '',
+-    note: correct
+-      ? 'The passage wording is preserved.'
+-      : (wordsOk ? 'Keep the sentence-ending punctuation between the passage sentences.' : 'Keep the whole passage wording and do not add extra sentences.'),
+-    misconceptionTags: correct ? [] : [wordsOk ? 'paragraph.sentence_boundary_missing' : 'paragraph.words_changed'],
++    note,
++    misconceptionTags: correct ? [] : tags,
+     facets: [
+       facet('preservation', wordsOk),
+-      facet('terminal_punctuation', sentenceBoundaryOk),
++      facet('terminal_punctuation', terminalOk),
++      facet('capitalisation', capitalOk),
+     ],
+   };
+ }
+--- a/tests/punctuation-marking.test.js
++++ b/tests/punctuation-marking.test.js
+@@ -40,6 +40,29 @@
+   assert.equal(result.misconceptionTags.includes('speech.punctuation_outside_quote'), true);
+ });
+
++test('speech rubric rejects duplicated speech terminals and incomplete reporting-after clauses', () => {
++  const duplicatedInsideQuote = markPunctuationAnswer({
++    item: item('sp_insert_question'),
++    answer: { typed: 'Ella asked, "Can we start now??"' },
++  });
++  assert.equal(duplicatedInsideQuote.correct, false);
++  assert.equal(facet(duplicatedInsideQuote, 'speech_punctuation')?.ok, false);
++
++  const missingReportingFullStop = markPunctuationAnswer({
++    item: item('sp_fix_question'),
++    answer: { typed: '"Where are we meeting?" asked Zara' },
++  });
++  assert.equal(missingReportingFullStop.correct, false);
++  assert.equal(facet(missingReportingFullStop, 'unwanted_punctuation')?.ok, false);
++
++  const duplicatedReportingFullStop = markPunctuationAnswer({
++    item: item('sp_fix_question'),
++    answer: { typed: '"Where are we meeting?" asked Zara..' },
++  });
++  assert.equal(duplicatedReportingFullStop.correct, false);
++  assert.equal(facet(duplicatedReportingFullStop, 'unwanted_punctuation')?.ok, false);
++});
++
+ test('speech rubric rejects missing, unmatched, and mixed quote pairs', () => {
+   const missing = evaluateSpeechRubric('Mia asked, Can we start now?', {
+     spokenWords: 'can we start now',
+@@ -101,6 +124,42 @@
+   assert.equal(facet(missingToken, 'terminal_punctuation')?.ok, true);
+ });
+
++
++test('paragraph and bullet marking reject missing terminals, duplicated terminals, and lower-case starts', () => {
++  const paragraphItem = item('pg_apostrophe_mix');
++
++  const missingFinalStop = markPunctuationAnswer({
++    item: paragraphItem,
++    answer: { typed: "We can't find the children's coats. The girls' bags are in the hall" },
++  });
++  assert.equal(missingFinalStop.correct, false);
++  assert.equal(facet(missingFinalStop, 'terminal_punctuation')?.ok, false);
++
++  const duplicatedFinalStop = markPunctuationAnswer({
++    item: paragraphItem,
++    answer: { typed: "We can't find the children's coats. The girls' bags are in the hall.." },
++  });
++  assert.equal(duplicatedFinalStop.correct, false);
++  assert.equal(facet(duplicatedFinalStop, 'terminal_punctuation')?.ok, false);
++
++  const lowerCaseParagraphStart = markPunctuationAnswer({
++    item: paragraphItem,
++    answer: { typed: "we can't find the children's coats. The girls' bags are in the hall." },
++  });
++  assert.equal(lowerCaseParagraphStart.correct, false);
++  assert.equal(facet(lowerCaseParagraphStart, 'capitalisation')?.ok, false);
++
++  const lowerCaseBulletStem = markPunctuationAnswer({
++    item: item('bp_insert_kit'),
++    answer: { typed: `bring:
++- a drink
++- a hat
++- a sketchbook` },
++  });
++  assert.equal(lowerCaseBulletStem.correct, false);
++  assert.equal(facet(lowerCaseBulletStem, 'preservation')?.ok, false);
++});
++
+ test('comma list transfer requires preserved items and KS2 list comma placement', () => {
+   const correct = markPunctuationAnswer({
+     item: item('lc_transfer_trip'),

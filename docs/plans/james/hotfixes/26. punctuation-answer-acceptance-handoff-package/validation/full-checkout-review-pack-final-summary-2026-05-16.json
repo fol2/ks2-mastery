@@ -1,0 +1,22 @@
+{
+  "itemCount": 15072,
+  "decisionCounts": {
+    "approved": 92,
+    "missing": 14980
+  },
+  "bySource": {
+    "fixed": {
+      "approved": 92,
+      "missing": 420
+    },
+    "generated": {
+      "missing": 14560
+    }
+  },
+  "reviewRegister": {
+    "releaseId": "punctuation-qg-p24-15072-2026-05-13",
+    "status": "PASS",
+    "fixedBankStatus": "inherited-approved",
+    "familyDecisionCount": 126
+  }
+}

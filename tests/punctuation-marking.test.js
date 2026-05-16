@@ -40,6 +40,29 @@ test('speech rubric rejects punctuation outside the closing inverted comma', () 
   assert.equal(result.misconceptionTags.includes('speech.punctuation_outside_quote'), true);
 });
 
+test('speech rubric rejects duplicated speech terminals and incomplete reporting-after clauses', () => {
+  const duplicatedInsideQuote = markPunctuationAnswer({
+    item: item('sp_insert_question'),
+    answer: { typed: 'Ella asked, "Can we start now??"' },
+  });
+  assert.equal(duplicatedInsideQuote.correct, false);
+  assert.equal(facet(duplicatedInsideQuote, 'speech_punctuation')?.ok, false);
+
+  const missingReportingFullStop = markPunctuationAnswer({
+    item: item('sp_fix_question'),
+    answer: { typed: '"Where are we meeting?" asked Zara' },
+  });
+  assert.equal(missingReportingFullStop.correct, false);
+  assert.equal(facet(missingReportingFullStop, 'unwanted_punctuation')?.ok, false);
+
+  const duplicatedReportingFullStop = markPunctuationAnswer({
+    item: item('sp_fix_question'),
+    answer: { typed: '"Where are we meeting?" asked Zara..' },
+  });
+  assert.equal(duplicatedReportingFullStop.correct, false);
+  assert.equal(facet(duplicatedReportingFullStop, 'unwanted_punctuation')?.ok, false);
+});
+
 test('speech rubric rejects missing, unmatched, and mixed quote pairs', () => {
   const missing = evaluateSpeechRubric('Mia asked, Can we start now?', {
     spokenWords: 'can we start now',
@@ -99,6 +122,94 @@ test('endmarks and apostrophe marking handles exact answers and constrained tran
   assert.equal(missingToken.misconceptionTags.includes('apostrophe.possession_missing'), true);
   assert.equal(facet(missingToken, 'preservation')?.ok, false);
   assert.equal(facet(missingToken, 'terminal_punctuation')?.ok, true);
+});
+
+
+test('paragraph and bullet marking reject missing terminals, duplicated terminals, and lower-case starts', () => {
+  const paragraphItem = item('pg_apostrophe_mix');
+
+  const missingFinalStop = markPunctuationAnswer({
+    item: paragraphItem,
+    answer: { typed: "We can't find the children's coats. The girls' bags are in the hall" },
+  });
+  assert.equal(missingFinalStop.correct, false);
+  assert.equal(facet(missingFinalStop, 'terminal_punctuation')?.ok, false);
+
+  const duplicatedFinalStop = markPunctuationAnswer({
+    item: paragraphItem,
+    answer: { typed: "We can't find the children's coats. The girls' bags are in the hall.." },
+  });
+  assert.equal(duplicatedFinalStop.correct, false);
+  assert.equal(facet(duplicatedFinalStop, 'terminal_punctuation')?.ok, false);
+
+  const lowerCaseParagraphStart = markPunctuationAnswer({
+    item: paragraphItem,
+    answer: { typed: "we can't find the children's coats. The girls' bags are in the hall." },
+  });
+  assert.equal(lowerCaseParagraphStart.correct, false);
+  assert.equal(facet(lowerCaseParagraphStart, 'capitalisation')?.ok, false);
+
+  const lowerCaseBulletStem = markPunctuationAnswer({
+    item: item('bp_insert_kit'),
+    answer: { typed: `bring:
+- a drink
+- a hat
+- a sketchbook` },
+  });
+  assert.equal(lowerCaseBulletStem.correct, false);
+  assert.equal(facet(lowerCaseBulletStem, 'preservation')?.ok, false);
+});
+
+test('bullet paragraph marking preserves optional consistent item stops while enforcing strict stem and terminal runs', () => {
+  const bulletParagraphItem = {
+    id: 'bullet_paragraph_consistent_stops',
+    mode: 'paragraph',
+    model: `Check:
+- doors.
+- windows.
+- lights.`,
+    accepted: [],
+    skillIds: ['bullet_points'],
+    validator: {
+      type: 'paragraphRepair',
+      checks: [
+        {
+          type: 'requiresBulletStemAndItems',
+          stem: 'Check',
+          items: ['doors', 'windows', 'lights'],
+        },
+      ],
+    },
+  };
+
+  const acceptedNoStopStyle = markPunctuationAnswer({
+    item: bulletParagraphItem,
+    answer: { typed: `Check:
+- doors
+- windows
+- lights` },
+  });
+  assert.equal(acceptedNoStopStyle.correct, true);
+
+  const duplicatedTerminal = markPunctuationAnswer({
+    item: bulletParagraphItem,
+    answer: { typed: `Check:
+- doors.
+- windows.
+- lights..` },
+  });
+  assert.equal(duplicatedTerminal.correct, false);
+  assert.equal(facet(duplicatedTerminal, 'terminal_punctuation')?.ok, false);
+
+  const lowerCaseStem = markPunctuationAnswer({
+    item: bulletParagraphItem,
+    answer: { typed: `check:
+- doors
+- windows
+- lights` },
+  });
+  assert.equal(lowerCaseStem.correct, false);
+  assert.equal(facet(lowerCaseStem, 'preservation')?.ok, false);
 });
 
 test('comma list transfer requires preserved items and KS2 list comma placement', () => {

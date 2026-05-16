@@ -1,0 +1,790 @@
+TAP version 13
+# Subtest: grand monster id is quoral after Phase 2 flip
+ok 1 - grand monster id is quoral after Phase 2 flip
+  ---
+  duration_ms: 0.9302
+  type: 'test'
+  ...
+# Subtest: reserved monster ids expose colisk, hyphang, carillon
+ok 2 - reserved monster ids expose colisk, hyphang, carillon
+  ---
+  duration_ms: 0.858
+  type: 'test'
+  ...
+# Subtest: fresh learner state passes through the normaliser unchanged
+ok 3 - fresh learner state passes through the normaliser unchanged
+  ---
+  duration_ms: 0.4426
+  type: 'test'
+  ...
+# Subtest: pre-flip carillon mastered keys union into quoral grand view
+ok 4 - pre-flip carillon mastered keys union into quoral grand view
+  ---
+  duration_ms: 0.3121
+  type: 'test'
+  ...
+# Subtest: stored quoral.publishedTotal=1 is overridden to 14 via progressForPunctuationMonster
+ok 5 - stored quoral.publishedTotal=1 is overridden to 14 via progressForPunctuationMonster
+  ---
+  duration_ms: 0.4982
+  type: 'test'
+  ...
+# Subtest: mixed state: carillon mastered + quoral speech-core both count in grand view
+ok 6 - mixed state: carillon mastered + quoral speech-core both count in grand view
+  ---
+  duration_ms: 0.3372
+  type: 'test'
+  ...
+# Subtest: duplicate keys across carillon and quoral dedupe in the union
+ok 7 - duplicate keys across carillon and quoral dedupe in the union
+  ---
+  duration_ms: 0.34
+  type: 'test'
+  ...
+# Subtest: normaliser is referentially transparent — state is not mutated on read
+ok 8 - normaliser is referentially transparent — state is not mutated on read
+  ---
+  duration_ms: 0.2097
+  type: 'test'
+  ...
+# Subtest: normaliser handles malformed mastery keys without throwing
+ok 9 - normaliser handles malformed mastery keys without throwing
+  ---
+  duration_ms: 0.3519
+  type: 'test'
+  ...
+# Subtest: reserved entries stay readable via reservedPunctuationMonsterEntries
+ok 10 - reserved entries stay readable via reservedPunctuationMonsterEntries
+  ---
+  duration_ms: 0.585
+  type: 'test'
+  ...
+# Subtest: reserved entries are preserved as stored after the normaliser runs
+ok 11 - reserved entries are preserved as stored after the normaliser runs
+  ---
+  duration_ms: 0.3073
+  type: 'test'
+  ...
+# Subtest: post-flip quoral without any pre-flip carillon passes through unchanged
+ok 12 - post-flip quoral without any pre-flip carillon passes through unchanged
+  ---
+  duration_ms: 0.1311
+  type: 'test'
+  ...
+# Subtest: direct monster progress reads normalised carillon evidence via grand view only
+ok 13 - direct monster progress reads normalised carillon evidence via grand view only
+  ---
+  duration_ms: 0.1711
+  type: 'test'
+  ...
+# Subtest: parity: fresh learner — all five consumer surfaces produce zero star counts
+ok 14 - parity: fresh learner — all five consumer surfaces produce zero star counts
+  ---
+  duration_ms: 3.9194
+  type: 'test'
+  ...
+# Subtest: parity: seeded evidence — all five consumer surfaces produce consistent star counts
+ok 15 - parity: seeded evidence — all five consumer surfaces produce consistent star counts
+  ---
+  duration_ms: 13.5561
+  type: 'test'
+  ...
+# Subtest: parity: two builds with identical input produce identical star values
+ok 16 - parity: two builds with identical input produce identical star values
+  ---
+  duration_ms: 2.2113
+  type: 'test'
+  ...
+# Subtest: negative: no child-facing component renders "Stage X of 4"
+ok 17 - negative: no child-facing component renders "Stage X of 4"
+  ---
+  duration_ms: 2.3621
+  type: 'test'
+  ...
+# Subtest: negative: no child-facing component renders "XP" as a reward label
+ok 18 - negative: no child-facing component renders "XP" as a reward label
+  ---
+  duration_ms: 2.488
+  type: 'test'
+  ...
+# Subtest: negative: reserved monsters (colisk, hyphang, carillon) never appear in rendered punctuation components
+ok 19 - negative: reserved monsters (colisk, hyphang, carillon) never appear in rendered punctuation components
+  ---
+  duration_ms: 2.375
+  type: 'test'
+  ...
+# Subtest: monotonicity: mergeMonotonicDisplay prevents displayStage regression across N sessions with lapses
+ok 20 - monotonicity: mergeMonotonicDisplay prevents displayStage regression across N sessions with lapses
+  ---
+  duration_ms: 0.4145
+  type: 'test'
+  ...
+# Subtest: monotonicity: mergeMonotonicDisplay with null codexEntry does not throw
+ok 21 - monotonicity: mergeMonotonicDisplay with null codexEntry does not throw
+  ---
+  duration_ms: 0.1275
+  type: 'test'
+  ...
+# Subtest: negative: dashboard model output does not contain "Stage X of 4" in JSON
+ok 22 - negative: dashboard model output does not contain "Stage X of 4" in JSON
+  ---
+  duration_ms: 0.8351
+  type: 'test'
+  ...
+# Subtest: negative: dashboard model output does not contain "XP" as reward label in JSON
+ok 23 - negative: dashboard model output does not contain "XP" as reward label in JSON
+  ---
+  duration_ms: 1.0061
+  type: 'test'
+  ...
+# Subtest: negative: read-model output does not contain reserved monsters in JSON
+ok 24 - negative: read-model output does not contain reserved monsters in JSON
+  ---
+  duration_ms: 0.6433
+  type: 'test'
+  ...
+# Subtest: first secure Punctuation unit records a cluster monster and the grand aggregate once
+ok 25 - first secure Punctuation unit records a cluster monster and the grand aggregate once
+  ---
+  duration_ms: 4.0823
+  type: 'test'
+  ...
+# Subtest: current release monster progress ignores mastery keys from previous releases
+ok 26 - current release monster progress ignores mastery keys from previous releases
+  ---
+  duration_ms: 1.0239
+  type: 'test'
+  ...
+# Subtest: previous release reward events cannot reserve current release mastery keys
+ok 27 - previous release reward events cannot reserve current release mastery keys
+  ---
+  duration_ms: 0.9565
+  type: 'test'
+  ...
+# Subtest: Apostrophe cluster reaches stage 2 when all published units are secure (count-based)
+ok 28 - Apostrophe cluster reaches stage 2 when all published units are secure (count-based)
+  ---
+  duration_ms: 0.5333
+  type: 'test'
+  ...
+# Subtest: Curlune reaches stage 3 when all published comma_flow + structure units are secure (count-based)
+ok 29 - Curlune reaches stage 3 when all published comma_flow + structure units are secure (count-based)
+  ---
+  duration_ms: 0.8355
+  type: 'test'
+  ...
+# Subtest: Pealark reaches stage 3 when all published endmarks + speech + boundary units are secure (count-based)
+ok 30 - Pealark reaches stage 3 when all published endmarks + speech + boundary units are secure (count-based)
+  ---
+  duration_ms: 0.4932
+  type: 'test'
+  ...
+# Subtest: published-release aggregate reaches stage 4 only for current published denominator
+ok 31 - published-release aggregate reaches stage 4 only for current published denominator
+  ---
+  duration_ms: 1.1563
+  type: 'test'
+  ...
+# Subtest: generated-template expansion does not change release-scoped mastery keys
+ok 32 - generated-template expansion does not change release-scoped mastery keys
+  ---
+  duration_ms: 1.6035
+  type: 'test'
+  ...
+# Subtest: terminalRewardToken uses (learnerId, monsterId, kind, releaseId)
+ok 33 - terminalRewardToken uses (learnerId, monsterId, kind, releaseId)
+  ---
+  duration_ms: 0.7567
+  type: 'test'
+  ...
+# Subtest: terminalRewardToken returns null for non-terminal transitions
+ok 34 - terminalRewardToken returns null for non-terminal transitions
+  ---
+  duration_ms: 0.4115
+  type: 'test'
+  ...
+# Subtest: cross-flip caught events dedupe to one terminal transition per (learner, monster, release)
+ok 35 - cross-flip caught events dedupe to one terminal transition per (learner, monster, release)
+  ---
+  duration_ms: 0.3811
+  type: 'test'
+  ...
+# Subtest: cross-release caught events remain distinct — future release re-emits
+ok 36 - cross-release caught events remain distinct — future release re-emits
+  ---
+  duration_ms: 0.0979
+  type: 'test'
+  ...
+# Subtest: mega across flip also dedupes by terminal token
+ok 37 - mega across flip also dedupes by terminal token
+  ---
+  duration_ms: 0.082
+  type: 'test'
+  ...
+# Subtest: caught and mega coexist for the same (learner, monster, release)
+ok 38 - caught and mega coexist for the same (learner, monster, release)
+  ---
+  duration_ms: 0.2121
+  type: 'test'
+  ...
+# Subtest: levelup and evolve are unaffected by terminal dedupe
+ok 39 - levelup and evolve are unaffected by terminal dedupe
+  ---
+  duration_ms: 0.1158
+  type: 'test'
+  ...
+# Subtest: Secure Stars ignore epoch-zero firstCorrectAt sentinels
+ok 40 - Secure Stars ignore epoch-zero firstCorrectAt sentinels
+  ---
+  duration_ms: 3.3209
+  type: 'test'
+  ...
+# Subtest: fresh learner (zero attempts) — all Stars 0 for every monster
+ok 41 - fresh learner (zero attempts) — all Stars 0 for every monster
+  ---
+  duration_ms: 0.4962
+  type: 'test'
+  ...
+# Subtest: one meaningful attempt in Pealark cluster — Try Stars increase, total > 0
+ok 42 - one meaningful attempt in Pealark cluster — Try Stars increase, total > 0
+  ---
+  duration_ms: 0.4773
+  type: 'test'
+  ...
+# Subtest: non-meaningful attempts do not mint Try Stars
+ok 43 - non-meaningful attempts do not mint Try Stars
+  ---
+  duration_ms: 0.4677
+  type: 'test'
+  ...
+# Subtest: legacy attempts without meaningful flag still count as meaningful
+ok 44 - legacy attempts without meaningful flag still count as meaningful
+  ---
+  duration_ms: 0.2289
+  type: 'test'
+  ...
+# Subtest: 3+ independent correct in Claspin — Practice Stars accumulate
+ok 45 - 3+ independent correct in Claspin — Practice Stars accumulate
+  ---
+  duration_ms: 0.3615
+  type: 'test'
+  ...
+# Subtest: item reaching secure bucket — Secure Stars unlock
+ok 46 - item reaching secure bucket — Secure Stars unlock
+  ---
+  duration_ms: 0.6931
+  type: 'test'
+  ...
+# Subtest: 10 same-item repeated attempts — Try/Practice Stars capped
+ok 47 - 10 same-item repeated attempts — Try/Practice Stars capped
+  ---
+  duration_ms: 0.3829
+  type: 'test'
+  ...
+# Subtest: generated variant signatures group equivalent surfaces for Try evidence
+ok 48 - generated variant signatures group equivalent surfaces for Try evidence
+  ---
+  duration_ms: 0.4555
+  type: 'test'
+  ...
+# Subtest: legacy unsigned attempts coalesce with signed attempts for the same generated item
+ok 49 - legacy unsigned attempts coalesce with signed attempts for the same generated item
+  ---
+  duration_ms: 0.4884
+  type: 'test'
+  ...
+# Subtest: secure Stars dedupe generated items with the same variant signature
+ok 50 - secure Stars dedupe generated items with the same variant signature
+  ---
+  duration_ms: 0.2971
+  type: 'test'
+  ...
+# Subtest: supported-only answers (supportLevel > 0) — Try/Practice only, Secure/Mastery blocked
+ok 51 - supported-only answers (supportLevel > 0) — Try/Practice only, Secure/Mastery blocked
+  ---
+  duration_ms: 0.2149
+  type: 'test'
+  ...
+# Subtest: Claspin 2 items both simple secure but no mixed/GPS evidence — ~60-70 stars max, not 100
+ok 52 - Claspin 2 items both simple secure but no mixed/GPS evidence — ~60-70 stars max, not 100
+  ---
+  duration_ms: 0.3936
+  type: 'test'
+  ...
+# Subtest: Grand Stars: 0 with single-monster-only progress (breadth gate)
+ok 53 - Grand Stars: 0 with single-monster-only progress (breadth gate)
+  ---
+  duration_ms: 0.2024
+  type: 'test'
+  ...
+# Subtest: Grand Stars: increase with multi-monster secured units
+ok 54 - Grand Stars: increase with multi-monster secured units
+  ---
+  duration_ms: 0.4595
+  type: 'test'
+  ...
+# Subtest: old-release reward units cannot project current Secure, Mastery, or Grand Stars
+ok 55 - old-release reward units cannot project current Secure, Mastery, or Grand Stars
+  ---
+  duration_ms: 0.2708
+  type: 'test'
+  ...
+# Subtest: mixed old and current release reward units count only current-release entries
+ok 56 - mixed old and current release reward units count only current-release entries
+  ---
+  duration_ms: 0.173
+  type: 'test'
+  ...
+# Subtest: canonical duplicate and current-looking loose rows cannot inflate Secure or Grand Stars
+ok 57 - canonical duplicate and current-looking loose rows cannot inflate Secure or Grand Stars
+  ---
+  duration_ms: 0.3981
+  type: 'test'
+  ...
+# Subtest: malformed current-looking mastery keys with extra segments do not count
+ok 58 - malformed current-looking mastery keys with extra segments do not count
+  ---
+  duration_ms: 0.1756
+  type: 'test'
+  ...
+# Subtest: unknown current-release rewardUnitId and clusterId entries do not count
+ok 59 - unknown current-release rewardUnitId and clusterId entries do not count
+  ---
+  duration_ms: 0.1343
+  type: 'test'
+  ...
+# Subtest: mixed old and current projection matches a current-only baseline for Mastery and Grand Stars
+ok 60 - mixed old and current projection matches a current-only baseline for Mastery and Grand Stars
+  ---
+  duration_ms: 0.3254
+  type: 'test'
+  ...
+# Subtest: release metadata falls back only to mastery keys that clearly belong to the current release
+ok 61 - release metadata falls back only to mastery keys that clearly belong to the current release
+  ---
+  duration_ms: 0.22
+  type: 'test'
+  ...
+# Subtest: pure function: calling twice with same input returns identical output
+ok 62 - pure function: calling twice with same input returns identical output
+  ---
+  duration_ms: 0.958
+  type: 'test'
+  ...
+# Subtest: null / undefined progress returns all-zero structure
+ok 63 - null / undefined progress returns all-zero structure
+  ---
+  duration_ms: 0.165
+  type: 'test'
+  ...
+# Subtest: output shape matches contract: perMonster has 3 direct monsters, grand has grandStars + total
+ok 64 - output shape matches contract: perMonster has 3 direct monsters, grand has grandStars + total
+  ---
+  duration_ms: 0.1514
+  type: 'test'
+  ...
+# Subtest: mastery stars require facet coverage across 2+ item modes
+ok 65 - mastery stars require facet coverage across 2+ item modes
+  ---
+  duration_ms: 0.3011
+  type: 'test'
+  ...
+# Subtest: recent lapse blocks Mastery Stars for that cluster
+ok 66 - recent lapse blocks Mastery Stars for that cluster
+  ---
+  duration_ms: 0.2137
+  type: 'test'
+  ...
+# Subtest: per-monster Stars never exceed their respective caps
+ok 67 - per-monster Stars never exceed their respective caps
+  ---
+  duration_ms: 0.925
+  type: 'test'
+  ...
+# Subtest: semicolon-lists-core maps only to structure (Curlune), not also to boundary (Pealark)
+ok 68 - semicolon-lists-core maps only to structure (Curlune), not also to boundary (Pealark)
+  ---
+  duration_ms: 0.1798
+  type: 'test'
+  ...
+# Subtest: colons-core maps only to structure (Curlune)
+ok 69 - colons-core maps only to structure (Curlune)
+  ---
+  duration_ms: 0.1432
+  type: 'test'
+  ...
+# Subtest: near-retry with supported correction yields 0 Practice Stars from retry credit
+ok 70 - near-retry with supported correction yields 0 Practice Stars from retry credit
+  ---
+  duration_ms: 0.2095
+  type: 'test'
+  ...
+# Subtest: near-retry with independent correction still earns Practice Stars
+ok 71 - near-retry with independent correction still earns Practice Stars
+  ---
+  duration_ms: 0.2034
+  type: 'test'
+  ...
+# Subtest: Grand Stars capped below Hatch with exactly 2-monster breadth (U6 tier gate)
+ok 72 - Grand Stars capped below Hatch with exactly 2-monster breadth (U6 tier gate)
+  ---
+  duration_ms: 0.3062
+  type: 'test'
+  ...
+# Subtest: Grand Stars capped below Egg with single-monster progress (U6 tier gate)
+ok 73 - Grand Stars capped below Egg with single-monster progress (U6 tier gate)
+  ---
+  duration_ms: 0.2337
+  type: 'test'
+  ...
+# Subtest: Curlune: list_commas attempts produce tryStars for Curlune only
+ok 74 - Curlune: list_commas attempts produce tryStars for Curlune only
+  ---
+  duration_ms: 0.1934
+  type: 'test'
+  ...
+# Subtest: Curlune: parenthesis (structure) attempts isolate to Curlune
+ok 75 - Curlune: parenthesis (structure) attempts isolate to Curlune
+  ---
+  duration_ms: 0.2045
+  type: 'test'
+  ...
+# Subtest: SKILL_TO_CLUSTER parity: every skill.id in PUNCTUATION_CLIENT_SKILLS maps to the same clusterId in star-projection
+ok 76 - SKILL_TO_CLUSTER parity: every skill.id in PUNCTUATION_CLIENT_SKILLS maps to the same clusterId in star-projection
+  ---
+  duration_ms: 0.5995
+  type: 'test'
+  ...
+# Subtest: SKILL_TO_CLUSTER parity: PUNCTUATION_CLIENT_SKILLS covers exactly 14 skills
+ok 77 - SKILL_TO_CLUSTER parity: PUNCTUATION_CLIENT_SKILLS covers exactly 14 skills
+  ---
+  duration_ms: 0.1385
+  type: 'test'
+  ...
+# Subtest: PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER parity: star-projection and view-model exports are identical
+ok 78 - PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER parity: star-projection and view-model exports are identical
+  ---
+  duration_ms: 0.1257
+  type: 'test'
+  ...
+# Subtest: ACTIVE_PUNCTUATION_MONSTER_IDS includes all 3 direct monsters plus quoral
+ok 79 - ACTIVE_PUNCTUATION_MONSTER_IDS includes all 3 direct monsters plus quoral
+  ---
+  duration_ms: 0.0988
+  type: 'test'
+  ...
+# Subtest: U5 calibration: simple secure journeys — Pealark, Claspin, Curlune stages within 1 of each other
+ok 80 - U5 calibration: simple secure journeys — Pealark, Claspin, Curlune stages within 1 of each other
+  ---
+  duration_ms: 4.0266
+  type: 'test'
+  ...
+# Subtest: U5 calibration: all simple secure journeys produce totals > 50 (meaningful progression)
+ok 81 - U5 calibration: all simple secure journeys produce totals > 50 (meaningful progression)
+  ---
+  duration_ms: 6.0245
+  type: 'test'
+  ...
+# Subtest: U5: Claspin Mega gate — 2 simple secure units cannot reach 100 stars
+ok 82 - U5: Claspin Mega gate — 2 simple secure units cannot reach 100 stars
+  ---
+  duration_ms: 0.7004
+  type: 'test'
+  ...
+# Subtest: U5: Claspin Mega — deep secure + mixed + spaced return unlocks 100 stars
+ok 83 - U5: Claspin Mega — deep secure + mixed + spaced return unlocks 100 stars
+  ---
+  duration_ms: 1.064
+  type: 'test'
+  ...
+# Subtest: U5: Claspin Mega gate — missing possession skill blocks full Mastery
+ok 84 - U5: Claspin Mega gate — missing possession skill blocks full Mastery
+  ---
+  duration_ms: 0.6073
+  type: 'test'
+  ...
+# Subtest: P6-U5: Curlune 5/7 deep-secure + mixed + spaced return — 100 Stars achievable
+ok 85 - P6-U5: Curlune 5/7 deep-secure + mixed + spaced return — 100 Stars achievable
+  ---
+  duration_ms: 2.1155
+  type: 'test'
+  ...
+# Subtest: P6-U5: Curlune 7/7 deep-secure — Mega reached
+ok 86 - P6-U5: Curlune 7/7 deep-secure — Mega reached
+  ---
+  duration_ms: 1.7351
+  type: 'test'
+  ...
+# Subtest: P6-U5: Curlune 3/7 deep-secure — Mastery capped at 15, total max 90
+ok 87 - P6-U5: Curlune 3/7 deep-secure — Mastery capped at 15, total max 90
+  ---
+  duration_ms: 1.9931
+  type: 'test'
+  ...
+# Subtest: P6-U5: Curlune 4/7 deep-secure — still capped (threshold is 5)
+ok 88 - P6-U5: Curlune 4/7 deep-secure — still capped (threshold is 5)
+  ---
+  duration_ms: 1.8464
+  type: 'test'
+  ...
+# Subtest: P6-U5: Curlune 5/7 deep-secure but no mixed modes — Mastery blocked by itemModes gate
+ok 89 - P6-U5: Curlune 5/7 deep-secure but no mixed modes — Mastery blocked by itemModes gate
+  ---
+  duration_ms: 1.7008
+  type: 'test'
+  ...
+# Subtest: P6-U5: Pealark and Claspin unaffected by Curlune breadth gate
+ok 90 - P6-U5: Pealark and Claspin unaffected by Curlune breadth gate
+  ---
+  duration_ms: 2.1217
+  type: 'test'
+  ...
+# Subtest: P6-U5: Curlune simple-secure journey (1 mode) cannot reach Mega
+ok 91 - P6-U5: Curlune simple-secure journey (1 mode) cannot reach Mega
+  ---
+  duration_ms: 1.8713
+  type: 'test'
+  ...
+# Subtest: U6: Grand Stars = 0 with zero secured evidence
+ok 92 - U6: Grand Stars = 0 with zero secured evidence
+  ---
+  duration_ms: 0.2391
+  type: 'test'
+  ...
+# Subtest: U6: single-unit depth cannot exceed Egg gate (breadth blocks)
+ok 93 - U6: single-unit depth cannot exceed Egg gate (breadth blocks)
+  ---
+  duration_ms: 0.5583
+  type: 'test'
+  ...
+# Subtest: U6 Egg tier: 2+ monsters, 3+ secured units reaches Egg (15)
+ok 94 - U6 Egg tier: 2+ monsters, 3+ secured units reaches Egg (15)
+  ---
+  duration_ms: 0.2154
+  type: 'test'
+  ...
+# Subtest: U6 Hatch tier: 3 monsters, 6+ secured units reaches Hatch (35)
+ok 95 - U6 Hatch tier: 3 monsters, 6+ secured units reaches Hatch (35)
+  ---
+  duration_ms: 0.3124
+  type: 'test'
+  ...
+# Subtest: U6 Evolve tier: 8+ secured, 4+ deep-secured reaches Evolve (60)
+ok 96 - U6 Evolve tier: 8+ secured, 4+ deep-secured reaches Evolve (60)
+  ---
+  duration_ms: 0.2794
+  type: 'test'
+  ...
+# Subtest: U6 Strong tier: 11+ secured, 8+ deep-secured, mixed evidence reaches Strong (80)
+ok 97 - U6 Strong tier: 11+ secured, 8+ deep-secured, mixed evidence reaches Strong (80)
+  ---
+  duration_ms: 0.3361
+  type: 'test'
+  ...
+# Subtest: U6 Strong tier: missing mixed evidence blocks Strong even with sufficient depth
+ok 98 - U6 Strong tier: missing mixed evidence blocks Strong even with sufficient depth
+  ---
+  duration_ms: 0.255
+  type: 'test'
+  ...
+# Subtest: U6 Grand Quoral: all 14 deep secure reaches 100 Grand Stars
+ok 99 - U6 Grand Quoral: all 14 deep secure reaches 100 Grand Stars
+  ---
+  duration_ms: 0.5354
+  type: 'test'
+  ...
+# Subtest: U6 Grand Quoral: GPS test mode counts as mixed evidence for Strong gate
+ok 100 - U6 Grand Quoral: GPS test mode counts as mixed evidence for Strong gate
+  ---
+  duration_ms: 0.3912
+  type: 'test'
+  ...
+# Subtest: U6: Grand Stars increase monotonically as evidence grows
+ok 101 - U6: Grand Stars increase monotonically as evidence grows
+  ---
+  duration_ms: 1.1325
+  type: 'test'
+  ...
+# Subtest: U6: interpolation within a tier band — partial progress yields intermediate values
+ok 102 - U6: interpolation within a tier band — partial progress yields intermediate values
+  ---
+  duration_ms: 0.2521
+  type: 'test'
+  ...
+# Subtest: P6-U6: CLASPIN_REQUIRED_SKILLS contains exactly apostrophe_contractions and apostrophe_possession
+ok 103 - P6-U6: CLASPIN_REQUIRED_SKILLS contains exactly apostrophe_contractions and apostrophe_possession
+  ---
+  duration_ms: 0.2857
+  type: 'test'
+  ...
+# Subtest: P6-U6: CLASPIN_REQUIRED_SKILLS is frozen (immutable)
+ok 104 - P6-U6: CLASPIN_REQUIRED_SKILLS is frozen (immutable)
+  ---
+  duration_ms: 0.0988
+  type: 'test'
+  ...
+# Subtest: P6-U6: CLASPIN_REQUIRED_SKILLS derivation — hypothetical 3rd apostrophe skill auto-included
+ok 105 - P6-U6: CLASPIN_REQUIRED_SKILLS derivation — hypothetical 3rd apostrophe skill auto-included
+  ---
+  duration_ms: 0.1932
+  type: 'test'
+  ...
+# Subtest: U4 daily throttle: 20 distinct correct items across 2 days — no cap hit
+ok 106 - U4 daily throttle: 20 distinct correct items across 2 days — no cap hit
+  ---
+  duration_ms: 0.3399
+  type: 'test'
+  ...
+# Subtest: U4 daily throttle: 25 distinct correct items in 1 day — at daily ceiling
+ok 107 - U4 daily throttle: 25 distinct correct items in 1 day — at daily ceiling
+  ---
+  duration_ms: 0.3333
+  type: 'test'
+  ...
+# Subtest: U4 daily throttle: 30 distinct correct items in 1 day — capped at daily ceiling
+ok 108 - U4 daily throttle: 30 distinct correct items in 1 day — capped at daily ceiling
+  ---
+  duration_ms: 0.5436
+  type: 'test'
+  ...
+# Subtest: U4 daily throttle: 15 items day 1 + 15 items day 2 — no cap (each day under threshold)
+ok 109 - U4 daily throttle: 15 items day 1 + 15 items day 2 — no cap (each day under threshold)
+  ---
+  duration_ms: 0.3383
+  type: 'test'
+  ...
+# Subtest: U4 daily throttle: same item attempted 5 times in 1 day — per-item cap (3) applies before per-day cap
+ok 110 - U4 daily throttle: same item attempted 5 times in 1 day — per-item cap (3) applies before per-day cap
+  ---
+  duration_ms: 0.1813
+  type: 'test'
+  ...
+# Subtest: U4 daily throttle: zero timestamp on all attempts — all cluster to day 0, cap applies
+ok 111 - U4 daily throttle: zero timestamp on all attempts — all cluster to day 0, cap applies
+  ---
+  duration_ms: 0.4927
+  type: 'test'
+  ...
+# Subtest: U4 verification: adding items beyond daily cap produces zero additional Practice Stars
+ok 112 - U4 verification: adding items beyond daily cap produces zero additional Practice Stars
+  ---
+  duration_ms: 2.8383
+  type: 'test'
+  ...
+# Subtest: U4 near-retry + daily-cap interaction: 30 fail-then-correct items equal 25 items under PRACTICE_CAP
+ok 113 - U4 near-retry + daily-cap interaction: 30 fail-then-correct items equal 25 items under PRACTICE_CAP
+  ---
+  duration_ms: 0.5881
+  type: 'test'
+  ...
+# Subtest: QG-P4-U5 dedup: two correct attempts with same variantSignature count as 1 Secure evidence
+ok 114 - QG-P4-U5 dedup: two correct attempts with same variantSignature count as 1 Secure evidence
+  ---
+  duration_ms: 0.2393
+  type: 'test'
+  ...
+# Subtest: QG-P4-U5 dedup: two correct attempts with different signatures count as 2 Secure evidences
+ok 115 - QG-P4-U5 dedup: two correct attempts with different signatures count as 2 Secure evidences
+  ---
+  duration_ms: 0.1877
+  type: 'test'
+  ...
+# Subtest: QG-P4-U5 dedup: fixed item + generated item = 2 independent evidences (fixed always counts)
+ok 116 - QG-P4-U5 dedup: fixed item + generated item = 2 independent evidences (fixed always counts)
+  ---
+  duration_ms: 0.1815
+  type: 'test'
+  ...
+# Subtest: QG-P4-U5 dedup: same templateId, different signatures — at most 1 Mastery evidence per facet
+ok 117 - QG-P4-U5 dedup: same templateId, different signatures — at most 1 Mastery evidence per facet
+  ---
+  duration_ms: 0.3231
+  type: 'test'
+  ...
+# Subtest: QG-P4-U5 dedup: supported attempt does not contribute to Secure regardless of signature
+ok 118 - QG-P4-U5 dedup: supported attempt does not contribute to Secure regardless of signature
+  ---
+  duration_ms: 0.1945
+  type: 'test'
+  ...
+# Subtest: QG-P4-U5 dedup: dedup does not affect Try/Practice star computation
+ok 119 - QG-P4-U5 dedup: dedup does not affect Try/Practice star computation
+  ---
+  duration_ms: 0.2119
+  type: 'test'
+  ...
+# Subtest: QG-P4-U5 dedup: 100-star cap still respected with dedup active
+ok 120 - QG-P4-U5 dedup: 100-star cap still respected with dedup active
+  ---
+  duration_ms: 1.1525
+  type: 'test'
+  ...
+# Subtest: starView consistency: fresh learner read-model and star projection both zero
+ok 121 - starView consistency: fresh learner read-model and star projection both zero
+  ---
+  duration_ms: 3.8405
+  type: 'test'
+  ...
+# Subtest: starView consistency: seeded state produces identical numbers across read-model runs
+ok 122 - starView consistency: seeded state produces identical numbers across read-model runs
+  ---
+  duration_ms: 3.4829
+  type: 'test'
+  ...
+# Subtest: module.js pct: derives from grandStars when present in stats
+ok 123 - module.js pct: derives from grandStars when present in stats
+  ---
+  duration_ms: 0.1549
+  type: 'test'
+  ...
+# Subtest: module.js pct: falls back to secured ratio when grandStars is null
+ok 124 - module.js pct: falls back to secured ratio when grandStars is null
+  ---
+  duration_ms: 0.1161
+  type: 'test'
+  ...
+# Subtest: module.js pct: falls back when grandStars absent
+ok 125 - module.js pct: falls back when grandStars absent
+  ---
+  duration_ms: 0.1962
+  type: 'test'
+  ...
+# Subtest: buildPunctuationDashboardModel threads starView into activeMonsters
+ok 126 - buildPunctuationDashboardModel threads starView into activeMonsters
+  ---
+  duration_ms: 0.5906
+  type: 'test'
+  ...
+# Subtest: buildPunctuationDashboardModel handles null starView gracefully
+ok 127 - buildPunctuationDashboardModel handles null starView gracefully
+  ---
+  duration_ms: 0.2521
+  type: 'test'
+  ...
+# Subtest: buildPunctuationDashboardModel handles undefined starView (omitted param)
+ok 128 - buildPunctuationDashboardModel handles undefined starView (omitted param)
+  ---
+  duration_ms: 0.2417
+  type: 'test'
+  ...
+# Subtest: integration: read-model with seeded evidence produces non-zero grandStars that module.js pct formula consumes
+ok 129 - integration: read-model with seeded evidence produces non-zero grandStars that module.js pct formula consumes
+  ---
+  duration_ms: 12.9608
+  type: 'test'
+  ...
+# Subtest: grandStars=0 is a valid value meaning fresh learner with zero Stars
+ok 130 - grandStars=0 is a valid value meaning fresh learner with zero Stars
+  ---
+  duration_ms: 0.6946
+  type: 'test'
+  ...
+1..130
+# tests 130
+# suites 0
+# pass 130
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 398.5552

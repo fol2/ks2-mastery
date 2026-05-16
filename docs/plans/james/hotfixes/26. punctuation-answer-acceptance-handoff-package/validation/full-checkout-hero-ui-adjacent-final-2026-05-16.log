@@ -1,0 +1,220 @@
+TAP version 13
+# Subtest: U6 Map: hero paints via HeroBackdrop with the map bellstorm URL
+ok 1 - U6 Map: hero paints via HeroBackdrop with the map bellstorm URL
+  ---
+  duration_ms: 341.6439
+  type: 'test'
+  ...
+# Subtest: U6 Map: `.punctuation-map-hero-content .section-title` reads "Punctuation Map"
+ok 2 - U6 Map: `.punctuation-map-hero-content .section-title` reads "Punctuation Map"
+  ---
+  duration_ms: 3.0361
+  type: 'test'
+  ...
+# Subtest: U6 Map: every status filter chip still renders
+ok 3 - U6 Map: every status filter chip still renders
+  ---
+  duration_ms: 2.82
+  type: 'test'
+  ...
+# Subtest: U6 Map: every monster filter chip still renders
+ok 4 - U6 Map: every monster filter chip still renders
+  ---
+  duration_ms: 3.2275
+  type: 'test'
+  ...
+# Subtest: U6 Map: every active cluster group still renders
+ok 5 - U6 Map: every active cluster group still renders
+  ---
+  duration_ms: 1.9534
+  type: 'test'
+  ...
+# Subtest: U6 Map: monster filter narrowing to a single active id still renders that cluster
+ok 6 - U6 Map: monster filter narrowing to a single active id still renders that cluster
+  ---
+  duration_ms: 1.1834
+  type: 'test'
+  ...
+# Subtest: U6 Map: Back-to-dashboard affordance still renders in the header
+ok 7 - U6 Map: Back-to-dashboard affordance still renders in the header
+  ---
+  duration_ms: 1.9846
+  type: 'test'
+  ...
+# Subtest: active-item phase paints the hero via HeroBackdrop with the active-item bellstorm URL
+ok 8 - active-item phase paints the hero via HeroBackdrop with the active-item bellstorm URL
+  ---
+  duration_ms: 338.0212
+  type: 'test'
+  ...
+# Subtest: active-item phase renders `.punctuation-session-hero-content .section-title` with the child-register-overridden prompt
+ok 9 - active-item phase renders `.punctuation-session-hero-content .section-title` with the child-register-overridden prompt
+  ---
+  duration_ms: 1.211
+  type: 'test'
+  ...
+# Subtest: active-item phase on a GPS session still renders the delayed-feedback chip row underneath the hero
+ok 10 - active-item phase on a GPS session still renders the delayed-feedback chip row underneath the hero
+  ---
+  duration_ms: 0.9407
+  type: 'test'
+  ...
+# Subtest: scored-feedback phase paints the hero via HeroBackdrop with the feedback bellstorm URL
+ok 11 - scored-feedback phase paints the hero via HeroBackdrop with the feedback bellstorm URL
+  ---
+  duration_ms: 0.8667
+  type: 'test'
+  ...
+# Subtest: minimal-feedback / GPS early-return branch paints the hero via HeroBackdrop with the feedback bellstorm URL
+ok 12 - minimal-feedback / GPS early-return branch paints the hero via HeroBackdrop with the feedback bellstorm URL
+  ---
+  duration_ms: 0.4755
+  type: 'test'
+  ...
+# Subtest: PunctuationSessionScene owns the bellstorm URL derivation — every phase branch receives a hero backdrop layer
+ok 13 - PunctuationSessionScene owns the bellstorm URL derivation — every phase branch receives a hero backdrop layer
+  ---
+  duration_ms: 1.2554
+  type: 'test'
+  ...
+# Subtest: PunctuationSessionScene threads the bellstorm URL phase-specifically — active-item differs from feedback
+ok 14 - PunctuationSessionScene threads the bellstorm URL phase-specifically — active-item differs from feedback
+  ---
+  duration_ms: 2.0996
+  type: 'test'
+  ...
+# Subtest: punctuation-hero-bg: re-exports bellstormSceneForPhase from the view-model verbatim
+ok 15 - punctuation-hero-bg: re-exports bellstormSceneForPhase from the view-model verbatim
+  ---
+  duration_ms: 1.0334
+  type: 'test'
+  ...
+# Subtest: punctuation-hero-bg: heroContrastProfileForPunctuationBg returns a static dark profile for every recognised bellstorm scene
+ok 16 - punctuation-hero-bg: heroContrastProfileForPunctuationBg returns a static dark profile for every recognised bellstorm scene
+  ---
+  duration_ms: 1.1368
+  type: 'test'
+  ...
+# Subtest: punctuation-hero-bg: heroContrastProfileForPunctuationBg returns null for unknown URLs
+ok 17 - punctuation-hero-bg: heroContrastProfileForPunctuationBg returns null for unknown URLs
+  ---
+  duration_ms: 0.1286
+  type: 'test'
+  ...
+# Subtest: punctuation-hero-bg: heroContrastProfileForPunctuationBg tolerates cache-busting query suffix
+ok 18 - punctuation-hero-bg: heroContrastProfileForPunctuationBg tolerates cache-busting query suffix
+  ---
+  duration_ms: 0.0868
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene paints its hero via the platform HeroBackdrop (background-image)
+ok 19 - punctuation Setup scene paints its hero via the platform HeroBackdrop (background-image)
+  ---
+  duration_ms: 962.1332
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene wraps the mission dashboard in .setup-grid / .setup-main / .setup-content
+ok 20 - punctuation Setup scene wraps the mission dashboard in .setup-grid / .setup-main / .setup-content
+  ---
+  duration_ms: 11.6607
+  type: 'test'
+  ...
+# Subtest: setup-grid mobile placement override stays after explicit desktop placement
+ok 21 - setup-grid mobile placement override stays after explicit desktop placement
+  ---
+  duration_ms: 1.4462
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene preserves every data-section landmark
+ok 22 - punctuation Setup scene preserves every data-section landmark
+  ---
+  duration_ms: 12.6796
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene renders platform LengthPicker with punctuation-set-round-length attrs
+ok 23 - punctuation Setup scene renders platform LengthPicker with punctuation-set-round-length attrs
+  ---
+  duration_ms: 11.2988
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene renders HeroWelcome when learner name is present
+ok 24 - punctuation Setup scene renders HeroWelcome when learner name is present
+  ---
+  duration_ms: 207.4338
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene collapses HeroWelcome when learner name is empty string
+ok 25 - punctuation Setup scene collapses HeroWelcome when learner name is empty string
+  ---
+  duration_ms: 1.0824
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene collapses HeroWelcome when learner is null
+ok 26 - punctuation Setup scene collapses HeroWelcome when learner is null
+  ---
+  duration_ms: 1.0598
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene collapses HeroWelcome when learner name is whitespace-only
+ok 27 - punctuation Setup scene collapses HeroWelcome when learner name is whitespace-only
+  ---
+  duration_ms: 0.8984
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene still wires the one-shot prefs migration useEffect for legacy cluster modes
+ok 28 - punctuation Setup scene still wires the one-shot prefs migration useEffect for legacy cluster modes
+  ---
+  duration_ms: 13.2476
+  type: 'test'
+  ...
+# Subtest: punctuation Setup scene emits exactly one card-opened telemetry event per mount
+ok 29 - punctuation Setup scene emits exactly one card-opened telemetry event per mount
+  ---
+  duration_ms: 16.9674
+  type: 'test'
+  ...
+# Subtest: U6 Summary: hero paints via HeroBackdrop with the summary bellstorm URL
+ok 30 - U6 Summary: hero paints via HeroBackdrop with the summary bellstorm URL
+  ---
+  duration_ms: 337.3025
+  type: 'test'
+  ...
+# Subtest: U6 Summary: `.punctuation-summary-hero-content .section-title` renders the tonal headline
+ok 31 - U6 Summary: `.punctuation-summary-hero-content .section-title` renders the tonal headline
+  ---
+  duration_ms: 1.4123
+  type: 'test'
+  ...
+# Subtest: U6 Summary: preserves the data-punctuation-summary section attribute
+ok 32 - U6 Summary: preserves the data-punctuation-summary section attribute
+  ---
+  duration_ms: 1.2054
+  type: 'test'
+  ...
+# Subtest: U6 Summary: summary.total === 0 still suppresses the CorrectCountLine
+ok 33 - U6 Summary: summary.total === 0 still suppresses the CorrectCountLine
+  ---
+  duration_ms: 1.1761
+  type: 'test'
+  ...
+# Subtest: U6 Summary: summary-reached + feedback-rendered telemetry still fire on mount
+ok 34 - U6 Summary: summary-reached + feedback-rendered telemetry still fire on mount
+  ---
+  duration_ms: 1.1612
+  type: 'test'
+  ...
+# Subtest: U6 Summary: monster-progress-changed fires when a stage advance is present in the payload
+ok 35 - U6 Summary: monster-progress-changed fires when a stage advance is present in the payload
+  ---
+  duration_ms: 1.1326
+  type: 'test'
+  ...
+1..35
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1878.5552

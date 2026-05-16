@@ -1,0 +1,13 @@
+ZIP path: /mnt/data/ks2-mastery-lean-05161311.zip
+ZIP name: ks2-mastery-lean-05161311.zip
+ZIP SHA-256: e45296872ddb84c23f725d1a81eaf3aaf5fc55dde2f7d8ec38523023707f465d
+ZIP size: 8065602 bytes
+Integrity: unzip -t passed (No errors detected)
+Extraction used for patch: /mnt/data/ks2-punctuation-work
+Clean original extraction: /mnt/data/ks2-punctuation-original
+Archive shape: rootless repository snapshot; no .git metadata
+Node runtime: v22.16.0
+npm runtime: 10.9.2
+.nvmrc: 22
+Manifest summary: profile=review, mode=omit, tracked_total=5149, selected_by_profile=1544, copied=1544, omitted=3604, placeholders=0, missing=1
+Manifest limitation: assets/**, reports/**, output/** and most docs are omitted by profile; local build/check can fail where omitted assets are required.

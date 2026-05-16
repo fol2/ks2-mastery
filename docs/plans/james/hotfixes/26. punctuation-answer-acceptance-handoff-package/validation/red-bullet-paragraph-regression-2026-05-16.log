@@ -1,0 +1,156 @@
+TAP version 13
+# Subtest: speech rubric accepts straight, curly, single, and double inverted commas
+ok 1 - speech rubric accepts straight, curly, single, and double inverted commas
+  ---
+  duration_ms: 1.5087
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects punctuation outside the closing inverted comma
+ok 2 - speech rubric rejects punctuation outside the closing inverted comma
+  ---
+  duration_ms: 0.3403
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects duplicated speech terminals and incomplete reporting-after clauses
+ok 3 - speech rubric rejects duplicated speech terminals and incomplete reporting-after clauses
+  ---
+  duration_ms: 0.2614
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects missing, unmatched, and mixed quote pairs
+ok 4 - speech rubric rejects missing, unmatched, and mixed quote pairs
+  ---
+  duration_ms: 0.2045
+  type: 'test'
+  ...
+# Subtest: speech rubric rejects missing reporting comma and changed target words
+ok 5 - speech rubric rejects missing reporting comma and changed target words
+  ---
+  duration_ms: 0.8249
+  type: 'test'
+  ...
+# Subtest: endmarks and apostrophe marking handles exact answers and constrained transfer
+ok 6 - endmarks and apostrophe marking handles exact answers and constrained transfer
+  ---
+  duration_ms: 0.5347
+  type: 'test'
+  ...
+# Subtest: paragraph and bullet marking reject missing terminals, duplicated terminals, and lower-case starts
+ok 7 - paragraph and bullet marking reject missing terminals, duplicated terminals, and lower-case starts
+  ---
+  duration_ms: 1.388
+  type: 'test'
+  ...
+# Subtest: bullet paragraph marking preserves optional consistent item stops while enforcing strict stem and terminal runs
+not ok 8 - bullet paragraph marking preserves optional consistent item stops while enforcing strict stem and terminal runs
+  ---
+  duration_ms: 0.6664
+  type: 'test'
+  location: 'D:\\Coding\\ks2-mastery\\.worktrees\\punctuation-answer-acceptance-hotfix-20260516\\tests\\punctuation-marking.test.js:163:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    false !== true
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Coding/ks2-mastery/.worktrees/punctuation-answer-acceptance-hotfix-20260516/tests/punctuation-marking.test.js:192:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: comma list transfer requires preserved items and KS2 list comma placement
+ok 9 - comma list transfer requires preserved items and KS2 list comma placement
+  ---
+  duration_ms: 2.397
+  type: 'test'
+  ...
+# Subtest: fronted adverbial and clarity transfers require the opening phrase comma
+ok 10 - fronted adverbial and clarity transfers require the opening phrase comma
+  ---
+  duration_ms: 0.8137
+  type: 'test'
+  ...
+# Subtest: boundary transfer validators require target marks between preserved clauses
+ok 11 - boundary transfer validators require target marks between preserved clauses
+  ---
+  duration_ms: 0.6541
+  type: 'test'
+  ...
+# Subtest: dash-clause model display teaches a spaced en dash
+ok 12 - dash-clause model display teaches a spaced en dash
+  ---
+  duration_ms: 0.1512
+  type: 'test'
+  ...
+# Subtest: fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers
+ok 13 - fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers
+  ---
+  duration_ms: 0.2448
+  type: 'test'
+  ...
+# Subtest: hyphen transfer validator requires the exact hyphenated phrase
+ok 14 - hyphen transfer validator requires the exact hyphenated phrase
+  ---
+  duration_ms: 0.6252
+  type: 'test'
+  ...
+# Subtest: P2 U3 free-text fixed anchors accept golden answers and tag representative misconceptions
+ok 15 - P2 U3 free-text fixed anchors accept golden answers and tag representative misconceptions
+  ---
+  duration_ms: 1.0056
+  type: 'test'
+  ...
+# Subtest: P2 U3 transfer anchors reject target-only sentence fragments
+ok 16 - P2 U3 transfer anchors reject target-only sentence fragments
+  ---
+  duration_ms: 0.2025
+  type: 'test'
+  ...
+# Subtest: mixed transfer validators constrain fronted speech and colon-list stems
+ok 17 - mixed transfer validators constrain fronted speech and colon-list stems
+  ---
+  duration_ms: 1.0858
+  type: 'test'
+  ...
+# Subtest: structure transfer validators require explicit punctuation roles
+ok 18 - structure transfer validators require explicit punctuation roles
+  ---
+  duration_ms: 1.2821
+  type: 'test'
+  ...
+# Subtest: structure exact marking honours parenthesis variants and line-based bullet lists
+ok 19 - structure exact marking honours parenthesis variants and line-based bullet lists
+  ---
+  duration_ms: 0.6712
+  type: 'test'
+  ...
+# Subtest: choice marking accepts integer indexes only without coercing malformed values
+ok 20 - choice marking accepts integer indexes only without coercing malformed values
+  ---
+  duration_ms: 0.164
+  type: 'test'
+  ...
+# Subtest: empty, whitespace-only, overlong, and unsupported answer payloads return marked results
+ok 21 - empty, whitespace-only, overlong, and unsupported answer payloads return marked results
+  ---
+  duration_ms: 0.0989
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 20
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 147.9764

@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
@@ -6,11 +6,34 @@ import assert from 'node:assert/strict';
 import { PRACTICE_SEO_PAGES, canonicalPracticePageUrl } from '../scripts/lib/seo-practice-pages.mjs';
 import { INTENT_SEO_PAGES, canonicalIntentPageUrl } from '../scripts/lib/seo-intent-pages.mjs';
 
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function runBuildStep(script) {
+  let lastResult = null;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const result = spawnSync(process.execPath, [script], { encoding: 'utf8' });
+    if (result.status === 0) return;
+    lastResult = result;
+    if (attempt < 2) sleepSync(500);
+  }
+  assert.fail([
+    `Command failed after retry: ${process.execPath} ${script}`,
+    `status: ${lastResult?.status ?? 'null'}`,
+    `signal: ${lastResult?.signal ?? 'null'}`,
+    'stdout:',
+    lastResult?.stdout || '(empty)',
+    'stderr:',
+    lastResult?.stderr || '(empty)',
+  ].join('\n'));
+}
+
 test('public build emits the React app bundle entrypoint', () => {
-  execFileSync(process.execPath, ['./scripts/build-bundles.mjs'], { stdio: 'ignore' });
-  execFileSync(process.execPath, ['./scripts/build-public.mjs'], { stdio: 'ignore' });
-  execFileSync(process.execPath, ['./scripts/assert-build-public.mjs'], { stdio: 'ignore' });
-  execFileSync(process.execPath, ['./scripts/audit-client-bundle.mjs'], { stdio: 'ignore' });
+  runBuildStep('./scripts/build-bundles.mjs');
+  runBuildStep('./scripts/build-public.mjs');
+  runBuildStep('./scripts/assert-build-public.mjs');
+  runBuildStep('./scripts/audit-client-bundle.mjs');
 
   const indexHtml = readFileSync('dist/public/index.html', 'utf8');
   const llmsTxt = readFileSync('dist/public/llms.txt', 'utf8');

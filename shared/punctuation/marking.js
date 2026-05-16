@@ -23,7 +23,7 @@ const FACET_LABELS = Object.freeze({
   single_sentence: 'One combined sentence',
   sentence_completeness: 'Complete sentence',
   token_variety: 'Used different words',
-  unwanted_punctuation: 'No duplicated punctuation outside the quote',
+  unwanted_punctuation: 'No extra or missing punctuation outside the quote',
 });
 
 /**
@@ -253,14 +253,26 @@ function reportingCommaOk(text, pair, rubric, detectedShape) {
   return true;
 }
 
-function speechPunctuationOk(quoted, requiredTerminal = null) {
-  const clean = normaliseAnswerText(quoted);
-  if (requiredTerminal) return clean.endsWith(requiredTerminal);
-  return /[.?!]$/.test(clean);
+function terminalRunAtEnd(value) {
+  const clean = normaliseAnswerText(value);
+  return clean.match(/([.?!]+)(?:[\"'”’])?$/)?.[1] || '';
 }
 
-function hasDuplicatedOutsidePunctuation(text, pair) {
-  return /^[.?!]/.test(afterClosingQuote(text, pair));
+function hasSingleTerminalAtEnd(value, requiredTerminal = null) {
+  const run = terminalRunAtEnd(value);
+  if (run.length !== 1) return false;
+  return requiredTerminal ? run === requiredTerminal : true;
+}
+
+function speechPunctuationOk(quoted, requiredTerminal = null) {
+  return hasSingleTerminalAtEnd(quoted, requiredTerminal);
+}
+
+function afterQuotePunctuationOk(text, pair, shape = null) {
+  const outside = afterClosingQuote(text, pair);
+  if (/^[.?!]/.test(outside)) return false;
+  if (shape !== 'reporting-after') return true;
+  return terminalRunAtEnd(outside) === '.';
 }
 
 function wordSequencePreserved(text, words = []) {
@@ -790,8 +802,8 @@ function bulletStemAndItems(text, validator = {}) {
     .map((entry) => canonicalPunctuationLineText(entry))
     .filter(Boolean);
   const firstLine = lines[0] || '';
-  const stemPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:?$`, 'i') : null;
-  const colonPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:$`, 'i') : null;
+  const stemPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:?$`) : null;
+  const colonPattern = stem ? new RegExp(`^${escapeRegExp(stem)}\\s*:$`) : null;
   const stemOk = Boolean(stemPattern?.test(firstLine));
   const colonOk = Boolean(colonPattern?.test(firstLine));
   const bulletLines = lines.slice(1);
@@ -955,7 +967,7 @@ export function evaluateSpeechRubric(answer, rubric = {}) {
     : sentenceStartsWithCapital(text);
   const capitalOk = sentenceCapitalOk && quotedWordsStartWithCapital(quoted);
   const wordsOk = includesWords(quoted, rubric.spokenWords || rubric.words);
-  const unwantedOk = !hasDuplicatedOutsidePunctuation(text, quote.pair);
+  const unwantedOk = afterQuotePunctuationOk(text, quote.pair, shape);
 
   // Position constraint: reject shape that contradicts explicit rubric position
   const positionOk = rubric?.reportingPosition === 'any'
@@ -1002,7 +1014,11 @@ export function evaluateSpeechRubric(answer, rubric = {}) {
   if (!positionOk) tags.push('speech.wrong_reporting_position');
   if (!capitalOk) tags.push('speech.capitalisation_missing');
   if (!wordsOk) tags.push('speech.words_changed');
-  if (!unwantedOk) tags.push('speech.unwanted_punctuation');
+  if (!unwantedOk) {
+    tags.push(shape === 'reporting-after'
+      ? 'speech.reporting_clause_terminal_missing'
+      : 'speech.unwanted_punctuation');
+  }
   if (expectedClauseWords && !clauseWordsOk) tags.push('speech.reporting_clause_changed');
 
   return {
@@ -1523,6 +1539,23 @@ export function countProseSentenceBoundaries(value) {
   return count;
 }
 
+function startsWithExpectedCapital(value) {
+  return /^(["'“‘]?)[A-Z]/.test(normaliseAnswerText(value));
+}
+
+function hasExpectedFinalTerminal(value) {
+  return /[.?!]["']?$/.test(canonicalPunctuationText(value));
+}
+
+function hasDuplicatedTerminalRun(value) {
+  return /[.?!]{2,}/.test(canonicalPunctuationText(value));
+}
+
+function usesBulletListParagraphCheck(item) {
+  return Array.isArray(item?.validator?.checks)
+    && item.validator.checks.some((check) => check?.type === 'requiresBulletStemAndItems');
+}
+
 function markParagraphPassageShape(item, rawText = '') {
   const expectedText = item.model || acceptedAnswers(item)[0] || '';
   const expectedWords = stripPunctuation(expectedText);
@@ -1531,17 +1564,32 @@ function markParagraphPassageShape(item, rawText = '') {
   const expectedSentenceBoundaries = countProseSentenceBoundaries(expectedText);
   const typedSentenceBoundaries = countProseSentenceBoundaries(rawText);
   const sentenceBoundaryOk = expectedSentenceBoundaries === 0 || typedSentenceBoundaries >= expectedSentenceBoundaries;
-  const correct = wordsOk && sentenceBoundaryOk;
+  const finalTerminalOk = usesBulletListParagraphCheck(item)
+    || !hasExpectedFinalTerminal(expectedText)
+    || hasSingleTerminalAtEnd(rawText);
+  const terminalOk = sentenceBoundaryOk && finalTerminalOk && !hasDuplicatedTerminalRun(rawText);
+  const capitalOk = !startsWithExpectedCapital(expectedText) || startsWithExpectedCapital(rawText);
+  const correct = wordsOk && terminalOk && capitalOk;
+  const note = correct
+    ? 'The passage wording is preserved.'
+    : !wordsOk
+      ? 'Keep the whole passage wording and do not add extra sentences.'
+      : !capitalOk
+        ? 'Start the passage with the expected capital letter.'
+        : 'Keep the sentence-ending punctuation between the passage sentences.';
+  const tags = [];
+  if (!wordsOk) tags.push('paragraph.words_changed');
+  if (wordsOk && !terminalOk) tags.push('paragraph.sentence_boundary_missing');
+  if (wordsOk && !capitalOk) tags.push('paragraph.capitalisation_missing');
   return {
     correct,
     expected: item.model || '',
-    note: correct
-      ? 'The passage wording is preserved.'
-      : (wordsOk ? 'Keep the sentence-ending punctuation between the passage sentences.' : 'Keep the whole passage wording and do not add extra sentences.'),
-    misconceptionTags: correct ? [] : [wordsOk ? 'paragraph.sentence_boundary_missing' : 'paragraph.words_changed'],
+    note,
+    misconceptionTags: correct ? [] : tags,
     facets: [
       facet('preservation', wordsOk),
-      facet('terminal_punctuation', sentenceBoundaryOk),
+      facet('terminal_punctuation', terminalOk),
+      facet('capitalisation', capitalOk),
     ],
   };
 }
