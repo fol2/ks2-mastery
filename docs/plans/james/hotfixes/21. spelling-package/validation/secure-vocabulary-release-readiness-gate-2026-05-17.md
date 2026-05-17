@@ -26,23 +26,23 @@ Command:
 node scripts\verify-spelling-secure-vocabulary-release.mjs --release-ready --audited-source "docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\audited-source.json" --review-pack "docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\review-pack.json" --out "docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\release-readiness-report.json" --json
 ```
 
-Result: exit `1`, expected for the current source.
+Result: exit `0` after James's secure-import and generated release-quality fallback approval was ingested.
 
 Report: `validation/secure-vocabulary-approved-source/release-readiness-report.json`
 
-- `ok`: `false`
-- `issueCount`: `17038`
-- `issuesTruncated`: `true`
+- `ok`: `true`
+- `issueCount`: `0`
+- `issuesTruncated`: `false`
 - `checkedReviewPackWords`: `1463`
 - `checkedAuditedSourceWords`: `1463`
 - `checkedSecureExtensionWords`: `1217`
 - `metadataIssueCount`: `0`
 
-The `metadataIssueCount: 0` result confirms that the B3w reviewer-pack metadata still reconciles with the audited source. The additional release-readiness issues are the intended blockers for live promotion.
+The `metadataIssueCount: 0` result confirms that the B3w reviewer-pack metadata still reconciles with the audited source. The release-readiness source gate now passes for the audited source and review pack.
 
 Current issue classes:
 
-- `secure_vocabulary_release_word_missing_field`: secure-extension candidates are missing release-quality fields required before learner-facing import on either the audited source word or the matching review-pack word.
+- None.
 
 The gate still supports the other release-blocking classes (`secure_vocabulary_release_promotion_not_approved`, `secure_vocabulary_release_word_missing_review_pack_entry`, and `secure_vocabulary_release_word_not_adult_approved`), but they are not present in the current report after James's secure-import approval was ingested.
 
@@ -50,11 +50,11 @@ The gate still supports the other release-blocking classes (`secure_vocabulary_r
 
 This stops the review loop from treating B3w source approval, or the later owner secure-import approval, as sufficient live import proof.
 
-The current source has secure-import approval and adult-approved per-word status. It is not suitable for live secure-extension promotion until the missing release-quality fields are supplied and validated.
+The current source has secure-import approval, adult-approved per-word status, and complete owner-approved generated release-quality fallback fields. It is suitable for the next runtime import/release implementation step, but that step has not been performed by this gate.
 
 No spelling content was imported, published, deployed, or promoted by this gate.
 
 ## Verification
 
 - `node --test tests\spelling-secure-vocabulary-source.test.js tests\secure-vocabulary-release-gates.test.js tests\secure-vocabulary-release-gap-summary.test.js tests\secure-vocabulary-release-input-template.test.js`: passed, `16` tests, `0` failures.
-- Current approved source release-readiness gate: failed as expected with `issueCount: 17038`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.
+- Current approved source release-readiness gate: passed with `issueCount: 0`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.

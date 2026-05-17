@@ -223,3 +223,57 @@ test('secure vocabulary release gap markdown does not request another approval a
   assert.match(markdown, /still requires all missing release fields/);
   assert.doesNotMatch(markdown, /requires `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, adult-approved/);
 });
+
+test('secure vocabulary release gap markdown does not request source input when release fields are complete', () => {
+  const zeroCounts = {
+    acceptedSpellings: 0,
+    explanation: 0,
+    exampleSentences: 0,
+    ukSpellingDecision: 0,
+    patternOrMorphologyTags: 0,
+    familyRoot: 0,
+    audioOrTtsStatus: 0,
+  };
+  const markdown = renderSecureVocabularyReleaseGapMarkdown({
+    status: 'RELEASE READY',
+    approval: {
+      auditedSourceDecision: 'APPROVED_FOR_SECURE_EXTENSION_IMPORT',
+      reviewPackDecision: 'APPROVED_FOR_SECURE_EXTENSION_IMPORT',
+      auditedSourceSecurePromotionAllowed: true,
+      reviewPackSecurePromotionAllowed: true,
+      promotionApproved: true,
+    },
+    counts: {
+      auditedSourceWords: 1463,
+      reviewPackWords: 1463,
+      secureExtensionWords: 1217,
+      missingReviewPackEntries: 0,
+      adultApprovedForSecureImport: 1217,
+      notAdultApprovedForSecureImport: 0,
+      advisoryWordCount: 12,
+      noAdvisoryWordCount: 1205,
+    },
+    releaseReadiness: {
+      issueCount: 0,
+      metadataIssueCount: 0,
+    },
+    missingFields: {
+      auditedSource: zeroCounts,
+      reviewPack: zeroCounts,
+    },
+    distributions: {
+      reviewStatus: {
+        adult_approved_for_secure_extension_import: 1217,
+      },
+      advisories: {
+        adult_review_context_sensitivity: 12,
+      },
+    },
+    examples: {
+      notAdultApproved: [],
+    },
+  });
+
+  assert.match(markdown, /No additional source-list, secure-import approval, or release-quality field input is required/);
+  assert.doesNotMatch(markdown, /still requires all missing release fields/);
+});

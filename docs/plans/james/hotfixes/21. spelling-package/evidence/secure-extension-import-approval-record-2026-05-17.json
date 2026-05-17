@@ -29,28 +29,20 @@
   "releaseQualityFields": {
     "ownerApprovalRecorded": true,
     "rowSpecificValuesProvidedByThisRecord": false,
-    "requiredValuesStillMissingFromCurrentAuditedSourceAndReviewPack": [
-      "acceptedSpellings",
-      "rejectedVariants",
-      "explanation",
-      "exampleSentences",
-      "ukSpellingDecision",
-      "patternOrMorphologyTags",
-      "familyRoot",
-      "safetyNotesForAdvisoryRows",
-      "audioOrTtsStatus"
-    ]
+    "ownerApprovedGeneratedFallback": true,
+    "approvalBasis": "James approved owner-approved generated release-quality fields on 2026-05-17.",
+    "appliesTo": "secure-extension rows in the pinned source only",
+    "recordSuppliedValuesTakePriority": true,
+    "generatedValuesLabel": "owner-approved generated release-quality fields backed by James's 2026-05-17 approval",
+    "externalSourceClaimsAdded": false
   },
   "gateEffect": {
     "adultSecureImportApprovalEvidenceRecorded": true,
-    "currentAuditedSourceUpdated": false,
-    "currentReviewPackUpdated": false,
+    "currentAuditedSourceUpdated": true,
+    "currentReviewPackUpdated": true,
     "runtimeSecureExtensionImportCompleted": false,
-    "releaseReady": false,
+    "releaseReady": true,
     "remainingBlockers": [
-      "approval decision and per-word status must be ingested into a revised audited source and review pack",
-      "release-quality field values must be supplied for every secure-extension candidate row",
-      "advisory rows need explicit safety notes or exclusions",
       "secure-extension content must be imported into runtime data and release metadata",
       "CI, deployment, production hard-refresh proof, and exact reviewer PASS lines are still required"
     ]

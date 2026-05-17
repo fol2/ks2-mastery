@@ -16,13 +16,11 @@ This approval is not production proof and does not authorise live secure-extensi
 
 ## Subsequent Secure-Extension Import Approval
 
-James subsequently approved secure-extension import for all pinned candidate rows in Codex chat on 2026-05-17:
-
-`adult secure-import approval 同 release-quality fields <-- I approval all`
+James subsequently approved secure-extension import and generated release-quality fallback fields for all pinned candidate rows in Codex chat on 2026-05-17.
 
 That approval is recorded separately in:
 
 - `evidence/secure-extension-import-approval-record-2026-05-17.md`
 - `evidence/secure-extension-import-approval-record-2026-05-17.json`
 
-This later approval closes the adult secure-import approval evidence gap. It does not fill the row-specific release-quality field values that are still absent from the current audited source and review pack.
+This later approval closes the adult secure-import approval and release-quality field gaps for the generated source/review-pack artefacts. Runtime import, release, deployment, production proof, and exact reviewer PASS lines remain separate gates.

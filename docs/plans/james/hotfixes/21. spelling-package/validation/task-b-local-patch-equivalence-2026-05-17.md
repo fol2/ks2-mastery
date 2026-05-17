@@ -60,5 +60,5 @@ Commands run locally:
 ## Remaining Limitations
 
 - Production was not deployed or hard-refresh verified for this Task B fix in this evidence pass.
-- The approved source list remains approved for import/reviewer-pack generation only, not live secure-extension promotion.
+- A later approval ingestion makes the approved source/review-pack release-ready, but this Task B evidence still does not import or promote secure-extension runtime content.
 - The full secure-extension taxonomy, import, runtime UI semantics, release manifest, audio/TTS validation, reviewer loop, deployment, and production proof are still not complete.

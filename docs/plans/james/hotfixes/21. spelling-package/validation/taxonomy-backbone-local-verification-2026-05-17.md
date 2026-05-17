@@ -34,7 +34,7 @@ Approved-source tier aliases are accepted at the runtime boundary:
 - Errors: `0`
 - Existing pattern warnings: `6`
 
-The zero secure-extension runtime count is intentional for this slice. Source approval is now ingested for secure-extension import, but live secure-extension promotion is still blocked by missing release-quality fields and absent runtime import.
+The zero secure-extension runtime count is intentional for this slice. Source approval and owner-approved generated release-quality fallback fields are now ingested for secure-extension import, but live secure-extension promotion is still blocked by absent runtime import, release metadata, deployment, and production proof.
 
 ## Validation
 

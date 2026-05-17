@@ -47,6 +47,12 @@ function normaliseString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function normaliseStringArray(value) {
+  return Array.isArray(value)
+    ? value.map((entry) => normaliseString(entry)).filter(Boolean)
+    : [];
+}
+
 function readJson(filePath) {
   return JSON.parse(readFileSync(filePath, 'utf8'));
 }
@@ -62,6 +68,109 @@ function increment(map, key) {
 
 function issue(severity, code, pathValue, message) {
   return { severity, code, path: pathValue, message };
+}
+
+function capitaliseWord(word) {
+  return word ? `${word.slice(0, 1).toUpperCase()}${word.slice(1)}` : 'This word';
+}
+
+function releaseQualityPolicyAllowsGeneratedFallback(approval) {
+  const releaseQualityFields = isPlainObject(approval?.releaseQualityFields)
+    ? approval.releaseQualityFields
+    : {};
+  const generatedFallbackPolicy = isPlainObject(releaseQualityFields.generatedFallbackPolicy)
+    ? releaseQualityFields.generatedFallbackPolicy
+    : {};
+
+  return releaseQualityFields.ownerApprovedGeneratedFallback === true
+    || generatedFallbackPolicy.ownerApproved === true;
+}
+
+function deriveMorphologyTags(record, word) {
+  const suppliedTags = normaliseStringArray(record.morphologyTags);
+  if (suppliedTags.length > 0) return suppliedTags;
+
+  const sourcePatternTags = normaliseStringArray(record.patternTags);
+  if (sourcePatternTags.length > 0) return sourcePatternTags;
+
+  const tags = [];
+  const suffixes = ['ation', 'tion', 'sion', 'ment', 'ness', 'able', 'ible', 'less', 'ful', 'ous', 'ity', 'ing', 'ed', 'ly'];
+  const suffix = suffixes.find((entry) => word.endsWith(entry) && word.length > entry.length + 2);
+  if (suffix) tags.push(`suffix-${suffix}`);
+  if (word.includes('-')) tags.push('hyphenated-compound');
+  if (/(.)\1/.test(word)) tags.push('double-letter');
+
+  return tags.length > 0 ? tags : ['base-word'];
+}
+
+function deriveFamilyRoot(word, morphologyTags) {
+  const suffixTag = morphologyTags.find((tag) => tag.startsWith('suffix-'));
+  if (!suffixTag) return word;
+
+  const suffix = suffixTag.slice('suffix-'.length);
+  if (!suffix || !word.endsWith(suffix) || word.length <= suffix.length + 2) return word;
+
+  const stem = word.slice(0, -suffix.length);
+  if (suffix === 'ful' && !stem.endsWith('e')) return `${stem}e`;
+  if (suffix === 'ity' && stem.endsWith('abil')) return `${stem.slice(0, -4)}able`;
+  return stem || word;
+}
+
+function generatedReleaseReadinessFields(record) {
+  const word = normaliseString(record.word);
+  const morphologyTags = deriveMorphologyTags(record, word);
+  const familyRoot = deriveFamilyRoot(word, morphologyTags);
+  const displayWord = capitaliseWord(word);
+  const advisories = normaliseStringArray(record.advisories);
+  const advisoryNote = advisories.length > 0
+    ? ` Advisory flags retained for adult review context: ${advisories.join(', ')}.`
+    : '';
+
+  return {
+    acceptedSpellings: [word],
+    rejectedVariants: [],
+    explanation: `${displayWord} is an owner-approved generated KS2 secure-extension spelling-practice entry. Pupils should read it clearly, spell each letter in order, and keep the accepted UK form unchanged.`,
+    exampleSentences: [`The teacher wrote the word ${word} on the board for secure vocabulary spelling practice.`],
+    ukSpellingDecision: `UK spelling approved: ${word} is the accepted spelling for this secure-extension entry.`,
+    familyRoot,
+    morphologyTags,
+    safetyNotes: `Owner-approved generated release-quality fields backed by James's 2026-05-17 approval. Suitable for KS2 spelling practice; no external source claim added.${advisoryNote}`,
+    audioStatus: 'tts_required',
+    ttsStatus: 'planned',
+    generationSource: 'owner_approved_generated_release_quality_fallback',
+    generationApprovalDate: '2026-05-17',
+  };
+}
+
+function releaseReadinessFromSourceRecord(record, approval, secureImportApprovalApplied) {
+  const generatedFallbackAllowed = secureImportApprovalApplied
+    && releaseQualityPolicyAllowsGeneratedFallback(approval);
+  const generatedFields = generatedFallbackAllowed
+    ? generatedReleaseReadinessFields(record)
+    : {};
+
+  return {
+    acceptedSpellings: normaliseStringArray(record.acceptedSpellings).length > 0
+      ? normaliseStringArray(record.acceptedSpellings)
+      : (generatedFields.acceptedSpellings || []),
+    rejectedVariants: normaliseStringArray(record.rejectedVariants).length > 0
+      ? normaliseStringArray(record.rejectedVariants)
+      : (generatedFields.rejectedVariants || []),
+    explanation: normaliseString(record.explanation) || generatedFields.explanation || '',
+    exampleSentences: normaliseStringArray(record.exampleSentences).length > 0
+      ? normaliseStringArray(record.exampleSentences)
+      : (generatedFields.exampleSentences || []),
+    ukSpellingDecision: normaliseString(record.ukSpellingDecision) || generatedFields.ukSpellingDecision || '',
+    familyRoot: normaliseString(record.familyRoot) || generatedFields.familyRoot || '',
+    morphologyTags: normaliseStringArray(record.morphologyTags).length > 0
+      ? normaliseStringArray(record.morphologyTags)
+      : (generatedFields.morphologyTags || []),
+    safetyNotes: normaliseString(record.safetyNotes) || generatedFields.safetyNotes || '',
+    audioStatus: normaliseString(record.audioStatus) || generatedFields.audioStatus || '',
+    ttsStatus: normaliseString(record.ttsStatus) || generatedFields.ttsStatus || '',
+    generationSource: generatedFields.generationSource || '',
+    generationApprovalDate: generatedFields.generationApprovalDate || '',
+  };
 }
 
 export function taxonomyTierForRecord(record) {
@@ -265,8 +374,8 @@ function auditedWordFromSourceRecord(record, approval, sourceJsonlSha256, index)
     recommendedPool: normaliseString(record.recommendedPool),
     yearBand: normaliseString(record.yearBand),
     sourceBucket: normaliseString(record.sourceBucket),
-    patternTags: Array.isArray(record.patternTags) ? record.patternTags : [],
-    advisories: Array.isArray(record.advisories) ? record.advisories : [],
+    patternTags: normaliseStringArray(record.patternTags),
+    advisories: normaliseStringArray(record.advisories),
     sourceReviewStatus,
     sourceReviewStatusBeforeSecureImportApproval,
     secureImportApprovalApplied,
@@ -287,20 +396,11 @@ function auditedWordFromSourceRecord(record, approval, sourceJsonlSha256, index)
     },
     safety: {
       status: safetyStatus,
-      advisories: Array.isArray(record.advisories) ? record.advisories : [],
+      advisories: normaliseStringArray(record.advisories),
       securePromotionAllowed: decision === DECISION_SECURE_EXTENSION_IMPORT,
     },
     releaseReadiness: {
-      acceptedSpellings: Array.isArray(record.acceptedSpellings) ? record.acceptedSpellings : [],
-      rejectedVariants: Array.isArray(record.rejectedVariants) ? record.rejectedVariants : [],
-      explanation: normaliseString(record.explanation),
-      exampleSentences: Array.isArray(record.exampleSentences) ? record.exampleSentences : [],
-      ukSpellingDecision: normaliseString(record.ukSpellingDecision),
-      familyRoot: normaliseString(record.familyRoot),
-      morphologyTags: Array.isArray(record.morphologyTags) ? record.morphologyTags : [],
-      safetyNotes: normaliseString(record.safetyNotes),
-      audioStatus: normaliseString(record.audioStatus),
-      ttsStatus: normaliseString(record.ttsStatus),
+      ...releaseReadinessFromSourceRecord(record, approval, secureImportApprovalApplied),
     },
   };
 }

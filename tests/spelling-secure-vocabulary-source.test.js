@@ -179,3 +179,87 @@ test('secure-extension import approval is applied to every secure-extension cand
     (issue) => issue.code === SECURE_VOCABULARY_RELEASE_WORD_NOT_ADULT_APPROVED
   ), false);
 });
+
+test('owner-approved release-quality policy populates secure-extension release fields only', () => {
+  const fixture = writeFixture([
+    sourceRecord({
+      acceptedSpellings: ['ability'],
+      explanation: 'Record supplied explanation stays in place.',
+      exampleSentences: ['The pupil showed ability in spelling.'],
+      ukSpellingDecision: 'Record supplied UK spelling decision.',
+      familyRoot: 'able',
+      morphologyTags: ['record-supplied-morphology'],
+      safetyNotes: 'Record supplied safety note.',
+      audioStatus: 'recorded',
+      ttsStatus: 'not_required',
+    }),
+    sourceRecord({
+      coverageTier: 'secure_extension_candidate',
+      normalisedWord: 'careful',
+      patternTags: ['suffix-ful'],
+      recordId: 'sv1-0002',
+      word: 'careful',
+    }),
+    sourceRecord({
+      coverageTier: 'current_statutory_core',
+      normalisedWord: 'accident',
+      recommendedPool: 'core',
+      recordId: 'current-0001',
+      reviewStatus: 'already_in_current_published_spelling_snapshot',
+      word: 'accident',
+      yearBand: 'Years 3-4',
+    }),
+  ], {
+    decision: DECISION_SECURE_EXTENSION_IMPORT,
+    releaseQualityFields: {
+      ownerApprovedGeneratedFallback: true,
+      approvalBasis: 'James approved owner-approved generated release-quality fields on 2026-05-17.',
+    },
+  });
+
+  const artifacts = buildSecureVocabularyArtifacts(fixture);
+  const suppliedSecureWord = artifacts.auditedSource.words.find((word) => word.word === 'ability');
+  const generatedSecureWord = artifacts.auditedSource.words.find((word) => word.word === 'careful');
+  const reviewPackGeneratedWord = artifacts.reviewPack.words.find((word) => word.word === 'careful');
+  const statutoryWord = artifacts.auditedSource.words.find((word) => word.word === 'accident');
+
+  assert.equal(suppliedSecureWord.releaseReadiness.explanation, 'Record supplied explanation stays in place.');
+  assert.deepEqual(suppliedSecureWord.releaseReadiness.morphologyTags, ['record-supplied-morphology']);
+  assert.deepEqual(generatedSecureWord.releaseReadiness.acceptedSpellings, ['careful']);
+  assert.equal(
+    generatedSecureWord.releaseReadiness.explanation,
+    'Careful is an owner-approved generated KS2 secure-extension spelling-practice entry. Pupils should read it clearly, spell each letter in order, and keep the accepted UK form unchanged.'
+  );
+  assert.deepEqual(
+    generatedSecureWord.releaseReadiness.exampleSentences,
+    ['The teacher wrote the word careful on the board for secure vocabulary spelling practice.']
+  );
+  assert.equal(
+    generatedSecureWord.releaseReadiness.ukSpellingDecision,
+    'UK spelling approved: careful is the accepted spelling for this secure-extension entry.'
+  );
+  assert.deepEqual(generatedSecureWord.releaseReadiness.morphologyTags, ['suffix-ful']);
+  assert.equal(generatedSecureWord.releaseReadiness.familyRoot, 'care');
+  assert.match(
+    generatedSecureWord.releaseReadiness.safetyNotes,
+    /Owner-approved generated release-quality fields/
+  );
+  assert.equal(generatedSecureWord.releaseReadiness.audioStatus, 'tts_required');
+  assert.equal(generatedSecureWord.releaseReadiness.ttsStatus, 'planned');
+  assert.equal(
+    generatedSecureWord.releaseReadiness.generationSource,
+    'owner_approved_generated_release_quality_fallback'
+  );
+  assert.equal(generatedSecureWord.releaseReadiness.generationApprovalDate, '2026-05-17');
+  assert.deepEqual(reviewPackGeneratedWord.releaseReadiness, generatedSecureWord.releaseReadiness);
+  assert.deepEqual(statutoryWord.releaseReadiness.acceptedSpellings, []);
+  assert.equal(statutoryWord.releaseReadiness.explanation, '');
+
+  const readiness = verifySecureVocabularyReleaseReadiness({
+    auditedSource: artifacts.auditedSource,
+    reviewPack: artifacts.reviewPack,
+  });
+
+  assert.equal(readiness.ok, true);
+  assert.equal(readiness.issueCount, 0);
+});

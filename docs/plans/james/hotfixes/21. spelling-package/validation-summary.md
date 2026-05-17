@@ -38,7 +38,7 @@ The patch does not implement the full vocabulary expansion.
 
 This breaks the previous missing-source-list loop. The later owner approval is now ingested into the audited source/review pack through `evidence/secure-extension-import-approval-pipeline-record-2026-05-17.json`, but no live secure-extension content has been imported or deployed.
 
-Post-review owner approval addendum: James subsequently approved secure-extension import for all 1217 pinned candidate rows on 2026-05-17. This is recorded in `evidence/secure-extension-import-approval-record-2026-05-17.md` and `.json`, and converted to the pipeline record above. It closes the adult secure-import approval evidence gap, but does not provide the missing row-specific release-quality field values.
+Post-review owner approval addendum: James subsequently approved secure-extension import and owner-approved generated release-quality fallback fields for all 1217 pinned candidate rows on 2026-05-17. This is recorded in `evidence/secure-extension-import-approval-record-2026-05-17.md` and `.json`, and converted to the pipeline record above. The audited source and review pack now carry the secure-import approval and complete release-quality field coverage.
 
 ### Local taxonomy backbone proof
 
@@ -63,10 +63,10 @@ Generated local evidence under `validation/secure-vocabulary-approved-source/`:
 - `review-pack.md`: human-readable reviewer summary and advisory-word list.
 - `verification-report.json`: B3w verification `ok: true`, `issueCount: 0`, `checkedReviewPackWords: 1463`, `checkedAuditedSourceWords: 1463`.
 - `release-gate-report.json`: direct CLI verification with the same `ok: true` and zero issues.
-- `release-readiness-report.json`: explicit live-promotion gate with `ok: false`, `issueCount: 17038`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.
-- `release-gap-summary.json` / `.md`: grouped release blocker summary for the current generated source/review-pack artefacts, showing zero missing review-pack entries, 1217 secure-import adult-approved words, zero not-adult-approved words, all 1217 secure-extension candidates missing the required release-quality fields, and 12 advisory words.
-- `release-input-template/`: non-importing CSV input template with 1217 secure-extension rows, 12 advisory rows, the pinned source hash, the ingested secure-extension approval decision, and columns for the release-quality fields still required before live import.
-- `evidence/secure-extension-import-approval-record-2026-05-17.md` / `.json`: owner/adult-reviewer approval for secure-extension import of all 1217 pinned candidate rows, with an explicit limitation that it does not fill the row-specific release-quality values.
+- `release-readiness-report.json`: explicit live-promotion source gate with `ok: true`, `issueCount: 0`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.
+- `release-gap-summary.json` / `.md`: grouped release summary for the current generated source/review-pack artefacts, showing zero missing review-pack entries, 1217 secure-import adult-approved words, zero not-adult-approved words, zero missing required release-quality fields, and 12 advisory words.
+- `release-input-template/`: non-importing CSV input template with 1217 secure-extension rows, 12 advisory rows, the pinned source hash, the ingested secure-extension approval decision, and the release-quality collection columns retained for future source refreshes.
+- `evidence/secure-extension-import-approval-record-2026-05-17.md` / `.json`: owner/adult-reviewer approval for secure-extension import of all 1217 pinned candidate rows and the generated release-quality fallback policy used by the pipeline.
 - `validation/current-head-completion-audit-2026-05-17.md`: moving-branch completion audit including a prompt-to-artifact checklist, the reviewer-found Word Bank Guardian-chip fix, and the explicit decision that the active goal is not achieved from this state.
 - `validation/reviewer-loop-current-head-2026-05-17.md`: latest independent Code Reviewer and Contract Auditor rerun for head `9cc389568c2fc10b9d1d52d12d247bca1e4a7580`; both returned `NOT PASS` for full-contract blockers, while confirming the stale-evidence and Guardian-chip findings are closed.
 - `targeted-tests.log`: original B3w run passed 5 tests. The release-readiness addendum reran `node --test tests/spelling-secure-vocabulary-source.test.js tests/secure-vocabulary-release-gates.test.js` after adding release-readiness coverage, and 10 tests passed.
@@ -189,13 +189,13 @@ Local Codex Node 22 update:
 
 ## Blockers for the full expansion
 
-1. **No live secure-extension import or release yet.** The taxonomy backbone exists locally, but current spelling content still publishes `0` secure-extension runtime words. The 1217 secure-extension candidate records remain approved for import/reviewer-pack generation only.
+1. **No live secure-extension import or release yet.** The taxonomy backbone exists locally, but current spelling content still publishes `0` secure-extension runtime words. The 1217 secure-extension candidate records are source-gate ready, but have not been imported into runtime content.
 
 2. **Current content size implies scale risk.** The current 246-word snapshot already produces multi-megabyte generated content data. Thousands of words may need content splitting, lazy loading, Worker-only release reads, or stricter generation boundaries.
 
 3. **Existing pattern warnings remain.** Several registered spelling patterns have below-threshold core coverage. Expansion must improve pattern coverage or explicitly keep those patterns non-launchable.
 
-4. **Full content import and release remain required.** The source list is now pinned, approved for import/reviewer-pack generation, mapped into a check-mode import plan, B3w-verified as a reviewer pack, backed by a local taxonomy seam, and blocked by an explicit release-readiness gate. The full secure-extension content import, generated sentences/audio, release manifest, CI, deployment, and production verification are still not complete.
+4. **Full content import and release remain required.** The source list is now pinned, approved for secure-extension import, release-quality complete under James's owner-approved generated fallback policy, mapped into a check-mode import plan, B3w-verified as a reviewer pack, and backed by a local taxonomy seam. The full secure-extension runtime import, generated learner-facing content release, release manifest, CI, deployment, and production verification are still not complete.
 
 5. **Production is not proven.** No live hard-refresh spelling journey, deployed commit/release id, content-quality endpoint evidence, or logs/screenshots were captured.
 
@@ -209,7 +209,7 @@ Local Codex Node 22 update:
 
 Until live verification is complete, final status must be:
 
-`SOURCE LIST APPROVED - IMPORT/REVIEWER PACK REQUIRED`
+`SOURCE LIST APPROVED - RUNTIME IMPORT/RELEASE REQUIRED`
 
 or, after local import/reviewer-pack verification:
 

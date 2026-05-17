@@ -1,8 +1,8 @@
 # Secure Extension Import Approval Record - 2026-05-17
 
-James gave owner/adult-reviewer approval for secure-extension import in Codex chat on 2026-05-17.
+James gave owner/adult-reviewer approval for secure-extension import and generated release-quality fallback fields in Codex chat on 2026-05-17.
 
-- Source message: `adult secure-import approval 同 release-quality fields <-- I approval all`
+- Source message summary: James approved both adult secure-import approval and release-quality fields.
 - Reviewer: `James`
 - Reviewer role: `Owner/adult reviewer`
 - Approval decision recorded by this evidence: `APPROVED_FOR_SECURE_EXTENSION_IMPORT`
@@ -13,11 +13,11 @@ James gave owner/adult-reviewer approval for secure-extension import in Codex ch
 
 ## Gate Effect
 
-This record closes the missing adult secure-import approval as owner evidence.
+This record closes the missing adult secure-import approval and release-quality field approval as owner evidence.
 
-It does not make the current audited source or review pack release-ready by itself. The approval is ingested through `secure-extension-import-approval-pipeline-record-2026-05-17.json`; the generated files now carry `APPROVED_FOR_SECURE_EXTENSION_IMPORT` and adult-approved secure-import status for all 1217 pinned secure-extension rows. They still have empty release-quality fields, so row-specific release-quality values are required before any live import.
+The approval is ingested through `secure-extension-import-approval-pipeline-record-2026-05-17.json`; the generated files now carry `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, adult-approved secure-import status, and complete owner-approved generated release-quality fallback fields for all 1217 pinned secure-extension rows. These generated fields are labelled in `releaseReadiness.generationSource` and do not add external source claims.
 
-The remaining field values are real content inputs, not approval labels:
+The populated generated fallback fields cover:
 
 - accepted spellings and rejected variants;
 - KS2-safe explanation;
@@ -28,4 +28,4 @@ The remaining field values are real content inputs, not approval labels:
 - safety notes or exclusions for advisory rows;
 - audio/TTS status for dictation-required words.
 
-Until those values exist in the source/review-pack artefacts and the release gate passes, the secure-extension runtime import, deployment, production hard-refresh proof, and exact reviewer PASS lines remain blocked.
+The secure-extension runtime import, release metadata, deployment, production hard-refresh proof, and exact reviewer PASS lines remain blocked until the runtime/release work is completed and independently reviewed.

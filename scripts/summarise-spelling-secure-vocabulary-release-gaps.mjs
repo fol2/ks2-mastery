@@ -92,6 +92,13 @@ function emptyFieldCounts() {
   return Object.fromEntries(RELEASE_READY_REQUIRED_FIELDS.map((field) => [field, 0]));
 }
 
+function totalMissingReleaseFields(summary) {
+  return RELEASE_READY_REQUIRED_FIELDS.reduce((total, field) =>
+    total
+      + (summary.missingFields?.auditedSource?.[field] || 0)
+      + (summary.missingFields?.reviewPack?.[field] || 0), 0);
+}
+
 function recordExample(examples, word, maxExamples) {
   if (examples.length >= maxExamples) return;
   examples.push({
@@ -314,7 +321,13 @@ export function renderSecureVocabularyReleaseGapMarkdown(summary) {
   lines.push('');
   lines.push('## Required Next Source Input');
   lines.push('');
-  if (summary.approval.promotionApproved && summary.counts.notAdultApprovedForSecureImport === 0) {
+  if (
+    summary.approval.promotionApproved
+    && summary.counts.notAdultApprovedForSecureImport === 0
+    && totalMissingReleaseFields(summary) === 0
+  ) {
+    lines.push('No additional source-list, secure-import approval, or release-quality field input is required for the current approved artefacts. Live secure-extension promotion still requires runtime content import, release metadata, CI, deployment, and production hard-refresh evidence.');
+  } else if (summary.approval.promotionApproved && summary.counts.notAdultApprovedForSecureImport === 0) {
     lines.push('The current artefact has `APPROVED_FOR_SECURE_EXTENSION_IMPORT` and adult-approved per-word secure import status. A live secure-extension import still requires all missing release fields above on both the audited source and review pack.');
   } else {
     lines.push('The current artefact is suitable for import/reviewer-pack generation only. A live secure-extension import requires `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, adult-approved per-word secure import status, and all missing release fields above on both the audited source and review pack.');

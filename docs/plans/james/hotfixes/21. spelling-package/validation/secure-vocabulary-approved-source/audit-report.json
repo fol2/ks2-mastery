@@ -6,7 +6,7 @@
   "issues": [],
   "source": {
     "artifactId": "ks2-spelling-secure-vocabulary-source-v1",
-    "sourceJsonlPath": "D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\.tmp\\ks2-spelling-secure-vocabulary-source-v1-approval-ingest\\source\\secure-vocabulary-source-v1.jsonl",
+    "sourceJsonlPath": "D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\.tmp\\ks2-secure-vocabulary-source-20260517-b3w\\source\\secure-vocabulary-source-v1.jsonl",
     "sourceJsonlSha256": "ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c",
     "recordCount": 1463,
     "uniqueWordCount": 1463

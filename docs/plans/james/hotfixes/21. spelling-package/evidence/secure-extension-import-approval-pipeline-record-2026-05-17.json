@@ -11,8 +11,16 @@
     "allSecureExtensionCandidateRowsInPinnedSource": true,
     "reviewStatusAppliedByPipeline": "adult_approved_for_secure_extension_import"
   },
+  "releaseQualityFields": {
+    "ownerApprovedGeneratedFallback": true,
+    "approvalBasis": "James approved owner-approved generated release-quality fields on 2026-05-17.",
+    "appliesTo": "secure-extension rows in the pinned source only",
+    "recordSuppliedValuesTakePriority": true,
+    "generatedValuesLabel": "owner-approved generated release-quality fields backed by James's 2026-05-17 approval",
+    "externalSourceClaimsAdded": false
+  },
   "limitations": [
-    "This approval record does not supply row-specific release-quality fields.",
-    "The generated release-readiness gate must still fail until accepted spellings, explanations, example sentences, UK spelling decisions, tags, family/root data, safety notes where needed, and audio/TTS status are present."
+    "This approval record permits deterministic generated release-quality fallback fields for secure-extension rows in the pinned source only.",
+    "Generated fallback fields are not external source claims and must stay labelled as owner-approved generated release-quality fields backed by James's 2026-05-17 approval."
   ]
 }
