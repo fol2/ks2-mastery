@@ -1,3 +1,5 @@
+IMPORTANT: Work on a worktree (other agents are working too, this is essential). Clean up the worktree after full completed.
+
 You are the local Codex execution agent for the KS2 Mastery webapp.
 
 You will receive:
