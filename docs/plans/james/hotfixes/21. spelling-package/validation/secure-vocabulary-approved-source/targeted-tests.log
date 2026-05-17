@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: secure vocabulary release gate passes when review-pack word metadata matches the audited source
+ok 1 - secure vocabulary release gate passes when review-pack word metadata matches the audited source
+  ---
+  duration_ms: 0.9244
+  type: 'test'
+  ...
+# Subtest: secure vocabulary release gate blocks review-pack word metadata mismatches
+ok 2 - secure vocabulary release gate blocks review-pack word metadata mismatches
+  ---
+  duration_ms: 0.6563
+  type: 'test'
+  ...
+# Subtest: secure vocabulary source audit passes for an approved exact source hash
+ok 3 - secure vocabulary source audit passes for an approved exact source hash
+  ---
+  duration_ms: 2.9206
+  type: 'test'
+  ...
+# Subtest: secure vocabulary source audit blocks pending approval and hash mismatch
+ok 4 - secure vocabulary source audit blocks pending approval and hash mismatch
+  ---
+  duration_ms: 1.8515
+  type: 'test'
+  ...
+# Subtest: review-pack build emits metadata that passes the B3w release gate
+ok 5 - review-pack build emits metadata that passes the B3w release gate
+  ---
+  duration_ms: 2.2156
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 62.1738

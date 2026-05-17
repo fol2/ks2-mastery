@@ -1,0 +1,183 @@
+{
+  "ok": true,
+  "status": "SOURCE APPROVED - IMPORT/REVIEWER PACK REQUIRED",
+  "issueCount": 0,
+  "errorCount": 0,
+  "issues": [],
+  "source": {
+    "artifactId": "ks2-spelling-secure-vocabulary-source-v1",
+    "sourceJsonlPath": "D:\\tmp\\ks2-spelling-b3w-source-artifact-approved-check\\source\\secure-vocabulary-source-v1.jsonl",
+    "sourceJsonlSha256": "ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c",
+    "recordCount": 1463,
+    "uniqueWordCount": 1463
+  },
+  "approval": {
+    "decision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY",
+    "reviewerName": "James",
+    "reviewerRole": "Owner/adult reviewer",
+    "reviewTimestamp": "2026-05-17T12:15:41+01:00",
+    "sourceJsonlSha256": "ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c",
+    "importReviewerPackAllowed": true,
+    "securePromotionAllowed": false
+  },
+  "counts": {
+    "coverageTier": {
+      "current_statutory_core": 213,
+      "current_extra": 33,
+      "secure_extension_candidate": 1217
+    },
+    "taxonomyTier": {
+      "statutory-core": 213,
+      "enrichment-extra": 33,
+      "secure-extension": 1217
+    },
+    "recommendedPool": {
+      "core": 213,
+      "extra": 33,
+      "secure_extension_candidate": 1217
+    },
+    "reviewStatus": {
+      "already_in_current_published_spelling_snapshot": 246,
+      "candidate_source_supplied_not_adult_approved": 1217
+    },
+    "sourceBucket": {
+      "statutory-y3-4": 109,
+      "statutory-y5-6": 104,
+      "extra-science-word-building": 33,
+      "school_academic_secure": 281,
+      "writing_grammar_secure": 91,
+      "maths_secure": 107,
+      "science_secure": 70,
+      "geography_history_secure": 63,
+      "spelling_pattern_secure": 83,
+      "morphology_family_secure": 212,
+      "tier_two_general_secure": 46,
+      "safe_subject_vocabulary_secure": 39,
+      "derived_forms_candidate": 225
+    },
+    "yearBand": {
+      "Years 3-4": 109,
+      "Years 5-6": 104,
+      "Extra": 33,
+      "Y3-Y6": 497,
+      "Y5-Y6 or extension after adult review": 720
+    },
+    "advisories": {
+      "adult_review_context_sensitivity": 12
+    },
+    "patternTags": {
+      "double-consonant": 45,
+      "suffix-ly": 8,
+      "silent-letter": 14,
+      "i-before-e": 5,
+      "prefix-pre-re-de": 9,
+      "root-graph-scribe": 1,
+      "homophone": 7,
+      "suffix-ous": 6,
+      "prefix-un-in-im": 3,
+      "root-port-spect": 2,
+      "suffix-tion": 6,
+      "suffix-sion": 3,
+      "suffix-able-ible": 2
+    },
+    "advisoryWordCount": 12
+  },
+  "advisoryWords": [
+    {
+      "recordId": "sv1-0495",
+      "word": "consumer",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0586",
+      "word": "invasion",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0587",
+      "word": "empire",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0588",
+      "word": "emperor",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0589",
+      "word": "monarchy",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0590",
+      "word": "monarch",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0957",
+      "word": "ballot",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0959",
+      "word": "carbon",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0963",
+      "word": "currency",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0966",
+      "word": "election",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0983",
+      "word": "revolution",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    },
+    {
+      "recordId": "sv1-0988",
+      "word": "treaty",
+      "coverageTier": "secure_extension_candidate",
+      "advisories": [
+        "adult_review_context_sensitivity"
+      ]
+    }
+  ]
+}

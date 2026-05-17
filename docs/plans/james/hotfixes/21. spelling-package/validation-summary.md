@@ -37,6 +37,31 @@ The patch does not implement the full vocabulary expansion.
 
 This breaks the previous missing-source-list loop. It does not approve live secure-extension promotion or prove production deployment.
 
+### Approved-source import and reviewer-pack proof
+
+Generated local evidence under `validation/secure-vocabulary-approved-source/`:
+
+- `audit-report.json`: `ok: true`, zero issues, exact source hash matched.
+- `import-plan.json`: check-mode import plan, `writes: false`, status `approved_for_import_reviewer_pack_only_not_applied`.
+- `audited-source.json`: audited-source input for the B3w release gate.
+- `review-pack.json`: reviewer-pack output with 1463 words.
+- `review-pack.md`: human-readable reviewer summary and advisory-word list.
+- `verification-report.json`: B3w verification `ok: true`, `issueCount: 0`, `checkedReviewPackWords: 1463`, `checkedAuditedSourceWords: 1463`.
+- `release-gate-report.json`: direct CLI verification with the same `ok: true` and zero issues.
+- `targeted-tests.log`: `node --test tests/spelling-secure-vocabulary-source.test.js tests/secure-vocabulary-release-gates.test.js`, 5 tests passed.
+- `content-validate.log`: `npm run content:validate`, `ok: true`, 246 runtime words, 2213 runtime sentences, 0 errors, 6 existing pattern warnings.
+- `npm-run-check.log`: `npm run check`, exit `0`; Wrangler dry-run build and client bundle audit passed.
+
+Commands recorded:
+
+- `node scripts/audit-spelling-secure-vocabulary.mjs --source-jsonl D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\source\secure-vocabulary-source-v1.jsonl --approval D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\approval\owner-approval-record.json --out validation/secure-vocabulary-approved-source/audit-report.json`
+- `node scripts/import-spelling-secure-vocabulary.mjs --check --source-jsonl D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\source\secure-vocabulary-source-v1.jsonl --approval D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\approval\owner-approval-record.json --out validation/secure-vocabulary-approved-source/import-plan.json`
+- `node scripts/build-spelling-secure-vocabulary-review-pack.mjs --source-jsonl D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\source\secure-vocabulary-source-v1.jsonl --approval D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\approval\owner-approval-record.json --out-dir validation/secure-vocabulary-approved-source --json`
+- `node scripts/verify-spelling-secure-vocabulary-release.mjs --source validation/secure-vocabulary-approved-source/audited-source.json --review-pack validation/secure-vocabulary-approved-source/review-pack.json --json --out validation/secure-vocabulary-approved-source/release-gate-report.json`
+- `node --test tests/spelling-secure-vocabulary-source.test.js tests/secure-vocabulary-release-gates.test.js`
+- `npm run content:validate`
+- `npm run check`
+
 ### GitHub
 
 GitHub was used only as a supplementary exact-file check. Repository `fol2/ks2-mastery` default branch was reported as `main`. Exact file `worker/src/repository.js` at `main` had blob SHA `a20215b8519c99fca4c05922ba1bc0c47c17108f`, matching the ZIP local blob SHA for the same file. This confirms the two patched adjacent issues were also present in fetched GitHub `main` for that file. It does not prove whole-repo identity.
@@ -138,7 +163,7 @@ Not fully run in this environment:
 
 3. **Existing pattern warnings remain.** Several registered spelling patterns have below-threshold core coverage. Expansion must improve pattern coverage or explicitly keep those patterns non-launchable.
 
-4. **Import/reviewer-pack proof is still required.** The source list is now pinned and approved for import/reviewer-pack generation only. The next local agent must generate import proof and reviewer-pack proof against the exact JSONL hash before any release gate can pass.
+4. **Full content import and release remain required.** The source list is now pinned, approved for import/reviewer-pack generation, mapped into a check-mode import plan, and B3w-verified as a reviewer pack. The full secure-extension content import, generated sentences/audio, release manifest, CI, deployment, and production verification are still not complete.
 
 5. **Production is not proven.** No live hard-refresh spelling journey, deployed commit/release id, content-quality endpoint evidence, or logs/screenshots were captured.
 

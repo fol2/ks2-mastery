@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "status": "SOURCE APPROVED - IMPORT/REVIEWER PACK REQUIRED",
+  "sourceJsonlSha256": "ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c",
+  "recordCount": 1463,
+  "uniqueWordCount": 1463,
+  "approvalDecision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY",
+  "reviewerName": "James",
+  "reviewTimestamp": "2026-05-17T12:15:41+01:00",
+  "checkedReviewPackWords": 1463,
+  "checkedAuditedSourceWords": 1463,
+  "issueCount": 0,
+  "outputs": {
+    "auditReport": "D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\docs\\plans\\james\\hotfixes\\21. spelling-package\\validation\\secure-vocabulary-approved-source\\audit-report.json",
+    "importPlan": "D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\docs\\plans\\james\\hotfixes\\21. spelling-package\\validation\\secure-vocabulary-approved-source\\import-plan.json",
+    "auditedSource": "D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\docs\\plans\\james\\hotfixes\\21. spelling-package\\validation\\secure-vocabulary-approved-source\\audited-source.json",
+    "reviewPack": "D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\docs\\plans\\james\\hotfixes\\21. spelling-package\\validation\\secure-vocabulary-approved-source\\review-pack.json",
+    "reviewPackMarkdown": "D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\docs\\plans\\james\\hotfixes\\21. spelling-package\\validation\\secure-vocabulary-approved-source\\review-pack.md",
+    "verificationReport": "D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\docs\\plans\\james\\hotfixes\\21. spelling-package\\validation\\secure-vocabulary-approved-source\\verification-report.json"
+  }
+}

@@ -1,0 +1,88 @@
+
+> ks2-mastery@0.1.0 content:validate
+> node scripts/validate-spelling-content.mjs
+
+{
+  "ok": true,
+  "summary": {
+    "wordListCount": 3,
+    "wordCount": 246,
+    "sentenceCount": 2213,
+    "releaseCount": 5,
+    "errorCount": 0,
+    "warningCount": 6,
+    "publishedReleaseId": "spelling-r5",
+    "publishedVersion": 5,
+    "publishedAt": 1777248000000,
+    "runtimeWordCount": 246,
+    "runtimeSentenceCount": 2213,
+    "ok": true
+  },
+  "patternCounts": {
+    "suffix-tion": 6,
+    "suffix-sion": 3,
+    "suffix-cian": 0,
+    "suffix-ous": 6,
+    "suffix-ly": 8,
+    "suffix-able-ible": 2,
+    "silent-letter": 5,
+    "i-before-e": 5,
+    "double-consonant": 45,
+    "prefix-un-in-im": 3,
+    "prefix-pre-re-de": 9,
+    "homophone": 7,
+    "root-graph-scribe": 1,
+    "root-port-spect": 2,
+    "exception-word": 0
+  },
+  "launchedPatternIds": [
+    "suffix-tion",
+    "suffix-ous",
+    "suffix-ly",
+    "silent-letter",
+    "i-before-e",
+    "double-consonant",
+    "prefix-pre-re-de",
+    "homophone"
+  ],
+  "launchThreshold": 4,
+  "errors": [],
+  "warnings": [
+    {
+      "severity": "warn",
+      "code": "pattern_below_launch_threshold",
+      "path": "patterns.suffix-sion",
+      "message": "Pattern \"suffix-sion\" has 3 tagged core word(s); below the launch threshold of 4."
+    },
+    {
+      "severity": "warn",
+      "code": "pattern_below_launch_threshold",
+      "path": "patterns.suffix-cian",
+      "message": "Pattern \"suffix-cian\" has 0 tagged core word(s); below the launch threshold of 4."
+    },
+    {
+      "severity": "warn",
+      "code": "pattern_below_launch_threshold",
+      "path": "patterns.suffix-able-ible",
+      "message": "Pattern \"suffix-able-ible\" has 2 tagged core word(s); below the launch threshold of 4."
+    },
+    {
+      "severity": "warn",
+      "code": "pattern_below_launch_threshold",
+      "path": "patterns.prefix-un-in-im",
+      "message": "Pattern \"prefix-un-in-im\" has 3 tagged core word(s); below the launch threshold of 4."
+    },
+    {
+      "severity": "warn",
+      "code": "pattern_below_launch_threshold",
+      "path": "patterns.root-graph-scribe",
+      "message": "Pattern \"root-graph-scribe\" has 1 tagged core word(s); below the launch threshold of 4."
+    },
+    {
+      "severity": "warn",
+      "code": "pattern_below_launch_threshold",
+      "path": "patterns.root-port-spect",
+      "message": "Pattern \"root-port-spect\" has 2 tagged core word(s); below the launch threshold of 4."
+    }
+  ]
+}
