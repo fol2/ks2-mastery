@@ -4,15 +4,17 @@
 
 Execute `docs/plans/james/hotfixes/21. spelling-package/contract/spelling-secure-vocabulary-expansion-contract.md` from an isolated worktree, using the finite secure-vocabulary source artefact in this folder where applicable. Do not claim live completion unless the change is deployed to `https://ks2.eugnel.uk`, hard-refresh verified, and both required independent review passes return the exact contract PASS line.
 
-## Current repository state
+## Repository state and commit scope
 
 - Worktree: `D:\Coding\ks2-mastery\.worktrees\spelling-package-b3w-completion`
 - Branch: `codex/spelling-package-b3w-completion`
-- Local HEAD: `b008b723588dd3a81d225ce0034f617dc03e0946`
-- Remote branch HEAD: `b008b723588dd3a81d225ce0034f617dc03e0946`
+- Baseline: `10b0f4b2e112f2cb354b5dac11997b9cdf2ecc26` (`origin/main`)
+- Audited implementation head: `b008b723588dd3a81d225ce0034f617dc03e0946` (`Add secure vocabulary release readiness gate`)
+- First current-state audit evidence commit: `2d416bdc11552ea147551c7435475ee5a647ee0e` (`Record spelling contract current-state audit`)
 - `origin/main`: `10b0f4b2e112f2cb354b5dac11997b9cdf2ecc26`
 - Rebase status: `git rebase origin/main` reported the branch is up to date.
 - Worktree status at this audit: clean.
+- Note: the moving branch head must be verified with `git rev-parse HEAD origin/codex/spelling-package-b3w-completion origin/main` when this evidence is consumed. This file records the audited implementation commit and the first evidence commit instead of treating the branch head as immutable.
 
 ## Source artefact boundary
 
@@ -50,7 +52,7 @@ The ZIP's `contract/LOCAL_AGENT_STOP_LOOP_CONTRACT.md` is now in scope. It expli
 | Runtime import of secure-extension words | Current runtime still has `0` secure-extension words; import plan is check-mode only. | Not met |
 | Content release manifest and migration semantics | No secure-extension content release, release manifest, audio manifest, or production migration evidence exists. | Not met |
 | Scale/performance proof for expanded word count | `npm run check` and bundle audit pass for the current 246-word runtime, not a 1217-candidate secure-extension runtime. | Not met |
-| Reviewer loop exact PASS lines | One follow-up code review reported no new blocker for the release-readiness gate, but the full contract still has known blockers and there is no exact PASS line from both Code Reviewer and Contract Auditor. | Not met |
+| Reviewer loop exact PASS lines | Follow-up Code Reviewer and Contract Auditor both confirmed the B3w source-list loop is closed for the narrow slice, but both refused the exact PASS line because the full contract still has blockers. | Not met |
 | Production hard-refresh proof | No deployment or hard-refresh production proof exists for this branch/commit on `https://ks2.eugnel.uk`. | Not met |
 
 ## Release-readiness gate result
@@ -73,6 +75,15 @@ The first stored issue is `secure_vocabulary_release_promotion_not_approved`: se
 The B3w source-list loop is closed. The source list exists, the exact hash is pinned, James's approval is recorded for import/reviewer-pack generation, the reviewer pack reconciles with the audited source, and a release-readiness gate now blocks unsafe live promotion.
 
 The full secure-vocabulary expansion contract is not complete. The current finite blocker is no longer "missing source list"; it is that the supplied source is approved only for import/reviewer-pack generation and lacks the release-quality content required for live secure-extension promotion.
+
+## Reviewer loop result
+
+The latest reviewer loop did not return the contract PASS line:
+
+- Code Reviewer: not PASS. Findings were that the full contract is not complete and that this current-state evidence must avoid stale branch-head claims.
+- Contract Auditor: not PASS. Findings were that the full contract is not complete, the ZIP approval forbids live promotion under the current decision, runtime secure-extension count is still zero, release/performance/audio/migration evidence is absent, reviewer PASS lines are absent, production proof is absent, and current-state evidence must avoid stale branch-head claims.
+
+The stale branch-head evidence issue is addressed above by recording the audited implementation commit and current-state evidence commit separately, and by requiring a fresh `git rev-parse` check when this evidence is consumed. The remaining reviewer findings are full-contract blockers and cannot be closed without a release-approved source artefact and live production evidence.
 
 ## Required next approval or source input
 
